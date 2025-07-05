@@ -439,9 +439,9 @@ CREATE TABLE Notification (
     type VARCHAR(50),
     message TEXT,
     isRead BOOLEAN DEFAULT FALSE,
-    userId INT,
-    repairRequestId INT,
-    channel VARCHAR(20),
+    userId INT DEFAULT NULL,
+    repairRequestId INT DEFAULT NULL,
+    channel ENUM('EMAIL','SMS','IN_APP') DEFAULT 'IN_APP', -- Enhancement: Multi-channel support
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES User(id),
@@ -451,7 +451,7 @@ CREATE TABLE Notification (
 CREATE TABLE NotificationTemplate (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(50),
-    template TEXT,
+    template TEXT, -- Enhancement: Store templates for recurring notifications
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -460,8 +460,8 @@ CREATE TABLE SystemSetting (
     id INT AUTO_INCREMENT PRIMARY KEY,
     `key` VARCHAR(100) NOT NULL UNIQUE,
     value TEXT,
-    type ENUM('STRING','NUMBER','BOOLEAN','JSON'),
-    description VARCHAR(255),
+    type ENUM('STRING','NUMBER','BOOLEAN','JSON') DEFAULT 'STRING',
+    description TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -469,16 +469,15 @@ CREATE TABLE SystemSetting (
 CREATE TABLE AuditLog (
     id INT AUTO_INCREMENT PRIMARY KEY,
     action VARCHAR(100),
-    actionType VARCHAR(50),
+    actionType ENUM('CREATE','UPDATE','DELETE','LOGIN'),
     details TEXT,
     entityType VARCHAR(50),
-    entityId INT,
+    entityId INT DEFAULT NULL,
     userId INT,
     ipAddress VARCHAR(45),
-    beforeValue JSON,
-    afterValue JSON,
+    beforeValue JSON, -- Enhancement: Store previous state for audit
+    afterValue JSON, -- Enhancement: Store new state for audit
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES User(id)
 );
 
