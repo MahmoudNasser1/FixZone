@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repair Requests - Fix Zone ERP</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container my-5">
+    <h1>Repair Requests</h1>
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#repairModal">Add Repair Request</button>
+    <table class="table table-bordered" id="repairsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Device ID</th>
+          <th>Status</th>
+          <th>Customer ID</th>
+          <th>Branch ID</th>
+          <th>Technician ID</th>
+          <th>Reported Problem</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="repairModal" tabindex="-1" aria-labelledby="repairModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="repairModalLabel">Add Repair Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="repairForm">
+            <input type="hidden" id="repairId">
+            <div class="mb-3">
+              <label for="repairDeviceId" class="form-label">Device ID</label>
+              <input type="number" class="form-control" id="repairDeviceId" required>
+            </div>
+            <div class="mb-3">
+              <label for="repairStatus" class="form-label">Status</label>
+              <select class="form-select" id="repairStatus" required>
+                <option value="RECEIVED">Received</option>
+                <option value="INSPECTION">Under Inspection</option>
+                <option value="AWAITING_APPROVAL">Awaiting Approval</option>
+                <option value="UNDER_REPAIR">Under Repair</option>
+                <option value="READY_FOR_DELIVERY">Ready for Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="WAITING_PARTS">Waiting for Parts</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="repairCustomerId" class="form-label">Customer ID</label>
+              <input type="number" class="form-control" id="repairCustomerId" required>
+            </div>
+            <div class="mb-3">
+              <label for="repairBranchId" class="form-label">Branch ID</label>
+              <input type="number" class="form-control" id="repairBranchId" required>
+            </div>
+            <div class="mb-3">
+              <label for="repairTechnicianId" class="form-label">Technician ID</label>
+              <input type="number" class="form-control" id="repairTechnicianId" required>
+            </div>
+            <div class="mb-3">
+              <label for="repairReportedProblem" class="form-label">Reported Problem</label>
+              <textarea class="form-control" id="repairReportedProblem" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const repairsTableBody = document.querySelector('#repairsTable tbody');
+    const repairForm = document.getElementById('repairForm');
+    const repairModal = new bootstrap.Modal(document.getElementById('repairModal'));
+    let editingId = null;
+
+    function fetchRepairs() {
+      fetch('/api/repairs')
+        .then(res => res.json())
+        .then(data => {
+          repairsTableBody.innerHTML = '';
+          data.forEach(r => {
+            repairsTableBody.innerHTML += `
+              <tr>
+                <td>${r.id}</td>
+                <td>${r.deviceId}</td>
+                <td>${r.status}</td>
+                <td>${r.customerId}</td>
+                <td>${r.branchId}</td>
+                <td>${r.technicianId}</td>
+                <td>${r.reportedProblem || ''}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning" onclick="editRepair(${r.id}, ${r.deviceId}, '${r.status}', ${r.customerId}, ${r.branchId}, ${r.technicianId}, \
+                    '${(r.reportedProblem || '').replace(/'/g, "&#39;")}'\
+                  )">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRepair(${r.id})">Delete</button>
+                </td>
+              </tr>
+            `;
+          });
+        });
+    }
+
+    window.editRepair = function(id, deviceId, status, customerId, branchId, technicianId, reportedProblem) {
+      editingId = id;
+      document.getElementById('repairId').value = id;
+      document.getElementById('repairDeviceId').value = deviceId;
+      document.getElementById('repairStatus').value = status;
+      document.getElementById('repairCustomerId').value = customerId;
+      document.getElementById('repairBranchId').value = branchId;
+      document.getElementById('repairTechnicianId').value = technicianId;
+      document.getElementById('repairReportedProblem').value = reportedProblem;
+      document.getElementById('repairModalLabel').textContent = 'Edit Repair Request';
+      repairModal.show();
+    };
+
+    window.deleteRepair = function(id) {
+      if (confirm('Are you sure you want to delete this repair request?')) {
+        fetch(`/api/repairs/${id}`, { method: 'DELETE' })
+          .then(() => fetchRepairs());
+      }
+    };
+
+    repairForm.onsubmit = function(e) {
+      e.preventDefault();
+      const id = document.getElementById('repairId').value;
+      const data = {
+        deviceId: document.getElementById('repairDeviceId').value,
+        status: document.getElementById('repairStatus').value,
+        customerId: document.getElementById('repairCustomerId').value,
+        branchId: document.getElementById('repairBranchId').value,
+        technicianId: document.getElementById('repairTechnicianId').value,
+        reportedProblem: document.getElementById('repairReportedProblem').value
+      };
+      if (id) {
+        fetch(`/api/repairs/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(() => {
+          repairModal.hide();
+          fetchRepairs();
+        });
+      } else {
+        fetch('/api/repairs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(() => {
+          repairModal.hide();
+          fetchRepairs();
+        });
+      }
+      repairForm.reset();
+      editingId = null;
+      document.getElementById('repairModalLabel').textContent = 'Add Repair Request';
+    };
+
+    document.querySelector('[data-bs-target="#repairModal"]').onclick = function() {
+      editingId = null;
+      repairForm.reset();
+      document.getElementById('repairModalLabel').textContent = 'Add Repair Request';
+    };
+
+    fetchRepairs();
+  </script>
+</body>
+</html> 

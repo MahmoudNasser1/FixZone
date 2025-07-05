@@ -1,0 +1,485 @@
+-- Fix Zone ERP Full SQL Schema
+-- Compatible with MySQL/MariaDB (XAMPP)
+-- All major modules and enhancements included
+
+CREATE DATABASE IF NOT EXISTS FZ;
+USE FZ;
+
+-- ----------------------
+-- Core Entities
+-- ----------------------
+
+CREATE TABLE City (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE Branch (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255),
+    phone VARCHAR(30),
+    cityId INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (cityId) REFERENCES City(id)
+);
+
+CREATE TABLE Role (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    permissions JSON,
+    parentRoleId INT DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (parentRoleId) REFERENCES Role(id)
+);
+
+CREATE TABLE User (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(30) UNIQUE,
+    isActive BOOLEAN DEFAULT TRUE,
+    roleId INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (roleId) REFERENCES Role(id)
+);
+
+CREATE TABLE UserLoginLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT,
+    loginAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ipAddress VARCHAR(45),
+    deviceInfo VARCHAR(255),
+    FOREIGN KEY (userId) REFERENCES User(id)
+);
+
+-- ----------------------
+-- Customers & CRM
+-- ----------------------
+
+CREATE TABLE Customer (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(30),
+    email VARCHAR(100),
+    address VARCHAR(255),
+    customFields JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+-- ----------------------
+-- Devices & Device Batches
+-- ----------------------
+
+CREATE TABLE DeviceBatch (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clientId INT,
+    receivedById INT,
+    batchDate DATE,
+    notes TEXT,
+    status ENUM('PENDING','COMPLETED') DEFAULT 'PENDING',
+    importLog TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (clientId) REFERENCES Customer(id),
+    FOREIGN KEY (receivedById) REFERENCES User(id)
+);
+
+CREATE TABLE Device (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customerId INT,
+    deviceType VARCHAR(100),
+    brand VARCHAR(100),
+    model VARCHAR(100),
+    serialNumber VARCHAR(100),
+    customFields JSON,
+    deviceBatchId INT DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (customerId) REFERENCES Customer(id),
+    FOREIGN KEY (deviceBatchId) REFERENCES DeviceBatch(id)
+);
+
+-- ----------------------
+-- Repair Management
+-- ----------------------
+
+CREATE TABLE RepairRequest (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    deviceId INT,
+    reportedProblem TEXT,
+    technicianReport TEXT,
+    status ENUM('RECEIVED','INSPECTION','AWAITING_APPROVAL','UNDER_REPAIR','READY_FOR_DELIVERY','DELIVERED','REJECTED','WAITING_PARTS') DEFAULT 'RECEIVED',
+    customerId INT,
+    branchId INT,
+    technicianId INT,
+    quotationId INT DEFAULT NULL,
+    invoiceId INT DEFAULT NULL,
+    deviceBatchId INT DEFAULT NULL,
+    attachments JSON,
+    customFields JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (deviceId) REFERENCES Device(id),
+    FOREIGN KEY (customerId) REFERENCES Customer(id),
+    FOREIGN KEY (branchId) REFERENCES Branch(id),
+    FOREIGN KEY (technicianId) REFERENCES User(id),
+    FOREIGN KEY (deviceBatchId) REFERENCES DeviceBatch(id)
+);
+
+CREATE TABLE StatusUpdateLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    repairRequestId INT,
+    fromStatus VARCHAR(50),
+    toStatus VARCHAR(50),
+    notes TEXT,
+    changedById INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
+    FOREIGN KEY (changedById) REFERENCES User(id)
+);
+
+-- ----------------------
+-- Quotations
+-- ----------------------
+
+CREATE TABLE Quotation (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    status ENUM('PENDING','SENT','APPROVED','REJECTED') DEFAULT 'PENDING',
+    totalAmount DECIMAL(12,2),
+    taxAmount DECIMAL(12,2),
+    notes TEXT,
+    sentAt DATETIME,
+    responseAt DATETIME,
+    repairRequestId INT UNIQUE,
+    currency VARCHAR(10),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id)
+);
+
+CREATE TABLE QuotationItem (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255),
+    quantity INT,
+    unitPrice DECIMAL(12,2),
+    totalPrice DECIMAL(12,2),
+    quotationId INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (quotationId) REFERENCES Quotation(id)
+);
+
+-- ----------------------
+-- Inventory & Purchasing
+-- ----------------------
+
+CREATE TABLE Warehouse (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE InventoryItem (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sku VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100),
+    type VARCHAR(100),
+    purchasePrice DECIMAL(12,2),
+    sellingPrice DECIMAL(12,2),
+    serialNumber VARCHAR(100),
+    customFields JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE StockLevel (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inventoryItemId INT,
+    warehouseId INT,
+    quantity INT,
+    minLevel INT DEFAULT 0,
+    isLowStock BOOLEAN DEFAULT FALSE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id),
+    FOREIGN KEY (warehouseId) REFERENCES Warehouse(id)
+);
+
+CREATE TABLE StockMovement (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('IN','OUT','TRANSFER') NOT NULL,
+    quantity INT,
+    inventoryItemId INT,
+    fromWarehouseId INT DEFAULT NULL,
+    toWarehouseId INT DEFAULT NULL,
+    userId INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id),
+    FOREIGN KEY (fromWarehouseId) REFERENCES Warehouse(id),
+    FOREIGN KEY (toWarehouseId) REFERENCES Warehouse(id),
+    FOREIGN KEY (userId) REFERENCES User(id)
+);
+
+CREATE TABLE Vendor (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(30),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE PurchaseOrder (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    status VARCHAR(50),
+    vendorId INT,
+    approvalStatus ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
+    approvedById INT DEFAULT NULL,
+    approvalDate DATETIME DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendorId) REFERENCES Vendor(id),
+    FOREIGN KEY (approvedById) REFERENCES User(id)
+);
+
+CREATE TABLE PurchaseOrderItem (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quantity INT,
+    unitPrice DECIMAL(12,2),
+    totalPrice DECIMAL(12,2),
+    purchaseOrderId INT,
+    inventoryItemId INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (purchaseOrderId) REFERENCES PurchaseOrder(id),
+    FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id)
+);
+
+CREATE TABLE PartsUsed (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quantity INT,
+    repairRequestId INT,
+    inventoryItemId INT,
+    invoiceItemId INT DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
+    FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id)
+);
+
+-- ----------------------
+-- Financial Entities
+-- ----------------------
+
+CREATE TABLE Invoice (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    totalAmount DECIMAL(12,2),
+    amountPaid DECIMAL(12,2),
+    status VARCHAR(50),
+    repairRequestId INT UNIQUE,
+    currency VARCHAR(10),
+    taxAmount DECIMAL(12,2),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id)
+);
+
+CREATE TABLE InvoiceItem (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quantity INT,
+    unitPrice DECIMAL(12,2),
+    totalPrice DECIMAL(12,2),
+    invoiceId INT,
+    partsUsedId INT DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoiceId) REFERENCES Invoice(id)
+);
+
+CREATE TABLE Payment (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    amount DECIMAL(12,2),
+    paymentMethod VARCHAR(50),
+    invoiceId INT,
+    userId INT,
+    currency VARCHAR(10),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoiceId) REFERENCES Invoice(id),
+    FOREIGN KEY (userId) REFERENCES User(id)
+);
+
+CREATE TABLE ExpenseCategory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE Expense (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255),
+    amount DECIMAL(12,2),
+    expenseDate DATE,
+    categoryId INT,
+    userId INT,
+    currency VARCHAR(10),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (categoryId) REFERENCES ExpenseCategory(id),
+    FOREIGN KEY (userId) REFERENCES User(id)
+);
+
+-- ----------------------
+-- Services
+-- ----------------------
+
+CREATE TABLE Service (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    basePrice DECIMAL(12,2),
+    isActive BOOLEAN DEFAULT TRUE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE RepairRequestService (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    repairRequestId INT,
+    serviceId INT,
+    technicianId INT,
+    price DECIMAL(12,2),
+    notes TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
+    FOREIGN KEY (serviceId) REFERENCES Service(id),
+    FOREIGN KEY (technicianId) REFERENCES User(id)
+);
+
+-- ----------------------
+-- Inspection Reports
+-- ----------------------
+
+CREATE TABLE InspectionType (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    description VARCHAR(255),
+    isActive BOOLEAN DEFAULT TRUE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE InspectionReport (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    repairRequestId INT,
+    inspectionTypeId INT,
+    technicianId INT,
+    summary TEXT,
+    result TEXT,
+    recommendations TEXT,
+    notes TEXT,
+    reportDate DATE,
+    branchId INT,
+    invoiceLink VARCHAR(255),
+    qrCode VARCHAR(255),
+    attachments JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
+    FOREIGN KEY (inspectionTypeId) REFERENCES InspectionType(id),
+    FOREIGN KEY (technicianId) REFERENCES User(id),
+    FOREIGN KEY (branchId) REFERENCES Branch(id)
+);
+
+CREATE TABLE InspectionComponent (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inspectionReportId INT,
+    name VARCHAR(100),
+    status ENUM('WORKING','PARTIAL','DEFECTIVE','NOT_PRESENT'),
+    notes VARCHAR(255),
+    priority ENUM('HIGH','MEDIUM','LOW','NONE'),
+    photo VARCHAR(255),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (inspectionReportId) REFERENCES InspectionReport(id)
+);
+
+-- ----------------------
+-- Notifications & Utility
+-- ----------------------
+
+CREATE TABLE Notification (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(50),
+    message TEXT,
+    isRead BOOLEAN DEFAULT FALSE,
+    userId INT,
+    repairRequestId INT,
+    channel VARCHAR(20),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES User(id),
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id)
+);
+
+CREATE TABLE NotificationTemplate (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(50),
+    template TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE SystemSetting (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    `key` VARCHAR(100) NOT NULL UNIQUE,
+    value TEXT,
+    type ENUM('STRING','NUMBER','BOOLEAN','JSON'),
+    description VARCHAR(255),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE AuditLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(100),
+    actionType VARCHAR(50),
+    details TEXT,
+    entityType VARCHAR(50),
+    entityId INT,
+    userId INT,
+    ipAddress VARCHAR(45),
+    beforeValue JSON,
+    afterValue JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES User(id)
+);
+
+-- End of schema 
