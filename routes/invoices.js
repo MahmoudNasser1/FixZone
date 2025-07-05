@@ -66,13 +66,13 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE Invoice SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM Invoice WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Invoice not found or already deleted');
+      return res.status(404).send('Invoice not found');
     }
-    res.json({ message: 'Invoice deleted successfully (soft delete)' });
+    res.json({ message: 'Invoice deleted successfully' });
   } catch (err) {
-    console.error(`Error soft deleting invoice with ID ${id}:`, err);
+    console.error(`Error deleting invoice with ID ${id}:`, err);
     res.status(500).send('Server Error');
   }
 });

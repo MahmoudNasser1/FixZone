@@ -66,13 +66,13 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE InventoryItem SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM InventoryItem WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Inventory item not found or already deleted');
+      return res.status(404).send('Inventory item not found');
     }
-    res.json({ message: 'Inventory item soft-deleted successfully' });
+    res.json({ message: 'Inventory item deleted successfully' });
   } catch (err) {
-    console.error(`Error soft-deleting inventory item with ID ${id}:`, err);
+    console.error(`Error deleting inventory item with ID ${id}:`, err);
     res.status(500).send('Server Error');
   }
 });

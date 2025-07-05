@@ -66,9 +66,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE Customer SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM Customer WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Customer not found or already deleted');
+      return res.status(404).send('Customer not found');
     }
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {

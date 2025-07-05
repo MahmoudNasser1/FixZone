@@ -72,13 +72,13 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE Expense SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM Expense WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Expense not found or already deleted');
+      return res.status(404).send('Expense not found');
     }
-    res.json({ message: 'Expense deleted successfully (soft delete)' });
+    res.json({ message: 'Expense deleted successfully' });
   } catch (err) {
-    console.error(`Error soft deleting expense with ID ${id}:`, err);
+    console.error(`Error deleting expense with ID ${id}:`, err);
     res.status(500).send('Server Error');
   }
 });

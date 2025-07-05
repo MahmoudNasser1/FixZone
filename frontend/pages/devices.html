@@ -109,8 +109,15 @@
 
     window.deleteDevice = function(id) {
       if (confirm('Are you sure you want to delete this device?')) {
+        console.log('Attempting to delete device with ID:', id); // Added log
         fetch(`/api/devices/${id}`, { method: 'DELETE' })
-          .then(() => fetchDevices());
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            fetchDevices();
+          })
+          .catch(error => console.error('Error deleting device:', error));
       }
     };
 

@@ -66,9 +66,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE Branch SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM Branch WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Branch not found or already deleted');
+      return res.status(404).send('Branch not found');
     }
     res.json({ message: 'Branch deleted successfully' });
   } catch (err) {

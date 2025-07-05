@@ -66,9 +66,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('UPDATE Role SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.query('DELETE FROM Role WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Role not found or already deleted');
+      return res.status(404).send('Role not found');
     }
     res.json({ message: 'Role deleted successfully' });
   } catch (err) {
