@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const techniciansController = require('../controllers/technicians');
+const db = require('../db');
 
-router.get('/', techniciansController.getAllTechnicians);
-router.get('/:id', techniciansController.getTechnicianById);
-router.post('/', techniciansController.createTechnician);
-router.put('/:id', techniciansController.updateTechnician);
-router.delete('/:id', techniciansController.deleteTechnician);
+// Get all technicians
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM User WHERE roleId = (SELECT id FROM Role WHERE name = "Technician")'); // Assuming 'Technician' role exists
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching technicians:', err);
+    res.status(500).send('Server Error');
+  }
+});
 
-module.exports = router; 
+module.exports = router;

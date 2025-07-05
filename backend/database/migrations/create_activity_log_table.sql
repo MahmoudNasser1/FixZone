@@ -1,0 +1,9 @@
+CREATE TABLE `activity_log` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `action` VARCHAR(255) NOT NULL,
+  `details` JSON,
+  `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE
+);
