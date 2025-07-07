@@ -1,57 +1,85 @@
-# Fix Zone ERP System Overview Documentation
+# Fix Zone ERP - System Overview (React Frontend)
 
-This document provides a high-level overview of the Fix Zone ERP system's architecture, key components, and their responsibilities. It aims to serve as a quick reference for understanding the project structure and the flow of operations.
+This document provides a high-level technical overview of the **React-based frontend** for the Fix Zone ERP system. It details the architecture, key libraries, and core concepts to facilitate development and maintenance.
 
-## 1. Project Structure
+---
 
-The project is organized into several main directories, separating frontend, backend, and documentation concerns.
+## 1. Core Technologies & Libraries
 
--   `c:\xampp\htdocs\FixZone\` (Root Directory)
-    -   `backend\`
-        -   `app.js`: The main entry point for the backend API routes. It exports an Express Router containing all API definitions.
-        -   `db.js`: Handles the database connection (MySQL/MariaDB).
-        -   `routes\`: Contains individual route files for different modules (e.g., `customers.js`, `repairs.js`). Each file defines API endpoints for a specific entity.
-        -   `controllers\`: (To be implemented/used) Will contain the business logic for handling requests from routes and interacting with models.
-        -   `models\`: (To be implemented/used) Will define the data structures and interact with the database (e.g., using an ORM or direct queries).
-    -   `frontend\`
-        -   `index.html`: The main entry point for the single-page application (SPA).
-        -   `pages\`: Contains individual HTML files for different frontend views (e.g., `dashboard.html`, `customers.html`).
-        -   `assets\`: Contains static assets like CSS, JavaScript files, images, etc.
-    -   `node_modules\`: Contains all project dependencies.
-    -   `server.js`: The main server launcher. It serves static frontend files and mounts the `backend/app.js` router under the `/api` endpoint.
-    -   `TODO_FixZone_ERP.md`: A detailed task list for UI/UX design and backend development.
-    -   `ui_design_prompt.md`: The original prompt detailing UI/UX requirements.
-    -   `fixzone_erp_full_schema.sql`: The SQL database schema definition.
-    -   `SYSTEM_OVERVIEW.md`: This documentation file.
+-   **Framework:** React.js (v18+)
+-   **Build Tool:** Vite
+-   **Routing:** React Router v6
+-   **Styling:** Tailwind CSS
+-   **UI Components:** shadcn/ui (a collection of reusable components built on Radix UI and Tailwind CSS)
+-   **State Management:** Zustand (a small, fast, and scalable state-management solution)
+-   **Icons:** Lucide React
+-   **Utilities:** `clsx`, `tailwind-merge` for conditional class name management.
 
-## 2. Backend Architecture (Node.js + Express)
+---
 
--   **Entry Point:** `server.js` is the primary server file. It sets up the Express application, serves static frontend files, and integrates the backend API.
--   **API Routing:** All API routes are defined within the `backend/routes` directory. `backend/app.js` aggregates these routes and exports them as a single Express Router.
--   **Database Connection:** `db.js` establishes and manages the connection to the MySQL/MariaDB database.
--   **Future Enhancements:** The `controllers` and `models` directories are placeholders for implementing a more structured MVC (Model-View-Controller) pattern, separating concerns for better maintainability and scalability.
+## 2. Project Structure (`frontend/react-app`)
 
-## 3. Frontend Architecture (React.js + Tailwind - Planned)
+```
+/src
+|-- /components         # Reusable components (Layout, Sidebar, etc.)
+|   |-- /ui             # Core UI elements from shadcn/ui (Button, Card, Input)
+|   |-- Dashboard.js
+|   |-- Layout.js
+|   |-- ProtectedRoute.js
+|   |-- Sidebar.js
+|   `-- ThemeProvider.js
+|
+|-- /pages              # Full-page components
+|   `-- LoginPage.js
+|
+|-- /stores             # Global state management (Zustand)
+|   `-- authStore.js
+|
+|-- App.css             # Global styles
+|-- App.js              # Main application component, defines routing
+|-- index.css           # Tailwind CSS base styles and directives
+`-- main.jsx            # Application entry point
+```
 
--   Currently, the frontend consists of static HTML files. The plan is to transition to a React.js application with Tailwind CSS for a dynamic and responsive user interface.
--   `server.js` serves these static files, making them accessible via the web server.
+---
 
-## 4. Key Tasks and Responsibilities
+## 3. Key Concepts & Architecture
 
--   **`server.js`**: Orchestrates the entire application. It handles incoming HTTP requests, directs static file serving, and forwards API requests to the backend router.
--   **`backend/app.js`**: Acts as the central hub for all backend API routes. It ensures that all API endpoints are properly defined and accessible under the `/api` prefix.
--   **`backend/routes/*.js`**: Defines specific API endpoints for different modules (e.g., `/api/customers`, `/api/repairs`). Each route file is responsible for handling requests related to its domain.
--   **`db.js`**: Manages the database connection, ensuring that the backend can interact with the MySQL/MariaDB database.
+### a. UI System (shadcn/ui)
 
-## 5. Next Steps (from TODO_FixZone_ERP.md)
+The UI is built on a foundation of reusable components from `shadcn/ui`. This is not a traditional component library but rather a collection of pre-built, customizable components that you own and can modify. Key components like `Button`, `Card`, `Input`, and `Label` are located in `src/components/ui`.
 
-After ensuring the server runs correctly, the immediate next steps involve implementing the core backend functionalities and corresponding frontend components, as detailed in `TODO_FixZone_ERP.md`. This includes:
+### b. Routing (React Router v6)
 
--   Authentication and Authorization (Auth + Roles).
--   Dashboard module development.
--   Repair Requests module development.
--   CRM module development.
--   Inventory management.
--   Financial modules (Invoices, Payments, Expenses).
+-   **File:** `src/App.js`
+-   **Logic:** The application uses a nested routing structure.
+    -   A standalone route for `/login` renders the `LoginPage`.
+    -   A parent route `/` is protected by the `ProtectedRoute` component.
+    -   All main application pages (Dashboard, Repairs, etc.) are nested inside the protected route, which renders them within the main `Layout` (which includes the `Sidebar`).
 
-This documentation will be updated as the project evolves and new components or architectural decisions are made.
+### c. Authentication Flow
+
+1.  **State Management:** The `useAuthStore` (in `src/stores/authStore.js`) manages the user's authentication state (`isAuthenticated`, `user`, `token`) using Zustand.
+2.  **Persistence:** The auth state is persisted in `localStorage` via `zustand/middleware`, keeping the user logged in across page reloads.
+3.  **Login:** The `LoginPage` uses the `authStore` to perform a mock login, set the auth state, and redirect the user to the dashboard (`/`).
+4.  **Protected Routes:** The `ProtectedRoute` component (`src/components/ProtectedRoute.js`) checks `isAuthenticated` from the store. If `false`, it redirects the user to `/login`.
+5.  **Logout:** The `Sidebar` contains a logout button that calls the `logout` action from the `authStore`, clearing the state and redirecting the user to the login page (implicitly via the `ProtectedRoute`).
+
+### d. Theming (Dark Mode & RTL)
+
+-   **File:** `src/components/ThemeProvider.js`
+-   **Logic:** A custom `ThemeProvider` context manages both the color theme (light/dark/system) and text direction (LTR/RTL).
+-   **Persistence:** User preferences for theme and direction are stored in `localStorage`.
+-   **Implementation:** The provider dynamically adds/removes the `dark` class and the `dir="rtl"` attribute to the root `<html>` element.
+-   **Toggles:** The `Sidebar` contains buttons to toggle both theme and direction.
+
+---
+
+## 4. How to Run the Project
+
+1.  Navigate to the frontend directory: `cd frontend/react-app`
+2.  Install dependencies: `npm install`
+3.  Run the development server: `npm run dev` (or `npm start` if configured)
+
+The application will be available at `http://localhost:5173` (or another port if 5173 is busy).
+
