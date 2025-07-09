@@ -37,10 +37,23 @@ exports.login = async (req, res) => {
         };
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
-        res.json({ token });
+        // Send the token in a secure, httpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            sameSite: 'strict', // Or 'lax'
+            maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
 
-        // Log the successful login activity
-        await logActivity(user.id, 'User Login', { ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+        // Send user info back to the client (without the password)
+        res.json({
+            id: user.id,
+            name: user.name,
+            role: user.roleId
+        });
+
+        // Log the successful login activity (temporarily disabled)
+        // await logActivity(user.id, 'User Login', { ipAddress: req.ip, userAgent: req.headers['user-agent'] });
 
     } catch (error) {
         console.error('Login error:', error);

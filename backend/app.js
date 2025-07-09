@@ -1,14 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const router = express.Router();
+const cookieParser = require('cookie-parser');
 
 // Enable CORS for all routes
-router.use(cors());
+router.use(cors({
+  origin: 'http://localhost:3001',
+  credentials: true
+}));
 
 const db = require('./db');
 const path = require('path');
 
 router.use(express.json());
+router.use(cookieParser());
 
 
 

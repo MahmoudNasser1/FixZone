@@ -1,12 +1,18 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import useAuthStore from './stores/authStore';
+
+// Core App Utilities
 import { ThemeProvider } from './components/ThemeProvider';
-import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import LoginPage from './pages/LoginPage';
-import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/Toaster';
 import './App.css';
+
+// Layout and Route Protection
+import MainLayout from './components/layout/MainLayout';
+
+// Pages and Components
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage'; // Using the new DashboardPage
 import PaymentsPage from './pages/payments/PaymentsPage';
 
 // Placeholder components for routing
@@ -15,31 +21,51 @@ const Customers = () => <h1 className="text-2xl font-bold">Customers (CRM)</h1>;
 const Inventory = () => <h1 className="text-2xl font-bold">Inventory</h1>;
 const Settings = () => <h1 className="text-2xl font-bold">Settings</h1>;
 
+// This component protects routes that require authentication.
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// This component handles routes that should only be accessible to unauthenticated users.
+const PublicRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return !isAuthenticated ? children : <Navigate to="/" replace />;
+};
+
 function App() {
   return (
-    
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="repairs" element={<Repairs />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="inventory" element={<Inventory />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="payments" element={<PaymentsPage />} />
-          </Route>
-        </Routes>
-        <Toaster />
-      </ThemeProvider>
-    
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/*" // All other routes are handled here
+          element={
+            <ProtectedRoute>
+              <MainLayout> {/* The new layout with Sidebar and Topbar */}
+                <Routes> {/* Nested routes that will render inside MainLayout's <Outlet> */}
+                  <Route index element={<DashboardPage />} />
+                  <Route path="repairs" element={<Repairs />} />
+                  <Route path="customers" element={<Customers />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="payments" element={<PaymentsPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unknown protected routes */}
+                </Routes>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <Toaster />
+    </ThemeProvider>
   );
 }
 

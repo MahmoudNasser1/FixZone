@@ -13,20 +13,18 @@ const useAuthStore = create(
       login: async (loginIdentifier, password) => {
         try {
           const API_URL = 'http://localhost:3000/api/auth';
+          // Configure axios to send credentials (cookies) with every request
+          axios.defaults.withCredentials = true;
+
           const response = await axios.post(`${API_URL}/login`, {
             loginIdentifier,
             password,
           });
 
-          const { token } = response.data;
-          if (token) {
-            const decodedUser = jwtDecode(token);
-            set({
-              isAuthenticated: true,
-              user: decodedUser,
-              token: token,
-            });
-          }
+          // The backend now sends user info directly, not a token.
+          const userData = response.data;
+
+          set({ isAuthenticated: true, user: userData, token: null }); // Token is in httpOnly cookie
         } catch (error) {
           console.error('Login failed:', error.response ? error.response.data : error.message);
           // Optionally, you can throw the error to be caught in the component

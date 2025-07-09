@@ -69,6 +69,17 @@ const LoginPage = () => {
                 disabled={isLoading}
               />
             </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id="remember-me" className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                <label htmlFor="remember-me" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Remember me
+                </label>
+              </div>
+              <a href="#" className="text-sm text-primary hover:underline">
+                Forgot password?
+              </a>
+            </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
