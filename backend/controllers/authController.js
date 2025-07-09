@@ -7,25 +7,35 @@ const { logActivity } = require('./activityLogController');
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key'; 
 
 exports.login = async (req, res) => {
-    const { name, password } = req.body;
+    const { loginIdentifier, password } = req.body;
+
+    if (!loginIdentifier || !password) {
+        return res.status(400).json({ message: 'Please provide login identifier and password' });
+    }
 
     try {
-        // Check if user exists
-        const [rows] = await db.query('SELECT * FROM user WHERE name = ?', [name]);
+        // Check if user exists by email or phone
+        const query = 'SELECT * FROM user WHERE (email = ? OR phone = ?) AND deletedAt IS NULL';
+        const [rows] = await db.query(query, [loginIdentifier, loginIdentifier]);
         const user = rows[0];
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         // Generate JWT
-        const token = jwt.sign({ id: user.id, role: user.roleId }, JWT_SECRET, { expiresIn: '1h' });
+        const payload = {
+            id: user.id,
+            role: user.roleId,
+            name: user.name
+        };
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
         res.json({ token });
 

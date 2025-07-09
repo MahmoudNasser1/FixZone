@@ -64,8 +64,21 @@ CREATE TABLE UserLoginLog (
 );
 
 -- ----------------------
--- Customers & CRM
+-- Customers, Companies & CRM
 -- ----------------------
+
+CREATE TABLE Company (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(30),
+    address VARCHAR(255),
+    taxNumber VARCHAR(50),
+    customFields JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
 
 CREATE TABLE Customer (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -73,10 +86,12 @@ CREATE TABLE Customer (
     phone VARCHAR(30),
     email VARCHAR(100),
     address VARCHAR(255),
+    companyId INT DEFAULT NULL,
     customFields JSON,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deletedAt DATETIME DEFAULT NULL
+    deletedAt DATETIME DEFAULT NULL,
+    FOREIGN KEY (companyId) REFERENCES Company(id)
 );
 
 -- ----------------------

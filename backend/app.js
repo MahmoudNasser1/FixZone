@@ -1,5 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const router = express.Router();
+
+// Enable CORS for all routes
+router.use(cors());
+
 const db = require('./db');
 const path = require('path');
 

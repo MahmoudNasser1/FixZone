@@ -5,7 +5,9 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from './components/ui/Toaster';
 import './App.css';
+import PaymentsPage from './pages/payments/PaymentsPage';
 
 // Placeholder components for routing
 const Repairs = () => <h1 className="text-2xl font-bold">Repair Tickets</h1>;
@@ -32,8 +34,10 @@ function App() {
             <Route path="customers" element={<Customers />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="payments" element={<PaymentsPage />} />
           </Route>
         </Routes>
+        <Toaster />
       </ThemeProvider>
     
   );
