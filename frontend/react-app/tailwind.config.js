@@ -17,6 +17,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        'arabic': ['Cairo', 'Tajawal', 'system-ui', 'sans-serif'],
+        'sans': ['Cairo', 'Tajawal', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

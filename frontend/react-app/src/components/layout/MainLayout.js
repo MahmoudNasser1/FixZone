@@ -1,10 +1,10 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Breadcrumb from './Breadcrumb';
 
 const MainLayout = ({ 
-  children, 
   showBreadcrumb = true, 
   breadcrumbItems = null,
   pageTitle = null,
@@ -44,7 +44,7 @@ const MainLayout = ({
           {/* المحتوى */}
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
             <div className="max-w-7xl mx-auto">
-              {children}
+              <Outlet />
             </div>
           </main>
         </div>

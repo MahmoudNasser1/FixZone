@@ -15,9 +15,14 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage'; // Using the new DashboardPage
 import PaymentsPage from './pages/payments/PaymentsPage';
 
+// Customer Pages
+import { CustomersPage, NewCustomerPage } from './pages/customers';
+
+// Layout Demo Page
+import LayoutDemo from './pages/LayoutDemo';
+
 // Placeholder components for routing
 const Repairs = () => <h1 className="text-2xl font-bold">Repair Tickets</h1>;
-const Customers = () => <h1 className="text-2xl font-bold">Customers (CRM)</h1>;
 const Inventory = () => <h1 className="text-2xl font-bold">Inventory</h1>;
 const Settings = () => <h1 className="text-2xl font-bold">Settings</h1>;
 
@@ -49,17 +54,25 @@ function App() {
           path="/*" // All other routes are handled here
           element={
             <ProtectedRoute>
-              <MainLayout> {/* The new layout with Sidebar and Topbar */}
-                <Routes> {/* Nested routes that will render inside MainLayout's <Outlet> */}
+              <Routes>
+                <Route path="/*" element={<MainLayout />}>
                   <Route index element={<DashboardPage />} />
                   <Route path="repairs" element={<Repairs />} />
-                  <Route path="customers" element={<Customers />} />
+                  
+                  {/* Customer Routes */}
+                  <Route path="customers" element={<CustomersPage />} />
+                  <Route path="customers/new" element={<NewCustomerPage />} />
+                  
                   <Route path="inventory" element={<Inventory />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="payments" element={<PaymentsPage />} />
+                  
+                  {/* Demo Route */}
+                  <Route path="demo" element={<LayoutDemo />} />
+                  
                   <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unknown protected routes */}
-                </Routes>
-              </MainLayout>
+                </Route>
+              </Routes>
             </ProtectedRoute>
           }
         />

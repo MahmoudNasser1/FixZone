@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MainLayout, SimpleLayout } from '../components/layout';
+import { MainLayout, SimpleLayout, CleanLayout } from '../components/layout/index';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
