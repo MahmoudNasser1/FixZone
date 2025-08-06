@@ -17,6 +17,15 @@ import PaymentsPage from './pages/payments/PaymentsPage';
 
 // Customer Pages
 import { CustomersPage, NewCustomerPage } from './pages/customers';
+import CustomerDetailsPage from './pages/customers/CustomerDetailsPage';
+import EditCustomerPage from './pages/customers/EditCustomerPage';
+
+// Company Pages
+import { CompaniesPage, NewCompanyPage } from './pages/companies';
+
+// Repair Pages
+import { RepairsPage } from './pages/repairs';
+import NewRepairPage from './pages/repairs/NewRepairPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
@@ -57,11 +66,18 @@ function App() {
               <Routes>
                 <Route path="/*" element={<MainLayout />}>
                   <Route index element={<DashboardPage />} />
-                  <Route path="repairs" element={<Repairs />} />
+                  <Route path="repairs" element={<RepairsPage />} />
+                <Route path="repairs/new" element={<NewRepairPage />} />
                   
                   {/* Customer Routes */}
                   <Route path="customers" element={<CustomersPage />} />
                   <Route path="customers/new" element={<NewCustomerPage />} />
+                  <Route path="customers/:id" element={<CustomerDetailsPage />} />
+                  <Route path="customers/:id/edit" element={<EditCustomerPage />} />
+                  
+                  {/* Company Routes */}
+                  <Route path="companies" element={<CompaniesPage />} />
+                  <Route path="companies/new" element={<NewCompanyPage />} />
                   
                   <Route path="inventory" element={<Inventory />} />
                   <Route path="settings" element={<Settings />} />

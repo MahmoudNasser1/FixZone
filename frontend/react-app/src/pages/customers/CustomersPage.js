@@ -1,438 +1,367 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-import { Button } from '../../components/ui/Button';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { DataTable } from '../../components/ui/DataTable';
+import apiService from '../../services/api';
+import SimpleButton from '../../components/ui/SimpleButton';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleBadge from '../../components/ui/SimpleBadge';
 import { Input } from '../../components/ui/Input';
 import { 
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../../components/ui/DropdownMenu";
 
 const CustomersPage = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [error, setError] = useState(null);
 
-  // بيانات تجريبية للعملاء (سيتم استبدالها بـ API calls)
-  const sampleCustomers = [
-    {
-      id: 1,
-      name: 'أحمد محمد السعيد',
-      phone: '0501234567',
-      email: 'ahmed.mohammed@email.com',
-      address: 'الرياض، حي النرجس',
-      companyId: 1,
-      companyName: 'شركة التقنية المتقدمة',
-      totalRepairs: 12,
-      lastRepairDate: '2024-01-15',
-      status: 'active',
-      createdAt: '2023-06-15',
-      customFields: {
-        preferredContact: 'phone',
-        vipCustomer: true
-      }
-    },
-    {
-      id: 2,
-      name: 'فاطمة أحمد العلي',
-      phone: '0507654321',
-      email: 'fatima.ali@email.com',
-      address: 'جدة، حي الصفا',
-      companyId: null,
-      companyName: null,
-      totalRepairs: 5,
-      lastRepairDate: '2024-01-10',
-      status: 'active',
-      createdAt: '2023-08-20',
-      customFields: {
-        preferredContact: 'email',
-        vipCustomer: false
-      }
-    },
-    {
-      id: 3,
-      name: 'عبدالله سعد المطيري',
-      phone: '0551234567',
-      email: 'abdullah.saad@email.com',
-      address: 'الدمام، حي الشاطئ',
-      companyId: 2,
-      companyName: 'مؤسسة الخليج للتجارة',
-      totalRepairs: 8,
-      lastRepairDate: '2023-12-28',
-      status: 'inactive',
-      createdAt: '2023-04-10',
-      customFields: {
-        preferredContact: 'phone',
-        vipCustomer: false
-      }
-    },
-    {
-      id: 4,
-      name: 'سارة محمد الزهراني',
-      phone: '0509876543',
-      email: 'sara.alzahrani@email.com',
-      address: 'مكة المكرمة، العزيزية',
-      companyId: null,
-      companyName: null,
-      totalRepairs: 15,
-      lastRepairDate: '2024-01-12',
-      status: 'active',
-      createdAt: '2023-03-05',
-      customFields: {
-        preferredContact: 'email',
-        vipCustomer: true
-      }
-    }
-  ];
-
+  // جلب البيانات من Backend
   useEffect(() => {
-    // محاكاة تحميل البيانات
-    setTimeout(() => {
-      setCustomers(sampleCustomers);
-      setLoading(false);
-    }, 1000);
+    fetchCustomers();
   }, []);
 
-  // تعريف أعمدة الجدول
-  const columns = [
-    {
-      accessorKey: 'name',
-      header: 'اسم العميل',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return (
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">
-                {customer.name}
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse mt-1">
-                {customer.customFields?.vipCustomer && (
-                  <Badge variant="default" size="sm">VIP</Badge>
-                )}
-                <Badge 
-                  variant={customer.status === 'active' ? 'success' : 'secondary'}
-                  size="sm"
-                >
-                  {customer.status === 'active' ? 'نشط' : 'غير نشط'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'contact',
-      header: 'معلومات الاتصال',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2 space-x-reverse text-sm">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <span className="en-text">{customer.phone}</span>
-            </div>
-            {customer.email && (
-              <div className="flex items-center space-x-2 space-x-reverse text-sm text-gray-600">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span className="en-text">{customer.email}</span>
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'company',
-      header: 'الشركة',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return customer.companyName ? (
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Building2 className="w-4 h-4 text-gray-400" />
-            <span className="text-sm">{customer.companyName}</span>
-          </div>
-        ) : (
-          <span className="text-gray-400 text-sm">عميل فردي</span>
-        );
-      },
-    },
-    {
-      accessorKey: 'address',
-      header: 'العنوان',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return customer.address ? (
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <span className="text-sm">{customer.address}</span>
-          </div>
-        ) : (
-          <span className="text-gray-400 text-sm">غير محدد</span>
-        );
-      },
-    },
-    {
-      accessorKey: 'repairs',
-      header: 'الطلبات',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return (
-          <div className="text-center">
-            <div className="text-lg font-semibold text-blue-600">
-              {customer.totalRepairs}
-            </div>
-            <div className="text-xs text-gray-500">
-              آخر طلب: {new Date(customer.lastRepairDate).toLocaleDateString('ar-SA')}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'تاريخ التسجيل',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return (
-          <div className="flex items-center space-x-2 space-x-reverse text-sm">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span>{new Date(customer.createdAt).toLocaleDateString('ar-SA')}</span>
-          </div>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      header: 'الإجراءات',
-      cell: ({ row }) => {
-        const customer = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to={`/customers/${customer.id}`}>
-                  <Eye className="w-4 h-4 ml-2" />
-                  عرض الملف
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={`/customers/${customer.id}/edit`}>
-                  <Edit className="w-4 h-4 ml-2" />
-                  تعديل
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={`/customers/${customer.id}/repairs`}>
-                  <Users className="w-4 h-4 ml-2" />
-                  طلبات الإصلاح
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-red-600"
-                onClick={() => handleDeleteCustomer(customer.id)}
-              >
-                <Trash2 className="w-4 h-4 ml-2" />
-                حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
-
-  // إحصائيات سريعة
-  const stats = {
-    total: customers.length,
-    active: customers.filter(c => c.status === 'active').length,
-    inactive: customers.filter(c => c.status === 'inactive').length,
-    vip: customers.filter(c => c.customFields?.vipCustomer).length,
-    withCompany: customers.filter(c => c.companyId).length
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await apiService.getCustomers();
+      console.log('Customers loaded:', data);
+      setCustomers(data);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('حدث خطأ في تحميل بيانات العملاء');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteCustomer = (customerId) => {
+  const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا العميل؟')) {
-      setCustomers(customers.filter(c => c.id !== customerId));
+      try {
+        await apiService.deleteCustomer(customerId);
+        setCustomers(customers.filter(customer => customer.id !== customerId));
+        alert('تم حذف العميل بنجاح');
+      } catch (err) {
+        console.error('Error deleting customer:', err);
+        alert('حدث خطأ في حذف العميل');
+      }
     }
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    // محاكاة إعادة تحميل البيانات
-    setTimeout(() => {
-      setCustomers(sampleCustomers);
-      setLoading(false);
-    }, 1000);
+    fetchCustomers();
   };
 
-  const pageActions = (
-    <>
-      <Button variant="outline" size="sm" onClick={handleRefresh}>
-        <RefreshCw className="w-4 h-4 ml-2" />
-        تحديث
-      </Button>
-      <Button variant="outline" size="sm">
-        <Download className="w-4 h-4 ml-2" />
-        تصدير
-      </Button>
-      <Button variant="outline" size="sm">
-        <Filter className="w-4 h-4 ml-2" />
-        فلترة
-      </Button>
-      <Button size="sm" asChild>
-        <Link to="/customers/new">
-          <Plus className="w-4 h-4 ml-2" />
-          عميل جديد
-        </Link>
-      </Button>
-    </>
-  );
+  // فلترة العملاء
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customer.phone.includes(searchTerm) ||
+                         (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (selectedFilter === 'all') return matchesSearch;
+    if (selectedFilter === 'vip') {
+      const customFields = (() => {
+        try {
+          return typeof customer.customFields === 'string' 
+            ? JSON.parse(customer.customFields) 
+            : customer.customFields || {};
+        } catch {
+          return {};
+        }
+      })();
+      return matchesSearch && customFields.isVip;
+    }
+    if (selectedFilter === 'active') return matchesSearch && customer.status === 'active';
+    if (selectedFilter === 'inactive') return matchesSearch && customer.status === 'inactive';
+    
+    return matchesSearch;
+  });
+
+  // حساب الإحصائيات
+  const stats = {
+    total: customers.length,
+    vip: customers.filter(customer => {
+      const customFields = (() => {
+        try {
+          return typeof customer.customFields === 'string' 
+            ? JSON.parse(customer.customFields) 
+            : customer.customFields || {};
+        } catch {
+          return {};
+        }
+      })();
+      return customFields.isVip;
+    }).length,
+    active: customers.filter(customer => customer.status === 'active').length,
+    inactive: customers.filter(customer => customer.status === 'inactive').length
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">جاري تحميل بيانات العملاء...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-        {/* الإحصائيات السريعة */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    إجمالي العملاء
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {stats.total}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
-                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">إدارة العملاء</h1>
+        <Link to="/customers/new">
+          <SimpleButton className="flex items-center space-x-2 space-x-reverse">
+            <Plus className="w-4 h-4" />
+            <span>عميل جديد</span>
+          </SimpleButton>
+        </Link>
+      </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    عملاء نشطين
-                  </p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {stats.active}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/20">
-                  <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    غير نشطين
-                  </p>
-                  <p className="text-2xl font-bold text-gray-600">
-                    {stats.inactive}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-gray-100 dark:bg-gray-700">
-                  <UserX className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    عملاء VIP
-                  </p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {stats.vip}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900/20">
-                  <User className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    عملاء شركات
-                  </p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {stats.withCompany}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900/20">
-                  <Building2 className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* رسالة الخطأ */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+          <SimpleButton 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRefresh}
+            className="mr-2"
+          >
+            إعادة المحاولة
+          </SimpleButton>
         </div>
+      )}
 
-        {/* جدول العملاء */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>قائمة العملاء</CardTitle>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <div className="relative">
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="البحث في العملاء..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pr-10 w-64"
-                  />
-                </div>
+      {/* الإحصائيات السريعة */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="mr-4">
+                <p className="text-sm font-medium text-gray-600">إجمالي العملاء</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={columns}
-              data={customers}
-              searchKey="name"
-              searchPlaceholder="البحث في أسماء العملاء..."
-              loading={loading}
-            />
-          </CardContent>
-        </Card>
+          </SimpleCardContent>
+        </SimpleCard>
+
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <UserCheck className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="mr-4">
+                <p className="text-sm font-medium text-gray-600">عملاء VIP</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.vip}</p>
+              </div>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
+
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <UserCheck className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="mr-4">
+                <p className="text-sm font-medium text-gray-600">نشط</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
+              </div>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
+
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <UserX className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="mr-4">
+                <p className="text-sm font-medium text-gray-600">غير نشط</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
+              </div>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
+
+      {/* أدوات البحث والفلترة */}
+      <SimpleCard>
+        <SimpleCardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="البحث في العملاء... (الاسم، الهاتف، البريد الإلكتروني)"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10 w-64"
+                />
+              </div>
+              
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">جميع العملاء</option>
+                <option value="vip">عملاء VIP</option>
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <SimpleButton variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="w-4 h-4 ml-2" />
+                تحديث
+              </SimpleButton>
+              <SimpleButton variant="outline" size="sm">
+                <Download className="w-4 h-4 ml-2" />
+                تصدير
+              </SimpleButton>
+            </div>
+          </div>
+        </SimpleCardContent>
+      </SimpleCard>
+
+      {/* جدول العملاء */}
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle>قائمة العملاء ({filteredCustomers.length})</SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
+          {filteredCustomers.length === 0 ? (
+            <div className="text-center py-8">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">لا توجد عملاء</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">العميل</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">معلومات الاتصال</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">تاريخ التسجيل</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCustomers.map((customer) => {
+                    const customFields = (() => {
+                      try {
+                        return typeof customer.customFields === 'string' 
+                          ? JSON.parse(customer.customFields) 
+                          : customer.customFields || {};
+                      } catch {
+                        return {};
+                      }
+                    })();
+
+                    return (
+                      <tr key={customer.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-4">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="mr-3">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <p className="font-medium text-gray-900">{customer.name}</p>
+                                {customFields.isVip && (
+                                  <SimpleBadge variant="default" size="sm">VIP</SimpleBadge>
+                                )}
+                              </div>
+                              {customer.companyId && (
+                                <div className="flex items-center text-sm text-gray-500 mt-1">
+                                  <Building2 className="w-3 h-3 ml-1" />
+                                  شركة
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Phone className="w-3 h-3 ml-2" />
+                              <span className="en-text">{customer.phone}</span>
+                            </div>
+                            {customer.email && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Mail className="w-3 h-3 ml-2" />
+                                <span className="en-text">{customer.email}</span>
+                              </div>
+                            )}
+                            {customer.address && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <MapPin className="w-3 h-3 ml-2" />
+                                <span>{customer.address}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <SimpleBadge 
+                            variant={customer.status === 'active' ? 'success' : 'secondary'}
+                            size="sm"
+                          >
+                            {customer.status === 'active' ? 'نشط' : 'غير نشط'}
+                          </SimpleBadge>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="w-3 h-3 ml-2" />
+                            {new Date(customer.createdAt).toLocaleDateString('ar-SA')}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-2 space-x-reverse">
+                            <Link to={`/customers/${customer.id}`}>
+                              <SimpleButton variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </SimpleButton>
+                            </Link>
+                            <Link to={`/customers/${customer.id}/edit`}>
+                              <SimpleButton variant="ghost" size="sm">
+                                <Edit className="w-4 h-4" />
+                              </SimpleButton>
+                            </Link>
+                            <SimpleButton 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteCustomer(customer.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </SimpleButton>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SimpleCardContent>
+      </SimpleCard>
+    </div>
   );
 };
 

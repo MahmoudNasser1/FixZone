@@ -19,6 +19,7 @@ router.use(cookieParser());
 
 // Import routes
 const customerRoutes = require('./routes/customers');
+const companyRoutes = require('./routes/companies');
 const deviceRoutes = require('./routes/devices');
 const repairRoutes = require('./routes/repairs');
 const technicianRoutes = require('./routes/technicians');
@@ -68,6 +69,7 @@ router.use('/users', usersRouter);
 router.use('/devicebatches', deviceBatchesRouter);
 router.use('/statusupdatelogs', statusUpdateLogsRouter);
 router.use('/customers', customerRoutes);
+router.use('/companies', companyRoutes);
 router.use('/devices', deviceRoutes);
 router.use('/repairs', repairRoutes);
 router.use('/technicians', technicianRoutes);

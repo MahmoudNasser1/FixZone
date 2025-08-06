@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import apiService from '../../services/api';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -105,11 +105,23 @@ const NewCustomerPage = () => {
     setSuccess(false);
 
     try {
-      // محاكاة إرسال البيانات إلى الخادم
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // في التطبيق الحقيقي، سيتم إرسال البيانات إلى API
-      console.log('Customer data to be sent:', formData);
+      // تحضير بيانات العميل للإرسال
+      const customerData = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || null,
+        address: formData.address || null,
+        companyId: formData.companyId || null,
+        customFields: {
+          isVip: formData.isVip,
+          preferredContact: formData.preferredContact,
+          notes: formData.notes
+        }
+      };
+
+      // إرسال البيانات إلى Backend
+      const result = await apiService.createCustomer(customerData);
+      console.log('Customer created successfully:', result);
       
       setSuccess(true);
       
