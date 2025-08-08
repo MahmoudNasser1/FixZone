@@ -5,6 +5,22 @@ const db = require('../db');
 // Get all repair requests with statistics
 router.get('/', async (req, res) => {
   try {
+    const { customerId, status, priority } = req.query;
+    
+    // بناء الاستعلام مع الفلاتر
+    let whereConditions = ['rr.deletedAt IS NULL'];
+    let queryParams = [];
+    
+    if (customerId) {
+      whereConditions.push('rr.customerId = ?');
+      queryParams.push(customerId);
+    }
+    
+    if (status) {
+      whereConditions.push('rr.status = ?');
+      queryParams.push(status);
+    }
+    
     // جلب جميع طلبات الإصلاح مع بيانات العملاء والأجهزة
     const query = `
       SELECT 
@@ -19,11 +35,11 @@ router.get('/', async (req, res) => {
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id
       LEFT JOIN Device d ON rr.deviceId = d.id
-      WHERE rr.deletedAt IS NULL
+      WHERE ${whereConditions.join(' AND ')}
       ORDER BY rr.createdAt DESC
     `;
     
-    const [rows] = await db.query(query);
+    const [rows] = await db.query(query, queryParams);
     
     // تحويل البيانات لتتوافق مع Frontend
     const formattedData = rows.map(row => ({

@@ -77,4 +77,98 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Get customer statistics
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    
+    // جلب إحصائيات العميل
+    const statsQuery = `
+      SELECT 
+        COUNT(rr.id) as totalRepairs,
+        COUNT(CASE WHEN rr.status = 'completed' THEN 1 END) as completedRepairs,
+        COUNT(CASE WHEN rr.status = 'pending' THEN 1 END) as pendingRepairs,
+        COUNT(CASE WHEN rr.status = 'in_progress' THEN 1 END) as inProgressRepairs,
+        COUNT(CASE WHEN rr.status = 'cancelled' THEN 1 END) as cancelledRepairs,
+        COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rr.totalCost END), 0) as totalPaid,
+        COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rr.totalCost END), 0) as avgRepairCost,
+        MAX(rr.createdAt) as lastRepairDate,
+        MIN(rr.createdAt) as firstRepairDate
+      FROM Customer c
+      LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
+      WHERE c.id = ? AND c.deletedAt IS NULL
+      GROUP BY c.id
+    `;
+    
+    const [statsRows] = await db.query(statsQuery, [customerId]);
+    
+    if (statsRows.length === 0) {
+      return res.status(404).json({ error: 'العميل غير موجود' });
+    }
+    
+    const stats = statsRows[0];
+    
+    // حساب معدل الرضا (افتراضي بناءً على الطلبات المكتملة)
+    const satisfactionRate = stats.totalRepairs > 0 
+      ? Math.round((stats.completedRepairs / stats.totalRepairs) * 100)
+      : 0;
+    
+    // تحديد حالة العميل
+    const customerStatus = {
+      isActive: stats.lastRepairDate && 
+        new Date(stats.lastRepairDate) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // آخر 90 يوم
+      isVip: stats.totalPaid > 5000 || stats.totalRepairs > 10, // VIP إذا دفع أكثر من 5000 أو لديه أكثر من 10 طلبات
+      riskLevel: stats.cancelledRepairs > 2 ? 'high' : stats.pendingRepairs > 3 ? 'medium' : 'low'
+    };
+    
+    // جلب آخر 3 طلبات للعميل
+    const recentRepairsQuery = `
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.createdAt,
+        rr.totalCost,
+        d.deviceType,
+        d.brand
+      FROM RepairRequest rr
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      WHERE rr.customerId = ? AND rr.deletedAt IS NULL
+      ORDER BY rr.createdAt DESC
+      LIMIT 3
+    `;
+    
+    const [recentRepairs] = await db.query(recentRepairsQuery, [customerId]);
+    
+    const response = {
+      customerId: parseInt(customerId),
+      totalRepairs: stats.totalRepairs || 0,
+      completedRepairs: stats.completedRepairs || 0,
+      pendingRepairs: stats.pendingRepairs || 0,
+      inProgressRepairs: stats.inProgressRepairs || 0,
+      cancelledRepairs: stats.cancelledRepairs || 0,
+      totalPaid: parseFloat(stats.totalPaid) || 0,
+      avgRepairCost: parseFloat(stats.avgRepairCost) || 0,
+      satisfactionRate,
+      lastRepairDate: stats.lastRepairDate,
+      firstRepairDate: stats.firstRepairDate,
+      customerStatus,
+      recentRepairs: recentRepairs.map(repair => ({
+        id: repair.id,
+        problem: repair.reportedProblem,
+        status: repair.status,
+        createdAt: repair.createdAt,
+        cost: parseFloat(repair.totalCost) || 0,
+        device: `${repair.brand || ''} ${repair.deviceType || ''}`.trim() || 'غير محدد'
+      }))
+    };
+    
+    res.json(response);
+    
+  } catch (error) {
+    console.error('Error fetching customer stats:', error);
+    res.status(500).json({ error: 'حدث خطأ في جلب إحصائيات العميل' });
+  }
+});
+
 module.exports = router;

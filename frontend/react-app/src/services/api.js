@@ -65,6 +65,11 @@ class ApiService {
     });
   }
 
+  // جلب إحصائيات العميل
+  async getCustomerStats(id) {
+    return this.request(`/customers/${id}/stats`);
+  }
+
   // ==================
   // Company APIs
   // ==================

@@ -1,0 +1,328 @@
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { 
+  CheckCircle, AlertCircle, Info, X, Bell, 
+  AlertTriangle, Clock, Zap, Settings
+} from 'lucide-react';
+import SimpleButton from '../ui/SimpleButton';
+
+// Context للإشعارات
+const NotificationContext = createContext();
+
+// Hook لاستخدام الإشعارات
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+};
+
+// مكون الإشعار الواحد
+const NotificationItem = ({ notification, onRemove, onAction }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  useEffect(() => {
+    // Animation in
+    setTimeout(() => setIsVisible(true), 100);
+    
+    // Auto remove for non-persistent notifications
+    if (!notification.persistent && notification.duration !== 0) {
+      const timer = setTimeout(() => {
+        handleRemove();
+      }, notification.duration || 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleRemove = () => {
+    setIsRemoving(true);
+    setTimeout(() => {
+      onRemove(notification.id);
+    }, 300);
+  };
+
+  const getIcon = () => {
+    switch (notification.type) {
+      case 'success': return CheckCircle;
+      case 'error': return AlertCircle;
+      case 'warning': return AlertTriangle;
+      case 'info': return Info;
+      case 'loading': return Clock;
+      default: return Bell;
+    }
+  };
+
+  const getColorClasses = () => {
+    switch (notification.type) {
+      case 'success': 
+        return 'bg-green-50 border-green-200 text-green-800';
+      case 'error': 
+        return 'bg-red-50 border-red-200 text-red-800';
+      case 'warning': 
+        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+      case 'info': 
+        return 'bg-blue-50 border-blue-200 text-blue-800';
+      case 'loading': 
+        return 'bg-gray-50 border-gray-200 text-gray-800';
+      default: 
+        return 'bg-white border-gray-200 text-gray-800';
+    }
+  };
+
+  const getIconColorClasses = () => {
+    switch (notification.type) {
+      case 'success': return 'text-green-600';
+      case 'error': return 'text-red-600';
+      case 'warning': return 'text-yellow-600';
+      case 'info': return 'text-blue-600';
+      case 'loading': return 'text-gray-600 animate-spin';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const Icon = getIcon();
+
+  return (
+    <div 
+      className={`
+        transform transition-all duration-300 ease-in-out
+        ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isRemoving ? 'translate-x-full opacity-0' : ''}
+        max-w-sm w-full shadow-lg rounded-lg pointer-events-auto border
+        ${getColorClasses()}
+      `}
+    >
+      <div className="p-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <Icon className={`w-5 h-5 ${getIconColorClasses()}`} />
+          </div>
+          
+          <div className="mr-3 flex-1">
+            {notification.title && (
+              <p className="text-sm font-medium">
+                {notification.title}
+              </p>
+            )}
+            
+            {notification.message && (
+              <p className={`text-sm ${notification.title ? 'mt-1' : ''}`}>
+                {notification.message}
+              </p>
+            )}
+            
+            {notification.actions && notification.actions.length > 0 && (
+              <div className="mt-3 flex space-x-2 space-x-reverse">
+                {notification.actions.map((action, index) => (
+                  <SimpleButton
+                    key={index}
+                    size="sm"
+                    variant={action.variant || 'outline'}
+                    onClick={() => {
+                      if (action.onClick) action.onClick();
+                      if (onAction) onAction(notification.id, action);
+                      if (action.autoClose !== false) handleRemove();
+                    }}
+                  >
+                    {action.label}
+                  </SimpleButton>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {!notification.persistent && (
+            <div className="mr-4 flex-shrink-0 flex">
+              <button
+                className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition ease-in-out duration-150"
+                onClick={handleRemove}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Progress bar for timed notifications */}
+      {!notification.persistent && notification.duration && notification.showProgress && (
+        <div className="h-1 bg-gray-200 rounded-b-lg overflow-hidden">
+          <div 
+            className="h-full bg-current opacity-50 transition-all ease-linear"
+            style={{
+              animation: `shrink ${notification.duration}ms linear forwards`
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// مكون حاوي الإشعارات
+const NotificationContainer = ({ notifications, onRemove, onAction, position = 'top-left' }) => {
+  const getPositionClasses = () => {
+    switch (position) {
+      case 'top-right':
+        return 'top-0 right-0 items-end';
+      case 'top-left':
+        return 'top-0 left-0 items-start';
+      case 'bottom-right':
+        return 'bottom-0 right-0 items-end';
+      case 'bottom-left':
+        return 'bottom-0 left-0 items-start';
+      case 'top-center':
+        return 'top-0 left-1/2 transform -translate-x-1/2 items-center';
+      case 'bottom-center':
+        return 'bottom-0 left-1/2 transform -translate-x-1/2 items-center';
+      default:
+        return 'top-0 right-0 items-end';
+    }
+  };
+
+  if (notifications.length === 0) return null;
+
+  return (
+    <>
+      <style jsx>{`
+        @keyframes shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
+      
+      <div 
+        className={`
+          fixed z-50 flex flex-col space-y-4 pointer-events-none p-6
+          ${getPositionClasses()}
+        `}
+        style={{ maxHeight: '80vh', overflowY: 'auto' }}
+      >
+        {notifications.map((notification) => (
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onRemove={onRemove}
+            onAction={onAction}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
+
+// مكون مزود الإشعارات
+export const NotificationProvider = ({ children, maxNotifications = 5, position = 'top-right' }) => {
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (notification) => {
+    const id = Date.now() + Math.random();
+    const newNotification = {
+      id,
+      type: 'info',
+      duration: 5000,
+      persistent: false,
+      showProgress: false,
+      ...notification
+    };
+
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      // Keep only max notifications
+      return updated.slice(0, maxNotifications);
+    });
+
+    return id;
+  };
+
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
+  const updateNotification = (id, updates) => {
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, ...updates } : n)
+    );
+  };
+
+  // Helper functions for common notification types
+  const success = (message, options = {}) => {
+    return addNotification({
+      type: 'success',
+      message,
+      ...options
+    });
+  };
+
+  const error = (message, options = {}) => {
+    return addNotification({
+      type: 'error',
+      message,
+      persistent: true, // Errors should be persistent by default
+      ...options
+    });
+  };
+
+  const warning = (message, options = {}) => {
+    return addNotification({
+      type: 'warning',
+      message,
+      ...options
+    });
+  };
+
+  const info = (message, options = {}) => {
+    return addNotification({
+      type: 'info',
+      message,
+      ...options
+    });
+  };
+
+  const loading = (message, options = {}) => {
+    return addNotification({
+      type: 'loading',
+      message,
+      persistent: true,
+      ...options
+    });
+  };
+
+  const handleAction = (notificationId, action) => {
+    // يمكن إضافة منطق إضافي هنا
+    console.log('Notification action:', { notificationId, action });
+  };
+
+  const contextValue = {
+    notifications,
+    addNotification,
+    removeNotification,
+    clearAllNotifications,
+    updateNotification,
+    success,
+    error,
+    warning,
+    info,
+    loading
+  };
+
+  return (
+    <NotificationContext.Provider value={contextValue}>
+      {children}
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+        onAction={handleAction}
+        position={position}
+      />
+    </NotificationContext.Provider>
+  );
+};
+
+export default NotificationProvider;

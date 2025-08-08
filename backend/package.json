@@ -2,9 +2,10 @@
   "name": "fixzone-backend",
   "version": "1.0.0",
   "description": "Fix Zone ERP Backend API",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

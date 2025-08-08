@@ -5,6 +5,8 @@ import useAuthStore from './stores/authStore';
 // Core App Utilities
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from './components/ui/Toaster';
+import { NotificationProvider } from './components/notifications/NotificationSystem';
+import SystemNotifications from './components/notifications/SystemNotifications';
 import './App.css';
 
 // Layout and Route Protection
@@ -26,9 +28,11 @@ import { CompaniesPage, NewCompanyPage } from './pages/companies';
 // Repair Pages
 import { RepairsPage } from './pages/repairs';
 import NewRepairPage from './pages/repairs/NewRepairPage';
+import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
+import NotificationDemoPage from './pages/NotificationDemoPage';
 
 // Placeholder components for routing
 const Repairs = () => <h1 className="text-2xl font-bold">Repair Tickets</h1>;
@@ -50,7 +54,9 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Routes>
+      <NotificationProvider position="top-right" maxNotifications={5}>
+        <SystemNotifications />
+        <Routes>
         <Route
           path="/login"
           element={
@@ -67,7 +73,8 @@ function App() {
                 <Route path="/*" element={<MainLayout />}>
                   <Route index element={<DashboardPage />} />
                   <Route path="repairs" element={<RepairsPage />} />
-                <Route path="repairs/new" element={<NewRepairPage />} />
+                  <Route path="repairs/new" element={<NewRepairPage />} />
+                  <Route path="repairs/:id" element={<RepairDetailsPage />} />
                   
                   {/* Customer Routes */}
                   <Route path="customers" element={<CustomersPage />} />
@@ -83,8 +90,9 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="payments" element={<PaymentsPage />} />
                   
-                  {/* Demo Route */}
+                  {/* Demo Routes */}
                   <Route path="demo" element={<LayoutDemo />} />
+                  <Route path="notifications-demo" element={<NotificationDemoPage />} />
                   
                   <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unknown protected routes */}
                 </Route>
@@ -94,6 +102,7 @@ function App() {
         />
       </Routes>
       <Toaster />
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

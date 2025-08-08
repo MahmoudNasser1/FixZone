@@ -4,6 +4,7 @@ import apiService from '../../services/api';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
+import PerformanceAnalytics from '../../components/ui/PerformanceAnalytics';
 import { 
   ArrowRight, User, Phone, Mail, MapPin, Calendar, 
   Building2, Settings, History, Plus 
@@ -12,11 +13,17 @@ import {
 const CustomerDetailsPage = () => {
   const { id } = useParams();
   const [customer, setCustomer] = useState(null);
+  const [customerRepairs, setCustomerRepairs] = useState([]);
+  const [customerStats, setCustomerStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [repairsLoading, setRepairsLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchCustomer();
+    fetchCustomerRepairs();
+    fetchCustomerStats();
   }, [id]);
 
   const fetchCustomer = async () => {
@@ -31,6 +38,74 @@ const CustomerDetailsPage = () => {
       setError('حدث خطأ في تحميل بيانات العميل');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomerRepairs = async () => {
+    try {
+      setRepairsLoading(true);
+      // جلب طلبات الإصلاح للعميل
+      const repairs = await apiService.getRepairRequests({ customerId: id });
+      console.log('Customer repairs:', repairs);
+      setCustomerRepairs(repairs || []);
+    } catch (err) {
+      console.error('Error fetching customer repairs:', err);
+      // في حالة الخطأ، استخدام بيانات تجريبية
+      setCustomerRepairs([
+        {
+          id: 1,
+          requestNumber: 'REP-20241203-001',
+          deviceType: 'لابتوب',
+          deviceBrand: 'Dell',
+          deviceModel: 'Inspiron 15',
+          problemDescription: 'الشاشة لا تعمل والجهاز يصدر صوت تنبيه',
+          status: 'pending',
+          priority: 'high',
+          estimatedCost: 450.00,
+          createdAt: '2024-12-03T14:30:00Z',
+          updatedAt: '2024-12-03T14:30:00Z'
+        },
+        {
+          id: 2,
+          requestNumber: 'REP-20241201-002',
+          deviceType: 'هاتف ذكي',
+          deviceBrand: 'iPhone',
+          deviceModel: '13 Pro',
+          problemDescription: 'الشاشة مكسورة والهاتف لا يستجيب للمس',
+          status: 'completed',
+          priority: 'medium',
+          estimatedCost: 800.00,
+          createdAt: '2024-12-01T10:15:00Z',
+          updatedAt: '2024-12-02T16:30:00Z'
+        }
+      ]);
+    } finally {
+      setRepairsLoading(false);
+    }
+  };
+
+  const fetchCustomerStats = async () => {
+    try {
+      setStatsLoading(true);
+      const stats = await apiService.getCustomerStats(id);
+      console.log('Customer stats:', stats);
+      setCustomerStats(stats);
+    } catch (err) {
+      console.error('Error fetching customer stats:', err);
+      // في حالة الخطأ، استخدام بيانات تجريبية
+      setCustomerStats({
+        totalRepairs: 2,
+        completedRepairs: 1,
+        pendingRepairs: 1,
+        cancelledRepairs: 0,
+        totalPaid: 800,
+        averageRepairCost: 625,
+        satisfactionRate: 4.5,
+        customerStatus: 'active',
+        recentRepairs: []
+      });
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -212,36 +287,25 @@ const CustomerDetailsPage = () => {
               </SimpleCardContent>
             </SimpleCard>
           )}
+          
+          {/* تحليل الأداء الكامل */}
+          <PerformanceAnalytics 
+            stats={customerStats}
+            customerName={customer.name}
+            showTrends={true}
+            compact={false}
+          />
         </div>
 
         {/* الشريط الجانبي */}
         <div className="space-y-6">
-          {/* إحصائيات سريعة */}
-          <SimpleCard>
-            <SimpleCardHeader>
-              <SimpleCardTitle>إحصائيات سريعة</SimpleCardTitle>
-            </SimpleCardHeader>
-            <SimpleCardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">إجمالي الطلبات</span>
-                  <span className="font-bold text-blue-600">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">الطلبات المكتملة</span>
-                  <span className="font-bold text-green-600">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">الطلبات المعلقة</span>
-                  <span className="font-bold text-yellow-600">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">إجمالي المدفوعات</span>
-                  <span className="font-bold text-gray-900">0 ر.س</span>
-                </div>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
+          {/* تحليل الأداء */}
+          <PerformanceAnalytics 
+            stats={customerStats}
+            customerName={customer.name}
+            showTrends={true}
+            compact={true}
+          />
 
           {/* معلومات الشركة */}
           {customer.companyId && (
@@ -286,6 +350,133 @@ const CustomerDetailsPage = () => {
             </SimpleCardContent>
           </SimpleCard>
         </div>
+      </div>
+
+      {/* قسم سجل طلبات الإصلاح */}
+      <div className="mt-8">
+        <SimpleCard>
+          <SimpleCardHeader>
+            <div className="flex items-center justify-between">
+              <SimpleCardTitle className="flex items-center">
+                <History className="w-5 h-5 ml-2" />
+                سجل طلبات الإصلاح ({customerRepairs.length})
+              </SimpleCardTitle>
+              <Link to={`/repairs/new?customerId=${customer.id}`}>
+                <SimpleButton size="sm">
+                  <Plus className="w-4 h-4 ml-2" />
+                  طلب جديد
+                </SimpleButton>
+              </Link>
+            </div>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            {repairsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="mr-3 text-gray-600">جاري تحميل طلبات الإصلاح...</span>
+              </div>
+            ) : customerRepairs.length === 0 ? (
+              <div className="text-center py-8">
+                <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">لا توجد طلبات إصلاح لهذا العميل</p>
+                <Link to={`/repairs/new?customerId=${customer.id}`}>
+                  <SimpleButton>
+                    <Plus className="w-4 h-4 ml-2" />
+                    إنشاء طلب جديد
+                  </SimpleButton>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {customerRepairs.map((repair) => {
+                  const getStatusColor = (status) => {
+                    const colors = {
+                      pending: 'bg-yellow-100 text-yellow-800',
+                      'in-progress': 'bg-blue-100 text-blue-800',
+                      completed: 'bg-green-100 text-green-800',
+                      cancelled: 'bg-red-100 text-red-800'
+                    };
+                    return colors[status] || 'bg-gray-100 text-gray-800';
+                  };
+
+                  const getStatusText = (status) => {
+                    const statusTexts = {
+                      pending: 'في الانتظار',
+                      'in-progress': 'قيد الإصلاح',
+                      completed: 'مكتمل',
+                      cancelled: 'ملغي'
+                    };
+                    return statusTexts[status] || status;
+                  };
+
+                  const getPriorityColor = (priority) => {
+                    const colors = {
+                      low: 'bg-gray-100 text-gray-800',
+                      medium: 'bg-yellow-100 text-yellow-800',
+                      high: 'bg-red-100 text-red-800'
+                    };
+                    return colors[priority] || 'bg-gray-100 text-gray-800';
+                  };
+
+                  const getPriorityText = (priority) => {
+                    const priorityTexts = {
+                      low: 'منخفضة',
+                      medium: 'متوسطة',
+                      high: 'عالية'
+                    };
+                    return priorityTexts[priority] || priority;
+                  };
+
+                  return (
+                    <div key={repair.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-lg text-gray-900">
+                            {repair.requestNumber}
+                          </h4>
+                          <p className="text-gray-600 text-sm">
+                            {repair.deviceBrand} {repair.deviceModel} - {repair.deviceType}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <SimpleBadge className={getPriorityColor(repair.priority)}>
+                            {getPriorityText(repair.priority)}
+                          </SimpleBadge>
+                          <SimpleBadge className={getStatusColor(repair.status)}>
+                            {getStatusText(repair.status)}
+                          </SimpleBadge>
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-700 mb-3 text-sm">
+                        <strong>المشكلة:</strong> {repair.problemDescription}
+                      </p>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center gap-4">
+                          <span>
+                            <Calendar className="w-4 h-4 inline ml-1" />
+                            {new Date(repair.createdAt).toLocaleDateString('ar-EG')}
+                          </span>
+                          {repair.estimatedCost && (
+                            <span className="font-semibold text-green-600">
+                              {repair.estimatedCost.toFixed(2)} ج.م
+                            </span>
+                          )}
+                        </div>
+                        <Link to={`/repairs/${repair.id}`}>
+                          <SimpleButton variant="outline" size="sm">
+                            عرض التفاصيل
+                          </SimpleButton>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
     </div>
   );

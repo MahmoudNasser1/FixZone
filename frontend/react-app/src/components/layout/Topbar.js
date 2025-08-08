@@ -20,6 +20,7 @@ import { useTheme } from '../ThemeProvider';
 import { Badge } from '../ui/Badge';
 import { Input } from '../ui/Input';
 import { cn } from '../../lib/utils';
+import NotificationCenter from '../notifications/NotificationCenter';
 
 // اختصارات سريعة للمهام اليومية
 const quickActions = [
@@ -131,6 +132,9 @@ const Topbar = () => {
 
       {/* Right Section */}
       <div className="flex items-center space-x-2 space-x-reverse">
+        {/* Notification Center */}
+        <NotificationCenter />
+        
         {/* Quick Actions */}
         <DropdownMenu open={showQuickActions} onOpenChange={setShowQuickActions}>
           <DropdownMenuTrigger asChild>
