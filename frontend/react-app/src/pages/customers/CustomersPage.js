@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -11,12 +11,29 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import { 
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
-  Eye, Edit, Trash2, Users, UserCheck, UserX, History
+  Eye, Edit, Trash2, Users, UserCheck, UserX, History,
+  Upload, File
 } from 'lucide-react';
 
 const CustomersPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
+  // مساعد تنبيهات بسيط لتقليل الإزعاج وتجنب التكرار السريع
+  const notify = (() => {
+    let last = { msg: null, ts: 0 };
+    return (type, message, { dedupeMs = 1500, options = {} } = {}) => {
+      const now = Date.now();
+      if (message === last.msg && now - last.ts < dedupeMs) return;
+      // استخدم المساعدات إن وجدت، وإلا fallback إلى addNotification({})
+      const fn = notifications?.[type];
+      if (typeof fn === 'function') {
+        fn(message, options);
+      } else if (typeof notifications?.addNotification === 'function') {
+        notifications.addNotification({ type, message, ...options });
+      }
+      last = { msg: message, ts: now };
+    };
+  })();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,16 +60,30 @@ const CustomersPage = () => {
     }
   };
 
+  // قالب CSV للتنزيل
+  const handleDownloadCSVTemplate = () => {
+    const headers = ['name','phone','email','company','status','address'];
+    const csv = headers.join(',') + '\n';
+    downloadFile(csv, 'customers_template.csv', 'text/csv;charset=utf-8;');
+    // لا حاجة لتنبيه هنا لتقليل الضوضاء
+  };
+
+  // قائمة إجراءات الشريط
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef(null);
+  const toggleActions = () => setActionsOpen(v => !v);
+  const closeActions = () => setActionsOpen(false);
+
   // حذف عميل
   const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا العميل؟')) {
       try {
         await apiService.delete(`/customers/${customerId}`);
         setCustomers(customers.filter(customer => customer.id !== customerId));
-        notifications.addNotification('تم حذف العميل بنجاح', 'success');
+        notify('success', 'تم حذف العميل بنجاح');
       } catch (error) {
         console.error('Error deleting customer:', error);
-        notifications.addNotification('خطأ في حذف العميل', 'error');
+        notify('error', 'خطأ في حذف العميل');
       }
     }
   };
@@ -74,6 +105,144 @@ const CustomersPage = () => {
 
   const handleRefresh = () => {
     fetchCustomers();
+  };
+  // إغلاق قائمة الإجراءات عند النقر خارجها
+  useEffect(() => {
+    const handler = (e) => {
+      if (actionsRef?.current && !actionsRef.current.contains(e.target)) {
+        closeActions();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // تصدير العملاء
+  const downloadFile = (content, filename, type = 'text/plain') => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToCSV = (rows) => {
+    const headers = ['id','name','phone','email','company','status','address','createdAt'];
+    const escape = (v) => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    };
+    const lines = [headers.join(',')].concat(
+      rows.map(r => headers.map(h => escape(r[h])).join(','))
+    );
+    return lines.join('\n');
+  };
+
+  const handleExportCSV = () => {
+    try {
+      const csv = exportToCSV(filteredCustomers);
+      downloadFile(csv, `customers_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+      // تصدير ناجح بلا تنبيه لتقليل الإزعاج
+    } catch (e) {
+      console.error(e);
+      notify('error', 'فشل تصدير CSV');
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const data = JSON.stringify(filteredCustomers, null, 2);
+      downloadFile(data, `customers_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+      // تصدير ناجح بلا تنبيه لتقليل الإزعاج
+    } catch (e) {
+      console.error(e);
+      notify('error', 'فشل تصدير JSON');
+    }
+  };
+
+  // استيراد العملاء
+  const fileInputRef = useRef(null);
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const parseCSV = async (file) => {
+    const text = await file.text();
+    const [headerLine, ...lines] = text.split(/\r?\n/).filter(Boolean);
+    const headers = headerLine.split(',').map(h => h.trim().replace(/^"|"$/g,''));
+    return lines.map(line => {
+      // naive CSV split (supports quoted values)
+      const values = [];
+      let cur = '', inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (ch === ',' && !inQuotes) {
+          values.push(cur); cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      values.push(cur);
+      const obj = {};
+      headers.forEach((h, idx) => obj[h] = values[idx]?.replace(/^\s*|\s*$/g,'') || null);
+      return obj;
+    });
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      let items = [];
+      if (file.name.endsWith('.json')) {
+        items = JSON.parse(await file.text());
+      } else if (file.name.endsWith('.csv')) {
+        items = await parseCSV(file);
+      } else {
+        notify('warning', 'نوع الملف غير مدعوم. استخدم CSV أو JSON');
+        return;
+      }
+
+      // إنشاء العملاء عبر API إن أمكن، وإلا تحديث الحالة محلياً
+      let created = 0;
+      let failed = 0;
+      for (const it of items) {
+        try {
+          // تجهيز الحقول الأساسية فقط
+          const payload = {
+            name: it.name || it.fullName || 'بدون اسم',
+            phone: it.phone || it.mobile || '',
+            email: it.email || '',
+            company: it.company || '',
+            status: it.status === 'inactive' ? 'inactive' : 'active',
+            address: it.address || '',
+          };
+          if (apiService?.post) {
+            await apiService.post('/customers', payload);
+          }
+          created++;
+        } catch (err) {
+          console.warn('Import item failed', err);
+          failed++;
+        }
+      }
+      notify('success', `تم استيراد ${created} عميل`);
+      if (failed > 0) {
+        notify('warning', `تعذر استيراد ${failed} سجل`);
+      }
+      await fetchCustomers();
+    } catch (err) {
+      console.error(err);
+      notify('error', 'فشل استيراد العملاء');
+    } finally {
+      e.target.value = '';
+    }
   };
 
   // تعريف الأعمدة للجدول
@@ -258,9 +427,11 @@ const CustomersPage = () => {
       type: 'approve',
       label: 'تفعيل',
       handler: (selectedIds) => {
-        notifications.success(`تم تفعيل ${selectedIds.length} عميل`, {
-          title: 'تم التفعيل'
-        });
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي عميل');
+          return;
+        }
+        notify('success', `تم تفعيل ${selectedIds.length} عميل`);
         console.log('تفعيل العملاء:', selectedIds);
       }
     },
@@ -269,9 +440,11 @@ const CustomersPage = () => {
       type: 'reject',
       label: 'إلغاء التفعيل',
       handler: (selectedIds) => {
-        notifications.warning(`تم إلغاء تفعيل ${selectedIds.length} عميل`, {
-          title: 'تم إلغاء التفعيل'
-        });
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي عميل');
+          return;
+        }
+        notify('warning', `تم إلغاء تفعيل ${selectedIds.length} عميل`);
         console.log('إلغاء تفعيل العملاء:', selectedIds);
       }
     },
@@ -280,10 +453,19 @@ const CustomersPage = () => {
       type: 'export',
       label: 'تصدير',
       handler: (selectedIds) => {
-        notifications.info(`جاري تصدير بيانات ${selectedIds.length} عميل...`, {
-          title: 'جاري التصدير'
-        });
-        console.log('تصدير العملاء:', selectedIds);
+        try {
+          if (!selectedIds || selectedIds.length === 0) {
+            notify('warning', 'لم تقم بتحديد أي عميل');
+            return;
+          }
+          const rows = customers.filter(c => selectedIds.includes(c.id));
+          const csv = exportToCSV(rows);
+          downloadFile(csv, `customers_selected_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+          // تصدير المحددين: بدون تنبيه لتقليل الإزعاج
+        } catch (e) {
+          console.error(e);
+          notify('error', 'فشل تصدير العملاء المحددين');
+        }
       }
     },
     {
@@ -294,9 +476,11 @@ const CustomersPage = () => {
       confirmMessage: 'هل أنت متأكد من حذف العملاء المحددين؟ هذا الإجراء لا يمكن التراجع عنه.',
       confirmLabel: 'حذف',
       handler: (selectedIds) => {
-        notifications.success(`تم حذف ${selectedIds.length} عميل`, {
-          title: 'تم الحذف'
-        });
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي عميل');
+          return;
+        }
+        notify('success', `تم حذف ${selectedIds.length} عميل`);
         // هنا يمكن إضافة منطق الحذف الفعلي
         console.log('حذف العملاء:', selectedIds);
       }
@@ -654,16 +838,38 @@ const CustomersPage = () => {
                 <option value="inactive">غير نشط</option>
               </select>
             </div>
-
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <SimpleButton variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="w-4 h-4 ml-2" />
-                تحديث
+            <div className="relative" ref={actionsRef}>
+              <input
+                type="file"
+                accept=".csv,.json"
+                ref={fileInputRef}
+                onChange={handleImportFile}
+                className="hidden"
+              />
+              <SimpleButton variant="outline" size="sm" onClick={toggleActions}>
+                <MoreHorizontal className="w-4 h-4 ml-2" />
+                الإجراءات
               </SimpleButton>
-              <SimpleButton variant="outline" size="sm">
-                <Download className="w-4 h-4 ml-2" />
-                تصدير
-              </SimpleButton>
+              {actionsOpen && (
+                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleRefresh(); closeActions(); }}>
+                    <RefreshCw className="w-4 h-4 ml-2" /> تحديث
+                  </button>
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleImportClick(); closeActions(); }}>
+                    <Upload className="w-4 h-4 ml-2" /> استيراد CSV/JSON
+                  </button>
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleExportCSV(); closeActions(); }}>
+                    <Download className="w-4 h-4 ml-2" /> تصدير CSV (المعروض)
+                  </button>
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleExportJSON(); closeActions(); }}>
+                    <File className="w-4 h-4 ml-2" /> تصدير JSON (المعروض)
+                  </button>
+                  <div className="border-t border-gray-200 dark:border-gray-700" />
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleDownloadCSVTemplate(); closeActions(); }}>
+                    <Download className="w-4 h-4 ml-2" /> تنزيل قالب CSV
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </SimpleCardContent>

@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import ViewModeToggle from './ViewModeToggle';
 import ColumnVisibilityToggle from './ColumnVisibilityToggle';
 import BulkActions from './BulkActions';
 import { DataTable } from './DataTable';
+import { SlidersHorizontal } from 'lucide-react';
 
 const DataView = ({
   data = [],
@@ -16,15 +18,29 @@ const DataView = ({
   renderCard,
   renderListItem,
   renderGridItem,
+  renderClassicItem,
   onItemClick,
   onEdit,
   onView,
   className = '',
   emptyState,
-  loading = false
+  loading = false,
+  controlsInDropdown = false,
 }) => {
 
   const [viewMode, setViewMode] = useState(defaultViewMode);
+  const [showControls, setShowControls] = useState(false);
+  const controlsRef = useRef(null);
+  const controlsMenuRef = useRef(null);
+  const [showColumns, setShowColumns] = useState(true);
+  const location = useLocation();
+
+  // ترتيب أنماط العرض ليكون ثابتًا وسهل الاستخدام
+  const orderedViewModes = useMemo(() => {
+    const preferred = ['classic', 'table', 'cards', 'list', 'grid'];
+    const present = new Set(viewModes);
+    return preferred.filter(m => present.has(m));
+  }, [viewModes]);
 
   // الأعمدة المرئية لكل وضع عرض على حدة (cards, table, list, grid)
   const [visibleColumnsByMode, setVisibleColumnsByMode] = useState(() => {
@@ -76,6 +92,38 @@ const DataView = ({
     // إلغاء التحديد عند تغيير الوضع
     setSelectedItems([]);
   };
+
+  // إغلاق القائمة عند النقر خارجها أو الضغط على Escape
+  useEffect(() => {
+    if (!controlsInDropdown) return;
+    const onDocClick = (e) => {
+      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
+        setShowControls(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setShowControls(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [controlsInDropdown]);
+
+  // إغلاق القائمة عند تغيير الروت
+  useEffect(() => {
+    setShowControls(false);
+  }, [location.pathname, location.search]);
+
+  // التركيز على القائمة عند الفتح لدعم لوحة المفاتيح
+  useEffect(() => {
+    if (showControls) {
+      const id = requestAnimationFrame(() => controlsMenuRef.current?.focus?.());
+      return () => cancelAnimationFrame(id);
+    }
+  }, [showControls]);
 
   // إدارة التحديد المجمع
   const handleSelectAll = () => {
@@ -501,6 +549,24 @@ const DataView = ({
     );
   };
 
+  // عرض كلاسيكي مخصص إن توفّر
+  const renderClassicView = () => {
+    if (typeof renderClassicItem === 'function') {
+      const visibleKeys = (visibleColumnsByMode[viewMode] || []);
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          {data.map((item, index) => (
+            <div key={item.id || index} onClick={() => onItemClick && onItemClick(item)}>
+              {renderClassicItem(item, visibleKeys)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    // إن لم يوجد رندر مخصص، نعود للبطاقات الافتراضية
+    return renderCardsView();
+  };
+
   // عرض المحتوى حسب الوضع
   const renderContent = () => {
     if (loading) {
@@ -520,6 +586,8 @@ const DataView = ({
     }
 
     switch (viewMode) {
+      case 'classic':
+        return renderClassicView();
       case 'table':
         return renderTableView();
       case 'list':
@@ -533,28 +601,11 @@ const DataView = ({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-2 ${className}`}>
       {/* شريط التحكم */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <ViewModeToggle
-            currentMode={viewMode}
-            onModeChange={handleViewModeChange}
-            availableModes={viewModes}
-          />
-          
-          {enableColumnToggle && (
-            <ColumnVisibilityToggle
-              columns={columns}
-              visibleColumns={visibleColumnsByMode[viewMode] || []}
-              onVisibilityChange={handleVisibilityChange}
-              storageKey={`${storageKey}_columns_${viewMode}`}
-            />
-          )}
-        </div>
-
+      <div className="flex items-center justify-between gap-3 flex-wrap relative">
         {/* معلومات البيانات */}
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           {data.length} عنصر
           {selectedItems.length > 0 && (
             <span className="mr-2 text-blue-600 dark:text-blue-400">
@@ -562,6 +613,97 @@ const DataView = ({
             </span>
           )}
         </div>
+
+        {/* عناصر التحكم */}
+        {!controlsInDropdown ? (
+          <div className="flex items-center gap-2">
+            <ViewModeToggle
+              currentMode={viewMode}
+              onModeChange={handleViewModeChange}
+              availableModes={orderedViewModes}
+              dense
+            />
+            {enableColumnToggle && (
+              <ColumnVisibilityToggle
+                columns={columns}
+                visibleColumns={visibleColumnsByMode[viewMode] || []}
+                onVisibilityChange={handleVisibilityChange}
+                storageKey={`${storageKey}_columns_${viewMode}`}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="relative" ref={controlsRef}>
+            <button
+              type="button"
+              onClick={() => setShowControls((v) => !v)}
+              className="flex items-center gap-2 px-2.5 py-1.5 text-sm border rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-haspopup="menu"
+              aria-expanded={showControls}
+              aria-controls="dataview-controls-menu"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>خيارات العرض</span>
+              {selectedItems.length > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-blue-600 text-white text-xs">
+                  {selectedItems.length}
+                </span>
+              )}
+            </button>
+            {showControls && (
+              <div
+                id="dataview-controls-menu"
+                role="menu"
+                className="absolute left-0 mt-2 w-72 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-3 origin-top-left animate-in fade-in zoom-in-95 focus:outline-none"
+                ref={controlsMenuRef}
+                tabIndex={-1}
+              >
+                {/* أوضاع العرض */}
+                <div className="mb-2 text-xs text-gray-500">وضع العرض</div>
+                <ViewModeToggle
+                  currentMode={viewMode}
+                  onModeChange={(m) => { setShowControls(false); handleViewModeChange(m); }}
+                  availableModes={orderedViewModes}
+                  dense
+                  segmented
+                  columns={0}
+                  className="grid grid-cols-2 sm:grid-cols-3"
+                />
+
+                {/* الأعمدة المرئية */}
+                {enableColumnToggle && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs text-gray-500">الأعمدة المرئية</div>
+                      <button
+                        type="button"
+                        className="text-xs px-2 py-0.5 rounded-md border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                        onClick={() => setShowColumns(v => !v)}
+                        aria-expanded={showColumns}
+                        aria-controls="dataview-columns-section"
+                        title="إظهار/إخفاء الأعمدة"
+                      >
+                        {(visibleColumnsByMode[viewMode]?.length || 0)}/{columns.length} الأعمدة
+                      </button>
+                    </div>
+                    <div id="dataview-columns-section" className={`${showColumns ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 overflow-visible relative z-50`}>
+                      {showColumns && (
+                        <div className="relative z-50">
+                          <ColumnVisibilityToggle
+                            columns={columns}
+                            visibleColumns={visibleColumnsByMode[viewMode] || []}
+                            onVisibilityChange={handleVisibilityChange}
+                            storageKey={`${storageKey}_columns_${viewMode}`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* المحتوى */}

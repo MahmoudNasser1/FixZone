@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
@@ -7,20 +7,104 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import RepairTimeline from '../../components/ui/RepairTimeline';
 import QuickStatsCard from '../../components/ui/QuickStatsCard';
 import { Input } from '../../components/ui/Input';
+import DataView from '../../components/ui/DataView';
+import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { 
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
-  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign
+  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter, Check, ChevronDown
 } from 'lucide-react';
 
 const RepairsPage = () => {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const statusMenuRef = useRef(null);
+  const statusMenuPanelRef = useRef(null);
+  const [highlightedStatusIndex, setHighlightedStatusIndex] = useState(0);
+  const location = useLocation();
+  const statusOptions = useMemo(() => ([
+    { key: 'all', label: 'الكل' },
+    { key: 'pending', label: 'في الانتظار' },
+    { key: 'in_progress', label: 'قيد التنفيذ' },
+    { key: 'completed', label: 'مكتمل' },
+    { key: 'cancelled', label: 'ملغي' },
+  ]), []);
+
+  // تهيئة فلتر الحالة من URL أو localStorage
+  useEffect(() => {
+    const urlStatus = searchParams.get('status');
+    const lsStatus = localStorage.getItem('repairs_status_filter');
+    const initial = urlStatus || lsStatus || 'all';
+    const valid = statusOptions.some(o => o.key === initial) ? initial : 'all';
+    setSelectedFilter(valid);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // مزامنة فلتر الحالة مع URL و localStorage
+  useEffect(() => {
+    const current = searchParams.get('status');
+    if (selectedFilter && selectedFilter !== current) {
+      const next = new URLSearchParams(searchParams);
+      if (selectedFilter === 'all') next.delete('status'); else next.set('status', selectedFilter);
+      setSearchParams(next, { replace: true });
+    }
+    localStorage.setItem('repairs_status_filter', selectedFilter);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFilter]);
+
+  // إغلاق قائمة الحالة عند النقر خارجها أو الضغط على Escape
+  useEffect(() => {
+    if (!showStatusFilter) return;
+    // Initialize highlighted index to current selection
+    const currentIdx = statusOptions.findIndex(o => o.key === selectedFilter);
+    setHighlightedStatusIndex(currentIdx >= 0 ? currentIdx : 0);
+    // Focus the panel for keyboard navigation
+    const id = requestAnimationFrame(() => {
+      statusMenuPanelRef.current?.focus?.();
+    });
+    const onDocClick = (e) => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target)) {
+        setShowStatusFilter(false);
+      }
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setShowStatusFilter(false); };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showStatusFilter, selectedFilter, statusOptions]);
+
+  // إغلاق قائمة الحالة عند تغيير الروت
+  useEffect(() => {
+    setShowStatusFilter(false);
+  }, [location.pathname, location.search]);
   const [error, setError] = useState(null);
   const [customerFilter, setCustomerFilter] = useState(null);
   const [customerName, setCustomerName] = useState('');
+  const notifications = useNotifications();
+
+  // مساعد للإشعارات مع تقليل الإزعاج
+  const notify = (() => {
+    let last = { msg: null, ts: 0 };
+    return (type, message, { dedupeMs = 1500, options = {} } = {}) => {
+      const now = Date.now();
+      if (message === last.msg && now - last.ts < dedupeMs) return;
+      const fn = notifications?.[type];
+      if (typeof fn === 'function') {
+        fn(message, options);
+      } else if (typeof notifications?.addNotification === 'function') {
+        notifications.addNotification({ type, message, ...options });
+      }
+      last = { msg: message, ts: now };
+    };
+  })();
 
   // معالجة URL parameters
   useEffect(() => {
@@ -134,6 +218,291 @@ const RepairsPage = () => {
     fetchRepairs();
   };
 
+  // التنقل لعرض/تعديل طلب الإصلاح
+  const handleViewRepair = (id) => {
+    if (!id) return;
+    navigate(`/repairs/${id}`);
+  };
+  const handleEditRepair = (id) => {
+    if (!id) return;
+    navigate(`/repairs/${id}/edit`);
+  };
+
+  // تصدير كل النتائج المفلترة من الشريط العلوي
+  const handleExportFiltered = () => {
+    try {
+      const csv = exportToCSV(filteredRepairs);
+      if (!csv) {
+        notify('warning', 'لا توجد بيانات لتصديرها');
+        return;
+      }
+      downloadFile(csv, `repairs_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+      // لا إشعار نجاح لتقليل الضوضاء
+    } catch (e) {
+      console.error(e);
+      notify('error', 'فشل تصدير البيانات');
+    }
+  };
+
+  // استيراد CSV/JSON مع تلخيص
+  const fileInputRef = useRef(null);
+  const handleImportClick = () => fileInputRef.current?.click();
+  const handleImportFiles = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const run = async () => {
+      const text = await file.text();
+      let rows = [];
+      try {
+        if (file.name.endsWith('.json')) {
+          rows = JSON.parse(text);
+        } else {
+          // CSV بسيط
+          const lines = text.split(/\r?\n/).filter(Boolean);
+          if (lines.length < 2) return [];
+          const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+          for (let i = 1; i < lines.length; i++) {
+            const parts = [];
+            let cur = '';
+            let inQ = false;
+            const line = lines[i];
+            for (let ch of line) {
+              if (ch === '"') { inQ = !inQ; cur += ch; }
+              else if (ch === ',' && !inQ) { parts.push(cur); cur = ''; }
+              else { cur += ch; }
+            }
+            parts.push(cur);
+            const clean = parts.map(p => p.replace(/^"|"$/g, '').replace(/""/g, '"'));
+            const obj = {};
+            headers.forEach((h, idx) => obj[h] = clean[idx]);
+            rows.push(obj);
+          }
+        }
+      } catch (err) {
+        console.error('parse error', err);
+        throw new Error('تعذر قراءة الملف');
+      }
+
+      let success = 0, failed = 0;
+      for (const r of rows) {
+        try {
+          // تحويلات بسيطة إن وجدت
+          const payload = { ...r };
+          if (!payload.requestNumber) continue;
+          await apiService.createRepairRequest(payload);
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      await fetchRepairs();
+      return { success, failed };
+    };
+
+    const withN = notifications?.withNotification;
+    if (typeof withN === 'function') {
+      try {
+        const { success, failed } = await withN(run, {
+          loadingMessage: 'جاري الاستيراد...',
+          successMessage: 'تم الاستيراد',
+          errorMessage: 'فشل الاستيراد',
+          dedupeKey: 'repairs-import'
+        });
+        notifications?.info?.(`تم الاستيراد: ناجحة ${success} / فاشلة ${failed}`, { dedupeKey: 'repairs-import-summary' });
+      } catch {}
+    } else {
+      try {
+        const { success, failed } = await run();
+        notify('info', `تم الاستيراد: ناجحة ${success} / فاشلة ${failed}`);
+      } catch (e) {
+        notify('error', e?.message || 'فشل الاستيراد');
+      }
+    }
+  };
+
+  // أعمدة DataView لطلبات الإصلاح
+  const columns = [
+    { key: 'requestNumber', label: 'رقم الطلب', defaultVisible: true },
+    { key: 'status', label: 'الحالة', defaultVisible: true },
+    { key: 'priority', label: 'الأولوية', defaultVisible: true },
+    { key: 'customerName', label: 'العميل', defaultVisible: true },
+    { key: 'customerPhone', label: 'الهاتف', defaultVisible: false },
+    { key: 'deviceType', label: 'نوع الجهاز', defaultVisible: true },
+    { key: 'deviceBrand', label: 'الماركة', defaultVisible: false },
+    { key: 'deviceModel', label: 'الموديل', defaultVisible: false },
+    { key: 'estimatedCost', label: 'التكلفة التقديرية', defaultVisible: true },
+    { key: 'createdAt', label: 'تاريخ الإنشاء', defaultVisible: true },
+  ];
+
+  // Helpers للتصدير
+  const exportToCSV = (rows) => {
+    if (!rows || rows.length === 0) return '';
+    const headers = [
+      'id','requestNumber','status','priority','customerName','customerPhone','deviceType','deviceBrand','deviceModel','estimatedCost','createdAt','updatedAt'
+    ];
+    const escape = (v) => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    };
+    const lines = [headers.join(',')];
+    rows.forEach(r => {
+      lines.push(headers.map(h => escape(r[h])).join(','));
+    });
+    return lines.join('\n');
+  };
+
+  const downloadFile = (content, filename, mime) => {
+    const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  };
+
+  // BulkActions مخصصة لطلبات الإصلاح
+  const bulkActions = [
+    {
+      key: 'start',
+      type: 'approve',
+      label: 'بدء التنفيذ',
+      handler: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي طلب');
+          return;
+        }
+        const run = async () => {
+          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'in_progress')));
+          await fetchRepairs();
+        };
+        const withN = notifications?.withNotification;
+        if (typeof withN === 'function') {
+          await withN(run, {
+            loadingMessage: 'تحديث الحالات...',
+            successMessage: `تم وضع ${selectedIds.length} طلب كـ قيد التنفيذ`,
+            errorMessage: 'فشل تحديث الحالات',
+            dedupeKey: 'repairs-bulk-status'
+          });
+        } else {
+          try {
+            await run();
+            notify('success', `تم وضع ${selectedIds.length} طلب كـ قيد التنفيذ`);
+          } catch {
+            notify('error', 'فشل تحديث الحالات');
+          }
+        }
+      }
+    },
+    {
+      key: 'complete',
+      type: 'approve',
+      label: 'تحديد كمكتمل',
+      handler: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي طلب');
+          return;
+        }
+        const run = async () => {
+          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'completed')));
+          await fetchRepairs();
+        };
+        const withN = notifications?.withNotification;
+        if (typeof withN === 'function') {
+          await withN(run, {
+            loadingMessage: 'تحديث الحالات...',
+            successMessage: `تم إنهاء ${selectedIds.length} طلب` ,
+            errorMessage: 'فشل تحديث الحالات',
+            dedupeKey: 'repairs-bulk-status'
+          });
+        } else {
+          try { await run(); notify('success', `تم إنهاء ${selectedIds.length} طلب`); }
+          catch { notify('error', 'فشل تحديث الحالات'); }
+        }
+      }
+    },
+    {
+      key: 'cancel',
+      type: 'reject',
+      label: 'إلغاء الطلب',
+      handler: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي طلب');
+          return;
+        }
+        const run = async () => {
+          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'cancelled')));
+          await fetchRepairs();
+        };
+        const withN = notifications?.withNotification;
+        if (typeof withN === 'function') {
+          await withN(run, {
+            loadingMessage: 'تحديث الحالات...',
+            successMessage: `تم إلغاء ${selectedIds.length} طلب`,
+            errorMessage: 'فشل تحديث الحالات',
+            dedupeKey: 'repairs-bulk-status'
+          });
+        } else {
+          try { await run(); notify('warning', `تم إلغاء ${selectedIds.length} طلب`); }
+          catch { notify('error', 'فشل تحديث الحالات'); }
+        }
+      }
+    },
+    {
+      key: 'export',
+      type: 'export',
+      label: 'تصدير المحدد (CSV)',
+      handler: (selectedIds) => {
+        try {
+          if (!selectedIds || selectedIds.length === 0) {
+            notify('warning', 'لم تقم بتحديد أي طلب');
+            return;
+          }
+          const rows = repairs.filter(r => selectedIds.includes(r.id));
+          const csv = exportToCSV(rows);
+          downloadFile(csv, `repairs_selected_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+          // بدون إشعار نجاح لتقليل الضوضاء
+        } catch (e) {
+          console.error(e);
+          notify('error', 'فشل تصدير الطلبات المحددة');
+        }
+      }
+    },
+    {
+      key: 'delete',
+      type: 'delete',
+      label: 'حذف',
+      requiresConfirmation: true,
+      confirmMessage: 'هل أنت متأكد من حذف الطلبات المحددة؟ هذا الإجراء لا يمكن التراجع عنه.',
+      confirmLabel: 'حذف',
+      handler: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) {
+          notify('warning', 'لم تقم بتحديد أي طلب');
+          return;
+        }
+        const run = async () => {
+          await Promise.all(selectedIds.map(id => apiService.deleteRepairRequest(id)));
+          await fetchRepairs();
+        };
+        const withN = notifications?.withNotification;
+        if (typeof withN === 'function') {
+          await withN(run, {
+            loadingMessage: 'حذف الطلبات...',
+            successMessage: `تم حذف ${selectedIds.length} طلب`,
+            errorMessage: 'فشل حذف الطلبات المحددة',
+            dedupeKey: 'repairs-bulk-delete'
+          });
+        } else {
+          try { await run(); notify('success', `تم حذف ${selectedIds.length} طلب`); }
+          catch { notify('error', 'فشل حذف الطلبات المحددة'); }
+        }
+      }
+    }
+  ];
+
   // فلترة الطلبات
   const filteredRepairs = repairs.filter(repair => {
     const searchLower = searchTerm.toLowerCase();
@@ -200,6 +569,111 @@ const RepairsPage = () => {
     }
   };
 
+  // عرض كلاسيكي (الأول سابقاً) كبطاقة تفصيلية
+  const renderClassicItem = (r, visibleKeys = []) => {
+    if (!r) return null;
+    const isVisible = (key) => (visibleKeys?.length ? visibleKeys.includes(key) : true);
+    const statusColor = getStatusColor(r.status);
+    const statusText = getStatusText(r.status);
+    const priorityColor = getPriorityColor(r.priority);
+    const priorityText = getPriorityText(r.priority);
+    const created = r.createdAt ? new Date(r.createdAt).toLocaleString('ar-EG') : '-';
+    const updated = r.updatedAt ? new Date(r.updatedAt).toLocaleString('ar-EG') : '-';
+    const onEditClick = (e) => { e.stopPropagation(); handleEditRepair(r.id); };
+    const onViewClick = (e) => { e.stopPropagation(); handleViewRepair(r.id); };
+
+    return (
+      <div className="relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition duration-200">
+        {/* أزرار العرض/التعديل */}
+        <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+          <button onClick={onEditClick} className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:scale-105 shadow">
+            <Edit className="w-4 h-4" />
+          </button>
+          <button onClick={onViewClick} className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:scale-105 shadow">
+            <Eye className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* العنوان */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-semibold text-gray-900 dark:text-gray-100">{(isVisible('requestNumber') && (r.requestNumber || `#${r.id}`)) || `#${r.id}`}</div>
+          {isVisible('status') && (
+            <SimpleBadge color={statusColor}>{statusText}</SimpleBadge>
+          )}
+        </div>
+
+        {/* معلومات أساسية */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          {(isVisible('customerName') || isVisible('customerPhone')) && (
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-400" />
+              {isVisible('customerName') && (
+                <span className="text-gray-600 dark:text-gray-300">{r.customerName || '-'}</span>
+              )}
+              {isVisible('customerPhone') && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-500">{r.customerPhone || '-'}</span>
+                </>
+              )}
+            </div>
+          )}
+          {(isVisible('deviceType') || isVisible('deviceBrand') || isVisible('deviceModel')) && (
+            <div className="flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-gray-400" />
+              {isVisible('deviceType') && (
+                <span className="text-gray-600 dark:text-gray-300">{r.deviceType || '-'}</span>
+              )}
+              {isVisible('deviceBrand') && (
+                <>
+                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-600 dark:text-gray-300">{r.deviceBrand || '-'}</span>
+                </>
+              )}
+              {isVisible('deviceModel') && (
+                <>
+                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-600 dark:text-gray-300">{r.deviceModel || '-'}</span>
+                </>
+              )}
+            </div>
+          )}
+          {(isVisible('estimatedCost') || isVisible('priority')) && (
+            <div className="flex items-center gap-2">
+              {isVisible('estimatedCost') && (
+                <>
+                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">{r.estimatedCost ?? '-'}</span>
+                </>
+              )}
+              {isVisible('priority') && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <SimpleBadge color={priorityColor}>{priorityText}</SimpleBadge>
+                </>
+              )}
+            </div>
+          )}
+          {(isVisible('createdAt')) && (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Calendar className="w-4 h-4" />
+              <span>إنشاء: {created}</span>
+              <span className="text-gray-400">•</span>
+              <span>تحديث: {updated}</span>
+            </div>
+          )}
+        </div>
+
+        {/* وصف المشكلة */}
+        {r.problemDescription && (
+          <div className="mt-3 text-sm text-gray-700 dark:text-gray-200 line-clamp-3">
+            {r.problemDescription}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -226,8 +700,8 @@ const RepairsPage = () => {
 
       {/* رسالة الخطأ */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center justify-between">
+          <span>{error}</span>
           <SimpleButton 
             variant="ghost" 
             size="sm" 
@@ -250,8 +724,8 @@ const RepairsPage = () => {
         />
         <QuickStatsCard
           title="قيد التنفيذ"
-          value={repairs.filter(r => r.status === 'in-progress').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'in-progress').length * 0.9)}
+          value={repairs.filter(r => r.status === 'in_progress').length}
+          previousValue={Math.floor(repairs.filter(r => r.status === 'in_progress').length * 0.9)}
           icon={Play}
           color="yellow"
         />
@@ -304,127 +778,132 @@ const RepairsPage = () => {
         </SimpleCard>
       )}
 
-      {/* أدوات البحث والفلترة */}
-      <SimpleCard>
-        <SimpleCardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="البحث في الطلبات..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10 w-64"
-                />
-              </div>
-              
-              <select
-                value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">جميع الطلبات</option>
-                <option value="pending">في الانتظار</option>
-                <option value="in_progress">قيد التنفيذ</option>
-                <option value="completed">مكتملة</option>
-                <option value="cancelled">ملغية</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <SimpleButton variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="w-4 h-4 ml-2" />
-                تحديث
-              </SimpleButton>
-              <SimpleButton variant="outline" size="sm">
-                <Download className="w-4 h-4 ml-2" />
-                تصدير
-              </SimpleButton>
-              <Link to="/repairs/new">
-                <SimpleButton size="sm">
-                  <Plus className="w-4 h-4 ml-2" />
-                  طلب جديد
-                </SimpleButton>
-              </Link>
-            </div>
+      {/* شريط الأدوات */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="ابحث..."
+              className="pr-8 h-8 text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        </SimpleCardContent>
-      </SimpleCard>
+          <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="whitespace-nowrap">
+            <RefreshCw className="w-3.5 h-3.5 ml-2" /> تحديث
+          </SimpleButton>
+          {/* فلتر الحالة داخل قائمة */}
+          <div className="relative" ref={statusMenuRef}>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setShowStatusFilter(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={showStatusFilter}
+              aria-controls="status-filter-menu"
+              className="flex items-center gap-1"
+              title="تصفية حسب الحالة"
+            >
+              <Filter className="w-3.5 h-3.5 ml-1" />
+              <span className="truncate max-w-[8rem]">
+                {`الحالة: ${statusOptions.find(o => o.key === selectedFilter)?.label || ''}`}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </SimpleButton>
+            {showStatusFilter && (
+              <div
+                id="status-filter-menu"
+                role="menu"
+                className="absolute right-0 mt-2 w-48 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 transform origin-top transition ease-out duration-100 scale-95 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 focus:outline-none"
+                data-open="true"
+                ref={statusMenuPanelRef}
+                tabIndex={-1}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setHighlightedStatusIndex((i) => (i + 1) % statusOptions.length);
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setHighlightedStatusIndex((i) => (i - 1 + statusOptions.length) % statusOptions.length);
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const opt = statusOptions[highlightedStatusIndex];
+                    if (opt) { setSelectedFilter(opt.key); setShowStatusFilter(false); }
+                  } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    setHighlightedStatusIndex(0);
+                  } else if (e.key === 'End') {
+                    e.preventDefault();
+                    setHighlightedStatusIndex(statusOptions.length - 1);
+                  }
+                }}
+              >
+                {statusOptions.map((opt, idx) => {
+                  const selected = selectedFilter === opt.key;
+                  const highlighted = highlightedStatusIndex === idx;
+                  return (
+                    <button
+                      key={opt.key}
+                      role="menuitem"
+                        className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'} ${highlighted ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                      onClick={() => { setSelectedFilter(opt.key); setShowStatusFilter(false); }}
+                    >
+                      <span>{opt.label}</span>
+                      {selected && <Check className="w-4 h-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <SimpleButton variant="outline" size="sm" onClick={handleExportFiltered}>
+            <Download className="w-3.5 h-3.5 ml-2" /> تصدير النتائج
+          </SimpleButton>
+          <SimpleButton variant="outline" size="sm" onClick={handleImportClick}>استيراد</SimpleButton>
+        </div>
+      </div>
 
-      {/* جدول طلبات الإصلاح */}
-      <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle>قائمة طلبات الإصلاح ({filteredRepairs.length})</SimpleCardTitle>
-        </SimpleCardHeader>
-        <SimpleCardContent>
-          {filteredRepairs.length === 0 ? (
-            <div className="text-center py-8">
-              <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد طلبات إصلاح</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredRepairs.map((repair) => (
-                <div key={repair.id} className="bg-white border rounded-lg hover:shadow-lg transition-all duration-200">
-                  {/* Header with Timeline */}
-                  <div className="p-4 border-b border-gray-100">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-lg text-blue-600">{repair.requestNumber}</h3>
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <Link to={`/repairs/${repair.id}`}>
-                          <SimpleButton variant="outline" size="sm">
-                            <Eye className="w-4 h-4 ml-1" />
-                            عرض
-                          </SimpleButton>
-                        </Link>
-                        <Link to={`/repairs/${repair.id}/edit`}>
-                          <SimpleButton variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </SimpleButton>
-                        </Link>
-                      </div>
-                    </div>
-                    
-                    {/* Compact Timeline */}
-                    <RepairTimeline repair={repair} compact={true} />
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                      <div>
-                        <p><strong>العميل:</strong> {repair.customerName}</p>
-                        <p><strong>الهاتف:</strong> <span className="en-text">{repair.customerPhone}</span></p>
-                      </div>
-                      <div>
-                        <p><strong>الجهاز:</strong> {repair.deviceType}</p>
-                        <p><strong>الماركة:</strong> {repair.deviceBrand} {repair.deviceModel}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-3">
-                      <p className="text-gray-700">
-                        <strong>المشكلة:</strong> {repair.problemDescription}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 ml-2" />
-                        <span>{new Date(repair.createdAt).toLocaleDateString('ar-SA')}</span>
-                      </div>
-                      <div className="font-medium text-gray-900">
-                        التكلفة: {repair.estimatedCost} ر.س
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SimpleCardContent>
-      </SimpleCard>
+
+      {/* DataView */}
+      <DataView
+        data={filteredRepairs}
+        columns={columns}
+        storageKey="repairs_dataview"
+        viewModes={['classic', 'cards', 'table', 'list', 'grid']}
+        defaultViewMode="classic"
+        controlsInDropdown
+        enableBulkActions
+        bulkActions={bulkActions}
+        loading={loading}
+        onItemClick={(item) => handleViewRepair(item?.id)}
+        onView={(item) => handleViewRepair(item?.id)}
+        onEdit={(item) => handleEditRepair(item?.id)}
+        renderClassicItem={renderClassicItem}
+        emptyState={(
+          <div className="text-center py-12">
+            <div className="text-gray-500 mb-3">لا توجد طلبات إصلاح مطابقة للمعايير الحالية</div>
+            <Link to="/repairs/new">
+              <SimpleButton>
+                <Plus className="w-4 h-4 ml-2" /> إنشاء طلب جديد
+              </SimpleButton>
+            </Link>
+          </div>
+        )}
+        className="mt-2"
+      />
+
+      {/* مُدخل الملفات المخفي للاستيراد */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".csv,.json"
+        className="hidden"
+        onChange={handleImportFiles}
+      />
     </div>
   );
 };

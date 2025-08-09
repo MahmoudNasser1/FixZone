@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { 
   CheckCircle, AlertCircle, Info, X, Bell, 
   AlertTriangle, Clock, Zap, Settings
@@ -216,17 +216,41 @@ const NotificationContainer = ({ notifications, onRemove, onAction, position = '
 // مكون مزود الإشعارات
 export const NotificationProvider = ({ children, maxNotifications = 5, position = 'top-right' }) => {
   const [notifications, setNotifications] = useState([]);
+  const lastByKeyRef = useRef({}); // dedupe/throttle tracker
 
   const addNotification = (notification) => {
-    const id = Date.now() + Math.random();
+    const now = Date.now();
+    const id = now + Math.random();
+    const {
+      dedupeKey,
+      dedupeWindowMs = 1500,
+      ...rest
+    } = notification || {};
+
+    // Build with defaults
     const newNotification = {
       id,
       type: 'info',
       duration: 5000,
       persistent: false,
       showProgress: false,
-      ...notification
+      read: false,
+      createdAt: now,
+      ...rest
     };
+
+    // Dedupe/throttle by key if provided
+    if (dedupeKey) {
+      const last = lastByKeyRef.current[dedupeKey];
+      if (last && now - last.ts < dedupeWindowMs) {
+        // Optionally update existing latest notification with same key
+        setNotifications(prev => prev.map(n => 
+          n.id === last.id ? { ...n, createdAt: now } : n
+        ));
+        return last.id;
+      }
+      lastByKeyRef.current[dedupeKey] = { id, ts: now };
+    }
 
     setNotifications(prev => {
       const updated = [newNotification, ...prev];
@@ -294,6 +318,44 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     });
   };
 
+  // Promise helper: manage loading/success/error lifecycle
+  const withNotification = async (asyncFn, {
+    loadingMessage = 'جارٍ المعالجة...'
+    , successMessage = 'تمت العملية بنجاح'
+    , errorMessage = 'حدث خطأ غير متوقع'
+    , dedupeKey
+    , loadingOptions = {}
+    , successOptions = {}
+    , errorOptions = {}
+  } = {}) => {
+    const loadingId = addNotification({
+      type: 'loading',
+      message: loadingMessage,
+      persistent: true,
+      dedupeKey,
+      ...loadingOptions
+    });
+    try {
+      const result = await asyncFn();
+      updateNotification(loadingId, {
+        type: 'success',
+        message: successMessage,
+        persistent: false,
+        duration: successOptions.duration ?? 3000,
+        ...successOptions
+      });
+      return result;
+    } catch (err) {
+      updateNotification(loadingId, {
+        type: 'error',
+        message: (err && err.message) ? `${errorMessage}: ${err.message}` : errorMessage,
+        persistent: true,
+        ...errorOptions
+      });
+      throw err;
+    }
+  };
+
   const handleAction = (notificationId, action) => {
     // يمكن إضافة منطق إضافي هنا
     console.log('Notification action:', { notificationId, action });
@@ -309,7 +371,8 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     error,
     warning,
     info,
-    loading
+    loading,
+    withNotification
   };
 
   return (

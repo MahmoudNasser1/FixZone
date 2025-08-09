@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, X, Trash2, Settings } from 'lucide-react';
 import { useNotifications } from './NotificationSystem';
 import SimpleButton from '../ui/SimpleButton';
 
 const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, removeNotification, clearAllNotifications } = useNotifications();
+  const { notifications, removeNotification, clearAllNotifications, updateNotification } = useNotifications();
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // عند فتح المركز، علّم كل الإشعارات كمقروءة
+  useEffect(() => {
+    if (isOpen) {
+      notifications.forEach(n => {
+        if (!n.read) updateNotification(n.id, { read: true });
+      });
+    }
+  }, [isOpen, notifications, updateNotification]);
 
   return (
     <div className="relative">

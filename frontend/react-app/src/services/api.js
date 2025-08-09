@@ -150,6 +150,13 @@ class ApiService {
     });
   }
 
+  // حذف طلب إصلاح
+  async deleteRepairRequest(id) {
+    return this.request(`/repairs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ==================
   // Dashboard APIs
   // ==================
