@@ -43,17 +43,33 @@ const CustomersPage = () => {
     }
   };
 
+  // حذف عميل
   const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا العميل؟')) {
       try {
-        await apiService.deleteCustomer(customerId);
+        await apiService.delete(`/customers/${customerId}`);
         setCustomers(customers.filter(customer => customer.id !== customerId));
-        alert('تم حذف العميل بنجاح');
-      } catch (err) {
-        console.error('Error deleting customer:', err);
-        alert('حدث خطأ في حذف العميل');
+        notifications.addNotification('تم حذف العميل بنجاح', 'success');
+      } catch (error) {
+        console.error('Error deleting customer:', error);
+        notifications.addNotification('خطأ في حذف العميل', 'error');
       }
     }
+  };
+
+  // تعديل عميل
+  const handleEditCustomer = (customer) => {
+    navigate(`/customers/${customer.id}/edit`);
+  };
+
+  // عرض تفاصيل عميل
+  const handleViewCustomer = (customer) => {
+    navigate(`/customers/${customer.id}`);
+  };
+
+  // نقر على عميل
+  const handleCustomerClick = (customer) => {
+    navigate(`/customers/${customer.id}`);
   };
 
   const handleRefresh = () => {
@@ -288,7 +304,7 @@ const CustomersPage = () => {
   ];
 
   // دوال عرض البيانات
-  const renderCard = (customer) => {
+  const renderCard = (customer, { columns } = {}) => {
     const customFields = (() => {
       try {
         return typeof customer.customFields === 'string' 
@@ -298,13 +314,67 @@ const CustomersPage = () => {
         return {};
       }
     })();
+    
+    // احترم الأعمدة المرئية القادمة من DataView عند توفرها
+    const visibleKeys = Array.isArray(columns)
+      ? columns.map(c => c.accessorKey || c.key)
+      : null;
+    const show = (key) => !visibleKeys || visibleKeys.includes(key);
 
+    // بطاقة مخصصة تعرض الاسم ورقم الجوال بشكل واضح
     return (
-      <CustomerStatsCard
-        customer={customer}
+      <div
+        className="flex items-start justify-between w-full"
         onClick={() => navigate(`/customers/${customer.id}`)}
-        className="cursor-pointer hover:shadow-md transition-shadow"
-      />
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mt-0.5">
+            <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            {show('name') && (
+              <div className="font-medium text-gray-900 dark:text-gray-100 text-base">
+                {customer.name || 'بدون اسم'}
+              </div>
+            )}
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+              {show('contact') && customer.phone && (
+                <span className="inline-flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5" />
+                  {customer.phone}
+                </span>
+              )}
+              {show('contact') && customer.email && (
+                <span className="inline-flex items-center gap-1">
+                  <Mail className="w-3.5 h-3.5" />
+                  {customer.email}
+                </span>
+              )}
+            </div>
+            {show('name') && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {customer.company || 'عميل فردي'}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {show('status') && (
+            <SimpleBadge 
+              variant={customer.status === 'active' ? 'success' : 'secondary'}
+              className="text-xs"
+            >
+              {customer.status === 'active' ? 'نشط' : 'غير نشط'}
+            </SimpleBadge>
+          )}
+          {customFields.isVip && (
+            <SimpleBadge variant="warning" className="text-xs">
+              VIP
+            </SimpleBadge>
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -612,7 +682,9 @@ const CustomersPage = () => {
         renderCard={renderCard}
         renderListItem={renderListItem}
         renderGridItem={renderGridItem}
-        onItemClick={(customer) => navigate(`/customers/${customer.id}`)}
+        onItemClick={handleCustomerClick}
+        onEdit={handleEditCustomer}
+        onView={handleViewCustomer}
         loading={loading}
         emptyState={
           <div className="text-center py-12">
