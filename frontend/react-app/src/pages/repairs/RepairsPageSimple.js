@@ -5,11 +5,13 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { Search, Plus, Download, Filter, Eye, Edit, Trash2, Calendar, Wrench, Clock, CheckCircle } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
 const RepairsPageSimple = () => {
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { formatMoney } = useSettings();
 
   useEffect(() => {
     fetchRepairs();
@@ -192,7 +194,7 @@ const RepairsPageSimple = () => {
                         </div>
                         <div>
                           <p><strong>الجهاز:</strong> {repair.deviceType} - {repair.deviceBrand}</p>
-                          <p><strong>التكلفة:</strong> {repair.estimatedCost} ر.س</p>
+                          <p><strong>التكلفة:</strong> {formatMoney(repair.estimatedCost || 0)}</p>
                         </div>
                       </div>
                       

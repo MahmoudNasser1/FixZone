@@ -29,6 +29,10 @@ import { CompaniesPage, NewCompanyPage } from './pages/companies';
 import { RepairsPage } from './pages/repairs';
 import NewRepairPage from './pages/repairs/NewRepairPage';
 import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
+import RepairPrintPage from './pages/repairs/RepairPrintPage';
+import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
+import { SettingsProvider } from './context/SettingsContext';
+import SystemSettingsPage from './pages/settings/SystemSettingsPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
@@ -56,52 +60,63 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <NotificationProvider position="top-right" maxNotifications={5}>
         <SystemNotifications />
-        <Routes>
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/*" // All other routes are handled here
-          element={
-            <ProtectedRoute>
-              <Routes>
-                <Route path="/*" element={<MainLayout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="repairs" element={<RepairsPage />} />
-                  <Route path="repairs/new" element={<NewRepairPage />} />
-                  <Route path="repairs/:id" element={<RepairDetailsPage />} />
-                  
-                  {/* Customer Routes */}
-                  <Route path="customers" element={<CustomersPage />} />
-                  <Route path="customers/new" element={<NewCustomerPage />} />
-                  <Route path="customers/:id" element={<CustomerDetailsPage />} />
-                  <Route path="customers/:id/edit" element={<EditCustomerPage />} />
-                  
-                  {/* Company Routes */}
-                  <Route path="companies" element={<CompaniesPage />} />
-                  <Route path="companies/new" element={<NewCompanyPage />} />
-                  
-                  <Route path="inventory" element={<Inventory />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="payments" element={<PaymentsPage />} />
-                  
-                  {/* Demo Routes */}
-                  <Route path="demo" element={<LayoutDemo />} />
-                  <Route path="notifications-demo" element={<NotificationDemoPage />} />
-                  
-                  <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unknown protected routes */}
-                </Route>
-              </Routes>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-      <Toaster />
+        <SettingsProvider>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
+
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <Routes>
+                    {/* Print routes outside layout to produce clean print pages */}
+                    <Route path="repairs/:id/print" element={<RepairPrintPage />} />
+                    <Route path="repairs/:id/print-qr" element={<RepairQRPrintPage />} />
+
+                    {/* App routes under main layout */}
+                    <Route path="/*" element={<MainLayout />}>
+                      <Route index element={<DashboardPage />} />
+
+                      {/* Repairs */}
+                      <Route path="repairs" element={<RepairsPage />} />
+                      <Route path="repairs/new" element={<NewRepairPage />} />
+                      <Route path="repairs/:id" element={<RepairDetailsPage />} />
+
+                      {/* Customers */}
+                      <Route path="customers" element={<CustomersPage />} />
+                      <Route path="customers/new" element={<NewCustomerPage />} />
+                      <Route path="customers/:id" element={<CustomerDetailsPage />} />
+                      <Route path="customers/:id/edit" element={<EditCustomerPage />} />
+
+                      {/* Companies */}
+                      <Route path="companies" element={<CompaniesPage />} />
+                      <Route path="companies/new" element={<NewCompanyPage />} />
+
+                      {/* Inventory, Settings, Payments */}
+                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="settings" element={<SystemSettingsPage />} />
+                      <Route path="payments" element={<PaymentsPage />} />
+
+                      {/* Demo */}
+                      <Route path="demo" element={<LayoutDemo />} />
+                      <Route path="notifications-demo" element={<NotificationDemoPage />} />
+
+                      {/* Fallback */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Route>
+                  </Routes>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </SettingsProvider>
       </NotificationProvider>
     </ThemeProvider>
   );

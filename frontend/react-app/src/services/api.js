@@ -1,3 +1,4 @@
+import { loadSettings } from '../config/settings';
 // API Service للتعامل مع Backend APIs
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -5,11 +6,17 @@ class ApiService {
   // Helper method للطلبات
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    const isFormData = options && options.body && typeof FormData !== 'undefined' && options.body instanceof FormData;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+    // عند استخدام FormData اترك المتصفح يحدد Content-Type مع boundary
+    if (isFormData && headers['Content-Type']) {
+      delete headers['Content-Type'];
+    }
     const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     };
 
@@ -25,6 +32,23 @@ class ApiService {
       console.error('API request failed:', error);
       throw error;
     }
+  }
+
+  // ==================
+  // Users APIs
+  // ==================
+  
+  // جلب جميع المستخدمين مع إمكانية التصفية (مثلاً بالدور)
+  async listUsers(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.request(`/users${qs ? `?${qs}` : ''}`);
+  }
+
+  // جلب الفنيين فقط (يفترض أن الـ backend يدعم التصفية عبر الدور)
+  async listTechnicians() {
+    // ملاحظة: وفق المخطط، الفني هو سجل في جدول User مع دور يشير إلى Role('Technician').
+    // إذا كان الـ backend يستخدم اسم دور مختلف (مثل TECHNICIAN)، حدث القيمة أدناه.
+    return this.listUsers({ role: 'Technician' });
   }
 
   // ==================
@@ -155,6 +179,116 @@ class ApiService {
     return this.request(`/repairs/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // سجلات/خط زمني لطلب الإصلاح
+  async getRepairLogs(id, params = {}) {
+    // لا يوجد مسار /repairs/:id/logs في الـ backend الحالي.
+    // سنستخدم /audit-logs ونرشح في الواجهة.
+    const all = await this.request(`/audit-logs`);
+    const logs = (Array.isArray(all) ? all : []).filter(
+      (l) => (l.entityType === 'RepairRequest' && String(l.entityId) === String(id))
+    );
+    // تحويل الصيغة لتناسق العرض
+    return logs.map((l) => ({
+      id: l.id,
+      content: l.details || '',
+      author: l.userId ? `مستخدم #${l.userId}` : 'غير معروف',
+      createdAt: l.createdAt || l.timestamp || new Date().toISOString(),
+      type: l.action || 'note',
+    }));
+  }
+
+  // إسناد فني للطلب
+  async assignTechnician(id, technicianId) {
+    return this.request(`/repairs/${id}/assign`, {
+      method: 'POST',
+      body: JSON.stringify({ technicianId }),
+    });
+  }
+
+  // المرفقات: قائمة/رفع/حذف
+  async listAttachments(id) {
+    return this.request(`/repairs/${id}/attachments`);
+  }
+
+  async uploadAttachment(id, file, extra = {}) {
+    const form = new FormData();
+    form.append('file', file);
+    Object.entries(extra || {}).forEach(([k, v]) => form.append(k, v));
+    return this.request(`/repairs/${id}/attachments`, {
+      method: 'POST',
+      body: form,
+    });
+  }
+
+  async deleteAttachment(id, attachmentId) {
+    return this.request(`/repairs/${id}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // فواتير الطلب
+  async listRepairInvoices(id, params = {}) {
+    // الراوتر الخلفي يستخدم /invoices مع إمكانية تمرير repairRequestId
+    const query = new URLSearchParams({ ...(params || {}), repairRequestId: id }).toString();
+    return this.request(`/invoices${query ? `?${query}` : ''}`);
+  }
+
+  async createRepairInvoice(id, invoiceData) {
+    // backend يتوقع: totalAmount, amountPaid, status, repairRequestId, currency, taxAmount
+    const payload = {
+      totalAmount: invoiceData?.totalAmount ?? invoiceData?.amount ?? 0,
+      amountPaid: invoiceData?.amountPaid ?? 0,
+      status: invoiceData?.status ?? 'unpaid',
+      repairRequestId: Number(id),
+      currency: invoiceData?.currency ?? (loadSettings()?.currency?.code || 'EGP'),
+      taxAmount: invoiceData?.taxAmount ?? 0,
+    };
+    return this.request(`/invoices`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // طباعة إيصال/ملصق
+  async printRepair(id, type = 'receipt') {
+    const endpoint = `/repairs/${id}/print/${type}`;
+    const url = `${API_BASE_URL}${endpoint}`;
+    const resp = await fetch(url, { method: 'GET', headers: { Accept: '*/*' } });
+    // إذا أعاد السيرفر JSON بدلاً من ملف، اعتبرها رسالة خطأ مقروءة
+    const contentType = resp.headers.get('content-type') || '';
+    if (!resp.ok) {
+      if (contentType.includes('application/json')) {
+        const errJson = await resp.json().catch(() => ({}));
+        const msg = errJson.message || `HTTP error! status: ${resp.status}`;
+        throw new Error(msg);
+      }
+      throw new Error(`HTTP error! status: ${resp.status}`);
+    }
+    // افتراض الاستلام كـ Blob (PDF/PNG...)
+    const blob = await resp.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    return { blob, objectUrl, contentType };
+  }
+
+  // ==================
+  // Notes via Audit Logs
+  // ==================
+  async addRepairNote(repairId, content, currentUserId = 1) {
+    // يستخدم جدول AuditLog لتخزين الملاحظات المرتبطة بطلب الإصلاح
+    const payload = {
+      action: 'repair_note',
+      actionType: 'NOTE',
+      details: content,
+      entityType: 'RepairRequest',
+      entityId: Number(repairId),
+      userId: currentUserId,
+      ipAddress: '127.0.0.1',
+      beforeValue: null,
+      afterValue: null,
+    };
+    return this.request('/audit-logs', { method: 'POST', body: JSON.stringify(payload) });
   }
 
   // ==================

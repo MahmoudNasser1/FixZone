@@ -11,11 +11,13 @@ import DataView from '../../components/ui/DataView';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { 
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
-  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter, Check, ChevronDown
+  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter, Check, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown
 } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
 const RepairsPage = () => {
   const navigate = useNavigate();
+  const { formatMoney } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,59 @@ const RepairsPage = () => {
     { key: 'completed', label: 'مكتمل' },
     { key: 'cancelled', label: 'ملغي' },
   ]), []);
+
+  // الفرز مع مزامنة URL
+  const sortFields = useMemo(() => ([
+    { key: 'createdAt', label: 'تاريخ الإنشاء' },
+    { key: 'updatedAt', label: 'تاريخ التحديث' },
+    { key: 'priority', label: 'الأولوية' },
+    { key: 'status', label: 'الحالة' },
+    { key: 'estimatedCost', label: 'التكلفة' },
+    { key: 'customerName', label: 'اسم العميل' },
+  ]), []);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef(null);
+  const sortMenuPanelRef = useRef(null);
+
+  // حالة وتقويم الصفحات (Client-side) مع مزامنة URL
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // تهيئة page/pageSize من URL مرة واحدة
+  useEffect(() => {
+    const p = parseInt(searchParams.get('page') || '1', 10);
+    const ps = parseInt(searchParams.get('pageSize') || '10', 10);
+    setPage(Number.isFinite(p) && p > 0 ? p : 1);
+    setPageSize([5,10,20,50,100].includes(ps) ? ps : 10);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // تهيئة البحث من URL (?q=)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q != null) setSearchTerm(q);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // تهيئة الفرز من URL (?sort=&order=)
+  useEffect(() => {
+    const s = searchParams.get('sort');
+    const o = searchParams.get('order');
+    if (s && sortFields.some(f => f.key === s)) setSortField(s);
+    if (o && (o === 'asc' || o === 'desc')) setSortOrder(o);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // مزامنة page/pageSize مع URL
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (page && page !== 1) next.set('page', String(page)); else next.delete('page');
+    if (pageSize && pageSize !== 10) next.set('pageSize', String(pageSize)); else next.delete('pageSize');
+    setSearchParams(next, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize]);
 
   // تهيئة فلتر الحالة من URL أو localStorage
   useEffect(() => {
@@ -56,30 +111,70 @@ const RepairsPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilter]);
 
+  // مزامنة البحث مع URL (debounced)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const current = searchParams.get('q') || '';
+      if ((searchTerm || '') !== current) {
+        const next = new URLSearchParams(searchParams);
+        if (!searchTerm) next.delete('q'); else next.set('q', searchTerm);
+        setSearchParams(next, { replace: true });
+      }
+    }, 300);
+    return () => clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
+  // مزامنة الفرز مع URL
+  useEffect(() => {
+    const currentSort = searchParams.get('sort') || '';
+    const currentOrder = searchParams.get('order') || '';
+    const next = new URLSearchParams(searchParams);
+    if ((sortField || '') !== currentSort) {
+      if (!sortField || sortField === 'createdAt') next.delete('sort'); else next.set('sort', sortField);
+    }
+    if ((sortOrder || 'desc') !== (currentOrder || 'desc')) {
+      if (!sortOrder || sortOrder === 'desc') next.delete('order'); else next.set('order', sortOrder);
+    }
+    setSearchParams(next, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder]);
+
   // إغلاق قائمة الحالة عند النقر خارجها أو الضغط على Escape
   useEffect(() => {
     if (!showStatusFilter) return;
-    // Initialize highlighted index to current selection
-    const currentIdx = statusOptions.findIndex(o => o.key === selectedFilter);
-    setHighlightedStatusIndex(currentIdx >= 0 ? currentIdx : 0);
-    // Focus the panel for keyboard navigation
-    const id = requestAnimationFrame(() => {
-      statusMenuPanelRef.current?.focus?.();
-    });
-    const onDocClick = (e) => {
-      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target)) {
-        setShowStatusFilter(false);
-      }
+    const onDown = (e) => {
+      if (e.key === 'Escape') setShowStatusFilter(false);
     };
-    const onKey = (e) => { if (e.key === 'Escape') setShowStatusFilter(false); };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
+    const onClick = (e) => {
+      if (!statusMenuRef.current) return;
+      if (!statusMenuRef.current.contains(e.target)) setShowStatusFilter(false);
+    };
+    document.addEventListener('keydown', onDown);
+    document.addEventListener('mousedown', onClick);
     return () => {
-      cancelAnimationFrame(id);
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onDown);
+      document.removeEventListener('mousedown', onClick);
     };
-  }, [showStatusFilter, selectedFilter, statusOptions]);
+  }, [showStatusFilter]);
+
+  // إغلاق قائمة الفرز عند النقر خارجها أو الضغط على Escape
+  useEffect(() => {
+    if (!showSortMenu) return;
+    const onDown = (e) => {
+      if (e.key === 'Escape') setShowSortMenu(false);
+    };
+    const onClick = (e) => {
+      if (!sortMenuRef.current) return;
+      if (!sortMenuRef.current.contains(e.target)) setShowSortMenu(false);
+    };
+    document.addEventListener('keydown', onDown);
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      document.removeEventListener('keydown', onDown);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [showSortMenu]);
 
   // إغلاق قائمة الحالة عند تغيير الروت
   useEffect(() => {
@@ -88,6 +183,7 @@ const RepairsPage = () => {
   const [error, setError] = useState(null);
   const [customerFilter, setCustomerFilter] = useState(null);
   const [customerName, setCustomerName] = useState('');
+  const [serverTotal, setServerTotal] = useState(null); // يدعم total القادم من الخادم
   const notifications = useNotifications();
 
   // مساعد للإشعارات مع تقليل الإزعاج
@@ -119,7 +215,7 @@ const RepairsPage = () => {
   // جلب البيانات من Backend
   useEffect(() => {
     fetchRepairs();
-  }, [customerFilter]);
+  }, [customerFilter, page, pageSize, selectedFilter, searchTerm]);
 
   const fetchCustomerName = async (customerId) => {
     try {
@@ -136,15 +232,28 @@ const RepairsPage = () => {
       setLoading(true);
       setError(null);
       
-      // بناء معاملات الفلترة
-      const filters = {};
-      if (customerFilter) {
-        filters.customerId = customerFilter;
+      // بناء معاملات الفلترة والصفحات لإرسالها للخادم (اختياريًا)
+      const params = {};
+      if (customerFilter) params.customerId = customerFilter;
+      if (selectedFilter && selectedFilter !== 'all') params.status = selectedFilter;
+      if (searchTerm) params.q = searchTerm;
+      if (page && page > 1) params.page = page;
+      if (pageSize && pageSize !== 10) params.pageSize = pageSize;
+      if (sortField && sortField !== 'createdAt') params.sort = sortField;
+      if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
+
+      const data = await apiService.getRepairRequests(params);
+      console.log('Repairs loaded:', data, 'with params:', params);
+      if (Array.isArray(data)) {
+        setRepairs(data);
+        setServerTotal(null);
+      } else if (data && Array.isArray(data.items)) {
+        setRepairs(data.items);
+        setServerTotal(Number.isFinite(data.total) ? data.total : null);
+      } else {
+        setRepairs([]);
+        setServerTotal(null);
       }
-      
-      const data = await apiService.getRepairRequests(filters);
-      console.log('Repairs loaded:', data, 'with filters:', filters);
-      setRepairs(data);
     } catch (err) {
       console.error('Error fetching repairs:', err);
       setError('حدث خطأ في تحميل بيانات طلبات الإصلاح');
@@ -518,6 +627,48 @@ const RepairsPage = () => {
     return matchesSearch && repair.status === selectedFilter;
   });
 
+  // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
+  const priorityRank = { high: 3, medium: 2, low: 1 };
+  const statusRank = { pending: 1, in_progress: 2, completed: 3, cancelled: 0 };
+  const sortedRepairs = [...filteredRepairs].sort((a, b) => {
+    const dir = sortOrder === 'asc' ? 1 : -1;
+    const getVal = (r) => {
+      switch (sortField) {
+        case 'createdAt': return r.createdAt ? new Date(r.createdAt).getTime() : 0;
+        case 'updatedAt': return r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
+        case 'priority': return priorityRank[r.priority] || 0;
+        case 'status': return statusRank[r.status] || 0;
+        case 'estimatedCost': return Number(r.estimatedCost) || 0;
+        case 'customerName': return (r.customerName || '').toLowerCase();
+        default: return 0;
+      }
+    };
+    const va = getVal(a);
+    const vb = getVal(b);
+    if (typeof va === 'string' && typeof vb === 'string') return dir * va.localeCompare(vb, 'ar');
+    return dir * (va - vb);
+  });
+
+  // حساب ترقيم الصفحات
+  const clientTotal = sortedRepairs.length;
+  const effectiveTotal = Number.isFinite(serverTotal) && serverTotal != null ? serverTotal : clientTotal;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const startIdx = (currentPage - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, clientTotal);
+  // إذا كانت البيانات قادمة مُقسّمة من الخادم (serverTotal موجود) نعرض كما هي، وإلا نُقسّم Client-side
+  const paginatedRepairs = Number.isFinite(serverTotal) && serverTotal != null ? repairs : sortedRepairs.slice(startIdx, endIdx);
+
+  // حساب أرقام العرض للصفحة الحالية (تراعي الترقيم الخادمي)
+  const pageCount = Number.isFinite(serverTotal) && serverTotal != null ? repairs.length : (endIdx - startIdx);
+  const displayedStart = effectiveTotal === 0 ? 0 : startIdx + 1;
+  const displayedEnd = effectiveTotal === 0 ? 0 : Math.min(startIdx + pageCount, effectiveTotal);
+
+  // إعادة تعيين الصفحة للأولى عند تغيّر عوامل الفلترة/البحث لتجنّب صفحات فارغة
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedFilter, customerFilter, sortField, sortOrder]);
+
   // حساب الإحصائيات
   const stats = {
     total: repairs.length,
@@ -643,7 +794,7 @@ const RepairsPage = () => {
               {isVisible('estimatedCost') && (
                 <>
                   <DollarSign className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-200 font-medium">{r.estimatedCost ?? '-'}</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">{r.estimatedCost != null ? formatMoney(Number(r.estimatedCost) || 0) : '-'}</span>
                 </>
               )}
               {isVisible('priority') && (
@@ -858,6 +1009,57 @@ const RepairsPage = () => {
               </div>
             )}
           </div>
+          {/* قائمة الفرز */}
+          <div className="relative" ref={sortMenuRef}>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSortMenu(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={showSortMenu}
+              aria-controls="sort-menu"
+              className="flex items-center gap-1"
+              title="فرز"
+            >
+              <ArrowUpDown className="w-3.5 h-3.5 ml-1" />
+              <span className="truncate max-w-[8rem]">
+                {`${sortFields.find(f => f.key === sortField)?.label || ''} • ${sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}`}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </SimpleButton>
+            {showSortMenu && (
+              <div
+                id="sort-menu"
+                role="menu"
+                className="absolute right-0 mt-2 w-56 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1"
+                ref={sortMenuPanelRef}
+              >
+                <div className="px-3 py-2 text-xs text-gray-500 flex items-center justify-between">
+                  <span>ترتيب</span>
+                  <div className="flex items-center gap-1">
+                    <SimpleButton size="xs" variant={sortOrder === 'asc' ? 'primary' : 'ghost'} onClick={() => setSortOrder('asc')}>تصاعدي</SimpleButton>
+                    <SimpleButton size="xs" variant={sortOrder === 'desc' ? 'primary' : 'ghost'} onClick={() => setSortOrder('desc')}>تنازلي</SimpleButton>
+                  </div>
+                </div>
+                <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
+                {sortFields.map((f) => {
+                  const selected = sortField === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}
+                      onClick={() => { setSortField(f.key); setShowSortMenu(false); }}
+                    >
+                      <span>{f.label}</span>
+                      {selected && <Check className="w-4 h-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <SimpleButton variant="outline" size="sm" onClick={handleExportFiltered}>
@@ -866,35 +1068,97 @@ const RepairsPage = () => {
           <SimpleButton variant="outline" size="sm" onClick={handleImportClick}>استيراد</SimpleButton>
         </div>
       </div>
+      
 
+      {/* Skeleton أثناء التحميل */}
+      {loading ? (
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {Array.from({ length: Math.min(pageSize || 10, 8) }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-pulse bg-white dark:bg-gray-800">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+              <div className="space-y-2">
+                <div className="h-3 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-3 w-2/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-3 w-4/5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* DataView */}
+          <DataView
+            data={paginatedRepairs}
+            columns={columns}
+            storageKey="repairs_dataview"
+            viewModes={['classic', 'cards', 'table', 'list', 'grid']}
+            defaultViewMode="classic"
+            controlsInDropdown
+            enableBulkActions
+            bulkActions={bulkActions}
+            loading={loading}
+            onItemClick={(item) => handleViewRepair(item?.id)}
+            onView={(item) => handleViewRepair(item?.id)}
+            onEdit={(item) => handleEditRepair(item?.id)}
+            renderClassicItem={renderClassicItem}
+            emptyState={(
+              <div className="text-center py-12">
+                <div className="text-gray-500 mb-3">لا توجد طلبات إصلاح مطابقة للمعايير الحالية</div>
+                <Link to="/repairs/new">
+                  <SimpleButton>
+                    <Plus className="w-4 h-4 ml-2" /> إنشاء طلب جديد
+                  </SimpleButton>
+                </Link>
+              </div>
+            )}
+            className="mt-2"
+          />
+        </>
+      )}
 
-      {/* DataView */}
-      <DataView
-        data={filteredRepairs}
-        columns={columns}
-        storageKey="repairs_dataview"
-        viewModes={['classic', 'cards', 'table', 'list', 'grid']}
-        defaultViewMode="classic"
-        controlsInDropdown
-        enableBulkActions
-        bulkActions={bulkActions}
-        loading={loading}
-        onItemClick={(item) => handleViewRepair(item?.id)}
-        onView={(item) => handleViewRepair(item?.id)}
-        onEdit={(item) => handleEditRepair(item?.id)}
-        renderClassicItem={renderClassicItem}
-        emptyState={(
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-3">لا توجد طلبات إصلاح مطابقة للمعايير الحالية</div>
-            <Link to="/repairs/new">
-              <SimpleButton>
-                <Plus className="w-4 h-4 ml-2" /> إنشاء طلب جديد
-              </SimpleButton>
-            </Link>
+      {/* عناصر تحكم الترقيم */}
+      <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          عرض {displayedStart}–{displayedEnd} من {effectiveTotal}
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600 dark:text-gray-300">عدد الصفوف:</label>
+          <select
+            className="h-8 text-sm border border-gray-200 dark:border-gray-700 rounded px-2 bg-white dark:bg-gray-800"
+            value={pageSize}
+            onChange={(e) => setPageSize(parseInt(e.target.value, 10) || 10)}
+          >
+            {[10,20,50,100].map(sz => (
+              <option key={sz} value={sz}>{sz}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-1">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              title="السابق"
+            >
+              <ChevronRight className="w-4 h-4 ml-1" /> السابق
+            </SimpleButton>
+            <div className="min-w-[4rem] text-center text-sm">{currentPage} / {totalPages}</div>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              title="التالي"
+            >
+              التالي <ChevronLeft className="w-4 h-4 mr-1" />
+            </SimpleButton>
           </div>
-        )}
-        className="mt-2"
-      />
+        </div>
+      </div>
 
       {/* مُدخل الملفات المخفي للاستيراد */}
       <input

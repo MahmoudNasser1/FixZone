@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettings } from '../../context/SettingsContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 const QuickStatsCard = ({ 
@@ -11,6 +12,7 @@ const QuickStatsCard = ({
   suffix = '',
   loading = false 
 }) => {
+  const { formatMoney } = useSettings();
   const calculateChange = () => {
     if (!previousValue || previousValue === 0) return null;
     const change = ((value - previousValue) / previousValue) * 100;
@@ -62,11 +64,7 @@ const QuickStatsCard = ({
 
   const formatValue = (val) => {
     if (format === 'currency') {
-      return new Intl.NumberFormat('ar-SA', {
-        style: 'currency',
-        currency: 'SAR',
-        minimumFractionDigits: 0
-      }).format(val);
+      return formatMoney(val || 0);
     } else if (format === 'percentage') {
       return `${val}%`;
     } else if (format === 'number') {

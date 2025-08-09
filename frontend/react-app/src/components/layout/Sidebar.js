@@ -87,7 +87,7 @@ const navItems = [
   {
     section: 'الإعدادات والإدارة',
     items: [
-      { href: '/settings', label: 'الإعدادات العامة', icon: Settings },
+      { href: '/settings', label: 'إعدادات النظام', icon: Settings },
       { href: '/users', label: 'إدارة المستخدمين', icon: Shield },
       { href: '/branches', label: 'الفروع', icon: MapPin },
       { href: '/system', label: 'إعدادات النظام', icon: Database },
@@ -287,7 +287,9 @@ const Sidebar = () => {
               <p className="text-sm font-medium text-white truncate">محمود ناصر</p>
               <p className="text-xs text-gray-400 truncate">مدير النظام</p>
             </div>
-            <Settings className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            <Link to="/settings">
+              <Settings className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            </Link>
           </div>
         ) : (
           <div className="flex justify-center">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettings } from '../../context/SettingsContext';
 import { 
   TrendingUp, TrendingDown, Target, Clock, 
   DollarSign, Star, AlertTriangle, CheckCircle 
@@ -11,6 +12,7 @@ const PerformanceAnalytics = ({
   showTrends = true,
   compact = false 
 }) => {
+  const { formatMoney } = useSettings();
   if (!stats) {
     return (
       <div className="bg-gray-50 rounded-lg p-4 animate-pulse">
@@ -128,7 +130,7 @@ const PerformanceAnalytics = ({
             <DollarSign className="w-6 h-6 text-purple-600" />
           </div>
           <div className="text-2xl font-bold text-purple-900">
-            {stats.averageRepairCost ? Math.round(stats.averageRepairCost) : 0}
+            {formatMoney(stats.averageRepairCost ? stats.averageRepairCost : 0)}
           </div>
           <div className="text-sm text-purple-700">متوسط التكلفة</div>
         </div>
@@ -190,20 +192,14 @@ const PerformanceAnalytics = ({
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">إجمالي المدفوعات</span>
               <span className="text-sm font-medium text-green-600">
-                {new Intl.NumberFormat('ar-SA', {
-                  style: 'currency',
-                  currency: 'SAR'
-                }).format(stats.totalPaid || 0)}
+                {formatMoney(stats.totalPaid || 0)}
               </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">متوسط التكلفة</span>
               <span className="text-sm font-medium">
-                {new Intl.NumberFormat('ar-SA', {
-                  style: 'currency',
-                  currency: 'SAR'
-                }).format(stats.averageRepairCost || 0)}
+                {formatMoney(stats.averageRepairCost || 0)}
               </span>
             </div>
 
