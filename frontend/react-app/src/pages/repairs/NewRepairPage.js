@@ -15,7 +15,11 @@ const NewRepairPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [brandOptions, setBrandOptions] = useState([]);
+  const [accessoryOptions, setAccessoryOptions] = useState([]);
   
   const [formData, setFormData] = useState({
     customerId: searchParams.get('customerId') || '',
@@ -24,8 +28,15 @@ const NewRepairPage = () => {
     customerEmail: '',
     deviceType: '',
     deviceBrand: '',
+    brandId: '',
     deviceModel: '',
     serialNumber: '',
+    devicePassword: '',
+    cpu: '',
+    gpu: '',
+    ram: '',
+    storage: '',
+    accessories: [],
     problemDescription: '',
     priority: 'medium',
     estimatedCost: '',
@@ -39,12 +50,52 @@ const NewRepairPage = () => {
     }
   }, []);
 
+  // جلب الماركات والملحقات عند تغيير نوع الجهاز
+  useEffect(() => {
+    const loadVariables = async () => {
+      try {
+        // الماركات حسب نوع الجهاز
+        const brands = await apiService.getVariables({ category: 'BRAND', deviceType: formData.deviceType || undefined, active: true });
+        setBrandOptions(brands || []);
+      } catch (e) {
+        console.warn('Failed to load brand options', e);
+        setBrandOptions([]);
+      }
+      try {
+        // الملحقات عامة (قد تكون حسب نوع الجهاز أيضاً لاحقاً)
+        const accessories = await apiService.getVariables({ category: 'ACCESSORY', active: true });
+        setAccessoryOptions(accessories || []);
+      } catch (e) {
+        console.warn('Failed to load accessory options', e);
+        setAccessoryOptions([]);
+      }
+    };
+    loadVariables();
+  }, [formData.deviceType]);
+
   const fetchCustomers = async () => {
     try {
       const data = await apiService.getCustomers();
       setCustomers(data);
     } catch (err) {
       console.error('Error fetching customers:', err);
+    }
+  };
+
+  const handleCustomerSearchChange = async (e) => {
+    const value = e.target.value;
+    setCustomerSearch(value);
+    if (!value || value.trim().length < 2) {
+      return;
+    }
+    try {
+      setSearchingCustomers(true);
+      const res = await apiService.searchCustomers(value.trim(), 1, 20);
+      setCustomers(res?.data || []);
+    } catch (err) {
+      console.error('Error searching customers:', err);
+    } finally {
+      setSearchingCustomers(false);
     }
   };
 
@@ -98,6 +149,19 @@ const NewRepairPage = () => {
     }
   };
 
+  // اختيار عميل من نتائج البحث (Autocomplete)
+  const pickCustomerFromSearch = (customer) => {
+    setSelectedCustomer(customer);
+    setFormData(prev => ({
+      ...prev,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerEmail: customer.email || ''
+    }));
+    setCustomerSearch(`${customer.name} - ${customer.phone} (#${customer.id})`);
+  };
+
   const generateRequestNumber = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -128,13 +192,20 @@ const NewRepairPage = () => {
         customerName: formData.customerName.trim(),
         customerPhone: formData.customerPhone.trim(),
         customerEmail: formData.customerEmail.trim() || null,
-        deviceType: formData.deviceType.trim(),
+        deviceType: formData.deviceType,
         deviceBrand: formData.deviceBrand.trim() || null,
+        brandId: formData.brandId || null,
         deviceModel: formData.deviceModel.trim() || null,
         serialNumber: formData.serialNumber.trim() || null,
+        devicePassword: formData.devicePassword.trim() || null,
+        cpu: formData.cpu.trim() || null,
+        gpu: formData.gpu.trim() || null,
+        ram: formData.ram.trim() || null,
+        storage: formData.storage.trim() || null,
+        accessories: (formData.accessories || []).map(x => Number(x)).filter(Number.isFinite),
         problemDescription: formData.problemDescription.trim(),
         priority: formData.priority,
-        estimatedCost: parseFloat(formData.estimatedCost) || 0,
+        estimatedCost: parseFloat(formData.estimatedCost || 0) || 0,
         notes: formData.notes.trim() || null,
         status: 'pending'
       };
@@ -203,23 +274,35 @@ const NewRepairPage = () => {
             </SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent className="space-y-4">
-            {/* اختيار عميل موجود */}
+            {/* بحث ديناميكي عن العملاء */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                اختيار عميل موجود (اختياري)
+                بحث عن عميل بالاسم أو الهاتف
               </label>
-              <select
-                value={formData.customerId}
-                onChange={handleCustomerSelect}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- عميل جديد --</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} - {customer.phone}
-                  </option>
-                ))}
-              </select>
+              <Input
+                value={customerSearch}
+                onChange={handleCustomerSearchChange}
+                placeholder="اكتب 2 حروف على الأقل..."
+              />
+              {searchingCustomers && (
+                <div className="text-sm text-gray-500 mt-1">جاري البحث...</div>
+              )}
+              {/* نتائج البحث (Autocomplete) */}
+              {customerSearch.trim().length >= 2 && customers.length > 0 && (
+                <div className="mt-2 max-h-56 overflow-auto border border-gray-200 rounded-md bg-white shadow-sm divide-y">
+                  {customers.map((c) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => pickCustomerFromSearch(c)}
+                      className="w-full text-right px-3 py-2 hover:bg-gray-50 focus:bg-gray-50"
+                    >
+                      <div className="text-sm font-medium text-gray-900">{c.name} <span className="text-xs text-gray-500">#{c.id}</span></div>
+                      <div className="text-xs text-gray-600">{c.phone || '—'}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,7 +374,7 @@ const NewRepairPage = () => {
                 >
                   <option value="">اختر نوع الجهاز</option>
                   {deviceTypes.map(type => (
-                    <option key={type.value} value={type.label}>
+                    <option key={type.value} value={type.value}>
                       {type.label}
                     </option>
                   ))}
@@ -300,8 +383,20 @@ const NewRepairPage = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  الماركة/الشركة المصنعة
+                  الماركة/الشركة المصنعة (ديناميكي)
                 </label>
+                <select
+                  name="brandId"
+                  value={formData.brandId}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">اختر الماركة</option>
+                  {brandOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+                <div className="text-xs text-gray-500 mt-1">أو أدخل ماركة مخصصة:</div>
                 <Input
                   name="deviceBrand"
                   value={formData.deviceBrand}
@@ -332,6 +427,62 @@ const NewRepairPage = () => {
                   onChange={handleInputChange}
                   placeholder="الرقم التسلسلي للجهاز"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  كلمة مرور الجهاز
+                </label>
+                <Input
+                  name="devicePassword"
+                  value={formData.devicePassword}
+                  onChange={handleInputChange}
+                  placeholder="كلمة المرور إن وجدت"
+                />
+              </div>
+            </div>
+
+            {/* مواصفات الجهاز */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">المعالج (CPU)</label>
+                <Input name="cpu" value={formData.cpu} onChange={handleInputChange} placeholder="Intel i5 / Ryzen 5" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">كرت الشاشة (GPU)</label>
+                <Input name="gpu" value={formData.gpu} onChange={handleInputChange} placeholder="NVIDIA / AMD / Intel" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الذاكرة (RAM)</label>
+                <Input name="ram" value={formData.ram} onChange={handleInputChange} placeholder="8GB / 16GB" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">التخزين (Storage)</label>
+                <Input name="storage" value={formData.storage} onChange={handleInputChange} placeholder="256GB SSD / 1TB HDD" />
+              </div>
+            </div>
+
+            {/* الملحقات */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">المتعلقات المستلمة</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {accessoryOptions.map((opt) => (
+                  <label key={opt.id} className="flex items-center space-x-2 space-x-reverse">
+                    <input
+                      type="checkbox"
+                      checked={formData.accessories.includes(String(opt.id)) || formData.accessories.includes(Number(opt.id))}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData((prev) => {
+                          const idStr = String(opt.id);
+                          const current = new Set((prev.accessories || []).map(String));
+                          if (checked) current.add(idStr); else current.delete(idStr);
+                          return { ...prev, accessories: Array.from(current) };
+                        });
+                      }}
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </SimpleCardContent>

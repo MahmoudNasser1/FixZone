@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSettings } from '../../context/SettingsContext';
+import api from '../../services/api';
 
 const tabs = [
   { key: 'general', label: 'عام' },
@@ -7,6 +8,7 @@ const tabs = [
   { key: 'printing', label: 'الطباعة' },
   { key: 'locale', label: 'المحلية واللغة' },
   { key: 'receipt', label: 'الإيصالات' },
+  { key: 'receiptPrint', label: 'إيصال الاستلام' },
 ];
 
 export default function SystemSettingsPage() {
@@ -38,6 +40,34 @@ export default function SystemSettingsPage() {
     // Receipt
     receiptTerms: settings.receipt.terms || '',
   }));
+
+  // حالة إعدادات إيصال الاستلام (من backend/config/print-settings.json)
+  const [print, setPrint] = useState({
+    title: 'إيصال استلام',
+    showLogo: true,
+    logoUrl: '/assets/logo.png',
+    showQr: true,
+    qrSize: 180,
+    showDevicePassword: false,
+    showSerialBarcode: true,
+    barcodeWidth: 1,
+    barcodeHeight: 28,
+    compactMode: false,
+    branchName: '',
+    branchAddress: '',
+    branchPhone: '',
+    margins: { top: 16, right: 16, bottom: 16, left: 16 },
+    dateDisplay: 'both',
+    terms: ''
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    api.getPrintSettings().then((data) => {
+      if (mounted && data) setPrint((p) => ({ ...p, ...data }));
+    }).catch(console.error);
+    return () => { mounted = false; };
+  }, [api]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -86,6 +116,54 @@ export default function SystemSettingsPage() {
       },
     }));
     alert('تم حفظ الإعدادات بنجاح');
+  };
+
+  const handlePrintChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const bools = new Set(['showLogo','showQr','showDevicePassword','showSerialBarcode','compactMode']);
+    const nums = new Set(['qrSize','barcodeWidth','barcodeHeight','margins.top','margins.right','margins.bottom','margins.left']);
+    if (name.startsWith('margins.')) {
+      const key = name.split('.')[1];
+      setPrint((p) => ({ ...p, margins: { ...p.margins, [key]: Number(value) } }));
+      return;
+    }
+    setPrint((p) => ({
+      ...p,
+      [name]: bools.has(name) ? (type === 'checkbox' ? checked : value === 'true') : nums.has(name) ? Number(value) : value,
+    }));
+  };
+
+  const handleSavePrint = async () => {
+    try {
+      const payload = {
+        title: print.title,
+        showLogo: !!print.showLogo,
+        logoUrl: print.logoUrl,
+        showQr: !!print.showQr,
+        qrSize: Number(print.qrSize) || 180,
+        showDevicePassword: !!print.showDevicePassword,
+        showSerialBarcode: !!print.showSerialBarcode,
+        barcodeWidth: Number(print.barcodeWidth) || 1,
+        barcodeHeight: Number(print.barcodeHeight) || 28,
+        compactMode: !!print.compactMode,
+        branchName: print.branchName,
+        branchAddress: print.branchAddress,
+        branchPhone: print.branchPhone,
+        margins: {
+          top: Number(print.margins.top) || 16,
+          right: Number(print.margins.right) || 16,
+          bottom: Number(print.margins.bottom) || 16,
+          left: Number(print.margins.left) || 16,
+        },
+        dateDisplay: print.dateDisplay,
+        terms: print.terms,
+      };
+      await api.updatePrintSettings(payload);
+      alert('تم حفظ إعدادات إيصال الاستلام بنجاح');
+    } catch (e) {
+      console.error(e);
+      alert('تعذر حفظ إعدادات الإيصال');
+    }
   };
 
   const PreviewCurrency = useMemo(() => (
@@ -142,6 +220,109 @@ export default function SystemSettingsPage() {
               <label className="block text-sm text-gray-600 mb-1">رابط الشعار (Logo URL)</label>
               <input name="logoUrl" value={form.logoUrl} onChange={handleChange} className="w-full border rounded p-2" />
               <div className="text-xs text-gray-500 mt-1">يمكنك رفع الشعار داخل مجلد public واستخدام المسار مثل /logo.png</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {active === 'receiptPrint' && (
+        <section className="space-y-4 max-w-4xl">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">إعدادات إيصال الاستلام</h2>
+            <button onClick={handleSavePrint} className="px-4 py-2 border rounded bg-blue-600 text-white">حفظ</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">عنوان الإيصال</label>
+              <input name="title" value={print.title} onChange={handlePrintChange} className="w-full border rounded p-2" />
+            </div>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="showLogo" checked={!!print.showLogo} onChange={handlePrintChange} />
+              <span className="text-sm text-gray-700">إظهار الشعار</span>
+            </label>
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">رابط الشعار</label>
+              <input name="logoUrl" value={print.logoUrl} onChange={handlePrintChange} className="w-full border rounded p-2" />
+            </div>
+
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="showQr" checked={!!print.showQr} onChange={handlePrintChange} />
+              <span className="text-sm text-gray-700">إظهار QR للتتبّع</span>
+            </label>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">حجم QR</label>
+              <input type="number" min={100} max={320} name="qrSize" value={print.qrSize} onChange={handlePrintChange} className="w-full border rounded p-2" />
+            </div>
+
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="showDevicePassword" checked={!!print.showDevicePassword} onChange={handlePrintChange} />
+              <span className="text-sm text-gray-700">عرض كلمة المرور على الإيصال</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="showSerialBarcode" checked={!!print.showSerialBarcode} onChange={handlePrintChange} />
+              <span className="text-sm text-gray-700">إظهار باركود الرقم التسلسلي</span>
+            </label>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">عرض الباركود</label>
+              <input type="number" min={0.6} max={2} step={0.1} name="barcodeWidth" value={print.barcodeWidth} onChange={handlePrintChange} className="w-full border rounded p-2" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">ارتفاع الباركود</label>
+              <input type="number" min={10} max={64} name="barcodeHeight" value={print.barcodeHeight} onChange={handlePrintChange} className="w-full border rounded p-2" />
+            </div>
+
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="compactMode" checked={!!print.compactMode} onChange={handlePrintChange} />
+              <span className="text-sm text-gray-700">وضع مضغوط (هوامش وخط أصغر)</span>
+            </label>
+
+            <div className="md:col-span-2 grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">هامش علوي</label>
+                <input type="number" name="margins.top" value={print.margins.top} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">هامش يمين</label>
+                <input type="number" name="margins.right" value={print.margins.right} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">هامش سفلي</label>
+                <input type="number" name="margins.bottom" value={print.margins.bottom} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">هامش يسار</label>
+                <input type="number" name="margins.left" value={print.margins.left} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+            </div>
+
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">اسم الفرع</label>
+                <input name="branchName" value={print.branchName} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">هاتف الفرع</label>
+                <input name="branchPhone" value={print.branchPhone} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">عنوان الفرع</label>
+                <input name="branchAddress" value={print.branchAddress} onChange={handlePrintChange} className="w-full border rounded p-2" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">تنسيق التاريخ</label>
+              <select name="dateDisplay" value={print.dateDisplay} onChange={handlePrintChange} className="w-full border rounded p-2">
+                <option value="both">كلاهما</option>
+                <option value="gregorian">ميلادي فقط</option>
+                <option value="hijri">هجري فقط</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">الشروط والأحكام (يدعم قوالب {'{{branchName}} {{requestNumber}} {{customerName}}'})</label>
+              <textarea name="terms" value={print.terms} onChange={handlePrintChange} className="w-full border rounded p-2 min-h-[140px]" />
             </div>
           </div>
         </section>

@@ -53,6 +53,7 @@ const quotationsRouter = require('./routes/quotations');
 const quotationItemsRouter = require('./routes/quotationItems');
 const warehousesRouter = require('./routes/warehouses');
 const inventoryItemsRouter = require('./routes/inventoryItems');
+const variablesRouter = require('./routes/variables');
 const stockLevelsRouter = require('./routes/stockLevels');
 const stockMovementsRouter = require('./routes/stockMovements');
 const authRouter = require('./routes/auth');
@@ -62,6 +63,7 @@ router.use('/cities', citiesRouter);
 router.use('/quotationitems', quotationItemsRouter);
 router.use('/warehouses', warehousesRouter);
 router.use('/inventoryitems', inventoryItemsRouter);
+router.use('/variables', variablesRouter);
 
 router.use('/branches', branchesRouter);
 router.use('/roles', rolesRouter);

@@ -1,0 +1,23 @@
+{
+  "title": "إيصال استلام",
+  "showLogo": true,
+  "logoUrl": "/assets/logo.png",
+  "showQr": true,
+  "qrSize": 180,
+  "showDevicePassword": false,
+  "showSerialBarcode": true,
+  "barcodeWidth": 1,
+  "barcodeHeight": 10,
+  "compactMode": false,
+  "branchName": "Fix Zone - فرع المعادي",
+  "branchAddress": "شارع 9، المعادي، القاهرة",
+  "branchPhone": "+20 100 000 0000",
+  "margins": {
+    "top": 16,
+    "right": 16,
+    "bottom": 16,
+    "left": 16
+  },
+  "dateDisplay": "both",
+  "terms": "- يُرجى الاحتفاظ بهذا الإيصال لمراجعة الطلب رقم {{requestNumber}} للعميل {{customerName}}.\n- الأجهزة تترك للفحص لمدة 48 ساعة قبل تقدير التكلفة النهائية.\n\n{{branchName}}\n{{branchAddress}}\nهاتف: {{branchPhone}}\n\nسياسة الضمان:\n- الضمان يشمل العطل المُصلّح فقط ولا يشمل الأعطال الأخرى.\n- إلغاء الضمان في حال وجود كسر أو سوائل أو عبث بعد التسليم."
+}

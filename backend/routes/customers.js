@@ -13,6 +13,43 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Search customers by name or phone with pagination
+router.get('/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    const page = parseInt(req.query.page || '1', 10);
+    const pageSize = Math.min(parseInt(req.query.pageSize || '20', 10), 100);
+    const offset = (page - 1) * pageSize;
+
+    if (!q) {
+      return res.json({ data: [], pagination: { page, pageSize, total: 0 } });
+    }
+
+    const like = `%${q}%`;
+    const [rows] = await db.query(
+      `SELECT id, name, phone, email, address
+       FROM Customer
+       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)
+       ORDER BY createdAt DESC
+       LIMIT ? OFFSET ?`,
+      [like, like, pageSize, offset]
+    );
+
+    // Get total count
+    const [countRows] = await db.query(
+      `SELECT COUNT(*) as cnt
+       FROM Customer
+       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)`,
+      [like, like]
+    );
+
+    res.json({ data: rows, pagination: { page, pageSize, total: countRows[0]?.cnt || 0 } });
+  } catch (err) {
+    console.error('Error searching customers:', err);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 // Get customer by ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params;

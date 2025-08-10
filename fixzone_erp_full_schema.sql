@@ -98,6 +98,36 @@ CREATE TABLE Customer (
 -- Devices & Device Batches
 -- ----------------------
 
+-- ----------------------
+-- Variables (Brands, Accessories)
+-- ----------------------
+
+CREATE TABLE VariableCategory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    scope ENUM('GLOBAL','DEVICE','REPAIR','CUSTOMER') DEFAULT 'GLOBAL',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+CREATE TABLE VariableOption (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    categoryId INT NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    value VARCHAR(100) NOT NULL,
+    deviceType VARCHAR(100) DEFAULT NULL,
+    isActive BOOLEAN DEFAULT TRUE,
+    sortOrder INT DEFAULT 0,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL,
+    UNIQUE KEY uq_varopt_cat_val_dev (categoryId, value, deviceType),
+    FOREIGN KEY (categoryId) REFERENCES VariableCategory(id)
+);
+
+
 CREATE TABLE DeviceBatch (
     id INT AUTO_INCREMENT PRIMARY KEY,
     clientId INT,
@@ -117,15 +147,22 @@ CREATE TABLE Device (
     customerId INT,
     deviceType VARCHAR(100),
     brand VARCHAR(100),
+    brandId INT NULL,
     model VARCHAR(100),
+    cpu VARCHAR(100),
+    gpu VARCHAR(100),
+    ram VARCHAR(50),
+    storage VARCHAR(50),
     serialNumber VARCHAR(100),
+    devicePassword VARCHAR(100) NULL,
     customFields JSON,
     deviceBatchId INT DEFAULT NULL,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deletedAt DATETIME DEFAULT NULL,
     FOREIGN KEY (customerId) REFERENCES Customer(id),
-    FOREIGN KEY (deviceBatchId) REFERENCES DeviceBatch(id)
+    FOREIGN KEY (deviceBatchId) REFERENCES DeviceBatch(id),
+    FOREIGN KEY (brandId) REFERENCES VariableOption(id)
 );
 
 -- ----------------------
@@ -138,6 +175,7 @@ CREATE TABLE RepairRequest (
     reportedProblem TEXT,
     technicianReport TEXT,
     status ENUM('RECEIVED','INSPECTION','AWAITING_APPROVAL','UNDER_REPAIR','READY_FOR_DELIVERY','DELIVERED','REJECTED','WAITING_PARTS') DEFAULT 'RECEIVED',
+    trackingToken VARCHAR(64) UNIQUE DEFAULT NULL,
     customerId INT,
     branchId INT,
     technicianId INT,
@@ -154,6 +192,20 @@ CREATE TABLE RepairRequest (
     FOREIGN KEY (branchId) REFERENCES Branch(id),
     FOREIGN KEY (technicianId) REFERENCES User(id),
     FOREIGN KEY (deviceBatchId) REFERENCES DeviceBatch(id)
+);
+
+-- جدول ربط لملحقات/متعلقات الطلب (Accessories)
+CREATE TABLE RepairRequestAccessory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    repairRequestId INT NOT NULL,
+    accessoryOptionId INT NOT NULL,
+    quantity INT DEFAULT 1,
+    notes VARCHAR(255) DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
+    FOREIGN KEY (accessoryOptionId) REFERENCES VariableOption(id),
+    UNIQUE KEY uq_rr_acc (repairRequestId, accessoryOptionId)
 );
 
 CREATE TABLE StatusUpdateLog (

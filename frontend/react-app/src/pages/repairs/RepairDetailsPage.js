@@ -710,6 +710,74 @@ const RepairDetailsPage = () => {
               </SimpleCardContent>
             </SimpleCard>
           )}
+
+          {/* مواصفات الجهاز */}
+          {repair && (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center">
+                  <Wrench className="w-5 h-5 ml-2" />
+                  مواصفات الجهاز
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="space-y-2">
+                  <div className="text-sm text-gray-600">{repair.deviceType || 'نوع غير محدد'}</div>
+                  <div className="text-sm text-gray-600">{repair.deviceBrand || 'ماركة غير محددة'}</div>
+                  {repair.deviceModel && (
+                    <div className="text-sm text-gray-600">الموديل: {repair.deviceModel}</div>
+                  )}
+                  {repair.serialNumber && (
+                    <div className="text-sm text-gray-600 en-text">S/N: {repair.serialNumber}</div>
+                  )}
+                </div>
+                {/* الحقول التفصيلية */}
+                {(() => {
+                  const specs = repair.deviceSpecs || {};
+                  const items = [
+                    { k: 'cpu', label: 'المعالج (CPU)' },
+                    { k: 'gpu', label: 'كرت الشاشة (GPU)' },
+                    { k: 'ram', label: 'الذاكرة (RAM)' },
+                    { k: 'storage', label: 'التخزين (Storage)' },
+                  ].filter(it => (specs?.[it.k] && String(specs[it.k]).trim().length > 0));
+                  if (items.length === 0) return null;
+                  return (
+                    <div className="mt-3 space-y-1">
+                      {items.map((it) => (
+                        <div key={it.k} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700">{it.label}</span>
+                          <span className="text-gray-900 en-text">{specs[it.k]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </SimpleCardContent>
+            </SimpleCard>
+          )}
+
+          {/* المتعلقات المستلمة */}
+          {repair && (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center">
+                  <Paperclip className="w-5 h-5 ml-2" />
+                  المتعلقات المستلمة
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                {Array.isArray(repair.accessories) && repair.accessories.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {repair.accessories.map((a) => (
+                      <span key={a.id} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">{a.label}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">لا توجد متعلقات مستلمة</div>
+                )}
+              </SimpleCardContent>
+            </SimpleCard>
+          )}
         </div>
       </div>
 

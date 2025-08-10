@@ -61,6 +61,12 @@ class ApiService {
     return this.request(`/customers${queryString ? `?${queryString}` : ''}`);
   }
 
+  // البحث عن العملاء بالاسم أو الهاتف مع ترقيم الصفحات
+  async searchCustomers(q, page = 1, pageSize = 20) {
+    const qs = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }).toString();
+    return this.request(`/customers/search?${qs}`);
+  }
+
   // جلب عميل واحد
   async getCustomer(id) {
     return this.request(`/customers/${id}`);
@@ -212,6 +218,20 @@ class ApiService {
     return this.request(`/repairs/${id}/attachments`);
   }
 
+  // ==================
+  // Print Settings APIs
+  // ==================
+  async getPrintSettings() {
+    return this.request(`/repairs/print-settings`);
+  }
+
+  async updatePrintSettings(payload) {
+    return this.request(`/repairs/print-settings`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async uploadAttachment(id, file, extra = {}) {
     const form = new FormData();
     form.append('file', file);
@@ -308,6 +328,17 @@ class ApiService {
   // جلب الإشعارات
   async getNotifications() {
     return this.request('/notifications');
+  }
+
+  // ==================
+  // Variables APIs
+  // ==================
+  async getVariables({ category, deviceType, active } = {}) {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (deviceType) params.set('deviceType', deviceType);
+    if (typeof active !== 'undefined') params.set('active', active ? '1' : '0');
+    return this.request(`/variables${params.toString() ? `?${params.toString()}` : ''}`);
   }
 }
 
