@@ -129,7 +129,7 @@ router.get('/', async (req, res) => {
       deviceType: row.deviceType || 'غير محدد',
       deviceBrand: row.deviceBrand || 'غير محدد',
       deviceModel: row.deviceModel || 'غير محدد',
-      problemDescription: row.reportedProblem || 'لا توجد تفاصيل',
+      problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل محددة للمشكلة',
       status: getStatusMapping(row.status),
       priority: 'medium', // افتراضي
       estimatedCost: 0, // افتراضي
@@ -470,6 +470,7 @@ router.get('/:id', async (req, res) => {
       deviceModel: repair.deviceModel,
       serialNumber: repair.serialNumber,
       reportedProblem: repair.reportedProblem,
+      problemDescription: repair.reportedProblem || repair.problemDescription || null,
       status: getStatusMapping(repair.status),
       createdAt: repair.createdAt,
       updatedAt: repair.updatedAt,

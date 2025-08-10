@@ -432,7 +432,7 @@ const RepairDetailsPage = () => {
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشكلة</label>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-900">{repair.problemDescription}</p>
+                      <p className="text-gray-900">{repair.problemDescription || repair.reportedProblem || '—'}</p>
                     </div>
                   </div>
                   {repair.technicianNotes && (
