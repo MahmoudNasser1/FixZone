@@ -8,6 +8,7 @@ import {
   CreditCard, Receipt, Banknote, Calculator, Building2, MapPin
 } from 'lucide-react';
 import useUIStore from '../../stores/uiStore';
+import useAuthStore from '../../stores/authStore';
 import { Badge } from '../ui/Badge';
 import { cn } from '../../lib/utils';
 
@@ -25,6 +26,7 @@ const navItems = [
       { href: '/repairs', label: 'طلبات الإصلاح', icon: Wrench, badge: '12' },
       { href: '/repairs/new', label: 'طلب إصلاح جديد', icon: FileText },
       { href: '/repairs/tracking', label: 'تتبع الطلبات', icon: Activity },
+      { href: '/services', label: 'الخدمات', icon: Wrench },
       {
         label: 'أنواع الأجهزة',
         icon: Monitor,
@@ -89,6 +91,7 @@ const navItems = [
     items: [
       { href: '/settings', label: 'إعدادات النظام', icon: Settings },
       { href: '/users', label: 'إدارة المستخدمين', icon: Shield },
+      { href: '/admin/roles', label: 'الأدوار والصلاحيات', icon: Shield },
       { href: '/branches', label: 'الفروع', icon: MapPin },
       { href: '/system', label: 'إعدادات النظام', icon: Database },
       { href: '/help', label: 'المساعدة', icon: HelpCircle },
@@ -99,6 +102,8 @@ const navItems = [
 const Sidebar = () => {
   const location = useLocation();
   const { isSidebarOpen } = useUIStore();
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = !!(user && (user.roleId === 1 || user.role === 'admin'));
   const [openMenus, setOpenMenus] = useState(new Set());
   const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات']));
 
@@ -125,6 +130,10 @@ const Sidebar = () => {
   };
 
   const renderMenuItem = (item, isSubItem = false) => {
+    // إخفاء رابط الأدوار عن غير الأدمن
+    if (item.href === '/admin/roles' && !isAdmin) {
+      return null;
+    }
     const isActive = location.pathname === item.href;
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isMenuOpen = openMenus.has(item.label);

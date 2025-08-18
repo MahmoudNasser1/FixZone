@@ -1,80 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const invoicesController = require('../controllers/invoicesController');
 
-// Get all invoices (excluding soft-deleted ones)
-router.get('/', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM Invoice WHERE deletedAt IS NULL');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching invoices:', err);
-    res.status(500).send('Server Error');
-  }
-});
+// Get all invoices with advanced filtering and pagination
+router.get('/', invoicesController.getAllInvoices);
 
-// Get invoice by ID
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await db.query('SELECT * FROM Invoice WHERE id = ? AND deletedAt IS NULL', [id]);
-    if (rows.length === 0) {
-      return res.status(404).send('Invoice not found');
-    }
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(`Error fetching invoice with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+// Get invoice statistics (place before dynamic :id route)
+router.get('/stats', invoicesController.getStatistics);
+
+// Bulk actions for invoices
+router.post('/bulk-action', invoicesController.bulkAction);
 
 // Create a new invoice
-router.post('/', async (req, res) => {
-  const { totalAmount, amountPaid, status, repairRequestId, currency, taxAmount } = req.body;
-  if (!totalAmount || !amountPaid || !status || !repairRequestId || !currency || !taxAmount) {
-    return res.status(400).send('Total amount, amount paid, status, repair request ID, currency, and tax amount are required');
-  }
-  try {
-    const [result] = await db.query('INSERT INTO Invoice (totalAmount, amountPaid, status, repairRequestId, currency, taxAmount) VALUES (?, ?, ?, ?, ?, ?)', [totalAmount, amountPaid, status, repairRequestId, currency, taxAmount]);
-    res.status(201).json({ id: result.insertId, totalAmount, amountPaid, status, repairRequestId, currency, taxAmount });
-  } catch (err) {
-    console.error('Error creating invoice:', err);
-    res.status(500).send('Server Error');
-  }
-});
+router.post('/', invoicesController.createInvoice);
+
+// Generate invoice PDF
+router.get('/:id/pdf', invoicesController.generatePDF);
 
 // Update an invoice
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { totalAmount, amountPaid, status, repairRequestId, currency, taxAmount } = req.body;
-  if (!totalAmount || !amountPaid || !status || !repairRequestId || !currency || !taxAmount) {
-    return res.status(400).send('Total amount, amount paid, status, repair request ID, currency, and tax amount are required');
-  }
-  try {
-    const [result] = await db.query('UPDATE Invoice SET totalAmount = ?, amountPaid = ?, status = ?, repairRequestId = ?, currency = ?, taxAmount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [totalAmount, amountPaid, status, repairRequestId, currency, taxAmount, id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Invoice not found or already deleted');
-    }
-    res.json({ message: 'Invoice updated successfully' });
-  } catch (err) {
-    console.error(`Error updating invoice with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+router.put('/:id', invoicesController.updateInvoice);
 
 // Soft delete an invoice
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [result] = await db.query('DELETE FROM Invoice WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Invoice not found');
-    }
-    res.json({ message: 'Invoice deleted successfully' });
-  } catch (err) {
-    console.error(`Error deleting invoice with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+router.delete('/:id', invoicesController.deleteInvoice);
+
+// Get invoice by ID with full details
+router.get('/:id', invoicesController.getInvoiceById);
+
+// Invoice items operations
+router.post('/:id/items', invoicesController.addInvoiceItem);
+router.delete('/:id/items/:itemId', invoicesController.removeInvoiceItem);
+
 
 module.exports = router;

@@ -14,8 +14,8 @@ exports.login = async (req, res) => {
     }
 
     try {
-        // Check if user exists by email or phone
-        const query = 'SELECT * FROM user WHERE (email = ? OR phone = ?) AND deletedAt IS NULL';
+        // Check if user exists by email or phone (table name and casing per schema: User)
+        const query = 'SELECT * FROM User WHERE (email = ? OR phone = ?) AND deletedAt IS NULL';
         const [rows] = await db.query(query, [loginIdentifier, loginIdentifier]);
         const user = rows[0];
 
@@ -40,8 +40,9 @@ exports.login = async (req, res) => {
         // Send the token in a secure, httpOnly cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-            sameSite: 'strict', // Or 'lax'
+            secure: false, // dev on http
+            sameSite: 'lax',
+            path: '/',
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
         });
 
@@ -67,7 +68,7 @@ exports.register = async (req, res) => {
 
     try {
         // Check if user already exists
-        const [existingUsers] = await db.query('SELECT id FROM user WHERE name = ? OR email = ?', [name, email]);
+        const [existingUsers] = await db.query('SELECT id FROM User WHERE name = ? OR email = ?', [name, email]);
         if (existingUsers.length > 0) {
             return res.status(400).json({ message: 'User with that username or email already exists' });
         }
@@ -75,10 +76,10 @@ exports.register = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10); // 10 salt rounds
 
-        // Insert new user into database
+        // Insert new user into database (schema uses roleId lowercase per SQL)
         const [result] = await db.query(
-            'INSERT INTO user (name, email, password, RoleID) VALUES (?, ?, ?, ?)',
-            [name, email, hashedPassword, roleId || 2] // Default RoleID to 2 if not provided
+            'INSERT INTO User (name, email, password, roleId) VALUES (?, ?, ?, ?)',
+            [name, email, hashedPassword, roleId || 2]
         );
 
         res.status(201).json({ message: 'User registered successfully', userId: result.insertId });

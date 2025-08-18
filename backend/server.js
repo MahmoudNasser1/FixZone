@@ -1,15 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all routes
+// Enable CORS for all routes (support frontend at 3001 and 3000 during dev)
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
+// Ensure cookies are parsed before routes
+app.use(cookieParser());
 
 app.use(express.json());
 app.use(cookieParser());
@@ -19,6 +25,9 @@ const apiRouter = require('./app');
 
 // Use the API router
 app.use('/api', apiRouter);
+
+// Serve uploads statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

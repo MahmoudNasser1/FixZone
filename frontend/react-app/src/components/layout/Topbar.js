@@ -69,8 +69,13 @@ const Topbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showQuickActions, setShowQuickActions] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (_) {
+      navigate('/login', { replace: true });
+    }
   };
 
   const handleSearch = (e) => {

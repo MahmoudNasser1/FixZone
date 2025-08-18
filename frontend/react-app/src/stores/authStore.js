@@ -32,12 +32,28 @@ const useAuthStore = create(
         }
       },
 
-      logout: () => {
-        set({
-          isAuthenticated: false,
-          user: null,
-          token: null,
-        });
+      // Restore session using /auth/me
+      restoreSession: async () => {
+        const API_URL = 'http://localhost:3000/api/auth';
+        try {
+          axios.defaults.withCredentials = true;
+          const response = await axios.get(`${API_URL}/me`);
+          const userData = response.data;
+          set({ isAuthenticated: true, user: userData, token: null });
+          return true;
+        } catch (_e) {
+          set({ isAuthenticated: false, user: null, token: null });
+          return false;
+        }
+      },
+
+      logout: async () => {
+        try {
+          const API_URL = 'http://localhost:3000/api/auth';
+          axios.defaults.withCredentials = true;
+          await axios.post(`${API_URL}/logout`);
+        } catch (_e) {}
+        set({ isAuthenticated: false, user: null, token: null });
       },
     }),
     {

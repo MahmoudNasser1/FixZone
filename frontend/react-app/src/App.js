@@ -33,15 +33,18 @@ import RepairPrintPage from './pages/repairs/RepairPrintPage';
 import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
 import { SettingsProvider } from './context/SettingsContext';
 import SystemSettingsPage from './pages/settings/SystemSettingsPage';
+import UsersPage from './pages/users/UsersPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
 import NotificationDemoPage from './pages/NotificationDemoPage';
+import InventoryPage from './pages/inventory/InventoryPage';
+import InvoicesPage from './pages/invoices/InvoicesPage';
+import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
+import ServicesCatalogPage from './pages/services/ServicesCatalogPage';
+import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
-// Placeholder components for routing
-const Repairs = () => <h1 className="text-2xl font-bold">Repair Tickets</h1>;
-const Inventory = () => <h1 className="text-2xl font-bold">Inventory</h1>;
-const Settings = () => <h1 className="text-2xl font-bold">Settings</h1>;
+// Placeholder components removed; using real pages instead
 
 // This component protects routes that require authentication.
 const ProtectedRoute = ({ children }) => {
@@ -53,6 +56,13 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return !isAuthenticated ? children : <Navigate to="/" replace />;
+};
+
+// Admin-only route wrapper
+const AdminRoute = ({ children }) => {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user && (user.roleId === 1 || user.role === 'admin');
+  return isAdmin ? children : <Navigate to="/" replace />;
 };
 
 function App() {
@@ -89,6 +99,9 @@ function App() {
                       <Route path="repairs/new" element={<NewRepairPage />} />
                       <Route path="repairs/:id" element={<RepairDetailsPage />} />
 
+                      {/* Services Catalog */}
+                      <Route path="services" element={<ServicesCatalogPage />} />
+
                       {/* Customers */}
                       <Route path="customers" element={<CustomersPage />} />
                       <Route path="customers/new" element={<NewCustomerPage />} />
@@ -100,8 +113,21 @@ function App() {
                       <Route path="companies/new" element={<NewCompanyPage />} />
 
                       {/* Inventory, Settings, Payments */}
-                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="inventory" element={<InventoryPage />} />
+                      {/* Invoices */}
+                      <Route path="invoices" element={<InvoicesPage />} />
+                      <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
                       <Route path="settings" element={<SystemSettingsPage />} />
+                       <Route path="users" element={<UsersPage />} />
+                      {/* Admin / Roles & Permissions */}
+                      <Route
+                        path="admin/roles"
+                        element={
+                          <AdminRoute>
+                            <RolesPermissionsPage />
+                          </AdminRoute>
+                        }
+                      />
                       <Route path="payments" element={<PaymentsPage />} />
 
                       {/* Demo */}

@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get all parts used entries
+// Get parts used entries (optionally filter by repairRequestId)
 router.get('/', async (req, res) => {
   try {
+    const { repairRequestId } = req.query;
+    if (repairRequestId) {
+      const [rows] = await db.query('SELECT * FROM PartsUsed WHERE repairRequestId = ?', [repairRequestId]);
+      return res.json(rows);
+    }
     const [rows] = await db.query('SELECT * FROM PartsUsed');
     res.json(rows);
   } catch (err) {

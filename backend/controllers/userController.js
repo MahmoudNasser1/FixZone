@@ -2,10 +2,63 @@ const db = require('../db');
 const bcrypt = require('bcryptjs');
 const { logActivity } = require('./activityLogController');
 
-// Get all users
+// Get all users with optional filtering, sorting, and pagination
 exports.getAllUsers = async (req, res) => {
     try {
-        const [users] = await db.query('SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM user');
+        const {
+            q,
+            roleId,
+            includeInactive,
+            sortBy = 'createdAt',
+            sortDir = 'DESC',
+            page,
+            pageSize
+        } = req.query;
+
+        const conditions = ['deletedAt IS NULL'];
+        const params = [];
+
+        if (q) {
+            conditions.push('(name LIKE ? OR email LIKE ?)');
+            params.push(`%${q}%`, `%${q}%`);
+        }
+        if (roleId) {
+            conditions.push('roleId = ?');
+            params.push(Number(roleId));
+        }
+        if (!includeInactive || includeInactive === 'false' || includeInactive === '0') {
+            conditions.push('isActive = 1');
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        // Whitelist sortable columns
+        const sortable = new Set(['id', 'name', 'email', 'roleId', 'isActive', 'createdAt', 'updatedAt']);
+        const orderBy = sortable.has(sortBy) ? sortBy : 'createdAt';
+        const direction = String(sortDir).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        // If pagination requested
+        const hasPagination = page !== undefined || pageSize !== undefined;
+        if (hasPagination) {
+            const pg = Math.max(1, parseInt(page || '1', 10));
+            const ps = Math.max(1, Math.min(100, parseInt(pageSize || '20', 10)));
+            const offset = (pg - 1) * ps;
+
+            const [countRows] = await db.query(`SELECT COUNT(*) AS cnt FROM User ${whereClause}`, params);
+            const total = countRows[0]?.cnt || 0;
+
+            const [rows] = await db.query(
+                `SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM User ${whereClause} ORDER BY ${orderBy} ${direction} LIMIT ? OFFSET ?`,
+                [...params, ps, offset]
+            );
+            return res.json({ items: rows, total, page: pg, pageSize: ps });
+        }
+
+        // Without pagination: maintain backward compatible array response
+        const [users] = await db.query(
+            `SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM User ${whereClause} ORDER BY ${orderBy} ${direction}`,
+            params
+        );
         res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -17,7 +70,10 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
     const { id } = req.params;
     try {
-        const [user] = await db.query('SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM user WHERE id = ?', [id]);
+        const [user] = await db.query(
+            'SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM User WHERE id = ? AND deletedAt IS NULL',
+            [id]
+        );
         if (!user.length) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -52,7 +108,7 @@ exports.updateUser = async (req, res) => {
 
     try {
         const [result] = await db.query(
-            `UPDATE user SET ${updateFields.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+            `UPDATE User SET ${updateFields.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
             updateValues
         );
 
@@ -71,7 +127,7 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
-        const [result] = await db.query('UPDATE user SET deletedAt = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+        const [result] = await db.query('UPDATE User SET deletedAt = CURRENT_TIMESTAMP WHERE id = ?', [id]);
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -86,7 +142,7 @@ exports.deleteUser = async (req, res) => {
 // Get all roles
 exports.getAllRoles = async (req, res) => {
     try {
-        const [roles] = await db.query('SELECT * FROM role');
+        const [roles] = await db.query('SELECT * FROM Role');
         res.json(roles);
     } catch (error) {
         console.error('Error fetching roles:', error);

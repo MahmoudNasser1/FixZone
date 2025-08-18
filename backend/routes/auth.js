@@ -8,6 +8,17 @@ const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 router.post('/login', authController.login);
 router.post('/register', authController.register);
 
+// Current user (restore session)
+router.get('/me', authMiddleware, (req, res) => {
+    res.json({ id: req.user.id, role: req.user.role, name: req.user.name });
+});
+
+// Logout (clear cookie)
+router.post('/logout', (req, res) => {
+    res.clearCookie('token', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
+    res.json({ success: true });
+});
+
 // Protected route example
 
 // Protected route accessible by any authenticated user

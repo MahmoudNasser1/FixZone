@@ -2,13 +2,51 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get all stock levels
+// Get stock levels (optionally filter by inventoryItemId and/or warehouseId)
 router.get('/', async (req, res) => {
   try {
+    const { inventoryItemId, warehouseId } = req.query;
+    if (inventoryItemId || warehouseId) {
+      const where = [];
+      const params = [];
+      if (inventoryItemId) { where.push('inventoryItemId = ?'); params.push(inventoryItemId); }
+      if (warehouseId) { where.push('warehouseId = ?'); params.push(warehouseId); }
+      const sql = `SELECT * FROM StockLevel ${where.length ? 'WHERE ' + where.join(' AND ') : ''}`;
+      const [rows] = await db.query(sql, params);
+      return res.json(rows);
+    }
     const [rows] = await db.query('SELECT * FROM StockLevel');
     res.json(rows);
   } catch (err) {
     console.error('Error fetching stock levels:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Get low stock items (by minLevel threshold or explicit isLowStock flag)
+router.get('/low-stock', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+        sl.id AS stockLevelId,
+        ii.id AS inventoryItemId,
+        ii.sku,
+        ii.name,
+        ii.type,
+        sl.quantity,
+        sl.minLevel,
+        sl.isLowStock,
+        w.id AS warehouseId,
+        w.name AS warehouseName,
+        (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1) AS isLow
+      FROM StockLevel sl
+      INNER JOIN InventoryItem ii ON ii.id = sl.inventoryItemId
+      INNER JOIN Warehouse w ON w.id = sl.warehouseId
+      WHERE (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1)
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching low stock items:', err);
     res.status(500).send('Server Error');
   }
 });

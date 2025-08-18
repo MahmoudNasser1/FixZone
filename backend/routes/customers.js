@@ -1,12 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Get all customers
+// Get all customers (optional pagination & search)
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM Customer WHERE deletedAt IS NULL');
-    res.json(rows);
+    const page = parseInt(req.query.page || '0', 10);
+    const pageSize = Math.min(parseInt(req.query.pageSize || '20', 10), 100);
+    const q = (req.query.q || '').trim();
+
+    // If no pagination requested, return full list for backward compatibility
+    if (!page) {
+      const [rows] = await db.query('SELECT * FROM Customer WHERE deletedAt IS NULL ORDER BY createdAt DESC');
+      return res.json(rows);
+    }
+
+    const where = ['deletedAt IS NULL'];
+    const params = [];
+    if (q) {
+      where.push('(name LIKE ? OR phone LIKE ? OR email LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const offset = (page - 1) * pageSize;
+    const [rows] = await db.query(
+      `SELECT id, name, phone, email, address, createdAt, updatedAt
+       FROM Customer
+       ${whereSql}
+       ORDER BY createdAt DESC
+       LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset]
+    );
+    const [countRows] = await db.query(
+      `SELECT COUNT(*) as cnt FROM Customer ${whereSql}`,
+      params
+    );
+    return res.json({ data: rows, pagination: { page, pageSize, total: countRows[0]?.cnt || 0 } });
   } catch (err) {
     console.error('Error fetching customers:', err);
     res.status(500).send('Server Error');
@@ -66,7 +97,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new customer
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   const { name, phone, email, address, customFields } = req.body;
   if (!name) {
     return res.status(400).send('Customer name is required');
@@ -81,7 +112,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a customer
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { name, phone, email, address, customFields } = req.body;
   if (!name) {
@@ -100,10 +131,10 @@ router.put('/:id', async (req, res) => {
 });
 
 // Soft delete a customer
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('DELETE FROM Customer WHERE id = ?', [id]);
+    const [result] = await db.query('UPDATE Customer SET deletedAt = NOW() WHERE id = ? AND deletedAt IS NULL', [id]);
     if (result.affectedRows === 0) {
       return res.status(404).send('Customer not found');
     }

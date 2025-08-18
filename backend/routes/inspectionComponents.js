@@ -2,9 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get all inspection components
+// Get all inspection components or by reportId
 router.get('/', async (req, res) => {
   try {
+    if (req.query.reportId) {
+      const [rows] = await db.query('SELECT * FROM InspectionComponent WHERE inspectionReportId = ?', [req.query.reportId]);
+      return res.json(rows);
+    }
     const [rows] = await db.query('SELECT * FROM InspectionComponent');
     res.json(rows);
   } catch (err) {

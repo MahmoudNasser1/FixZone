@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // GET /api/companies - جلب جميع الشركات
 router.get('/', async (req, res) => {
   try {
-    const { search, status, limit, offset } = req.query;
+    const { search, status } = req.query;
+    const page = parseInt(req.query.page || '0', 10);
+    const pageSize = Math.min(parseInt(req.query.pageSize || '20', 10), 100);
     
     let query = `
       SELECT 
@@ -32,20 +35,24 @@ router.get('/', async (req, res) => {
     
     query += ` GROUP BY c.id ORDER BY c.createdAt DESC`;
     
-    // إضافة pagination
-    if (limit) {
-      query += ` LIMIT ?`;
-      params.push(parseInt(limit));
-      
-      if (offset) {
-        query += ` OFFSET ?`;
-        params.push(parseInt(offset));
-      }
+    if (!page) {
+      const companies = await db.query(query, params);
+      return res.json(companies);
     }
-    
-    const companies = await db.query(query, params);
-    
-    res.json(companies);
+
+    // pagination
+    const offsetVal = (page - 1) * pageSize;
+    const paginatedQuery = `${query} LIMIT ? OFFSET ?`;
+    const companies = await db.query(paginatedQuery, [...params, pageSize, offsetVal]);
+
+    // total count
+    const [countRows] = await db.query(
+      `SELECT COUNT(*) as cnt FROM Company c ${search || status ? 'WHERE' : ''}
+       ${[search ? '(c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)' : null, status ? 'c.status = ?' : null].filter(Boolean).join(' AND ')}`,
+      (search ? [`%${search}%`,`%${search}%`,`%${search}%`] : []).concat(status ? [status] : [])
+    );
+
+    res.json({ data: companies, pagination: { page, pageSize, total: countRows?.[0]?.cnt || 0 } });
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ 
@@ -87,7 +94,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/companies - إنشاء شركة جديدة
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const {
       name,
@@ -148,7 +155,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/companies/:id - تحديث شركة
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -209,7 +216,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/companies/:id - حذف شركة (soft delete)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     

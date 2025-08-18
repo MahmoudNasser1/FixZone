@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
+import useAuthStore from './stores/authStore';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+const Boot = () => {
+  const restoreSession = useAuthStore((s) => s.restoreSession);
+  useEffect(() => { restoreSession(); }, [restoreSession]);
+  return <App />;
+};
+
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <Boot />
     </BrowserRouter>
   </React.StrictMode>
 );

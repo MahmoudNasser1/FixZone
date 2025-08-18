@@ -6,9 +6,9 @@ const tabs = [
   { key: 'general', label: 'عام' },
   { key: 'currency', label: 'العملة' },
   { key: 'printing', label: 'الطباعة' },
-  { key: 'locale', label: 'المحلية واللغة' },
-  { key: 'receipt', label: 'الإيصالات' },
   { key: 'receiptPrint', label: 'إيصال الاستلام' },
+  { key: 'locale', label: 'المحلية واللغة' },
+  { key: 'systemSettings', label: 'إعدادات النظام العامة' },
 ];
 
 export default function SystemSettingsPage() {
@@ -68,6 +68,87 @@ export default function SystemSettingsPage() {
     }).catch(console.error);
     return () => { mounted = false; };
   }, [api]);
+
+  // System settings list state
+  const [sysLoading, setSysLoading] = useState(false);
+  const [sysError, setSysError] = useState('');
+  const [sysItems, setSysItems] = useState([]); // [{key, value, description}]
+  const [sysForm, setSysForm] = useState({ key: '', value: '', description: '' });
+  const [editingKey, setEditingKey] = useState('');
+
+  // Load system settings when tab becomes active
+  useEffect(() => {
+    if (active !== 'systemSettings') return;
+    let mounted = true;
+    const loadSys = async () => {
+      try {
+        setSysLoading(true);
+        const list = await api.listSystemSettings();
+        if (!mounted) return;
+        setSysItems(Array.isArray(list) ? list : (list.items || []));
+        setSysError('');
+      } catch (e) {
+        if (!mounted) return;
+        setSysError('تعذر تحميل إعدادات النظام');
+      } finally {
+        if (mounted) setSysLoading(false);
+      }
+    };
+    loadSys();
+    return () => { mounted = false; };
+  }, [active]);
+
+  const handleSysEdit = async (key) => {
+    try {
+      const item = await api.getSystemSetting(key);
+      setEditingKey(key);
+      setSysForm({ key, value: item?.value ?? '', description: item?.description ?? '' });
+    } catch (e) {
+      alert('تعذر جلب الإعداد');
+    }
+  };
+
+  const handleSysDelete = async (key) => {
+    if (!confirm('حذف هذا الإعداد؟')) return;
+    const prev = sysItems;
+    setSysItems((items) => items.filter((i) => i.key !== key));
+    try {
+      await api.deleteSystemSetting(key);
+    } catch (e) {
+      alert('تعذر الحذف');
+      setSysItems(prev);
+    }
+  };
+
+  const handleSysSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { key: sysForm.key.trim(), value: sysForm.value, description: sysForm.description };
+      if (!payload.key) {
+        alert('المفتاح مطلوب');
+        return;
+      }
+      if (editingKey && editingKey === payload.key) {
+        await api.updateSystemSetting(payload.key, payload);
+      } else if (editingKey && editingKey !== payload.key) {
+        // تغيير المفتاح: أنشئ جديد ثم احذف القديم
+        await api.createSystemSetting(payload);
+        await api.deleteSystemSetting(editingKey);
+      } else {
+        await api.createSystemSetting(payload);
+      }
+      // تحديث القائمة محلياً
+      const next = sysItems.filter((i) => i.key !== (editingKey || payload.key));
+      next.push(payload);
+      next.sort((a, b) => a.key.localeCompare(b.key));
+      setSysItems(next);
+      setEditingKey('');
+      setSysForm({ key: '', value: '', description: '' });
+      alert('تم الحفظ');
+    } catch (e) {
+      alert('تعذر الحفظ');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -401,6 +482,67 @@ export default function SystemSettingsPage() {
               <label className="block text-sm text-gray-600 mb-1">صيغة التاريخ</label>
               <input name="dateFormat" value={form.dateFormat} onChange={handleChange} className="w-full border rounded p-2" />
             </div>
+          </div>
+        </section>
+      )}
+
+      {active === 'systemSettings' && (
+        <section className="space-y-4 max-w-5xl">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">إعدادات النظام العامة</h2>
+            {sysLoading && <div className="text-sm text-gray-500">جاري التحميل...</div>}
+          </div>
+          {sysError && <div className="text-red-600 text-sm">{sysError}</div>}
+
+          <form onSubmit={handleSysSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end border rounded p-3 bg-white">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">المفتاح (Key)</label>
+              <input value={sysForm.key} onChange={(e) => setSysForm({ ...sysForm, key: e.target.value })} className="w-full border rounded p-2" placeholder="مثال: defaultBranch" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">القيمة (Value)</label>
+              <input value={sysForm.value} onChange={(e) => setSysForm({ ...sysForm, value: e.target.value })} className="w-full border rounded p-2" placeholder="قيمة نصية أو JSON" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">الوصف</label>
+              <input value={sysForm.description} onChange={(e) => setSysForm({ ...sysForm, description: e.target.value })} className="w-full border rounded p-2" placeholder="وصف مختصر" />
+            </div>
+            <div className="md:col-span-4 flex gap-2 justify-end">
+              {editingKey && (
+                <button type="button" onClick={() => { setEditingKey(''); setSysForm({ key: '', value: '', description: '' }); }} className="px-3 py-2 border rounded">إلغاء</button>
+              )}
+              <button type="submit" className="px-4 py-2 rounded text-white bg-blue-600">{editingKey ? 'تحديث' : 'إضافة'}</button>
+            </div>
+          </form>
+
+          <div className="overflow-auto border rounded bg-white">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="p-2 text-right border-b">المفتاح</th>
+                  <th className="p-2 text-right border-b">القيمة</th>
+                  <th className="p-2 text-right border-b">الوصف</th>
+                  <th className="p-2 text-right border-b">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sysItems.sort((a, b) => a.key.localeCompare(b.key)).map((it) => (
+                  <tr key={it.key}>
+                    <td className="p-2 border-b align-top font-mono text-sm">{it.key}</td>
+                    <td className="p-2 border-b align-top">
+                      <pre className="text-xs whitespace-pre-wrap break-words">{String(it.value)}</pre>
+                    </td>
+                    <td className="p-2 border-b align-top text-sm text-gray-600">{it.description}</td>
+                    <td className="p-2 border-b align-top">
+                      <div className="flex gap-2">
+                        <button onClick={() => handleSysEdit(it.key)} className="px-3 py-1 rounded bg-gray-200">تعديل</button>
+                        <button onClick={() => handleSysDelete(it.key)} className="px-3 py-1 rounded bg-red-600 text-white">حذف</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       )}

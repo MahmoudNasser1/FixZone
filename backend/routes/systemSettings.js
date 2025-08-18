@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const auth = require('../middleware/authMiddleware');
+const authorize = require('../middleware/authorizeMiddleware');
 
 // Get all system settings
-router.get('/', async (req, res) => {
+router.get('/', auth, authorize([1]), async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM SystemSetting');
     res.json(rows);
@@ -14,7 +16,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get system setting by ID (or by key, if preferred)
-router.get('/:key', async (req, res) => {
+router.get('/:key', auth, authorize([1]), async (req, res) => {
   const { key } = req.params;
   try {
     const [rows] = await db.query('SELECT * FROM SystemSetting WHERE `key` = ?', [key]);
@@ -29,7 +31,7 @@ router.get('/:key', async (req, res) => {
 });
 
 // Create a new system setting
-router.post('/', async (req, res) => {
+router.post('/', auth, authorize([1]), async (req, res) => {
   const { key, value, type, description } = req.body;
   if (!key || !value) {
     return res.status(400).send('Key and value are required');
@@ -47,7 +49,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a system setting
-router.put('/:key', async (req, res) => {
+router.put('/:key', auth, authorize([1]), async (req, res) => {
   const { key } = req.params;
   const { value, type, description } = req.body;
   if (!value) {
@@ -69,7 +71,7 @@ router.put('/:key', async (req, res) => {
 });
 
 // Hard delete a system setting
-router.delete('/:key', async (req, res) => {
+router.delete('/:key', auth, authorize([1]), async (req, res) => {
   const { key } = req.params;
   try {
     const [result] = await db.query('DELETE FROM SystemSetting WHERE `key` = ?', [key]);

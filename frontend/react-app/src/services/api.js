@@ -17,6 +17,7 @@ class ApiService {
     }
     const config = {
       headers,
+      credentials: 'include',
       ...options,
     };
 
@@ -35,6 +36,18 @@ class ApiService {
   }
 
   // ==================
+  // Auth APIs
+  // ==================
+
+  async authMe() {
+    return this.request('/auth/me');
+  }
+
+  async logout() {
+    return this.request('/auth/logout', { method: 'POST' });
+  }
+
+  // ==================
   // Users APIs
   // ==================
   
@@ -44,11 +57,17 @@ class ApiService {
     return this.request(`/users${qs ? `?${qs}` : ''}`);
   }
 
-  // جلب الفنيين فقط (يفترض أن الـ backend يدعم التصفية عبر الدور)
+  // تحديث مستخدم (دور/نشط/بيانات عامة)
+  async updateUser(id, payload) {
+    return this.request(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // جلب الفنيين فقط من راوتر مخصص
   async listTechnicians() {
-    // ملاحظة: وفق المخطط، الفني هو سجل في جدول User مع دور يشير إلى Role('Technician').
-    // إذا كان الـ backend يستخدم اسم دور مختلف (مثل TECHNICIAN)، حدث القيمة أدناه.
-    return this.listUsers({ role: 'Technician' });
+    return this.request('/technicians');
   }
 
   // ==================
@@ -188,21 +207,8 @@ class ApiService {
   }
 
   // سجلات/خط زمني لطلب الإصلاح
-  async getRepairLogs(id, params = {}) {
-    // لا يوجد مسار /repairs/:id/logs في الـ backend الحالي.
-    // سنستخدم /audit-logs ونرشح في الواجهة.
-    const all = await this.request(`/audit-logs`);
-    const logs = (Array.isArray(all) ? all : []).filter(
-      (l) => (l.entityType === 'RepairRequest' && String(l.entityId) === String(id))
-    );
-    // تحويل الصيغة لتناسق العرض
-    return logs.map((l) => ({
-      id: l.id,
-      content: l.details || '',
-      author: l.userId ? `مستخدم #${l.userId}` : 'غير معروف',
-      createdAt: l.createdAt || l.timestamp || new Date().toISOString(),
-      type: l.action || 'note',
-    }));
+  async getRepairLogs(id) {
+    return this.request(`/repairs/${id}/logs`);
   }
 
   // إسناد فني للطلب
@@ -210,6 +216,41 @@ class ApiService {
     return this.request(`/repairs/${id}/assign`, {
       method: 'POST',
       body: JSON.stringify({ technicianId }),
+    });
+  }
+
+  // ==================
+  // Inspection APIs
+  // ==================
+  async createInspectionReport(payload) {
+    return this.request('/inspectionreports', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateInspectionReport(id, payload) {
+    return this.request(`/inspectionreports/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async listInspectionComponents(reportId) {
+    return this.request(`/inspectioncomponents?reportId=${reportId}`);
+  }
+
+  async addInspectionComponent(payload) {
+    return this.request('/inspectioncomponents', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateInspectionComponent(id, payload) {
+    return this.request(`/inspectioncomponents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     });
   }
 
@@ -308,7 +349,7 @@ class ApiService {
       beforeValue: null,
       afterValue: null,
     };
-    return this.request('/audit-logs', { method: 'POST', body: JSON.stringify(payload) });
+    return this.request('/auditlogs', { method: 'POST', body: JSON.stringify(payload) });
   }
 
   // ==================
@@ -340,9 +381,70 @@ class ApiService {
     if (typeof active !== 'undefined') params.set('active', active ? '1' : '0');
     return this.request(`/variables${params.toString() ? `?${params.toString()}` : ''}`);
   }
+
+  // ==================
+  // Roles & Permissions APIs
+  // ==================
+  async listRoles() {
+    return this.request('/roles'); // Admin-only
+  }
+
+  async getRole(id) {
+    return this.request(`/roles/${id}`);
+  }
+
+  async createRole(payload) {
+    return this.request('/roles', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateRole(id, payload) {
+    return this.request(`/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteRole(id) {
+    return this.request(`/roles/${id}`, { method: 'DELETE' });
+  }
+
+  // ==================
+  // System Settings APIs
+  // ==================
+  async listSystemSettings() {
+    return this.request('/systemsettings');
+  }
+
+  async getSystemSetting(key) {
+    return this.request(`/systemsettings/${encodeURIComponent(key)}`);
+  }
+
+  async createSystemSetting(setting) {
+    return this.request('/systemsettings', {
+      method: 'POST',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  async updateSystemSetting(key, setting) {
+    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  async deleteSystemSetting(key) {
+    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // إنشاء instance واحد للاستخدام في التطبيق
 const apiService = new ApiService();
 
 export default apiService;
+export { apiService };

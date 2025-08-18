@@ -28,21 +28,72 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new inspection report
+// Create a new inspection report (resilient to missing FKs)
 router.post('/', async (req, res) => {
-  const { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body;
-  if (!repairRequestId || !inspectionTypeId || !technicianId || !reportDate) {
-    return res.status(400).send('repairRequestId, inspectionTypeId, technicianId, and reportDate are required');
+  let { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body || {};
+  if (!repairRequestId || !reportDate) {
+    return res.status(400).json({ error: 'repairRequestId and reportDate are required' });
   }
   try {
+    // Ensure repair exists
+    const [repRows] = await db.query('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairRequestId]);
+    if (!repRows || repRows.length === 0) {
+      return res.status(404).json({ error: 'Repair request not found' });
+    }
+
+    // Validate/resolve inspectionTypeId
+    let validInspectionTypeId = null;
+    if (inspectionTypeId) {
+      const [it] = await db.query('SELECT id FROM InspectionType WHERE id = ? AND deletedAt IS NULL', [inspectionTypeId]);
+      if (it && it.length > 0) validInspectionTypeId = it[0].id;
+    }
+    if (!validInspectionTypeId) {
+      const [byName] = await db.query("SELECT id FROM InspectionType WHERE name IN ('فحص مبدئي','فحص نهائي','Initial Inspection') AND deletedAt IS NULL ORDER BY id LIMIT 1");
+      if (byName && byName.length > 0) {
+        validInspectionTypeId = byName[0].id;
+      } else {
+        const [created] = await db.query('INSERT INTO InspectionType (name, description, isActive) VALUES (?, ?, ?)', ['فحص مبدئي', 'نوع فحص افتراضي', 1]);
+        validInspectionTypeId = created.insertId;
+      }
+    }
+
+    // Validate/resolve technicianId (optional)
+    let validTechnicianId = null;
+    if (technicianId) {
+      const [tech] = await db.query('SELECT id FROM User WHERE id = ? AND deletedAt IS NULL', [technicianId]);
+      if (tech && tech.length > 0) validTechnicianId = tech[0].id;
+    }
+
+    // Validate branchId (optional)
+    let validBranchId = null;
+    if (branchId) {
+      const [br] = await db.query('SELECT id FROM Branch WHERE id = ? AND deletedAt IS NULL', [branchId]);
+      if (br && br.length > 0) validBranchId = br[0].id;
+    }
+
+    const payload = [
+      Number(repairRequestId),
+      validInspectionTypeId,
+      validTechnicianId,
+      summary || null,
+      result || null,
+      recommendations || null,
+      notes || null,
+      reportDate,
+      validBranchId,
+      invoiceLink || null,
+      qrCode || null,
+      attachments ? JSON.stringify(attachments) : null
+    ];
+
     const [resultQuery] = await db.query(
       'INSERT INTO InspectionReport (repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments]
+      payload
     );
-    res.status(201).json({ id: resultQuery.insertId, repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments });
+    res.status(201).json({ id: resultQuery.insertId, repairRequestId, inspectionTypeId: validInspectionTypeId, technicianId: validTechnicianId, summary, result, recommendations, notes, reportDate, branchId: validBranchId, invoiceLink, qrCode });
   } catch (err) {
     console.error('Error creating inspection report:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 

@@ -5,7 +5,10 @@ const cookieParser = require('cookie-parser');
 
 // Enable CORS for all routes
 router.use(cors({
-  origin: 'http://localhost:3001',
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 
@@ -47,6 +50,7 @@ const notificationsRouter = require('./routes/notifications');
 const notificationTemplatesRouter = require('./routes/notificationTemplates');
 const systemSettingsRouter = require('./routes/systemSettings');
 const auditLogsRouter = require('./routes/auditLogs');
+const invoiceTemplatesRouter = require('./routes/invoiceTemplates');
 const deviceBatchesRouter = require('./routes/deviceBatches');
 const statusUpdateLogsRouter = require('./routes/statusUpdateLogs');
 const quotationsRouter = require('./routes/quotations');
@@ -56,6 +60,7 @@ const inventoryItemsRouter = require('./routes/inventoryItems');
 const variablesRouter = require('./routes/variables');
 const stockLevelsRouter = require('./routes/stockLevels');
 const stockMovementsRouter = require('./routes/stockMovements');
+const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
 
@@ -76,6 +81,7 @@ router.use('/devices', deviceRoutes);
 router.use('/repairs', repairRoutes);
 router.use('/technicians', technicianRoutes);
 router.use('/inventory', inventoryRoutes);
+router.use('/inventory', inventoryIssueRouter);
 router.use('/vendors', vendorRoutes);
 router.use('/purchaseorders', purchaseOrdersRouter);
 router.use('/purchaseorderitems', purchaseOrderItemsRouter);
@@ -94,6 +100,7 @@ router.use('/notifications', notificationsRouter);
 
 router.use('/systemsettings', systemSettingsRouter);
 router.use('/auditlogs', auditLogsRouter);
+router.use('/invoicetemplates', invoiceTemplatesRouter);
 router.use('/reports', reportRoutes);
 router.use('/stocklevels', stockLevelsRouter);
 router.use('/stockmovements', stockMovementsRouter);

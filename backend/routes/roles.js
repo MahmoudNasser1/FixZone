@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
-const authMiddleware = require('../middleware/authMiddleware');
-const authorizeMiddleware = require('../middleware/authorizeMiddleware');
+const auth = require('../middleware/authMiddleware');
+const authorize = require('../middleware/authorizeMiddleware');
+const rolesController = require('../controllers/rolesController');
 
 // Role Management Routes (Admin Only)
-// Get all roles - requires authentication and Admin role (RoleID 1)
-router.get('/', authMiddleware, authorizeMiddleware([1]), userController.getAllRoles);
+router.get('/', auth, authorize([1]), rolesController.listRoles);
+router.get('/:id', auth, authorize([1]), rolesController.getRole);
+router.post('/', auth, authorize([1]), rolesController.createRole);
+router.put('/:id', auth, authorize([1]), rolesController.updateRole);
+router.delete('/:id', auth, authorize([1]), rolesController.deleteRole);
 
 module.exports = router;

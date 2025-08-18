@@ -4,61 +4,73 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
-import RepairTimeline from '../../components/ui/RepairTimeline';
-import QuickStatsCard from '../../components/ui/QuickStatsCard';
-import { Input } from '../../components/ui/Input';
-import DataView from '../../components/ui/DataView';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { 
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
-  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter, Check, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown
+  Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter,
+  ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Check, AlertTriangle, Printer
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
+import Breadcrumb from '../../components/layout/Breadcrumb';
+import QuickStatsCard from '../../components/ui/QuickStatsCard';
+import { Input } from '../../components/ui/Input';
+import DataView from '../../components/ui/DataView';
 
 const RepairsPage = () => {
   const navigate = useNavigate();
   const { formatMoney } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const notifications = useNotifications();
+  
+  // State للبيانات والتحميل
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [error, setError] = useState(null);
+  
+  // State للبحث والفلترة
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || '');
+  
+  // State للترقيم والفرز
+  const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
+  const [pageSize, setPageSize] = useState(Number(searchParams.get('limit')) || 10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
+  const [sortOrder, setSortOrder] = useState((searchParams.get('sortOrder') || 'desc').toLowerCase());
+  
+  // State للواجهة
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef(null);
+  const sortMenuPanelRef = useRef(null);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusMenuRef = useRef(null);
   const statusMenuPanelRef = useRef(null);
   const [highlightedStatusIndex, setHighlightedStatusIndex] = useState(0);
-  const location = useLocation();
-  const statusOptions = useMemo(() => ([
+
+  const statusOptions = [
     { key: 'all', label: 'الكل' },
     { key: 'pending', label: 'في الانتظار' },
-    { key: 'in_progress', label: 'قيد التنفيذ' },
+    { key: 'in-progress', label: 'قيد الإصلاح' },
+    { key: 'on-hold', label: 'معلق' },
     { key: 'completed', label: 'مكتمل' },
     { key: 'cancelled', label: 'ملغي' },
-  ]), []);
+  ];
 
-  // الفرز مع مزامنة URL
-  const sortFields = useMemo(() => ([
+  const sortFields = [
     { key: 'createdAt', label: 'تاريخ الإنشاء' },
     { key: 'updatedAt', label: 'تاريخ التحديث' },
     { key: 'priority', label: 'الأولوية' },
     { key: 'status', label: 'الحالة' },
     { key: 'estimatedCost', label: 'التكلفة' },
-    { key: 'customerName', label: 'اسم العميل' },
-  ]), []);
-  const [sortField, setSortField] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const sortMenuRef = useRef(null);
-  const sortMenuPanelRef = useRef(null);
-
-  // حالة وتقويم الصفحات (Client-side) مع مزامنة URL
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+    { key: 'customerName', label: 'العميل' },
+  ];
 
   // تهيئة page/pageSize من URL مرة واحدة
   useEffect(() => {
     const p = parseInt(searchParams.get('page') || '1', 10);
-    const ps = parseInt(searchParams.get('pageSize') || '10', 10);
+    const ps = parseInt(searchParams.get('limit') || '10', 10);
     setPage(Number.isFinite(p) && p > 0 ? p : 1);
     setPageSize([5,10,20,50,100].includes(ps) ? ps : 10);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +79,7 @@ const RepairsPage = () => {
   // تهيئة البحث من URL (?q=)
   useEffect(() => {
     const q = searchParams.get('q');
-    if (q != null) setSearchTerm(q);
+    if (q != null) setSearch(q);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -75,7 +87,7 @@ const RepairsPage = () => {
   useEffect(() => {
     const s = searchParams.get('sort');
     const o = searchParams.get('order');
-    if (s && sortFields.some(f => f.key === s)) setSortField(s);
+    if (s && sortFields.some(f => f.key === s)) setSortBy(s);
     if (o && (o === 'asc' || o === 'desc')) setSortOrder(o);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -95,50 +107,50 @@ const RepairsPage = () => {
     const lsStatus = localStorage.getItem('repairs_status_filter');
     const initial = urlStatus || lsStatus || 'all';
     const valid = statusOptions.some(o => o.key === initial) ? initial : 'all';
-    setSelectedFilter(valid);
+    setStatus(valid);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // مزامنة فلتر الحالة مع URL و localStorage
   useEffect(() => {
     const current = searchParams.get('status');
-    if (selectedFilter && selectedFilter !== current) {
+    if (status && status !== current) {
       const next = new URLSearchParams(searchParams);
-      if (selectedFilter === 'all') next.delete('status'); else next.set('status', selectedFilter);
+      if (status === 'all') next.delete('status'); else next.set('status', status);
       setSearchParams(next, { replace: true });
     }
-    localStorage.setItem('repairs_status_filter', selectedFilter);
+    localStorage.setItem('repairs_status_filter', status);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFilter]);
+  }, [status]);
 
   // مزامنة البحث مع URL (debounced)
   useEffect(() => {
     const id = setTimeout(() => {
       const current = searchParams.get('q') || '';
-      if ((searchTerm || '') !== current) {
+      if ((search || '') !== current) {
         const next = new URLSearchParams(searchParams);
-        if (!searchTerm) next.delete('q'); else next.set('q', searchTerm);
+        if (!search) next.delete('q'); else next.set('q', search);
         setSearchParams(next, { replace: true });
       }
     }, 300);
     return () => clearTimeout(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [search]);
 
   // مزامنة الفرز مع URL
   useEffect(() => {
     const currentSort = searchParams.get('sort') || '';
     const currentOrder = searchParams.get('order') || '';
     const next = new URLSearchParams(searchParams);
-    if ((sortField || '') !== currentSort) {
-      if (!sortField || sortField === 'createdAt') next.delete('sort'); else next.set('sort', sortField);
+    if ((sortBy || '') !== currentSort) {
+      if (!sortBy || sortBy === 'createdAt') next.delete('sort'); else next.set('sort', sortBy);
     }
     if ((sortOrder || 'desc') !== (currentOrder || 'desc')) {
       if (!sortOrder || sortOrder === 'desc') next.delete('order'); else next.set('order', sortOrder);
     }
     setSearchParams(next, { replace: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder]);
+  }, [sortBy, sortOrder]);
 
   // إغلاق قائمة الحالة عند النقر خارجها أو الضغط على Escape
   useEffect(() => {
@@ -180,11 +192,10 @@ const RepairsPage = () => {
   useEffect(() => {
     setShowStatusFilter(false);
   }, [location.pathname, location.search]);
-  const [error, setError] = useState(null);
+  
   const [customerFilter, setCustomerFilter] = useState(null);
   const [customerName, setCustomerName] = useState('');
   const [serverTotal, setServerTotal] = useState(null); // يدعم total القادم من الخادم
-  const notifications = useNotifications();
 
   // مساعد للإشعارات مع تقليل الإزعاج
   const notify = (() => {
@@ -215,7 +226,7 @@ const RepairsPage = () => {
   // جلب البيانات من Backend
   useEffect(() => {
     fetchRepairs();
-  }, [customerFilter, page, pageSize, selectedFilter, searchTerm]);
+  }, [customerFilter, page, pageSize, status, search]);
 
   const fetchCustomerName = async (customerId) => {
     try {
@@ -235,11 +246,11 @@ const RepairsPage = () => {
       // بناء معاملات الفلترة والصفحات لإرسالها للخادم (اختياريًا)
       const params = {};
       if (customerFilter) params.customerId = customerFilter;
-      if (selectedFilter && selectedFilter !== 'all') params.status = selectedFilter;
-      if (searchTerm) params.q = searchTerm;
+      if (status && status !== 'all') params.status = status;
+      if (search) params.q = search;
       if (page && page > 1) params.page = page;
       if (pageSize && pageSize !== 10) params.pageSize = pageSize;
-      if (sortField && sortField !== 'createdAt') params.sort = sortField;
+      if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
 
       const data = await apiService.getRepairRequests(params);
@@ -334,7 +345,7 @@ const RepairsPage = () => {
   };
   const handleEditRepair = (id) => {
     if (!id) return;
-    navigate(`/repairs/${id}/edit`);
+    navigate(`/repairs/${id}`);
   };
 
   // تصدير كل النتائج المفلترة من الشريط العلوي
@@ -614,26 +625,26 @@ const RepairsPage = () => {
 
   // فلترة الطلبات
   const filteredRepairs = repairs.filter(repair => {
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = search.toLowerCase();
     const matchesSearch = 
       (repair.requestNumber || '').toLowerCase().includes(searchLower) ||
       (repair.customerName || '').toLowerCase().includes(searchLower) ||
-      (repair.customerPhone || '').includes(searchTerm) ||
+      (repair.customerPhone || '').includes(search) ||
       (repair.deviceType || '').toLowerCase().includes(searchLower) ||
       (repair.deviceBrand || '').toLowerCase().includes(searchLower) ||
       (repair.problemDescription || '').toLowerCase().includes(searchLower);
     
-    if (selectedFilter === 'all') return matchesSearch;
-    return matchesSearch && repair.status === selectedFilter;
+    if (status === 'all') return matchesSearch;
+    return matchesSearch && repair.status === status;
   });
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
   const priorityRank = { high: 3, medium: 2, low: 1 };
-  const statusRank = { pending: 1, in_progress: 2, completed: 3, cancelled: 0 };
+  const statusRank = { pending: 1, 'in-progress': 2, 'on-hold': 1.5, completed: 3, cancelled: 0 };
   const sortedRepairs = [...filteredRepairs].sort((a, b) => {
     const dir = sortOrder === 'asc' ? 1 : -1;
     const getVal = (r) => {
-      switch (sortField) {
+      switch (sortBy) {
         case 'createdAt': return r.createdAt ? new Date(r.createdAt).getTime() : 0;
         case 'updatedAt': return r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
         case 'priority': return priorityRank[r.priority] || 0;
@@ -667,35 +678,56 @@ const RepairsPage = () => {
   // إعادة تعيين الصفحة للأولى عند تغيّر عوامل الفلترة/البحث لتجنّب صفحات فارغة
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedFilter, customerFilter, sortField, sortOrder]);
+  }, [search, status, customerFilter, sortBy, sortOrder]);
 
   // حساب الإحصائيات
   const stats = {
     total: repairs.length,
     pending: repairs.filter(repair => repair.status === 'pending').length,
-    inProgress: repairs.filter(repair => repair.status === 'in_progress').length,
+    inProgress: repairs.filter(repair => repair.status === 'in-progress').length,
+    onHold: repairs.filter(repair => repair.status === 'on-hold').length,
     completed: repairs.filter(repair => repair.status === 'completed').length,
     cancelled: repairs.filter(repair => repair.status === 'cancelled').length
   };
 
   // دالة لتحديد لون الحالة
   const getStatusColor = (status) => {
+    let color;
     switch (status) {
-      case 'pending': return 'warning';
-      case 'in_progress': return 'info';
-      case 'completed': return 'success';
-      case 'cancelled': return 'danger';
-      default: return 'secondary';
+      case 'pending': 
+        color = 'warning'; // أصفر للانتظار
+        break;
+      case 'in-progress': 
+        color = 'info'; // أزرق للإصلاح
+        break;
+      case 'on-hold': 
+        color = 'secondary'; // رمادي للمعلق
+        break;
+      case 'completed': 
+        color = 'success'; // أخضر للمكتمل
+        break;
+      case 'cancelled': 
+        color = 'danger'; // أحمر للملغي
+        break;
+      default: 
+        color = 'secondary';
     }
+    return color;
   };
 
   // دالة لتحديد نص الحالة
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'في الانتظار';
-      case 'in_progress': return 'قيد التنفيذ';
-      case 'completed': return 'مكتمل';
-      case 'cancelled': return 'ملغي';
+      case 'pending': 
+        return 'في الانتظار';
+      case 'in-progress': 
+        return 'قيد الإصلاح';
+      case 'on-hold': 
+        return 'معلق';
+      case 'completed': 
+        return 'مكتمل';
+      case 'cancelled': 
+        return 'ملغي';
       default: return status;
     }
   };
@@ -742,6 +774,13 @@ const RepairsPage = () => {
           </button>
           <button onClick={onViewClick} className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:scale-105 shadow">
             <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); window.open(`/api/repairs/${r.id}/print/invoice`, '_blank'); }}
+            title="طباعة الفاتورة"
+            className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center hover:scale-105 shadow"
+          >
+            <Printer className="w-4 h-4" />
           </button>
         </div>
 
@@ -874,11 +913,11 @@ const RepairsPage = () => {
           color="blue"
         />
         <QuickStatsCard
-          title="قيد التنفيذ"
-          value={repairs.filter(r => r.status === 'in_progress').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'in_progress').length * 0.9)}
+          title="قيد الإصلاح"
+          value={repairs.filter(r => r.status === 'in-progress').length}
+          previousValue={Math.floor(repairs.filter(r => r.status === 'in-progress').length * 0.9)}
           icon={Play}
-          color="yellow"
+          color="blue"
         />
         <QuickStatsCard
           title="مكتملة"
@@ -892,6 +931,13 @@ const RepairsPage = () => {
           value={repairs.filter(r => r.status === 'pending').length}
           previousValue={Math.floor(repairs.filter(r => r.status === 'pending').length * 1.2)}
           icon={Clock}
+          color="yellow"
+        />
+        <QuickStatsCard
+          title="معلق"
+          value={repairs.filter(r => r.status === 'on-hold').length}
+          previousValue={Math.floor(repairs.filter(r => r.status === 'on-hold').length * 1.1)}
+          icon={AlertTriangle}
           color="gray"
         />
         <QuickStatsCard
@@ -938,8 +984,8 @@ const RepairsPage = () => {
               type="text"
               placeholder="ابحث..."
               className="pr-8 h-8 text-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="whitespace-nowrap">
@@ -959,7 +1005,7 @@ const RepairsPage = () => {
             >
               <Filter className="w-3.5 h-3.5 ml-1" />
               <span className="truncate max-w-[8rem]">
-                {`الحالة: ${statusOptions.find(o => o.key === selectedFilter)?.label || ''}`}
+                {`الحالة: ${statusOptions.find(o => o.key === status)?.label || ''}`}
               </span>
               <ChevronDown className="w-3.5 h-3.5" />
             </SimpleButton>
@@ -981,7 +1027,7 @@ const RepairsPage = () => {
                   } else if (e.key === 'Enter') {
                     e.preventDefault();
                     const opt = statusOptions[highlightedStatusIndex];
-                    if (opt) { setSelectedFilter(opt.key); setShowStatusFilter(false); }
+                    if (opt) { setStatus(opt.key); setShowStatusFilter(false); }
                   } else if (e.key === 'Home') {
                     e.preventDefault();
                     setHighlightedStatusIndex(0);
@@ -992,14 +1038,14 @@ const RepairsPage = () => {
                 }}
               >
                 {statusOptions.map((opt, idx) => {
-                  const selected = selectedFilter === opt.key;
+                  const selected = status === opt.key;
                   const highlighted = highlightedStatusIndex === idx;
                   return (
                     <button
                       key={opt.key}
                       role="menuitem"
                         className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'} ${highlighted ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
-                      onClick={() => { setSelectedFilter(opt.key); setShowStatusFilter(false); }}
+                      onClick={() => { setStatus(opt.key); setShowStatusFilter(false); }}
                     >
                       <span>{opt.label}</span>
                       {selected && <Check className="w-4 h-4" />}
@@ -1023,7 +1069,7 @@ const RepairsPage = () => {
             >
               <ArrowUpDown className="w-3.5 h-3.5 ml-1" />
               <span className="truncate max-w-[8rem]">
-                {`${sortFields.find(f => f.key === sortField)?.label || ''} • ${sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}`}
+                {`${sortFields.find(f => f.key === sortBy)?.label || ''} • ${sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}`}
               </span>
               <ChevronDown className="w-3.5 h-3.5" />
             </SimpleButton>
@@ -1043,14 +1089,14 @@ const RepairsPage = () => {
                 </div>
                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
                 {sortFields.map((f) => {
-                  const selected = sortField === f.key;
+                  const selected = sortBy === f.key;
                   return (
                     <button
                       key={f.key}
                       role="menuitemradio"
                       aria-checked={selected}
                       className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}
-                      onClick={() => { setSortField(f.key); setShowSortMenu(false); }}
+                      onClick={() => { setSortBy(f.key); setShowSortMenu(false); }}
                     >
                       <span>{f.label}</span>
                       {selected && <Check className="w-4 h-4" />}
