@@ -63,6 +63,7 @@ const stockMovementsRouter = require('./routes/stockMovements');
 const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
+const accountingRouter = require('./routes/accounting');
 
 router.use('/cities', citiesRouter);
 router.use('/quotationitems', quotationItemsRouter);
@@ -107,5 +108,6 @@ router.use('/stockmovements', stockMovementsRouter);
 router.use('/notificationtemplates', notificationTemplatesRouter);
 router.use('/auth', authRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/accounting', accountingRouter);
 
 module.exports = router; 

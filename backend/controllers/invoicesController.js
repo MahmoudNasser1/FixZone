@@ -305,55 +305,74 @@ class InvoicesController {
               UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?
             `, [itemResult.insertId, part.id]);
           }
-
-          // Add services
-          const [services] = await connection.query(`
-            SELECT rrs.*, s.name, s.basePrice
-            FROM RepairRequestService rrs
-            LEFT JOIN Service s ON rrs.serviceId = s.id
-            WHERE rrs.repairRequestId = ?
-          `, [repairRequestId]);
-
-          for (const service of services) {
-            await connection.query(`
-              INSERT INTO InvoiceItem (
-                invoiceId, serviceId, quantity, unitPrice, totalPrice
-              ) VALUES (?, ?, ?, ?, ?)
-            `, [
-              invoiceId,
-              service.serviceId,
-              1,
-              service.price || service.basePrice || 0,
-              service.price || service.basePrice || 0
-            ]);
-          }
         }
+
+        // Calculate totals for accounting entry
+        let computedTotal = Number(totalAmount) || 0;
+        // Prefer calculated sum of items if present
+        const [sumRows] = await connection.query(`
+          SELECT COALESCE(SUM(quantity * unitPrice), 0) as itemsTotal
+          FROM InvoiceItem WHERE invoiceId = ?
+        `, [invoiceId]);
+        const itemsTotal = Number(sumRows[0]?.itemsTotal || 0);
+        if (itemsTotal > 0) {
+          computedTotal = itemsTotal;
+          // Sync invoice totalAmount with items sum
+          await connection.query(`UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?`, [computedTotal, invoiceId]);
+        }
+        const tax = Number(taxAmount) || 0;
+        const discount = Number(discountAmount) || 0;
+        const subtotal = Math.max(0, computedTotal - tax + discount);
+        const total = computedTotal;
+
+        // إنشاء قيد محاسبي للفاتورة
+        const entryNumber = `INV-${new Date().getFullYear()}-${String(invoiceId).padStart(6, '0')}`;
+        const [journalResult] = await connection.query(`
+          INSERT INTO JournalEntry (entryNumber, entryDate, description, reference, totalDebit, totalCredit, status, createdBy)
+          VALUES (?, CURDATE(), ?, ?, ?, ?, 'draft', ?)
+        `, [entryNumber, `فاتورة رقم ${invoiceId}`, `INV-${invoiceId}`, total, total, req.user?.id || 1]);
+
+        const journalEntryId = journalResult.insertId;
+
+        // سطر مدين - العملاء
+        await connection.query(`
+          INSERT INTO JournalEntryLine (journalEntryId, lineNumber, accountId, description, debitAmount, creditAmount)
+          VALUES (?, 1, 3, ?, ?, 0.00)
+        `, [journalEntryId, `فاتورة عميل رقم ${invoiceId}`, total]);
+
+        // سطر دائن - الإيرادات
+        await connection.query(`
+          INSERT INTO JournalEntryLine (journalEntryId, lineNumber, accountId, description, debitAmount, creditAmount)
+          VALUES (?, 2, 35, ?, 0.00, ?)
+        `, [journalEntryId, `إيراد فاتورة رقم ${invoiceId}`, subtotal]);
+
+        // سطر دائن - الضرائب (إذا وجدت)
+        if (taxAmount > 0) {
+          await connection.query(`
+            INSERT INTO JournalEntryLine (journalEntryId, lineNumber, accountId, description, debitAmount, creditAmount)
+            VALUES (?, 3, 24, ?, 0.00, ?)
+          `, [journalEntryId, `ضريبة فاتورة رقم ${invoiceId}`, taxAmount]);
+        }
+
+        // ربط الفاتورة بالقيد المحاسبي
+        await connection.query(`
+          UPDATE Invoice SET journalEntryId = ? WHERE id = ?
+        `, [journalEntryId, invoiceId]);
 
         await connection.commit();
 
-        // Fetch the created invoice with details
-        const [createdInvoice] = await connection.query(`
-          SELECT i.*, 
-            c.name as customerName,
-            c.phone as customerPhone,
-            c.email as customerEmail
-          FROM Invoice i
-          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-          LEFT JOIN Customer c ON rr.customerId = c.id
-          WHERE i.id = ?
-        `, [invoiceId]);
-
         res.status(201).json({
           success: true,
-          data: createdInvoice[0],
-          message: 'Invoice created successfully'
+          data: { invoiceId, journalEntryId, message: 'Invoice created successfully with accounting entry' }
         });
+
       } catch (error) {
         await connection.rollback();
         throw error;
       } finally {
         connection.release();
       }
+
     } catch (error) {
       console.error('Error creating invoice:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
@@ -425,39 +444,28 @@ class InvoicesController {
         return res.status(400).json({ success: false, error: 'No fields to update' });
       }
 
+      // Add updatedAt
       updates.push('updatedAt = NOW()');
       values.push(id);
 
-      await db.query(`
-        UPDATE Invoice SET ${updates.join(', ')} WHERE id = ?
+      const [result] = await db.query(`
+        UPDATE Invoice SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL
       `, values);
 
-      // Fetch updated invoice
-      const [updated] = await db.query(`
-        SELECT i.*, 
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          c.address as customerAddress
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.id = ?
-      `, [id]);
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, error: 'Invoice not found or no changes made' });
+      }
 
-      res.json({
-        success: true,
-        data: updated[0],
-        message: 'Invoice updated successfully'
-      });
+      res.json({ success: true, message: 'Invoice updated successfully' });
+
     } catch (error) {
       console.error('Error updating invoice:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
     }
   }
 
-  // Bulk actions for invoices
-  async bulkAction(req, res) {
+  // Bulk operations on invoices
+  async bulkOperations(req, res) {
     try {
       const { action, invoiceIds, data = {} } = req.body;
 

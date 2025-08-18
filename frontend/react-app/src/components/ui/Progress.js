@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as ProgressPrimitive from "@radix-ui/react-progress";
 import { cva } from "class-variance-authority";
 
 import { cn } from "../../lib/utils";
@@ -53,18 +52,18 @@ const Progress = React.forwardRef(({
   size = "md",
   ...props 
 }, ref) => (
-  <ProgressPrimitive.Root
+  <div
     ref={ref}
     className={cn(progressVariants({ variant, size }), className)}
     {...props}
   >
-    <ProgressPrimitive.Indicator
+    <div
       className={cn(progressIndicatorVariants({ variant }))}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
-  </ProgressPrimitive.Root>
+  </div>
 ));
-Progress.displayName = ProgressPrimitive.Root.displayName;
+Progress.displayName = "Progress";
 
 // مكون Progress محسن مع النص والنسبة المئوية
 const EnhancedProgress = React.forwardRef(({ 

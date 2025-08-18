@@ -1,80 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const { body } = require('express-validator');
+const paymentsController = require('../controllers/paymentsController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Get all payments
-router.get('/', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM Payment');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching payments:', err);
-    res.status(500).send('Server Error');
-  }
-});
+// Validation rules for payment creation
+const createPaymentValidation = [
+  body('customerId').isInt().withMessage('Customer ID must be a valid integer'),
+  body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be a positive number'),
+  body('paymentMethod').isIn(['cash', 'bank_transfer', 'credit_card', 'check']).withMessage('Invalid payment method'),
+  body('paymentDate').isISO8601().withMessage('Payment date must be a valid date'),
+  body('currency').optional().isIn(['EGP', 'USD', 'EUR']).withMessage('Invalid currency')
+];
+
+// Validation rules for payment update
+const updatePaymentValidation = [
+  body('amount').optional().isFloat({ min: 0.01 }).withMessage('Amount must be a positive number'),
+  body('paymentMethod').optional().isIn(['cash', 'bank_transfer', 'credit_card', 'check']).withMessage('Invalid payment method'),
+  body('paymentDate').optional().isISO8601().withMessage('Payment date must be a valid date'),
+  body('status').optional().isIn(['pending', 'completed', 'cancelled']).withMessage('Invalid status')
+];
+
+// Get all payments with filtering and pagination
+router.get('/', authMiddleware, paymentsController.getAllPayments);
+
+// Get payment statistics
+router.get('/stats', authMiddleware, paymentsController.getPaymentStats);
 
 // Get payment by ID
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await db.query('SELECT * FROM Payment WHERE id = ?', [id]);
-    if (rows.length === 0) {
-      return res.status(404).send('Payment not found');
-    }
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(`Error fetching payment with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+router.get('/:id', authMiddleware, paymentsController.getPaymentById);
 
-// Create a new payment
-router.post('/', async (req, res) => {
-  const { amount, paymentMethod, invoiceId, userId, currency } = req.body;
-  if (!amount || !paymentMethod || !invoiceId || !userId || !currency) {
-    return res.status(400).send('Amount, payment method, invoice ID, user ID, and currency are required');
-  }
-  try {
-    const [result] = await db.query('INSERT INTO Payment (amount, paymentMethod, invoiceId, userId, currency) VALUES (?, ?, ?, ?, ?)', [amount, paymentMethod, invoiceId, userId, currency]);
-    res.status(201).json({ id: result.insertId, amount, paymentMethod, invoiceId, userId, currency });
-  } catch (err) {
-    console.error('Error creating payment:', err);
-    res.status(500).send('Server Error');
-  }
-});
+// Create new payment with accounting integration
+router.post('/', authMiddleware, createPaymentValidation, paymentsController.createPayment);
 
-// Update a payment
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { amount, paymentMethod, invoiceId, userId, currency } = req.body;
-  if (!amount || !paymentMethod || !invoiceId || !userId || !currency) {
-    return res.status(400).send('Amount, payment method, invoice ID, user ID, and currency are required');
-  }
-  try {
-    const [result] = await db.query('UPDATE Payment SET amount = ?, paymentMethod = ?, invoiceId = ?, userId = ?, currency = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', [amount, paymentMethod, invoiceId, userId, currency, id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Payment not found');
-    }
-    res.json({ message: 'Payment updated successfully' });
-  } catch (err) {
-    console.error(`Error updating payment with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+// Update payment
+router.put('/:id', authMiddleware, updatePaymentValidation, paymentsController.updatePayment);
 
-// Delete a payment (hard delete)
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [result] = await db.query('DELETE FROM Payment WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Payment not found');
-    }
-    res.json({ message: 'Payment deleted successfully' });
-  } catch (err) {
-    console.error(`Error deleting payment with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+// Delete payment (soft delete)
+router.delete('/:id', authMiddleware, paymentsController.deletePayment);
 
 module.exports = router;

@@ -44,7 +44,8 @@ import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
 import ServicesCatalogPage from './pages/services/ServicesCatalogPage';
 import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
-// Placeholder components removed; using real pages instead
+// Accounting Pages
+import { AccountingDashboard, ChartOfAccounts, JournalEntries, FinancialReports } from './pages/accounting';
 
 // This component protects routes that require authentication.
 const ProtectedRoute = ({ children }) => {
@@ -117,6 +118,13 @@ function App() {
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
                       <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
+                      
+                      {/* Accounting */}
+                      <Route path="accounting" element={<AccountingDashboard />} />
+                      <Route path="accounting/accounts" element={<ChartOfAccounts />} />
+                      <Route path="accounting/journal-entries" element={<JournalEntries />} />
+                      <Route path="accounting/reports" element={<FinancialReports />} />
+                      
                       <Route path="settings" element={<SystemSettingsPage />} />
                        <Route path="users" element={<UsersPage />} />
                       {/* Admin / Roles & Permissions */}
