@@ -61,13 +61,11 @@ const navItems = [
   {
     section: 'النظام المالي',
     items: [
-      { href: '/accounting', label: 'لوحة المحاسبة', icon: DollarSign },
-      { href: '/accounting/accounts', label: 'دليل الحسابات', icon: Building2 },
-      { href: '/accounting/journal-entries', label: 'القيود المحاسبية', icon: FileText },
-      { href: '/accounting/reports', label: 'التقارير المالية', icon: Calculator },
+      { href: '/finance', label: 'النظام المالي', icon: DollarSign },
       { href: '/invoices', label: 'الفواتير', icon: Receipt, badge: '8' },
       { href: '/payments', label: 'المدفوعات', icon: CreditCard },
       { href: '/expenses', label: 'المصروفات', icon: Banknote },
+      { href: '/financial-reports', label: 'التقارير المالية', icon: Calculator },
     ]
   },
   {

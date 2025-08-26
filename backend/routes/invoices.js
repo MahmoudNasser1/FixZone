@@ -9,7 +9,7 @@ router.get('/', invoicesController.getAllInvoices);
 router.get('/stats', invoicesController.getStatistics);
 
 // Bulk actions for invoices
-router.post('/bulk-action', invoicesController.bulkOperations);
+router.post('/bulk-action', invoicesController.bulkAction);
 
 // Create a new invoice
 router.post('/', invoicesController.createInvoice);

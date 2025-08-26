@@ -1,6 +1,8 @@
 -- إنشاء جدول قوالب الفواتير
 -- Migration: Create InvoiceTemplate table for invoice templates system
 
+USE FZ;
+
 CREATE TABLE IF NOT EXISTS InvoiceTemplate (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) NOT NULL COMMENT 'اسم القالب',
@@ -29,7 +31,7 @@ CREATE TABLE IF NOT EXISTS InvoiceTemplate (
   INDEX idx_template_deleted (deletedAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='قوالب الفواتير';
 
--- إدراج قوالب افتراضية
+-- إدراج قوالب افتراضية مصرية
 INSERT INTO InvoiceTemplate (name, type, description, isDefault, headerHTML, footerHTML, stylesCSS, settings) VALUES 
 (
   'القالب الأساسي', 
@@ -41,26 +43,26 @@ INSERT INTO InvoiceTemplate (name, type, description, isDefault, headerHTML, foo
   '.invoice-container { max-width: 800px; margin: 0 auto; } .header { border-bottom: 2px solid #333; padding-bottom: 20px; }',
   JSON_OBJECT(
     'companyName', 'شركة فيكس زون',
-    'companyAddress', 'الرياض، المملكة العربية السعودية',
-    'companyPhone', '+966-11-1234567',
-    'companyEmail', 'info@fixzone.sa',
-    'currency', 'ر.س',
+    'companyAddress', 'القاهرة، جمهورية مصر العربية',
+    'companyPhone', '+20-10-1234567',
+    'companyEmail', 'info@fixzone.eg',
+    'currency', 'ج.م',
     'footerText', 'جميع الحقوق محفوظة © 2025'
   )
 ),
 (
   'قالب ضريبي', 
   'tax', 
-  'قالب فاتورة ضريبية متوافق مع متطلبات الضريبة',
+  'قالب فاتورة ضريبية متوافق مع متطلبات الضريبة المصرية',
   TRUE,
   '<div class="company-info"><h1>{{companyName}}</h1><p>الرقم الضريبي: {{taxNumber}}</p><p>{{companyAddress}}</p></div>',
   '<p>فاتورة ضريبية معتمدة</p><p>{{footerText}}</p>',
   '.tax-info { background: #f0f8ff; padding: 10px; border: 1px solid #0066cc; margin: 10px 0; }',
   JSON_OBJECT(
     'companyName', 'شركة فيكس زون',
-    'taxNumber', '123456789012345',
-    'companyAddress', 'الرياض، المملكة العربية السعودية',
-    'currency', 'ر.س',
+    'taxNumber', '123-456-789',
+    'companyAddress', 'القاهرة، جمهورية مصر العربية',
+    'currency', 'ج.م',
     'showTaxDetails', true,
     'footerText', 'فاتورة ضريبية معتمدة'
   )
@@ -75,7 +77,7 @@ INSERT INTO InvoiceTemplate (name, type, description, isDefault, headerHTML, foo
   '.receipt-header { text-align: center; border-bottom: 1px dashed #333; } .receipt-container { max-width: 400px; font-size: 14px; }',
   JSON_OBJECT(
     'companyName', 'فيكس زون',
-    'currency', 'ر.س',
+    'currency', 'ج.م',
     'showMinimalInfo', true
   )
 );

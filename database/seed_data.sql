@@ -145,9 +145,9 @@ INSERT INTO `Expense` (`description`, `amount`, `expenseDate`, `categoryId`, `us
 -- 7. Notifications
 -- ----------------------
 
-INSERT INTO `NotificationTemplate` (`id`, `type`, `template`) VALUES
-(1, 'REPAIR', 'Dear {customerName}, the status of your repair for device {deviceModel} is now {repairStatus}.'),
-(2, 'QUOTATION', 'Dear {customerName}, your quotation #{quotationId} for repair request #{repairRequestId} is ready. Total amount is {totalAmount}.');
+INSERT INTO `NotificationTemplate` (`id`, `name`, `type`, `channel`, `subject`, `body`) VALUES
+(1, 'Repair Status Update', 'REPAIR', 'SMS', NULL, 'Dear {customerName}, the status of your repair for device {deviceModel} is now {repairStatus}.'),
+(2, 'Quotation Ready', 'QUOTATION', 'EMAIL', 'Your Quotation #{quotationId} is Ready', 'Dear {customerName}, please review your quotation for repair request #{repairRequestId}. Total amount is {totalAmount}.');
 
 
 SELECT 'Comprehensive seed data has been created successfully.' AS status;

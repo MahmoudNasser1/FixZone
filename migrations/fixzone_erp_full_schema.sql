@@ -6,6 +6,53 @@ CREATE DATABASE IF NOT EXISTS FZ;
 USE FZ;
 
 -- ----------------------
+-- Drop existing tables (in reverse order of dependencies)
+-- ----------------------
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS AuditLog;
+DROP TABLE IF EXISTS SystemSetting;
+DROP TABLE IF EXISTS NotificationTemplate;
+DROP TABLE IF EXISTS Notification;
+DROP TABLE IF EXISTS InspectionComponent;
+DROP TABLE IF EXISTS InspectionReport;
+DROP TABLE IF EXISTS InspectionType;
+DROP TABLE IF EXISTS RepairRequestService;
+DROP TABLE IF EXISTS Service;
+DROP TABLE IF EXISTS Expense;
+DROP TABLE IF EXISTS ExpenseCategory;
+DROP TABLE IF EXISTS Payment;
+DROP TABLE IF EXISTS InvoiceItem;
+DROP TABLE IF EXISTS Invoice;
+DROP TABLE IF EXISTS PartsUsed;
+DROP TABLE IF EXISTS PurchaseOrderItem;
+DROP TABLE IF EXISTS PurchaseOrder;
+DROP TABLE IF EXISTS Vendor;
+DROP TABLE IF EXISTS StockMovement;
+DROP TABLE IF EXISTS StockLevel;
+DROP TABLE IF EXISTS InventoryItem;
+DROP TABLE IF EXISTS Warehouse;
+DROP TABLE IF EXISTS QuotationItem;
+DROP TABLE IF EXISTS Quotation;
+DROP TABLE IF EXISTS StatusUpdateLog;
+DROP TABLE IF EXISTS RepairRequestAccessory;
+DROP TABLE IF EXISTS RepairRequest;
+DROP TABLE IF EXISTS Device;
+DROP TABLE IF EXISTS DeviceBatch;
+DROP TABLE IF EXISTS VariableOption;
+DROP TABLE IF EXISTS VariableCategory;
+DROP TABLE IF EXISTS Customer;
+DROP TABLE IF EXISTS Company;
+DROP TABLE IF EXISTS UserLoginLog;
+DROP TABLE IF EXISTS User;
+DROP TABLE IF EXISTS Role;
+DROP TABLE IF EXISTS Branch;
+DROP TABLE IF EXISTS City;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ----------------------
 -- Core Entities
 -- ----------------------
 
@@ -174,7 +221,7 @@ CREATE TABLE RepairRequest (
     deviceId INT,
     reportedProblem TEXT,
     technicianReport TEXT,
-    status ENUM('RECEIVED','INSPECTION','AWAITING_APPROVAL','UNDER_REPAIR','READY_FOR_DELIVERY','DELIVERED','REJECTED','WAITING_PARTS') DEFAULT 'RECEIVED',
+    status ENUM('RECEIVED','INSPECTION','AWAITING_APPROVAL','UNDER_REPAIR','READY_FOR_DELIVERY','DELIVERED','REJECTED','WAITING_PARTS','ON_HOLD') DEFAULT 'RECEIVED',
     trackingToken VARCHAR(64) UNIQUE DEFAULT NULL,
     customerId INT,
     branchId INT,
@@ -233,7 +280,7 @@ CREATE TABLE Quotation (
     sentAt DATETIME,
     responseAt DATETIME,
     repairRequestId INT UNIQUE,
-    currency VARCHAR(10),
+    currency VARCHAR(10) DEFAULT 'EGP',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id)
@@ -355,6 +402,21 @@ CREATE TABLE PartsUsed (
 );
 
 -- ----------------------
+-- Services (moved before Financial Entities)
+-- ----------------------
+
+CREATE TABLE Service (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    basePrice DECIMAL(12,2),
+    isActive BOOLEAN DEFAULT TRUE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt DATETIME DEFAULT NULL
+);
+
+-- ----------------------
 -- Financial Entities
 -- ----------------------
 
@@ -364,7 +426,7 @@ CREATE TABLE Invoice (
     amountPaid DECIMAL(12,2),
     status VARCHAR(50),
     repairRequestId INT UNIQUE,
-    currency VARCHAR(10),
+    currency VARCHAR(10) DEFAULT 'EGP',
     taxAmount DECIMAL(12,2),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -378,10 +440,15 @@ CREATE TABLE InvoiceItem (
     unitPrice DECIMAL(12,2),
     totalPrice DECIMAL(12,2),
     invoiceId INT,
-    partsUsedId INT DEFAULT NULL,
+    serviceId INT DEFAULT NULL,
+    inventoryItemId INT DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    itemType ENUM('part', 'service') DEFAULT 'part',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (invoiceId) REFERENCES Invoice(id)
+    FOREIGN KEY (invoiceId) REFERENCES Invoice(id),
+    FOREIGN KEY (serviceId) REFERENCES Service(id),
+    FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id)
 );
 
 CREATE TABLE Payment (
@@ -390,7 +457,7 @@ CREATE TABLE Payment (
     paymentMethod VARCHAR(50),
     invoiceId INT,
     userId INT,
-    currency VARCHAR(10),
+    currency VARCHAR(10) DEFAULT 'EGP',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (invoiceId) REFERENCES Invoice(id),
@@ -412,27 +479,12 @@ CREATE TABLE Expense (
     expenseDate DATE,
     categoryId INT,
     userId INT,
-    currency VARCHAR(10),
+    currency VARCHAR(10) DEFAULT 'EGP',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deletedAt DATETIME DEFAULT NULL,
     FOREIGN KEY (categoryId) REFERENCES ExpenseCategory(id),
     FOREIGN KEY (userId) REFERENCES User(id)
-);
-
--- ----------------------
--- Services
--- ----------------------
-
-CREATE TABLE Service (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    basePrice DECIMAL(12,2),
-    isActive BOOLEAN DEFAULT TRUE,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deletedAt DATETIME DEFAULT NULL
 );
 
 CREATE TABLE RepairRequestService (
@@ -547,5 +599,37 @@ CREATE TABLE AuditLog (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES User(id)
 );
+
+-- ----------------------
+-- Invoice Templates
+-- ----------------------
+
+CREATE TABLE InvoiceTemplate (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL COMMENT 'اسم القالب',
+    type ENUM('standard', 'tax', 'commercial', 'service', 'receipt') DEFAULT 'standard' COMMENT 'نوع القالب',
+    description TEXT COMMENT 'وصف القالب',
+    
+    -- محتوى القالب
+    headerHTML TEXT COMMENT 'HTML الرأس',
+    footerHTML TEXT COMMENT 'HTML التذييل', 
+    stylesCSS TEXT COMMENT 'أنماط CSS مخصصة',
+    settings JSON COMMENT 'إعدادات القالب (ألوان، خطوط، شعار، إلخ)',
+    
+    -- حالة القالب
+    isDefault BOOLEAN DEFAULT FALSE COMMENT 'هل هو القالب الافتراضي لهذا النوع',
+    isActive BOOLEAN DEFAULT TRUE COMMENT 'هل القالب نشط',
+    
+    -- تواريخ النظام
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deletedAt TIMESTAMP NULL COMMENT 'تاريخ الحذف المنطقي',
+    
+    -- فهارس
+    INDEX idx_template_type (type),
+    INDEX idx_template_default (isDefault),
+    INDEX idx_template_active (isActive),
+    INDEX idx_template_deleted (deletedAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='قوالب الفواتير';
 
 -- End of schema 

@@ -190,7 +190,7 @@ const ServicesCatalogPage = () => {
             </div>
           ) : error ? (
             <div className="text-red-600 text-sm">{error}</div>
-          ) : pageItems.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="text-gray-600 text-sm">لا توجد خدمات</div>
           ) : (
             <div className="overflow-x-auto">
