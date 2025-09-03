@@ -116,6 +116,14 @@ const invoicesService = {
     });
   },
 
+  // تحديث عنصر في الفاتورة
+  async updateInvoiceItem(invoiceId, itemId, data) {
+    return apiService.request(`/invoices/${invoiceId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
   // حذف عنصر من الفاتورة
   async removeItem(invoiceId, itemId) {
     return apiService.request(`/invoices/${invoiceId}/items/${itemId}`, {

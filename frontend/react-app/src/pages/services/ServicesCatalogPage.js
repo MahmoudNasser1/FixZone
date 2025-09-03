@@ -4,7 +4,7 @@ import { SimpleCard, SimpleCardContent, SimpleCardHeader, SimpleCardTitle } from
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:3001/api';
 
 const ServicesCatalogPage = () => {
   const { success, error: notifyError, warning } = useNotifications();

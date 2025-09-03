@@ -20,7 +20,7 @@ const StockMovementHistory = ({ inventoryItemId, onClose }) => {
       setLoading(true);
       setError(null);
       // استدعاء API لجلب حركات المخزون
-      const response = await fetch(`http://localhost:3000/api/stockmovements?inventoryItemId=${inventoryItemId}`);
+              const response = await fetch(`http://localhost:3001/api/stockmovements?inventoryItemId=${inventoryItemId}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }

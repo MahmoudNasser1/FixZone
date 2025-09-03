@@ -63,6 +63,10 @@ const stockMovementsRouter = require('./routes/stockMovements');
 const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
+// Delivery and payment routes - using existing routes
+// const deliveryRouter = require('./routes/delivery');
+// const paymentRouter = require('./routes/payment');
+// const purchaseOrderRouter = require('./routes/purchaseOrder');
 
 router.use('/cities', citiesRouter);
 router.use('/quotationitems', quotationItemsRouter);
@@ -107,5 +111,9 @@ router.use('/stockmovements', stockMovementsRouter);
 router.use('/notificationtemplates', notificationTemplatesRouter);
 router.use('/auth', authRouter);
 router.use('/dashboard', dashboardRouter);
+// Using existing routes instead:
+// router.use('/delivery', deliveryRouter); // Use existing repairs route for delivery
+// router.use('/payment', paymentRouter); // Use existing payments route
+// router.use('/purchaseorders', purchaseOrderRouter); // Use existing purchaseOrders route
 
 module.exports = router; 

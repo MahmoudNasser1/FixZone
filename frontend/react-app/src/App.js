@@ -4,7 +4,6 @@ import useAuthStore from './stores/authStore';
 
 // Core App Utilities
 import { ThemeProvider } from './components/ThemeProvider';
-import { Toaster } from './components/ui/Toaster';
 import { NotificationProvider } from './components/notifications/NotificationSystem';
 import SystemNotifications from './components/notifications/SystemNotifications';
 import './App.css';
@@ -15,7 +14,6 @@ import MainLayout from './components/layout/MainLayout';
 // Pages and Components
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage'; // Using the new DashboardPage
-import PaymentsPage from './pages/payments/PaymentsPage';
 
 // Customer Pages
 import { CustomersPage, NewCustomerPage } from './pages/customers';
@@ -41,6 +39,13 @@ import NotificationDemoPage from './pages/NotificationDemoPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import InvoicesPage from './pages/invoices/InvoicesPage';
 import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
+import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
+import EditInvoicePage from './pages/invoices/EditInvoicePage';
+// Temporarily commented out missing pages:
+// import DeliveryPage from './pages/Delivery/DeliveryPage';
+// import PaymentsPage from './pages/payments/PaymentsPage';
+// import { VendorsPage } from './pages/vendors';
+// import { PurchaseOrdersPage } from './pages/PurchaseOrders';
 import ServicesCatalogPage from './pages/services/ServicesCatalogPage';
 import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
@@ -116,7 +121,17 @@ function App() {
                       <Route path="inventory" element={<InventoryPage />} />
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
+                      <Route path="invoices/create" element={<CreateInvoicePage />} />
+                      <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
                       <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
+                      {/* Delivery & Payments - Temporarily disabled */}
+                      {/* <Route path="delivery" element={<DeliveryPage />} /> */}
+                      {/* <Route path="payments" element={<PaymentsPage />} /> */}
+                      
+                      {/* Vendors & Purchase Orders - Temporarily disabled */}
+                      {/* <Route path="vendors" element={<VendorsPage />} /> */}
+                      {/* <Route path="purchase-orders" element={<PurchaseOrdersPage />} /> */}
+                      
                       <Route path="settings" element={<SystemSettingsPage />} />
                        <Route path="users" element={<UsersPage />} />
                       {/* Admin / Roles & Permissions */}
@@ -128,7 +143,6 @@ function App() {
                           </AdminRoute>
                         }
                       />
-                      <Route path="payments" element={<PaymentsPage />} />
 
                       {/* Demo */}
                       <Route path="demo" element={<LayoutDemo />} />

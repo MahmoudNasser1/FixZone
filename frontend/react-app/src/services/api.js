@@ -1,6 +1,6 @@
 import { loadSettings } from '../config/settings';
 // API Service للتعامل مع Backend APIs
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 class ApiService {
   // Helper method للطلبات
@@ -409,6 +409,27 @@ class ApiService {
 
   async deleteRole(id) {
     return this.request(`/roles/${id}`, { method: 'DELETE' });
+  }
+
+  // ==================
+  // Inventory APIs
+  // ==================
+  
+  // جلب جميع عناصر المخزون
+  async getInventoryItems(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.request(`/inventory${qs ? `?${qs}` : ''}`);
+  }
+
+  // جلب عنصر مخزون واحد
+  async getInventoryItem(id) {
+    return this.request(`/inventory/${id}`);
+  }
+
+  // جلب جميع الخدمات
+  async getServices(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.request(`/services${qs ? `?${qs}` : ''}`);
   }
 
   // ==================

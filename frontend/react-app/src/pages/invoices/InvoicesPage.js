@@ -61,10 +61,15 @@ export default function InvoicesPage() {
   const notifications = useNotifications();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   // Initialize from URL params
   const initialPage = Number(searchParams.get('page')) || 1;
   const initialLimit = Number(searchParams.get('limit')) || 10;
   const initialSearch = searchParams.get('search') || '';
+  const initialStatus = searchParams.get('status') || '';
+  const initialCustomerId = searchParams.get('customerId') || '';
+  const initialDateFrom = searchParams.get('dateFrom') || '';
+  const initialDateTo = searchParams.get('dateTo') || '';
   const initialSortBy = (['createdAt','totalAmount','status','customerName'].includes(searchParams.get('sortBy'))
     ? searchParams.get('sortBy')
     : 'createdAt');
@@ -81,6 +86,10 @@ export default function InvoicesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [sortOrder, setSortOrder] = useState(initialSortOrder);
+  const [status, setStatus] = useState(initialStatus);
+  const [customerId, setCustomerId] = useState(initialCustomerId);
+  const [dateFrom, setDateFrom] = useState(initialDateFrom);
+  const [dateTo, setDateTo] = useState(initialDateTo);
   const [creating, setCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -158,8 +167,12 @@ export default function InvoicesPage() {
     if (debouncedSearch) params.set('search', debouncedSearch);
     if (sortBy) params.set('sortBy', sortBy);
     if (sortOrder) params.set('sortOrder', sortOrder);
+    if (status) params.set('status', status);
+    if (customerId) params.set('customerId', customerId);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
     setSearchParams(params, { replace: true });
-  }, [page, limit, debouncedSearch, sortBy, sortOrder, setSearchParams]);
+  }, [page, limit, debouncedSearch, sortBy, sortOrder, status, customerId, dateFrom, dateTo, setSearchParams]);
 
   useEffect(() => {
     let mounted = true;
@@ -173,6 +186,10 @@ export default function InvoicesPage() {
           search: debouncedSearch,
           sortBy,
           sortOrder,
+          status: status || undefined,
+          customerId: customerId || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
         });
         const fetchedInvoices = Array.isArray(response)
           ? response
@@ -193,6 +210,21 @@ export default function InvoicesPage() {
           setTotalItems(Array.isArray(invoicesWithCustomers) ? invoicesWithCustomers.length : 0);
         }
 
+        setStats(statsData);
+        // نظّف الاختيارات عند تبدل الصفحة/البيانات
+        setSelectedIds([]);
+      } catch (e) {
+        console.error(e);
+        setError(e?.message || 'حدث خطأ في جلب الفواتير');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, [page, limit, debouncedSearch, sortBy, sortOrder, status, customerId, dateFrom, dateTo]);
+
+  // Handle bulk actions
   async function handleBulk(action) {
     if (selectedIds.length === 0) return;
     if (action === 'delete') {
@@ -232,19 +264,6 @@ export default function InvoicesPage() {
       setPerformingBulk(false);
     }
   }
-        setStats(statsData);
-        // نظّف الاختيارات عند تبدل الصفحة/البيانات
-        setSelectedIds([]);
-      } catch (e) {
-        console.error(e);
-        setError(e?.message || 'حدث خطأ في جلب الفواتير');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => { mounted = false; };
-  }, [page, limit, debouncedSearch, sortBy, sortOrder]);
 
   return (
     <div className="space-y-6">
@@ -258,10 +277,113 @@ export default function InvoicesPage() {
             <h1 className="text-2xl font-bold text-gray-900">الفواتير</h1>
             <p className="text-sm text-gray-500">قائمة الفواتير</p>
           </div>
+          
+          {/* قسم الفلترة المتقدم */}
+          <div className="bg-gray-50 rounded-lg p-4 mt-4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* فلترة الحالة */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">جميع الحالات</option>
+                  <option value="draft">مسودة</option>
+                  <option value="sent">مرسلة</option>
+                  <option value="paid">مدفوعة</option>
+                  <option value="overdue">متأخرة</option>
+                </select>
+              </div>
+              
+              {/* فلترة العميل */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">العميل</label>
+                <select
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">جميع العملاء</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* فلترة التاريخ من */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">من تاريخ</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              {/* فلترة التاريخ إلى */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">إلى تاريخ</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            {/* أزرار الفلترة */}
+            <div className="flex items-center gap-2 mt-4">
+              <SimpleButton
+                onClick={() => {
+                  setPage(1);
+                  // تحديث URL params
+                  const params = new URLSearchParams(searchParams);
+                  if (status) params.set('status', status);
+                  if (customerId) params.set('customerId', customerId);
+                  if (dateFrom) params.set('dateFrom', dateFrom);
+                  if (dateTo) params.set('dateTo', dateTo);
+                  setSearchParams(params);
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                تطبيق الفلترة
+              </SimpleButton>
+              <SimpleButton
+                variant="outline"
+                onClick={() => {
+                  setStatus('');
+                  setCustomerId('');
+                  setDateFrom('');
+                  setDateTo('');
+                  setPage(1);
+                  // مسح URL params
+                  const params = new URLSearchParams(searchParams);
+                  params.delete('status');
+                  params.delete('customerId');
+                  params.delete('dateFrom');
+                  params.delete('dateTo');
+                  setSearchParams(params);
+                }}
+              >
+                مسح الفلترة
+              </SimpleButton>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            <SimpleButton onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-4 h-4 ml-2" />
-              فاتورة جديدة
+            <Link to="/invoices/create">
+              <SimpleButton>
+                <Plus className="w-4 h-4 ml-2" />
+                فاتورة جديدة
+              </SimpleButton>
+            </Link>
+            <SimpleButton variant="outline" onClick={() => setShowCreateModal(true)}>
+              إنشاء سريع
             </SimpleButton>
             {/* أزرار العمليات المجمعة */}
             <div className="flex items-center gap-2">
@@ -675,9 +797,10 @@ export default function InvoicesPage() {
 
   // Debounced server-side search for customers (prefer /customers?q=, then fallback to /customers/search, then local)
   useEffect(() => {
-    if (!showCreateModal) return; // only when modal open
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
+      if (!showCreateModal) return; // only when modal open
+      
       const q = (customerSearch || '').trim();
       try {
         setSearching(true);
@@ -726,7 +849,7 @@ export default function InvoicesPage() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [customerSearch, showCreateModal]);
+  }, [customerSearch, showCreateModal, allCustomers]);
 
   async function loadCustomersAndRepairs() {
     try {

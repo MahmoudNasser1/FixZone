@@ -181,15 +181,14 @@ class InvoicesController {
           ii.*,
           (ii.quantity * ii.unitPrice) as totalPrice,
           CASE 
-            WHEN ii.partsUsedId IS NOT NULL THEN 'part'
+            WHEN ii.inventoryItemId IS NOT NULL THEN 'part'
             WHEN ii.serviceId IS NOT NULL THEN 'service'
             ELSE 'other'
           END as itemType,
           COALESCE(inv.name, s.name, 'Unknown Item') as itemName,
-          COALESCE(inv.sku, s.id, NULL) as itemCode
+          COALESCE(inv.sku, CONCAT('SVC-', s.id), NULL) as itemCode
         FROM InvoiceItem ii
-        LEFT JOIN PartsUsed pu ON ii.partsUsedId = pu.id
-        LEFT JOIN InventoryItem inv ON COALESCE(ii.inventoryItemId, pu.inventoryItemId) = inv.id
+        LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
         LEFT JOIN Service s ON ii.serviceId = s.id
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt
@@ -687,7 +686,7 @@ class InvoicesController {
   async addInvoiceItem(req, res) {
     try {
       const { id } = req.params; // invoiceId
-      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, partsUsedId = null, description = null } = req.body || {};
+      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, description = null } = req.body || {};
 
       // Validate invoice exists
       const [invRows] = await db.query(`SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL`, [id]);
@@ -717,17 +716,12 @@ class InvoicesController {
 
       // Insert invoice item
       const [result] = await db.query(
-        `INSERT INTO InvoiceItem (invoiceId, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, partsUsedId, description, createdAt, updatedAt)
+        `INSERT INTO InvoiceItem (invoiceId, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, description, itemType, createdAt, updatedAt)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [id, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, partsUsedId, description]
+        [id, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, description, inventoryItemId ? 'part' : 'service']
       );
 
       const itemId = result.insertId;
-
-      // If partsUsedId provided, link PartsUsed to this invoice item
-      if (partsUsedId) {
-        await db.query(`UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?`, [itemId, partsUsedId]);
-      }
 
       // Recalculate invoice totalAmount as sum of items
       await db.query(
@@ -749,6 +743,82 @@ class InvoicesController {
     }
   }
 
+  // Update invoice item and recalculate total
+  async updateInvoiceItem(req, res) {
+    try {
+      const { id, itemId } = req.params; // invoiceId, itemId
+      const { quantity, unitPrice, description } = req.body;
+
+      // Validate invoice exists
+      const [invRows] = await db.query(`SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL`, [id]);
+      if (invRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Invoice not found' });
+      }
+
+      // Check if item exists
+      const [itemRows] = await db.query(`SELECT * FROM InvoiceItem WHERE id = ? AND invoiceId = ?`, [itemId, id]);
+      if (itemRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Invoice item not found' });
+      }
+
+      // Build update query dynamically
+      const updates = [];
+      const values = [];
+
+      if (quantity !== undefined) {
+        updates.push('quantity = ?');
+        values.push(Number(quantity) || 0);
+      }
+      if (unitPrice !== undefined) {
+        updates.push('unitPrice = ?');
+        values.push(Number(unitPrice) || 0);
+      }
+      if (description !== undefined) {
+        updates.push('description = ?');
+        values.push(description);
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ success: false, error: 'No fields to update' });
+      }
+
+      // Calculate new total price if quantity or unitPrice changed
+      if (quantity !== undefined || unitPrice !== undefined) {
+        const currentItem = itemRows[0];
+        const newQuantity = quantity !== undefined ? Number(quantity) : Number(currentItem.quantity);
+        const newUnitPrice = unitPrice !== undefined ? Number(unitPrice) : Number(currentItem.unitPrice);
+        const newTotalPrice = newQuantity * newUnitPrice;
+        
+        updates.push('totalPrice = ?');
+        values.push(newTotalPrice);
+      }
+
+      updates.push('updatedAt = NOW()');
+      values.push(itemId);
+
+      // Update invoice item
+      await db.query(`UPDATE InvoiceItem SET ${updates.join(', ')} WHERE id = ?`, values);
+
+      // Recalculate invoice totalAmount
+      await db.query(
+        `UPDATE Invoice i 
+         SET i.totalAmount = (
+           SELECT COALESCE(SUM(ii.quantity * ii.unitPrice), 0)
+           FROM InvoiceItem ii WHERE ii.invoiceId = i.id
+         ), i.updatedAt = NOW()
+         WHERE i.id = ?`,
+        [id]
+      );
+
+      // Return updated item
+      const [updatedRows] = await db.query(`SELECT * FROM InvoiceItem WHERE id = ?`, [itemId]);
+      return res.json({ success: true, data: updatedRows[0], message: 'Invoice item updated' });
+    } catch (error) {
+      console.error('Error updating invoice item:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+
   // Remove invoice item and recalculate total
   async removeInvoiceItem(req, res) {
     try {
@@ -760,8 +830,8 @@ class InvoicesController {
         return res.status(404).json({ success: false, error: 'Invoice not found' });
       }
 
-      // Clear link from PartsUsed if linked
-      await db.query(`UPDATE PartsUsed SET invoiceItemId = NULL WHERE invoiceItemId = ?`, [itemId]);
+      // Note: No need to clear PartsUsed links as we're not using partsUsedId field anymore
+      
 
       // Delete invoice item
       const [delRes] = await db.query(`DELETE FROM InvoiceItem WHERE id = ? AND invoiceId = ?`, [itemId, id]);
@@ -783,6 +853,216 @@ class InvoicesController {
       return res.json({ success: true, message: 'Invoice item removed' });
     } catch (error) {
       console.error('Error removing invoice item:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+
+  // Get invoice by repair request ID
+  async getInvoiceByRepairId(req, res) {
+    try {
+      const { repairId } = req.params;
+
+      const [invoices] = await db.query(`
+        SELECT 
+          i.*,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          d.model as deviceModel,
+          d.brand as deviceBrand,
+          rr.reportedProblem as problemDescription
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Device d ON rr.deviceId = d.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE rr.id = ? AND i.deletedAt IS NULL
+      `, [repairId]);
+
+      if (invoices.length === 0) {
+        return res.status(404).json({ success: false, error: 'No invoice found for this repair request' });
+      }
+
+      const invoice = invoices[0];
+
+      // Get invoice items
+      const [items] = await db.query(`
+        SELECT 
+          ii.*,
+          COALESCE(inv.name, s.name, 'Unknown Item') as itemName,
+          COALESCE(inv.sku, s.id, NULL) as itemCode
+        FROM InvoiceItem ii
+        LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
+        LEFT JOIN Service s ON ii.serviceId = s.id
+        WHERE ii.invoiceId = ?
+        ORDER BY ii.createdAt
+      `, [invoice.id]);
+
+      // Get payment history
+      const [payments] = await db.query(`
+        SELECT p.*, u.name as createdByName
+        FROM Payment p
+        LEFT JOIN User u ON p.userId = u.id
+        WHERE p.invoiceId = ?
+        ORDER BY p.createdAt DESC
+      `, [invoice.id]);
+
+      res.json({
+        success: true,
+        data: {
+          ...invoice,
+          items,
+          payments,
+          itemsCount: items.length,
+          calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching invoice by repair ID:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+
+  // Create invoice from repair request
+  async createInvoiceFromRepair(req, res) {
+    try {
+      const { repairId } = req.params;
+      const {
+        status = 'draft',
+        currency = 'EGP',
+        taxAmount = 0,
+        discountAmount = 0,
+        notes = '',
+        dueDate = null
+      } = req.body;
+
+      // Check if repair request exists
+      const [repairRows] = await db.query(`
+        SELECT rr.*, c.name as customerName, d.model as deviceModel, d.brand as deviceBrand
+        FROM RepairRequest rr
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        LEFT JOIN Device d ON rr.deviceId = d.id
+        WHERE rr.id = ? AND rr.deletedAt IS NULL
+      `, [repairId]);
+
+      if (repairRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Repair request not found' });
+      }
+
+      // Check if invoice already exists for this repair
+      const [existingInvoice] = await db.query(`
+        SELECT id FROM Invoice WHERE repairRequestId = ? AND deletedAt IS NULL
+      `, [repairId]);
+
+      if (existingInvoice.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: 'Invoice already exists for this repair request',
+          data: { invoiceId: existingInvoice[0].id }
+        });
+      }
+
+      const connection = await db.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // Create invoice
+        const [result] = await connection.query(`
+          INSERT INTO Invoice (
+            repairRequestId, totalAmount, amountPaid, status, 
+            currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `, [
+          repairId,
+          0, // Will be calculated after adding items
+          0,
+          status,
+          currency,
+          taxAmount,
+          discountAmount,
+          dueDate
+        ]);
+
+        const invoiceId = result.insertId;
+
+        // Add parts used in repair
+        const [partsUsed] = await connection.query(`
+          SELECT pu.*, ii.name, ii.sellingPrice
+          FROM PartsUsed pu
+          LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+          WHERE pu.repairRequestId = ?
+        `, [repairId]);
+
+        for (const part of partsUsed) {
+          const unitPrice = part.sellingPrice || 0;
+          const quantity = part.quantity || 1;
+          const totalPrice = quantity * unitPrice;
+
+          await connection.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'part', ?)
+          `, [invoiceId, part.inventoryItemId, quantity, unitPrice, totalPrice, `قطعة غيار: ${part.name || 'غير محدد'}`]);
+        }
+
+        // Add services used in repair
+        const [services] = await connection.query(`
+          SELECT rrs.*, s.name, s.basePrice
+          FROM RepairRequestService rrs
+          LEFT JOIN Service s ON rrs.serviceId = s.id
+          WHERE rrs.repairRequestId = ?
+        `, [repairId]);
+
+        for (const service of services) {
+          const unitPrice = service.price || service.basePrice || 0;
+          await connection.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'service', ?)
+          `, [invoiceId, service.serviceId, 1, unitPrice, unitPrice, `خدمة: ${service.name || 'غير محدد'}`]);
+        }
+
+        // Calculate and update total amount
+        const [totalResult] = await connection.query(`
+          SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+          FROM InvoiceItem WHERE invoiceId = ?
+        `, [invoiceId]);
+
+        const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount) - Number(discountAmount);
+
+        await connection.query(`
+          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+        `, [finalTotal, invoiceId]);
+
+        await connection.commit();
+
+        // Fetch the created invoice with details
+        const [createdInvoice] = await connection.query(`
+          SELECT i.*, 
+            c.name as customerName,
+            c.phone as customerPhone,
+            c.email as customerEmail,
+            d.model as deviceModel,
+            d.brand as deviceBrand
+          FROM Invoice i
+          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+          LEFT JOIN Customer c ON rr.customerId = c.id
+          LEFT JOIN Device d ON rr.deviceId = d.id
+          WHERE i.id = ?
+        `, [invoiceId]);
+
+        res.status(201).json({
+          success: true,
+          data: createdInvoice[0],
+          message: 'Invoice created successfully from repair request'
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error creating invoice from repair:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
     }
   }

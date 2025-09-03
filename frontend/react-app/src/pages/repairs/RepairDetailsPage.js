@@ -727,7 +727,7 @@ const RepairDetailsPage = () => {
 
   const handlePrint = (type) => {
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
-    const base = 'http://localhost:3000/api/repairs';
+            const base = 'http://localhost:3001/api/repairs';
     let url = `${base}/${id}/print/receipt`;
     if (type === 'qr') url = `${base}/${id}/print/receipt`;
     if (type === 'inspection') url = `${base}/${id}/print/inspection`;

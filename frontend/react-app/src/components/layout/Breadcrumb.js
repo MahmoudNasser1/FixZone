@@ -95,14 +95,14 @@ const Breadcrumb = ({
             {/* العنصر */}
             <div className="flex items-center space-x-1 space-x-reverse">
               {item.isEllipsis ? (
-                <span className="text-gray-400 px-2">...</span>
+                <span className="text-gray-300 px-2 font-medium">...</span>
               ) : item.href ? (
                 <Link
                   to={item.href}
                   className={cn(
                     "flex items-center space-x-1 space-x-reverse px-2 py-1 rounded-md transition-colors",
-                    "text-gray-600 hover:text-gray-900 hover:bg-gray-100",
-                    "dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-700"
+                    "text-white hover:text-blue-100 hover:bg-white/20 font-medium",
+                    "dark:text-white dark:hover:text-blue-100 dark:hover:bg-white/20"
                   )}
                 >
                   {item.icon && <item.icon className="w-4 h-4" />}
@@ -113,8 +113,8 @@ const Breadcrumb = ({
                   className={cn(
                     "flex items-center space-x-1 space-x-reverse px-2 py-1 rounded-md",
                     item.isActive 
-                      ? "text-blue-600 bg-blue-50 font-medium dark:text-blue-400 dark:bg-blue-900/20" 
-                      : "text-gray-900 dark:text-gray-100"
+                      ? "text-white bg-white/20 font-bold dark:text-white dark:bg-white/20" 
+                      : "text-blue-100 dark:text-blue-100"
                   )}
                   aria-current={item.isActive ? "page" : undefined}
                 >
@@ -128,9 +128,9 @@ const Breadcrumb = ({
             {index < displayItems.length - 1 && !item.isEllipsis && (
               <div className="mx-2">
                 {SeparatorIcon ? (
-                  <SeparatorIcon className="w-4 h-4 text-gray-400" />
+                  <SeparatorIcon className="w-4 h-4 text-blue-200" />
                 ) : (
-                  <span className="text-gray-400">/</span>
+                  <span className="text-blue-200 font-medium">/</span>
                 )}
               </div>
             )}
