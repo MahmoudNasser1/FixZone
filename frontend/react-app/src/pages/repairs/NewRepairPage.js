@@ -20,6 +20,7 @@ const NewRepairPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [brandOptions, setBrandOptions] = useState([]);
   const [accessoryOptions, setAccessoryOptions] = useState([]);
+  const [deviceTypeOptions, setDeviceTypeOptions] = useState([]);
   
   const [formData, setFormData] = useState({
     customerId: searchParams.get('customerId') || '',
@@ -38,13 +39,84 @@ const NewRepairPage = () => {
     storage: '',
     accessories: [],
     problemDescription: '',
-    priority: 'medium',
+    priority: 'MEDIUM',
     estimatedCost: '',
+    actualCost: '',
+    expectedDeliveryDate: '',
     notes: ''
   });
 
+  // تحميل البيانات الأساسية عند بدء الصفحة
   useEffect(() => {
+    console.log('Initial useEffect triggered');
+    
+    const loadInitialData = async () => {
+      try {
+        console.log('Loading initial variables...');
+        
+        // تحميل الماركات والملحقات الأساسية
+        const brandsResponse = await apiService.getVariables({ category: 'BRAND', active: true });
+        console.log('Brands response:', brandsResponse);
+        if (brandsResponse.ok) {
+          const brands = await brandsResponse.json();
+          console.log('Brands loaded:', brands);
+          setBrandOptions(Array.isArray(brands) ? brands : []);
+        } else {
+          console.log('Brands response not ok, using fallback data');
+          setBrandOptions([
+            { id: 1, label: 'Apple', value: 'APPLE' },
+            { id: 2, label: 'Samsung', value: 'SAMSUNG' },
+            { id: 3, label: 'Huawei', value: 'HUAWEI' },
+            { id: 4, label: 'Dell', value: 'DELL' },
+            { id: 5, label: 'HP', value: 'HP' }
+          ]);
+        }
+        
+        const accessoriesResponse = await apiService.getVariables({ category: 'ACCESSORY', active: true });
+        console.log('Accessories response:', accessoriesResponse);
+        if (accessoriesResponse.ok) {
+          const accessories = await accessoriesResponse.json();
+          console.log('Accessories loaded:', accessories);
+          setAccessoryOptions(Array.isArray(accessories) ? accessories : []);
+        } else {
+          console.log('Accessories response not ok, using fallback data');
+          setAccessoryOptions([
+            { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
+            { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
+            { id: 3, label: 'سماعات', value: 'EARPHONES' },
+            { id: 4, label: 'حافظة', value: 'CASE' },
+            { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' }
+          ]);
+        }
+
+        // تحميل أنواع الأجهزة
+        const deviceTypesResponse = await apiService.getVariables({ category: 'DEVICE_TYPE', active: true });
+        console.log('Device types response:', deviceTypesResponse);
+        if (deviceTypesResponse.ok) {
+          const deviceTypes = await deviceTypesResponse.json();
+          console.log('Device types loaded:', deviceTypes);
+          setDeviceTypeOptions(Array.isArray(deviceTypes) ? deviceTypes : []);
+        } else {
+          console.log('Device types response not ok, using fallback data');
+          setDeviceTypeOptions([
+            { id: 1, label: 'هاتف ذكي', value: 'SMARTPHONE' },
+            { id: 2, label: 'لابتوب', value: 'LAPTOP' },
+            { id: 3, label: 'تابلت', value: 'TABLET' },
+            { id: 4, label: 'ساعة ذكية', value: 'SMARTWATCH' },
+            { id: 5, label: 'سماعات', value: 'HEADPHONES' }
+          ]);
+        }
+      } catch (e) {
+        console.warn('Failed to load initial variables', e);
+        setBrandOptions([]);
+        setAccessoryOptions([]);
+        setDeviceTypeOptions([]);
+      }
+    };
+    
     fetchCustomers();
+    loadInitialData();
+    
     if (searchParams.get('customerId')) {
       fetchCustomerDetails(searchParams.get('customerId'));
     }
@@ -52,22 +124,46 @@ const NewRepairPage = () => {
 
   // جلب الماركات والملحقات عند تغيير نوع الجهاز
   useEffect(() => {
+    if (!formData.deviceType) return; // لا نحتاج إعادة تحميل إذا لم يكن هناك نوع جهاز
+    
     const loadVariables = async () => {
       try {
+        console.log('Loading variables for device type:', formData.deviceType);
+        
         // الماركات حسب نوع الجهاز
-        const brands = await apiService.getVariables({ category: 'BRAND', deviceType: formData.deviceType || undefined, active: true });
-        setBrandOptions(brands || []);
+        const brandsResponse = await apiService.getVariables({ category: 'BRAND', deviceType: formData.deviceType, active: true });
+        console.log('Brands for device type response:', brandsResponse);
+        if (brandsResponse.ok) {
+          const brands = await brandsResponse.json();
+          console.log('Brands for device type loaded:', brands);
+          setBrandOptions(Array.isArray(brands) ? brands : []);
+        } else {
+          console.log('Brands response not ok, using fallback data for device type:', formData.deviceType);
+          // إضافة بيانات تجريبية حسب نوع الجهاز
+          const deviceBrands = {
+            'SMARTPHONE': [
+              { id: 1, label: 'Apple', value: 'APPLE' },
+              { id: 2, label: 'Samsung', value: 'SAMSUNG' },
+              { id: 3, label: 'Huawei', value: 'HUAWEI' },
+              { id: 4, label: 'Xiaomi', value: 'XIAOMI' }
+            ],
+            'LAPTOP': [
+              { id: 5, label: 'Dell', value: 'DELL' },
+              { id: 6, label: 'HP', value: 'HP' },
+              { id: 7, label: 'Lenovo', value: 'LENOVO' },
+              { id: 8, label: 'ASUS', value: 'ASUS' }
+            ],
+            'TABLET': [
+              { id: 9, label: 'iPad', value: 'IPAD' },
+              { id: 10, label: 'Samsung Galaxy Tab', value: 'SAMSUNG_TAB' },
+              { id: 11, label: 'Huawei MediaPad', value: 'HUAWEI_TAB' }
+            ]
+          };
+          setBrandOptions(deviceBrands[formData.deviceType] || []);
+        }
       } catch (e) {
         console.warn('Failed to load brand options', e);
         setBrandOptions([]);
-      }
-      try {
-        // الملحقات عامة (قد تكون حسب نوع الجهاز أيضاً لاحقاً)
-        const accessories = await apiService.getVariables({ category: 'ACCESSORY', active: true });
-        setAccessoryOptions(accessories || []);
-      } catch (e) {
-        console.warn('Failed to load accessory options', e);
-        setAccessoryOptions([]);
       }
     };
     loadVariables();
@@ -206,8 +302,10 @@ const NewRepairPage = () => {
         problemDescription: formData.problemDescription.trim(),
         priority: formData.priority,
         estimatedCost: parseFloat(formData.estimatedCost || 0) || 0,
+        actualCost: formData.actualCost ? parseFloat(formData.actualCost) : null,
+        expectedDeliveryDate: formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate).toISOString() : null,
         notes: formData.notes.trim() || null,
-        status: 'pending'
+        status: 'RECEIVED'
       };
 
       const newRepair = await apiService.createRepairRequest(repairData);
@@ -224,14 +322,6 @@ const NewRepairPage = () => {
     }
   };
 
-  const deviceTypes = [
-    { value: 'laptop', label: 'لابتوب', icon: Laptop },
-    { value: 'smartphone', label: 'هاتف ذكي', icon: Smartphone },
-    { value: 'tablet', label: 'تابلت', icon: Tablet },
-    { value: 'desktop', label: 'كمبيوتر مكتبي', icon: Laptop },
-    { value: 'printer', label: 'طابعة', icon: Wrench },
-    { value: 'other', label: 'أخرى', icon: Wrench }
-  ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -373,7 +463,7 @@ const NewRepairPage = () => {
                   required
                 >
                   <option value="">اختر نوع الجهاز</option>
-                  {deviceTypes.map(type => (
+                  {deviceTypeOptions.map(type => (
                     <option key={type.value} value={type.value}>
                       {type.label}
                     </option>
@@ -392,9 +482,12 @@ const NewRepairPage = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">اختر الماركة</option>
-                  {brandOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id}>{opt.label}</option>
-                  ))}
+                  {(() => {
+                    console.log('Rendering brandOptions:', brandOptions, 'Type:', typeof brandOptions, 'IsArray:', Array.isArray(brandOptions));
+                    return Array.isArray(brandOptions) ? brandOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>{opt.label}</option>
+                    )) : null;
+                  })()}
                 </select>
                 <div className="text-xs text-gray-500 mt-1">أو أدخل ماركة مخصصة:</div>
                 <Input
@@ -465,24 +558,27 @@ const NewRepairPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">المتعلقات المستلمة</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {accessoryOptions.map((opt) => (
-                  <label key={opt.id} className="flex items-center space-x-2 space-x-reverse">
-                    <input
-                      type="checkbox"
-                      checked={formData.accessories.includes(String(opt.id)) || formData.accessories.includes(Number(opt.id))}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setFormData((prev) => {
-                          const idStr = String(opt.id);
-                          const current = new Set((prev.accessories || []).map(String));
-                          if (checked) current.add(idStr); else current.delete(idStr);
-                          return { ...prev, accessories: Array.from(current) };
-                        });
-                      }}
-                    />
-                    <span>{opt.label}</span>
-                  </label>
-                ))}
+                {(() => {
+                  console.log('Rendering accessoryOptions:', accessoryOptions, 'Type:', typeof accessoryOptions, 'IsArray:', Array.isArray(accessoryOptions));
+                  return Array.isArray(accessoryOptions) ? accessoryOptions.map((opt) => (
+                    <label key={opt.id} className="flex items-center space-x-2 space-x-reverse">
+                      <input
+                        type="checkbox"
+                        checked={formData.accessories.includes(String(opt.id)) || formData.accessories.includes(Number(opt.id))}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData((prev) => {
+                            const idStr = String(opt.id);
+                            const current = new Set((prev.accessories || []).map(String));
+                            if (checked) current.add(idStr); else current.delete(idStr);
+                            return { ...prev, accessories: Array.from(current) };
+                          });
+                        }}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  )) : null;
+                })()}
               </div>
             </div>
           </SimpleCardContent>
@@ -520,15 +616,16 @@ const NewRepairPage = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="low">منخفضة</option>
-                  <option value="medium">متوسطة</option>
-                  <option value="high">عالية</option>
+                  <option value="LOW">منخفضة</option>
+                  <option value="MEDIUM">متوسطة</option>
+                  <option value="HIGH">عالية</option>
+                  <option value="URGENT">عاجلة</option>
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  التكلفة المتوقعة (ر.س)
+                  التكلفة المتوقعة
                 </label>
                 <Input
                   name="estimatedCost"
@@ -538,6 +635,34 @@ const NewRepairPage = () => {
                   value={formData.estimatedCost}
                   onChange={handleInputChange}
                   placeholder="0.00"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  التكلفة الفعلية - اختياري
+                </label>
+                <Input
+                  name="actualCost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.actualCost}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  موعد التسليم المتوقع
+                </label>
+                <input
+                  name="expectedDeliveryDate"
+                  type="datetime-local"
+                  value={formData.expectedDeliveryDate}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>

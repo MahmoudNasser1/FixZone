@@ -4,7 +4,7 @@ import { SimpleCard, SimpleCardContent, SimpleCardHeader, SimpleCardTitle } from
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 
-const API_BASE = 'http://localhost:3001/api';
+import apiService from '../../services/api';
 
 const ServicesCatalogPage = () => {
   const { success, error: notifyError, warning } = useNotifications();
@@ -35,7 +35,7 @@ const ServicesCatalogPage = () => {
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
       });
-      const res = await fetch(`${API_BASE}/services?${params.toString()}`, { credentials: 'include' });
+      const res = await apiService.request(`/services?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -62,12 +62,10 @@ const ServicesCatalogPage = () => {
         return;
       }
       setSaving(true);
-      const url = editingId ? `${API_BASE}/services/${editingId}` : `${API_BASE}/services`;
+      const url = editingId ? `/services/${editingId}` : `/services`;
       const method = editingId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiService.request(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           name: form.name,
           description: form.description || '',
@@ -107,10 +105,8 @@ const ServicesCatalogPage = () => {
 
   const toggleActive = async (svc) => {
     try {
-      const res = await fetch(`${API_BASE}/services/${svc.id}`, {
+      const res = await apiService.request(`/services/${svc.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           name: svc.name,
           description: svc.description,
@@ -130,7 +126,7 @@ const ServicesCatalogPage = () => {
     try {
       const ok = window.confirm(`سيتم حذف الخدمة: ${svc.name}. هل أنت متأكد؟`);
       if (!ok) return;
-      const res = await fetch(`${API_BASE}/services/${svc.id}`, { method: 'DELETE', credentials: 'include' });
+      const res = await apiService.request(`/services/${svc.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       success('تم حذف الخدمة');
       await loadServices();
@@ -190,7 +186,7 @@ const ServicesCatalogPage = () => {
             </div>
           ) : error ? (
             <div className="text-red-600 text-sm">{error}</div>
-          ) : filtered.length === 0 ? (
+          ) : services.length === 0 ? (
             <div className="text-gray-600 text-sm">لا توجد خدمات</div>
           ) : (
             <div className="overflow-x-auto">

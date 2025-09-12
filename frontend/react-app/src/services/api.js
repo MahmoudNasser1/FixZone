@@ -24,11 +24,8 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      // Return the full response object for components that need to check response.ok
+      return response;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
@@ -289,6 +286,98 @@ class ApiService {
     });
   }
 
+  // ==================
+  // Invoice APIs
+  // ==================
+  
+  // جلب جميع الفواتير
+  async getInvoices(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/invoices${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // جلب فاتورة واحدة
+  async getInvoiceById(id) {
+    return this.request(`/invoices/${id}`);
+  }
+
+  // إنشاء فاتورة جديدة
+  async createInvoice(invoiceData) {
+    return this.request('/invoices', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
+  }
+
+  // إنشاء فاتورة من طلب إصلاح
+  async createInvoiceFromRepair(repairId, invoiceData = {}) {
+    return this.request(`/invoices/create-from-repair/${repairId}`, {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
+  }
+
+  // تحديث فاتورة
+  async updateInvoice(id, invoiceData) {
+    return this.request(`/invoices/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(invoiceData),
+    });
+  }
+
+  // حذف فاتورة
+  async deleteInvoice(id) {
+    return this.request(`/invoices/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // جلب عناصر الفاتورة
+  async getInvoiceItems(invoiceId) {
+    return this.request(`/invoices/${invoiceId}/items`);
+  }
+
+  // إضافة عنصر للفاتورة
+  async addInvoiceItem(invoiceId, itemData) {
+    return this.request(`/invoices/${invoiceId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // تحديث عنصر الفاتورة
+  async updateInvoiceItem(invoiceId, itemId, itemData) {
+    return this.request(`/invoices/${invoiceId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // حذف عنصر من الفاتورة
+  async removeInvoiceItem(invoiceId, itemId) {
+    return this.request(`/invoices/${invoiceId}/items/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // جلب مدفوعات الفاتورة
+  async getInvoicePayments(invoiceId) {
+    return this.request(`/payments/invoice/${invoiceId}`);
+  }
+
+  // توليد PDF للفاتورة
+  async generateInvoicePDF(invoiceId) {
+    return this.request(`/invoices/${invoiceId}/pdf`);
+  }
+
+  // العمليات المجمعة للفواتير
+  async bulkActionInvoices(action, invoiceIds) {
+    return this.request('/invoices/bulk-action', {
+      method: 'POST',
+      body: JSON.stringify({ action, invoiceIds }),
+    });
+  }
+
   // فواتير الطلب
   async listRepairInvoices(id, params = {}) {
     // الراوتر الخلفي يستخدم /invoices مع إمكانية تمرير repairRequestId
@@ -369,6 +458,80 @@ class ApiService {
   // جلب الإشعارات
   async getNotifications() {
     return this.request('/notifications');
+  }
+
+  // ==================
+  // Service APIs
+  // ==================
+  
+  // جلب جميع الخدمات
+  async getServices() {
+    return this.request('/services');
+  }
+
+  // جلب خدمة واحدة
+  async getService(id) {
+    return this.request(`/services/${id}`);
+  }
+
+  // إنشاء خدمة جديدة
+  async createService(serviceData) {
+    return this.request('/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+  }
+
+  // تحديث خدمة
+  async updateService(id, serviceData) {
+    return this.request(`/services/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(serviceData),
+    });
+  }
+
+  // حذف خدمة
+  async deleteService(id) {
+    return this.request(`/services/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================
+  // Inventory APIs
+  // ==================
+  
+  // جلب جميع عناصر المخزون
+  async getInventoryItems() {
+    return this.request('/inventory/items');
+  }
+
+  // جلب عنصر مخزون واحد
+  async getInventoryItem(id) {
+    return this.request(`/inventory/items/${id}`);
+  }
+
+  // إنشاء عنصر مخزون جديد
+  async createInventoryItem(itemData) {
+    return this.request('/inventory/items', {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // تحديث عنصر المخزون
+  async updateInventoryItem(id, itemData) {
+    return this.request(`/inventory/items/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // حذف عنصر المخزون
+  async deleteInventoryItem(id) {
+    return this.request(`/inventory/items/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // ==================

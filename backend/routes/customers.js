@@ -89,6 +89,9 @@ router.get('/:id', async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).send('Customer not found');
     }
+    
+    console.log('Fetched customer:', rows[0]);
+    
     res.json(rows[0]);
   } catch (err) {
     console.error(`Error fetching customer with ID ${id}:`, err);
@@ -98,13 +101,19 @@ router.get('/:id', async (req, res) => {
 
 // Create a new customer
 router.post('/', authMiddleware, async (req, res) => {
-  const { name, phone, email, address, customFields } = req.body;
+  const { name, phone, email, address, companyId, status = 'active', customFields } = req.body;
+  
+  console.log('Creating customer:', { name, phone, email, address, companyId, status, customFields });
+  
   if (!name) {
     return res.status(400).send('Customer name is required');
   }
   try {
-    const [result] = await db.query('INSERT INTO Customer (name, phone, email, address, customFields) VALUES (?, ?, ?, ?, ?)', [name, phone, email, address, JSON.stringify(customFields)]);
-    res.status(201).json({ id: result.insertId, name, phone, email, address, customFields });
+    const [result] = await db.query('INSERT INTO Customer (name, phone, email, address, companyId, status, customFields) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, email, address, companyId, status, JSON.stringify(customFields)]);
+    
+    console.log('Create result:', result);
+    
+    res.status(201).json({ id: result.insertId, name, phone, email, address, companyId, status, customFields });
   } catch (err) {
     console.error('Error creating customer:', err);
     res.status(500).send('Server Error');
@@ -114,12 +123,18 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update a customer
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { name, phone, email, address, customFields } = req.body;
+  const { name, phone, email, address, companyId, status, customFields } = req.body;
+  
+  console.log('Updating customer:', { id, name, phone, email, address, companyId, status, customFields });
+  
   if (!name) {
     return res.status(400).send('Customer name is required');
   }
   try {
-    const [result] = await db.query('UPDATE Customer SET name = ?, phone = ?, email = ?, address = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [name, phone, email, address, JSON.stringify(customFields), id]);
+    const [result] = await db.query('UPDATE Customer SET name = ?, phone = ?, email = ?, address = ?, companyId = ?, status = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [name, phone, email, address, companyId, status || 'active', JSON.stringify(customFields), id]);
+    
+    console.log('Update result:', result);
+    
     if (result.affectedRows === 0) {
       return res.status(404).send('Customer not found or already deleted');
     }

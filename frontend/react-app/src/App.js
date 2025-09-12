@@ -22,6 +22,8 @@ import EditCustomerPage from './pages/customers/EditCustomerPage';
 
 // Company Pages
 import { CompaniesPage, NewCompanyPage } from './pages/companies';
+import CompanyDetailsPage from './pages/companies/CompanyDetailsPage';
+import EditCompanyPage from './pages/companies/EditCompanyPage';
 
 // Repair Pages
 import { RepairsPage } from './pages/repairs';
@@ -37,6 +39,9 @@ import UsersPage from './pages/users/UsersPage';
 import LayoutDemo from './pages/LayoutDemo';
 import NotificationDemoPage from './pages/NotificationDemoPage';
 import InventoryPage from './pages/inventory/InventoryPage';
+import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
+import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
+import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
 import InvoicesPage from './pages/invoices/InvoicesPage';
 import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
 import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
@@ -116,11 +121,17 @@ function App() {
                       {/* Companies */}
                       <Route path="companies" element={<CompaniesPage />} />
                       <Route path="companies/new" element={<NewCompanyPage />} />
+                      <Route path="companies/:id" element={<CompanyDetailsPage />} />
+                      <Route path="companies/:id/edit" element={<EditCompanyPage />} />
 
                       {/* Inventory, Settings, Payments */}
                       <Route path="inventory" element={<InventoryPage />} />
+                      <Route path="inventory/transfer" element={<InventoryTransferPage />} />
+                      <Route path="inventory/reports" element={<InventoryReportsPage />} />
+                      <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
+                      <Route path="invoices/new" element={<CreateInvoicePage />} />
                       <Route path="invoices/create" element={<CreateInvoicePage />} />
                       <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
                       <Route path="invoices/:id" element={<InvoiceDetailsPage />} />

@@ -53,6 +53,9 @@ const navItems = [
     section: 'المخزون والقطع',
     items: [
       { href: '/inventory', label: 'المخزون', icon: Warehouse },
+      { href: '/inventory/warehouses', label: 'إدارة المخازن', icon: Building2 },
+      { href: '/inventory/transfer', label: 'نقل المخزون', icon: Package },
+      { href: '/inventory/reports', label: 'تقارير المخزون', icon: BarChart2 },
       { href: '/inventory/parts', label: 'قطع الغيار', icon: Package, badge: 'نقص' },
       { href: '/inventory/suppliers', label: 'الموردين', icon: Building2 },
       { href: '/inventory/orders', label: 'طلبات الشراء', icon: FileText },

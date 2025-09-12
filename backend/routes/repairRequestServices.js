@@ -5,7 +5,26 @@ const db = require('../db');
 // Get all repair request services
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM RepairRequestService');
+    const { repairRequestId } = req.query;
+    let query = `
+      SELECT 
+        rrs.*,
+        s.name as serviceName,
+        u.name as technicianName
+      FROM RepairRequestService rrs
+      LEFT JOIN Service s ON rrs.serviceId = s.id
+      LEFT JOIN User u ON rrs.technicianId = u.id
+    `;
+    
+    const params = [];
+    if (repairRequestId) {
+      query += ' WHERE rrs.repairRequestId = ?';
+      params.push(repairRequestId);
+    }
+    
+    query += ' ORDER BY rrs.createdAt DESC';
+    
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching repair request services:', err);

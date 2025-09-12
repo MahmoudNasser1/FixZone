@@ -58,11 +58,14 @@ const quotationItemsRouter = require('./routes/quotationItems');
 const warehousesRouter = require('./routes/warehouses');
 const inventoryItemsRouter = require('./routes/inventoryItems');
 const variablesRouter = require('./routes/variables');
+const variableCategoriesRouter = require('./routes/variable-categories');
+const variableOptionsRouter = require('./routes/variable-options');
 const stockLevelsRouter = require('./routes/stockLevels');
 const stockMovementsRouter = require('./routes/stockMovements');
 const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
+const messagingRouter = require('./routes/messaging');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -73,6 +76,8 @@ router.use('/quotationitems', quotationItemsRouter);
 router.use('/warehouses', warehousesRouter);
 router.use('/inventoryitems', inventoryItemsRouter);
 router.use('/variables', variablesRouter);
+router.use('/variable-categories', variableCategoriesRouter);
+router.use('/variable-options', variableOptionsRouter);
 
 router.use('/branches', branchesRouter);
 router.use('/roles', rolesRouter);
@@ -111,6 +116,7 @@ router.use('/stockmovements', stockMovementsRouter);
 router.use('/notificationtemplates', notificationTemplatesRouter);
 router.use('/auth', authRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/messaging', messagingRouter);
 // Using existing routes instead:
 // router.use('/delivery', deliveryRouter); // Use existing repairs route for delivery
 // router.use('/payment', paymentRouter); // Use existing payments route

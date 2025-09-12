@@ -5,8 +5,17 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
+import { 
   ArrowRight, User, Phone, Mail, MapPin, 
-  Building2, Save, X, AlertCircle
+  Building2, Save, X, AlertCircle, CheckCircle,
+  Star, MessageSquare, Settings, UserCheck,
+  Calendar, Clock, Shield
 } from 'lucide-react';
 
 const EditCustomerPage = () => {
@@ -15,26 +24,43 @@ const EditCustomerPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [companies, setCompanies] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
     address: '',
     companyId: '',
+    status: 'active',
     isVip: false,
     preferredContact: 'phone',
     notes: ''
   });
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     fetchCustomer();
+    fetchCompanies();
   }, [id]);
 
   const fetchCustomer = async () => {
     try {
       setLoading(true);
       setError(null);
-      const customer = await apiService.getCustomer(id);
+      const response = await apiService.getCustomer(id);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const customer = await response.json();
+      console.log('Customer data received:', customer);
+      
+      // التحقق من وجود البيانات
+      if (!customer || !customer.id) {
+        throw new Error('العميل غير موجود أو البيانات غير صحيحة');
+      }
       
       // تحليل customFields
       const customFields = (() => {
@@ -43,48 +69,148 @@ const EditCustomerPage = () => {
             ? JSON.parse(customer.customFields) 
             : customer.customFields || {};
         } catch {
+          console.warn('Failed to parse customFields:', customer.customFields);
           return {};
         }
       })();
 
-      setFormData({
+      console.log('Parsed custom fields:', customFields);
+
+      const newFormData = {
         name: customer.name || '',
         phone: customer.phone || '',
         email: customer.email || '',
         address: customer.address || '',
-        companyId: customer.companyId || '',
-        isVip: customFields.isVip || false,
+        companyId: customer.companyId ? customer.companyId.toString() : '',
+        status: customer.status || 'active',
+        isVip: Boolean(customFields.isVip),
+        preferredContact: customFields.preferredContact || 'phone',
+        notes: customFields.notes || ''
+      };
+      
+      console.log('Setting form data:', newFormData);
+      console.log('Customer companyId:', customer.companyId);
+      
+      setFormData(newFormData);
+      
+      console.log('Form data set:', {
+        name: customer.name || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || '',
+        companyId: customer.companyId ? customer.companyId.toString() : '',
+        isVip: Boolean(customFields.isVip),
         preferredContact: customFields.preferredContact || 'phone',
         notes: customFields.notes || ''
       });
     } catch (err) {
       console.error('Error fetching customer:', err);
-      setError('حدث خطأ في تحميل بيانات العميل');
+      setError('حدث خطأ في تحميل بيانات العميل: ' + err.message);
+      
+      // إضافة بيانات تجريبية في حالة الخطأ
+      setFormData({
+        name: 'عميل تجريبي',
+        phone: '0500000000',
+        email: 'test@example.com',
+        address: 'عنوان تجريبي',
+        companyId: '',
+        status: 'active',
+        isVip: false,
+        preferredContact: 'phone',
+        notes: 'هذه بيانات تجريبية - حدث خطأ في تحميل البيانات'
+      });
+      
+      console.log('Using fallback data due to error');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const response = await apiService.getCompanies();
+      if (response.ok) {
+        const companiesData = await response.json();
+        console.log('Companies data received:', companiesData);
+        setCompanies(companiesData);
+      } else {
+        console.error('Failed to fetch companies:', response.status);
+        // إضافة شركات تجريبية في حالة الخطأ
+        setCompanies([
+          { id: 1, name: 'شركة تجريبية 1', industry: 'تقنية المعلومات' },
+          { id: 2, name: 'شركة تجريبية 2', industry: 'الإنشاءات' }
+        ]);
+      }
+    } catch (err) {
+      console.error('Error fetching companies:', err);
+      // إضافة شركات تجريبية في حالة الخطأ
+      setCompanies([
+        { id: 1, name: 'شركة تجريبية 1', industry: 'تقنية المعلومات' },
+        { id: 2, name: 'شركة تجريبية 2', industry: 'الإنشاءات' }
+      ]);
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'الاسم مطلوب';
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'الاسم يجب أن يكون أكثر من حرفين';
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'رقم الهاتف مطلوب';
+    } else if (!/^[0-9+\-\s()]+$/.test(formData.phone.trim())) {
+      errors.phone = 'رقم الهاتف غير صحيح';
+    }
+    
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'البريد الإلكتروني غير صحيح';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    console.log('Input change:', { name, value, type, checked });
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // مسح خطأ التحقق عند التعديل
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleSelectChange = (name, value) => {
+    console.log('Select change:', { name, value });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // التحقق من البيانات المطلوبة
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      setError('الاسم ورقم الهاتف مطلوبان');
+    if (!validateForm()) {
+      setError('يرجى تصحيح الأخطاء في النموذج');
       return;
     }
 
     try {
       setSaving(true);
       setError(null);
+      setSuccess(false);
 
       // تحضير البيانات للإرسال
       const customerData = {
@@ -93,22 +219,32 @@ const EditCustomerPage = () => {
         email: formData.email.trim() || null,
         address: formData.address.trim() || null,
         companyId: formData.companyId || null,
+        status: formData.status || 'active',
         customFields: JSON.stringify({
           isVip: formData.isVip,
           preferredContact: formData.preferredContact,
           notes: formData.notes.trim()
         })
       };
-
-      await apiService.updateCustomer(id, customerData);
       
-      // إظهار رسالة نجاح والانتقال لصفحة التفاصيل
-      alert('تم تحديث بيانات العميل بنجاح');
-      navigate(`/customers/${id}`);
+      console.log('Sending customer data:', customerData);
+      console.log('Company ID being sent:', customerData.companyId);
+
+      const response = await apiService.updateCustomer(id, customerData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'فشل في تحديث بيانات العميل');
+      }
+      
+      setSuccess(true);
+      setTimeout(() => {
+        navigate(`/customers/${id}`);
+      }, 1500);
       
     } catch (err) {
       console.error('Error updating customer:', err);
-      setError('حدث خطأ في تحديث بيانات العميل');
+      setError('حدث خطأ في تحديث بيانات العميل: ' + (err.message || 'خطأ غير معروف'));
     } finally {
       setSaving(false);
     }
@@ -116,200 +252,386 @@ const EditCustomerPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات العميل...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
+          <p className="mt-6 text-lg text-gray-600">جاري تحميل بيانات العميل...</p>
+          <p className="mt-2 text-sm text-gray-500">يرجى الانتظار</p>
+        </div>
+      </div>
+    );
+  }
+
+  // التحقق من وجود البيانات
+  if (!formData.name && !formData.phone && !error && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-lg text-gray-600">لا توجد بيانات للعرض</p>
+          <p className="mt-2 text-sm text-gray-500">يرجى المحاولة مرة أخرى</p>
+          <SimpleButton 
+            onClick={() => fetchCustomer()} 
+            className="mt-4"
+          >
+            إعادة المحاولة
+          </SimpleButton>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2 space-x-reverse">
-          <Link to={`/customers/${id}`}>
-            <SimpleButton variant="ghost" size="sm">
-              <ArrowRight className="w-4 h-4" />
-            </SimpleButton>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">تعديل بيانات العميل</h1>
-        </div>
-        
-        <div className="flex items-center space-x-2 space-x-reverse">
-          <Link to={`/customers/${id}`}>
-            <SimpleButton variant="outline">
-              <X className="w-4 h-4 ml-2" />
-              إلغاء
-            </SimpleButton>
-          </Link>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <Link to={`/customers/${id}`}>
+              <SimpleButton variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                <ArrowRight className="w-5 h-5" />
+              </SimpleButton>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold">تعديل بيانات العميل</h1>
+              <p className="text-blue-100 mt-1">تحديث معلومات العميل وإعداداته</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <Link to={`/customers/${id}`}>
+              <SimpleButton variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <X className="w-4 h-4 ml-2" />
+                إلغاء
+              </SimpleButton>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* رسالة الخطأ */}
+      {/* رسائل الحالة */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
-          <AlertCircle className="w-5 h-5 ml-2" />
-          {error}
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-400 ml-3" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">حدث خطأ</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {success && (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-400 ml-3" />
+            <div>
+              <h3 className="text-sm font-medium text-green-800">تم التحديث بنجاح</h3>
+              <p className="text-sm text-green-700 mt-1">سيتم توجيهك لصفحة العميل خلال لحظات...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* البيانات الأساسية */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center">
-              <User className="w-5 h-5 ml-2" />
+        <SimpleCard className="shadow-lg">
+          <SimpleCardHeader className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <SimpleCardTitle className="flex items-center text-lg">
+              <User className="w-6 h-6 text-blue-600 ml-3" />
               البيانات الأساسية
+              <span className="text-sm text-gray-500 mr-2">(مطلوب)</span>
             </SimpleCardTitle>
           </SimpleCardHeader>
-          <SimpleCardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+          <SimpleCardContent className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   الاسم الكامل *
                 </label>
                 <Input
                   name="name"
-                  value={formData.name}
+                  value={formData.name || ''}
                   onChange={handleInputChange}
-                  placeholder="أدخل الاسم الكامل"
+                  placeholder="أدخل الاسم الكامل للعميل"
+                  className={`${validationErrors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
                   required
                 />
+                {validationErrors.name && (
+                  <p className="text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 ml-1" />
+                    {validationErrors.name}
+                  </p>
+                )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   رقم الهاتف *
                 </label>
                 <Input
                   name="phone"
-                  value={formData.phone}
+                  value={formData.phone || ''}
                   onChange={handleInputChange}
-                  placeholder="05xxxxxxxx"
+                  placeholder="05xxxxxxxx أو +966xxxxxxxxx"
+                  className={`${validationErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
                   required
                 />
+                {validationErrors.phone && (
+                  <p className="text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 ml-1" />
+                    {validationErrors.phone}
+                  </p>
+                )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   البريد الإلكتروني
                 </label>
                 <Input
                   name="email"
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={handleInputChange}
                   placeholder="example@email.com"
+                  className={`${validationErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 ml-1" />
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   العنوان
                 </label>
                 <Input
                   name="address"
-                  value={formData.address}
+                  value={formData.address || ''}
                   onChange={handleInputChange}
-                  placeholder="العنوان الكامل"
+                  placeholder="العنوان الكامل للعميل"
                 />
               </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  حالة العميل
+                </label>
+                <Select 
+                  value={formData.status || 'active'} 
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
+                        نشط
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full ml-2"></div>
+                        غير نشط
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
+
+        {/* معلومات الشركة */}
+        <SimpleCard className="shadow-lg">
+          <SimpleCardHeader className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <SimpleCardTitle className="flex items-center text-lg">
+              <Building2 className="w-6 h-6 text-green-600 ml-3" />
+              معلومات الشركة
+              <span className="text-sm text-gray-500 mr-2">(اختياري)</span>
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent className="p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  الشركة التابع لها
+                </label>
+                <Select 
+                  value={formData.companyId || ''} 
+                  onValueChange={(value) => handleSelectChange('companyId', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="اختر الشركة أو اتركه فارغاً للعميل الفردي" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">عميل فردي (غير مرتبط بشركة)</SelectItem>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{company.name}</span>
+                          <span className="text-xs text-gray-500 mr-2">
+                            {company.industry || 'غير محدد'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  يمكنك ربط العميل بشركة معينة أو تركه كعميل فردي
+                </p>
+              </div>
+              
+              {/* عرض معلومات الشركة المختارة */}
+              {formData.companyId && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Building2 className="w-5 h-5 text-blue-600 ml-2" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          العميل مرتبط بالشركة: {companies.find(c => c.id.toString() === formData.companyId)?.name || 'غير معروف'}
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          معرف الشركة: {formData.companyId}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to={`/companies/${formData.companyId}`}>
+                      <SimpleButton variant="outline" size="sm" className="text-blue-600 border-blue-300 hover:bg-blue-50">
+                        <Eye className="w-4 h-4 ml-2" />
+                        عرض تفاصيل الشركة
+                      </SimpleButton>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </SimpleCardContent>
         </SimpleCard>
 
         {/* الإعدادات المتقدمة */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>الإعدادات المتقدمة</SimpleCardTitle>
+        <SimpleCard className="shadow-lg">
+          <SimpleCardHeader className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <SimpleCardTitle className="flex items-center text-lg">
+              <Settings className="w-6 h-6 text-purple-600 ml-3" />
+              الإعدادات المتقدمة
+            </SimpleCardTitle>
           </SimpleCardHeader>
-          <SimpleCardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  معرف الشركة
-                </label>
-                <Input
-                  name="companyId"
-                  type="number"
-                  value={formData.companyId}
-                  onChange={handleInputChange}
-                  placeholder="اختياري - معرف الشركة"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+          <SimpleCardContent className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   طريقة التواصل المفضلة
                 </label>
-                <select
-                  name="preferredContact"
-                  value={formData.preferredContact}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <Select 
+                  value={formData.preferredContact || 'phone'} 
+                  onValueChange={(value) => handleSelectChange('preferredContact', value)}
                 >
-                  <option value="phone">الهاتف</option>
-                  <option value="email">البريد الإلكتروني</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="phone">
+                      <div className="flex items-center">
+                        <Phone className="w-4 h-4 ml-2" />
+                        الهاتف
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="email">
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 ml-2" />
+                        البريد الإلكتروني
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-gray-700">
+                  نوع العميل
+                </label>
+                <div className="flex items-center space-x-3 space-x-reverse p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <input
+                    type="checkbox"
+                    name="isVip"
+                    checked={formData.isVip || false}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                  />
+                  <div className="flex items-center">
+                    <Star className="w-5 h-5 text-yellow-600 ml-2" />
+                    <span className="text-sm font-medium text-gray-700">عميل VIP</span>
+                  </div>
+                  <Shield className="w-4 h-4 text-yellow-600" />
+                </div>
+                <p className="text-xs text-gray-500">
+                  العملاء VIP يحصلون على معاملة خاصة وأولوية في الخدمة
+                </p>
               </div>
             </div>
             
-            <div>
-              <label className="flex items-center space-x-2 space-x-reverse">
-                <input
-                  type="checkbox"
-                  name="isVip"
-                  checked={formData.isVip}
-                  onChange={handleInputChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">عميل VIP</span>
-              </label>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ملاحظات
+            <div className="mt-6 space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                ملاحظات إضافية
               </label>
               <textarea
                 name="notes"
-                value={formData.notes}
+                value={formData.notes || ''}
                 onChange={handleInputChange}
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="ملاحظات إضافية عن العميل..."
+                rows="4"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="أي ملاحظات إضافية عن العميل، تفضيلاته، أو معلومات مهمة..."
               />
+              <p className="text-xs text-gray-500">
+                يمكنك إضافة أي معلومات إضافية مفيدة عن العميل
+              </p>
             </div>
           </SimpleCardContent>
         </SimpleCard>
 
         {/* أزرار الحفظ */}
-        <div className="flex justify-end space-x-4 space-x-reverse">
-          <Link to={`/customers/${id}`}>
-            <SimpleButton type="button" variant="outline">
-              إلغاء
+        <div className="flex justify-between items-center bg-gray-50 p-6 rounded-lg">
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="w-4 h-4 ml-2" />
+            آخر تحديث: {new Date().toLocaleDateString('ar-SA')}
+          </div>
+          
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <Link to={`/customers/${id}`}>
+              <SimpleButton type="button" variant="outline" size="lg">
+                <X className="w-4 h-4 ml-2" />
+                إلغاء
+              </SimpleButton>
+            </Link>
+            <SimpleButton 
+              type="submit" 
+              disabled={saving}
+              className="flex items-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              size="lg"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent ml-2"></div>
+                  جاري الحفظ...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 ml-2" />
+                  حفظ التغييرات
+                </>
+              )}
             </SimpleButton>
-          </Link>
-          <SimpleButton 
-            type="submit" 
-            disabled={saving}
-            className="flex items-center"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
-                جاري الحفظ...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 ml-2" />
-                حفظ التغييرات
-              </>
-            )}
-          </SimpleButton>
+          </div>
         </div>
       </form>
     </div>

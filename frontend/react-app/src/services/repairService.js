@@ -1,72 +1,45 @@
-const API_BASE = 'http://localhost:3001/api';
+import apiService from './api';
 
 const repairService = {
   // جلب خدمات طلب الإصلاح
   async getRepairRequestServices(repairRequestId) {
-    const response = await fetch(`${API_BASE}/repairrequestservices?repairRequestId=${repairRequestId}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
+    return apiService.request(`/repairrequestservices?repairRequestId=${repairRequestId}`);
   },
 
   // إضافة خدمة لطلب الإصلاح
   async addRepairRequestService(data) {
-    const response = await fetch(`${API_BASE}/repairrequestservices`, {
+    return apiService.request('/repairrequestservices', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
   },
 
   // تحديث خدمة طلب الإصلاح
   async updateRepairRequestService(id, data) {
-    const response = await fetch(`${API_BASE}/repairrequestservices/${id}`, {
+    return apiService.request(`/repairrequestservices/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
   },
 
   // حذف خدمة طلب الإصلاح
   async deleteRepairRequestService(id) {
-    const response = await fetch(`${API_BASE}/repairrequestservices/${id}`, {
-      method: 'DELETE',
+    return apiService.request(`/repairrequestservices/${id}`, {
+      method: 'DELETE'
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
   },
 
   // جلب قائمة الخدمات المتاحة
   async getAvailableServices() {
-    const response = await fetch(`${API_BASE}/services`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
+    return apiService.request('/services');
   },
 
   // إضافة خدمات للفاتورة
   async addServicesToInvoice(invoiceId, serviceData) {
-    const response = await fetch(`${API_BASE}/invoices/${invoiceId}/items`, {
+    return apiService.request(`/invoices/${invoiceId}/items`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(serviceData),
+      body: JSON.stringify(serviceData)
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
   }
 };
 

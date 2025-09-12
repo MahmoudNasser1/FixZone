@@ -28,6 +28,24 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get payments by invoice ID
+router.get('/invoice/:invoiceId', async (req, res) => {
+  const { invoiceId } = req.params;
+  try {
+    const [rows] = await db.query(`
+      SELECT p.*, u.name as userName 
+      FROM Payment p 
+      LEFT JOIN User u ON p.userId = u.id 
+      WHERE p.invoiceId = ? 
+      ORDER BY p.createdAt DESC
+    `, [invoiceId]);
+    res.json(rows);
+  } catch (err) {
+    console.error(`Error fetching payments for invoice ${invoiceId}:`, err);
+    res.status(500).send('Server Error');
+  }
+});
+
 // Create a new payment
 router.post('/', async (req, res) => {
   const { amount, paymentMethod, invoiceId, userId, currency } = req.body;

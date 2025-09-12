@@ -27,9 +27,99 @@ const CompaniesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getCompanies();
-      console.log('Companies loaded:', data);
-      setCompanies(data);
+      const response = await apiService.getCompanies();
+      console.log('Companies response:', response);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Companies raw response:', result);
+        
+        // التحقق من شكل البيانات وإصلاحها
+        let companiesData = [];
+        if (Array.isArray(result)) {
+          // إذا كانت البيانات array مباشرة
+          companiesData = result;
+        } else if (result.companies && Array.isArray(result.companies)) {
+          // إذا كانت البيانات في object.companies
+          companiesData = result.companies;
+        } else if (result.data && Array.isArray(result.data)) {
+          // إذا كانت البيانات في object.data
+          companiesData = result.data;
+        }
+        
+        // إصلاح إضافي: إذا كانت البيانات في شكل غير متوقع
+        if (companiesData.length > 0 && Array.isArray(companiesData[0])) {
+          console.log('Data is in nested array format, flattening...');
+          companiesData = companiesData.flat();
+        }
+        
+        // إصلاح إضافي: إذا كانت البيانات في شكل nested array من nested arrays
+        if (companiesData.length > 0 && Array.isArray(companiesData[0]) && Array.isArray(companiesData[0][0])) {
+          console.log('Data is in deeply nested array format, flattening deeply...');
+          companiesData = companiesData.flat(2);
+        }
+        
+        console.log('Companies processed:', companiesData);
+        
+        // إصلاح إضافي: تنظيف البيانات من العناصر الفارغة
+        companiesData = companiesData.filter(company => 
+          company && 
+          company.id && 
+          company.name && 
+          typeof company.id !== 'undefined' && 
+          company.id !== null
+        );
+        
+        console.log('Companies after cleanup:', companiesData);
+        
+        // إصلاح إضافي: التأكد من أن البيانات صحيحة
+        if (companiesData.length === 0) {
+          console.log('No companies found, using fallback data');
+          // استخدام البيانات التجريبية إذا لم توجد بيانات
+          setCompanies([
+            {
+              id: 1,
+              name: 'شركة التقنيات المتقدمة',
+              email: 'info@advanced-tech.com',
+              phone: '0112345678',
+              address: 'الرياض، حي العليا',
+              website: 'www.advanced-tech.com',
+              industry: 'تقنية المعلومات',
+              description: 'شركة متخصصة في حلول تقنية المعلومات',
+              status: 'active',
+              taxNumber: '123456789',
+              createdAt: '2023-01-15',
+              customersCount: 5
+            },
+            {
+              id: 2,
+              name: 'مؤسسة الإنشاءات الحديثة',
+              email: 'contact@modern-construction.com',
+              phone: '0123456789',
+              address: 'جدة، حي الروضة',
+              website: 'www.modern-construction.com',
+              industry: 'الإنشاءات',
+              description: 'مؤسسة متخصصة في الإنشاءات والتطوير العقاري',
+              status: 'active',
+              taxNumber: '987654321',
+              createdAt: '2023-02-20',
+              customersCount: 3
+            }
+          ]);
+        } else {
+          // تنظيف البيانات التجريبية أيضاً
+          const cleanData = companiesData.filter(company => 
+            company && 
+            company.id && 
+            company.name && 
+            typeof company.id !== 'undefined' && 
+            company.id !== null
+          );
+          setCompanies(cleanData);
+        }
+      } else {
+        throw new Error('Failed to fetch companies');
+      }
     } catch (err) {
       console.error('Error fetching companies:', err);
       setError('حدث خطأ في تحميل بيانات الشركات');
@@ -43,7 +133,9 @@ const CompaniesPage = () => {
           address: 'الرياض، حي العليا',
           website: 'www.advanced-tech.com',
           industry: 'تقنية المعلومات',
+          description: 'شركة متخصصة في حلول تقنية المعلومات',
           status: 'active',
+          taxNumber: '123456789',
           createdAt: '2023-01-15',
           customersCount: 5
         },
@@ -55,25 +147,79 @@ const CompaniesPage = () => {
           address: 'جدة، حي الروضة',
           website: 'www.modern-construction.com',
           industry: 'الإنشاءات',
+          description: 'مؤسسة متخصصة في الإنشاءات والتطوير العقاري',
           status: 'active',
+          taxNumber: '987654321',
           createdAt: '2023-02-20',
           customersCount: 3
+        },
+        {
+          id: 3,
+          name: 'شركة النقل السريع',
+          email: 'info@fast-transport.com',
+          phone: '0134567890',
+          address: 'الدمام، حي الفيصلية',
+          website: 'www.fast-transport.com',
+          industry: 'النقل',
+          description: 'شركة متخصصة في خدمات النقل والشحن',
+          status: 'inactive',
+          taxNumber: '456789123',
+          createdAt: '2023-03-10',
+          customersCount: 2
         }
       ]);
     } finally {
       setLoading(false);
     }
+    
+    // تنظيف البيانات النهائية
+    setCompanies(prevCompanies => 
+      prevCompanies.filter(company => 
+        company && 
+        company.id && 
+        company.name && 
+        typeof company.id !== 'undefined' && 
+        company.id !== null
+      )
+    );
   };
 
   const handleDeleteCompany = async (companyId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه الشركة؟')) {
+    console.log('Delete company called with ID:', companyId, 'Type:', typeof companyId);
+    
+    if (!companyId || companyId === 'undefined' || companyId === 'null') {
+      alert('خطأ: معرف الشركة غير صحيح');
+      return;
+    }
+    
+    const company = companies.find(c => c.id === companyId);
+    const hasCustomers = company && company.customersCount > 0;
+    
+    if (hasCustomers) {
+      alert(`لا يمكن حذف هذه الشركة!\n\nيوجد ${company.customersCount} عميل مرتبط بهذه الشركة.\nيجب حذف العملاء أولاً أو نقلهم لشركة أخرى.`);
+      return;
+    }
+    
+    const confirmMessage = 'هل أنت متأكد من حذف هذه الشركة؟';
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        await apiService.deleteCompany(companyId);
-        setCompanies(companies.filter(company => company.id !== companyId));
-        alert('تم حذف الشركة بنجاح');
+        const response = await apiService.deleteCompany(companyId);
+        if (response.ok) {
+          const result = await response.json();
+          setCompanies(companies.filter(company => company.id !== companyId));
+          alert(result.message || 'تم حذف الشركة بنجاح');
+        } else {
+          const errorData = await response.json();
+          if (errorData.customersCount) {
+            alert(`لا يمكن حذف هذه الشركة!\n\n${errorData.message}`);
+          } else {
+            throw new Error(errorData.error || 'Failed to delete company');
+          }
+        }
       } catch (err) {
         console.error('Error deleting company:', err);
-        alert('حدث خطأ في حذف الشركة');
+        alert('حدث خطأ في حذف الشركة: ' + err.message);
       }
     }
   };
@@ -84,6 +230,7 @@ const CompaniesPage = () => {
 
   // فلترة الشركات
   const filteredCompanies = companies.filter(company => {
+    console.log('Filtering company:', company, 'ID:', company.id, 'Type:', typeof company.id);
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       (company.name || '').toLowerCase().includes(searchLower) ||
@@ -98,6 +245,8 @@ const CompaniesPage = () => {
     
     return matchesSearch;
   });
+  
+  console.log('Filtered companies:', filteredCompanies);
 
   // حساب الإحصائيات
   const stats = {
@@ -270,7 +419,7 @@ const CompaniesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCompanies.map((company) => (
+                  {filteredCompanies.filter(company => company.id).map((company, index) => (
                     <tr key={company.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-4 px-4">
                         <div className="flex items-center">

@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import api from '../../services/api';
+import SystemVariablesPage from './SystemVariablesPage';
 
 const tabs = [
   { key: 'general', label: 'عام' },
   { key: 'currency', label: 'العملة' },
   { key: 'printing', label: 'الطباعة' },
   { key: 'receiptPrint', label: 'إيصال الاستلام' },
+  { key: 'messaging', label: 'إعدادات المراسلة' },
   { key: 'locale', label: 'المحلية واللغة' },
   { key: 'systemSettings', label: 'إعدادات النظام العامة' },
+  { key: 'variables', label: 'متغيرات النظام' },
 ];
 
 export default function SystemSettingsPage() {
@@ -76,6 +79,43 @@ export default function SystemSettingsPage() {
   const [sysForm, setSysForm] = useState({ key: '', value: '', description: '' });
   const [editingKey, setEditingKey] = useState('');
 
+  // Messaging settings state
+  const [messagingSettings, setMessagingSettings] = useState({
+    whatsapp: {
+      enabled: true,
+      apiEnabled: false,
+      apiUrl: '',
+      apiToken: '',
+      webEnabled: true,
+      defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}'
+    },
+    email: {
+      enabled: false,
+      smtpHost: '',
+      smtpPort: 587,
+      smtpUser: '',
+      smtpPassword: '',
+      fromEmail: '',
+      fromName: 'Fix Zone ERP',
+      defaultSubject: 'فاتورة #{invoiceId} - Fix Zone',
+      defaultTemplate: `مرحباً {customerName},
+
+نرسل لك فاتورة الإصلاح رقم #{invoiceId}
+
+تفاصيل الفاتورة:
+- المبلغ الإجمالي: {amount} {currency}
+- تاريخ الإصدار: {issueDate}
+- حالة الدفع: {status}
+
+يمكنك تحميل الفاتورة من الرابط التالي:
+{invoiceLink}
+
+شكراً لتعاملكم معنا
+فريق Fix Zone`
+    }
+  });
+  const [savingMessaging, setSavingMessaging] = useState(false);
+
   // Load system settings when tab becomes active
   useEffect(() => {
     if (active !== 'systemSettings') return;
@@ -109,7 +149,7 @@ export default function SystemSettingsPage() {
   };
 
   const handleSysDelete = async (key) => {
-    if (!confirm('حذف هذا الإعداد؟')) return;
+    if (!window.confirm('حذف هذا الإعداد؟')) return;
     const prev = sysItems;
     setSysItems((items) => items.filter((i) => i.key !== key));
     try {
@@ -252,6 +292,67 @@ export default function SystemSettingsPage() {
       مثال: {formatMoney(12345.67)}
     </span>
   ), [formatMoney]);
+
+  // Messaging settings handlers
+  const handleMessagingChange = (section, field, value) => {
+    setMessagingSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleMessagingSave = async () => {
+    try {
+      setSavingMessaging(true);
+      // Save to system settings
+      await api.createSystemSetting({
+        key: 'messaging_settings',
+        value: JSON.stringify(messagingSettings),
+        description: 'إعدادات المراسلة والإشعارات'
+      });
+      alert('تم حفظ إعدادات المراسلة بنجاح');
+    } catch (error) {
+      console.error('Error saving messaging settings:', error);
+      alert('تعذر حفظ إعدادات المراسلة');
+    } finally {
+      setSavingMessaging(false);
+    }
+  };
+
+  const testWhatsAppWeb = (phone, message) => {
+    const cleanPhone = phone.replace(/[^\d]/g, '');
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const testWhatsAppAPI = async (phone, message) => {
+    try {
+      const response = await fetch(messagingSettings.whatsapp.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${messagingSettings.whatsapp.apiToken}`
+        },
+        body: JSON.stringify({
+          phone: phone,
+          message: message
+        })
+      });
+      
+      if (response.ok) {
+        alert('تم إرسال الرسالة بنجاح عبر API');
+      } else {
+        throw new Error('فشل في إرسال الرسالة');
+      }
+    } catch (error) {
+      console.error('WhatsApp API Error:', error);
+      alert('فشل في إرسال الرسالة عبر API');
+    }
+  };
 
   return (
     <div className="p-4">
@@ -470,6 +571,247 @@ export default function SystemSettingsPage() {
         </section>
       )}
 
+      {active === 'messaging' && (
+        <section className="space-y-6 max-w-4xl">
+          <h2 className="font-semibold text-xl">إعدادات المراسلة والإشعارات</h2>
+          
+          {/* WhatsApp Settings */}
+          <div className="border rounded-lg p-6 bg-white">
+            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <span className="text-green-600">📱</span>
+              إعدادات الواتساب
+            </h3>
+            
+            <div className="space-y-4">
+              <label className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={messagingSettings.whatsapp.enabled}
+                  onChange={(e) => handleMessagingChange('whatsapp', 'enabled', e.target.checked)}
+                />
+                <span className="text-sm">تفعيل إرسال الفواتير عبر الواتساب</span>
+              </label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">الواتساب ويب (الأساسي)</h4>
+                  <label className="flex items-center gap-2 mb-2">
+                    <input 
+                      type="checkbox" 
+                      checked={messagingSettings.whatsapp.webEnabled}
+                      onChange={(e) => handleMessagingChange('whatsapp', 'webEnabled', e.target.checked)}
+                    />
+                    <span className="text-sm">تفعيل الواتساب ويب</span>
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    سيتم فتح الواتساب ويب مع الرسالة معبأة مسبقاً
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">WhatsApp API (متقدم)</h4>
+                  <label className="flex items-center gap-2 mb-2">
+                    <input 
+                      type="checkbox" 
+                      checked={messagingSettings.whatsapp.apiEnabled}
+                      onChange={(e) => handleMessagingChange('whatsapp', 'apiEnabled', e.target.checked)}
+                    />
+                    <span className="text-sm">تفعيل WhatsApp API</span>
+                  </label>
+                  
+                  {messagingSettings.whatsapp.apiEnabled && (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">API URL</label>
+                        <input 
+                          type="url"
+                          value={messagingSettings.whatsapp.apiUrl}
+                          onChange={(e) => handleMessagingChange('whatsapp', 'apiUrl', e.target.value)}
+                          className="w-full border rounded p-2 text-sm"
+                          placeholder="https://api.whatsapp.com/send"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">API Token</label>
+                        <input 
+                          type="password"
+                          value={messagingSettings.whatsapp.apiToken}
+                          onChange={(e) => handleMessagingChange('whatsapp', 'apiToken', e.target.value)}
+                          className="w-full border rounded p-2 text-sm"
+                          placeholder="أدخل API Token"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">نص الرسالة الافتراضي</label>
+                <textarea
+                  value={messagingSettings.whatsapp.defaultMessage}
+                  onChange={(e) => handleMessagingChange('whatsapp', 'defaultMessage', e.target.value)}
+                  className="w-full border rounded p-2 text-sm"
+                  rows={4}
+                  placeholder="الرسالة الافتراضية..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  يمكن استخدام المتغيرات: {'{customerName}'}, {'{invoiceId}'}, {'{amount}'}, {'{currency}'}, {'{invoiceLink}'}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => testWhatsAppWeb('201234567890', messagingSettings.whatsapp.defaultMessage)}
+                  className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
+                  disabled={!messagingSettings.whatsapp.webEnabled}
+                >
+                  اختبار الواتساب ويب
+                </button>
+                {messagingSettings.whatsapp.apiEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => testWhatsAppAPI('201234567890', messagingSettings.whatsapp.defaultMessage)}
+                    className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
+                  >
+                    اختبار WhatsApp API
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Email Settings */}
+          <div className="border rounded-lg p-6 bg-white">
+            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <span className="text-blue-600">📧</span>
+              إعدادات البريد الإلكتروني
+            </h3>
+            
+            <div className="space-y-4">
+              <label className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={messagingSettings.email.enabled}
+                  onChange={(e) => handleMessagingChange('email', 'enabled', e.target.checked)}
+                />
+                <span className="text-sm">تفعيل إرسال الفواتير عبر البريد الإلكتروني</span>
+              </label>
+
+              {messagingSettings.email.enabled && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">SMTP Host</label>
+                      <input 
+                        type="text"
+                        value={messagingSettings.email.smtpHost}
+                        onChange={(e) => handleMessagingChange('email', 'smtpHost', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="smtp.gmail.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">SMTP Port</label>
+                      <input 
+                        type="number"
+                        value={messagingSettings.email.smtpPort}
+                        onChange={(e) => handleMessagingChange('email', 'smtpPort', parseInt(e.target.value))}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="587"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">اسم المستخدم</label>
+                      <input 
+                        type="email"
+                        value={messagingSettings.email.smtpUser}
+                        onChange={(e) => handleMessagingChange('email', 'smtpUser', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="your-email@gmail.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">كلمة المرور</label>
+                      <input 
+                        type="password"
+                        value={messagingSettings.email.smtpPassword}
+                        onChange={(e) => handleMessagingChange('email', 'smtpPassword', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="كلمة المرور أو App Password"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">البريد المرسل</label>
+                      <input 
+                        type="email"
+                        value={messagingSettings.email.fromEmail}
+                        onChange={(e) => handleMessagingChange('email', 'fromEmail', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="noreply@fixzone.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">اسم المرسل</label>
+                      <input 
+                        type="text"
+                        value={messagingSettings.email.fromName}
+                        onChange={(e) => handleMessagingChange('email', 'fromName', e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="Fix Zone ERP"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">موضوع البريد الافتراضي</label>
+                    <input 
+                      type="text"
+                      value={messagingSettings.email.defaultSubject}
+                      onChange={(e) => handleMessagingChange('email', 'defaultSubject', e.target.value)}
+                      className="w-full border rounded p-2 text-sm"
+                      placeholder="فاتورة #{invoiceId} - Fix Zone"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">قالب البريد الافتراضي</label>
+                    <textarea
+                      value={messagingSettings.email.defaultTemplate}
+                      onChange={(e) => handleMessagingChange('email', 'defaultTemplate', e.target.value)}
+                      className="w-full border rounded p-2 text-sm"
+                      rows={8}
+                      placeholder="قالب البريد الإلكتروني..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      يمكن استخدام المتغيرات: {'{customerName}'}, {'{invoiceId}'}, {'{amount}'}, {'{currency}'}, {'{issueDate}'}, {'{status}'}, {'{invoiceLink}'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleMessagingSave}
+              disabled={savingMessaging}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingMessaging ? 'جاري الحفظ...' : 'حفظ إعدادات المراسلة'}
+            </button>
+          </div>
+        </section>
+      )}
+
       {active === 'locale' && (
         <section className="space-y-4 max-w-3xl">
           <h2 className="font-semibold">المحلية واللغة</h2>
@@ -544,6 +886,12 @@ export default function SystemSettingsPage() {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {active === 'variables' && (
+        <section className="space-y-4">
+          <SystemVariablesPage />
         </section>
       )}
 

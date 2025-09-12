@@ -12,7 +12,9 @@ router.get('/', async (req, res) => {
     
     let query = `
       SELECT 
-        c.*,
+        c.id, c.name, c.email, c.phone, c.address, c.website, 
+        c.industry, c.description, c.status, c.taxNumber, c.customFields,
+        c.createdAt, c.updatedAt,
         COUNT(cust.id) as customersCount
       FROM Company c
       LEFT JOIN Customer cust ON c.id = cust.companyId AND cust.deletedAt IS NULL
@@ -36,14 +38,49 @@ router.get('/', async (req, res) => {
     query += ` GROUP BY c.id ORDER BY c.createdAt DESC`;
     
     if (!page) {
-      const companies = await db.query(query, params);
-      return res.json(companies);
+      const [companiesRows] = await db.query(query, params);
+      // تحويل MySQL objects إلى JSON objects عادية
+      const formattedCompanies = companiesRows.map(company => ({
+        id: company.id,
+        name: company.name,
+        email: company.email,
+        phone: company.phone,
+        address: company.address,
+        website: company.website,
+        industry: company.industry,
+        description: company.description,
+        status: company.status,
+        taxNumber: company.taxNumber,
+        customFields: company.customFields,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
+        customersCount: company.customersCount
+      }));
+      return res.json(formattedCompanies);
     }
 
     // pagination
     const offsetVal = (page - 1) * pageSize;
     const paginatedQuery = `${query} LIMIT ? OFFSET ?`;
-    const companies = await db.query(paginatedQuery, [...params, pageSize, offsetVal]);
+    const [companiesRows] = await db.query(paginatedQuery, [...params, pageSize, offsetVal]);
+
+    // تحويل MySQL objects إلى JSON objects عادية
+    const formattedCompanies = companiesRows.map(company => ({
+      id: company.id,
+      name: company.name,
+      email: company.email,
+      phone: company.phone,
+      address: company.address,
+      website: company.website,
+      industry: company.industry,
+      description: company.description,
+      status: company.status,
+      taxNumber: company.taxNumber,
+      customFields: company.customFields,
+      createdAt: company.createdAt,
+      updatedAt: company.updatedAt,
+      customersCount: company.customersCount
+    }));
 
     // total count
     const [countRows] = await db.query(
@@ -52,7 +89,7 @@ router.get('/', async (req, res) => {
       (search ? [`%${search}%`,`%${search}%`,`%${search}%`] : []).concat(status ? [status] : [])
     );
 
-    res.json({ data: companies, pagination: { page, pageSize, total: countRows?.[0]?.cnt || 0 } });
+    res.json({ data: formattedCompanies, pagination: { page, pageSize, total: countRows?.[0]?.cnt || 0 } });
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ 
@@ -69,7 +106,9 @@ router.get('/:id', async (req, res) => {
     
     const query = `
       SELECT 
-        c.*,
+        c.id, c.name, c.email, c.phone, c.address, c.website, 
+        c.industry, c.description, c.status, c.taxNumber, c.customFields,
+        c.createdAt, c.updatedAt,
         COUNT(cust.id) as customersCount
       FROM Company c
       LEFT JOIN Customer cust ON c.id = cust.companyId AND cust.deletedAt IS NULL
@@ -77,13 +116,32 @@ router.get('/:id', async (req, res) => {
       GROUP BY c.id
     `;
     
-    const companies = await db.query(query, [id]);
+    const [companiesRows] = await db.query(query, [id]);
     
-    if (companies.length === 0) {
+    if (companiesRows.length === 0) {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
-    res.json(companies[0]);
+    // تحويل MySQL object إلى JSON object عادي
+    const company = companiesRows[0];
+    const formattedCompany = {
+      id: company.id,
+      name: company.name,
+      email: company.email,
+      phone: company.phone,
+      address: company.address,
+      website: company.website,
+      industry: company.industry,
+      description: company.description,
+      status: company.status,
+      taxNumber: company.taxNumber,
+      customFields: company.customFields,
+      createdAt: company.createdAt,
+      updatedAt: company.updatedAt,
+      customersCount: company.customersCount
+    };
+    
+    res.json(formattedCompany);
   } catch (error) {
     console.error('Error fetching company:', error);
     res.status(500).json({ 
@@ -115,12 +173,12 @@ router.post('/', authMiddleware, async (req, res) => {
     }
     
     // التحقق من عدم وجود شركة بنفس الاسم
-    const existingCompany = await db.query(
+    const [existingCompanyRows] = await db.query(
       'SELECT id FROM Company WHERE name = ? AND deletedAt IS NULL',
       [name]
     );
     
-    if (existingCompany.length > 0) {
+    if (existingCompanyRows.length > 0) {
       return res.status(400).json({ 
         error: 'يوجد شركة بنفس هذا الاسم بالفعل' 
       });
@@ -129,22 +187,23 @@ router.post('/', authMiddleware, async (req, res) => {
     const query = `
       INSERT INTO Company (
         name, email, phone, address, website, 
-        industry, description, status, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        industry, description, status, taxNumber, customFields, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
     
-    const result = await db.query(query, [
+    const [result] = await db.query(query, [
       name, email, phone, address, website,
-      industry, description, status
+      industry, description, status, req.body.taxNumber || null, 
+      JSON.stringify(req.body.customFields || {})
     ]);
     
     // جلب الشركة المنشأة
-    const newCompany = await db.query(
-      'SELECT * FROM Company WHERE id = ?',
+    const [newCompanyRows] = await db.query(
+      'SELECT id, name, email, phone, address, website, industry, description, status, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [result.insertId]
     );
     
-    res.status(201).json(newCompany[0]);
+    res.status(201).json(newCompanyRows[0]);
   } catch (error) {
     console.error('Error creating company:', error);
     res.status(500).json({ 
@@ -170,12 +229,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
     } = req.body;
     
     // التحقق من وجود الشركة
-    const existingCompany = await db.query(
+    const [existingCompanyRows] = await db.query(
       'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
     
-    if (existingCompany.length === 0) {
+    if (existingCompanyRows.length === 0) {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
@@ -190,22 +249,23 @@ router.put('/:id', authMiddleware, async (req, res) => {
       UPDATE Company SET 
         name = ?, email = ?, phone = ?, address = ?, 
         website = ?, industry = ?, description = ?, 
-        status = ?, updatedAt = NOW()
+        status = ?, taxNumber = ?, customFields = ?, updatedAt = NOW()
       WHERE id = ? AND deletedAt IS NULL
     `;
     
     await db.query(query, [
       name, email, phone, address, website,
-      industry, description, status, id
+      industry, description, status, req.body.taxNumber || null,
+      JSON.stringify(req.body.customFields || {}), id
     ]);
     
     // جلب الشركة المحدثة
-    const updatedCompany = await db.query(
-      'SELECT * FROM Company WHERE id = ?',
+    const [updatedCompanyRows] = await db.query(
+      'SELECT id, name, email, phone, address, website, industry, description, status, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [id]
     );
     
-    res.json(updatedCompany[0]);
+    res.json(updatedCompanyRows[0]);
   } catch (error) {
     console.error('Error updating company:', error);
     res.status(500).json({ 
@@ -221,34 +281,38 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const { id } = req.params;
     
     // التحقق من وجود الشركة
-    const existingCompany = await db.query(
+    const [existingCompanyRows] = await db.query(
       'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
     
-    if (existingCompany.length === 0) {
+    if (existingCompanyRows.length === 0) {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
     // التحقق من وجود عملاء مرتبطين بالشركة
-    const linkedCustomers = await db.query(
+    const [linkedCustomersRows] = await db.query(
       'SELECT id FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
       [id]
     );
     
-    if (linkedCustomers.length > 0) {
+    if (linkedCustomersRows.length > 0) {
       return res.status(400).json({ 
-        error: `لا يمكن حذف الشركة لوجود ${linkedCustomers.length} عملاء مرتبطين بها` 
+        error: 'لا يمكن حذف الشركة لأنها مرتبطة بعملاء',
+        customersCount: linkedCustomersRows.length,
+        message: `يوجد ${linkedCustomersRows.length} عميل مرتبط بهذه الشركة. يجب حذف العملاء أولاً أو نقلهم لشركة أخرى.`
       });
     }
     
-    // Soft delete
+    // Soft delete للشركة
     await db.query(
       'UPDATE Company SET deletedAt = NOW() WHERE id = ?',
       [id]
     );
     
-    res.json({ message: 'تم حذف الشركة بنجاح' });
+    res.json({ 
+      message: 'تم حذف الشركة بنجاح'
+    });
   } catch (error) {
     console.error('Error deleting company:', error);
     res.status(500).json({ 
@@ -264,21 +328,21 @@ router.get('/:id/customers', async (req, res) => {
     const { id } = req.params;
     
     // التحقق من وجود الشركة
-    const company = await db.query(
+    const [companyRows] = await db.query(
       'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
     
-    if (company.length === 0) {
+    if (companyRows.length === 0) {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
-    const customers = await db.query(
+    const [customersRows] = await db.query(
       'SELECT * FROM Customer WHERE companyId = ? AND deletedAt IS NULL ORDER BY createdAt DESC',
       [id]
     );
     
-    res.json(customers);
+    res.json(customersRows);
   } catch (error) {
     console.error('Error fetching company customers:', error);
     res.status(500).json({ 

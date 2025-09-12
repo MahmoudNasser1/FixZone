@@ -154,8 +154,11 @@ router.get('/', async (req, res) => {
       deviceModel: row.deviceModel || 'غير محدد',
       problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل محددة للمشكلة',
       status: getStatusMapping(row.status),
-      priority: 'medium', // افتراضي
-      estimatedCost: 0, // افتراضي
+      priority: row.priority || 'MEDIUM',
+      estimatedCost: row.estimatedCost || 0,
+      actualCost: row.actualCost || null,
+      expectedDeliveryDate: row.expectedDeliveryDate || null,
+      notes: row.notes || null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }));
@@ -515,6 +518,11 @@ router.get('/:id', async (req, res) => {
       reportedProblem: repair.reportedProblem,
       problemDescription: repair.reportedProblem || repair.problemDescription || null,
       status: getStatusMapping(repair.status),
+      estimatedCost: repair.estimatedCost || 0,
+      actualCost: repair.actualCost || null,
+      priority: repair.priority || 'MEDIUM',
+      expectedDeliveryDate: repair.expectedDeliveryDate || null,
+      notes: repair.notes || null,
       createdAt: repair.createdAt,
       updatedAt: repair.updatedAt,
       deviceSpecs: {

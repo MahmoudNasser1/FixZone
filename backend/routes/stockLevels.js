@@ -84,12 +84,38 @@ router.post('/', async (req, res) => {
 // Update a stock level
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { inventoryItemId, warehouseId, quantity, minLevel, isLowStock } = req.body;
-  if (!inventoryItemId || !warehouseId || quantity === undefined) {
-    return res.status(400).send('Inventory item ID, warehouse ID, and quantity are required');
+  const { quantity, minLevel, isLowStock } = req.body;
+  
+  // Build dynamic update query
+  const updates = [];
+  const params = [];
+  
+  if (quantity !== undefined) {
+    updates.push('quantity = ?');
+    params.push(quantity);
   }
+  
+  if (minLevel !== undefined) {
+    updates.push('minLevel = ?');
+    params.push(minLevel);
+  }
+  
+  if (isLowStock !== undefined) {
+    updates.push('isLowStock = ?');
+    params.push(isLowStock);
+  }
+  
+  if (updates.length === 0) {
+    return res.status(400).send('At least one field must be provided for update');
+  }
+  
+  updates.push('updatedAt = CURRENT_TIMESTAMP');
+  params.push(id);
+  
   try {
-    const [result] = await db.query('UPDATE StockLevel SET inventoryItemId = ?, warehouseId = ?, quantity = ?, minLevel = ?, isLowStock = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', [inventoryItemId, warehouseId, quantity, minLevel, isLowStock, id]);
+    const sql = `UPDATE StockLevel SET ${updates.join(', ')} WHERE id = ?`;
+    const [result] = await db.query(sql, params);
+    
     if (result.affectedRows === 0) {
       return res.status(404).send('Stock level not found');
     }

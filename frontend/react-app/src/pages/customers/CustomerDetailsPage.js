@@ -13,6 +13,7 @@ import {
 const CustomerDetailsPage = () => {
   const { id } = useParams();
   const [customer, setCustomer] = useState(null);
+  const [company, setCompany] = useState(null);
   const [customerRepairs, setCustomerRepairs] = useState([]);
   const [customerStats, setCustomerStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,13 +27,26 @@ const CustomerDetailsPage = () => {
     fetchCustomerStats();
   }, [id]);
 
+  useEffect(() => {
+    if (customer && customer.companyId) {
+      fetchCompany(customer.companyId);
+    }
+  }, [customer]);
+
   const fetchCustomer = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getCustomer(id);
-      console.log('Customer details:', data);
-      setCustomer(data);
+      const response = await apiService.getCustomer(id);
+      console.log('Customer response:', response);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Customer details:', data);
+        setCustomer(data);
+      } else {
+        throw new Error('Failed to fetch customer');
+      }
     } catch (err) {
       console.error('Error fetching customer:', err);
       setError('حدث خطأ في تحميل بيانات العميل');
@@ -41,13 +55,48 @@ const CustomerDetailsPage = () => {
     }
   };
 
+  const fetchCompany = async (companyId) => {
+    try {
+      const response = await apiService.getCompany(companyId);
+      if (response.ok) {
+        const company = await response.json();
+        setCompany(company);
+      }
+    } catch (err) {
+      console.error('Error fetching company:', err);
+    }
+  };
+
   const fetchCustomerRepairs = async () => {
     try {
       setRepairsLoading(true);
       // جلب طلبات الإصلاح للعميل
-      const repairs = await apiService.getRepairRequests({ customerId: id });
-      console.log('Customer repairs:', repairs);
-      setCustomerRepairs(repairs || []);
+      const response = await apiService.getRepairRequests({ customerId: id });
+      console.log('Customer repairs response:', response);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Customer repairs data:', data);
+        // إصلاح إضافي: التأكد من أن البيانات صحيحة
+        let repairsData = [];
+        if (Array.isArray(data)) {
+          repairsData = data;
+        } else if (data.repairs && Array.isArray(data.repairs)) {
+          repairsData = data.repairs;
+        } else if (data.data && Array.isArray(data.data)) {
+          repairsData = data.data;
+        }
+        
+        // إصلاح إضافي: إذا كانت البيانات في شكل غير متوقع
+        if (repairsData.length > 0 && Array.isArray(repairsData[0])) {
+          console.log('Repairs data is in nested array format, flattening...');
+          repairsData = repairsData.flat();
+        }
+        
+        setCustomerRepairs(repairsData);
+      } else {
+        throw new Error('Failed to fetch customer repairs');
+      }
     } catch (err) {
       console.error('Error fetching customer repairs:', err);
       // في حالة الخطأ، استخدام بيانات تجريبية
@@ -87,9 +136,16 @@ const CustomerDetailsPage = () => {
   const fetchCustomerStats = async () => {
     try {
       setStatsLoading(true);
-      const stats = await apiService.getCustomerStats(id);
-      console.log('Customer stats:', stats);
-      setCustomerStats(stats);
+      const response = await apiService.getCustomerStats(id);
+      console.log('Customer stats response:', response);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Customer stats data:', data);
+        setCustomerStats(data);
+      } else {
+        throw new Error('Failed to fetch customer stats');
+      }
     } catch (err) {
       console.error('Error fetching customer stats:', err);
       // في حالة الخطأ، استخدام بيانات تجريبية
@@ -317,12 +373,33 @@ const CustomerDetailsPage = () => {
                 </SimpleCardTitle>
               </SimpleCardHeader>
               <SimpleCardContent>
-                <p className="text-gray-600 text-sm">
-                  هذا العميل مرتبط بشركة (ID: {customer.companyId})
-                </p>
-                <SimpleButton variant="outline" size="sm" className="mt-2">
-                  عرض تفاصيل الشركة
-                </SimpleButton>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-600 text-sm">
+                        العميل مرتبط بالشركة:
+                      </p>
+                      <p className="font-medium text-gray-900">
+                        {company ? company.name : 'جاري التحميل...'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        معرف الشركة: {customer.companyId}
+                      </p>
+                    </div>
+                    {company && (
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">{company.industry || 'غير محدد'}</p>
+                        <p className="text-xs text-gray-500">{company.status === 'active' ? 'نشطة' : 'غير نشطة'}</p>
+                      </div>
+                    )}
+                  </div>
+                  <Link to={`/companies/${customer.companyId}`}>
+                    <SimpleButton variant="outline" size="sm" className="w-full">
+                      <Building2 className="w-4 h-4 ml-2" />
+                      عرض تفاصيل الشركة
+                    </SimpleButton>
+                  </Link>
+                </div>
               </SimpleCardContent>
             </SimpleCard>
           )}
@@ -458,9 +535,11 @@ const CustomerDetailsPage = () => {
                             <Calendar className="w-4 h-4 inline ml-1" />
                             {new Date(repair.createdAt).toLocaleDateString('ar-EG')}
                           </span>
-                          {repair.estimatedCost && (
+                          {repair.estimatedCost && repair.estimatedCost !== 0 && (
                             <span className="font-semibold text-green-600">
-                              {repair.estimatedCost.toFixed(2)} ج.م
+                              {typeof repair.estimatedCost === 'number' 
+                                ? repair.estimatedCost.toFixed(2) 
+                                : parseFloat(repair.estimatedCost || 0).toFixed(2)} ج.م
                             </span>
                           )}
                         </div>

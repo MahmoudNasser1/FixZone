@@ -7,6 +7,35 @@ const { validationResult } = require('express-validator');
  */
 class InvoicesController {
   
+  // Get new invoice page data
+  async getNewInvoicePage(req, res) {
+    try {
+      // Return empty invoice data for new invoice creation
+      res.json({
+        success: true,
+        data: {
+          id: null,
+          totalAmount: 0,
+          amountPaid: 0,
+          status: 'draft',
+          currency: 'EGP',
+          taxAmount: 0,
+          discountAmount: 0,
+          notes: '',
+          dueDate: null,
+          items: [],
+          payments: []
+        }
+      });
+    } catch (error) {
+      console.error('Error in getNewInvoicePage:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load new invoice page'
+      });
+    }
+  }
+  
   // Get all invoices with advanced filtering and pagination
   async getAllInvoices(req, res) {
     try {
@@ -253,106 +282,95 @@ class InvoicesController {
         // If this guard query fails, proceed to main try/catch to surface as server error
       }
 
-      const connection = await db.getConnection();
-      await connection.beginTransaction();
+      // Create invoice without transaction for now
+      const invoiceCurrency = currency || 'EGP';
+      const [result] = await db.query(`
+        INSERT INTO Invoice (
+          repairRequestId, totalAmount, amountPaid, status, 
+          currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `, [
+        repairRequestId,
+        totalAmount,
+        amountPaid,
+        status,
+        invoiceCurrency,
+        taxAmount,
+        discountAmount,
+        dueDate
+      ]);
 
-      try {
-        // Create invoice
-        const [result] = await connection.query(`
-          INSERT INTO Invoice (
-            repairRequestId, totalAmount, amountPaid, status, 
-            currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [
-          repairRequestId,
-          totalAmount,
-          amountPaid,
-          status,
-          currency,
-          taxAmount,
-          discountAmount,
-          dueDate
-        ]);
+      const invoiceId = result.insertId;
 
-        const invoiceId = result.insertId;
+      // If linked to repair request, auto-add parts and services
+      if (repairRequestId) {
+        // Add parts used
+        const [partsUsed] = await db.query(`
+          SELECT pu.*, ii.name, ii.sellingPrice
+          FROM PartsUsed pu
+          LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+          WHERE pu.repairRequestId = ? AND pu.invoiceItemId IS NULL
+        `, [repairRequestId]);
 
-        // If linked to repair request, auto-add parts and services
-        if (repairRequestId) {
-          // Add parts used
-          const [partsUsed] = await connection.query(`
-            SELECT pu.*, ii.name, ii.sellingPrice
-            FROM PartsUsed pu
-            LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
-            WHERE pu.repairRequestId = ? AND pu.invoiceItemId IS NULL
-          `, [repairRequestId]);
+        for (const part of partsUsed) {
+          const [itemResult] = await db.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType
+            ) VALUES (?, ?, ?, ?, ?, 'part')
+          `, [
+            invoiceId,
+            part.inventoryItemId,
+            part.quantity,
+            part.sellingPrice || 0,
+            (part.quantity || 1) * (part.sellingPrice || 0)
+          ]);
 
-          for (const part of partsUsed) {
-            const [itemResult] = await connection.query(`
-              INSERT INTO InvoiceItem (
-                invoiceId, inventoryItemId, quantity, unitPrice, totalPrice
-              ) VALUES (?, ?, ?, ?, ?)
-            `, [
-              invoiceId,
-              part.inventoryItemId,
-              part.quantity,
-              part.sellingPrice || 0,
-              (part.quantity || 1) * (part.sellingPrice || 0)
-            ]);
-
-            // Update PartsUsed to link to invoice item
-            await connection.query(`
-              UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?
-            `, [itemResult.insertId, part.id]);
-          }
-
-          // Add services
-          const [services] = await connection.query(`
-            SELECT rrs.*, s.name, s.basePrice
-            FROM RepairRequestService rrs
-            LEFT JOIN Service s ON rrs.serviceId = s.id
-            WHERE rrs.repairRequestId = ?
-          `, [repairRequestId]);
-
-          for (const service of services) {
-            await connection.query(`
-              INSERT INTO InvoiceItem (
-                invoiceId, serviceId, quantity, unitPrice, totalPrice
-              ) VALUES (?, ?, ?, ?, ?)
-            `, [
-              invoiceId,
-              service.serviceId,
-              1,
-              service.price || service.basePrice || 0,
-              service.price || service.basePrice || 0
-            ]);
-          }
+          // Update PartsUsed to link to invoice item
+          await db.query(`
+            UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?
+          `, [itemResult.insertId, part.id]);
         }
 
-        await connection.commit();
+        // Add services
+        const [services] = await db.query(`
+          SELECT rrs.*, s.name, s.basePrice
+          FROM RepairRequestService rrs
+          LEFT JOIN Service s ON rrs.serviceId = s.id
+          WHERE rrs.repairRequestId = ?
+        `, [repairRequestId]);
 
-        // Fetch the created invoice with details
-        const [createdInvoice] = await connection.query(`
-          SELECT i.*, 
-            c.name as customerName,
-            c.phone as customerPhone,
-            c.email as customerEmail
-          FROM Invoice i
-          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-          LEFT JOIN Customer c ON rr.customerId = c.id
-          WHERE i.id = ?
-        `, [invoiceId]);
-
-        res.status(201).json({
-          success: true,
-          data: createdInvoice[0],
-          message: 'Invoice created successfully'
-        });
-      } catch (error) {
-        await connection.rollback();
-        throw error;
-      } finally {
-        connection.release();
+        for (const service of services) {
+          await db.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType
+            ) VALUES (?, ?, ?, ?, ?, 'service')
+          `, [
+            invoiceId,
+            service.serviceId,
+            1,
+            service.price || service.basePrice || 0,
+            service.price || service.basePrice || 0
+          ]);
+        }
       }
+
+      // Fetch the created invoice with details
+      const [createdInvoice] = await db.query(`
+        SELECT i.*, 
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.id = ?
+      `, [invoiceId]);
+
+      res.status(201).json({
+        success: true,
+        data: createdInvoice[0],
+        message: 'Invoice created successfully'
+      });
     } catch (error) {
       console.error('Error creating invoice:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
@@ -373,6 +391,8 @@ class InvoicesController {
         notes,
         dueDate
       } = req.body;
+      
+      const invoiceCurrency = currency || 'EGP';
 
       // Check if invoice exists
       const [existing] = await db.query(`
@@ -401,7 +421,7 @@ class InvoicesController {
       }
       if (currency !== undefined) {
         updates.push('currency = ?');
-        values.push(currency);
+        values.push(invoiceCurrency);
       }
       if (taxAmount !== undefined) {
         updates.push('taxAmount = ?');
@@ -682,11 +702,52 @@ class InvoicesController {
     }
   }
 
+  // Get invoice items
+  async getInvoiceItems(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Validate invoice exists
+      const [invoice] = await db.query(`
+        SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL
+      `, [id]);
+
+      if (invoice.length === 0) {
+        return res.status(404).json({ success: false, error: 'Invoice not found' });
+      }
+
+      // Get invoice items
+      const [items] = await db.query(`
+        SELECT 
+          ii.*,
+          ii.description as itemDescription,
+          ii.quantity,
+          ii.unitPrice,
+          ii.totalPrice,
+          ii.itemType as type,
+          ii.currency,
+          ii.createdAt,
+          ii.updatedAt
+        FROM InvoiceItem ii
+        WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
+        ORDER BY ii.createdAt ASC
+      `, [id]);
+
+      res.json({
+        success: true,
+        data: items
+      });
+    } catch (error) {
+      console.error('Error in getInvoiceItems:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+
   // Add invoice item (part or service) and recalculate total
   async addInvoiceItem(req, res) {
     try {
       const { id } = req.params; // invoiceId
-      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, description = null } = req.body || {};
+      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, description = null, partsUsedId = null } = req.body || {};
 
       // Validate invoice exists
       const [invRows] = await db.query(`SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL`, [id]);
@@ -697,6 +758,27 @@ class InvoicesController {
       // Validate payload
       if (!inventoryItemId && !serviceId) {
         return res.status(400).json({ success: false, error: 'Either inventoryItemId or serviceId is required' });
+      }
+
+      // Check for duplicates
+      if (inventoryItemId) {
+        const [existingPart] = await db.query(
+          `SELECT id FROM InvoiceItem WHERE invoiceId = ? AND inventoryItemId = ?`,
+          [id, inventoryItemId]
+        );
+        if (existingPart.length > 0) {
+          return res.status(409).json({ success: false, error: 'هذه القطعة مضافة مسبقاً للفاتورة' });
+        }
+      }
+
+      if (serviceId) {
+        const [existingService] = await db.query(
+          `SELECT id FROM InvoiceItem WHERE invoiceId = ? AND serviceId = ?`,
+          [id, serviceId]
+        );
+        if (existingService.length > 0) {
+          return res.status(409).json({ success: false, error: 'هذه الخدمة مضافة مسبقاً للفاتورة' });
+        }
       }
 
       quantity = Number(quantity) || 1;
@@ -722,6 +804,24 @@ class InvoicesController {
       );
 
       const itemId = result.insertId;
+
+      // Update RepairRequestService to link with invoice item if serviceId provided
+      if (serviceId) {
+        await db.query(
+          `UPDATE RepairRequestService SET invoiceItemId = ? WHERE serviceId = ? AND repairRequestId = (
+            SELECT repairRequestId FROM Invoice WHERE id = ?
+          )`,
+          [itemId, serviceId, id]
+        );
+      }
+
+      // Update PartsUsed to link with invoice item if partsUsedId provided
+      if (partsUsedId) {
+        await db.query(
+          `UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?`,
+          [itemId, partsUsedId]
+        );
+      }
 
       // Recalculate invoice totalAmount as sum of items
       await db.query(

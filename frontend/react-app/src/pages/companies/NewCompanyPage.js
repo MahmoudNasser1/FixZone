@@ -20,7 +20,10 @@ const NewCompanyPage = () => {
     address: '',
     website: '',
     industry: '',
-    description: ''
+    description: '',
+    status: 'active',
+    taxNumber: '',
+    customFields: {}
   });
 
   const handleInputChange = (e) => {
@@ -53,18 +56,25 @@ const NewCompanyPage = () => {
         website: formData.website.trim() || null,
         industry: formData.industry.trim() || null,
         description: formData.description.trim() || null,
-        status: 'active'
+        status: formData.status,
+        taxNumber: formData.taxNumber.trim() || null,
+        customFields: formData.customFields
       };
 
-      const newCompany = await apiService.createCompany(companyData);
+      const response = await apiService.createCompany(companyData);
       
-      // إظهار رسالة نجاح والانتقال لصفحة الشركات
-      alert('تم إنشاء الشركة بنجاح');
-      navigate('/companies');
+      if (response.ok) {
+        // إظهار رسالة نجاح والانتقال لصفحة الشركات
+        alert('تم إنشاء الشركة بنجاح');
+        navigate('/companies');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create company');
+      }
       
     } catch (err) {
       console.error('Error creating company:', err);
-      setError('حدث خطأ في إنشاء الشركة');
+      setError('حدث خطأ في إنشاء الشركة: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -223,6 +233,36 @@ const NewCompanyPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="وصف مختصر عن نشاط الشركة وخدماتها..."
               />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الرقم الضريبي
+                </label>
+                <Input
+                  name="taxNumber"
+                  value={formData.taxNumber}
+                  onChange={handleInputChange}
+                  placeholder="123456789"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  حالة الشركة
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="active">نشطة</option>
+                  <option value="inactive">غير نشطة</option>
+                  <option value="suspended">معلقة</option>
+                </select>
+              </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>

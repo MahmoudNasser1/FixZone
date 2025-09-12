@@ -30,13 +30,41 @@ router.get('/:id', async (req, res) => {
 
 // Create a new warehouse
 router.post('/', async (req, res) => {
-  const { name } = req.body;
+  const { 
+    name, 
+    location, 
+    address, 
+    phone, 
+    email, 
+    manager, 
+    capacity, 
+    description, 
+    isActive = true 
+  } = req.body;
+  
   if (!name) {
     return res.status(400).send('Warehouse name is required');
   }
+  
   try {
-    const [result] = await db.query('INSERT INTO Warehouse (name) VALUES (?)', [name]);
-    res.status(201).json({ id: result.insertId, name });
+    const [result] = await db.query(`
+      INSERT INTO Warehouse (
+        name, location, address, phone, email, manager, capacity, description, isActive
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name, location, address, phone, email, manager, capacity, description, isActive]);
+    
+    res.status(201).json({ 
+      id: result.insertId, 
+      name, 
+      location, 
+      address, 
+      phone, 
+      email, 
+      manager, 
+      capacity, 
+      description, 
+      isActive 
+    });
   } catch (err) {
     console.error('Error creating warehouse:', err);
     res.status(500).send('Server Error');
@@ -46,16 +74,55 @@ router.post('/', async (req, res) => {
 // Update a warehouse
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { 
+    name, 
+    location, 
+    address, 
+    phone, 
+    email, 
+    manager, 
+    capacity, 
+    description, 
+    isActive 
+  } = req.body;
+  
   if (!name) {
     return res.status(400).send('Warehouse name is required');
   }
+  
   try {
-    const [result] = await db.query('UPDATE Warehouse SET name = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [name, id]);
+    const [result] = await db.query(`
+      UPDATE Warehouse SET 
+        name = ?, 
+        location = ?, 
+        address = ?, 
+        phone = ?, 
+        email = ?, 
+        manager = ?, 
+        capacity = ?, 
+        description = ?, 
+        isActive = ?,
+        updatedAt = CURRENT_TIMESTAMP 
+      WHERE id = ? AND deletedAt IS NULL
+    `, [name, location, address, phone, email, manager, capacity, description, isActive, id]);
+    
     if (result.affectedRows === 0) {
       return res.status(404).send('Warehouse not found or already deleted');
     }
-    res.json({ message: 'Warehouse updated successfully' });
+    
+    res.json({ 
+      message: 'Warehouse updated successfully',
+      id, 
+      name, 
+      location, 
+      address, 
+      phone, 
+      email, 
+      manager, 
+      capacity, 
+      description, 
+      isActive 
+    });
   } catch (err) {
     console.error(`Error updating warehouse with ID ${id}:`, err);
     res.status(500).send('Server Error');

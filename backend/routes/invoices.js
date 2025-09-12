@@ -18,6 +18,9 @@ router.post('/bulk-action', invoicesController.bulkAction);
 // إنشاء فاتورة جديدة
 router.post('/', invoicesController.createInvoice);
 
+// صفحة إنشاء فاتورة جديدة (GET)
+router.get('/new', invoicesController.getNewInvoicePage);
+
 // جلب فاتورة طلب إصلاح
 router.get('/by-repair/:repairId', invoicesController.getInvoiceByRepairId);
 
@@ -37,6 +40,7 @@ router.put('/:id', invoicesController.updateInvoice);
 router.delete('/:id', invoicesController.deleteInvoice);
 
 // عمليات عناصر الفاتورة
+router.get('/:id/items', invoicesController.getInvoiceItems);
 router.post('/:id/items', invoicesController.addInvoiceItem);
 router.put('/:id/items/:itemId', invoicesController.updateInvoiceItem);
 router.delete('/:id/items/:itemId', invoicesController.removeInvoiceItem);

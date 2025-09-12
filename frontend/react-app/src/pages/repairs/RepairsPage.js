@@ -225,8 +225,15 @@ const RepairsPage = () => {
 
   // جلب البيانات من Backend
   useEffect(() => {
+    console.log('useEffect triggered with dependencies:', { customerFilter, page, pageSize, status, search });
     fetchRepairs();
   }, [customerFilter, page, pageSize, status, search]);
+
+  // جلب البيانات عند بدء الصفحة
+  useEffect(() => {
+    console.log('Initial useEffect triggered - fetching repairs on page load');
+    fetchRepairs();
+  }, []);
 
   const fetchCustomerName = async (customerId) => {
     try {
@@ -240,6 +247,7 @@ const RepairsPage = () => {
 
   const fetchRepairs = async () => {
     try {
+      console.log('fetchRepairs called');
       setLoading(true);
       setError(null);
       
@@ -253,15 +261,30 @@ const RepairsPage = () => {
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
 
-      const data = await apiService.getRepairRequests(params);
-      console.log('Repairs loaded:', data, 'with params:', params);
+      const response = await apiService.getRepairRequests(params);
+      console.log('Repairs response:', response);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Repairs data:', data, 'with params:', params);
+      
       if (Array.isArray(data)) {
+        console.log('Setting repairs as array:', data.length, 'items');
         setRepairs(data);
         setServerTotal(null);
       } else if (data && Array.isArray(data.items)) {
+        console.log('Setting repairs from data.items:', data.items.length, 'items');
         setRepairs(data.items);
         setServerTotal(Number.isFinite(data.total) ? data.total : null);
+      } else if (data && Array.isArray(data.data)) {
+        console.log('Setting repairs from data.data:', data.data.length, 'items');
+        setRepairs(data.data);
+        setServerTotal(Number.isFinite(data.total) ? data.total : null);
       } else {
+        console.warn('Unexpected data format:', data);
         setRepairs([]);
         setServerTotal(null);
       }
@@ -280,7 +303,7 @@ const RepairsPage = () => {
           deviceModel: 'Inspiron 15',
           problemDescription: 'الجهاز لا يعمل عند الضغط على زر التشغيل',
           status: 'pending',
-          priority: 'high',
+          priority: 'HIGH',
           estimatedCost: 500,
           createdAt: '2024-01-15T10:30:00Z',
           updatedAt: '2024-01-15T10:30:00Z'
@@ -295,7 +318,7 @@ const RepairsPage = () => {
           deviceModel: 'Galaxy S21',
           problemDescription: 'الشاشة مكسورة',
           status: 'in_progress',
-          priority: 'medium',
+          priority: 'MEDIUM',
           estimatedCost: 300,
           createdAt: '2024-01-16T14:20:00Z',
           updatedAt: '2024-01-16T16:45:00Z'
@@ -310,7 +333,7 @@ const RepairsPage = () => {
           deviceModel: 'Air 4',
           problemDescription: 'البطارية لا تشحن',
           status: 'completed',
-          priority: 'low',
+          priority: 'LOW',
           estimatedCost: 200,
           createdAt: '2024-01-10T09:15:00Z',
           updatedAt: '2024-01-14T11:30:00Z'
@@ -639,7 +662,7 @@ const RepairsPage = () => {
   });
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
-  const priorityRank = { high: 3, medium: 2, low: 1 };
+  const priorityRank = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
   const statusRank = { pending: 1, 'in-progress': 2, 'on-hold': 1.5, completed: 3, cancelled: 0 };
   const sortedRepairs = [...filteredRepairs].sort((a, b) => {
     const dir = sortOrder === 'asc' ? 1 : -1;
@@ -669,6 +692,16 @@ const RepairsPage = () => {
   const endIdx = Math.min(startIdx + pageSize, clientTotal);
   // إذا كانت البيانات قادمة مُقسّمة من الخادم (serverTotal موجود) نعرض كما هي، وإلا نُقسّم Client-side
   const paginatedRepairs = Number.isFinite(serverTotal) && serverTotal != null ? repairs : sortedRepairs.slice(startIdx, endIdx);
+  
+  // Debug logging
+  console.log('Render debug:', {
+    repairs: repairs.length,
+    sortedRepairs: sortedRepairs.length,
+    paginatedRepairs: paginatedRepairs.length,
+    serverTotal,
+    startIdx,
+    endIdx
+  });
 
   // حساب أرقام العرض للصفحة الحالية (تراعي الترقيم الخادمي)
   const pageCount = Number.isFinite(serverTotal) && serverTotal != null ? repairs.length : (endIdx - startIdx);
@@ -735,9 +768,10 @@ const RepairsPage = () => {
   // دالة لتحديد لون الأولوية
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'danger';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
+      case 'HIGH': return 'danger';
+      case 'URGENT': return 'danger';
+      case 'MEDIUM': return 'warning';
+      case 'LOW': return 'success';
       default: return 'secondary';
     }
   };
@@ -745,9 +779,10 @@ const RepairsPage = () => {
   // دالة لتحديد نص الأولوية
   const getPriorityText = (priority) => {
     switch (priority) {
-      case 'high': return 'عالية';
-      case 'medium': return 'متوسطة';
-      case 'low': return 'منخفضة';
+      case 'HIGH': return 'عالية';
+      case 'URGENT': return 'عاجلة';
+      case 'MEDIUM': return 'متوسطة';
+      case 'LOW': return 'منخفضة';
       default: return priority;
     }
   };

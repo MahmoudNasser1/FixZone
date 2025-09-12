@@ -35,6 +35,7 @@ const CustomersPage = () => {
     };
   })();
   const [customers, setCustomers] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -43,20 +44,51 @@ const CustomersPage = () => {
   // جلب البيانات من Backend
   useEffect(() => {
     fetchCustomers();
+    fetchCompanies();
   }, []);
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getCustomers();
-      console.log('Customers loaded:', data);
-      setCustomers(data);
+      const response = await apiService.getCustomers();
+      console.log('Customers response:', response);
+      
+      // التأكد من أن البيانات هي array
+      let customersData = [];
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          customersData = data;
+        } else if (data && Array.isArray(data.data)) {
+          customersData = data.data;
+        } else if (data && data.customers && Array.isArray(data.customers)) {
+          customersData = data.customers;
+        }
+      } else {
+        throw new Error('Failed to fetch customers');
+      }
+      
+      console.log('Customers loaded:', customersData);
+      setCustomers(customersData);
     } catch (err) {
       console.error('Error fetching customers:', err);
       setError('حدث خطأ في تحميل بيانات العملاء');
+      setCustomers([]); // تأكد من أن customers هو array فارغ في حالة الخطأ
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await apiService.getCompanies();
+      if (response.ok) {
+        const companiesData = await response.json();
+        setCompanies(companiesData);
+      }
+    } catch (err) {
+      console.error('Error fetching companies:', err);
     }
   };
 
@@ -79,7 +111,7 @@ const CustomersPage = () => {
     if (window.confirm('هل أنت متأكد من حذف هذا العميل؟')) {
       try {
         await apiService.delete(`/customers/${customerId}`);
-        setCustomers(customers.filter(customer => customer.id !== customerId));
+        setCustomers(prevCustomers => (prevCustomers || []).filter(customer => customer.id !== customerId));
         notify('success', 'تم حذف العميل بنجاح');
       } catch (error) {
         console.error('Error deleting customer:', error);
@@ -458,7 +490,7 @@ const CustomersPage = () => {
             notify('warning', 'لم تقم بتحديد أي عميل');
             return;
           }
-          const rows = customers.filter(c => selectedIds.includes(c.id));
+          const rows = Array.isArray(customers) ? customers.filter(c => selectedIds.includes(c.id)) : [];
           const csv = exportToCSV(rows);
           downloadFile(csv, `customers_selected_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
           // تصدير المحددين: بدون تنبيه لتقليل الإزعاج
@@ -537,7 +569,10 @@ const CustomersPage = () => {
             </div>
             {show('name') && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {customer.company || 'عميل فردي'}
+                {customer.companyId ? 
+                  (companies.find(c => c.id.toString() === customer.companyId.toString())?.name || `شركة (ID: ${customer.companyId})`) 
+                  : 'عميل فردي'
+                }
               </div>
             )}
           </div>
@@ -671,7 +706,7 @@ const CustomersPage = () => {
   };
 
   // فلترة العملاء
-  const filteredCustomers = customers.filter(customer => {
+        const filteredCustomers = Array.isArray(customers) ? customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          customer.phone.includes(searchTerm) ||
                          (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -693,12 +728,12 @@ const CustomersPage = () => {
     if (selectedFilter === 'inactive') return matchesSearch && customer.status === 'inactive';
     
     return matchesSearch;
-  });
+  }) : [];
 
   // حساب الإحصائيات
   const stats = {
-    total: customers.length,
-    vip: customers.filter(customer => {
+          total: Array.isArray(customers) ? customers.length : 0,
+            vip: Array.isArray(customers) ? customers.filter(customer => {
       const customFields = (() => {
         try {
           return typeof customer.customFields === 'string' 
@@ -709,9 +744,9 @@ const CustomersPage = () => {
         }
       })();
       return customFields.isVip;
-    }).length,
-    active: customers.filter(customer => customer.status === 'active').length,
-    inactive: customers.filter(customer => customer.status === 'inactive').length
+    }).length : 0,
+          active: Array.isArray(customers) ? customers.filter(customer => customer.status === 'active').length : 0,
+      inactive: Array.isArray(customers) ? customers.filter(customer => customer.status === 'inactive').length : 0
   };
 
   if (loading) {

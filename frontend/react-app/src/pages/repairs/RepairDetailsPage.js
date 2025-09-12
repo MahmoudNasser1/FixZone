@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import apiService from '../../services/api';
 import inventoryService from '../../services/inventoryService';
-import invoicesService from '../../services/invoicesService';
 import repairService from '../../services/repairService';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -66,6 +65,16 @@ const RepairDetailsPage = () => {
   // Device specifications editing state
   const [editingSpecs, setEditingSpecs] = useState(false);
   const [deviceSpecs, setDeviceSpecs] = useState({});
+  
+  // Repair details editing state
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [repairDetails, setRepairDetails] = useState({
+    estimatedCost: 0,
+    actualCost: null,
+    priority: 'MEDIUM',
+    expectedDeliveryDate: null,
+    notes: ''
+  });
 
   // Activity log state with filtering
   const [activityFilter, setActivityFilter] = useState('all'); // all | system | technician | customer
@@ -88,6 +97,7 @@ const RepairDetailsPage = () => {
   // Edit accessories state
   const [editingAccessories, setEditingAccessories] = useState(false);
   const [accessoriesForm, setAccessoriesForm] = useState([]);
+  const [accessoryOptions, setAccessoryOptions] = useState([]);
   const [addSvcLoading, setAddSvcLoading] = useState(false);
   const [addSvcError, setAddSvcError] = useState('');
   const [availableServices, setAvailableServices] = useState([]);
@@ -128,15 +138,20 @@ const RepairDetailsPage = () => {
   const loadItemsMap = async () => {
     try {
       setItemsMapLoading(true);
+      console.log('Loading items map...');
       const res = await inventoryService.listItems();
-      const list = Array.isArray(res) ? res : (res.items || []);
+      console.log('Items response:', res);
+      const list = Array.isArray(res) ? res : (res.data?.items || res.items || []);
+      console.log('Processed items list:', list);
       const map = {};
       for (const it of list) {
         if (it && (it.id != null)) map[it.id] = { name: it.name || '', sku: it.sku || '' };
       }
+      console.log('Items map:', map);
       setItemsMap(map);
-    } catch {}
-    finally {
+    } catch (e) {
+      console.error('Error loading items map:', e);
+    } finally {
       setItemsMapLoading(false);
     }
   };
@@ -154,6 +169,14 @@ const RepairDetailsPage = () => {
         return;
       }
       setIssueLoading(true);
+      console.log('Issuing part with data:', {
+        repairRequestId: Number(id),
+        inventoryItemId: Number(issueForm.inventoryItemId),
+        warehouseId: Number(issueForm.warehouseId),
+        quantity,
+        userId: Number(currentUserId || 1),
+        invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
+      });
       await inventoryService.issuePart({
         repairRequestId: Number(id),
         inventoryItemId: Number(issueForm.inventoryItemId),
@@ -192,6 +215,41 @@ const RepairDetailsPage = () => {
     }
   };
 
+  // تحميل خيارات المتعلقات من المتغيرات
+  const loadAccessoryOptions = async () => {
+    try {
+      const response = await apiService.getVariables({ category: 'ACCESSORY', active: true });
+      if (response.ok) {
+        const accessories = await response.json();
+        setAccessoryOptions(Array.isArray(accessories) ? accessories : []);
+      } else {
+        // بيانات تجريبية في حالة عدم توفر البيانات
+        setAccessoryOptions([
+          { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
+          { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
+          { id: 3, label: 'سماعات', value: 'EARPHONES' },
+          { id: 4, label: 'حافظة', value: 'CASE' },
+          { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' },
+          { id: 6, label: 'قلم رقمي', value: 'STYLUS' },
+          { id: 7, label: 'ماوس', value: 'MOUSE' },
+          { id: 8, label: 'لوحة مفاتيح', value: 'KEYBOARD' },
+          { id: 9, label: 'بطاقة ذاكرة', value: 'MEMORY_CARD' },
+          { id: 10, label: 'بطارية خارجية', value: 'POWER_BANK' }
+        ]);
+      }
+    } catch (error) {
+      console.warn('Failed to load accessory options:', error);
+      // بيانات تجريبية في حالة الخطأ
+      setAccessoryOptions([
+        { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
+        { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
+        { id: 3, label: 'سماعات', value: 'EARPHONES' },
+        { id: 4, label: 'حافظة', value: 'CASE' },
+        { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' }
+      ]);
+    }
+  };
+
   useEffect(() => {
     fetchRepairDetails();
     // load parts used initially
@@ -202,6 +260,8 @@ const RepairDetailsPage = () => {
     loadItemsMap();
     // load payments initially
     loadPayments();
+    // load accessory options initially
+    loadAccessoryOptions();
   }, [id]);
 
   useEffect(() => {
@@ -219,10 +279,20 @@ const RepairDetailsPage = () => {
     try {
       setPartsLoading(true);
       setPartsError('');
-      const res = await apiService.request(`/partsused?repairRequestId=${id}`);
-      setPartsUsed(res);
+      console.log('Loading parts used for repair request:', id);
+      const response = await apiService.request(`/partsused?repairRequestId=${id}`);
+      console.log('Parts used response:', response);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPartsUsed(Array.isArray(data) ? data : []);
+      } else {
+        throw new Error('فشل في تحميل الأجزاء المصروفة');
+      }
     } catch (e) {
+      console.error('Error loading parts used:', e);
       setPartsError('تعذر تحميل الأجزاء المصروفة');
+      setPartsUsed([]);
     } finally {
       setPartsLoading(false);
     }
@@ -230,7 +300,12 @@ const RepairDetailsPage = () => {
 
   // Derived lists with sorting & pagination for Parts Used
   const getSortedPagedParts = () => {
-    const withMeta = (partsUsed || []).map(pu => ({
+    // التأكد من أن partsUsed مصفوفة
+    if (!Array.isArray(partsUsed)) {
+      return { total: 0, items: [] };
+    }
+    
+    const withMeta = partsUsed.map(pu => ({
       ...pu,
       _name: itemsMap[pu.inventoryItemId]?.name || '',
       _invoiced: !!pu.invoiceItemId,
@@ -254,10 +329,30 @@ const RepairDetailsPage = () => {
     try {
       setServicesLoading(true);
       setServicesError('');
-      const rows = await repairService.getRepairRequestServices(id);
-      setServices(Array.isArray(rows) ? rows : []);
+      console.log('Loading services for repair request:', id);
+      const response = await repairService.getRepairRequestServices(id);
+      console.log('Services response:', response);
+      
+      // التأكد من أن الاستجابة صحيحة
+      let servicesData = [];
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          servicesData = data;
+        } else if (data && Array.isArray(data.data)) {
+          servicesData = data.data;
+        } else if (data && data.services && Array.isArray(data.services)) {
+          servicesData = data.services;
+        }
+      } else {
+        throw new Error('Failed to fetch services');
+      }
+      
+      setServices(servicesData);
     } catch (e) {
+      console.error('Error loading services:', e);
       setServicesError('تعذر تحميل خدمات الإصلاح');
+      setServices([]);
     } finally {
       setServicesLoading(false);
     }
@@ -318,12 +413,15 @@ const RepairDetailsPage = () => {
       };
 
       try {
+        console.log('Creating payment with data:', newPayment);
         const created = await apiService.request('/payments', {
           method: 'POST',
           body: JSON.stringify(newPayment)
         });
+        console.log('Payment created:', created);
         setPayments(prev => [...prev, created]);
-      } catch {
+      } catch (e) {
+        console.error('Error creating payment:', e);
         // إضافة محلية في حالة عدم توفر API
         const created = {
           ...newPayment,
@@ -350,9 +448,11 @@ const RepairDetailsPage = () => {
       };
 
       try {
+        console.log('Updating device specs with data:', deviceSpecs);
         await apiService.updateRepairRequest(id, { deviceSpecs });
         setRepair(prev => ({ ...prev, deviceSpecs }));
-      } catch {
+      } catch (e) {
+        console.error('Error updating device specs:', e);
         // تحديث محلي في حالة عدم توفر API
         setRepair(prev => ({ ...prev, deviceSpecs }));
       }
@@ -361,6 +461,35 @@ const RepairDetailsPage = () => {
       setEditingSpecs(false);
     } catch (e) {
       notifications.error('تعذر تحديث مواصفات الجهاز');
+    }
+  };
+
+  const handleUpdateRepairDetails = async () => {
+    try {
+      console.log('Updating repair details with data:', repairDetails);
+      await apiService.updateRepairRequest(id, {
+        estimatedCost: repairDetails.estimatedCost,
+        actualCost: repairDetails.actualCost,
+        priority: repairDetails.priority,
+        expectedDeliveryDate: repairDetails.expectedDeliveryDate,
+        notes: repairDetails.notes
+      });
+
+      // تحديث محلي
+      setRepair(prev => ({ 
+        ...prev, 
+        estimatedCost: repairDetails.estimatedCost,
+        actualCost: repairDetails.actualCost,
+        priority: repairDetails.priority,
+        expectedDeliveryDate: repairDetails.expectedDeliveryDate,
+        notes: repairDetails.notes
+      }));
+
+      notifications.success('تم تحديث تفاصيل الطلب بنجاح');
+      setEditingDetails(false);
+    } catch (e) {
+      console.error('Error updating repair details:', e);
+      notifications.error('تعذر تحديث تفاصيل الطلب');
     }
   };
 
@@ -391,9 +520,11 @@ const RepairDetailsPage = () => {
       try {
         setTechLoading(true);
         const res = await apiService.listTechnicians();
+        console.log('Technicians response (inspection):', res);
         const items = Array.isArray(res) ? res : (res.items || []);
         setTechOptions(items);
       } catch (e) {
+        console.error('Error loading technicians (inspection):', e);
         notifications.error('تعذر تحميل قائمة الفنيين');
       } finally {
         setTechLoading(false);
@@ -410,9 +541,11 @@ const RepairDetailsPage = () => {
       try {
         setTechLoading(true);
         const res = await apiService.listTechnicians();
+        console.log('Technicians response (assign):', res);
         const items = Array.isArray(res) ? res : (res.items || []);
         setTechOptions(items);
       } catch (e) {
+        console.error('Error loading technicians (assign):', e);
         notifications.error('تعذر تحميل قائمة الفنيين');
       } finally {
         setTechLoading(false);
@@ -428,12 +561,44 @@ const RepairDetailsPage = () => {
     const loadIssueData = async () => {
       try {
         setIssueError('');
-        const [wh, it] = await Promise.all([
-          inventoryService.listWarehouses().catch(() => []),
-          inventoryService.listItems().catch(() => []),
+        console.log('Loading issue data...');
+        const [whResponse, itResponse] = await Promise.all([
+          inventoryService.listWarehouses().catch(() => null),
+          inventoryService.listItems().catch(() => null),
         ]);
-        setWarehouses(Array.isArray(wh) ? wh : (wh.items || []));
-        setItems(Array.isArray(it) ? it : (it.items || []));
+        console.log('Warehouses response:', whResponse);
+        console.log('Items response:', itResponse);
+        
+        // معالجة بيانات المخازن
+        let warehousesData = [];
+        if (whResponse && whResponse.ok) {
+          const wh = await whResponse.json();
+          if (Array.isArray(wh)) {
+            warehousesData = wh;
+          } else if (wh && Array.isArray(wh.data)) {
+            warehousesData = wh.data;
+          } else if (wh && wh.warehouses && Array.isArray(wh.warehouses)) {
+            warehousesData = wh.warehouses;
+          }
+        }
+        setWarehouses(warehousesData);
+        
+        // معالجة بيانات العناصر
+        let itemsData = [];
+        if (itResponse && itResponse.ok) {
+          const it = await itResponse.json();
+          if (Array.isArray(it)) {
+            itemsData = it;
+          } else if (it && Array.isArray(it.data)) {
+            itemsData = it.data;
+          } else if (it && it.items && Array.isArray(it.items)) {
+            itemsData = it.items;
+          }
+        }
+        setItems(itemsData);
+        
+        console.log('Processed warehouses:', warehousesData);
+        console.log('Processed items:', itemsData);
         try {
           const me = await apiService.authMe();
           if (me && (me.id || me.userId)) setCurrentUserId(Number(me.id || me.userId));
@@ -456,16 +621,20 @@ const RepairDetailsPage = () => {
     const loadAddServiceData = async () => {
       try {
         setAddSvcError('');
+        console.log('Loading add service data...');
         // تحميل قائمة الخدمات المتاحة
         const svc = await repairService.getAvailableServices().catch(() => []);
+        console.log('Available services response:', svc);
         setAvailableServices(Array.isArray(svc) ? svc : (svc.items || []));
         // تحميل الفنيين إن لم يكونوا محملين مسبقًا
         if (techOptions.length === 0) {
           try {
             setTechLoading(true);
             const technicians = await apiService.listTechnicians();
+            console.log('Technicians response:', technicians);
             setTechOptions(Array.isArray(technicians) ? technicians : (technicians.items || []));
-          } catch {
+          } catch (e) {
+            console.error('Error loading technicians:', e);
           } finally {
             setTechLoading(false);
           }
@@ -475,6 +644,7 @@ const RepairDetailsPage = () => {
           await loadInvoices();
         }
       } catch (e) {
+        console.error('Error loading add service data:', e);
         setAddSvcError('تعذر تحميل بيانات إضافة الخدمة');
       }
     };
@@ -495,6 +665,7 @@ const RepairDetailsPage = () => {
         return;
       }
       setAddSvcLoading(true);
+      console.log('Adding service with data:', { serviceId, price, technicianId, notes, invoiceId });
       // إنشاء خدمة طلب الإصلاح
       await repairService.addRepairRequestService({
         repairRequestId: Number(id),
@@ -507,7 +678,7 @@ const RepairDetailsPage = () => {
       try {
         const invId = invoiceId ? Number(invoiceId) : (invoices[0]?.id || invoices[0]?.invoiceId || null);
         if (invId) {
-          await invoicesService.addItem(invId, {
+          await apiService.addInvoiceItem(invId, {
             serviceId: Number(serviceId),
             quantity: 1,
             unitPrice: Number(price),
@@ -536,8 +707,12 @@ const RepairDetailsPage = () => {
         setMinLevel(null);
         setIsLowStock(null);
         if (!warehouseId || !inventoryItemId) return;
-        const levels = await inventoryService.listStockLevels({ warehouseId, inventoryItemId });
-        const list = Array.isArray(levels) ? levels : (levels.items || []);
+        const levelsResponse = await inventoryService.listStockLevels({ warehouseId, inventoryItemId });
+        let list = [];
+        if (levelsResponse && levelsResponse.ok) {
+          const levels = await levelsResponse.json();
+          list = Array.isArray(levels) ? levels : (levels.items || []);
+        }
         const row = list && list[0] ? list[0] : null;
         const qty = row ? Number(row.quantity) : 0;
         setAvailableQty(Number.isFinite(qty) ? qty : 0);
@@ -559,38 +734,67 @@ const RepairDetailsPage = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching repair details for ID:', id);
       // محاولة الجلب من API أولاً
       try {
-        const rep = await apiService.getRepairRequest(id);
-        setRepair(rep);
-        // تحديد مواصفات الجهاز من البيانات المحملة
-        setDeviceSpecs(rep.deviceSpecs || {
-          cpu: rep.cpu || '',
-          gpu: rep.gpu || '',
-          ram: rep.ram || '',
-          storage: rep.storage || '',
-          screenSize: rep.screenSize || '',
-          os: rep.os || ''
-        });
-        // ملاحظات/سجل
-        try {
-          const logs = await apiService.getRepairLogs(id);
-          // إذا عاد السجل بصيغة مختلفة، خزن كما هو
-          setNotes(Array.isArray(logs) ? logs : (logs.items || []));
-        } catch {}
-        // المرفقات
-        try {
-          const atts = await apiService.listAttachments(id);
-          setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
-        } catch {}
-        // بيانات العميل إن وجدت
-        if (rep?.customerId) {
+        const response = await apiService.getRepairRequest(id);
+        console.log('Repair response:', response);
+        if (response.ok) {
+          const rep = await response.json();
+          setRepair(rep);
+          
+          // تحديد مواصفات الجهاز من البيانات المحملة
+          setDeviceSpecs(rep.deviceSpecs || {
+            cpu: rep.cpu || '',
+            gpu: rep.gpu || '',
+            ram: rep.ram || '',
+            storage: rep.storage || '',
+            screenSize: rep.screenSize || '',
+            os: rep.os || ''
+          });
+          
+          // تحديد تفاصيل طلب الإصلاح من البيانات المحملة
+          setRepairDetails({
+            estimatedCost: rep.estimatedCost || 0,
+            actualCost: rep.actualCost || null,
+            priority: rep.priority || 'MEDIUM',
+            expectedDeliveryDate: rep.expectedDeliveryDate || null,
+            notes: rep.notes || ''
+          });
+          
+          // ملاحظات/سجل
           try {
-            const cust = await apiService.getCustomer(rep.customerId);
-            setCustomer(cust);
+            const logsResponse = await apiService.getRepairLogs(id);
+            if (logsResponse.ok) {
+              const logs = await logsResponse.json();
+              setNotes(Array.isArray(logs) ? logs : (logs.items || []));
+            }
           } catch {}
+          
+          // المرفقات
+          try {
+            const attsResponse = await apiService.listAttachments(id);
+            if (attsResponse.ok) {
+              const atts = await attsResponse.json();
+              setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
+            }
+          } catch {}
+          
+          // بيانات العميل إن وجدت
+          if (rep?.customerId) {
+            try {
+              const custResponse = await apiService.getCustomer(rep.customerId);
+              if (custResponse.ok) {
+                const cust = await custResponse.json();
+                setCustomer(cust);
+              }
+            } catch {}
+          }
+          
+          setNewStatus(rep?.status || 'pending');
+        } else {
+          throw new Error('Failed to fetch repair details');
         }
-        setNewStatus(rep?.status || 'pending');
       } catch (fetchErr) {
         // fallback: بيانات تجريبية
         setRepair({
@@ -601,14 +805,14 @@ const RepairDetailsPage = () => {
           deviceModel: 'Inspiron 15 3000',
           problemDescription: 'الشاشة لا تعمل والجهاز يصدر صوت تنبيه عند التشغيل.',
           status: 'in-progress',
-          priority: 'high',
+          priority: 'HIGH',
           estimatedCost: 450.00,
           actualCost: null,
           technicianNotes: 'تم فحص الجهاز، المشكلة في كارت الشاشة',
           customerNotes: 'الجهاز توقف فجأة أثناء العمل',
           createdAt: '2024-12-07T10:30:00Z',
           updatedAt: '2024-12-07T14:15:00Z',
-          expectedDelivery: '2024-12-10T16:00:00Z',
+          expectedDeliveryDate: '2024-12-10T16:00:00Z',
           customerId: 1,
           customerName: 'أحمد محمد علي',
           customerPhone: '+966501234567'
@@ -644,20 +848,33 @@ const RepairDetailsPage = () => {
       setInvoicesLoading(true);
       setInvoicesError(null);
       
+      console.log('Loading invoices for repair request:', id);
+      
       // Use the new invoices service with repair request filter
-      const response = await invoicesService.listInvoices({
+      const response = await apiService.getInvoices({
         repairRequestId: id,
         limit: 50 // Get all invoices for this repair
       });
       
-      if (response.success) {
-        setInvoices(response.data.invoices || []);
+      console.log('Invoices response:', response);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Invoices data:', data);
+        setInvoices(data.data?.invoices || data.invoices || data.data || []);
       } else {
         // Fallback to old API if new one fails
         const res = await apiService.listRepairInvoices(id);
-        setInvoices(Array.isArray(res) ? res : (res.items || []));
+        console.log('Fallback invoices response:', res);
+        if (res.ok) {
+          const fallbackData = await res.json();
+          setInvoices(fallbackData.data?.invoices || fallbackData.invoices || fallbackData.data || []);
+        } else {
+          throw new Error('Failed to load invoices from fallback API');
+        }
       }
     } catch (e) {
+      console.error('Error loading invoices:', e);
       setInvoicesError('تعذر تحميل الفواتير');
     } finally {
       setInvoicesLoading(false);
@@ -677,16 +894,23 @@ const RepairDetailsPage = () => {
         notes: `فاتورة لطلب الإصلاح ${repair?.requestNumber || id}`
       };
       
+      console.log('Creating invoice with payload:', payload);
       // Use the new invoices service
-      const response = await invoicesService.createInvoice(payload);
+      const response = await apiService.createInvoiceFromRepair(id, payload);
+      console.log('Invoice creation response:', response);
       
-      if (response.success) {
-        notifications.success('تم إنشاء الفاتورة بنجاح مع ربط تلقائي للقطع والخدمات');
-        await loadInvoices();
-        await loadPartsUsed(); // Refresh to show updated invoice status
-        await loadServices();
+      if (response.ok) {
+        const responseData = await response.json();
+        if (responseData.success) {
+          notifications.success('تم إنشاء الفاتورة بنجاح مع ربط تلقائي للقطع والخدمات');
+          await loadInvoices();
+          await loadPartsUsed(); // Refresh to show updated invoice status
+          await loadServices();
+        } else {
+          throw new Error(responseData.message || 'فشل في إنشاء الفاتورة');
+        }
       } else {
-        throw new Error(response.message || 'فشل في إنشاء الفاتورة');
+        throw new Error('فشل في إنشاء الفاتورة');
       }
     } catch (e) {
       console.error('Error creating invoice:', e);
@@ -713,6 +937,7 @@ const RepairDetailsPage = () => {
   const handleAssignTechnician = async () => {
     if (!assignTechId) return;
     try {
+      console.log('Assigning technician:', assignTechId, 'to repair request:', id);
       await apiService.assignTechnician(id, assignTechId);
       notifications.success('تم إسناد الفني بنجاح');
       setAssignOpen(false);
@@ -721,18 +946,21 @@ const RepairDetailsPage = () => {
       const tech = techOptions.find(t => String(t.id) === String(assignTechId));
       setRepair(prev => prev ? { ...prev, technicianId: assignTechId, technicianName: tech?.name || `مستخدم #${assignTechId}` } : prev);
     } catch (e) {
+      console.error('Error assigning technician:', e);
       notifications.error('تعذر إسناد الفني');
     }
   };
 
   const handlePrint = (type) => {
+    console.log('Printing repair request:', id, 'with type:', type);
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
-            const base = 'http://localhost:3001/api/repairs';
+    const base = 'http://localhost:3001/api/repairs';
     let url = `${base}/${id}/print/receipt`;
     if (type === 'qr') url = `${base}/${id}/print/receipt`;
     if (type === 'inspection') url = `${base}/${id}/print/inspection`;
     if (type === 'delivery') url = `${base}/${id}/print/delivery`;
     if (type === 'invoice') url = `${base}/${id}/print/invoice`;
+    console.log('Opening print URL:', url);
     window.open(url, '_blank');
   };
 
@@ -740,22 +968,26 @@ const RepairDetailsPage = () => {
     const confirmed = window.confirm('سيتم حذف طلب الإصلاح نهائيًا. هل أنت متأكد؟');
     if (!confirmed) return;
     try {
+      console.log('Deleting repair request:', id);
       await apiService.deleteRepairRequest(id);
       notifications.success('تم حذف الطلب بنجاح');
       navigate('/repairs');
     } catch (e) {
+      console.error('Error deleting repair request:', e);
       notifications.error('تعذر حذف الطلب');
     }
   };
 
   const handleStatusUpdate = async () => {
     try {
+      console.log('Updating repair status to:', newStatus, 'for repair request:', id);
       // تحديث عبر API ثم تحديث الواجهة
       await apiService.updateRepairStatus(id, newStatus);
       setRepair(prev => (prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : prev));
       setEditingStatus(false);
       notifications.success('تم تحديث الحالة بنجاح', { title: 'نجاح', duration: 2500 });
     } catch (err) {
+      console.error('Error updating repair status:', err);
       setError('حدث خطأ في تحديث حالة الطلب');
     }
   };
@@ -777,7 +1009,9 @@ const RepairDetailsPage = () => {
     setAddingNote(false);
 
     try {
+      console.log('Adding note with content:', optimistic.content, 'to repair request:', id);
       const res = await apiService.addRepairNote(id, optimistic.content);
+      console.log('Note added response:', res);
       // استبدال الملاحظة المؤقتة بالملاحظة من السيرفر
       const saved = {
         id: res?.id ?? optimistic.id,
@@ -789,6 +1023,7 @@ const RepairDetailsPage = () => {
       setNotes(prev => prev.map(n => (n.id === optimistic.id ? saved : n)));
       notifications.success('تم حفظ الملاحظة بنجاح');
     } catch (e) {
+      console.error('Error adding note:', e);
       // تراجع عند الفشل
       setNotes(prev => prev.filter(n => n.id !== optimistic.id));
       notifications.error('تعذر حفظ الملاحظة');
@@ -808,11 +1043,12 @@ const RepairDetailsPage = () => {
 
   const getPriorityInfo = (priority) => {
     const priorityMap = {
-      low: { text: 'منخفضة', color: 'bg-gray-100 text-gray-800' },
-      medium: { text: 'متوسطة', color: 'bg-yellow-100 text-yellow-800' },
-      high: { text: 'عالية', color: 'bg-red-100 text-red-800' }
+      LOW: { text: 'منخفضة', color: 'bg-gray-100 text-gray-800' },
+      MEDIUM: { text: 'متوسطة', color: 'bg-yellow-100 text-yellow-800' },
+      HIGH: { text: 'عالية', color: 'bg-red-100 text-red-800' },
+      URGENT: { text: 'عاجلة', color: 'bg-red-200 text-red-900' }
     };
-    return priorityMap[priority] || priorityMap.medium;
+    return priorityMap[priority] || priorityMap.MEDIUM;
   };
 
   // دالة تصفية الأنشطة
@@ -917,7 +1153,14 @@ const RepairDetailsPage = () => {
             </SimpleBadge>
           </div>
           <p className="text-gray-600">
-            تاريخ الإنشاء: {new Date(repair.createdAt).toLocaleDateString('ar-SA')}
+            تاريخ الإنشاء: {repair.createdAt ? (() => {
+              try {
+                const date = new Date(repair.createdAt);
+                return isNaN(date.getTime()) ? 'غير محدد' : date.toLocaleDateString('ar-SA');
+              } catch (e) {
+                return 'غير محدد';
+              }
+            })() : 'غير محدد'}
           </p>
         </div>
         
@@ -1024,7 +1267,7 @@ const RepairDetailsPage = () => {
                   onChange={(e) => {
                     const sel = e.target.value;
                     const svc = availableServices.find(s => String(s.id) === String(sel) || String(s.serviceId) === String(sel));
-                    setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.price || svc.unitPrice || '') : f.price }));
+                    setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
                   }}
                   className="w-full p-2 border border-gray-300 rounded-lg bg-white"
                 >
@@ -1119,9 +1362,100 @@ const RepairDetailsPage = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
-                        <p className="text-gray-900">{repair.expectedDelivery ? new Date(repair.expectedDelivery).toLocaleDateString('ar-SA') : 'لم يتم تحديده بعد'}</p>
+                        <p className="text-gray-900">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('ar-SA') : 'لم يتم تحديده بعد'}</p>
                       </div>
                     </div>
+                    
+                    {/* نموذج تعديل تفاصيل طلب الإصلاح */}
+                    {editingDetails ? (
+                      <div className="mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <h4 className="text-lg font-medium text-gray-900 mb-4">تعديل تفاصيل الطلب</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={repairDetails.estimatedCost}
+                              onChange={(e) => setRepairDetails(prev => ({ ...prev, estimatedCost: parseFloat(e.target.value) || 0 }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة الفعلية</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={repairDetails.actualCost || ''}
+                              onChange={(e) => setRepairDetails(prev => ({ ...prev, actualCost: e.target.value ? parseFloat(e.target.value) : null }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                            <select
+                              value={repairDetails.priority}
+                              onChange={(e) => setRepairDetails(prev => ({ ...prev, priority: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="LOW">منخفضة</option>
+                              <option value="MEDIUM">متوسطة</option>
+                              <option value="HIGH">عالية</option>
+                              <option value="URGENT">عاجلة</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
+                            <input
+                              type="datetime-local"
+                              value={repairDetails.expectedDeliveryDate ? new Date(repairDetails.expectedDeliveryDate).toISOString().slice(0, 16) : ''}
+                              onChange={(e) => setRepairDetails(prev => ({ ...prev, expectedDeliveryDate: e.target.value ? new Date(e.target.value).toISOString() : null }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات إضافية</label>
+                          <textarea
+                            value={repairDetails.notes}
+                            onChange={(e) => setRepairDetails(prev => ({ ...prev, notes: e.target.value }))}
+                            rows="3"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="أي ملاحظات إضافية..."
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t mt-4">
+                          <SimpleButton size="sm" onClick={handleUpdateRepairDetails}>
+                            <Save className="w-4 h-4 ml-1" />
+                            حفظ التغييرات
+                          </SimpleButton>
+                          <SimpleButton size="sm" variant="ghost" onClick={() => {
+                            setEditingDetails(false);
+                            setRepairDetails({
+                              estimatedCost: repair.estimatedCost || 0,
+                              actualCost: repair.actualCost || null,
+                              priority: repair.priority || 'MEDIUM',
+                              expectedDeliveryDate: repair.expectedDeliveryDate || null,
+                              notes: repair.notes || ''
+                            });
+                          }}>
+                            <X className="w-4 h-4 ml-1" />
+                            إلغاء
+                          </SimpleButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4">
+                        <SimpleButton size="sm" variant="outline" onClick={() => setEditingDetails(true)}>
+                          <Edit className="w-4 h-4 ml-1" />
+                          تعديل التفاصيل
+                        </SimpleButton>
+                      </div>
+                    )}
                   </div>
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشكلة</label>
@@ -1206,64 +1540,121 @@ const RepairDetailsPage = () => {
                   ) : partsError ? (
                     <div className="text-red-600 text-sm">{partsError}</div>
                   ) : partsUsed.length === 0 ? (
-                    <div className="text-gray-600 text-sm">لا توجد قطع مصروفة لهذا الطلب</div>
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <div className="text-gray-600 text-lg font-medium">لا توجد قطع غيار مصروفة</div>
+                      <div className="text-gray-500 text-sm mt-2">لم يتم صرف أي قطع غيار لهذا الطلب بعد</div>
+                    </div>
                   ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="space-y-3">
                       {getSortedPagedParts().items.map((pu) => {
                         const itemMeta = itemsMap[pu.inventoryItemId] || {};
                         const invoiced = !!pu.invoiceItemId;
                         return (
-                          <div key={pu.id} className="py-3 flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {itemMeta.name || `عنصر #${pu.inventoryItemId}`} <span className="text-xs text-gray-500 en-text">{itemMeta.sku ? `(${itemMeta.sku})` : ''}</span>
+                          <div key={pu.id} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400 hover:bg-gray-100 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Wrench className="w-5 h-5 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-gray-900 text-lg">
+                                      {itemMeta.name || `قطعة غيار #${pu.inventoryItemId}`}
+                                    </div>
+                                    {itemMeta.sku && (
+                                      <div className="text-sm text-gray-500 font-mono">
+                                        كود القطعة: {itemMeta.sku}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-gray-600">الكمية المستخدمة:</span>
+                                    <span className="font-medium text-gray-900">{pu.quantity}</span>
+                                  </div>
+                                  {itemMeta.sellingPrice && (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                      <span className="text-gray-600">السعر:</span>
+                                      <span className="font-medium text-gray-900">{itemMeta.sellingPrice} ج.م</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-600">الكمية: {pu.quantity}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
-                                {invoiced ? 'مفوتر' : 'غير مفوتر'}
-                              </SimpleBadge>
-                              {!invoiced && (
-                                <SimpleButton
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      // تأكد من وجود فاتورة واحدة على الأقل
-                                      if (invoices.length === 0) {
-                                        await loadInvoices();
+                              
+                              <div className="flex flex-col items-end gap-3">
+                                <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
+                                  {invoiced ? '✓ مفوتر' : '⏳ غير مفوتر'}
+                                </SimpleBadge>
+                                
+                                <div className="flex gap-2">
+                                  {!invoiced && (
+                                    <SimpleButton
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                      onClick={async () => {
+                                        try {
+                                          // تأكد من وجود فاتورة واحدة على الأقل
+                                          if (invoices.length === 0) {
+                                            await loadInvoices();
+                                          }
+                                          const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
+                                          if (!targetInvoiceId) {
+                                            notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+                                            return;
+                                          }
+                                          // إضافة عنصر فاتورة للقطعة المصروفة
+                                          const addResponse = await apiService.addInvoiceItem(targetInvoiceId, {
+                                            inventoryItemId: pu.inventoryItemId,
+                                            quantity: Number(pu.quantity || 1),
+                                            partsUsedId: pu.id
+                                          });
+                                          
+                                          if (addResponse.ok) {
+                                            const addData = await addResponse.json();
+                                        if (addData.success) {
+                                          notifications.success('تم إضافة القطعة إلى الفاتورة');
+                                          await loadPartsUsed();
+                                          await loadServices();
+                                          await loadInvoices();
+                                        } else {
+                                              throw new Error(addData.error || 'Failed to add part to invoice');
+                                            }
+                                      } else {
+                                        const errorData = await addResponse.json();
+                                        if (addResponse.status === 409) {
+                                          // Duplicate item error
+                                          notifications.warn(errorData.error || 'تم إضافة هذه القطعة مسبقاً');
+                                          return;
+                                        }
+                                        throw new Error(errorData.error || 'Failed to add part to invoice');
                                       }
-                                      const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
-                                      if (!targetInvoiceId) {
-                                        notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
-                                        return;
-                                      }
-                                      // إضافة عنصر فاتورة للقطعة المصروفة
-                                      await invoicesService.addItem(targetInvoiceId, {
-                                        inventoryItemId: pu.inventoryItemId,
-                                        quantity: Number(pu.quantity || 1),
-                                        partsUsedId: pu.id
-                                      });
-                                      notifications.success('تم إضافة القطعة إلى الفاتورة');
-                                      await loadPartsUsed();
-                                      await loadServices();
                                     } catch (e) {
-                                      notifications.error('تعذر إضافة القطعة إلى الفاتورة');
-                                    }
-                                  }}
-                                >
-                                  إضافة إلى فاتورة
-                                </SimpleButton>
-                              )}
-                              <SimpleButton
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handlePrint('invoice')}
-                                className="mr-2"
-                              >
-                                <Printer className="w-4 h-4 ml-1" />
-                                طباعة فاتورة
-                              </SimpleButton>
+                                      console.error('Error adding part to invoice:', e);
+                                      notifications.error(`تعذر إضافة القطعة إلى الفاتورة: ${e.message}`);
+                                        }
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      إضافة للفاتورة
+                                    </SimpleButton>
+                                  )}
+                                  
+                                  <SimpleButton
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handlePrint('invoice')}
+                                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                  >
+                                    <Printer className="w-4 h-4" />
+                                    طباعة
+                                  </SimpleButton>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
@@ -1343,59 +1734,120 @@ const RepairDetailsPage = () => {
                   ) : servicesError ? (
                     <div className="text-red-600 text-sm">{servicesError}</div>
                   ) : services.length === 0 ? (
-                    <div className="text-gray-600 text-sm">لا توجد خدمات مسجلة لهذا الطلب</div>
+                    <div className="text-center py-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                      <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <div className="text-gray-600 text-lg font-medium">لا توجد خدمات مسجلة</div>
+                      <div className="text-gray-500 text-sm mt-2">لم يتم تسجيل أي خدمات إصلاح لهذا الطلب بعد</div>
+                    </div>
                   ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="space-y-3">
                       {getSortedPagedServices().items.map((service) => {
                         const invoiced = !!service.invoiceItemId;
                         return (
-                          <div key={service.id} className="py-3 flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {service.serviceName || `خدمة #${service.serviceId}`}
+                          <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <Settings className="w-5 h-5 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-gray-900 text-lg">
+                                      {service.serviceName || `خدمة إصلاح #${service.serviceId}`}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      كود الخدمة: {service.serviceId || 'غير محدد'}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-gray-600">السعر:</span>
+                                    <span className="font-medium text-gray-900">{Number(service.price || 0).toFixed(2)} ج.م</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    <span className="text-gray-600">الفني:</span>
+                                    <span className="font-medium text-gray-900">{service.technicianName || 'غير محدد'}</span>
+                                  </div>
+                                </div>
+                                
+                                {service.notes && (
+                                  <div className="bg-white/70 rounded-lg p-3 mt-2">
+                                    <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
+                                    <div className="text-sm text-gray-700">{service.notes}</div>
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-sm text-gray-600">
-                                السعر: {Number(service.price || 0).toFixed(2)} - الفني: {service.technicianName || 'غير محدد'}
+                              
+                              <div className="flex flex-col items-end gap-3">
+                                <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
+                                  {invoiced ? '✓ مفوتر' : '⏳ غير مفوتر'}
+                                </SimpleBadge>
+                                {!invoiced && (
+                                  <SimpleButton
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        // تأكد من وجود فاتورة واحدة على الأقل
+                                        if (invoices.length === 0) {
+                                          await loadInvoices();
+                                        }
+                                        const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
+                                        if (!targetInvoiceId) {
+                                          notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+                                          return;
+                                        }
+                                        console.log('Adding service to invoice:', {
+                                          targetInvoiceId,
+                                          service,
+                                          payload: {
+                                            serviceId: service.serviceId || service.id,
+                                            quantity: 1,
+                                            unitPrice: Number(service.price || 0),
+                                            description: service.notes || service.serviceName || ''
+                                          }
+                                        });
+                                        // إضافة عنصر فاتورة للخدمة
+                                        const addResponse = await apiService.addInvoiceItem(targetInvoiceId, {
+                                          serviceId: service.serviceId || service.id,
+                                          quantity: 1,
+                                          unitPrice: Number(service.price || 0),
+                                          description: service.notes || service.serviceName || ''
+                                        });
+                                        
+                                        if (addResponse.ok) {
+                                          const addData = await addResponse.json();
+                                          if (addData.success) {
+                                            notifications.success('تم إضافة الخدمة إلى الفاتورة');
+                                            await loadServices();
+                                            await loadInvoices();
+                                          } else {
+                                            throw new Error(addData.error || 'Failed to add service to invoice');
+                                          }
+                                        } else {
+                                          const errorData = await addResponse.json();
+                                          if (addResponse.status === 409) {
+                                            // Duplicate item error
+                                            notifications.warn(errorData.error || 'تم إضافة هذه الخدمة مسبقاً');
+                                            return;
+                                          }
+                                          throw new Error(errorData.error || 'Failed to add service to invoice');
+                                        }
+                                      } catch (e) {
+                                        console.error('Error adding service to invoice:', e);
+                                        notifications.error(`تعذر إضافة الخدمة إلى الفاتورة: ${e.message}`);
+                                      }
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    إضافة للفاتورة
+                                  </SimpleButton>
+                                )}
                               </div>
-                              {service.notes && (
-                                <div className="text-xs text-gray-500 mt-1">{service.notes}</div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
-                                {invoiced ? 'مفوتر' : 'غير مفوتر'}
-                              </SimpleBadge>
-                              {!invoiced && (
-                                <SimpleButton
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      // تأكد من وجود فاتورة واحدة على الأقل
-                                      if (invoices.length === 0) {
-                                        await loadInvoices();
-                                      }
-                                      const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
-                                      if (!targetInvoiceId) {
-                                        notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
-                                        return;
-                                      }
-                                      // إضافة عنصر فاتورة للخدمة
-                                      await invoicesService.addItem(targetInvoiceId, {
-                                        serviceId: service.serviceId || service.id,
-                                        quantity: 1,
-                                        unitPrice: Number(service.price || 0),
-                                        description: service.notes || service.serviceName || ''
-                                      });
-                                      notifications.success('تم إضافة الخدمة إلى الفاتورة');
-                                      await loadServices();
-                                    } catch (e) {
-                                      notifications.error('تعذر إضافة الخدمة إلى الفاتورة');
-                                    }
-                                  }}
-                                >
-                                  إضافة إلى فاتورة
-                                </SimpleButton>
-                              )}
                             </div>
                           </div>
                         );
@@ -2040,30 +2492,21 @@ const RepairDetailsPage = () => {
                 {editingAccessories ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {[
-                        'شاحن الجهاز',
-                        'الحقيبة',
-                        'الماوس',
-                        'سماعات الرأس',
-                        'كابل USB',
-                        'قلم اللمس',
-                        'بطارية إضافية',
-                        'كارت الذاكرة'
-                      ].map((item) => (
-                        <label key={item} className="flex items-center space-x-2 space-x-reverse">
+                      {accessoryOptions.map((option) => (
+                        <label key={option.id} className="flex items-center space-x-2 space-x-reverse">
                           <input
                             type="checkbox"
-                            checked={accessoriesForm.some(a => a.label === item)}
+                            checked={accessoriesForm.some(a => a.id === option.id || a.label === option.label)}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setAccessoriesForm(prev => [...prev, { id: Date.now(), label: item }]);
+                                setAccessoriesForm(prev => [...prev, { id: option.id, label: option.label, value: option.value }]);
                               } else {
-                                setAccessoriesForm(prev => prev.filter(a => a.label !== item));
+                                setAccessoriesForm(prev => prev.filter(a => a.id !== option.id && a.label !== option.label));
                               }
                             }}
                             className="rounded border-gray-300"
                           />
-                          <span className="text-sm">{item}</span>
+                          <span className="text-sm">{option.label}</span>
                         </label>
                       ))}
                     </div>

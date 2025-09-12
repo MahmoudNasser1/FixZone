@@ -29,19 +29,19 @@ const inventoryService = {
       sortOrder
     });
     
-    return apiService.request(`/inventoryitems?${query}`);
+    return apiService.request(`/inventory?${query}`);
   },
   getItem(id) {
-    return apiService.request(`/inventoryitems/${id}`);
+    return apiService.request(`/inventory/${id}`);
   },
   createItem(payload) {
-    return apiService.request('/inventoryitems', { method: 'POST', body: JSON.stringify(payload) });
+    return apiService.request('/inventory', { method: 'POST', body: JSON.stringify(payload) });
   },
   updateItem(id, payload) {
-    return apiService.request(`/inventoryitems/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    return apiService.request(`/inventory/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
   },
   deleteItem(id) {
-    return apiService.request(`/inventoryitems/${id}`, { method: 'DELETE' });
+    return apiService.request(`/inventory/${id}`, { method: 'DELETE' });
   },
 
   // Bulk actions for inventory items

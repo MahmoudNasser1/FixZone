@@ -6,11 +6,13 @@ CREATE DATABASE IF NOT EXISTS FZ;
 USE FZ;
 
 -- ----------------------
--- Drop existing tables (in reverse order of dependencies)
+-- Drop existing tables (in correct reverse order of dependencies)
 -- ----------------------
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Drop tables in correct dependency order (most dependent first)
+DROP TABLE IF EXISTS InvoiceTemplate;
 DROP TABLE IF EXISTS AuditLog;
 DROP TABLE IF EXISTS SystemSetting;
 DROP TABLE IF EXISTS NotificationTemplate;
@@ -19,7 +21,6 @@ DROP TABLE IF EXISTS InspectionComponent;
 DROP TABLE IF EXISTS InspectionReport;
 DROP TABLE IF EXISTS InspectionType;
 DROP TABLE IF EXISTS RepairRequestService;
-DROP TABLE IF EXISTS Service;
 DROP TABLE IF EXISTS Expense;
 DROP TABLE IF EXISTS ExpenseCategory;
 DROP TABLE IF EXISTS Payment;
@@ -42,6 +43,7 @@ DROP TABLE IF EXISTS Device;
 DROP TABLE IF EXISTS DeviceBatch;
 DROP TABLE IF EXISTS VariableOption;
 DROP TABLE IF EXISTS VariableCategory;
+DROP TABLE IF EXISTS Service;
 DROP TABLE IF EXISTS Customer;
 DROP TABLE IF EXISTS Company;
 DROP TABLE IF EXISTS UserLoginLog;
@@ -305,6 +307,15 @@ CREATE TABLE QuotationItem (
 CREATE TABLE Warehouse (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    -- حقول المخازن المحسنة
+    location VARCHAR(255) COMMENT 'الموقع الجغرافي',
+    address TEXT COMMENT 'العنوان التفصيلي',
+    phone VARCHAR(20) COMMENT 'رقم الهاتف',
+    email VARCHAR(100) COMMENT 'البريد الإلكتروني',
+    manager VARCHAR(100) COMMENT 'مدير المخزن',
+    capacity VARCHAR(100) COMMENT 'سعة المخزن',
+    description TEXT COMMENT 'وصف المخزن',
+    isActive BOOLEAN DEFAULT TRUE COMMENT 'حالة المخزن (نشط/معطل)',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deletedAt DATETIME DEFAULT NULL
@@ -330,7 +341,8 @@ CREATE TABLE StockLevel (
     warehouseId INT,
     quantity INT,
     minLevel INT DEFAULT 0,
-    isLowStock BOOLEAN DEFAULT FALSE,
+    maxLevel INT DEFAULT NULL COMMENT 'الحد الأقصى للمخزون',
+    isLowStock BOOLEAN DEFAULT FALSE COMMENT 'مخزون منخفض',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id),
@@ -339,12 +351,13 @@ CREATE TABLE StockLevel (
 
 CREATE TABLE StockMovement (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    type ENUM('IN','OUT','TRANSFER') NOT NULL,
-    quantity INT,
-    inventoryItemId INT,
-    fromWarehouseId INT DEFAULT NULL,
-    toWarehouseId INT DEFAULT NULL,
-    userId INT,
+    type ENUM('IN','OUT','TRANSFER','ADJUSTMENT') NOT NULL COMMENT 'نوع الحركة',
+    quantity INT NOT NULL COMMENT 'الكمية',
+    inventoryItemId INT NOT NULL COMMENT 'معرف قطعة المخزون',
+    fromWarehouseId INT NULL COMMENT 'معرف المخزن المصدر (للنقل)',
+    toWarehouseId INT NULL COMMENT 'معرف المخزن الهدف (للنقل)',
+    notes TEXT COMMENT 'ملاحظات',
+    userId INT NOT NULL COMMENT 'معرف المستخدم',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (inventoryItemId) REFERENCES InventoryItem(id),
@@ -422,24 +435,16 @@ CREATE TABLE Service (
 
 CREATE TABLE Invoice (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    subtotalAmount DECIMAL(12,2) DEFAULT 0,
     totalAmount DECIMAL(12,2),
     amountPaid DECIMAL(12,2),
-    status ENUM('DRAFT','SENT','PAID','PARTIALLY_PAID','OVERDUE','CANCELLED','FINALIZED') DEFAULT 'DRAFT',
-    currency VARCHAR(3) DEFAULT 'EGP',
-    taxAmount DECIMAL(12,2) DEFAULT 0,
-    discountAmount DECIMAL(12,2) DEFAULT 0,
-    discountPercentage DECIMAL(5,2) DEFAULT 0,
-    notes TEXT,
-    dueDate DATE,
-    finalizedAt DATETIME DEFAULT NULL,
-    finalizedById INT DEFAULT NULL,
-    repairRequestId INT,
+    status VARCHAR(50),
+    repairRequestId INT UNIQUE,
+    currency VARCHAR(10) DEFAULT 'EGP',
+    taxAmount DECIMAL(12,2),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deletedAt DATETIME DEFAULT NULL,
-    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
-    FOREIGN KEY (finalizedById) REFERENCES User(id)
+    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id)
 );
 
 CREATE TABLE InvoiceItem (
@@ -597,30 +602,15 @@ CREATE TABLE AuditLog (
     id INT AUTO_INCREMENT PRIMARY KEY,
     action VARCHAR(100),
     actionType ENUM('CREATE','UPDATE','DELETE','LOGIN'),
-    tableName VARCHAR(100),
-    recordId INT,
-    oldValues JSON,
-    newValues JSON,
+    details TEXT,
+    entityType VARCHAR(50),
+    entityId INT DEFAULT NULL,
     userId INT,
     ipAddress VARCHAR(45),
-    userAgent TEXT,
+    beforeValue JSON, -- Enhancement: Store previous state for audit
+    afterValue JSON, -- Enhancement: Store new state for audit
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES User(id)
-);
-
-CREATE TABLE DeviceDelivery (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    repairRequestId INT NOT NULL,
-    deliveredById INT NOT NULL,
-    deliveryMethod ENUM('PICKUP','DELIVERY') DEFAULT 'PICKUP',
-    deliveryAddress TEXT,
-    deliveryNotes TEXT,
-    customerSignature TEXT,
-    deliveredAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (repairRequestId) REFERENCES RepairRequest(id),
-    FOREIGN KEY (deliveredById) REFERENCES User(id)
 );
 
 -- ----------------------
@@ -655,4 +645,62 @@ CREATE TABLE InvoiceTemplate (
     INDEX idx_template_deleted (deletedAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='قوالب الفواتير';
 
--- End of schema 
+-- ----------------------
+-- إضافة بيانات تجريبية أساسية
+-- ----------------------
+
+-- إضافة دور أساسي
+INSERT IGNORE INTO Role (id, name, permissions) VALUES 
+(1, 'admin', '{"all": true}'),
+(2, 'technician', '{"repairs": true, "inventory": true}'),
+(3, 'customer_service', '{"customers": true, "repairs": true}');
+
+-- إضافة مستخدم أساسي
+INSERT IGNORE INTO User (id, name, email, password, phone, roleId, isActive) VALUES 
+(1, 'مدير النظام', 'admin@fixzone.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+20123456789', 1, TRUE);
+
+-- إضافة مدينة أساسية
+INSERT IGNORE INTO City (id, name) VALUES (1, 'القاهرة');
+
+-- إضافة فرع أساسي
+INSERT IGNORE INTO Branch (id, name, address, phone, cityId) VALUES 
+(1, 'الفرع الرئيسي', 'شارع التحرير، القاهرة', '+20123456789', 1);
+
+-- إضافة مخازن أساسية
+INSERT IGNORE INTO Warehouse (id, name, location, address, phone, email, manager, capacity, description, isActive) VALUES
+(1, 'المخزن الرئيسي - القاهرة', 'القاهرة', 'شارع التحرير، القاهرة', '+20123456789', 'main@fixzone.com', 'مدير النظام', '10000 قطعة', 'المخزن الرئيسي للشركة', TRUE),
+(2, 'مخزن فرع الجيزة', 'الجيزة', 'شارع الهرم، الجيزة', '+20123456790', 'giza@fixzone.com', 'مدير النظام', '5000 قطعة', 'مخزن فرع الجيزة', TRUE);
+
+-- إضافة عناصر مخزون أساسية
+INSERT IGNORE INTO InventoryItem (id, sku, name, type, purchasePrice, sellingPrice) VALUES
+(1, 'PART-001', 'شاشة LCD للهاتف', 'شاشة', 150.00, 250.00),
+(2, 'PART-002', 'بطارية ليثيوم', 'بطارية', 80.00, 120.00);
+
+-- إضافة مستويات مخزون أساسية
+INSERT IGNORE INTO StockLevel (id, inventoryItemId, warehouseId, quantity, minLevel, isLowStock) VALUES
+(1, 1, 1, 15, 5, FALSE),
+(2, 1, 2, 6, 5, FALSE),
+(3, 2, 1, 25, 10, FALSE),
+(4, 2, 2, 8, 10, TRUE);
+
+-- إضافة خدمات أساسية
+INSERT IGNORE INTO Service (id, name, description, basePrice, isActive) VALUES
+(1, 'إصلاح الشاشة', 'إصلاح شاشة الهاتف المكسورة', 100.00, TRUE),
+(2, 'استبدال البطارية', 'استبدال بطارية الهاتف', 50.00, TRUE);
+
+-- إضافة عملاء أساسيين
+INSERT IGNORE INTO Customer (id, name, phone, email, address) VALUES
+(1, 'أحمد محمد', '+20123456789', 'ahmed@example.com', 'القاهرة'),
+(2, 'فاطمة علي', '+20123456790', 'fatima@example.com', 'الجيزة');
+
+-- إضافة أجهزة أساسية
+INSERT IGNORE INTO Device (id, customerId, deviceType, brand, model, serialNumber) VALUES
+(1, 1, 'هاتف ذكي', 'Samsung', 'Galaxy S21', 'SN001'),
+(2, 2, 'هاتف ذكي', 'iPhone', 'iPhone 13', 'SN002');
+
+-- إضافة طلبات إصلاح أساسية
+INSERT IGNORE INTO RepairRequest (id, deviceId, customerId, branchId, technicianId, status, reportedProblem) VALUES
+(1, 1, 1, 1, 1, 'RECEIVED', 'الشاشة مكسورة'),
+(2, 2, 2, 1, 1, 'UNDER_REPAIR', 'البطارية لا تعمل');
+
+-- End of schema

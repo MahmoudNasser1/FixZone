@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
-import invoicesService from '../../services/invoicesService';
+import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { Save, X } from 'lucide-react';
 
@@ -32,12 +32,22 @@ export default function EditInvoicePage() {
   // Load invoice data
   useEffect(() => {
     async function loadInvoiceData() {
+      if (!id) {
+        console.error('No invoice ID provided');
+        notifications.error('لم يتم توفير معرف الفاتورة');
+        navigate('/invoices');
+        return;
+      }
+      
       try {
         setLoading(true);
-        const response = await invoicesService.getInvoice(id);
+        console.log('Loading invoice with ID:', id);
+        const response = await apiService.getInvoiceById(id);
         
-        if (response?.success && response.data) {
-          const invoiceData = response.data;
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('API Response:', responseData);
+          const invoiceData = responseData.data || responseData;
           setInvoice(invoiceData);
           
           // Ensure all numeric values are properly converted
@@ -61,7 +71,7 @@ export default function EditInvoicePage() {
         }
       } catch (error) {
         console.error('Error loading invoice:', error);
-        notifications.error('فشل في تحميل بيانات الفاتورة');
+        notifications.error('فشل في تحميل بيانات الفاتورة: ' + error.message);
         navigate('/invoices');
       } finally {
         setLoading(false);
@@ -88,13 +98,14 @@ export default function EditInvoicePage() {
         dueDate: form.dueDate || null
       };
 
-      const response = await invoicesService.updateInvoice(id, updateData);
+      const response = await apiService.updateInvoice(id, updateData);
       
-      if (response?.success) {
+      if (response.ok) {
         notifications.success('تم حفظ التغييرات بنجاح');
         navigate(`/invoices/${id}`);
       } else {
-        throw new Error(response?.message || 'فشل في حفظ التغييرات');
+        const errorData = await response.json();
+        throw new Error(errorData?.message || 'فشل في حفظ التغييرات');
       }
     } catch (error) {
       console.error('Error saving invoice:', error);
