@@ -335,14 +335,14 @@ const InvoicesPage = () => {
                         </Link>
                       )}
                       {invoice.id && (
-                        <SimpleButton 
-                          variant="outline" 
+              <SimpleButton 
+                variant="outline" 
                           size="sm"
                           onClick={() => handleDeleteInvoice(invoice.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </SimpleButton>
+              </SimpleButton>
                       )}
             </div>
           </div>

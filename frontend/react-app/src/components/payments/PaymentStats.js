@@ -1,0 +1,140 @@
+import React from 'react';
+import { SimpleCard, SimpleCardContent } from '../ui/SimpleCard';
+import paymentService from '../../services/paymentService';
+
+const PaymentStats = ({ stats, loading = false }) => {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, index) => (
+          <SimpleCard key={index}>
+            <SimpleCardContent className="p-4">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        ))}
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
+
+  const formatAmount = (amount) => {
+    return paymentService.formatAmount(amount);
+  };
+
+  const statsData = [
+    {
+      title: 'إجمالي المدفوعات',
+      value: formatAmount(stats.totalAmount || 0),
+      icon: '💰',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    {
+      title: 'عدد المدفوعات',
+      value: stats.totalPayments || 0,
+      icon: '📊',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'متوسط المدفوعات',
+      value: formatAmount(stats.averageAmount || 0),
+      icon: '📈',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    },
+    {
+      title: 'المدفوعات النقدية',
+      value: formatAmount(stats.cashAmount || 0),
+      icon: '💵',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50'
+    }
+  ];
+
+  const paymentMethodsData = [
+    {
+      method: 'نقدي',
+      count: stats.cashPayments || 0,
+      amount: stats.cashAmount || 0,
+      icon: '💵',
+      color: 'text-green-600'
+    },
+    {
+      method: 'بطاقة ائتمان',
+      count: stats.cardPayments || 0,
+      amount: stats.cardAmount || 0,
+      icon: '💳',
+      color: 'text-blue-600'
+    },
+    {
+      method: 'تحويل بنكي',
+      count: stats.bankTransferPayments || 0,
+      amount: stats.bankTransferAmount || 0,
+      icon: '🏦',
+      color: 'text-purple-600'
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Main Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statsData.map((stat, index) => (
+          <SimpleCard key={index}>
+            <SimpleCardContent className="p-4">
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                  <span className="text-2xl">{stat.icon}</span>
+                </div>
+                <div className="mr-3 rtl:mr-0 rtl:ml-3">
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className={`text-lg font-semibold ${stat.color}`}>
+                    {stat.value}
+                  </p>
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        ))}
+      </div>
+
+      {/* Payment Methods Breakdown */}
+      <SimpleCard>
+        <SimpleCardContent className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            توزيع المدفوعات حسب الطريقة
+          </h3>
+          <div className="space-y-3">
+            {paymentMethodsData.map((method, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <span className="text-xl">{method.icon}</span>
+                  <span className="font-medium text-gray-900">{method.method}</span>
+                </div>
+                <div className="text-left rtl:text-right">
+                  <p className={`font-semibold ${method.color}`}>
+                    {formatAmount(method.amount)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {method.count} دفعة
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SimpleCardContent>
+      </SimpleCard>
+    </div>
+  );
+};
+
+export default PaymentStats;
+

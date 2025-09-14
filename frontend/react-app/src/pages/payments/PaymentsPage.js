@@ -4,7 +4,9 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleButton from '../../components/ui/SimpleButton';
 import { DataTable } from '../../components/ui/DataTable';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import { PaymentCard, PaymentForm, PaymentStats } from '../../components/payments';
 import paymentService from '../../services/paymentService';
+import apiService from '../../services/api';
 
 export default function PaymentsPage() {
   const navigate = useNavigate();
@@ -19,24 +21,20 @@ export default function PaymentsPage() {
     paymentMethod: '',
     customerId: ''
   });
-  const [summary, setSummary] = useState({});
+  const [stats, setStats] = useState({});
+  const [overduePayments, setOverduePayments] = useState([]);
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const [paymentForm, setPaymentForm] = useState({
-    invoiceId: '',
-    amount: '',
-    paymentMethod: 'cash',
-    paymentDate: new Date().toISOString().split('T')[0],
-    referenceNumber: '',
-    notes: ''
-  });
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
 
   useEffect(() => {
     loadPayments();
-    loadDailyReport();
+    loadStats();
+    loadOverduePayments();
   }, [pagination.page, filters]);
 
   const loadPayments = async () => {
@@ -48,208 +46,197 @@ export default function PaymentsPage() {
         ...filters
       });
       
-      if (response.success) {
-        setPayments(response.data.payments);
-        setPagination(response.data.pagination);
-        setSummary(response.data.summary);
+      if (response.payments) {
+        setPayments(response.payments);
+        setPagination(prev => ({
+          ...prev,
+          totalPages: response.pagination?.totalPages || 1
+        }));
       }
     } catch (error) {
+      console.error('Error loading payments:', error);
       addNotification('خطأ في تحميل المدفوعات', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadDailyReport = async () => {
+  const loadStats = async () => {
     try {
-      const response = await paymentService.getDailyPaymentsReport();
-      if (response.success) {
-        console.log('Daily report:', response.data);
-      }
+      const response = await paymentService.getPaymentStats(filters);
+      setStats(response);
     } catch (error) {
-      console.error('Error loading daily report:', error);
+      console.error('Error loading payment stats:', error);
     }
   };
 
-  const handleAddPayment = async () => {
+  const loadOverduePayments = async () => {
+    try {
+      const response = await paymentService.getOverduePayments();
+      setOverduePayments(response);
+    } catch (error) {
+      console.error('Error loading overdue payments:', error);
+    }
+  };
+
+  const handleAddPayment = async (paymentData) => {
     try {
       setLoading(true);
       
-      const response = await paymentService.addPayment({
-        ...paymentForm,
-        amount: parseFloat(paymentForm.amount)
+      const response = await paymentService.createPayment({
+        ...paymentData,
+        createdBy: 1 // TODO: Get from auth context
       });
 
       if (response.success) {
         addNotification('تم إضافة الدفعة بنجاح', 'success');
         setShowAddModal(false);
-        resetForm();
+        setSelectedInvoice(null);
         loadPayments();
+        loadStats();
       } else {
-        addNotification(response.message || 'خطأ في إضافة الدفعة', 'error');
+        throw new Error(response.error || 'فشل في إضافة الدفعة');
       }
     } catch (error) {
-      addNotification('خطأ في إضافة الدفعة', 'error');
+      console.error('Error adding payment:', error);
+      addNotification(error.message || 'خطأ في إضافة الدفعة', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditPayment = async () => {
+  const handleEditPayment = async (paymentData) => {
     try {
       setLoading(true);
       
-      const response = await paymentService.updatePayment(selectedPayment.id, {
-        amount: parseFloat(paymentForm.amount),
-        paymentMethod: paymentForm.paymentMethod,
-        referenceNumber: paymentForm.referenceNumber,
-        notes: paymentForm.notes
-      });
+      const response = await paymentService.updatePayment(selectedPayment.id, paymentData);
 
       if (response.success) {
         addNotification('تم تحديث الدفعة بنجاح', 'success');
         setShowEditModal(false);
-        resetForm();
+        setSelectedPayment(null);
         loadPayments();
+        loadStats();
       } else {
-        addNotification(response.message || 'خطأ في تحديث الدفعة', 'error');
+        throw new Error(response.error || 'فشل في تحديث الدفعة');
       }
     } catch (error) {
-      addNotification('خطأ في تحديث الدفعة', 'error');
+      console.error('Error updating payment:', error);
+      addNotification(error.message || 'خطأ في تحديث الدفعة', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeletePayment = async (paymentId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه الدفعة؟')) return;
-    
+  const handleDeletePayment = async (payment) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه الدفعة؟')) {
+      return;
+    }
+
     try {
       setLoading(true);
       
-      const response = await paymentService.deletePayment(paymentId);
-      
+      const response = await paymentService.deletePayment(payment.id);
+
       if (response.success) {
         addNotification('تم حذف الدفعة بنجاح', 'success');
         loadPayments();
+        loadStats();
       } else {
-        addNotification(response.message || 'خطأ في حذف الدفعة', 'error');
+        throw new Error(response.error || 'فشل في حذف الدفعة');
       }
     } catch (error) {
-      addNotification('خطأ في حذف الدفعة', 'error');
+      console.error('Error deleting payment:', error);
+      addNotification(error.message || 'خطأ في حذف الدفعة', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setPaymentForm({
-      invoiceId: '',
-      amount: '',
-      paymentMethod: 'cash',
-      paymentDate: new Date().toISOString().split('T')[0],
-      referenceNumber: '',
-      notes: ''
-    });
-    setSelectedPayment(null);
+  const handleViewPayment = (payment) => {
+    navigate(`/payments/${payment.id}`);
   };
 
-  const openEditModal = (payment) => {
+  const handleEditPaymentClick = (payment) => {
     setSelectedPayment(payment);
-    setPaymentForm({
-      invoiceId: payment.invoiceId,
-      amount: payment.amount,
-      paymentMethod: payment.paymentMethod,
-      paymentDate: payment.paymentDate ? payment.paymentDate.split('T')[0] : '',
-      referenceNumber: payment.referenceNumber || '',
-      notes: payment.notes || ''
-    });
     setShowEditModal(true);
   };
 
-  // أعمدة جدول المدفوعات
-  const columns = [
+  const handleAddPaymentClick = (invoice = null) => {
+    setSelectedInvoice(invoice);
+    setShowAddModal(true);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, page }));
+  };
+
+  const paymentMethods = paymentService.getPaymentMethods();
+
+  const tableColumns = [
     {
-      id: 'id',
-      accessorKey: 'id',
-      header: 'رقم الدفعة',
-      cell: ({ getValue }) => `#${getValue()}`
+      key: 'amount',
+      label: 'المبلغ',
+      render: (payment) => paymentService.formatAmount(payment.amount, payment.currency)
     },
     {
-      id: 'invoiceNumber',
-      accessorKey: 'invoiceNumber',
-      header: 'رقم الفاتورة',
-      cell: ({ getValue, row }) => (
-        <button
-          className="text-blue-600 hover:underline"
-          onClick={() => navigate(`/invoices/${row.original.invoiceId}`)}
-        >
-          {getValue() || `INV-${row.original.invoiceId}`}
-        </button>
+      key: 'paymentMethod',
+      label: 'طريقة الدفع',
+      render: (payment) => (
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+          <span>{paymentService.getPaymentMethodIcon(payment.paymentMethod)}</span>
+          <span>{paymentMethods.find(m => m.value === payment.paymentMethod)?.label}</span>
+        </div>
       )
     },
     {
-      id: 'customerName',
-      accessorKey: 'customerName',
-      header: 'العميل'
+      key: 'paymentDate',
+      label: 'تاريخ الدفع',
+      render: (payment) => paymentService.formatDate(payment.paymentDate)
     },
     {
-      id: 'amount',
-      accessorKey: 'amount',
-      header: 'المبلغ',
-      cell: ({ getValue }) => `${getValue()} ريال`
+      key: 'customer',
+      label: 'العميل',
+      render: (payment) => payment.customerFirstName ? 
+        `${payment.customerFirstName} ${payment.customerLastName}` : 
+        'غير محدد'
     },
     {
-      id: 'paymentMethod',
-      accessorKey: 'paymentMethod',
-      header: 'طريقة الدفع',
-      cell: ({ getValue }) => {
-        const methods = {
-          cash: 'نقدي',
-          card: 'بطاقة ائتمان',
-          transfer: 'تحويل بنكي',
-          check: 'شيك'
-        };
-        return methods[getValue()] || getValue();
-      }
+      key: 'invoiceNumber',
+      label: 'رقم الفاتورة',
+      render: (payment) => payment.invoiceNumber || 'غير محدد'
     },
     {
-      id: 'paymentDate',
-      accessorKey: 'paymentDate',
-      header: 'تاريخ الدفع',
-      cell: ({ getValue }) => getValue() ? new Date(getValue()).toLocaleDateString('ar-SA') : '-'
-    },
-    {
-      id: 'referenceNumber',
-      accessorKey: 'referenceNumber',
-      header: 'المرجع',
-      cell: ({ getValue }) => getValue() || '-'
-    },
-    {
-      id: 'createdByName',
-      accessorKey: 'createdByName',
-      header: 'المضاف بواسطة',
-      cell: ({ getValue }) => getValue() || '-'
-    },
-    {
-      id: 'actions',
-      header: 'الإجراءات',
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <SimpleButton
-            variant="outline"
-            size="sm"
-            onClick={() => openEditModal(row.original)}
+      key: 'actions',
+      label: 'الإجراءات',
+      render: (payment) => (
+        <div className="flex space-x-2 rtl:space-x-reverse">
+          <button
+            onClick={() => handleViewPayment(payment)}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            عرض
+          </button>
+          <button
+            onClick={() => handleEditPaymentClick(payment)}
+            className="text-green-600 hover:text-green-800 text-sm"
           >
             تعديل
-          </SimpleButton>
-          <SimpleButton
-            variant="danger"
-            size="sm"
-            onClick={() => handleDeletePayment(row.original.id)}
+          </button>
+          <button
+            onClick={() => handleDeletePayment(payment)}
+            className="text-red-600 hover:text-red-800 text-sm"
           >
             حذف
-          </SimpleButton>
+          </button>
         </div>
       )
     }
@@ -259,108 +246,92 @@ export default function PaymentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">إدارة المدفوعات</h1>
-          <p className="text-gray-600 mt-1">مراقبة وإدارة جميع المدفوعات</p>
-        </div>
-        <div className="flex gap-2">
+        <h1 className="text-2xl font-bold text-gray-900">إدارة المدفوعات</h1>
+        <div className="flex space-x-3 rtl:space-x-reverse">
           <SimpleButton
-            variant="primary"
-            onClick={() => setShowAddModal(true)}
+            onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
+            variant="outline"
+          >
+            {viewMode === 'grid' ? 'عرض جدولي' : 'عرض بطاقات'}
+          </SimpleButton>
+          <SimpleButton
+            onClick={() => handleAddPaymentClick()}
+            className="bg-green-600 hover:bg-green-700"
           >
             إضافة دفعة جديدة
           </SimpleButton>
-          <SimpleButton
-            variant="outline"
-            onClick={() => navigate('/delivery')}
-          >
-            إدارة التسليم
-          </SimpleButton>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SimpleCard>
+      {/* Stats */}
+      <PaymentStats stats={stats} loading={loading} />
+
+      {/* Overdue Payments Alert */}
+      {overduePayments.length > 0 && (
+        <SimpleCard className="border-red-200 bg-red-50">
           <SimpleCardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {summary.totalAmount?.toLocaleString() || 0} ريال
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <h3 className="font-semibold text-red-900">
+                  مدفوعات متأخرة ({overduePayments.length})
+                </h3>
+                <p className="text-sm text-red-700">
+                  يوجد {overduePayments.length} فاتورة متأخرة عن موعد الدفع
+                </p>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">إجمالي المدفوعات</div>
           </SimpleCardContent>
         </SimpleCard>
-        
-        <SimpleCard>
-          <SimpleCardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">
-              {summary.totalInvoices || 0}
-            </div>
-            <div className="text-sm text-gray-600">عدد الفواتير المدفوعة</div>
-          </SimpleCardContent>
-        </SimpleCard>
-        
-        <SimpleCard>
-          <SimpleCardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {payments.length || 0}
-            </div>
-            <div className="text-sm text-gray-600">عدد المعاملات</div>
-          </SimpleCardContent>
-        </SimpleCard>
-      </div>
+      )}
 
       {/* Filters */}
       <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle>البحث والفلترة</SimpleCardTitle>
-        </SimpleCardHeader>
-        <SimpleCardContent>
+        <SimpleCardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 من تاريخ
               </label>
               <input
                 type="date"
-                className="w-full border border-gray-300 rounded-md p-2"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 إلى تاريخ
               </label>
               <input
                 type="date"
-                className="w-full border border-gray-300 rounded-md p-2"
                 value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 طريقة الدفع
               </label>
               <select
-                className="w-full border border-gray-300 rounded-md p-2"
                 value={filters.paymentMethod}
-                onChange={(e) => setFilters(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">الكل</option>
-                <option value="cash">نقدي</option>
-                <option value="card">بطاقة ائتمان</option>
-                <option value="transfer">تحويل بنكي</option>
-                <option value="check">شيك</option>
+                <option value="">جميع الطرق</option>
+                {paymentMethods.map(method => (
+                  <option key={method.value} value={method.value}>
+                    {method.icon} {method.label}
+                  </option>
+                ))}
               </select>
             </div>
-            
             <div className="flex items-end">
               <SimpleButton
-                variant="outline"
                 onClick={() => setFilters({ dateFrom: '', dateTo: '', paymentMethod: '', customerId: '' })}
+                variant="outline"
                 className="w-full"
               >
                 مسح الفلاتر
@@ -370,214 +341,77 @@ export default function PaymentsPage() {
         </SimpleCardContent>
       </SimpleCard>
 
-      {/* Payments Table */}
+      {/* Payments List */}
       <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle>قائمة المدفوعات</SimpleCardTitle>
+        </SimpleCardHeader>
         <SimpleCardContent>
-          <DataTable
-            data={payments}
-            columns={columns}
-            loading={loading}
-            pagination={{
-              ...pagination,
-              onPageChange: (page) => setPagination(prev => ({ ...prev, page }))
-            }}
-            emptyMessage="لا توجد مدفوعات"
-          />
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {payments.map(payment => (
+                <PaymentCard
+                  key={payment.id}
+                  payment={payment}
+                  onView={handleViewPayment}
+                  onEdit={handleEditPaymentClick}
+                  onDelete={handleDeletePayment}
+                />
+              ))}
+            </div>
+          ) : (
+            <DataTable
+              data={payments}
+              columns={tableColumns}
+              loading={loading}
+              pagination={pagination}
+              onPageChange={handlePageChange}
+            />
+          )}
         </SimpleCardContent>
       </SimpleCard>
 
       {/* Add Payment Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">إضافة دفعة جديدة</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رقم الفاتورة *
-                </label>
-                <input
-                  type="number"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.invoiceId}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, invoiceId: e.target.value }))}
-                  placeholder="أدخل رقم الفاتورة"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  المبلغ *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  طريقة الدفع
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.paymentMethod}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                >
-                  <option value="cash">نقدي</option>
-                  <option value="card">بطاقة ائتمان</option>
-                  <option value="transfer">تحويل بنكي</option>
-                  <option value="check">شيك</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  تاريخ الدفع
-                </label>
-                <input
-                  type="date"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.paymentDate}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentDate: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رقم المرجع
-                </label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.referenceNumber}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, referenceNumber: e.target.value }))}
-                  placeholder="رقم الشيك أو المرجع البنكي"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ملاحظات
-                </label>
-                <textarea
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  rows="2"
-                  value={paymentForm.notes}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="أي ملاحظات إضافية..."
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-6">
-              <SimpleButton
-                variant="primary"
-                onClick={handleAddPayment}
-                disabled={loading || !paymentForm.invoiceId || !paymentForm.amount}
-              >
-                {loading ? 'جاري الإضافة...' : 'إضافة الدفعة'}
-              </SimpleButton>
-              <SimpleButton
-                variant="outline"
-                onClick={() => {
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">
+                {selectedInvoice ? 'إضافة دفعة للفاتورة' : 'إضافة دفعة جديدة'}
+              </h2>
+              <PaymentForm
+                invoice={selectedInvoice}
+                onSubmit={handleAddPayment}
+                onCancel={() => {
                   setShowAddModal(false);
-                  resetForm();
+                  setSelectedInvoice(null);
                 }}
-              >
-                إلغاء
-              </SimpleButton>
+                loading={loading}
+              />
             </div>
           </div>
         </div>
       )}
 
       {/* Edit Payment Modal */}
-      {showEditModal && (
+      {showEditModal && selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">تعديل الدفعة</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  المبلغ *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  طريقة الدفع
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.paymentMethod}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                >
-                  <option value="cash">نقدي</option>
-                  <option value="card">بطاقة ائتمان</option>
-                  <option value="transfer">تحويل بنكي</option>
-                  <option value="check">شيك</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رقم المرجع
-                </label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={paymentForm.referenceNumber}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, referenceNumber: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ملاحظات
-                </label>
-                <textarea
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  rows="2"
-                  value={paymentForm.notes}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-6">
-              <SimpleButton
-                variant="primary"
-                onClick={handleEditPayment}
-                disabled={loading || !paymentForm.amount}
-              >
-                {loading ? 'جاري التحديث...' : 'حفظ التعديلات'}
-              </SimpleButton>
-              <SimpleButton
-                variant="outline"
-                onClick={() => {
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">تعديل الدفعة</h2>
+              <PaymentForm
+                payment={selectedPayment}
+                onSubmit={handleEditPayment}
+                onCancel={() => {
                   setShowEditModal(false);
-                  resetForm();
+                  setSelectedPayment(null);
                 }}
-              >
-                إلغاء
-              </SimpleButton>
+                loading={loading}
+              />
             </div>
           </div>
         </div>
