@@ -7,7 +7,7 @@
 -- =====================================================
 
 -- إعداد قاعدة البيانات
-CREATE DATABASE IF NOT EXISTS FZ CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS [fz] CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE FZ;
 
 -- تعطيل فحص المفاتيح الأجنبية مؤقتاً
@@ -592,7 +592,7 @@ CREATE TABLE InspectionComponent (
   id INT NOT NULL AUTO_INCREMENT,
   inspectionReportId INT NOT NULL,
   componentName VARCHAR(100) NOT NULL,
-  condition ENUM('excellent', 'good', 'fair', 'poor', 'critical') DEFAULT 'good',
+  componentCondition ENUM('excellent', 'good', 'fair', 'poor', 'critical') DEFAULT 'good',
   notes TEXT,
   requiresReplacement BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (id),

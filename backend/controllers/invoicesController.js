@@ -263,6 +263,14 @@ class InvoicesController {
         dueDate = null
       } = req.body;
 
+      // Validate required fields
+      if (!repairRequestId || repairRequestId === '' || repairRequestId === null) {
+        return res.status(400).json({
+          success: false,
+          error: 'repairRequestId is required and cannot be empty'
+        });
+      }
+
       // Guard: prevent duplicate invoice for the same repair request
       try {
         if (repairRequestId) {

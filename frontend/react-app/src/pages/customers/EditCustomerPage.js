@@ -15,7 +15,7 @@ import {
   ArrowRight, User, Phone, Mail, MapPin, 
   Building2, Save, X, AlertCircle, CheckCircle,
   Star, MessageSquare, Settings, UserCheck,
-  Calendar, Clock, Shield
+  Calendar, Clock, Shield, Eye
 } from 'lucide-react';
 
 const EditCustomerPage = () => {

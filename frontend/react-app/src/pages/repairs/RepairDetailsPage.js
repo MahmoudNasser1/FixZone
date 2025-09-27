@@ -404,12 +404,22 @@ const RepairDetailsPage = () => {
         return;
       }
 
+      // First, we need to get the invoice for this repair request
+      const invoice = invoices.find(inv => inv.repairRequestId === parseInt(id));
+      if (!invoice) {
+        notifications.error('لا توجد فاتورة لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+        return;
+      }
+
       const newPayment = {
-        repairRequestId: parseInt(id),
+        invoiceId: invoice.id,
         amount,
-        method: paymentForm.method,
-        reference: paymentForm.reference || `${paymentForm.method.toUpperCase()}-${Date.now()}`,
-        notes: paymentForm.notes
+        paymentMethod: paymentForm.method,
+        referenceNumber: paymentForm.reference || `${paymentForm.method.toUpperCase()}-${Date.now()}`,
+        notes: paymentForm.notes,
+        createdBy: 1, // TODO: Get from auth context
+        currency: 'EGP',
+        paymentDate: new Date().toISOString().split('T')[0]
       };
 
       try {
@@ -2103,8 +2113,8 @@ const RepairDetailsPage = () => {
                     <p className="text-gray-600 text-center py-8">لا توجد مدفوعات بعد</p>
                   ) : (
                     <div className="divide-y divide-gray-200">
-                      {payments.map(payment => (
-                        <div key={payment.id} className="py-4 flex items-center justify-between">
+                      {payments.map((payment, index) => (
+                        <div key={payment.id || `payment-${index}`} className="py-4 flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 space-x-reverse">
                               <div className="text-lg font-semibold text-gray-900">

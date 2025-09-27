@@ -123,6 +123,17 @@ const InvoiceDetailsPage = () => {
     );
   };
 
+  const getPaymentMethodLabel = (method) => {
+    const methodLabels = {
+      'cash': 'نقدي',
+      'card': 'بطاقة ائتمان',
+      'bank_transfer': 'تحويل بنكي',
+      'check': 'شيك',
+      'other': 'أخرى'
+    };
+    return methodLabels[method] || method;
+  };
+
   const formatCurrency = (amount, currency = 'EGP') => {
     return formatMoney(amount || 0, currency);
   };
@@ -380,33 +391,111 @@ const InvoiceDetailsPage = () => {
           {/* Payment History */}
           <SimpleCard>
             <SimpleCardHeader>
-              <SimpleCardTitle className="flex items-center">
-                <Receipt className="w-5 h-5 ml-2" />
-                تاريخ المدفوعات
+              <SimpleCardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Receipt className="w-5 h-5 ml-2" />
+                  تاريخ المدفوعات
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <span className="text-sm text-gray-500">
+                    {payments.length} مدفوعة
+                  </span>
+                  <Link to={`/payments/new?invoiceId=${invoice.id}`}>
+                    <SimpleButton size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 ml-1" />
+                      إضافة مدفوعة
+                    </SimpleButton>
+                  </Link>
+                </div>
               </SimpleCardTitle>
             </SimpleCardHeader>
             <SimpleCardContent>
               {payments.length === 0 ? (
-                <div className="text-center py-4">
-                  <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">لا توجد مدفوعات</p>
+                <div className="text-center py-8">
+                  <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">لا توجد مدفوعات لهذه الفاتورة</p>
+                  <Link to={`/payments/new?invoiceId=${invoice.id}`}>
+                    <SimpleButton className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 ml-2" />
+                      إضافة أول مدفوعة
+                    </SimpleButton>
+                  </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {payments.map((payment, index) => (
-                    <div key={payment.id || index} className="border border-gray-200 rounded-lg p-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-900">{formatCurrency(payment.amount, payment.currency)}</p>
-                          <p className="text-sm text-gray-600">{payment.paymentMethod}</p>
-                          <p className="text-xs text-gray-500">{formatDate(payment.createdAt)}</p>
-                        </div>
-                        <CheckCircle className="w-5 h-5 text-green-600" />
+                <div className="space-y-4">
+                  {/* Payment Summary */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-blue-700 font-medium">إجمالي المدفوعات:</span>
+                        <p className="text-blue-900 font-semibold text-lg">
+                          {formatCurrency(payments.reduce((sum, p) => sum + parseFloat(p.amount), 0), invoice.currency)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-blue-700 font-medium">المتبقي:</span>
+                        <p className="text-blue-900 font-semibold text-lg">
+                          {formatCurrency(remainingAmount, invoice.currency)}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                    </div>
-                  )}
+                  </div>
+
+                  {/* Payment List */}
+                  <div className="space-y-3">
+                    {payments.map((payment, index) => (
+                      <div key={payment.id || index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-semibold text-lg text-gray-900">
+                                {formatCurrency(payment.amount, payment.currency)}
+                              </p>
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <Link to={`/payments/${payment.id}`}>
+                                  <SimpleButton variant="ghost" size="sm">
+                                    <Eye className="w-4 h-4" />
+                                  </SimpleButton>
+                                </Link>
+                                <Link to={`/payments/${payment.id}/edit`}>
+                                  <SimpleButton variant="ghost" size="sm">
+                                    <Edit className="w-4 h-4" />
+                                  </SimpleButton>
+                                </Link>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">طريقة الدفع:</span>
+                                <p className="text-gray-900">{getPaymentMethodLabel(payment.paymentMethod)}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">تاريخ الدفع:</span>
+                                <p className="text-gray-900">{formatDate(payment.paymentDate)}</p>
+                              </div>
+                              {payment.referenceNumber && (
+                                <div>
+                                  <span className="font-medium">رقم المرجع:</span>
+                                  <p className="text-gray-900">{payment.referenceNumber}</p>
+                                </div>
+                              )}
+                              {payment.notes && (
+                                <div className="col-span-2">
+                                  <span className="font-medium">الملاحظات:</span>
+                                  <p className="text-gray-900">{payment.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </SimpleCardContent>
           </SimpleCard>
 

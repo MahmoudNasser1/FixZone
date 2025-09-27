@@ -4,7 +4,7 @@ const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '', // Set your MySQL root password if any
-  database: 'fz' // Change to 'FZ System' if needed
+  database: 'FZ' // Fixed case sensitivity
 });
 
 // Export both the promise pool and the original pool for transactions

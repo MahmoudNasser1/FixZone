@@ -48,7 +48,7 @@ import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
 import EditInvoicePage from './pages/invoices/EditInvoicePage';
 // Temporarily commented out missing pages:
 // import DeliveryPage from './pages/Delivery/DeliveryPage';
-import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage } from './pages/payments';
+import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage, EditPaymentPage, PaymentReportsPage, OverduePaymentsPage } from './pages/payments';
 // import { VendorsPage } from './pages/vendors';
 // import { PurchaseOrdersPage } from './pages/PurchaseOrders';
 import ServicesCatalogPage from './pages/services/ServicesCatalogPage';
@@ -136,9 +136,12 @@ function App() {
                       <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
                       <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
                       {/* Payments */}
-                      <Route path="payments" element={<PaymentsPage />} />
-                      <Route path="payments/new" element={<CreatePaymentPage />} />
-                      <Route path="payments/:id" element={<PaymentDetailsPage />} />
+            <Route path="payments" element={<PaymentsPage />} />
+            <Route path="payments/new" element={<CreatePaymentPage />} />
+            <Route path="payments/:id" element={<PaymentDetailsPage />} />
+            <Route path="payments/:id/edit" element={<EditPaymentPage />} />
+            <Route path="payments/reports" element={<PaymentReportsPage />} />
+            <Route path="payments/overdue" element={<OverduePaymentsPage />} />
                       
                       {/* Delivery - Temporarily disabled */}
                       {/* <Route path="delivery" element={<DeliveryPage />} /> */}

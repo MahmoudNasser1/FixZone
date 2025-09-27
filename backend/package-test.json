@@ -1,0 +1,42 @@
+{
+  "name": "fixzone-payments-testing",
+  "version": "1.0.0",
+  "description": "اختبارات شاملة لموديول المدفوعات - FixZone ERP",
+  "scripts": {
+    "test": "node test-payments.js",
+    "test:security": "node security-test.js",
+    "test:performance": "node performance-test.js",
+    "test:all": "node run-all-tests.js",
+    "test:functional": "node test-payments.js",
+    "test:integration": "node test-payments.js",
+    "test:ux": "node run-all-tests.js",
+    "test:coverage": "node test-payments.js --coverage",
+    "test:watch": "nodemon test-payments.js",
+    "test:ci": "node run-all-tests.js --ci"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "mysql2": "^3.6.0",
+    "performance": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0",
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
+  },
+  "keywords": [
+    "testing",
+    "payments",
+    "security",
+    "performance",
+    "fixzone",
+    "erp"
+  ],
+  "author": "FixZone Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
+
+

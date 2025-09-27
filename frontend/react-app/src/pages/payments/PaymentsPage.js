@@ -5,7 +5,9 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { DataTable } from '../../components/ui/DataTable';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { PaymentCard, PaymentForm, PaymentStats } from '../../components/payments';
+import BulkOperations from '../../components/payments/BulkOperations';
 import paymentService from '../../services/paymentService';
+import exportService from '../../services/exportService';
 import apiService from '../../services/api';
 
 export default function PaymentsPage() {
@@ -23,6 +25,7 @@ export default function PaymentsPage() {
   });
   const [stats, setStats] = useState({});
   const [overduePayments, setOverduePayments] = useState([]);
+  const [selectedPayments, setSelectedPayments] = useState([]);
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -153,6 +156,70 @@ export default function PaymentsPage() {
     }
   };
 
+  // Bulk Operations
+  const handleSelectPayment = (paymentId) => {
+    setSelectedPayments(prev => 
+      prev.includes(paymentId) 
+        ? prev.filter(id => id !== paymentId)
+        : [...prev, paymentId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPayments.length === payments.length) {
+      setSelectedPayments([]);
+    } else {
+      setSelectedPayments(payments.map(p => p.id));
+    }
+  };
+
+  const handleBulkDelete = async (paymentIds) => {
+    try {
+      await Promise.all(paymentIds.map(id => paymentService.deletePayment(id)));
+      loadPayments();
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      throw error;
+    }
+  };
+
+  const handleBulkExport = async (paymentIds, format) => {
+    try {
+      const selectedPaymentData = payments.filter(p => paymentIds.includes(p.id));
+      
+      if (format === 'pdf') {
+        await exportService.exportPaymentsToPDF(selectedPaymentData, 'تقرير المدفوعات المختارة');
+      } else if (format === 'excel') {
+        await exportService.exportPaymentsToExcel(selectedPaymentData, 'تقرير المدفوعات المختارة');
+      }
+    } catch (error) {
+      console.error('Error in bulk export:', error);
+      throw error;
+    }
+  };
+
+  const handleBulkSendReminder = async (paymentIds) => {
+    try {
+      // إرسال تذكير للمدفوعات المختارة
+      console.log('Sending reminders for payments:', paymentIds);
+    } catch (error) {
+      console.error('Error in bulk send reminder:', error);
+      throw error;
+    }
+  };
+
+  const handleBulkUpdateStatus = async (paymentIds, status) => {
+    try {
+      await Promise.all(paymentIds.map(id => 
+        paymentService.updatePayment(id, { status })
+      ));
+      loadPayments();
+    } catch (error) {
+      console.error('Error in bulk status update:', error);
+      throw error;
+    }
+  };
+
   const handleViewPayment = (payment) => {
     navigate(`/payments/${payment.id}`);
   };
@@ -248,6 +315,13 @@ export default function PaymentsPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">إدارة المدفوعات</h1>
         <div className="flex space-x-3 rtl:space-x-reverse">
+          <SimpleButton
+            onClick={() => navigate('/payments/reports')}
+            variant="outline"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            التقارير
+          </SimpleButton>
           <SimpleButton
             onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
             variant="outline"
@@ -416,6 +490,17 @@ export default function PaymentsPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Operations */}
+      <BulkOperations
+        selectedItems={selectedPayments}
+        onClearSelection={() => setSelectedPayments([])}
+        onBulkDelete={handleBulkDelete}
+        onBulkExport={handleBulkExport}
+        onBulkSendReminder={handleBulkSendReminder}
+        onBulkUpdateStatus={handleBulkUpdateStatus}
+        itemType="payments"
+      />
     </div>
   );
 }

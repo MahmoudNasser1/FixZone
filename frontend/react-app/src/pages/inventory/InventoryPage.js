@@ -452,149 +452,149 @@ export default function InventoryPage() {
       {(() => {
         if (loading) {
           return (
-            <SimpleCard>
-              <SimpleCardContent>
-                <div className="p-6 text-center text-gray-500">جاري التحميل...</div>
-              </SimpleCardContent>
-            </SimpleCard>
+        <SimpleCard>
+          <SimpleCardContent>
+            <div className="p-6 text-center text-gray-500">جاري التحميل...</div>
+          </SimpleCardContent>
+        </SimpleCard>
           );
         }
         
         if (error) {
           return (
-            <SimpleCard>
-              <SimpleCardContent>
-                <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-700">{error}</div>
-              </SimpleCardContent>
-            </SimpleCard>
+        <SimpleCard>
+          <SimpleCardContent>
+            <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-700">{error}</div>
+          </SimpleCardContent>
+        </SimpleCard>
           );
         }
         
         if (activeTab === 'items') {
           return (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>العناصر</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <DataTable columns={inventoryColumns} data={items || []}>
-                  {(table) => (
-                    <>
-                      <DataTableToolbar table={table} />
-                      <DataTablePagination table={table} />
-                    </>
-                  )}
-                </DataTable>
-              </SimpleCardContent>
-            </SimpleCard>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>العناصر</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <DataTable columns={inventoryColumns} data={items || []}>
+              {(table) => (
+                <>
+                  <DataTableToolbar table={table} />
+                  <DataTablePagination table={table} />
+                </>
+              )}
+            </DataTable>
+          </SimpleCardContent>
+        </SimpleCard>
           );
         }
         
         if (activeTab === 'low') {
           return (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>عناصر منخفضة المخزون</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="overflow-auto rounded-lg border border-amber-200">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-amber-50">
-                      <tr className="text-right text-amber-900">
-                        <th className="px-3 py-2">المخزن</th>
-                        <th className="px-3 py-2">العنصر</th>
-                        <th className="px-3 py-2">الكمية الحالية</th>
-                        <th className="px-3 py-2">الحد الأدنى</th>
-                        <th className="px-3 py-2">حالة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lowStock.map((row) => (
-                        <tr key={`${row.stockLevelId}`} className="border-t border-amber-200 hover:bg-amber-50/60">
-                          <td className="px-3 py-2 text-gray-900">{row.warehouseName}</td>
-                          <td className="px-3 py-2 text-gray-900"><span className="font-mono text-xs opacity-70">{row.sku}</span> — {row.name}</td>
-                          <td className="px-3 py-2 text-gray-900">{row.quantity}</td>
-                          <td className="px-3 py-2 text-gray-900">{row.minLevel ?? 0}</td>
-                          <td className="px-3 py-2">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                              نقص
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                      {lowStock.length === 0 && (
-                        <tr>
-                          <td className="px-3 py-6 text-center text-gray-500" colSpan={5}>لا توجد عناصر منخفضة المخزون</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </SimpleCardContent>
-            </SimpleCard>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>عناصر منخفضة المخزون</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="overflow-auto rounded-lg border border-amber-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-amber-50">
+                  <tr className="text-right text-amber-900">
+                    <th className="px-3 py-2">المخزن</th>
+                    <th className="px-3 py-2">العنصر</th>
+                    <th className="px-3 py-2">الكمية الحالية</th>
+                    <th className="px-3 py-2">الحد الأدنى</th>
+                    <th className="px-3 py-2">حالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lowStock.map((row) => (
+                    <tr key={`${row.stockLevelId}`} className="border-t border-amber-200 hover:bg-amber-50/60">
+                      <td className="px-3 py-2 text-gray-900">{row.warehouseName}</td>
+                      <td className="px-3 py-2 text-gray-900"><span className="font-mono text-xs opacity-70">{row.sku}</span> — {row.name}</td>
+                      <td className="px-3 py-2 text-gray-900">{row.quantity}</td>
+                      <td className="px-3 py-2 text-gray-900">{row.minLevel ?? 0}</td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                          نقص
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {lowStock.length === 0 && (
+                    <tr>
+                      <td className="px-3 py-6 text-center text-gray-500" colSpan={5}>لا توجد عناصر منخفضة المخزون</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
           );
         }
         
         if (activeTab === 'levels') {
           return (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>مستويات المخزون حسب المخازن</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="overflow-auto rounded-lg border border-gray-200">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr className="text-right text-gray-700">
-                        <th className="px-3 py-2">المخزن</th>
-                        <th className="px-3 py-2">العنصر</th>
-                        <th className="px-3 py-2">الكمية المتاحة</th>
-                        <th className="px-3 py-2">الحد الأدنى</th>
-                        <th className="px-3 py-2">الحد الأقصى</th>
-                        <th className="px-3 py-2">الحالة</th>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>مستويات المخزون حسب المخازن</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="overflow-auto rounded-lg border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="text-right text-gray-700">
+                    <th className="px-3 py-2">المخزن</th>
+                    <th className="px-3 py-2">العنصر</th>
+                    <th className="px-3 py-2">الكمية المتاحة</th>
+                    <th className="px-3 py-2">الحد الأدنى</th>
+                    <th className="px-3 py-2">الحد الأقصى</th>
+                    <th className="px-3 py-2">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockLevels.map((level) => {
+                    const isLow = level.quantity <= (level.minLevel || 0);
+                    const isHigh = level.maxLevel && level.quantity >= level.maxLevel;
+                    return (
+                      <tr key={`${level.id}`} className="border-t border-gray-200 hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-900">{level.warehouseName || 'غير محدد'}</td>
+                        <td className="px-3 py-2 text-gray-900">
+                          <span className="font-mono text-xs opacity-70">{level.sku}</span> — {level.itemName}
+                        </td>
+                        <td className="px-3 py-2 text-gray-900 font-medium">{level.quantity}</td>
+                        <td className="px-3 py-2 text-gray-600">{level.minLevel || '-'}</td>
+                        <td className="px-3 py-2 text-gray-600">{level.maxLevel || '-'}</td>
+                        <td className="px-3 py-2">
+                          {isLow ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              نقص
+                            </span>
+                          ) : isHigh ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              فائض
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              طبيعي
+                            </span>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {stockLevels.map((level) => {
-                        const isLow = level.quantity <= (level.minLevel || 0);
-                        const isHigh = level.maxLevel && level.quantity >= level.maxLevel;
-                        return (
-                          <tr key={`${level.id}`} className="border-t border-gray-200 hover:bg-gray-50">
-                            <td className="px-3 py-2 text-gray-900">{level.warehouseName || 'غير محدد'}</td>
-                            <td className="px-3 py-2 text-gray-900">
-                              <span className="font-mono text-xs opacity-70">{level.sku}</span> — {level.itemName}
-                            </td>
-                            <td className="px-3 py-2 text-gray-900 font-medium">{level.quantity}</td>
-                            <td className="px-3 py-2 text-gray-600">{level.minLevel || '-'}</td>
-                            <td className="px-3 py-2 text-gray-600">{level.maxLevel || '-'}</td>
-                            <td className="px-3 py-2">
-                              {isLow ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  نقص
-                                </span>
-                              ) : isHigh ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                  فائض
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  طبيعي
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {stockLevels.length === 0 && (
-                        <tr>
-                          <td className="px-3 py-6 text-center text-gray-500" colSpan={6}>لا توجد بيانات مستويات المخزون</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </SimpleCardContent>
-            </SimpleCard>
+                    );
+                  })}
+                  {stockLevels.length === 0 && (
+                    <tr>
+                      <td className="px-3 py-6 text-center text-gray-500" colSpan={6}>لا توجد بيانات مستويات المخزون</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
           );
         }
         
