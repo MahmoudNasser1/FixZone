@@ -321,7 +321,7 @@ export default function InventoryPage() {
       
       if (response.ok) {
         notifications.success('تم استيراد البيانات بنجاح');
-        await load(); // Reload data
+        window.location.reload(); // Reload data
         setShowImportModal(false);
       } else {
         throw new Error('فشل في استيراد البيانات');

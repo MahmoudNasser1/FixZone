@@ -17,6 +17,7 @@ const navItems = [
     section: 'الرئيسية',
     items: [
       { href: '/', label: 'لوحة التحكم', icon: Home, badge: null },
+      { href: '/integration/workflow', label: 'لوحة التحكم المتكاملة', icon: Activity, badge: 'جديد' },
       { href: '/quick-actions', label: 'الإجراءات السريعة', icon: Activity, badge: 'جديد' },
     ]
   },
@@ -55,6 +56,8 @@ const navItems = [
       { href: '/inventory', label: 'المخزون', icon: Warehouse },
       { href: '/inventory/warehouses', label: 'إدارة المخازن', icon: Building2 },
       { href: '/inventory/transfer', label: 'نقل المخزون', icon: Package },
+      { href: '/inventory/stock-movements', label: 'حركة المخزون', icon: Activity },
+      { href: '/inventory/stock-alerts', label: 'تنبيهات المخزون', icon: Activity, badge: '3' },
       { href: '/inventory/reports', label: 'تقارير المخزون', icon: BarChart2 },
       { href: '/inventory/parts', label: 'قطع الغيار', icon: Package, badge: 'نقص' },
       { href: '/inventory/suppliers', label: 'الموردين', icon: Building2 },
@@ -78,11 +81,13 @@ const navItems = [
         label: 'التقارير',
         icon: BarChart2,
         subItems: [
+          { href: '/reports/daily', label: 'التقرير اليومي', icon: Calendar },
+          { href: '/reports/financial', label: 'التقارير المالية', icon: DollarSign },
+          { href: '/reports/technician', label: 'تقارير أداء الفنيين', icon: UserCheck },
           { href: '/reports/repairs', label: 'تقارير الإصلاح', icon: Wrench },
           { href: '/reports/sales', label: 'تقارير المبيعات', icon: TrendingUp },
           { href: '/reports/inventory', label: 'تقارير المخزون', icon: Package },
           { href: '/reports/customers', label: 'تقارير العملاء', icon: Users },
-          { href: '/reports/financial', label: 'التقارير المالية', icon: DollarSign },
         ]
       },
       { href: '/analytics', label: 'التحليلات', icon: PieChart },

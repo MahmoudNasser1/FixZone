@@ -42,6 +42,17 @@ import InventoryPage from './pages/inventory/InventoryPage';
 import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
 import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
 import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
+import StockMovementPage from './pages/inventory/StockMovementPage';
+import StockAlertsPage from './pages/inventory/StockAlertsPage';
+
+// Reports Pages
+import FinancialReportsPage from './pages/reports/FinancialReportsPage';
+import DailyReportsPage from './pages/reports/DailyReportsPage';
+import TechnicianReportsPage from './pages/reports/TechnicianReportsPage';
+
+// Integration Pages
+import WorkflowDashboardPage from './pages/integration/WorkflowDashboardPage';
+
 import InvoicesPage from './pages/invoices/InvoicesPage';
 import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
 import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
@@ -129,6 +140,8 @@ function App() {
                       <Route path="inventory/transfer" element={<InventoryTransferPage />} />
                       <Route path="inventory/reports" element={<InventoryReportsPage />} />
                       <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />
+                      <Route path="inventory/stock-movements" element={<StockMovementPage />} />
+                      <Route path="inventory/stock-alerts" element={<StockAlertsPage />} />
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
                       <Route path="invoices/new" element={<CreateInvoicePage />} />
@@ -142,6 +155,14 @@ function App() {
             <Route path="payments/:id/edit" element={<EditPaymentPage />} />
             <Route path="payments/reports" element={<PaymentReportsPage />} />
             <Route path="payments/overdue" element={<OverduePaymentsPage />} />
+                      
+                      {/* Reports */}
+                      <Route path="reports/financial" element={<FinancialReportsPage />} />
+                      <Route path="reports/daily" element={<DailyReportsPage />} />
+                      <Route path="reports/technician" element={<TechnicianReportsPage />} />
+                      
+                      {/* Integration */}
+                      <Route path="integration/workflow" element={<WorkflowDashboardPage />} />
                       
                       {/* Delivery - Temporarily disabled */}
                       {/* <Route path="delivery" element={<DeliveryPage />} /> */}
