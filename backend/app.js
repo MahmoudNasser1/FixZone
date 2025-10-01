@@ -22,9 +22,9 @@ router.use(cookieParser());
 
 // Import routes
 const customerRoutes = require('./routes/customers');
-const companyRoutes = require('./routes/companies');
+const companyRoutes = require('./routes/companiesSimple');
 const deviceRoutes = require('./routes/devices');
-const repairRoutes = require('./routes/repairs');
+const repairRoutes = require('./routes/repairsSimple');
 const technicianRoutes = require('./routes/technicians');
 const inventoryRoutes = require('./routes/inventory');
 const vendorRoutes = require('./routes/vendors');
@@ -41,12 +41,12 @@ const usersRouter = require('./routes/users');
 const purchaseOrdersRouter = require('./routes/purchaseOrders');
 const purchaseOrderItemsRouter = require('./routes/purchaseOrderItems');
 const partsUsedRouter = require('./routes/partsUsed');
-const invoicesRouter = require('./routes/invoices');
+const invoicesRouter = require('./routes/invoicesSimple');
 const invoiceItemsRouter = require('./routes/invoiceItems');
 const paymentsRouter = require('./routes/payments');
 const expenseCategoriesRouter = require('./routes/expenseCategories');
 const expensesRouter = require('./routes/expenses');
-const servicesRouter = require('./routes/services');
+const servicesRouter = require('./routes/servicesSimple');
 const repairRequestServicesRouter = require('./routes/repairRequestServices');
 const inspectionTypesRouter = require('./routes/inspectionTypes');
 const inspectionReportsRouter = require('./routes/inspectionReports');

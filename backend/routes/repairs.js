@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
     const query = `
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -282,7 +282,7 @@ router.get('/:id/track', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         d.deviceType,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -368,7 +368,7 @@ router.get('/track/:token', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         d.deviceType,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -468,7 +468,7 @@ router.get('/:id', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         u.name as technicianName,
@@ -636,7 +636,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const [newRepairData] = await db.query(`
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -941,7 +941,7 @@ router.get('/:id/print/receipt', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        c.name as customerName,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         d.deviceType,
@@ -1132,7 +1132,7 @@ router.get('/:id/print/inspection', async (req, res) => {
     const [rows] = await db.query(`
       SELECT ir.*, it.name as inspectionTypeName,
              rr.id as repairId, rr.createdAt as repairCreatedAt,
-             c.name as customerName, c.phone as customerPhone,
+             CONCAT(c.firstName, ' ', c.lastName) as customerName, c.phone as customerPhone,
              d.deviceType, COALESCE(vo.label, d.brand) as deviceBrand, d.model as deviceModel, d.serialNumber
       FROM InspectionReport ir
       LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id

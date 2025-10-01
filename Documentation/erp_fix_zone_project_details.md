@@ -129,7 +129,7 @@
 | القسم | التقنية المستخدمة |
 |--------|---------------------|
 | Backend | Node.js + Express |
-| Database | PostgreSQL + Prisma ORM |
+| Database | mysql + Prisma ORM |
 | Frontend | React.js + Tailwind |
 | Auth | JWT + RBAC |
 | File Uploads | Multer + Local Storage |

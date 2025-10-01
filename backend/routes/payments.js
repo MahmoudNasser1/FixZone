@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
     const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
     
     // First, let's check if we have any payments at all
-    const [paymentCount] = await db.query('SELECT COUNT(*) as count FROM payment');
+    const [paymentCount] = await db.query('SELECT COUNT(*) as count FROM Payment');
     console.log('Total payments in database:', paymentCount[0].count);
     
     if (paymentCount[0].count === 0) {
@@ -65,9 +65,9 @@ router.get('/', async (req, res) => {
         '' as customerPhone,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName,
-        (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE invoiceId = p.invoiceId) as totalPaid,
-        (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE invoiceId = p.invoiceId)) as remainingAmount
-      FROM payment p
+        (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
+        (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
+      FROM Payment p
       LEFT JOIN invoice i ON p.invoiceId = i.id
       ${whereClause}
       ORDER BY p.paymentDate DESC, p.createdAt DESC
@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
     // Get total count for pagination
     const countQuery = `
       SELECT COUNT(*) as total
-      FROM payment p
+      FROM Payment p
       LEFT JOIN invoice i ON p.invoiceId = i.id
       ${whereClause}
     `;
@@ -129,9 +129,9 @@ router.get('/:id', async (req, res) => {
         '' as customerEmail,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName,
-        (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE invoiceId = p.invoiceId) as totalPaid,
-        (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE invoiceId = p.invoiceId)) as remainingAmount
-      FROM payment p
+        (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
+        (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
+      FROM Payment p
       LEFT JOIN invoice i ON p.invoiceId = i.id
       WHERE p.id = ?
     `, [id]);
@@ -166,7 +166,7 @@ router.get('/invoice/:invoiceId', async (req, res) => {
         'غير محدد' as createdByLastName,
         i.id as invoiceId,
         i.totalAmount as invoiceFinal
-      FROM payment p 
+      FROM Payment p 
       LEFT JOIN invoice i ON p.invoiceId = i.id
       WHERE p.invoiceId = ? 
       ORDER BY p.paymentDate DESC, p.createdAt DESC
@@ -239,7 +239,7 @@ router.post('/', async (req, res) => {
     // Check if payment amount exceeds remaining balance
     const [paymentSum] = await db.query(`
       SELECT COALESCE(SUM(amount), 0) as totalPaid 
-      FROM payment 
+      FROM Payment 
       WHERE invoiceId = ?
     `, [invoiceId]);
     
@@ -299,7 +299,7 @@ router.post('/', async (req, res) => {
         '' as customerLastName,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName
-      FROM payment p
+      FROM Payment p
       LEFT JOIN invoice i ON p.invoiceId = i.id
       WHERE p.id = ?
     `, [paymentId]);
@@ -347,7 +347,7 @@ router.put('/:id', async (req, res) => {
     // Get current payment details
     const [currentPayment] = await db.query(`
       SELECT invoiceId, amount as oldAmount 
-      FROM payment 
+      FROM Payment 
       WHERE id = ?
     `, [id]);
     
@@ -381,7 +381,7 @@ router.put('/:id', async (req, res) => {
       if (invoiceRows.length > 0) {
         const [paymentSum] = await db.query(`
           SELECT COALESCE(SUM(amount), 0) as totalPaid 
-          FROM payment 
+          FROM Payment 
           WHERE invoiceId = ?
         `, [payment.invoiceId]);
         
@@ -429,7 +429,7 @@ router.delete('/:id', async (req, res) => {
     // Get payment details before deletion
     const [paymentRows] = await db.query(`
       SELECT invoiceId, amount 
-      FROM payment 
+      FROM Payment 
       WHERE id = ?
     `, [id]);
     
@@ -440,7 +440,7 @@ router.delete('/:id', async (req, res) => {
     const payment = paymentRows[0];
     
     // Delete payment
-    const [result] = await db.query('DELETE FROM payment WHERE id = ?', [id]);
+    const [result] = await db.query('DELETE FROM Payment WHERE id = ?', [id]);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Payment not found' });
@@ -449,7 +449,7 @@ router.delete('/:id', async (req, res) => {
     // Update invoice status after payment deletion
     const [paymentSum] = await db.query(`
       SELECT COALESCE(SUM(amount), 0) as totalPaid 
-      FROM payment 
+      FROM Payment 
       WHERE invoiceId = ?
     `, [payment.invoiceId]);
     
@@ -524,7 +524,7 @@ router.get('/stats/summary', async (req, res) => {
         COALESCE(SUM(CASE WHEN p.paymentMethod = 'bank_transfer' THEN p.amount ELSE 0 END), 0) as bankTransferAmount,
         COALESCE(SUM(CASE WHEN p.paymentMethod = 'check' THEN p.amount ELSE 0 END), 0) as checkAmount,
         COALESCE(SUM(CASE WHEN p.paymentMethod = 'other' THEN p.amount ELSE 0 END), 0) as otherAmount
-      FROM payment p
+      FROM Payment p
       ${whereClause}
     `, queryParams);
     

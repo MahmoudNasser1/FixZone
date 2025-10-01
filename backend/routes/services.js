@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     // Whitelists to prevent SQL injection for identifiers
-    const allowedSortBy = new Set(['id', 'name', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
+    const allowedSortBy = new Set(['id', 'serviceName', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
     const safeSortBy = allowedSortBy.has(String(sortBy)) ? String(sortBy) : 'id';
     const safeSortDir = String(sortDir).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 
     if (q && String(q).trim() !== '') {
       const like = `%${String(q).trim()}%`;
-      whereClauses.push('(name LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
+      whereClauses.push('(serviceName LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
       params.push(like, like, like);
     }
 

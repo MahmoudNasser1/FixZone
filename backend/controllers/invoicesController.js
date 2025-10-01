@@ -58,7 +58,7 @@ class InvoicesController {
 
       // Search functionality
       if (search) {
-        whereClause += ` AND (c.name LIKE ? OR i.id LIKE ? OR d.model LIKE ?)`;
+        whereClause += ` AND (CONCAT(c.firstName, ' ', c.lastName) LIKE ? OR i.id LIKE ? OR rr.deviceModel LIKE ?)`;
         const searchTerm = `%${search}%`;
         queryParams.push(searchTerm, searchTerm, searchTerm);
       }
@@ -100,22 +100,21 @@ class InvoicesController {
       const query = `
         SELECT 
           i.*,
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
-          d.model as deviceModel,
-          d.brand as deviceBrand,
-          rr.reportedProblem as problemDescription,
+          rr.deviceModel as deviceModel,
+          rr.deviceBrand as deviceBrand,
+          rr.issueDescription as problemDescription,
           COUNT(ii.id) as itemsCount,
           COALESCE(SUM(ii.quantity * ii.unitPrice), 0) as calculatedTotal
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         LEFT JOIN Customer c ON rr.customerId = c.id
         LEFT JOIN InvoiceItem ii ON i.id = ii.invoiceId
         ${whereClause}
         GROUP BY i.id
-        ORDER BY ${sortField === 'customerName' ? 'c.name' : `i.${sortField}`} ${order}
+        ORDER BY ${sortField === 'customerName' ? 'CONCAT(c.firstName, \' \', c.lastName)' : `i.${sortField}`} ${order}
         LIMIT ? OFFSET ?
       `;
 
@@ -129,7 +128,6 @@ class InvoicesController {
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
         LEFT JOIN Customer c ON rr.customerId = c.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         ${whereClause}
       `;
       
@@ -181,18 +179,17 @@ class InvoicesController {
       const [invoiceRows] = await db.query(`
         SELECT 
           i.*,
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
           c.address as customerAddress,
-          d.model as deviceModel,
-          d.brand as deviceBrand,
-          rr.reportedProblem as problemDescription,
+          rr.deviceModel as deviceModel,
+          rr.deviceBrand as deviceBrand,
+          rr.issueDescription as problemDescription,
           d.serialNumber as deviceSerial,
           u.name as technicianName
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         LEFT JOIN Customer c ON rr.customerId = c.id
         LEFT JOIN User u ON rr.technicianId = u.id
         WHERE i.id = ? AND i.deletedAt IS NULL
@@ -365,7 +362,7 @@ class InvoicesController {
       // Fetch the created invoice with details
       const [createdInvoice] = await db.query(`
         SELECT i.*, 
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail
         FROM Invoice i
@@ -462,7 +459,7 @@ class InvoicesController {
       // Fetch updated invoice
       const [updated] = await db.query(`
         SELECT i.*, 
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
           c.address as customerAddress
@@ -626,7 +623,7 @@ class InvoicesController {
       // Get top customers by invoice count
       const [topCustomers] = await db.query(`
         SELECT 
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           COUNT(i.id) as invoiceCount,
           SUM(i.totalAmount) as totalAmount
         FROM Invoice i
@@ -634,7 +631,7 @@ class InvoicesController {
         LEFT JOIN Customer c ON rr.customerId = c.id
         WHERE i.deletedAt IS NULL
           AND i.createdAt >= DATE_SUB(NOW(), INTERVAL ? DAY)
-        GROUP BY c.id, c.name
+        GROUP BY c.id, c.firstName, c.lastName
         ORDER BY invoiceCount DESC
         LIMIT 10
       `, [days]);
@@ -666,13 +663,12 @@ class InvoicesController {
           d.deviceType,
           d.brand as deviceBrand,
           d.model as deviceModel,
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
           c.address as customerAddress
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         LEFT JOIN Customer c ON rr.customerId = c.id
         WHERE i.id = ? AND i.deletedAt IS NULL
       `, [id]);
@@ -973,15 +969,14 @@ class InvoicesController {
       const [invoices] = await db.query(`
         SELECT 
           i.*,
-          c.name as customerName,
+          CONCAT(c.firstName, ' ', c.lastName) as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
-          d.model as deviceModel,
-          d.brand as deviceBrand,
+          rr.deviceModel as deviceModel,
+          rr.deviceBrand as deviceBrand,
           rr.reportedProblem as problemDescription
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         LEFT JOIN Customer c ON rr.customerId = c.id
         WHERE rr.id = ? AND i.deletedAt IS NULL
       `, [repairId]);
@@ -1045,10 +1040,9 @@ class InvoicesController {
 
       // Check if repair request exists
       const [repairRows] = await db.query(`
-        SELECT rr.*, c.name as customerName, d.model as deviceModel, d.brand as deviceBrand
+        SELECT rr.*, CONCAT(c.firstName, ' ', c.lastName) as customerName, rr.deviceModel as deviceModel, rr.deviceBrand as deviceBrand
         FROM RepairRequest rr
         LEFT JOIN Customer c ON rr.customerId = c.id
-        LEFT JOIN Device d ON rr.deviceId = d.id
         WHERE rr.id = ? AND rr.deletedAt IS NULL
       `, [repairId]);
 
@@ -1146,15 +1140,14 @@ class InvoicesController {
         // Fetch the created invoice with details
         const [createdInvoice] = await connection.query(`
           SELECT i.*, 
-            c.name as customerName,
+            CONCAT(c.firstName, ' ', c.lastName) as customerName,
             c.phone as customerPhone,
             c.email as customerEmail,
-            d.model as deviceModel,
-            d.brand as deviceBrand
+            rr.deviceModel as deviceModel,
+            rr.deviceBrand as deviceBrand
           FROM Invoice i
           LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
           LEFT JOIN Customer c ON rr.customerId = c.id
-          LEFT JOIN Device d ON rr.deviceId = d.id
           WHERE i.id = ?
         `, [invoiceId]);
 

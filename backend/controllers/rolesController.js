@@ -5,10 +5,10 @@ const { logActivity } = require('./activityLogController');
 exports.listRoles = async (req, res) => {
   try {
     const { q } = req.query;
-    let sql = 'SELECT id, name, permissions, parentRoleId, createdAt, updatedAt FROM Role WHERE deletedAt IS NULL';
+    let sql = 'SELECT id, name, description, permissions FROM Role';
     const params = [];
     if (q) {
-      sql += ' AND name LIKE ?';
+      sql += ' WHERE name LIKE ?';
       params.push(`%${q}%`);
     }
     const [rows] = await db.query(sql, params);
@@ -24,7 +24,7 @@ exports.getRole = async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await db.query(
-      'SELECT id, name, permissions, parentRoleId, createdAt, updatedAt FROM Role WHERE id = ? AND deletedAt IS NULL',
+      'SELECT id, name, description, permissions FROM Role WHERE id = ?',
       [id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Role not found' });

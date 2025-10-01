@@ -707,8 +707,9 @@ const CustomersPage = () => {
 
   // فلترة العملاء
         const filteredCustomers = Array.isArray(customers) ? customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.phone.includes(searchTerm) ||
+    const customerName = customer.name || (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : '');
+    const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (customer.phone && customer.phone.includes(searchTerm)) ||
                          (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
     
     if (selectedFilter === 'all') return matchesSearch;
