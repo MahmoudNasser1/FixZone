@@ -117,6 +117,7 @@ router.use('/invoicetemplates', invoiceTemplatesRouter);
 router.use('/reports', reportRoutes);
 router.use('/stocklevels', stockLevelsRouter);
 router.use('/stockmovements', stockMovementsRouter);
+router.use('/stock-movements', stockMovementsRouter); // Alias مع شرطة
 router.use('/stock-alerts', stockAlertsRouter);
 router.use('/workflow', workflowIntegrationRouter);
 router.use('/inventory-integration', inventoryIntegrationRouter);

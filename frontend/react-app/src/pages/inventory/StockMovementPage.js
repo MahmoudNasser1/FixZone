@@ -34,8 +34,12 @@ const StockMovementPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      setMovements(data || []);
-      setFilteredMovements(data || []);
+      console.log('Stock movements data:', data);
+      
+      // معالجة الاستجابة بشكل صحيح
+      const movementsData = Array.isArray(data) ? data : (data.items || data.movements || []);
+      setMovements(movementsData);
+      setFilteredMovements(movementsData);
     } catch (error) {
       console.error('Error fetching stock movements:', error);
       // Mock data for demonstration
@@ -284,7 +288,7 @@ const StockMovementPage = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {movementTypes.map((type) => {
-          const count = movements.filter(m => m.type === type.value).length;
+          const count = Array.isArray(movements) ? movements.filter(m => m.type === type.value).length : 0;
           const IconComponent = type.icon;
           
           return (

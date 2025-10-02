@@ -43,6 +43,7 @@ import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
 import LayoutDemo from './pages/LayoutDemo';
 import NotificationDemoPage from './pages/NotificationDemoPage';
 import InventoryPage from './pages/inventory/InventoryPage';
+import InventoryPageEnhanced from './pages/inventory/InventoryPageEnhanced';
 import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
 import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
 import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
@@ -150,7 +151,8 @@ function App() {
                       <Route path="companies/:id/edit" element={<EditCompanyPage />} />
 
                       {/* Inventory, Settings, Payments */}
-                      <Route path="inventory" element={<InventoryPage />} />
+                      <Route path="inventory" element={<InventoryPageEnhanced />} />
+                      <Route path="inventory-old" element={<InventoryPage />} />
                       <Route path="inventory/transfer" element={<InventoryTransferPage />} />
                       <Route path="inventory/reports" element={<InventoryReportsPage />} />
                       <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />

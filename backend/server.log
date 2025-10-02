@@ -1,107 +1,26 @@
-🚀 Fix Zone Backend Server is running on port 3001
-📊 API Base URL: http://localhost:3001/api
-🏥 Health Check: http://localhost:3001/health
-User object in authorizeMiddleware: {
-  id: 1,
-  role: 1,
-  name: 'محمود ناصر',
-  iat: 1759406404,
-  exp: 1759435204
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/application.js:635:24)
+    at Object.<anonymous> (/opt/lampp/htdocs/FixZone/backend/server.js:54:5)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
 }
-User role in authorizeMiddleware: 1
-User object in authorizeMiddleware: {
-  id: 1,
-  role: 1,
-  name: 'محمود ناصر',
-  iat: 1759406404,
-  exp: 1759435204
-}
-User role in authorizeMiddleware: 1
-User object in authorizeMiddleware: {
-  id: 1,
-  role: 1,
-  name: 'محمود ناصر',
-  iat: 1759406404,
-  exp: 1759435204
-}
-User role in authorizeMiddleware: 1
-User object in authorizeMiddleware: {
-  id: 1,
-  role: 1,
-  name: 'محمود ناصر',
-  iat: 1759406404,
-  exp: 1759435204
-}
-User role in authorizeMiddleware: 1
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
-}
-Total payments in database: 0
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
-}
-Total payments in database: 0
-Total payments in database: 0
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
-}
-Total payments in database: 0
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
-}
+
+Node.js v22.20.0
