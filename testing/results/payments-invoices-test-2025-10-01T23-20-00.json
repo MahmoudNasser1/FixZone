@@ -1,0 +1,65 @@
+{
+  "module": "Payments & Invoices",
+  "timestamp": "2025-10-01T23:20:00.259Z",
+  "results": {
+    "passed": 6,
+    "failed": 5,
+    "total": 11,
+    "tests": [
+      {
+        "name": "Get all invoices",
+        "details": "Status: 200"
+      },
+      {
+        "name": "Get single invoice",
+        "passed": false,
+        "details": "No invoices available to test"
+      },
+      {
+        "name": "Create invoice",
+        "passed": 11,
+        "details": "Created invoice #11"
+      },
+      {
+        "name": "Invoice validation - missing fields",
+        "passed": true,
+        "details": "Correctly rejected"
+      },
+      {
+        "name": "Get all payments",
+        "passed": true,
+        "details": "Found 2 payments"
+      },
+      {
+        "name": "Get payment statistics",
+        "passed": false,
+        "details": "Status: 404"
+      },
+      {
+        "name": "Create payment",
+        "passed": false,
+        "details": "Status: 400 - {\"error\":\"Amount, payment method, invoice ID, and userId are required\"}"
+      },
+      {
+        "name": "Create partial payment",
+        "passed": false,
+        "details": "Status: 400 - {\"error\":\"Amount, payment method, invoice ID, and userId are required\"}"
+      },
+      {
+        "name": "Payment validation - missing fields",
+        "passed": true,
+        "details": "Correctly rejected"
+      },
+      {
+        "name": "Get payments by invoice",
+        "passed": true,
+        "details": "Found 0 payment(s) for invoice 11"
+      },
+      {
+        "name": "Get overdue payments",
+        "passed": true,
+        "details": "Found 0 overdue payment(s)"
+      }
+    ]
+  }
+}

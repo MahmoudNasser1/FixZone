@@ -12,21 +12,50 @@ router.get('/', async (req, res) => {
 
     // If no pagination requested, return full list for backward compatibility
     if (!page) {
-      const [rows] = await db.query('SELECT * FROM Customer WHERE deletedAt IS NULL ORDER BY createdAt DESC');
+      const [rows] = await db.query(`
+        SELECT 
+          id,
+          CONCAT(firstName, ' ', lastName) as name,
+          firstName,
+          lastName,
+          phone,
+          email,
+          address,
+          companyId,
+          status,
+          isActive,
+          notes,
+          createdAt,
+          updatedAt
+        FROM Customer 
+        WHERE deletedAt IS NULL 
+        ORDER BY createdAt DESC
+      `);
       return res.json(rows);
     }
 
     const where = ['deletedAt IS NULL'];
     const params = [];
     if (q) {
-      where.push('(name LIKE ? OR phone LIKE ? OR email LIKE ?)');
+      where.push('(CONCAT(firstName, " ", lastName) LIKE ? OR phone LIKE ? OR email LIKE ?)');
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const offset = (page - 1) * pageSize;
     const [rows] = await db.query(
-      `SELECT id, name, phone, email, address, createdAt, updatedAt
+      `SELECT 
+        id, 
+        CONCAT(firstName, ' ', lastName) as name,
+        firstName,
+        lastName,
+        phone, 
+        email, 
+        address, 
+        companyId,
+        status,
+        createdAt, 
+        updatedAt
        FROM Customer
        ${whereSql}
        ORDER BY createdAt DESC
@@ -58,9 +87,16 @@ router.get('/search', async (req, res) => {
 
     const like = `%${q}%`;
     const [rows] = await db.query(
-      `SELECT id, name, phone, email, address
+      `SELECT 
+        id, 
+        CONCAT(firstName, ' ', lastName) as name,
+        firstName,
+        lastName,
+        phone, 
+        email, 
+        address
        FROM Customer
-       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)
+       WHERE deletedAt IS NULL AND (CONCAT(firstName, ' ', lastName) LIKE ? OR phone LIKE ?)
        ORDER BY createdAt DESC
        LIMIT ? OFFSET ?`,
       [like, like, pageSize, offset]
@@ -70,7 +106,7 @@ router.get('/search', async (req, res) => {
     const [countRows] = await db.query(
       `SELECT COUNT(*) as cnt
        FROM Customer
-       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)`,
+       WHERE deletedAt IS NULL AND (CONCAT(firstName, ' ', lastName) LIKE ? OR phone LIKE ?)`,
       [like, like]
     );
 
@@ -85,7 +121,13 @@ router.get('/search', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query('SELECT * FROM Customer WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [rows] = await db.query(`
+      SELECT 
+        *,
+        CONCAT(firstName, ' ', lastName) as name
+      FROM Customer 
+      WHERE id = ? AND deletedAt IS NULL
+    `, [id]);
     if (rows.length === 0) {
       return res.status(404).send('Customer not found');
     }
@@ -101,47 +143,123 @@ router.get('/:id', async (req, res) => {
 
 // Create a new customer
 router.post('/', authMiddleware, async (req, res) => {
-  const { name, phone, email, address, companyId, status = 'active', customFields } = req.body;
+  const { firstName, lastName, phone, email, address, companyId, status = 'active', notes } = req.body;
   
-  console.log('Creating customer:', { name, phone, email, address, companyId, status, customFields });
+  console.log('Creating customer:', { firstName, lastName, phone, email, address, companyId, status, notes });
   
-  if (!name) {
-    return res.status(400).send('Customer name is required');
+  if (!firstName || !phone) {
+    return res.status(400).json({ success: false, message: 'First name and phone are required' });
   }
+  
   try {
-    const [result] = await db.query('INSERT INTO Customer (name, phone, email, address, companyId, status, customFields) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, email, address, companyId, status, JSON.stringify(customFields)]);
+    // Check if phone already exists
+    const [existing] = await db.query(
+      'SELECT id FROM Customer WHERE phone = ? AND deletedAt IS NULL',
+      [phone]
+    );
+    
+    if (existing.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A customer with this phone number already exists' 
+      });
+    }
+    
+    const [result] = await db.query(
+      'INSERT INTO Customer (firstName, lastName, phone, email, address, companyId, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+      [firstName, lastName || '', phone, email, address, companyId, status, notes]
+    );
     
     console.log('Create result:', result);
     
-    res.status(201).json({ id: result.insertId, name, phone, email, address, companyId, status, customFields });
+    const customer = {
+      id: result.insertId,
+      firstName,
+      lastName,
+      phone,
+      email,
+      address,
+      companyId,
+      status,
+      notes
+    };
+    
+    res.status(201).json({ success: true, customer });
   } catch (err) {
     console.error('Error creating customer:', err);
-    res.status(500).send('Server Error');
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'A customer with this phone number already exists' });
+    }
+    res.status(500).json({ success: false, message: 'Server Error', details: err.message });
   }
 });
 
 // Update a customer
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { name, phone, email, address, companyId, status, customFields } = req.body;
+  const { firstName, lastName, phone, email, address, companyId, status, notes } = req.body;
   
-  console.log('Updating customer:', { id, name, phone, email, address, companyId, status, customFields });
+  console.log('Updating customer:', { id, firstName, lastName, phone, email, address, companyId, status, notes });
   
-  if (!name) {
-    return res.status(400).send('Customer name is required');
+  // Build dynamic update query
+  const updates = [];
+  const values = [];
+  
+  if (firstName !== undefined) {
+    updates.push('firstName = ?');
+    values.push(firstName);
   }
+  if (lastName !== undefined) {
+    updates.push('lastName = ?');
+    values.push(lastName);
+  }
+  if (phone !== undefined) {
+    updates.push('phone = ?');
+    values.push(phone);
+  }
+  if (email !== undefined) {
+    updates.push('email = ?');
+    values.push(email);
+  }
+  if (address !== undefined) {
+    updates.push('address = ?');
+    values.push(address);
+  }
+  if (companyId !== undefined) {
+    updates.push('companyId = ?');
+    values.push(companyId);
+  }
+  if (status !== undefined) {
+    updates.push('status = ?');
+    values.push(status);
+  }
+  if (notes !== undefined) {
+    updates.push('notes = ?');
+    values.push(notes);
+  }
+  
+  if (updates.length === 0) {
+    return res.status(400).json({ success: false, message: 'No fields to update' });
+  }
+  
+  updates.push('updatedAt = CURRENT_TIMESTAMP');
+  values.push(id);
+  
   try {
-    const [result] = await db.query('UPDATE Customer SET name = ?, phone = ?, email = ?, address = ?, companyId = ?, status = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [name, phone, email, address, companyId, status || 'active', JSON.stringify(customFields), id]);
+    const [result] = await db.query(
+      `UPDATE Customer SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`,
+      values
+    );
     
     console.log('Update result:', result);
     
     if (result.affectedRows === 0) {
-      return res.status(404).send('Customer not found or already deleted');
+      return res.status(404).json({ success: false, message: 'Customer not found or already deleted' });
     }
-    res.json({ message: 'Customer updated successfully' });
+    res.json({ success: true, message: 'Customer updated successfully' });
   } catch (err) {
     console.error(`Error updating customer with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error', details: err.message });
   }
 });
 

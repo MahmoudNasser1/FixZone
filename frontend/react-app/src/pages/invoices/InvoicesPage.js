@@ -31,12 +31,17 @@ const InvoicesPage = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('API Response:', data);
-        // Handle the nested structure from the API
-        if (data.success && data.data && data.data.invoices) {
-          setInvoices(data.data.invoices);
+        // Handle different response structures from the API
+        if (data.success && Array.isArray(data.data)) {
+          setInvoices(data.data);
+        } else if (data.invoices && Array.isArray(data.invoices)) {
+          setInvoices(data.invoices);
         } else if (Array.isArray(data)) {
           setInvoices(data);
+        } else if (data.data && Array.isArray(data.data.invoices)) {
+          setInvoices(data.data.invoices);
         } else {
+          console.warn('Unexpected API response format:', data);
           setInvoices([]);
         }
       } else {

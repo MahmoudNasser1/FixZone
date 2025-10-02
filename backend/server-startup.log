@@ -1,0 +1,175 @@
+🚀 Fix Zone Backend Server is running on port 3001
+📊 API Base URL: http://localhost:3001/api
+🏥 Health Check: http://localhost:3001/health
+Total payments in database: 2
+Total payments in database: 2
+Total payments in database: 2
+Total payments in database: 2
+Total payments in database: 2
+Total payments in database: 2
+Total payments in database: 4
+Total payments in database: 4
+Total payments in database: 6
+Total payments in database: 6
+Total payments in database: 6
+Error fetching repair request services: Error: Unknown column 's.name' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/repairRequestServices.js:27:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        rrs.*,\n' +
+    '        s.name as serviceName,\n' +
+    '        u.name as technicianName\n' +
+    '      FROM RepairRequestService rrs\n' +
+    '      LEFT JOIN Service s ON rrs.serviceId = s.id\n' +
+    '      LEFT JOIN User u ON rrs.technicianId = u.id\n' +
+    "     WHERE rrs.repairRequestId = '9' ORDER BY rrs.createdAt DESC",
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 's.name' in 'field list'"
+}
+Total payments in database: 6
+Error fetching variables: Error: Unknown column 'code' in 'where clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'code' in 'where clause'"
+}
+Error fetching repair request services: Error: Unknown column 's.name' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/repairRequestServices.js:27:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        rrs.*,\n' +
+    '        s.name as serviceName,\n' +
+    '        u.name as technicianName\n' +
+    '      FROM RepairRequestService rrs\n' +
+    '      LEFT JOIN Service s ON rrs.serviceId = s.id\n' +
+    '      LEFT JOIN User u ON rrs.technicianId = u.id\n' +
+    "     WHERE rrs.repairRequestId = '9' ORDER BY rrs.createdAt DESC",
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 's.name' in 'field list'"
+}
+Error fetching variables: Error: Unknown column 'code' in 'where clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'code' in 'where clause'"
+}
+Total payments in database: 6
+Fetched customer: {
+  id: 6,
+  firstName: 'محمد',
+  lastName: 'علي',
+  phone: '01099887766',
+  email: 'test@example.com',
+  address: null,
+  companyId: null,
+  isActive: 1,
+  status: 'active',
+  notes: null,
+  createdAt: 2025-10-01T23:14:56.000Z,
+  updatedAt: 2025-10-01T23:14:56.000Z,
+  deletedAt: null
+}
+Creating customer: {
+  name: undefined,
+  phone: '01091157191',
+  email: 'test1759361157191@example.com',
+  address: 'القاهرة، مصر',
+  companyId: undefined,
+  status: 'active',
+  customFields: undefined
+}
+Creating customer: {
+  name: undefined,
+  phone: '01091157195',
+  email: undefined,
+  address: undefined,
+  companyId: undefined,
+  status: 'active',
+  customFields: undefined
+}
+Creating customer: {
+  name: undefined,
+  phone: undefined,
+  email: undefined,
+  address: undefined,
+  companyId: undefined,
+  status: 'active',
+  customFields: undefined
+}
+Creating customer: {
+  name: undefined,
+  phone: '01099887766',
+  email: undefined,
+  address: undefined,
+  companyId: undefined,
+  status: 'active',
+  customFields: undefined
+}
+Fetched customer: {
+  id: 6,
+  firstName: 'محمد',
+  lastName: 'علي',
+  phone: '01099887766',
+  email: 'test@example.com',
+  address: null,
+  companyId: null,
+  isActive: 1,
+  status: 'active',
+  notes: null,
+  createdAt: 2025-10-01T23:14:56.000Z,
+  updatedAt: 2025-10-01T23:14:56.000Z,
+  deletedAt: null
+}
+Creating customer: {
+  name: undefined,
+  phone: '01099999999',
+  email: undefined,
+  address: undefined,
+  companyId: undefined,
+  status: 'active',
+  customFields: undefined
+}

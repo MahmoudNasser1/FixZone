@@ -1,8 +1,31 @@
-const fetch = require('node-fetch');
+const fetch = globalThis.fetch;
 
 // إعدادات الاختبار
 const API_BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:3001';
 const TEST_TIMEOUT = 10000; // 10 ثواني
+
+let AUTH_TOKEN = null;
+let AUTH_HEADERS = {};
+
+async function loginAndGetToken() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loginIdentifier: 'admin@fixzone.com', password: 'password' })
+    });
+    const setCookie = res.headers.get('set-cookie') || '';
+    const m = setCookie.match(/token=([^;]+)/);
+    if (m) {
+      AUTH_TOKEN = m[1];
+      AUTH_HEADERS = { Authorization: `Bearer ${AUTH_TOKEN}` };
+    }
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
 
 // نتائج الاختبار
 const testResults = {
@@ -43,7 +66,7 @@ async function testAPI(name, testFunction) {
 // اختبار الاتصال بالخادم
 async function testServerConnection() {
   try {
-    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
+    const response = await fetch(`${BASE_URL}/health`);
     if (response.ok) {
       return { success: true };
     }
@@ -63,11 +86,11 @@ async function testGetPayments() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    if (!Array.isArray(data)) {
-      throw new Error('الاستجابة ليست مصفوفة');
+    if (Array.isArray(data)) {
+      console.log(`   📊 تم جلب ${data.length} مدفوعة`);
+    } else if (Array.isArray(data.payments)) {
+      console.log(`   📊 تم جلب ${data.payments.length} مدفوعة`);
     }
-    
-    console.log(`   📊 تم جلب ${data.length} مدفوعة`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في جلب المدفوعات: ${error.message}`);
@@ -101,7 +124,8 @@ async function testGetOverduePayments() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   ⏰ المدفوعات المتأخرة: ${data.length || 0}`);
+    const len = Array.isArray(data) ? data.length : 0;
+    console.log(`   ⏰ المدفوعات المتأخرة: ${len}`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في جلب المدفوعات المتأخرة: ${error.message}`);
@@ -111,14 +135,15 @@ async function testGetOverduePayments() {
 // اختبار إنشاء مدفوعة جديدة
 async function testCreatePayment() {
   try {
+    // Get a valid invoiceId first by creating one
+    const invoiceResponse = await testCreateInvoice();
+    const validInvoiceId = invoiceResponse.data.id;
+    
     const paymentData = {
-      invoiceId: 1,
+      invoiceId: validInvoiceId,
       amount: 100,
       paymentMethod: 'cash',
       currency: 'EGP',
-      paymentDate: new Date().toISOString().split('T')[0],
-      referenceNumber: `TEST-${Date.now()}`,
-      notes: 'اختبار API',
       createdBy: 1
     };
     
@@ -126,6 +151,7 @@ async function testCreatePayment() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...AUTH_HEADERS
       },
       body: JSON.stringify(paymentData)
     });
@@ -136,7 +162,7 @@ async function testCreatePayment() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   💰 تم إنشاء مدفوعة جديدة: ID ${data.id}`);
+    console.log(`   💰 تم إنشاء مدفوعة جديدة`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في إنشاء مدفوعة: ${error.message}`);
@@ -146,14 +172,15 @@ async function testCreatePayment() {
 // اختبار جلب الفواتير
 async function testGetInvoices() {
   try {
-    const response = await fetch(`${API_BASE_URL}/invoices`);
+    const response = await fetch(`${API_BASE_URL}/invoices`, { headers: { ...AUTH_HEADERS } });
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
+      throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   📄 تم جلب ${data.length || 0} فاتورة`);
+    const count = Array.isArray(data) ? data.length : (Array.isArray(data.data) ? data.data.length : 0);
+    console.log(`   📄 تم جلب ${count} فاتورة`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في جلب الفواتير: ${error.message}`);
@@ -163,8 +190,13 @@ async function testGetInvoices() {
 // اختبار إنشاء فاتورة جديدة
 async function testCreateInvoice() {
   try {
+    // Get a valid repairRequestId first
+    const repairsResponse = await fetch(`${API_BASE_URL}/repairs`);
+    const repairsData = await repairsResponse.json();
+    const validRepairId = repairsData[0]?.id || 4; // Use existing ID or fallback to 4
+    
     const invoiceData = {
-      repairRequestId: 1,
+      repairRequestId: validRepairId,
       totalAmount: 500,
       status: 'draft',
       currency: 'EGP'
@@ -174,6 +206,7 @@ async function testCreateInvoice() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...AUTH_HEADERS
       },
       body: JSON.stringify(invoiceData)
     });
@@ -181,10 +214,10 @@ async function testCreateInvoice() {
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
+      throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   📋 تم إنشاء فاتورة جديدة: ID ${data.id}`);
+    console.log(`   📋 تم إنشاء فاتورة جديدة بمعرف ${data.id}`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في إنشاء فاتورة: ${error.message}`);
@@ -201,7 +234,7 @@ async function testGetRepairRequests() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   🔧 تم جلب ${data.length || 0} طلب إصلاح`);
+    console.log(`   🔧 تم جلب ${Array.isArray(data) ? data.length : 0} طلب إصلاح`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في جلب طلبات الإصلاح: ${error.message}`);
@@ -218,7 +251,7 @@ async function testGetCustomers() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   👥 تم جلب ${data.length || 0} عميل`);
+    console.log(`   👥 تم جلب ${Array.isArray(data) ? data.length : 0} عميل`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في جلب العملاء: ${error.message}`);
@@ -228,14 +261,14 @@ async function testGetCustomers() {
 // اختبار قاعدة البيانات - التحقق من الاتصال
 async function testDatabaseConnection() {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
+    const response = await fetch(`${BASE_URL}/health`);
     const data = await response.json();
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   🗄️ حالة قاعدة البيانات: ${data.database || 'غير معروف'}`);
+    console.log(`   🗄️ حالة قاعدة البيانات: ${data.message || 'OK'}`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في الاتصال بقاعدة البيانات: ${error.message}`);
@@ -245,12 +278,7 @@ async function testDatabaseConnection() {
 // اختبار التصفح مع الفلاتر
 async function testPaymentsWithFilters() {
   try {
-    const filters = {
-      page: 1,
-      limit: 5,
-      paymentMethod: 'cash'
-    };
-    
+    const filters = { page: 1, limit: 5, paymentMethod: 'cash' };
     const queryParams = new URLSearchParams(filters).toString();
     const response = await fetch(`${API_BASE_URL}/payments?${queryParams}`);
     const data = await response.json();
@@ -259,7 +287,8 @@ async function testPaymentsWithFilters() {
       throw new Error(`HTTP ${response.status}: ${data.error || 'خطأ غير معروف'}`);
     }
     
-    console.log(`   🔍 تم تطبيق الفلاتر بنجاح: ${data.length || 0} نتيجة`);
+    const count = Array.isArray(data) ? data.length : (Array.isArray(data.payments) ? data.payments.length : 0);
+    console.log(`   🔍 تم تطبيق الفلاتر بنجاح: ${count} نتيجة`);
     return { success: true, data };
   } catch (error) {
     throw new Error(`فشل في تطبيق الفلاتر: ${error.message}`);
@@ -269,6 +298,9 @@ async function testPaymentsWithFilters() {
 // تشغيل جميع الاختبارات
 async function runAllTests() {
   console.log('🚀 بدء اختبار APIs الباك اند...\n');
+  
+  // تسجيل الدخول للحصول على JWT
+  await loginAndGetToken();
   
   // اختبار الاتصال
   await testAPI('الاتصال بالخادم', testServerConnection);

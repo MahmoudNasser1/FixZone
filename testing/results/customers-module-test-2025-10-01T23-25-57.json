@@ -1,0 +1,61 @@
+{
+  "module": "Customers",
+  "timestamp": "2025-10-01T23:25:57.220Z",
+  "results": {
+    "passed": 5,
+    "failed": 5,
+    "total": 10,
+    "tests": [
+      {
+        "name": "Get all customers",
+        "passed": true,
+        "details": "Found 6 customers"
+      },
+      {
+        "name": "Get single customer",
+        "passed": true,
+        "details": "Customer ID: 6"
+      },
+      {
+        "name": "Create customer (all fields)",
+        "passed": false,
+        "details": "Unexpected token 'C', \"Customer n\"... is not valid JSON"
+      },
+      {
+        "name": "Create customer (minimal)",
+        "passed": false,
+        "details": "Unexpected token 'C', \"Customer n\"... is not valid JSON"
+      },
+      {
+        "name": "Customer validation - missing fields",
+        "passed": false,
+        "details": "Unexpected token 'C', \"Customer n\"... is not valid JSON"
+      },
+      {
+        "name": "Duplicate phone validation",
+        "passed": false,
+        "details": "Unexpected token 'C', \"Customer n\"... is not valid JSON"
+      },
+      {
+        "name": "Update customer",
+        "passed": false,
+        "details": "No customer to update (previous test failed)"
+      },
+      {
+        "name": "Search customers",
+        "passed": true,
+        "details": "Found 6 matching customers"
+      },
+      {
+        "name": "Get customer with relations",
+        "passed": true,
+        "details": "Customer loaded"
+      },
+      {
+        "name": "Get non-existent customer",
+        "passed": true,
+        "details": "Correctly returned 404"
+      }
+    ]
+  }
+}

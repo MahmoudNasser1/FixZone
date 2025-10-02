@@ -48,7 +48,17 @@ exports.getAllUsers = async (req, res) => {
             const total = countRows[0]?.cnt || 0;
 
             const [rows] = await db.query(
-                `SELECT id, firstName, lastName, email, roleId, isActive, createdAt, updatedAt FROM User ${whereClause} ORDER BY ${orderBy} ${direction} LIMIT ? OFFSET ?`,
+                `SELECT 
+                  id, 
+                  firstName, 
+                  lastName, 
+                  CONCAT(firstName, ' ', lastName) as name,
+                  email, 
+                  roleId, 
+                  isActive, 
+                  createdAt, 
+                  updatedAt 
+                FROM User ${whereClause} ORDER BY ${orderBy} ${direction} LIMIT ? OFFSET ?`,
                 [...params, ps, offset]
             );
             return res.json({ items: rows, total, page: pg, pageSize: ps });
@@ -56,7 +66,17 @@ exports.getAllUsers = async (req, res) => {
 
         // Without pagination: maintain backward compatible array response
         const [users] = await db.query(
-            `SELECT id, firstName, lastName, email, roleId, isActive, createdAt, updatedAt FROM User ${whereClause} ORDER BY ${orderBy} ${direction}`,
+            `SELECT 
+              id, 
+              firstName, 
+              lastName, 
+              CONCAT(firstName, ' ', lastName) as name,
+              email, 
+              roleId, 
+              isActive, 
+              createdAt, 
+              updatedAt 
+            FROM User ${whereClause} ORDER BY ${orderBy} ${direction}`,
             params
         );
         res.json(users);

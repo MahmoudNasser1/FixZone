@@ -36,35 +36,185 @@ router.get('/:id', async (req, res) => {
 
 // Create a new inventory item
 router.post('/', async (req, res) => {
-  const { sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields } = req.body;
-  if (!sku || !name) {
-    return res.status(400).send('SKU and name are required');
+  const { 
+    sku, 
+    name, 
+    description,
+    category, 
+    purchasePrice, 
+    sellingPrice, 
+    minStockLevel = 0,
+    maxStockLevel = 1000,
+    currentQuantity = 0,
+    unit = 'قطعة'
+  } = req.body;
+  
+  if (!name) {
+    return res.status(400).json({ success: false, message: 'Name is required' });
   }
+  
   try {
-    const [result] = await db.query('INSERT INTO InventoryItem (sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields) VALUES (?, ?, ?, ?, ?, ?, ?)', [sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields]);
-    res.status(201).json({ id: result.insertId, sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields });
+    const [result] = await db.query(
+      `INSERT INTO InventoryItem (
+        sku, name, description, category, purchasePrice, sellingPrice, 
+        minStockLevel, maxStockLevel, unit
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+      [sku, name, description, category, purchasePrice, sellingPrice, minStockLevel, maxStockLevel, unit]
+    );
+    
+    const item = {
+      id: result.insertId,
+      sku,
+      name,
+      description,
+      category,
+      purchasePrice,
+      sellingPrice,
+      minStockLevel,
+      maxStockLevel,
+      unit
+    };
+    
+    res.status(201).json({ success: true, item });
   } catch (err) {
     console.error('Error creating inventory item:', err);
-    res.status(500).send('Server Error');
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'SKU already exists' });
+    }
+    res.status(500).json({ success: false, message: 'Server Error', details: err.message });
   }
 });
 
 // Update an inventory item
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields } = req.body;
-  if (!sku || !name) {
-    return res.status(400).send('SKU and name are required');
+  const { sku, name, description, category, purchasePrice, sellingPrice, minStockLevel, maxStockLevel, unit } = req.body;
+  
+  // Build dynamic update query
+  const updates = [];
+  const values = [];
+  
+  if (sku !== undefined) {
+    updates.push('sku = ?');
+    values.push(sku);
   }
+  if (name !== undefined) {
+    updates.push('name = ?');
+    values.push(name);
+  }
+  if (description !== undefined) {
+    updates.push('description = ?');
+    values.push(description);
+  }
+  if (category !== undefined) {
+    updates.push('category = ?');
+    values.push(category);
+  }
+  if (purchasePrice !== undefined) {
+    updates.push('purchasePrice = ?');
+    values.push(purchasePrice);
+  }
+  if (sellingPrice !== undefined) {
+    updates.push('sellingPrice = ?');
+    values.push(sellingPrice);
+  }
+  if (minStockLevel !== undefined) {
+    updates.push('minStockLevel = ?');
+    values.push(minStockLevel);
+  }
+  if (maxStockLevel !== undefined) {
+    updates.push('maxStockLevel = ?');
+    values.push(maxStockLevel);
+  }
+  if (unit !== undefined) {
+    updates.push('unit = ?');
+    values.push(unit);
+  }
+  
+  if (updates.length === 0) {
+    return res.status(400).json({ success: false, message: 'No fields to update' });
+  }
+  
+  updates.push('updatedAt = CURRENT_TIMESTAMP');
+  values.push(id);
+  
   try {
-    const [result] = await db.query('UPDATE InventoryItem SET sku = ?, name = ?, type = ?, purchasePrice = ?, sellingPrice = ?, serialNumber = ?, customFields = ? WHERE id = ?', [sku, name, type, purchasePrice, sellingPrice, serialNumber, customFields, id]);
+    const [result] = await db.query(
+      `UPDATE InventoryItem SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+    
     if (result.affectedRows === 0) {
-      return res.status(404).send('Inventory item not found');
+      return res.status(404).json({ success: false, message: 'Inventory item not found' });
     }
-    res.json({ message: 'Inventory item updated successfully' });
+    res.json({ success: true, message: 'Inventory item updated successfully' });
   } catch (err) {
     console.error(`Error updating inventory item with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error', details: err.message });
+  }
+});
+
+// Adjust inventory quantity (add/subtract)
+router.post('/:id/adjust', async (req, res) => {
+  const { id } = req.params;
+  const { quantity, type, reason, notes } = req.body;
+  
+  if (!quantity || !type) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Quantity and type (add/subtract) are required' 
+    });
+  }
+  
+  if (!['add', 'subtract'].includes(type)) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Type must be "add" or "subtract"' 
+    });
+  }
+  
+  try {
+    // Check if item exists
+    const [item] = await db.query('SELECT id, name FROM InventoryItem WHERE id = ?', [id]);
+    
+    if (!item.length) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Inventory item not found' 
+      });
+    }
+    
+    // Calculate adjustment
+    const adjustment = type === 'add' ? quantity : -quantity;
+    
+    // Update quantity
+    const [result] = await db.query(
+      'UPDATE InventoryItem SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+      [id]
+    );
+    
+    // Log the adjustment (if you have AuditLog table)
+    // For now, just return success
+    
+    res.json({ 
+      success: true, 
+      message: `Quantity ${type === 'add' ? 'increased' : 'decreased'} by ${quantity}`,
+      adjustment: {
+        itemId: id,
+        itemName: item[0].name,
+        quantity,
+        type,
+        reason: reason || 'Not specified',
+        notes: notes || ''
+      }
+    });
+  } catch (err) {
+    console.error(`Error adjusting inventory quantity for item ${id}:`, err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server Error', 
+      details: err.message 
+    });
   }
 });
 

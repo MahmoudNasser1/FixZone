@@ -1,85 +1,17 @@
-🚀 Fix Zone Backend Server is running on port 3001
-📊 API Base URL: http://localhost:3001/api
-🏥 Health Check: http://localhost:3001/health
-User object in authorizeMiddleware: {
-  id: 1,
-  role: 1,
-  name: 'محمود ناصر',
-  iat: 1759240921,
-  exp: 1759269721
-}
-User role in authorizeMiddleware: 1
-Error fetching invoices: Error: Unknown column 'c.name' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at getAllInvoices (/opt/lampp/htdocs/FixZone/backend/controllers/invoicesController.js:124:35)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '        SELECT \n' +
-    '          i.*,\n' +
-    '          c.name as customerName,\n' +
-    '          c.phone as customerPhone,\n' +
-    '          c.email as customerEmail,\n' +
-    '          d.model as deviceModel,\n' +
-    '          d.brand as deviceBrand,\n' +
-    '          rr.reportedProblem as problemDescription,\n' +
-    '          COUNT(ii.id) as itemsCount,\n' +
-    '          COALESCE(SUM(ii.quantity * ii.unitPrice), 0) as calculatedTotal\n' +
-    '        FROM Invoice i\n' +
-    '        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id\n' +
-    '        LEFT JOIN Device d ON rr.deviceId = d.id\n' +
-    '        LEFT JOIN Customer c ON rr.customerId = c.id\n' +
-    '        LEFT JOIN InvoiceItem ii ON i.id = ii.invoiceId\n' +
-    '        WHERE i.deletedAt IS NULL\n' +
-    '        GROUP BY i.id\n' +
-    '        ORDER BY i.createdAt DESC\n' +
-    '        LIMIT 10 OFFSET 0\n' +
-    '      ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'c.name' in 'field list'"
-}
-Error fetching invoices: Error: Unknown column 'c.name' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at getAllInvoices (/opt/lampp/htdocs/FixZone/backend/controllers/invoicesController.js:124:35)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '        SELECT \n' +
-    '          i.*,\n' +
-    '          c.name as customerName,\n' +
-    '          c.phone as customerPhone,\n' +
-    '          c.email as customerEmail,\n' +
-    '          d.model as deviceModel,\n' +
-    '          d.brand as deviceBrand,\n' +
-    '          rr.reportedProblem as problemDescription,\n' +
-    '          COUNT(ii.id) as itemsCount,\n' +
-    '          COALESCE(SUM(ii.quantity * ii.unitPrice), 0) as calculatedTotal\n' +
-    '        FROM Invoice i\n' +
-    '        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id\n' +
-    '        LEFT JOIN Device d ON rr.deviceId = d.id\n' +
-    '        LEFT JOIN Customer c ON rr.customerId = c.id\n' +
-    '        LEFT JOIN InvoiceItem ii ON i.id = ii.invoiceId\n' +
-    '        WHERE i.deletedAt IS NULL\n' +
-    '        GROUP BY i.id\n' +
-    '        ORDER BY i.createdAt DESC\n' +
-    '        LIMIT 10 OFFSET 0\n' +
-    '      ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'c.name' in 'field list'"
-}
+/opt/lampp/htdocs/FixZone/backend/routes/repairRequestServices.js:65
+    return res.status(400).json({ error: 'repairRequestId, serviceId, technicianId, and price are required');
+                                                                                                           ^
+
+SyntaxError: Unexpected token ')'
+    at wrapSafe (node:internal/modules/cjs/loader:1638:18)
+    at Module._compile (node:internal/modules/cjs/loader:1680:20)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (/opt/lampp/htdocs/FixZone/backend/app.js:50:37)
+
+Node.js v22.20.0

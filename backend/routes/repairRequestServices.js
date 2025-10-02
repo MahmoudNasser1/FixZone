@@ -6,11 +6,19 @@ const db = require('../db');
 router.get('/', async (req, res) => {
   try {
     const { repairRequestId } = req.query;
+    
+    // Validate repairRequestId is numeric if provided
+    if (repairRequestId && isNaN(parseInt(repairRequestId))) {
+      return res.status(400).json({ 
+        error: 'Invalid repairRequestId - must be numeric' 
+      });
+    }
+    
     let query = `
       SELECT 
         rrs.*,
-        s.name as serviceName,
-        u.name as technicianName
+        s.serviceName,
+        CONCAT(u.firstName, ' ', u.lastName) as technicianName
       FROM RepairRequestService rrs
       LEFT JOIN Service s ON rrs.serviceId = s.id
       LEFT JOIN User u ON rrs.technicianId = u.id
@@ -19,7 +27,7 @@ router.get('/', async (req, res) => {
     const params = [];
     if (repairRequestId) {
       query += ' WHERE rrs.repairRequestId = ?';
-      params.push(repairRequestId);
+      params.push(parseInt(repairRequestId));
     }
     
     query += ' ORDER BY rrs.createdAt DESC';
@@ -28,7 +36,10 @@ router.get('/', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Error fetching repair request services:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ 
+      error: 'Server Error',
+      details: err.message 
+    });
   }
 });
 
@@ -38,12 +49,12 @@ router.get('/:id', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM RepairRequestService WHERE id = ?', [id]);
     if (rows.length === 0) {
-      return res.status(404).send('Repair request service not found');
+      return res.status(404).json({ error: 'Repair request service not found' });
     }
     res.json(rows[0]);
   } catch (err) {
     console.error(`Error fetching repair request service with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -51,7 +62,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
   if (!repairRequestId || !serviceId || !technicianId || !price) {
-    return res.status(400).send('repairRequestId, serviceId, technicianId, and price are required');
+    return res.status(400).json({ error: 'repairRequestId, serviceId, technicianId, and price are required' });
   }
   try {
     const [result] = await db.query(
@@ -61,7 +72,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ id: result.insertId, repairRequestId, serviceId, technicianId, price, notes });
   } catch (err) {
     console.error('Error creating repair request service:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -70,7 +81,7 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
   if (!repairRequestId || !serviceId || !technicianId || !price) {
-    return res.status(400).send('repairRequestId, serviceId, technicianId, and price are required');
+    return res.status(400).json({ error: 'repairRequestId, serviceId, technicianId, and price are required' });
   }
   try {
     const [result] = await db.query(
@@ -78,12 +89,12 @@ router.put('/:id', async (req, res) => {
       [repairRequestId, serviceId, technicianId, price, notes, id]
     );
     if (result.affectedRows === 0) {
-      return res.status(404).send('Repair request service not found');
+      return res.status(404).json({ error: 'Repair request service not found' });
     }
     res.json({ message: 'Repair request service updated successfully' });
   } catch (err) {
     console.error(`Error updating repair request service with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -93,12 +104,12 @@ router.delete('/:id', async (req, res) => {
   try {
     const [result] = await db.query('DELETE FROM RepairRequestService WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Repair request service not found');
+      return res.status(404).json({ error: 'Repair request service not found' });
     }
     res.json({ message: 'Repair request service deleted successfully' });
   } catch (err) {
     console.error(`Error deleting repair request service with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 

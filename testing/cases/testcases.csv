@@ -1,0 +1,22 @@
+Module,TestID,Title,Type,Priority,Steps,Expected,Data
+Dashboard,DASH-API-001,جلب ملخص لوحة التحكم,API,P1,GET /api/dashboard/summary,200 وحقول إجمالية صحيحة,
+Repairs,REP-LST-001,قائمة الطلبات مع فلاتر,API,P1,GET /api/repairs?status=UNDER_REPAIR,نتائج متسقة,status=UNDER_REPAIR
+CRM,CRM-GET-001,جلب العملاء بدون page,API,P2,GET /api/customers,مصفوفة كاملة,
+CRM,CRM-SRCH-001,بحث بالاسم والرقم,API,P2,GET /api/customers/search?q=Ahmed&page=1,قائمة مع pagination,q=Ahmed
+Finance,INV-LST-001,قائمة الفواتير المحمية,API,P0,GET /api/invoices مع JWT,200,JWT
+Finance,PAY-LST-001,قائمة المدفوعات مع فلاتر,API,P1,GET /api/payments?paymentMethod=cash,200 وجسم {payments,pagination},paymentMethod=cash
+Finance,PAY-CRT-001,إنشاء مدفوعة صحيحة,API,P0,POST /api/payments,201 وتحديث حالة الفاتورة,invoiceId,amount=100,method=cash
+Finance,PAY-CRT-002,رفض مدفوعة تتجاوز المتبقي,API,P0,POST /api/payments,400,amount > remaining
+Inventory,INV-STM-001,جلب حركات المخزون,API,P1,GET /api/stockmovements,200,
+Inventory,INV-ALR-001,تنبيهات المخزون المنخفض,API,P1,GET /api/stock-alerts/low,200,
+Vendors,VND-CRT-001,إنشاء مورد,API,P2,POST /api/vendors,201,name,email
+Reports,RPT-FIN-001,تقرير مالي يومي,API,P2,GET /api/reports/financial/sales?date=today,200,date=today
+Users,AUT-LGN-001,تسجيل الدخول,API,P0,POST /api/auth/login,200 وإرجاع JWT,email,password
+Users,USR-LST-001,قائمة المستخدمين مع RBAC,API,P0,GET /api/users مع JWT Admin,200,JWT(Admin)
+Notifications,NOT-SND-001,إرسال إشعار,API,P2,POST /api/notifications/send,200,type,message
+Settings,SET-UPD-001,تحديث الإعدادات دفعة واحدة,API,P1,PUT /api/systemsettings,200,JSON payload
+Printing,PRN-TPL-001,قوالب الفواتير,API,P3,GET /api/invoicetemplates,200,
+ClientPortal,CP-TRK-001,تتبع طلب عبر توكن,API,P1,GET /api/repairs/tracking/<token>,200 أو 404,token
+E2E,E2E-PAY-001,تدفّق: إنشاء دفعة من الواجهة,E2E,P1,/payments → إضافة مدفوعة,ظهور الدفعة وتحديث الحالة,
+Security,SEC-SQLI-001,حماية SQLi بالحقل النصي,SEC,P0,POST /api/payments notes="';DROP TABLE--",400 أو تجاهل,
+Performance,PERF-PAY-001,أداء قائمة المدفوعات,PERF,P1,GET /api/payments?page=1&limit=50,p95 < 1200ms,

@@ -1,0 +1,13 @@
+{
+  "schema_consistency": false,
+  "api_test_pass_rate": 0,
+  "db_test_pass_rate": 70,
+  "e2e_executed": false,
+  "jwt_rbac_reviewed": false,
+  "verdict": "NOT_READY",
+  "blocking_issues": [
+    "Mismatch between DB schema and queries in payments/invoices",
+    "API test harness fetch error",
+    "Case-sensitive table names on Linux (Invoice/Payment)"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "bug_reports": [
+    {
+      "title": "API tests fail: fetch is not a function",
+      "module": "APIs/Test Harness",
+      "priority": "P0",
+      "severity": "Critical",
+      "environment": "Node v22, linux, test-backend-apis.js",
+      "steps": ["node test-backend-apis.js"],
+      "actual": "كل الاختبارات تفشل برسالة fetch is not a function",
+      "expected": "استخدام fetch صالح",
+      "suggested_fix": [
+        "استخدم globalThis.fetch على Node 18+",
+        "أو ESM import: const fetch = (await import('node-fetch')).default;"
+      ],
+      "labels": ["backend", "test", "env"]
+    },
+    {
+      "title": "Payments queries expect non-existent columns and case mismatch",
+      "module": "Finance/Payments",
+      "priority": "P0",
+      "severity": "High",
+      "environment": "MySQL on Linux (case-sensitive)",
+      "steps": ["GET /api/payments", "POST /api/payments"],
+      "actual": "استخدام invoice/payment بأحرف صغيرة وأعمدة غير موجودة",
+      "expected": "تطابق أسماء الجداول مع المخطط",
+      "suggested_fix": [
+        "استخدم Invoice/Payment بحالة أحرف صحيحة",
+        "أضف أعمدة Payment اللازمة وفهارس",
+        "أضف أعمدة Invoice للديو ديت والبايد ديت أو عدّل الاستعلامات"
+      ],
+      "labels": ["backend", "db"]
+    },
+    {
+      "title": "Invoices controller uses non-existent columns",
+      "module": "Finance/Invoices",
+      "priority": "P1",
+      "severity": "High",
+      "environment": "invoicesControllerSimple.js",
+      "steps": ["GET /api/invoices"],
+      "actual": "SELECT يستخدم invoiceNumber/issueDate و firstName/lastName",
+      "expected": "استخدام Customer.name وJOIN Device للموديل/البراند أو تعديل المخطط",
+      "suggested_fix": [
+        "استبدل concat باسم واحد",
+        "JOIN Device",
+        "أزل الأعمدة أو أضفها للمخطط"
+      ],
+      "labels": ["backend", "db"]
+    }
+  ]
+}

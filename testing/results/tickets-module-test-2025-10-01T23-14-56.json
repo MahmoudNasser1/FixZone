@@ -1,0 +1,56 @@
+{
+  "module": "Tickets/Repairs",
+  "timestamp": "2025-10-01T23:14:56.314Z",
+  "results": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "tests": [
+      {
+        "name": "Get all tickets",
+        "passed": true,
+        "details": "Found 5 tickets"
+      },
+      {
+        "name": "Get single ticket",
+        "passed": true,
+        "details": "Ticket ID: 7"
+      },
+      {
+        "name": "Create ticket (existing customer)",
+        "passed": 9,
+        "details": "Created ticket #9"
+      },
+      {
+        "name": "Create ticket (new customer)",
+        "passed": 10,
+        "details": "Created ticket #10"
+      },
+      {
+        "name": "Validation - missing fields",
+        "passed": true,
+        "details": "Correctly rejected"
+      },
+      {
+        "name": "Update ticket status",
+        "passed": true,
+        "details": "Updated to 'in_progress'"
+      },
+      {
+        "name": "Search tickets",
+        "passed": true,
+        "details": "Found 7 matching tickets"
+      },
+      {
+        "name": "Filter by status",
+        "passed": true,
+        "details": "Found 3 in_progress tickets"
+      },
+      {
+        "name": "Get non-existent ticket",
+        "passed": true,
+        "details": "Correctly returned 404"
+      }
+    ]
+  }
+}

@@ -123,4 +123,302 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Create new repair request
+router.post('/', async (req, res) => {
+  try {
+    const { 
+      customerId, 
+      customer,
+      deviceBrand, 
+      deviceModel, 
+      deviceType,
+      serialNumber,
+      devicePassword,
+      reportedProblem,
+      issueDescription,
+      customerNotes,
+      priority = 'medium',
+      estimatedCost
+    } = req.body;
+    
+    let finalCustomerId = customerId;
+    
+    // If customer object provided, create new customer
+    if (!finalCustomerId && customer) {
+      const { firstName, lastName, phone, email, address } = customer;
+      
+      if (!firstName || !phone) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Customer firstName and phone are required' 
+        });
+      }
+      
+      const [customerResult] = await db.query(
+        `INSERT INTO Customer (firstName, lastName, phone, email, address) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [firstName, lastName || '', phone, email || null, address || null]
+      );
+      
+      finalCustomerId = customerResult.insertId;
+    }
+    
+    // Validate required fields
+    if (!finalCustomerId) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Either customerId or customer object is required' 
+      });
+    }
+    
+    if (!deviceBrand || !deviceModel) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'deviceBrand and deviceModel are required' 
+      });
+    }
+    
+    const issue = issueDescription || reportedProblem;
+    if (!issue) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'issueDescription or reportedProblem is required' 
+      });
+    }
+    
+    // Create repair request
+    const [result] = await db.query(
+      `INSERT INTO RepairRequest (
+        customerId, deviceBrand, deviceModel, deviceType, serialNumber, 
+        devicePassword, issueDescription, customerNotes, priority, estimatedCost
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        finalCustomerId,
+        deviceBrand,
+        deviceModel,
+        deviceType || null,
+        serialNumber || null,
+        devicePassword || null,
+        issue,
+        customerNotes || null,
+        priority,
+        estimatedCost || null
+      ]
+    );
+    
+    // Fetch the created repair
+    const [rows] = await db.query(
+      `SELECT rr.*, CONCAT(c.firstName, ' ', c.lastName) as customerName
+       FROM RepairRequest rr
+       LEFT JOIN Customer c ON rr.customerId = c.id
+       WHERE rr.id = ?`,
+      [result.insertId]
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        id: result.insertId,
+        ...rows[0]
+      },
+      message: 'تم إنشاء طلب الإصلاح بنجاح'
+    });
+    
+  } catch (error) {
+    console.error('Error creating repair:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server Error',
+      details: error.message 
+    });
+  }
+});
+
+// Update repair request
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Check if repair exists
+    const [existing] = await db.query(
+      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL',
+      [id]
+    );
+    
+    if (!existing.length) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Repair request not found' 
+      });
+    }
+    
+    // Build update query
+    const allowedFields = [
+      'status', 'priority', 'estimatedCost', 'actualCost', 
+      'customerNotes', 'devicePassword', 'assignedTechnicianId'
+    ];
+    
+    const updateFields = [];
+    const updateValues = [];
+    
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        updateFields.push(`${field} = ?`);
+        updateValues.push(updates[field]);
+      }
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'No valid fields to update' 
+      });
+    }
+    
+    // Update timestamps based on status
+    if (updates.status) {
+      if (updates.status === 'in_progress' && !existing[0].startedAt) {
+        updateFields.push('startedAt = NOW()');
+      } else if (updates.status === 'completed') {
+        updateFields.push('completedAt = NOW()');
+      } else if (updates.status === 'delivered') {
+        updateFields.push('deliveredAt = NOW()');
+      }
+    }
+    
+    updateValues.push(id);
+    
+    await db.query(
+      `UPDATE RepairRequest SET ${updateFields.join(', ')} WHERE id = ?`,
+      updateValues
+    );
+    
+    // Fetch updated repair
+    const [rows] = await db.query(
+      `SELECT rr.*, CONCAT(c.firstName, ' ', c.lastName) as customerName
+       FROM RepairRequest rr
+       LEFT JOIN Customer c ON rr.customerId = c.id
+       WHERE rr.id = ?`,
+      [id]
+    );
+    
+    res.json({
+      success: true,
+      data: rows[0],
+      message: 'تم تحديث طلب الإصلاح بنجاح'
+    });
+    
+  } catch (error) {
+    console.error('Error updating repair:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server Error',
+      details: error.message 
+    });
+  }
+});
+
+// Delete repair request (soft delete)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [result] = await db.query(
+      'UPDATE RepairRequest SET deletedAt = NOW() WHERE id = ? AND deletedAt IS NULL',
+      [id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Repair request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'تم حذف طلب الإصلاح بنجاح'
+    });
+    
+  } catch (error) {
+    console.error('Error deleting repair:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server Error',
+      details: error.message 
+    });
+  }
+});
+
+// Get repair by tracking number (for public tracking page)
+router.get('/tracking', async (req, res) => {
+  try {
+    const { trackingToken, requestNumber } = req.query;
+    
+    if (!trackingToken && !requestNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tracking token or request number is required'
+      });
+    }
+    
+    let query = `
+      SELECT 
+        rr.*,
+        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      WHERE rr.deletedAt IS NULL
+    `;
+    
+    const params = [];
+    
+    if (trackingToken) {
+      query += ' AND rr.trackingToken = ?';
+      params.push(trackingToken);
+    } else {
+      query += ' AND rr.requestNumber = ?';
+      params.push(requestNumber);
+    }
+    
+    const [rows] = await db.query(query, params);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair request not found'
+      });
+    }
+    
+    const repair = rows[0];
+    
+    res.json({
+      success: true,
+      data: {
+        id: repair.id,
+        requestNumber: repair.requestNumber || `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(3, '0')}`,
+        status: repair.status,
+        deviceType: repair.deviceType,
+        deviceBrand: repair.deviceBrand,
+        deviceModel: repair.deviceModel,
+        problemDescription: repair.issueDescription,
+        estimatedCompletionDate: repair.estimatedCompletionDate,
+        createdAt: repair.createdAt,
+        updatedAt: repair.updatedAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error tracking repair:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

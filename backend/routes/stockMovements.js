@@ -2,10 +2,24 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get all stock movements
+// Get all stock movements with details
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM StockMovement');
+    const [rows] = await db.query(`
+      SELECT 
+        sm.*,
+        sm.movementType as type,
+        i.name as itemName,
+        w.name as warehouseName,
+        CONCAT(u.firstName, ' ', u.lastName) as userName,
+        sm.notes as reason
+      FROM StockMovement sm
+      LEFT JOIN InventoryItem i ON sm.inventoryItemId = i.id
+      LEFT JOIN Warehouse w ON sm.warehouseId = w.id
+      LEFT JOIN User u ON sm.createdBy = u.id
+      ORDER BY sm.createdAt DESC
+      LIMIT 100
+    `);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching stock movements:', err);

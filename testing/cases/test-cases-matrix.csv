@@ -1,0 +1,90 @@
+ID,Module,Test Title,Type,Priority,Steps,Expected Result,Role,Status
+TC-001,Auth,Login success with valid credentials,Integration,P0,"1. POST /api/auth/login with email='admin@fixzone.com' password='password'",200 OK + JWT token in response body,any,Pass
+TC-002,Auth,Login failure with invalid password,Integration,P0,"1. POST /api/auth/login with valid email but wrong password",401 Unauthorized + error message,any,Pass
+TC-003,Auth,Login failure with non-existent email,Integration,P1,"1. POST /api/auth/login with email that doesn't exist",401 Unauthorized + error message,any,Pass
+TC-004,Auth,Access protected route without token,Security,P0,"1. GET /api/tickets without Authorization header",401 Unauthorized,guest,Pass
+TC-005,Auth,Access protected route with expired token,Security,P0,"1. GET /api/tickets with expired JWT token",401 Unauthorized + token expired message,any,Pass
+TC-006,Auth,Access protected route with invalid token,Security,P0,"1. GET /api/tickets with malformed/invalid JWT",401 Unauthorized + invalid token message,any,Pass
+TC-007,Auth,Token refresh flow,Integration,P1,"1. Login to get refresh token 2. Use refresh token to get new access token",200 OK + new access token,any,Pending
+TC-008,Auth,Logout and invalidate token,Integration,P1,"1. Login 2. POST /api/auth/logout 3. Try to use same token",401 Unauthorized after logout,any,Pending
+TC-010,Tickets,Create ticket with existing customer,Integration,P0,"1. POST /api/tickets with valid customerId deviceBrand deviceModel reportedProblem","201 Created + ticket object with id ticketNumber status='received'",reception,Pass
+TC-011,Tickets,Create ticket with new customer inline,Integration,P0,"1. POST /api/tickets with customer object {firstName lastName phone} + device info","201 Created + ticket object + new customer created",reception,Pass
+TC-012,Tickets,Create ticket without customer info,Integration,P0,"1. POST /api/tickets without customerId or customer object",400 Bad Request + validation error,reception,Pass
+TC-013,Tickets,Create ticket full flow (E2E),E2E,P0,"1. Login as reception 2. Navigate to /tickets/new 3. Fill form 4. Submit","Ticket created + PDF receipt available + WhatsApp/Email sent",reception,Pass
+TC-014,Tickets,Get all tickets as admin,Integration,P0,"1. GET /api/tickets as admin user",200 OK + array of all tickets,admin,Pass
+TC-015,Tickets,Get only own tickets as client,Integration,P0,"1. GET /api/tickets as client user",200 OK + array of only client's tickets,client,Pass
+TC-016,Tickets,Update ticket status as technician,Integration,P0,"1. PUT /api/tickets/:id/status with status='in_progress' notes='بدء الفحص'",200 OK + updated ticket + notification sent,technician,Pass
+TC-017,Tickets,Update ticket status as client (forbidden),Security,P1,"1. Try PUT /api/tickets/:id/status as client user",403 Forbidden,client,Pass
+TC-018,Tickets,Delete ticket as admin,Integration,P1,"1. DELETE /api/tickets/:id as admin",200 OK + soft delete (deletedAt set),admin,Pending
+TC-019,Tickets,Delete ticket as non-admin (forbidden),Security,P1,"1. Try DELETE /api/tickets/:id as technician",403 Forbidden,technician,Pass
+TC-020,Tickets,Search tickets by customer name,Integration,P1,"1. GET /api/tickets?search='أحمد'",200 OK + filtered tickets matching search,reception,Pending
+TC-021,Tickets,Filter tickets by status,Integration,P1,"1. GET /api/tickets?status='in_progress'",200 OK + only in_progress tickets,any,Pending
+TC-022,Tickets,Get ticket details with full relations,Integration,P1,"1. GET /api/tickets/:id",200 OK + ticket with customer device technician data,any,Pass
+TC-030,Customers,Create customer with all fields,Integration,P0,"1. POST /api/customers with firstName lastName phone email address",201 Created + customer object with id,reception,Pass
+TC-031,Customers,Create customer with minimal fields,Integration,P0,"1. POST /api/customers with only firstName phone",201 Created + customer object,reception,Pass
+TC-032,Customers,Create customer with duplicate phone,Integration,P1,"1. POST /api/customers with phone that already exists",400 Bad Request + duplicate error,reception,Pass
+TC-033,Customers,Get all customers,Integration,P0,"1. GET /api/customers",200 OK + array of customers,any,Pass
+TC-034,Customers,Get customer by ID,Integration,P0,"1. GET /api/customers/:id",200 OK + customer object,any,Pass
+TC-035,Customers,Get non-existent customer,Integration,P1,"1. GET /api/customers/99999",404 Not Found,any,Pass
+TC-036,Customers,Update customer info,Integration,P0,"1. PUT /api/customers/:id with updated data",200 OK + updated customer,reception,Pass
+TC-037,Customers,Delete customer (soft delete),Integration,P1,"1. DELETE /api/customers/:id",200 OK + deletedAt set + tickets preserved,admin,Pass
+TC-038,Customers,Search customers by name,Integration,P1,"1. GET /api/customers?search='محمد'",200 OK + filtered customers,reception,Pending
+TC-039,Customers,Filter customers by active status,Integration,P2,"1. GET /api/customers?isActive=true",200 OK + only active customers,any,Pending
+TC-040,Inventory,Get all inventory items,Integration,P0,"1. GET /api/inventory",200 OK + array of items with quantities,any,Pass
+TC-041,Inventory,Get low stock items,Integration,P1,"1. GET /api/inventory?lowStock=true",200 OK + items where quantity < minQuantity,admin,Pending
+TC-042,Inventory,Create new inventory item,Integration,P0,"1. POST /api/inventory with name sku quantity minQuantity price",201 Created + item object,admin,Pending
+TC-043,Inventory,Adjust inventory quantity as admin,Integration,P0,"1. PUT /api/inventory/adjust with itemId quantity reason='restock'",200 OK + updated quantity + log entry created,admin,Pending
+TC-044,Inventory,Adjust inventory quantity as accountant,Integration,P0,"1. PUT /api/inventory/adjust as accountant",200 OK + updated quantity,accountant,Pending
+TC-045,Inventory,Adjust inventory as technician (forbidden),Security,P1,"1. Try PUT /api/inventory/adjust as technician",403 Forbidden,technician,Pending
+TC-046,Inventory,Use item in repair (decrement stock),Integration,P0,"1. POST /api/tickets/:id/use-part with itemId quantity",200 OK + item quantity decreased + added to ticket,technician,Pending
+TC-047,Inventory,Use more items than available,Integration,P0,"1. POST /api/tickets/:id/use-part with quantity > available",400 Bad Request + insufficient stock error,technician,Pending
+TC-048,Inventory,Transfer item between warehouses,Integration,P1,"1. POST /api/inventory/transfer with fromWarehouse toWarehouse itemId quantity",200 OK + quantities updated in both + transfer log,admin,Pending
+TC-049,Inventory,Concurrent inventory decrement (race condition),Performance,P1,"1. Simulate 12 concurrent requests to use 1 item from stock of 10",Only 10 succeed + 2 fail with insufficient stock + final quantity = 0,any,Pending
+TC-050,Invoices,Get all invoices,Integration,P0,"1. GET /api/invoices",200 OK + array of invoices,accountant,Pass
+TC-051,Invoices,Get invoice by ID,Integration,P0,"1. GET /api/invoices/:id",200 OK + invoice with customer and items,accountant,Pass
+TC-052,Invoices,Create invoice for completed ticket,Integration,P0,"1. POST /api/invoices with repairRequestId totalAmount",201 Created + invoice object,accountant,Pass
+TC-053,Invoices,Create invoice for in-progress ticket,Integration,P1,"1. POST /api/invoices for ticket with status != 'completed'",400 Bad Request + ticket not ready error,accountant,Pending
+TC-054,Invoices,Create invoice without repairRequestId,Integration,P0,"1. POST /api/invoices with only totalAmount",201 Created + standalone invoice,accountant,Pass
+TC-055,Invoices,Update invoice status,Integration,P1,"1. PUT /api/invoices/:id with status='sent'",200 OK + updated invoice,accountant,Pending
+TC-056,Invoices,Delete invoice (soft delete),Integration,P1,"1. DELETE /api/invoices/:id",200 OK + deletedAt set + payments soft deleted,admin,Pending
+TC-057,Invoices,Generate PDF invoice,Integration,P0,"1. GET /api/invoices/:id/pdf",200 OK + PDF file download,accountant,Pending
+TC-058,Invoices,Email invoice to customer,Integration,P1,"1. POST /api/invoices/:id/send-email",200 OK + email sent successfully,accountant,Pending
+TC-059,Invoices,Apply discount to invoice,Integration,P1,"1. PUT /api/invoices/:id with discount amount",200 OK + totalAmount recalculated,accountant,Pending
+TC-060,Payments,Create full payment for invoice,Integration,P0,"1. POST /api/payments with invoiceId amount=totalAmount method='cash'",201 Created + invoice status='paid',accountant,Pass
+TC-061,Payments,Create partial payment,Integration,P0,"1. POST /api/payments with amount < invoice.totalAmount",201 Created + invoice status='partially_paid',accountant,Pass
+TC-062,Payments,Create payment exceeding remaining amount,Integration,P0,"1. POST /api/payments with amount > remaining amount",400 Bad Request + amount exceeds remaining error,accountant,Pass
+TC-063,Payments,Get all payments for invoice,Integration,P0,"1. GET /api/payments?invoiceId=:id",200 OK + array of payments for that invoice,accountant,Pass
+TC-064,Payments,Get payment statistics,Integration,P1,"1. GET /api/payments/stats with date range",200 OK + total collected by method by period,accountant,Pass
+TC-065,Payments,Update payment amount,Integration,P2,"1. PUT /api/payments/:id with new amount",200 OK + updated + invoice totals recalculated,accountant,Pending
+TC-066,Payments,Delete payment,Integration,P1,"1. DELETE /api/payments/:id",200 OK + invoice totals recalculated,admin,Pending
+TC-067,Payments,Refund partial amount,Integration,P1,"1. POST /api/payments/refund with invoiceId amount reason",200 OK + refund payment created + invoice status updated,accountant,Pending
+TC-068,Payments,Complete payment flow (partial then full),Integration,P0,"1. Create invoice 2. Add partial payment 3. Add remaining payment",Invoice status changes: draft → partially_paid → paid,accountant,Pass
+TC-069,Payments,Create payment as technician (forbidden),Security,P1,"1. Try POST /api/payments as technician",403 Forbidden,technician,Pass
+TC-070,Reports,Get daily report,Integration,P1,"1. GET /api/reports/daily with date",200 OK + daily stats (tickets created completed revenue),admin,Pending
+TC-071,Reports,Get monthly report,Integration,P1,"1. GET /api/reports/monthly with year month",200 OK + monthly aggregated data,admin,Pending
+TC-072,Reports,Export daily report to Excel,Integration,P1,"1. GET /api/reports/daily/export with date",200 OK + Excel file download,admin,Pending
+TC-073,Reports,Get technician performance report,Integration,P2,"1. GET /api/reports/technicians with date range",200 OK + tickets completed by technician avg time,admin,Pending
+TC-074,Reports,Get inventory turnover report,Integration,P2,"1. GET /api/reports/inventory/turnover with date range",200 OK + items used frequency reorder suggestions,admin,Pending
+TC-075,Reports,Access reports as non-admin (forbidden),Security,P1,"1. Try GET /api/reports/* as reception",403 Forbidden for sensitive reports,reception,Pending
+TC-080,Users,Get all users (admin only),Integration,P1,"1. GET /api/users as admin",200 OK + array of all users,admin,Pending
+TC-081,Users,Get all users as non-admin (forbidden),Security,P1,"1. Try GET /api/users as technician",403 Forbidden,technician,Pending
+TC-082,Users,Create new user,Integration,P1,"1. POST /api/users with email password firstName lastName role",201 Created + user object (password hashed),admin,Pending
+TC-083,Users,Update user role,Integration,P1,"1. PUT /api/users/:id with new role",200 OK + user updated,admin,Pending
+TC-084,Users,Delete user (soft delete),Integration,P2,"1. DELETE /api/users/:id",200 OK + deletedAt set + user can't login,admin,Pending
+TC-085,Users,Change own password,Integration,P0,"1. PUT /api/users/me/password with currentPassword newPassword",200 OK + password updated,any,Pending
+TC-086,Users,Reset password flow,Integration,P1,"1. POST /api/auth/forgot-password 2. Receive email 3. POST /api/auth/reset-password with token",200 OK + password reset successfully,any,Pending
+TC-090,Security,SQL Injection in search field,Security,P0,"1. GET /api/customers?search=""'; DROP TABLE User; --""",200 OK + no SQL injection + User table intact,any,Pending
+TC-091,Security,SQL Injection in login,Security,P0,"1. POST /api/auth/login with email=""admin' OR '1'='1""",401 Unauthorized + no SQL injection,any,Pending
+TC-092,Security,XSS in text fields,Security,P1,"1. POST /api/tickets with reportedProblem=""<script>alert('xss')</script>""",400 Bad Request + input sanitized or rejected,reception,Pending
+TC-093,Security,File upload - large file rejection,Security,P0,"1. Upload file > 10MB to /api/upload",413 Payload Too Large,any,Pending
+TC-094,Security,File upload - disallowed file type,Security,P0,"1. Upload .exe file to /api/upload",400 Bad Request + file type not allowed,any,Pending
+TC-095,Security,Path traversal in file upload,Security,P0,"1. Upload with filename=""../../../etc/passwd""",400 Bad Request + path traversal prevented,any,Pending
+TC-096,Security,Brute force login protection (rate limiting),Security,P0,"1. Attempt login 10 times with wrong password",429 Too Many Requests after 5 attempts,any,Pending
+TC-097,Security,API rate limiting per user,Security,P1,"1. Send 150 requests rapidly to /api/tickets",429 Too Many Requests after threshold,any,Pending
+TC-098,Security,CSRF token validation,Security,P2,"1. Try state-changing request without CSRF token",403 Forbidden + CSRF token missing,any,Pending
+TC-099,Security,Sensitive data exposure in logs,Security,P1,"1. Check server logs for password/token leakage",Passwords and tokens not logged in plaintext,admin,Pending
+TC-100,Performance,Load test - create ticket endpoint,Performance,P1,"1. Run k6 with 50 concurrent users for 1 minute creating tickets",p95 response time < 500ms + error rate < 1%,load,Pending
+TC-101,Performance,Load test - dashboard stats endpoint,Performance,P1,"1. Run k6 with 100 concurrent users fetching dashboard",p95 response time < 1000ms + error rate < 1%,load,Pending
+TC-102,Performance,Database query optimization,Performance,P2,"1. Run EXPLAIN on slow queries 2. Check for missing indexes",All frequently-used queries have appropriate indexes,admin,Pending
+TC-103,Performance,Large dataset pagination,Performance,P1,"1. GET /api/tickets?page=1&limit=50 on DB with 10000+ tickets",Response time < 500ms + correct pagination,any,Pending
+

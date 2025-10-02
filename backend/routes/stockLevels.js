@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Error fetching stock levels:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -47,7 +47,7 @@ router.get('/low-stock', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Error fetching low stock items:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -62,7 +62,7 @@ router.get('/:id', async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error(`Error fetching stock level with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ id: result.insertId, inventoryItemId, warehouseId, quantity, minLevel, isLowStock });
   } catch (err) {
     console.error('Error creating stock level:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -122,7 +122,7 @@ router.put('/:id', async (req, res) => {
     res.json({ message: 'Stock level updated successfully' });
   } catch (err) {
     console.error(`Error updating stock level with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -137,7 +137,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Stock level deleted successfully' });
   } catch (err) {
     console.error(`Error deleting stock level with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 

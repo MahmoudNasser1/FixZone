@@ -1,0 +1,61 @@
+{
+  "module": "Customers",
+  "timestamp": "2025-10-01T23:29:58.725Z",
+  "results": {
+    "passed": 9,
+    "failed": 1,
+    "total": 10,
+    "tests": [
+      {
+        "name": "Get all customers",
+        "passed": true,
+        "details": "Found 6 customers"
+      },
+      {
+        "name": "Get single customer",
+        "passed": true,
+        "details": "Customer ID: 6"
+      },
+      {
+        "name": "Create customer (all fields)",
+        "passed": 7,
+        "details": "Created customer #7"
+      },
+      {
+        "name": "Create customer (minimal)",
+        "passed": 8,
+        "details": "Created customer #8"
+      },
+      {
+        "name": "Customer validation - missing fields",
+        "passed": true,
+        "details": "Correctly rejected"
+      },
+      {
+        "name": "Duplicate phone validation",
+        "passed": false,
+        "details": "Status: 201 - Should be 400"
+      },
+      {
+        "name": "Update customer",
+        "passed": true,
+        "details": "Customer updated"
+      },
+      {
+        "name": "Search customers",
+        "passed": true,
+        "details": "Found 9 matching customers"
+      },
+      {
+        "name": "Get customer with relations",
+        "passed": true,
+        "details": "Customer loaded"
+      },
+      {
+        "name": "Get non-existent customer",
+        "passed": true,
+        "details": "Correctly returned 404"
+      }
+    ]
+  }
+}

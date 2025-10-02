@@ -1,0 +1,51 @@
+{
+  "module": "Inventory",
+  "timestamp": "2025-10-01T23:46:09.545Z",
+  "results": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "tests": [
+      {
+        "name": "Get all inventory items",
+        "passed": true,
+        "details": "Found 3 items"
+      },
+      {
+        "name": "Get single item",
+        "passed": true,
+        "details": "Item ID: 1"
+      },
+      {
+        "name": "Create inventory item",
+        "passed": 4,
+        "details": "Created item #4"
+      },
+      {
+        "name": "Update item",
+        "passed": true,
+        "details": "Item updated"
+      },
+      {
+        "name": "Adjust quantity (restock)",
+        "passed": false,
+        "details": "Status: 404 - {\"error\":\"Route not found\",\"path\":\"/api/inventory/4/adjust\"}"
+      },
+      {
+        "name": "Get low stock items",
+        "passed": true,
+        "details": "Found 4 low stock items"
+      },
+      {
+        "name": "Search inventory",
+        "passed": true,
+        "details": "Found 4 matching items"
+      },
+      {
+        "name": "Get non-existent item",
+        "passed": true,
+        "details": "Correctly returned 404"
+      }
+    ]
+  }
+}

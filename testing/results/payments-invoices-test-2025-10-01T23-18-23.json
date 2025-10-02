@@ -1,0 +1,66 @@
+{
+  "module": "Payments & Invoices",
+  "timestamp": "2025-10-01T23:18:23.245Z",
+  "results": {
+    "passed": 2,
+    "failed": 9,
+    "total": 11,
+    "tests": [
+      {
+        "name": "Get all invoices",
+        "passed": false,
+        "details": "Status: 401"
+      },
+      {
+        "name": "Get single invoice",
+        "passed": false,
+        "details": "No invoices available to test"
+      },
+      {
+        "name": "Create invoice",
+        "passed": false,
+        "details": "Status: 401 - {\"message\":\"Token is not valid\"}"
+      },
+      {
+        "name": "Invoice validation - missing fields",
+        "passed": false,
+        "details": "Status: 401 - Should be 400"
+      },
+      {
+        "name": "Get all payments",
+        "passed": false,
+        "details": "Status: 200"
+      },
+      {
+        "name": "Get payment statistics",
+        "passed": false,
+        "details": "Status: 404"
+      },
+      {
+        "name": "Create payment",
+        "passed": false,
+        "details": "No invoice to pay (previous test failed)"
+      },
+      {
+        "name": "Create partial payment",
+        "passed": false,
+        "details": "Could not create test invoice"
+      },
+      {
+        "name": "Payment validation - missing fields",
+        "passed": true,
+        "details": "Correctly rejected"
+      },
+      {
+        "name": "Get payments by invoice",
+        "passed": false,
+        "details": "No invoice to test"
+      },
+      {
+        "name": "Get overdue payments",
+        "passed": true,
+        "details": "Found 0 overdue payment(s)"
+      }
+    ]
+  }
+}

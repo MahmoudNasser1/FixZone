@@ -86,7 +86,7 @@ router.post('/', auth, authorize([1]), async (req, res) => {
   }
   try {
     const [result] = await db.query(
-      'INSERT INTO Service (name, description, basePrice, isActive) VALUES (?, ?, ?, ?)',
+      'INSERT INTO Service (serviceName, description, basePrice, isActive) VALUES (?, ?, ?, ?)',
       [name, description, basePrice, isActive]
     );
     res.status(201).json({ id: result.insertId, name, description, basePrice, isActive });
@@ -105,7 +105,7 @@ router.put('/:id', auth, authorize([1]), async (req, res) => {
   }
   try {
     const [result] = await db.query(
-      'UPDATE Service SET name = ?, description = ?, basePrice = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
+      'UPDATE Service SET serviceName = ?, description = ?, basePrice = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
       [name, description, basePrice, isActive, id]
     );
     if (result.affectedRows === 0) {

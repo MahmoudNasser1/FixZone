@@ -12,4 +12,10 @@ router.get('/', invoicesController.getAllInvoices);
 // GET /api/invoices/stats - Get invoice statistics
 router.get('/stats', invoicesController.getInvoiceStats);
 
+// GET /api/invoices/:id - Get single invoice by ID
+router.get('/:id', invoicesController.getInvoiceById);
+
+// POST /api/invoices - Create new invoice
+router.post('/', invoicesController.createInvoice);
+
 module.exports = router;

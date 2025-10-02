@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     res.json({ message: 'Reports endpoint. Implement specific report logic here.' });
   } catch (err) {
     console.error('Error fetching reports:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -38,7 +38,7 @@ router.get('/daily-revenue', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching daily revenue:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -69,7 +69,7 @@ router.get('/monthly-revenue', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching monthly revenue:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -109,7 +109,10 @@ router.get('/expenses', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching expenses:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ 
+      error: 'Server Error',
+      details: err.message 
+    });
   }
 });
 
@@ -159,7 +162,7 @@ router.get('/profit-loss', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching profit-loss:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -204,7 +207,7 @@ router.get('/technician-performance', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching technician performance:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -233,7 +236,7 @@ router.get('/inventory-value', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching inventory value:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -269,7 +272,7 @@ router.get('/pending-payments', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching pending payments:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 

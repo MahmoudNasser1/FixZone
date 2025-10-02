@@ -1,0 +1,72 @@
+{
+  "project": "FixZone ERP",
+  "stack": {
+    "backend": "Node.js + Express + MySQL2",
+    "db": "MySQL (schema: migrations/fixzone_erp_full_schema.sql)",
+    "frontend": "React + Tailwind",
+    "e2e": "Playwright",
+    "test_scripts": [
+      "test-database-integration.js",
+      "test-backend-apis.js",
+      "test-e2e-playwright.js",
+      "run-complete-test-suite.js"
+    ]
+  },
+  "environment_setup": {
+    "hostnames": {
+      "backend": "http://localhost:3001",
+      "frontend": "http://localhost:3000"
+    },
+    "db": { "name": "FZ", "user": "root", "password": "", "port": 3306 },
+    "seed": [
+      "FIXZONE_DATABASE_COMPLETE.sql",
+      "migrations/fixzone_erp_full_schema.sql"
+    ],
+    "accounts": [ { "email": "admin@fixzone.com", "password": "password", "role": "Admin" } ]
+  },
+  "modules": [
+    {
+      "name": "Finance (Invoices & Payments)",
+      "tests": {
+        "unit": ["remainingAmount from SUM(Payment.amount)"],
+        "integration": ["payment changes invoice status"],
+        "api": [
+          "GET /api/invoices",
+          "GET /api/invoices/stats",
+          "GET /api/payments",
+          "POST /api/payments",
+          "GET /api/payments/stats/summary",
+          "GET /api/payments/overdue/list"
+        ],
+        "e2e": ["create invoice and partial payment"],
+        "security": ["JWT protected"],
+        "performance": ["p95 < 1200ms"]
+      }
+    },
+    { "name": "CRM (Customers)", "tests": { "integration": ["search + pagination"], "api": ["GET /api/customers", "GET /api/customers/:id"], "security": ["JWT on write ops"] } },
+    { "name": "Inventory" },
+    { "name": "Repairs" },
+    { "name": "Dashboard" },
+    { "name": "Users & Roles" },
+    { "name": "Reports" },
+    { "name": "Notifications" },
+    { "name": "Settings" },
+    { "name": "Printing" },
+    { "name": "Client Portal" }
+  ],
+  "sanity_regression_results": {
+    "backend_health": "OK",
+    "db_tests": {
+      "passed": ["connection","core_tables","relationships","existing_data","data_integrity","sql_injection"],
+      "failed": [
+        {"name":"payment_table_structure","detail":"Missing [userId,status]; Extra [createdBy]"},
+        {"name":"invoice_table_structure","detail":"Missing [amountPaid]; Extra [invoiceNumber, customerId, finalAmount, issueDate, paidDate, notes, createdBy, deletedAt]"},
+        {"name":"performance_query","detail":"Unknown column c.name"}
+      ],
+      "warnings": ["Missing index: idx_payment_method"]
+    },
+    "api_tests": { "failed_all": true, "root_issue": "fetch is not a function (node-fetch v3 with require)" },
+    "e2e": { "executed": false, "note": "run after frontend up" }
+  },
+  "release_readiness": { "schema_consistency": false, "api_test_pass_rate": 0, "db_test_pass_rate": 70, "e2e_executed": false, "verdict": "NOT_READY" }
+}
