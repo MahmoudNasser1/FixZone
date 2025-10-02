@@ -27,7 +27,7 @@ const navItems = [
       { href: '/repairs', label: 'طلبات الإصلاح', icon: Wrench, badge: '12' },
       { href: '/repairs/new', label: 'طلب إصلاح جديد', icon: FileText },
       { href: '/repairs/tracking', label: 'تتبع الطلبات', icon: Activity },
-      { href: '/services', label: 'الخدمات', icon: Wrench },
+      { href: '/services', label: 'كتالوج الخدمات', icon: Package },
       {
         label: 'أنواع الأجهزة',
         icon: Monitor,

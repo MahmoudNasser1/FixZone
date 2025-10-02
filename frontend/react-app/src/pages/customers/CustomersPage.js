@@ -8,11 +8,12 @@ import CustomerStatsCard from '../../components/ui/CustomerStatsCard';
 import DataView from '../../components/ui/DataView';
 import { Input } from '../../components/ui/Input';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import { 
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX, History,
-  Upload, File
+  Upload, File, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 const CustomersPage = () => {
@@ -40,11 +41,30 @@ const CustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [error, setError] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalItems, setTotalItems] = useState(0);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  
+  // Multi-select state
+  const [selectedCustomers, setSelectedCustomers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   // جلب البيانات من Backend
   useEffect(() => {
-    fetchCustomers();
-    fetchCompanies();
+    const loadData = async () => {
+      try {
+        await Promise.all([fetchCustomers(), fetchCompanies()]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    loadData();
   }, []);
 
   const fetchCustomers = async () => {
@@ -52,7 +72,6 @@ const CustomersPage = () => {
       setLoading(true);
       setError(null);
       const response = await apiService.getCustomers();
-      console.log('Customers response:', response);
       
       // التأكد من أن البيانات هي array
       let customersData = [];
@@ -69,7 +88,6 @@ const CustomersPage = () => {
         throw new Error('Failed to fetch customers');
       }
       
-      console.log('Customers loaded:', customersData);
       setCustomers(customersData);
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -100,6 +118,70 @@ const CustomersPage = () => {
     // لا حاجة لتنبيه هنا لتقليل الضوضاء
   };
 
+  // استيراد CSV
+  const handleImportCSV = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const text = await file.text();
+      const lines = text.split('\n');
+      const headers = lines[0].split(',');
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const values = line.split(',');
+        const customerData = {};
+        
+        headers.forEach((header, index) => {
+          customerData[header.trim()] = values[index] ? values[index].trim() : '';
+        });
+        
+        // تقسيم الاسم
+        const nameParts = customerData.name ? customerData.name.trim().split(' ') : [];
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        if (!firstName || !customerData.phone) continue;
+        
+        try {
+          const response = await apiService.createCustomer({
+            firstName: firstName,
+            lastName: lastName,
+            phone: customerData.phone,
+            email: customerData.email || null,
+            address: customerData.address || null,
+            status: customerData.status || 'active'
+          });
+          
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error('Error importing customer:', error);
+          errorCount++;
+        }
+      }
+      
+      notify('success', `تم استيراد ${successCount} عميل بنجاح${errorCount > 0 ? ` (${errorCount} فشل)` : ''}`);
+      fetchCustomers(); // تحديث القائمة
+    } catch (error) {
+      console.error('Error reading CSV:', error);
+      notify('error', 'خطأ في قراءة ملف CSV');
+    } finally {
+      setLoading(false);
+      event.target.value = ''; // Reset input
+    }
+  };
+
   // قائمة إجراءات الشريط
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef(null);
@@ -110,9 +192,13 @@ const CustomersPage = () => {
   const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا العميل؟')) {
       try {
-        await apiService.delete(`/customers/${customerId}`);
-        setCustomers(prevCustomers => (prevCustomers || []).filter(customer => customer.id !== customerId));
-        notify('success', 'تم حذف العميل بنجاح');
+        const response = await apiService.deleteCustomer(customerId);
+        if (response.ok) {
+          setCustomers(prevCustomers => (prevCustomers || []).filter(customer => customer.id !== customerId));
+          notify('success', 'تم حذف العميل بنجاح');
+        } else {
+          throw new Error('Failed to delete customer');
+        }
       } catch (error) {
         console.error('Error deleting customer:', error);
         notify('error', 'خطأ في حذف العميل');
@@ -123,6 +209,170 @@ const CustomersPage = () => {
   // تعديل عميل
   const handleEditCustomer = (customer) => {
     navigate(`/customers/${customer.id}/edit`);
+  };
+
+  // Helper function to get filtered customers
+  const getFilteredCustomers = () => {
+    let filtered = Array.isArray(customers) ? customers.filter(customer => {
+      const customerName = customer.name || (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : '');
+      const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (customer.phone && customer.phone.includes(searchTerm)) ||
+                           (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      if (selectedFilter === 'all') return matchesSearch;
+      if (selectedFilter === 'vip') {
+        const customFields = (() => {
+          try {
+            return typeof customer.customFields === 'string' 
+              ? JSON.parse(customer.customFields) 
+              : customer.customFields || {};
+          } catch {
+            return {};
+          }
+        })();
+        return matchesSearch && customFields.isVip === true;
+      }
+      if (selectedFilter === 'active') return matchesSearch && customer.status === 'active';
+      if (selectedFilter === 'inactive') return matchesSearch && customer.status === 'inactive';
+      return matchesSearch;
+    }) : [];
+
+    // تطبيق الترتيب
+    if (sortField && filtered.length > 0) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue = a[sortField];
+        let bValue = b[sortField];
+
+        // معالجة الحقول الخاصة
+        if (sortField === 'name') {
+          aValue = a.name || (a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : '');
+          bValue = b.name || (b.firstName && b.lastName ? `${b.firstName} ${b.lastName}` : '');
+        }
+
+        // معالجة الأرقام
+        if (sortField === 'id' || sortField === 'phone') {
+          aValue = parseInt(aValue) || 0;
+          bValue = parseInt(bValue) || 0;
+        }
+
+        // معالجة النصوص
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortDirection === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  // Pagination helpers
+  const getPaginatedCustomers = () => {
+    const filtered = getFilteredCustomers();
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  };
+
+  // Update total items when filtered customers change
+  useEffect(() => {
+    const filtered = getFilteredCustomers();
+    setTotalItems(filtered.length);
+  }, [customers, searchTerm, selectedFilter]);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // إعادة تعيين الصفحة عند تغيير البحث أو الفلتر
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedFilter]);
+
+  // Sorting handler
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // إذا كان نفس الحقل، غير الاتجاه
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // إذا كان حقل جديد، ابدأ بـ asc
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // إعادة تعيين الصفحة عند الترتيب
+  };
+
+  // Render sort icon
+  const renderSortIcon = (field) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+      <ArrowDown className="w-4 h-4 text-blue-600" />;
+  };
+
+  // Multi-select handlers
+  const handleSelectCustomer = (customerId) => {
+    setSelectedCustomers(prev => {
+      if (prev.includes(customerId)) {
+        return prev.filter(id => id !== customerId);
+      } else {
+        return [...prev, customerId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedCustomers([]);
+    } else {
+      const currentFilteredCustomers = getFilteredCustomers();
+      setSelectedCustomers(currentFilteredCustomers.map(customer => customer.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  // Update selectAll when selectedCustomers changes
+  useEffect(() => {
+    const currentFilteredCustomers = getFilteredCustomers();
+    
+    if (currentFilteredCustomers.length > 0) {
+      setSelectAll(selectedCustomers.length === currentFilteredCustomers.length);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedCustomers, customers, searchTerm, selectedFilter]);
+
+  // Bulk delete customers
+  const handleBulkDelete = async () => {
+    if (selectedCustomers.length === 0) {
+      notify('warning', 'يرجى اختيار عميل واحد على الأقل');
+      return;
+    }
+
+    if (window.confirm(`هل أنت متأكد من حذف ${selectedCustomers.length} عميل؟`)) {
+      try {
+        const deletePromises = selectedCustomers.map(id => apiService.deleteCustomer(id));
+        await Promise.all(deletePromises);
+        
+        setCustomers(prevCustomers => 
+          prevCustomers.filter(customer => !selectedCustomers.includes(customer.id))
+        );
+        setSelectedCustomers([]);
+        notify('success', `تم حذف ${selectedCustomers.length} عميل بنجاح`);
+      } catch (error) {
+        console.error('Error bulk deleting customers:', error);
+        notify('error', 'خطأ في حذف العملاء');
+      }
+    }
   };
 
   // عرض تفاصيل عميل
@@ -280,9 +530,44 @@ const CustomersPage = () => {
   // تعريف الأعمدة للجدول
   const columns = [
     {
+      id: 'id',
+      key: 'id',
+      header: (
+        <button
+          onClick={() => handleSort('id')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          ID
+          {renderSortIcon('id')}
+        </button>
+      ),
+      label: 'رقم العميل',
+      description: 'رقم العميل',
+      defaultVisible: true,
+      accessorKey: 'id',
+      cell: ({ row }) => {
+        const customer = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+              #{customer.id}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
       id: 'name',
       key: 'name',
-      header: 'الاسم',
+      header: (
+        <button
+          onClick={() => handleSort('name')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          الاسم
+          {renderSortIcon('name')}
+        </button>
+      ),
       label: 'الاسم',
       description: 'اسم العميل',
       defaultVisible: true,
@@ -305,7 +590,15 @@ const CustomersPage = () => {
     {
       id: 'contact',
       key: 'contact',
-      header: 'معلومات الاتصال',
+      header: (
+        <button
+          onClick={() => handleSort('phone')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          معلومات الاتصال
+          {renderSortIcon('phone')}
+        </button>
+      ),
       label: 'معلومات الاتصال',
       description: 'رقم الهاتف والبريد الإلكتروني',
       defaultVisible: true,
@@ -507,14 +800,24 @@ const CustomersPage = () => {
       requiresConfirmation: true,
       confirmMessage: 'هل أنت متأكد من حذف العملاء المحددين؟ هذا الإجراء لا يمكن التراجع عنه.',
       confirmLabel: 'حذف',
-      handler: (selectedIds) => {
+      handler: async (selectedIds) => {
         if (!selectedIds || selectedIds.length === 0) {
           notify('warning', 'لم تقم بتحديد أي عميل');
           return;
         }
-        notify('success', `تم حذف ${selectedIds.length} عميل`);
-        // هنا يمكن إضافة منطق الحذف الفعلي
-        console.log('حذف العملاء:', selectedIds);
+        
+        try {
+          const deletePromises = selectedIds.map(id => apiService.deleteCustomer(id));
+          await Promise.all(deletePromises);
+          
+          setCustomers(prevCustomers => 
+            prevCustomers.filter(customer => !selectedIds.includes(customer.id))
+          );
+          notify('success', `تم حذف ${selectedIds.length} عميل بنجاح`);
+        } catch (error) {
+          console.error('Error bulk deleting customers:', error);
+          notify('error', 'خطأ في حذف العملاء');
+        }
       }
     }
   ];
@@ -706,30 +1009,7 @@ const CustomersPage = () => {
   };
 
   // فلترة العملاء
-        const filteredCustomers = Array.isArray(customers) ? customers.filter(customer => {
-    const customerName = customer.name || (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : '');
-    const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (customer.phone && customer.phone.includes(searchTerm)) ||
-                         (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    if (selectedFilter === 'all') return matchesSearch;
-    if (selectedFilter === 'vip') {
-      const customFields = (() => {
-        try {
-          return typeof customer.customFields === 'string' 
-            ? JSON.parse(customer.customFields) 
-            : customer.customFields || {};
-        } catch {
-          return {};
-        }
-      })();
-      return matchesSearch && customFields.isVip;
-    }
-    if (selectedFilter === 'active') return matchesSearch && customer.status === 'active';
-    if (selectedFilter === 'inactive') return matchesSearch && customer.status === 'inactive';
-    
-    return matchesSearch;
-  }) : [];
+  const filteredCustomers = getPaginatedCustomers();
 
   // حساب الإحصائيات
   const stats = {
@@ -790,63 +1070,67 @@ const CustomersPage = () => {
       )}
 
       {/* الإحصائيات السريعة */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600" />
+      {loading ? (
+        <CardLoadingSkeleton count={4} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">إجمالي العملاء</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
               </div>
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">إجمالي العملاء</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <UserCheck className="w-6 h-6 text-yellow-600" />
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <UserCheck className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">عملاء VIP</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.vip}</p>
+                </div>
               </div>
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">عملاء VIP</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.vip}</p>
-              </div>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UserCheck className="w-6 h-6 text-green-600" />
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <UserCheck className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">نشط</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
+                </div>
               </div>
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">نشط</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
-              </div>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <UserX className="w-6 h-6 text-red-600" />
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <UserX className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">غير نشط</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
+                </div>
               </div>
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">غير نشط</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
-              </div>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-      </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        </div>
+      )}
 
       {/* أدوات البحث والفلترة */}
       <SimpleCard>
@@ -904,6 +1188,10 @@ const CustomersPage = () => {
                   <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleDownloadCSVTemplate(); closeActions(); }}>
                     <Download className="w-4 h-4 ml-2" /> تنزيل قالب CSV
                   </button>
+                  <label className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <Upload className="w-4 h-4 ml-2" /> استيراد من CSV
+                    <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
+                  </label>
                 </div>
               )}
             </div>
@@ -912,36 +1200,130 @@ const CustomersPage = () => {
       </SimpleCard>
 
       {/* عرض البيانات بأنماط مختلفة */}
-      <DataView
-        data={filteredCustomers}
-        columns={columns}
-        viewModes={['cards', 'table', 'list', 'grid']}
-        defaultViewMode="cards"
-        enableBulkActions={true}
+      {loading ? (
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <TableLoadingSkeleton rows={10} columns={6} />
+          </SimpleCardContent>
+        </SimpleCard>
+      ) : (
+        <DataView
+          data={filteredCustomers}
+          columns={columns}
+          viewModes={['cards', 'table', 'list', 'grid']}
+          defaultViewMode="cards"
+          enableBulkActions={true}
         enableColumnToggle={true}
         bulkActions={bulkActions}
         storageKey="customers"
         renderCard={renderCard}
-        renderListItem={renderListItem}
-        renderGridItem={renderGridItem}
-        onItemClick={handleCustomerClick}
-        onEdit={handleEditCustomer}
-        onView={handleViewCustomer}
-        loading={loading}
-        emptyState={
-          <div className="text-center py-12">
-            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">لا توجد عملاء</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">ابدأ بإضافة عميل جديد للنظام</p>
-            <Link to="/customers/new">
-              <SimpleButton>
-                <Plus className="w-4 h-4 ml-2" />
-                إضافة عميل جديد
-              </SimpleButton>
-            </Link>
+          renderListItem={renderListItem}
+          renderGridItem={renderGridItem}
+          onItemClick={handleCustomerClick}
+          onEdit={handleEditCustomer}
+          onView={handleViewCustomer}
+          loading={false}
+          emptyState={
+            <div className="text-center py-12">
+              <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">لا توجد عملاء</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">ابدأ بإضافة عميل جديد للنظام</p>
+              <Link to="/customers/new">
+                <SimpleButton>
+                  <Plus className="w-4 h-4 ml-2" />
+                  إضافة عميل جديد
+                </SimpleButton>
+              </Link>
+            </div>
+          }
+        />
+      )}
+
+      {/* Pagination Controls */}
+      {totalItems > 0 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              عرض {((currentPage - 1) * itemsPerPage) + 1} إلى {Math.min(currentPage * itemsPerPage, totalItems)} من {totalItems} عميل
+            </span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={10}>10 لكل صفحة</option>
+              <option value={20}>20 لكل صفحة</option>
+              <option value={50}>50 لكل صفحة</option>
+              <option value={100}>100 لكل صفحة</option>
+            </select>
           </div>
-        }
-      />
+          
+          <div className="flex items-center space-x-1 space-x-reverse">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              الأول
+            </SimpleButton>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              السابق
+            </SimpleButton>
+            
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <SimpleButton
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={currentPage === pageNum ? "bg-blue-600 text-white" : ""}
+                >
+                  {pageNum}
+                </SimpleButton>
+              );
+            })}
+            
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              التالي
+            </SimpleButton>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              الأخير
+            </SimpleButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

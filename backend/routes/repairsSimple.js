@@ -38,25 +38,36 @@ router.get('/', async (req, res) => {
     const [rows] = await db.query(query, queryParams);
     
     // تحويل البيانات لتتوافق مع Frontend
-    const formattedData = rows.map(row => ({
-      id: row.id,
-      requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(3, '0')}`,
-      customerName: row.customerName || 'غير محدد',
-      customerPhone: row.customerPhone || 'غير محدد',
-      customerEmail: row.customerEmail || 'غير محدد',
-      deviceType: row.deviceType || 'غير محدد',
-      deviceBrand: row.deviceBrand || 'غير محدد',
-      deviceModel: row.deviceModel || 'غير محدد',
-      problemDescription: row.issueDescription || 'لا توجد تفاصيل محددة للمشكلة',
-      status: row.status || 'pending',
-      priority: row.priority || 'medium',
-      estimatedCost: row.estimatedCost || '0.00',
-      actualCost: row.actualCost || null,
-      expectedDeliveryDate: row.expectedDeliveryDate || null,
-      notes: row.notes || null,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt
-    }));
+    const formattedData = rows.map(row => {
+      // Map database status to frontend status
+      const statusMapping = {
+        'pending': 'RECEIVED',
+        'in_progress': 'UNDER_REPAIR',
+        'completed': 'COMPLETED',
+        'cancelled': 'CANCELLED',
+        'delivered': 'DELIVERED'
+      };
+      
+      return {
+        id: row.id,
+        requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(3, '0')}`,
+        customerName: row.customerName || 'غير محدد',
+        customerPhone: row.customerPhone || 'غير محدد',
+        customerEmail: row.customerEmail || 'غير محدد',
+        deviceType: row.deviceType || 'غير محدد',
+        deviceBrand: row.deviceBrand || 'غير محدد',
+        deviceModel: row.deviceModel || 'غير محدد',
+        problemDescription: row.issueDescription || 'لا توجد تفاصيل محددة للمشكلة',
+        status: statusMapping[row.status] || 'RECEIVED',
+        priority: row.priority || 'medium',
+        estimatedCost: row.estimatedCost || '0.00',
+        actualCost: row.actualCost || null,
+        expectedDeliveryDate: row.expectedDeliveryDate || null,
+        notes: row.notes || null,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      };
+    });
     
     res.json(formattedData);
     
@@ -190,8 +201,8 @@ router.post('/', async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO RepairRequest (
         customerId, deviceBrand, deviceModel, deviceType, serialNumber, 
-        devicePassword, issueDescription, customerNotes, priority, estimatedCost
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        devicePassword, issueDescription, customerNotes, priority, estimatedCost, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         finalCustomerId,
         deviceBrand,
@@ -202,7 +213,8 @@ router.post('/', async (req, res) => {
         issue,
         customerNotes || null,
         priority,
-        estimatedCost || null
+        estimatedCost || null,
+        'pending' // Set default status
       ]
     );
     
@@ -368,9 +380,13 @@ router.get('/tracking', async (req, res) => {
         rr.*,
         CONCAT(c.firstName, ' ', c.lastName) as customerName,
         c.phone as customerPhone,
-        c.email as customerEmail
+        c.email as customerEmail,
+        b.name as branchName,
+        CONCAT(u.firstName, ' ', u.lastName) as technicianName
       FROM RepairRequest rr
-      LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      LEFT JOIN User u ON rr.technicianId = u.id AND u.deletedAt IS NULL
       WHERE rr.deletedAt IS NULL
     `;
     
@@ -395,20 +411,36 @@ router.get('/tracking', async (req, res) => {
     
     const repair = rows[0];
     
+    // Map database status to frontend status
+    const statusMapping = {
+      'pending': 'RECEIVED',
+      'in_progress': 'UNDER_REPAIR',
+      'completed': 'COMPLETED',
+      'cancelled': 'CANCELLED',
+      'delivered': 'DELIVERED'
+    };
+
     res.json({
-      success: true,
-      data: {
-        id: repair.id,
-        requestNumber: repair.requestNumber || `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(3, '0')}`,
-        status: repair.status,
-        deviceType: repair.deviceType,
-        deviceBrand: repair.deviceBrand,
-        deviceModel: repair.deviceModel,
-        problemDescription: repair.issueDescription,
-        estimatedCompletionDate: repair.estimatedCompletionDate,
-        createdAt: repair.createdAt,
-        updatedAt: repair.updatedAt
-      }
+      id: repair.id,
+      requestNumber: repair.requestNumber || `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(3, '0')}`,
+      trackingToken: repair.trackingToken,
+      status: statusMapping[repair.status] || 'RECEIVED',
+      deviceType: repair.deviceType,
+      deviceBrand: repair.deviceBrand,
+      deviceModel: repair.deviceModel,
+      problemDescription: repair.issueDescription,
+      estimatedCost: repair.estimatedCost,
+      actualCost: repair.actualCost,
+      priority: repair.priority,
+      estimatedCompletionDate: repair.estimatedCompletionDate,
+      customerName: repair.customerName,
+      customerPhone: repair.customerPhone,
+      customerEmail: repair.customerEmail,
+      branchName: repair.branchName,
+      technicianName: repair.technicianName,
+      notes: repair.notes,
+      createdAt: repair.createdAt,
+      updatedAt: repair.updatedAt
     });
     
   } catch (error) {

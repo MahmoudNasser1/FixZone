@@ -8,7 +8,8 @@ import { Input } from '../../components/ui/Input';
 import { 
   Plus, Search, Filter, Download, RefreshCw, Building2,
   Phone, Mail, MapPin, Calendar, MoreHorizontal,
-  Eye, Edit, Trash2, Users, UserCheck, Globe
+  Eye, Edit, Trash2, Users, UserCheck, Globe,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 const CompaniesPage = () => {
@@ -17,6 +18,10 @@ const CompaniesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [error, setError] = useState(null);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
 
   // جلب البيانات من Backend
   useEffect(() => {
@@ -228,23 +233,79 @@ const CompaniesPage = () => {
     fetchCompanies();
   };
 
-  // فلترة الشركات
-  const filteredCompanies = companies.filter(company => {
-    console.log('Filtering company:', company, 'ID:', company.id, 'Type:', typeof company.id);
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
-      (company.name || '').toLowerCase().includes(searchLower) ||
-      (company.phone || '').includes(searchTerm) ||
-      (company.email || '').toLowerCase().includes(searchLower) ||
-      (company.industry || '').toLowerCase().includes(searchLower) ||
-      (company.address || '').toLowerCase().includes(searchLower);
-    
-    if (selectedFilter === 'all') return matchesSearch;
-    if (selectedFilter === 'active') return matchesSearch && company.status === 'active';
-    if (selectedFilter === 'inactive') return matchesSearch && company.status === 'inactive';
-    
-    return matchesSearch;
-  });
+  // Sorting handler
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // إذا كان نفس الحقل، غير الاتجاه
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // إذا كان حقل جديد، ابدأ بـ asc
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Render sort icon
+  const renderSortIcon = (field) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+      <ArrowDown className="w-4 h-4 text-blue-600" />;
+  };
+
+  // فلترة وترتيب الشركات
+  const getFilteredAndSortedCompanies = () => {
+    let filtered = companies.filter(company => {
+      console.log('Filtering company:', company, 'ID:', company.id, 'Type:', typeof company.id);
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = 
+        (company.name || '').toLowerCase().includes(searchLower) ||
+        (company.phone || '').includes(searchTerm) ||
+        (company.email || '').toLowerCase().includes(searchLower) ||
+        (company.industry || '').toLowerCase().includes(searchLower) ||
+        (company.address || '').toLowerCase().includes(searchLower);
+      
+      if (selectedFilter === 'all') return matchesSearch;
+      if (selectedFilter === 'active') return matchesSearch && company.status === 'active';
+      if (selectedFilter === 'inactive') return matchesSearch && company.status === 'inactive';
+      
+      return matchesSearch;
+    });
+
+    // تطبيق الترتيب
+    if (sortField && filtered.length > 0) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue = a[sortField];
+        let bValue = b[sortField];
+
+        // معالجة الأرقام
+        if (sortField === 'id') {
+          aValue = parseInt(aValue) || 0;
+          bValue = parseInt(bValue) || 0;
+        }
+
+        // معالجة النصوص
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortDirection === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredCompanies = getFilteredAndSortedCompanies();
   
   console.log('Filtered companies:', filteredCompanies);
 
@@ -410,17 +471,63 @@ const CompaniesPage = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">الشركة</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">معلومات الاتصال</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">القطاع</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                      <button
+                        onClick={() => handleSort('id')}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                      >
+                        ID
+                        {renderSortIcon('id')}
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                      >
+                        الشركة
+                        {renderSortIcon('name')}
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                      <button
+                        onClick={() => handleSort('phone')}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                      >
+                        معلومات الاتصال
+                        {renderSortIcon('phone')}
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                      <button
+                        onClick={() => handleSort('industry')}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                      >
+                        القطاع
+                        {renderSortIcon('industry')}
+                      </button>
+                    </th>
                     <th className="text-right py-3 px-4 font-medium text-gray-700">العملاء</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                      <button
+                        onClick={() => handleSort('status')}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                      >
+                        الحالة
+                        {renderSortIcon('status')}
+                      </button>
+                    </th>
                     <th className="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCompanies.filter(company => company.id).map((company, index) => (
                     <tr key={company.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          #{company.id}
+                        </span>
+                      </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">

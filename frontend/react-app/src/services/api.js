@@ -497,6 +497,11 @@ class ApiService {
     });
   }
 
+  // جلب إحصائيات الخدمة
+  async getServiceStats(id) {
+    return this.request(`/services/${id}/stats`);
+  }
+
   // ==================
   // Inventory APIs
   // ==================

@@ -199,4 +199,83 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Get service usage statistics
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get service details
+    const serviceSql = `
+      SELECT *
+      FROM Service
+      WHERE id = ? AND deletedAt IS NULL
+    `;
+    
+    const [serviceRows] = await db.query(serviceSql, [id]);
+    
+    if (!serviceRows.length) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    
+    const service = serviceRows[0];
+    
+    // Get usage statistics from RepairRequestServices
+    const statsSql = `
+      SELECT 
+        COUNT(rrs.id) as totalUsage,
+        COUNT(CASE WHEN rr.status = 'completed' THEN 1 END) as completedUsage,
+        COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rrs.price END), 0) as totalRevenue,
+        COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rrs.price END), 0) as avgPrice,
+        MAX(rr.receivedAt) as lastUsed,
+        MIN(rr.receivedAt) as firstUsed
+      FROM RepairRequestServices rrs
+      LEFT JOIN RepairRequest rr ON rrs.repairRequestId = rr.id AND rr.deletedAt IS NULL
+      WHERE rrs.serviceId = ?
+    `;
+    
+    const [statsRows] = await db.query(statsSql, [id]);
+    const stats = statsRows[0];
+    
+    // Get recent usage
+    const recentSql = `
+      SELECT 
+        rr.id,
+        rr.deviceType,
+        rr.deviceBrand,
+        rr.receivedAt,
+        rr.status,
+        rrs.price,
+        c.name as customerName
+      FROM RepairRequestServices rrs
+      LEFT JOIN RepairRequest rr ON rrs.repairRequestId = rr.id AND rr.deletedAt IS NULL
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      WHERE rrs.serviceId = ?
+      ORDER BY rr.receivedAt DESC
+      LIMIT 5
+    `;
+    
+    const [recentRows] = await db.query(recentSql, [id]);
+    
+    res.json({
+      service,
+      stats: {
+        totalUsage: stats.totalUsage || 0,
+        completedUsage: stats.completedUsage || 0,
+        totalRevenue: stats.totalRevenue || 0,
+        avgPrice: stats.avgPrice || 0,
+        lastUsed: stats.lastUsed,
+        firstUsed: stats.firstUsed
+      },
+      recentUsage: recentRows
+    });
+    
+  } catch (error) {
+    console.error('Error fetching service stats:', error);
+    res.status(500).json({ 
+      error: 'Server Error',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;

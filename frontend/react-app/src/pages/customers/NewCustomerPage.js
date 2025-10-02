@@ -105,17 +105,23 @@ const NewCustomerPage = () => {
     setSuccess(false);
 
     try {
+      // تقسيم الاسم إلى firstName و lastName
+      const nameParts = formData.name.trim().split(' ');
+      const firstName = nameParts[0] || formData.name;
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       // تحضير بيانات العميل للإرسال
       const customerData = {
-        name: formData.name,
+        firstName: firstName,
+        lastName: lastName,
         phone: formData.phone,
         email: formData.email || null,
         address: formData.address || null,
         companyId: formData.companyId || null,
+        notes: formData.notes || null,
         customFields: {
           isVip: formData.isVip,
-          preferredContact: formData.preferredContact,
-          notes: formData.notes
+          preferredContact: formData.preferredContact
         }
       };
 

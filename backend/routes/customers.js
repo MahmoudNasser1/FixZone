@@ -291,10 +291,10 @@ router.get('/:id/stats', async (req, res) => {
         COUNT(CASE WHEN rr.status = 'pending' THEN 1 END) as pendingRepairs,
         COUNT(CASE WHEN rr.status = 'in_progress' THEN 1 END) as inProgressRepairs,
         COUNT(CASE WHEN rr.status = 'cancelled' THEN 1 END) as cancelledRepairs,
-        COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rr.totalCost END), 0) as totalPaid,
-        COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rr.totalCost END), 0) as avgRepairCost,
-        MAX(rr.createdAt) as lastRepairDate,
-        MIN(rr.createdAt) as firstRepairDate
+        COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as totalPaid,
+        COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as avgRepairCost,
+        MAX(rr.receivedAt) as lastRepairDate,
+        MIN(rr.receivedAt) as firstRepairDate
       FROM Customer c
       LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
       WHERE c.id = ? AND c.deletedAt IS NULL
@@ -326,16 +326,15 @@ router.get('/:id/stats', async (req, res) => {
     const recentRepairsQuery = `
       SELECT 
         rr.id,
-        rr.reportedProblem,
+        rr.issueDescription as reportedProblem,
         rr.status,
-        rr.createdAt,
-        rr.totalCost,
-        d.deviceType,
-        d.brand
+        rr.receivedAt as createdAt,
+        rr.actualCost as totalCost,
+        rr.deviceType,
+        rr.deviceBrand as brand
       FROM RepairRequest rr
-      LEFT JOIN Device d ON rr.deviceId = d.id
       WHERE rr.customerId = ? AND rr.deletedAt IS NULL
-      ORDER BY rr.createdAt DESC
+      ORDER BY rr.receivedAt DESC
       LIMIT 3
     `;
     

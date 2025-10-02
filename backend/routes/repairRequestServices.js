@@ -62,7 +62,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
   if (!repairRequestId || !serviceId || !technicianId || !price) {
-    return res.status(400).json({ error: 'repairRequestId, serviceId, technicianId, and price are required' });
+    return res.status(400).json({ 
+      error: 'repairRequestId, serviceId, technicianId, and price are required' 
+    });
   }
   try {
     const [result] = await db.query(
@@ -81,7 +83,9 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
   if (!repairRequestId || !serviceId || !technicianId || !price) {
-    return res.status(400).json({ error: 'repairRequestId, serviceId, technicianId, and price are required' });
+    return res.status(400).json({ 
+      error: 'repairRequestId, serviceId, technicianId, and price are required' 
+    });
   }
   try {
     const [result] = await db.query(

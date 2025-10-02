@@ -29,6 +29,8 @@ import EditCompanyPage from './pages/companies/EditCompanyPage';
 import { RepairsPage } from './pages/repairs';
 import NewRepairPage from './pages/repairs/NewRepairPage';
 import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
+import RepairTrackingPage from './pages/repairs/RepairTrackingPage';
+import PublicRepairTrackingPage from './pages/repairs/PublicRepairTrackingPage';
 import RepairPrintPage from './pages/repairs/RepairPrintPage';
 import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
 import { SettingsProvider } from './context/SettingsContext';
@@ -62,7 +64,9 @@ import EditInvoicePage from './pages/invoices/EditInvoicePage';
 import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage, EditPaymentPage, PaymentReportsPage, OverduePaymentsPage } from './pages/payments';
 // import { VendorsPage } from './pages/vendors';
 // import { PurchaseOrdersPage } from './pages/PurchaseOrders';
-import ServicesCatalogPage from './pages/services/ServicesCatalogPage';
+import ServicesCatalogPage from './pages/services/ServicesCatalog';
+import ServiceForm from './pages/services/ServiceForm';
+import ServiceDetails from './pages/services/ServiceDetails';
 import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
 // Placeholder components removed; using real pages instead
@@ -107,6 +111,9 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Routes>
+                    {/* Public routes outside layout */}
+                    <Route path="track" element={<PublicRepairTrackingPage />} />
+                    
                     {/* Print routes outside layout to produce clean print pages */}
                     <Route path="repairs/:id/print" element={<RepairPrintPage />} />
                     <Route path="repairs/:id/print-qr" element={<RepairQRPrintPage />} />
@@ -118,10 +125,14 @@ function App() {
                       {/* Repairs */}
                       <Route path="repairs" element={<RepairsPage />} />
                       <Route path="repairs/new" element={<NewRepairPage />} />
+                      <Route path="repairs/tracking" element={<RepairTrackingPage />} />
                       <Route path="repairs/:id" element={<RepairDetailsPage />} />
 
                       {/* Services Catalog */}
                       <Route path="services" element={<ServicesCatalogPage />} />
+                      <Route path="services/new" element={<ServiceForm />} />
+                      <Route path="services/:id" element={<ServiceDetails />} />
+                      <Route path="services/:id/edit" element={<ServiceForm />} />
 
                       {/* Customers */}
                       <Route path="customers" element={<CustomersPage />} />
