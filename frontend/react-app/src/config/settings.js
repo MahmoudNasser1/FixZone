@@ -6,6 +6,7 @@ export const defaultSettings = {
   company: {
     name: 'FixZone',
     address: 'مول البستان التجاري - الدور الأرضي',
+    city: 'القاهرة',
     country: 'مصر',
     phone: '01270388043',
     website: '',
@@ -17,6 +18,7 @@ export const defaultSettings = {
     name: 'الجنيه المصري',
     locale: 'ar-EG',
     minimumFractionDigits: 2,
+    position: 'after', // before | after (رمز العملة بعد الرقم)
   },
   printing: {
     defaultCopy: 'customer', // customer | archive

@@ -62,6 +62,13 @@ class ApiService {
     });
   }
 
+  // حذف مستخدم (soft delete)
+  async deleteUser(id) {
+    return this.request(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // جلب الفنيين فقط من راوتر مخصص
   async listTechnicians() {
     return this.request('/technicians');
@@ -148,8 +155,9 @@ class ApiService {
   }
 
   // حذف شركة
-  async deleteCompany(id) {
-    return this.request(`/companies/${id}`, {
+  async deleteCompany(id, force = false) {
+    const url = force ? `/companies/${id}?force=true` : `/companies/${id}`;
+    return this.request(url, {
       method: 'DELETE',
     });
   }

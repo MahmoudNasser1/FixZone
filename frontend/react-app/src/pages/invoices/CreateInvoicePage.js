@@ -268,9 +268,9 @@ const CreateInvoicePage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="EGP">جنيه مصري (EGP)</option>
-                      <option value="SAR">ريال سعودي (SAR)</option>
+                      <option value="EGP">جنيه مصري (EGP) - ج.م</option>
                       <option value="USD">دولار أمريكي (USD)</option>
+                      <option value="EUR">يورو (EUR)</option>
                     </select>
                   </div>
                   <div>

@@ -49,13 +49,17 @@ const CompanyDetailsPage = () => {
 
   const fetchCompanyCustomers = async () => {
     try {
-      const response = await apiService.request(`/companies/${id}/customers`);
+      const response = await apiService.getCompanyCustomers(id);
       if (response.ok) {
         const data = await response.json();
         setCustomers(Array.isArray(data) ? data : []);
+      } else if (response.status === 404) {
+        // الشركة غير موجودة أو لا يوجد عملاء مرتبطين
+        setCustomers([]);
       }
     } catch (err) {
       console.error('Error fetching company customers:', err);
+      setCustomers([]); // في حالة الخطأ، اجعل القائمة فارغة
     }
   };
 

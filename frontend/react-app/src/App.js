@@ -28,6 +28,7 @@ import EditCompanyPage from './pages/companies/EditCompanyPage';
 // Repair Pages
 import { RepairsPage } from './pages/repairs';
 import NewRepairPage from './pages/repairs/NewRepairPage';
+import NewRepairPageEnhanced from './pages/repairs/NewRepairPageEnhanced';
 import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
 import RepairTrackingPage from './pages/repairs/RepairTrackingPage';
 import PublicRepairTrackingPage from './pages/repairs/PublicRepairTrackingPage';
@@ -36,6 +37,7 @@ import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
 import { SettingsProvider } from './context/SettingsContext';
 import SystemSettingsPage from './pages/settings/SystemSettingsPage';
 import UsersPage from './pages/users/UsersPage';
+import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
@@ -124,7 +126,8 @@ function App() {
 
                       {/* Repairs */}
                       <Route path="repairs" element={<RepairsPage />} />
-                      <Route path="repairs/new" element={<NewRepairPage />} />
+                      <Route path="repairs/new" element={<NewRepairPageEnhanced />} />
+                      <Route path="repairs/new-old" element={<NewRepairPage />} />
                       <Route path="repairs/tracking" element={<RepairTrackingPage />} />
                       <Route path="repairs/:id" element={<RepairDetailsPage />} />
 
@@ -183,7 +186,8 @@ function App() {
                       {/* <Route path="purchase-orders" element={<PurchaseOrdersPage />} /> */}
                       
                       <Route path="settings" element={<SystemSettingsPage />} />
-                       <Route path="users" element={<UsersPage />} />
+                       <Route path="users" element={<UsersPageEnhanced />} />
+                       <Route path="users-old" element={<UsersPage />} />
                       {/* Admin / Roles & Permissions */}
                       <Route
                         path="admin/roles"

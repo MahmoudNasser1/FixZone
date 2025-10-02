@@ -279,10 +279,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const { force } = req.query; // إضافة خيار force للحذف الإجباري
     
     // التحقق من وجود الشركة
     const [existingCompanyRows] = await db.query(
-      'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
+      'SELECT id, name FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
     
@@ -290,18 +291,35 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
-    // التحقق من وجود عملاء مرتبطين بالشركة
-    const [linkedCustomersRows] = await db.query(
-      'SELECT id FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
+    // التحقق من وجود عملاء نشطين مرتبطين بالشركة
+    const [activeCustomersRows] = await db.query(
+      'SELECT id, firstName, lastName FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
       [id]
     );
     
-    if (linkedCustomersRows.length > 0) {
+    // إذا كان هناك عملاء نشطون وليس force delete
+    if (activeCustomersRows.length > 0 && force !== 'true') {
+      console.log(`Company ${id} has ${activeCustomersRows.length} active customers:`, 
+        activeCustomersRows.map(c => `${c.firstName} ${c.lastName} (ID: ${c.id})`).join(', '));
+      
       return res.status(400).json({ 
-        error: 'لا يمكن حذف الشركة لأنها مرتبطة بعملاء',
-        customersCount: linkedCustomersRows.length,
-        message: `يوجد ${linkedCustomersRows.length} عميل مرتبط بهذه الشركة. يجب حذف العملاء أولاً أو نقلهم لشركة أخرى.`
+        error: 'لا يمكن حذف الشركة لأنها مرتبطة بعملاء نشطين',
+        customersCount: activeCustomersRows.length,
+        customers: activeCustomersRows.map(c => ({
+          id: c.id,
+          name: `${c.firstName} ${c.lastName}`
+        })),
+        message: `يوجد ${activeCustomersRows.length} عميل نشط مرتبط بهذه الشركة. يمكنك:\n1. حذف العملاء أولاً\n2. نقل العملاء لشركة أخرى\n3. إلغاء ربط العملاء بالشركة`
       });
+    }
+    
+    // إذا كان force delete، إلغاء ربط العملاء بالشركة أولاً
+    if (activeCustomersRows.length > 0 && force === 'true') {
+      await db.query(
+        'UPDATE Customer SET companyId = NULL WHERE companyId = ?',
+        [id]
+      );
+      console.log(`Unlinked ${activeCustomersRows.length} customers from company ${id}`);
     }
     
     // Soft delete للشركة
@@ -311,7 +329,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     );
     
     res.json({ 
-      message: 'تم حذف الشركة بنجاح'
+      message: 'تم حذف الشركة بنجاح',
+      unlinkedCustomers: activeCustomersRows.length
     });
   } catch (error) {
     console.error('Error deleting company:', error);

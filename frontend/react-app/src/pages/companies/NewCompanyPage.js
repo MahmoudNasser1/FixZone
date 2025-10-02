@@ -56,7 +56,7 @@ const NewCompanyPage = () => {
         website: formData.website.trim() || null,
         industry: formData.industry.trim() || null,
         description: formData.description.trim() || null,
-        status: formData.status,
+        isActive: formData.status === 'active', // تحويل status إلى isActive boolean
         taxNumber: formData.taxNumber.trim() || null,
         customFields: formData.customFields
       };

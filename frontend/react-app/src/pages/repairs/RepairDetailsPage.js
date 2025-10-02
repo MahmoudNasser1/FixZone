@@ -632,23 +632,47 @@ const RepairDetailsPage = () => {
       try {
         setAddSvcError('');
         console.log('Loading add service data...');
+        
         // تحميل قائمة الخدمات المتاحة
-        const svc = await repairService.getAvailableServices().catch(() => []);
-        console.log('Available services response:', svc);
-        setAvailableServices(Array.isArray(svc) ? svc : (svc.items || []));
+        const svcResponse = await repairService.getAvailableServices();
+        console.log('Available services response:', svcResponse);
+        
+        if (svcResponse && svcResponse.ok) {
+          const svcData = await svcResponse.json();
+          console.log('Services data:', svcData);
+          const servicesList = Array.isArray(svcData) ? svcData : (svcData.items || []);
+          setAvailableServices(servicesList);
+          console.log('Available services set:', servicesList.length);
+        } else {
+          console.error('Failed to load services');
+          setAvailableServices([]);
+        }
+        
         // تحميل الفنيين إن لم يكونوا محملين مسبقًا
         if (techOptions.length === 0) {
           try {
             setTechLoading(true);
-            const technicians = await apiService.listTechnicians();
-            console.log('Technicians response:', technicians);
-            setTechOptions(Array.isArray(technicians) ? technicians : (technicians.items || []));
+            const techResponse = await apiService.listTechnicians();
+            console.log('Technicians response:', techResponse);
+            
+            if (techResponse && techResponse.ok) {
+              const techData = await techResponse.json();
+              console.log('Technicians data:', techData);
+              const techList = Array.isArray(techData) ? techData : (techData.items || []);
+              setTechOptions(techList);
+              console.log('Tech options set:', techList.length);
+            } else {
+              console.error('Failed to load technicians');
+              setTechOptions([]);
+            }
           } catch (e) {
             console.error('Error loading technicians:', e);
+            setTechOptions([]);
           } finally {
             setTechLoading(false);
           }
         }
+        
         // تحميل الفواتير للربط الاختياري
         if (invoices.length === 0 && !invoicesLoading) {
           await loadInvoices();
@@ -1269,8 +1293,21 @@ const RepairDetailsPage = () => {
               {addSvcError && (
                 <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded">{addSvcError}</div>
               )}
+              
+              {/* معلومات التحميل */}
+              <div className="flex items-center gap-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                <div className="flex-1">
+                  <span className="font-medium">الخدمات:</span> {availableServices.length} متاحة
+                </div>
+                <div className="flex-1">
+                  <span className="font-medium">الفنيون:</span> {techOptions.length} متاح
+                </div>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الخدمة</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  الخدمة {availableServices.length > 0 && <span className="text-xs text-green-600">({availableServices.length} متاحة)</span>}
+                </label>
                 <select
                   name="serviceId"
                   value={svcForm.serviceId}
@@ -1280,14 +1317,20 @@ const RepairDetailsPage = () => {
                     setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
                   }}
                   className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                  disabled={availableServices.length === 0}
                 >
-                  <option value="">اختر الخدمة...</option>
+                  <option value="">
+                    {availableServices.length === 0 ? 'جاري التحميل...' : 'اختر الخدمة...'}
+                  </option>
                   {availableServices.map(s => (
                     <option key={s.id || s.serviceId} value={s.id || s.serviceId}>
-                      {s.name || s.serviceName || `خدمة #${s.id || s.serviceId}`}
+                      {s.serviceName || s.name || `خدمة #${s.id || s.serviceId}`} - {s.basePrice || s.price || '0'} ج.م
                     </option>
                   ))}
                 </select>
+                {availableServices.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-1">لا توجد خدمات متاحة. يرجى إضافة خدمات من صفحة كتالوج الخدمات.</p>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1295,13 +1338,28 @@ const RepairDetailsPage = () => {
                   <input type="number" name="price" value={svcForm.price} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
-                  <select name="technicianId" value={svcForm.technicianId} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg bg-white">
-                    <option value="">اختر الفني...</option>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    الفني {techOptions.length > 0 && <span className="text-xs text-green-600">({techOptions.length} متاح)</span>}
+                  </label>
+                  <select 
+                    name="technicianId" 
+                    value={svcForm.technicianId} 
+                    onChange={handleAddServiceChange} 
+                    className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                    disabled={techOptions.length === 0}
+                  >
+                    <option value="">
+                      {techOptions.length === 0 ? 'جاري التحميل...' : 'اختر الفني...'}
+                    </option>
                     {techOptions.map(t => (
-                      <option key={t.id} value={t.id}>{t.name || t.fullName || `فني #${t.id}`}</option>
+                      <option key={t.id} value={t.id}>
+                        {t.name || t.fullName || `${t.firstName} ${t.lastName}` || `فني #${t.id}`}
+                      </option>
                     ))}
                   </select>
+                  {techOptions.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">لا يوجد فنيون متاحون.</p>
+                  )}
                 </div>
               </div>
               <div>

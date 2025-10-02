@@ -140,6 +140,9 @@ router.post('/', async (req, res) => {
     const { 
       customerId, 
       customer,
+      customerName,
+      customerPhone,
+      customerEmail,
       deviceBrand, 
       deviceModel, 
       deviceType,
@@ -174,11 +177,26 @@ router.post('/', async (req, res) => {
       finalCustomerId = customerResult.insertId;
     }
     
+    // If customerName and customerPhone provided directly, create new customer
+    if (!finalCustomerId && customerName && customerPhone) {
+      const nameParts = customerName.trim().split(' ');
+      const firstName = nameParts[0] || customerName;
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      const [customerResult] = await db.query(
+        `INSERT INTO Customer (firstName, lastName, phone, email, address) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [firstName, lastName, customerPhone, customerEmail || null, null]
+      );
+      
+      finalCustomerId = customerResult.insertId;
+    }
+    
     // Validate required fields
     if (!finalCustomerId) {
       return res.status(400).json({ 
         success: false,
-        error: 'Either customerId or customer object is required' 
+        error: 'Either customerId, customer object, or customerName+customerPhone are required' 
       });
     }
     

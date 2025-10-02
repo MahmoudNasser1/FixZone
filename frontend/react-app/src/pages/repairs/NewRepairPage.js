@@ -182,14 +182,27 @@ const NewRepairPage = () => {
     const value = e.target.value;
     setCustomerSearch(value);
     if (!value || value.trim().length < 2) {
+      setCustomers([]);
       return;
     }
     try {
       setSearchingCustomers(true);
-      const res = await apiService.searchCustomers(value.trim(), 1, 20);
-      setCustomers(res?.data || []);
+      console.log('Searching for customers with query:', value);
+      
+      const response = await apiService.searchCustomers(value.trim(), 1, 20);
+      console.log('Search response:', response);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Search result:', result);
+        setCustomers(result?.data || []);
+      } else {
+        console.error('Search failed:', response.status);
+        setCustomers([]);
+      }
     } catch (err) {
       console.error('Error searching customers:', err);
+      setCustomers([]);
     } finally {
       setSearchingCustomers(false);
     }
@@ -299,13 +312,11 @@ const NewRepairPage = () => {
         ram: formData.ram.trim() || null,
         storage: formData.storage.trim() || null,
         accessories: (formData.accessories || []).map(x => Number(x)).filter(Number.isFinite),
-        problemDescription: formData.problemDescription.trim(),
-        priority: formData.priority,
+        issueDescription: formData.problemDescription.trim(), // Backend expects issueDescription
+        customerNotes: formData.notes ? formData.notes.trim() : null,
+        priority: formData.priority.toLowerCase(), // Convert to lowercase for backend
         estimatedCost: parseFloat(formData.estimatedCost || 0) || 0,
-        actualCost: formData.actualCost ? parseFloat(formData.actualCost) : null,
-        expectedDeliveryDate: formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate).toISOString() : null,
-        notes: formData.notes.trim() || null,
-        status: 'RECEIVED'
+        expectedDeliveryDate: formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate).toISOString() : null
       };
 
       const newRepair = await apiService.createRepairRequest(repairData);

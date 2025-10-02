@@ -198,33 +198,85 @@ const CompaniesPage = () => {
     }
     
     const company = companies.find(c => c.id === companyId);
-    const hasCustomers = company && company.customersCount > 0;
     
-    if (hasCustomers) {
-      alert(`لا يمكن حذف هذه الشركة!\n\nيوجد ${company.customersCount} عميل مرتبط بهذه الشركة.\nيجب حذف العملاء أولاً أو نقلهم لشركة أخرى.`);
+    // إذا الشركة غير موجودة في الـ state (محذوفة من الـ DB بالفعل)
+    if (!company) {
+      alert('⚠️ هذه الشركة محذوفة بالفعل من قاعدة البيانات!\n\nسيتم تحديث القائمة...');
+      fetchCompanies(); // إعادة تحميل البيانات من الـ DB
       return;
     }
     
+    const hasCustomers = company && company.customersCount > 0;
+    
+    // إذا كان هناك عملاء مرتبطين، اعرض خيارات
+    if (hasCustomers) {
+      const customersList = company.customersCount === 1 ? 'عميل واحد' : `${company.customersCount} عميل`;
+      const forceDelete = window.confirm(
+        `⚠️ تنبيه: يوجد ${customersList} مرتبط بهذه الشركة!\n\n` +
+        `هل تريد حذف الشركة مع إلغاء ربط العملاء؟\n\n` +
+        `• اضغط "موافق" لحذف الشركة وإلغاء ربط العملاء\n` +
+        `• اضغط "إلغاء" لإلغاء العملية`
+      );
+      
+      if (!forceDelete) {
+        return;
+      }
+      
+      // حذف مع force
+      try {
+        const response = await apiService.deleteCompany(companyId, true); // force = true
+        if (response.ok) {
+          const result = await response.json();
+          setCompanies(companies.filter(company => company.id !== companyId));
+          alert(`✅ ${result.message}\n\nتم إلغاء ربط ${result.unlinkedCustomers || 0} عميل من الشركة.`);
+          fetchCompanies(); // إعادة تحميل البيانات
+        } else if (response.status === 404) {
+          // الشركة غير موجودة في الـ DB
+          alert('⚠️ هذه الشركة محذوفة بالفعل من قاعدة البيانات!\n\nسيتم تحديث القائمة...');
+          setCompanies(companies.filter(company => company.id !== companyId));
+          fetchCompanies();
+        } else {
+          const errorData = await response.json();
+          alert(`❌ خطأ: ${errorData.message || errorData.error}`);
+        }
+      } catch (err) {
+        console.error('Error force deleting company:', err);
+        alert('حدث خطأ في حذف الشركة: ' + err.message);
+        fetchCompanies(); // إعادة تحميل البيانات في حالة الخطأ
+      }
+      return;
+    }
+    
+    // إذا لم يكن هناك عملاء، حذف عادي
     const confirmMessage = 'هل أنت متأكد من حذف هذه الشركة؟';
     
     if (window.confirm(confirmMessage)) {
       try {
-        const response = await apiService.deleteCompany(companyId);
+        const response = await apiService.deleteCompany(companyId, false);
         if (response.ok) {
           const result = await response.json();
           setCompanies(companies.filter(company => company.id !== companyId));
           alert(result.message || 'تم حذف الشركة بنجاح');
+          fetchCompanies(); // إعادة تحميل البيانات
+        } else if (response.status === 404) {
+          // الشركة غير موجودة في الـ DB
+          alert('⚠️ هذه الشركة محذوفة بالفعل من قاعدة البيانات!\n\nسيتم تحديث القائمة...');
+          setCompanies(companies.filter(company => company.id !== companyId));
+          fetchCompanies();
         } else {
           const errorData = await response.json();
-          if (errorData.customersCount) {
-            alert(`لا يمكن حذف هذه الشركة!\n\n${errorData.message}`);
+          if (errorData.customersCount && errorData.customers) {
+            const customerNames = errorData.customers.map(c => `• ${c.name} (ID: ${c.id})`).join('\n');
+            alert(`❌ لا يمكن حذف هذه الشركة!\n\nالعملاء المرتبطون:\n${customerNames}\n\n${errorData.message}`);
           } else {
-            throw new Error(errorData.error || 'Failed to delete company');
+            alert(`❌ خطأ: ${errorData.message || errorData.error}`);
           }
+          fetchCompanies(); // إعادة تحميل البيانات في حالة الخطأ
         }
       } catch (err) {
         console.error('Error deleting company:', err);
         alert('حدث خطأ في حذف الشركة: ' + err.message);
+        fetchCompanies(); // إعادة تحميل البيانات في حالة الخطأ
       }
     }
   };

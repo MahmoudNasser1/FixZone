@@ -86,7 +86,13 @@ const EditCompanyPage = () => {
       setSaving(true);
       setError(null);
       
-      const response = await apiService.updateCompany(id, formData);
+      // تحضير البيانات للإرسال مع تحويل status إلى isActive
+      const companyData = {
+        ...formData,
+        isActive: formData.status === 'active'
+      };
+      
+      const response = await apiService.updateCompany(id, companyData);
       if (response.ok) {
         notifications.success('تم تحديث الشركة بنجاح');
         navigate(`/companies/${id}`);
