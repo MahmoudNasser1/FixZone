@@ -159,19 +159,19 @@ router.post('/', async (req, res) => {
     
     // If customer object provided, create new customer
     if (!finalCustomerId && customer) {
-      const { firstName, lastName, phone, email, address } = customer;
+      const { name, phone, email, address } = customer;
       
-      if (!firstName || !phone) {
+      if (!name || !phone) {
         return res.status(400).json({ 
           success: false,
-          error: 'Customer firstName and phone are required' 
+          error: 'Customer name and phone are required' 
         });
       }
       
       const [customerResult] = await db.query(
-        `INSERT INTO Customer (firstName, lastName, phone, email, address) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [firstName, lastName || '', phone, email || null, address || null]
+        `INSERT INTO Customer (name, phone, email, address) 
+         VALUES (?, ?, ?, ?)`,
+        [name, phone, email || null, address || null]
       );
       
       finalCustomerId = customerResult.insertId;
@@ -184,9 +184,9 @@ router.post('/', async (req, res) => {
       const lastName = nameParts.slice(1).join(' ') || '';
       
       const [customerResult] = await db.query(
-        `INSERT INTO Customer (firstName, lastName, phone, email, address) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [firstName, lastName, customerPhone, customerEmail || null, null]
+        `INSERT INTO Customer (name, phone, email, address) 
+         VALUES (?, ?, ?, ?)`,
+        [customerName, customerPhone, customerEmail || null, null]
       );
       
       finalCustomerId = customerResult.insertId;
@@ -238,7 +238,7 @@ router.post('/', async (req, res) => {
     
     // Fetch the created repair
     const [rows] = await db.query(
-      `SELECT rr.*, CONCAT(c.firstName, ' ', c.lastName) as customerName
+      `SELECT rr.*, c.name as customerName
        FROM RepairRequest rr
        LEFT JOIN Customer c ON rr.customerId = c.id
        WHERE rr.id = ?`,
@@ -326,7 +326,7 @@ router.put('/:id', async (req, res) => {
     
     // Fetch updated repair
     const [rows] = await db.query(
-      `SELECT rr.*, CONCAT(c.firstName, ' ', c.lastName) as customerName
+      `SELECT rr.*, c.name as customerName
        FROM RepairRequest rr
        LEFT JOIN Customer c ON rr.customerId = c.id
        WHERE rr.id = ?`,
@@ -400,7 +400,7 @@ router.get('/tracking', async (req, res) => {
         c.phone as customerPhone,
         c.email as customerEmail,
         b.name as branchName,
-        CONCAT(u.firstName, ' ', u.lastName) as technicianName
+        u.name as technicianName
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
       LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL

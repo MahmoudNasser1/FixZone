@@ -78,6 +78,7 @@ const stockCountRouter = require('./routes/stockCount');
 const stockTransferRouter = require('./routes/stockTransfer');
 const itemVendorsRouter = require('./routes/itemVendors');
 const barcodeRouter = require('./routes/barcode');
+const analyticsRouter = require('./routes/analytics');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -140,6 +141,7 @@ router.use('/inventory', itemVendorsRouter); // ItemVendor routes
 router.use('/stock-count', stockCountRouter);
 router.use('/stock-transfer', stockTransferRouter);
 router.use('/barcode', barcodeRouter);
+router.use('/analytics', analyticsRouter);
 
 // Error handling middleware (must be last)
 router.use(errorHandler);

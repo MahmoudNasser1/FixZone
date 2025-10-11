@@ -53,6 +53,7 @@ import StockCountPage from './pages/inventory/StockCountPage';
 import StockTransferPage from './pages/inventory/StockTransferPage';
 import BarcodeScannerPage from './pages/inventory/BarcodeScannerPage';
 import ImportExportPage from './pages/inventory/ImportExportPage';
+import AnalyticsPage from './pages/inventory/AnalyticsPage';
 
 // Reports Pages
 import FinancialReportsPage from './pages/reports/FinancialReportsPage';
@@ -166,6 +167,8 @@ function App() {
                       <Route path="stock-transfer" element={<StockTransferPage />} />
                       <Route path="barcode-scanner" element={<BarcodeScannerPage />} />
                       <Route path="import-export" element={<ImportExportPage />} />
+                      <Route path="analytics" element={<AnalyticsPage />} />
+                      <Route path="inventory/analytics" element={<AnalyticsPage />} />
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
                       <Route path="invoices/new" element={<CreateInvoicePage />} />
