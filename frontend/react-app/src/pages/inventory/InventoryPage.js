@@ -9,6 +9,11 @@ import { DataTableToolbar } from '../../components/ui/DataTableToolbar';
 import { DataTablePagination } from '../../components/ui/DataTablePagination';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { Plus, Edit, Trash2, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorHandler from '../../components/common/ErrorHandler';
+import StatsDashboard from '../../components/inventory/StatsDashboard';
+import SearchAndFilter from '../../components/inventory/SearchAndFilter';
+import EnhancedInventoryTable from '../../components/inventory/EnhancedInventoryTable';
 
 
 // تعريف أعمدة جدول العناصر - will be created inside component to access functions
@@ -81,6 +86,12 @@ export default function InventoryPage() {
   const [stockLevels, setStockLevels] = useState([]);
 
   const [activeTab, setActiveTab] = useState('items'); // items | low | levels | warehouse-items
+  const [stats, setStats] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({});
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -104,6 +115,27 @@ export default function InventoryPage() {
     customFields: {}
   });
 
+  // Enhanced handlers
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    // TODO: Implement search filtering
+  };
+
+  const handleFilter = (newFilters) => {
+    setFilters(newFilters);
+    // TODO: Implement filtering
+  };
+
+  const handleSort = (field, order) => {
+    setSortBy(field);
+    setSortOrder(order);
+    // TODO: Implement sorting
+  };
+
+  const handleViewChange = (mode) => {
+    setViewMode(mode);
+  };
+
   // Handle functions
   const handleEditItem = (item) => {
     setEditingItem(item);
@@ -123,13 +155,14 @@ export default function InventoryPage() {
     if (!window.confirm('هل أنت متأكد من حذف هذا العنصر؟')) return;
     
     try {
-      await apiService.request(`/inventoryitems/${itemId}`, { method: 'DELETE' });
+      await inventoryService.deleteItem(itemId);
       notifications.success('تم حذف العنصر بنجاح');
       // Reload items
       const itemsRes = await inventoryService.listItems();
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setItems(Array.isArray(itemsData) ? itemsData : (itemsData?.data?.items || itemsData?.items || []));
+      if (itemsRes && itemsRes.success) {
+        setItems(itemsRes.data?.items || itemsRes.data || []);
+      } else if (Array.isArray(itemsRes)) {
+        setItems(itemsRes);
       }
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -145,18 +178,16 @@ export default function InventoryPage() {
 
     try {
       setSaving(true);
-      await apiService.request('/inventoryitems', {
-        method: 'POST',
-        body: JSON.stringify(itemForm)
-      });
+      await inventoryService.createItem(itemForm);
       notifications.success('تم إنشاء العنصر بنجاح');
       setShowCreateModal(false);
       resetForm();
       // Reload items
       const itemsRes = await inventoryService.listItems();
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setItems(Array.isArray(itemsData) ? itemsData : (itemsData?.data?.items || itemsData?.items || []));
+      if (itemsRes && itemsRes.success) {
+        setItems(itemsRes.data?.items || itemsRes.data || []);
+      } else if (Array.isArray(itemsRes)) {
+        setItems(itemsRes);
       }
     } catch (error) {
       console.error('Error creating item:', error);
@@ -174,10 +205,7 @@ export default function InventoryPage() {
 
     try {
       setSaving(true);
-      await apiService.request(`/inventoryitems/${editingItem.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(itemForm)
-      });
+      await inventoryService.updateItem(editingItem.id, itemForm);
       notifications.success('تم تحديث العنصر بنجاح');
       setShowEditModal(false);
       setEditingItem(null);
@@ -217,33 +245,36 @@ export default function InventoryPage() {
       setLoading(true);
       setError(null);
       try {
-        const [itemsRes, lowRes, whRes, levelsRes] = await Promise.all([
+        const [itemsRes, lowRes, whRes, levelsRes, statsRes] = await Promise.all([
           inventoryService.listItems(),
           inventoryService.listLowStock(),
           inventoryService.listWarehouses(),
           inventoryService.listStockLevels(),
+          inventoryService.getStatistics(),
         ]);
         if (!mounted) return;
         
         // Parse responses correctly
-        if (itemsRes.ok) {
-          const itemsData = await itemsRes.json();
-          setItems(Array.isArray(itemsData) ? itemsData : (itemsData?.data?.items || itemsData?.items || []));
+        if (itemsRes && itemsRes.success) {
+          setItems(itemsRes.data?.items || itemsRes.data || []);
+        } else if (Array.isArray(itemsRes)) {
+          setItems(itemsRes);
         }
         
-        if (lowRes.ok) {
-          const lowData = await lowRes.json();
-          setLowStock(Array.isArray(lowData) ? lowData : []);
+        if (lowRes && Array.isArray(lowRes)) {
+          setLowStock(lowRes);
         }
         
-        if (whRes.ok) {
-          const whData = await whRes.json();
-          setWarehouses(whData || []);
+        if (whRes && Array.isArray(whRes)) {
+          setWarehouses(whRes);
         }
         
-        if (levelsRes.ok) {
-          const levelsData = await levelsRes.json();
-          setStockLevels(Array.isArray(levelsData) ? levelsData : []);
+        if (levelsRes && Array.isArray(levelsRes)) {
+          setStockLevels(levelsRes);
+        }
+        
+        if (statsRes && statsRes.success) {
+          setStats(statsRes.data);
         }
       } catch (e) {
         console.error(e);
@@ -448,45 +479,64 @@ export default function InventoryPage() {
         </SimpleButton>
       </div>
 
+      {/* Stats Dashboard */}
+      {activeTab === 'items' && (
+        <StatsDashboard stats={stats} loading={loading} />
+      )}
+
+      {/* Search and Filter */}
+      {activeTab === 'items' && (
+        <SearchAndFilter
+          onSearch={handleSearch}
+          onFilter={handleFilter}
+          onSort={handleSort}
+          onViewChange={handleViewChange}
+          categories={[]} // TODO: Load categories
+          warehouses={warehouses}
+          vendors={[]} // TODO: Load vendors
+          loading={loading}
+          viewMode={viewMode}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+        />
+      )}
+
       {/* Content */}
       {(() => {
         if (loading) {
           return (
-        <SimpleCard>
-          <SimpleCardContent>
-            <div className="p-6 text-center text-gray-500">جاري التحميل...</div>
-          </SimpleCardContent>
-        </SimpleCard>
+            <SimpleCard>
+              <SimpleCardContent>
+                <LoadingSpinner message="جاري تحميل بيانات المخزون..." />
+              </SimpleCardContent>
+            </SimpleCard>
           );
         }
         
         if (error) {
           return (
-        <SimpleCard>
-          <SimpleCardContent>
-            <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-700">{error}</div>
-          </SimpleCardContent>
-        </SimpleCard>
+            <SimpleCard>
+              <SimpleCardContent>
+                <ErrorHandler 
+                  error={{ message: error }}
+                  onRetry={() => window.location.reload()}
+                  title="خطأ في تحميل البيانات"
+                />
+              </SimpleCardContent>
+            </SimpleCard>
           );
         }
         
         if (activeTab === 'items') {
           return (
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>العناصر</SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <DataTable columns={inventoryColumns} data={items || []}>
-              {(table) => (
-                <>
-                  <DataTableToolbar table={table} />
-                  <DataTablePagination table={table} />
-                </>
-              )}
-            </DataTable>
-          </SimpleCardContent>
-        </SimpleCard>
+            <EnhancedInventoryTable
+              items={items}
+              loading={loading}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
+              onView={(item) => console.log('View item:', item)}
+              viewMode={viewMode}
+            />
           );
         }
         

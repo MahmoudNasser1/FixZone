@@ -2,19 +2,50 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get parts used entries (optionally filter by repairRequestId)
+// Get parts used entries (optionally filter by repairRequestId, startDate, endDate)
 router.get('/', async (req, res) => {
   try {
-    const { repairRequestId } = req.query;
+    const { repairRequestId, startDate, endDate, page = 1, limit = 50 } = req.query;
+    
+    let whereClause = '1=1';
+    let queryParams = [];
+    
     if (repairRequestId) {
-      const [rows] = await db.query('SELECT * FROM PartsUsed WHERE repairRequestId = ?', [repairRequestId]);
-      return res.json(rows);
+      whereClause += ' AND pu.repairRequestId = ?';
+      queryParams.push(repairRequestId);
     }
-    const [rows] = await db.query('SELECT * FROM PartsUsed');
+    
+    if (startDate) {
+      whereClause += ' AND pu.createdAt >= ?';
+      queryParams.push(startDate);
+    }
+    
+    if (endDate) {
+      whereClause += ' AND pu.createdAt <= ?';
+      queryParams.push(endDate + ' 23:59:59');
+    }
+    
+    const offset = (page - 1) * limit;
+    
+    const [rows] = await db.query(
+      `SELECT 
+        pu.*,
+        ii.name as itemName,
+        ii.sku as itemSku,
+        ii.purchasePrice,
+        ii.sellingPrice
+      FROM PartsUsed pu
+      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+      WHERE ${whereClause}
+      ORDER BY pu.createdAt DESC
+      LIMIT ? OFFSET ?`,
+      [...queryParams, parseInt(limit), offset]
+    );
+    
     res.json(rows);
   } catch (err) {
     console.error('Error fetching parts used entries:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error', error: err.message });
   }
 });
 
@@ -79,6 +110,50 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error deleting parts used entry with ID ${id}:`, err);
     res.status(500).send('Server Error');
+  }
+});
+
+// Get parts usage report/stats
+router.get('/reports/consumption', async (req, res) => {
+  try {
+    const { startDate, endDate, groupBy = 'item' } = req.query;
+    
+    let whereClause = '1=1';
+    let queryParams = [];
+    
+    if (startDate) {
+      whereClause += ' AND pu.createdAt >= ?';
+      queryParams.push(startDate);
+    }
+    
+    if (endDate) {
+      whereClause += ' AND pu.createdAt <= ?';
+      queryParams.push(endDate + ' 23:59:59');
+    }
+    
+    if (groupBy === 'item') {
+      const [rows] = await db.query(
+        `SELECT 
+          pu.inventoryItemId,
+          ii.name as itemName,
+          ii.sku,
+          COUNT(pu.id) as usageCount,
+          SUM(pu.quantity) as totalQuantity,
+          COUNT(DISTINCT pu.repairRequestId) as repairsCount
+        FROM PartsUsed pu
+        LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+        WHERE ${whereClause}
+        GROUP BY pu.inventoryItemId, ii.name, ii.sku
+        ORDER BY totalQuantity DESC`,
+        queryParams
+      );
+      return res.json({ success: true, data: rows });
+    }
+    
+    res.json({ success: true, data: [] });
+  } catch (err) {
+    console.error('Error fetching parts consumption report:', err);
+    res.status(500).json({ success: false, message: 'Server Error', error: err.message });
   }
 });
 

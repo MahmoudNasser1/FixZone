@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-10-10T13:08:38.876Z",
+  "summary": {
+    "total": 21,
+    "success": 20,
+    "failed": 1,
+    "successRate": "95.24%"
+  },
+  "issues": [
+    {
+      "category": "Stock Movements",
+      "name": "GET /:id",
+      "error": {
+        "status": 404,
+        "message": {
+          "success": false,
+          "message": "Stock movement not found"
+        }
+      }
+    }
+  ],
+  "issuesByType": {
+    "SQL Errors": [],
+    "404 Not Found": [
+      {
+        "category": "Stock Movements",
+        "name": "GET /:id",
+        "error": {
+          "status": 404,
+          "message": {
+            "success": false,
+            "message": "Stock movement not found"
+          }
+        }
+      }
+    ],
+    "500 Server Error": [],
+    "Response Structure": [],
+    "Other": []
+  }
+}

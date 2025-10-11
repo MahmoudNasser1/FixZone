@@ -30,14 +30,15 @@ const StockMovementPage = () => {
 
   const fetchStockMovements = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/stock-movements', {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/inventory-enhanced/movements', {
         credentials: 'include'
       });
       const data = await response.json();
       console.log('Stock movements data:', data);
       
       // معالجة الاستجابة بشكل صحيح
-      const movementsData = Array.isArray(data) ? data : (data.items || data.movements || []);
+      const movementsData = Array.isArray(data) ? data : (data.data?.movements || data.movements || []);
       setMovements(movementsData);
       setFilteredMovements(movementsData);
     } catch (error) {
@@ -89,6 +90,8 @@ const StockMovementPage = () => {
       ];
       setMovements(mockMovements);
       setFilteredMovements(mockMovements);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -165,3 +165,6 @@ SELECT * FROM v_warehouse_inventory_value;
 
 SELECT 'تم تطبيق جميع الإصلاحات بنجاح! ✅' as status;
 
+
+
+

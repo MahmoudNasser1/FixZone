@@ -15,6 +15,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import apiService from '../../services/api';
+import inventoryService from '../../services/inventoryService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 
 const WarehouseManagementPage = () => {
@@ -48,11 +49,8 @@ const WarehouseManagementPage = () => {
       setLoading(true);
       setError('');
       
-      const warehousesRes = await apiService.request('/warehouses');
-      if (warehousesRes.ok) {
-        const warehousesData = await warehousesRes.json();
-        setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-      }
+      const warehousesRes = await inventoryService.listWarehouses();
+      setWarehouses(Array.isArray(warehousesRes) ? warehousesRes : []);
     } catch (err) {
       setError('تعذر تحميل بيانات المخازن');
       console.error('Error loading warehouses:', err);

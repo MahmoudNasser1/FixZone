@@ -5,25 +5,42 @@ const db = require('../db');
 // Get all stock movements with details
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query(`
+    const { type } = req.query;
+    
+    let query = `
       SELECT 
         sm.*,
-        sm.movementType as type,
         i.name as itemName,
-        w.name as warehouseName,
-        CONCAT(u.firstName, ' ', u.lastName) as userName,
-        sm.notes as reason
+        wf.name as fromWarehouseName,
+        wt.name as toWarehouseName
       FROM StockMovement sm
       LEFT JOIN InventoryItem i ON sm.inventoryItemId = i.id
-      LEFT JOIN Warehouse w ON sm.warehouseId = w.id
-      LEFT JOIN User u ON sm.createdBy = u.id
-      ORDER BY sm.createdAt DESC
-      LIMIT 100
-    `);
-    res.json(rows);
+      LEFT JOIN Warehouse wf ON sm.fromWarehouseId = wf.id
+      LEFT JOIN Warehouse wt ON sm.toWarehouseId = wt.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    if (type) {
+      query += ' AND sm.type = ?';
+      params.push(type);
+    }
+    
+    query += ' ORDER BY sm.createdAt DESC LIMIT 100';
+    
+    const [rows] = await db.query(query, params);
+    
+    res.json({
+      success: true,
+      data: rows
+    });
   } catch (err) {
     console.error('Error fetching stock movements:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 });
 
@@ -31,14 +48,36 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query('SELECT * FROM StockMovement WHERE id = ?', [id]);
+    const [rows] = await db.query(`
+      SELECT 
+        sm.*,
+        i.name as itemName,
+        wf.name as fromWarehouseName,
+        wt.name as toWarehouseName
+      FROM StockMovement sm
+      LEFT JOIN InventoryItem i ON sm.inventoryItemId = i.id
+      LEFT JOIN Warehouse wf ON sm.fromWarehouseId = wf.id
+      LEFT JOIN Warehouse wt ON sm.toWarehouseId = wt.id
+      WHERE sm.id = ?
+    `, [id]);
+    
     if (rows.length === 0) {
-      return res.status(404).send('Stock movement not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Stock movement not found'
+      });
     }
-    res.json(rows[0]);
+    
+    res.json({
+      success: true,
+      data: rows[0]
+    });
   } catch (err) {
     console.error(`Error fetching stock movement with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 });
 

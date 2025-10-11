@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiService from '../../services/api';
+import inventoryService from '../../services/inventoryService';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { LoadingSpinner, TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
+import StatsDashboard from '../../components/inventory/StatsDashboard';
 
 const InventoryPageEnhanced = () => {
   const navigate = useNavigate();
@@ -51,36 +53,53 @@ const InventoryPageEnhanced = () => {
       setLoading(true);
       setError(null);
       
-      const [itemsRes, warehousesRes, stockLevelsRes] = await Promise.all([
-        apiService.request('/inventory'),
-        apiService.request('/warehouses'),
-        apiService.request('/stock-levels')
+      const [itemsRes, warehousesRes, stockLevelsRes, statsRes] = await Promise.all([
+        inventoryService.listItems(),
+        inventoryService.listWarehouses(),
+        inventoryService.listStockLevels(),
+        inventoryService.getStatistics()
       ]);
       
+      // Parse Enhanced APIs responses
       let itemsData = [];
-      if (itemsRes.ok) {
-        const result = await itemsRes.json();
-        itemsData = Array.isArray(result) ? result : (result.items || []);
+      if (itemsRes && itemsRes.success) {
+        itemsData = itemsRes.data?.items || itemsRes.data || [];
+      } else if (Array.isArray(itemsRes)) {
+        itemsData = itemsRes;
       }
       
+      console.log('Items data loaded:', itemsData.length, 'items');
+      
       let warehousesData = [];
-      if (warehousesRes.ok) {
-        const result = await warehousesRes.json();
-        warehousesData = Array.isArray(result) ? result : (result.items || []);
+      if (Array.isArray(warehousesRes)) {
+        warehousesData = warehousesRes;
       }
       
       let stockData = [];
-      if (stockLevelsRes.ok) {
-        const result = await stockLevelsRes.json();
-        stockData = Array.isArray(result) ? result : (result.items || []);
+      if (Array.isArray(stockLevelsRes)) {
+        stockData = stockLevelsRes;
       }
       
       setItems(itemsData);
       setWarehouses(warehousesData);
       setStockLevels(stockData);
       
-      // حساب الإحصائيات
-      calculateStats(itemsData, stockData);
+      // Use Enhanced Stats API
+      if (statsRes && statsRes.success) {
+        const enhancedStats = statsRes.data;
+        console.log('Enhanced stats:', enhancedStats);
+        setStats({
+          totalItems: enhancedStats.overview?.totalItems || 0,
+          totalValue: enhancedStats.overview?.totalCostValue || 0,
+          lowStockItems: enhancedStats.overview?.lowStockItems || 0,
+          outOfStockItems: enhancedStats.overview?.outOfStockItems || 0,
+          totalQuantity: enhancedStats.overview?.totalQuantity || 0,
+          potentialProfit: (enhancedStats.overview?.totalSellingValue || 0) - (enhancedStats.overview?.totalCostValue || 0)
+        });
+      } else {
+        // Fallback to manual calculation
+        calculateStats(itemsData, stockData);
+      }
       
     } catch (err) {
       console.error('Error loading inventory data:', err);
@@ -142,6 +161,7 @@ const InventoryPageEnhanced = () => {
   };
 
   const getFilteredAndSortedItems = () => {
+    console.log('getFilteredAndSortedItems - items:', items.length, items);
     let filtered = [...items];
     
     // البحث
@@ -296,12 +316,24 @@ const InventoryPageEnhanced = () => {
         </div>
       </div>
 
-      {/* الإحصائيات */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <CardLoadingSkeleton key={i} />)}
-        </div>
-      ) : (
+      {/* Stats Dashboard */}
+      <StatsDashboard 
+        stats={{
+          overview: {
+            totalItems: stats.totalItems,
+            totalCostValue: stats.totalValue,
+            totalQuantity: stats.totalQuantity
+          },
+          alerts: {
+            lowStockItems: stats.lowStockItems,
+            outOfStockItems: stats.outOfStockItems
+          }
+        }} 
+        loading={loading} 
+      />
+
+      {/* Old Stats Section (Fallback) */}
+      {false && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SimpleCard className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <SimpleCardContent className="p-6">
@@ -648,4 +680,5 @@ const InventoryPageEnhanced = () => {
 };
 
 export default InventoryPageEnhanced;
+
 

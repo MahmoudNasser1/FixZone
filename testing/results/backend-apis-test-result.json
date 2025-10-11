@@ -1,0 +1,156 @@
+{
+  "timestamp": "2025-10-10T11:57:54.757Z",
+  "results": {
+    "total": 28,
+    "passed": 8,
+    "failed": 20,
+    "tests": [
+      {
+        "name": "GET /inventory-enhanced - بدون فلاتر",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /inventory-enhanced - مع pagination",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /inventory-enhanced - مع search",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /inventory-enhanced - مع category filter",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /inventory-enhanced/stats",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /inventory-enhanced/categories",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /inventory-enhanced/:id - صنف موجود",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /inventory-enhanced/:id - صنف غير موجود",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /warehouses",
+        "status": "FAIL",
+        "error": "Warehouses not found"
+      },
+      {
+        "name": "GET /warehouses/:id",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /stock-movements",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-movements - فلترة حسب النوع",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-movements/:id",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /stock-levels",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /stock-levels/item/:itemId",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /stock-alerts",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-alerts/low",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-alerts/settings",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-alerts/reorder-suggestions",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-count",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /stock-count/stats",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /stock-count/:id",
+        "status": "FAIL",
+        "error": "Request failed with status code 500"
+      },
+      {
+        "name": "GET /stock-transfer",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /stock-transfer/stats",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /barcode/stats",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /barcode/lookup/:code",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "name": "GET /item-vendors",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      },
+      {
+        "name": "GET /item-vendors/item/:itemId",
+        "status": "FAIL",
+        "error": "Request failed with status code 404"
+      }
+    ]
+  },
+  "summary": {
+    "total": 28,
+    "passed": 8,
+    "failed": 20,
+    "successRate": "28.57%"
+  }
+}

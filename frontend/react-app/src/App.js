@@ -49,6 +49,10 @@ import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
 import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
 import StockMovementPage from './pages/inventory/StockMovementPage';
 import StockAlertsPage from './pages/inventory/StockAlertsPage';
+import StockCountPage from './pages/inventory/StockCountPage';
+import StockTransferPage from './pages/inventory/StockTransferPage';
+import BarcodeScannerPage from './pages/inventory/BarcodeScannerPage';
+import ImportExportPage from './pages/inventory/ImportExportPage';
 
 // Reports Pages
 import FinancialReportsPage from './pages/reports/FinancialReportsPage';
@@ -158,6 +162,10 @@ function App() {
                       <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />
                       <Route path="inventory/stock-movements" element={<StockMovementPage />} />
                       <Route path="inventory/stock-alerts" element={<StockAlertsPage />} />
+                      <Route path="stock-count" element={<StockCountPage />} />
+                      <Route path="stock-transfer" element={<StockTransferPage />} />
+                      <Route path="barcode-scanner" element={<BarcodeScannerPage />} />
+                      <Route path="import-export" element={<ImportExportPage />} />
                       {/* Invoices */}
                       <Route path="invoices" element={<InvoicesPage />} />
                       <Route path="invoices/new" element={<CreateInvoicePage />} />

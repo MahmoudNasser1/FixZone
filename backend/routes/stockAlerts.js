@@ -2,6 +2,38 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+// Get all alerts (default route)
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        ii.id,
+        ii.name,
+        ii.type as category,
+        ii.purchasePrice as unitPrice,
+        SUM(sl.quantity) as quantity,
+        sl.minLevel as minimumStockLevel,
+        (SUM(sl.quantity) - sl.minLevel) as stockDeficit,
+        CASE 
+          WHEN SUM(sl.quantity) <= 0 THEN 'out_of_stock'
+          WHEN SUM(sl.quantity) <= sl.minLevel THEN 'low_stock'
+          ELSE 'normal'
+        END as alertLevel
+      FROM InventoryItem ii
+      JOIN StockLevel sl ON ii.id = sl.inventoryItemId
+      WHERE ii.deletedAt IS NULL
+      GROUP BY ii.id, sl.minLevel
+      HAVING SUM(sl.quantity) <= sl.minLevel
+      ORDER BY alertLevel DESC, stockDeficit ASC
+    `);
+    
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching stock alerts:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
 // Get low stock alerts
 router.get('/low', async (req, res) => {
   try {
@@ -9,19 +41,21 @@ router.get('/low', async (req, res) => {
       SELECT 
         ii.id,
         ii.name,
-        ii.category,
-        ii.unitPrice,
-        sl.quantity,
-        ii.minimumStockLevel,
-        (sl.quantity - ii.minimumStockLevel) as stockDeficit,
+        ii.type as category,
+        ii.purchasePrice as unitPrice,
+        SUM(sl.quantity) as quantity,
+        sl.minLevel as minimumStockLevel,
+        (SUM(sl.quantity) - sl.minLevel) as stockDeficit,
         CASE 
-          WHEN sl.quantity <= 0 THEN 'out_of_stock'
-          WHEN sl.quantity <= ii.minimumStockLevel THEN 'low_stock'
+          WHEN SUM(sl.quantity) <= 0 THEN 'out_of_stock'
+          WHEN SUM(sl.quantity) <= sl.minLevel THEN 'low_stock'
           ELSE 'normal'
         END as alertLevel
       FROM InventoryItem ii
       JOIN StockLevel sl ON ii.id = sl.inventoryItemId
-      WHERE sl.quantity <= ii.minimumStockLevel
+      WHERE ii.deletedAt IS NULL
+      GROUP BY ii.id, sl.minLevel
+      HAVING SUM(sl.quantity) <= sl.minLevel
       ORDER BY alertLevel DESC, stockDeficit ASC
     `);
     
@@ -44,12 +78,12 @@ router.get('/settings', async (req, res) => {
       SELECT 
         ii.id,
         ii.name,
-        ii.category,
-        ii.minimumStockLevel,
-        ii.maximumStockLevel,
-        ii.reorderPoint,
-        ii.reorderQuantity
+        ii.type as category,
+        sl.minLevel as minimumStockLevel,
+        sl.minLevel as reorderPoint
       FROM InventoryItem ii
+      JOIN StockLevel sl ON ii.id = sl.inventoryItemId
+      WHERE ii.deletedAt IS NULL
       ORDER BY ii.name
     `);
     
@@ -66,43 +100,17 @@ router.get('/settings', async (req, res) => {
 router.put('/settings/:itemId', async (req, res) => {
   try {
     const { itemId } = req.params;
-    const { minimumStockLevel, maximumStockLevel, reorderPoint, reorderQuantity } = req.body;
+    const { minimumStockLevel } = req.body;
     
-    if (minimumStockLevel === undefined && maximumStockLevel === undefined && 
-        reorderPoint === undefined && reorderQuantity === undefined) {
-      return res.status(400).send('At least one setting must be provided');
+    if (minimumStockLevel === undefined) {
+      return res.status(400).send('minimumStockLevel is required');
     }
-    
-    let updateFields = [];
-    let params = [];
-    
-    if (minimumStockLevel !== undefined) {
-      updateFields.push('minimumStockLevel = ?');
-      params.push(minimumStockLevel);
-    }
-    
-    if (maximumStockLevel !== undefined) {
-      updateFields.push('maximumStockLevel = ?');
-      params.push(maximumStockLevel);
-    }
-    
-    if (reorderPoint !== undefined) {
-      updateFields.push('reorderPoint = ?');
-      params.push(reorderPoint);
-    }
-    
-    if (reorderQuantity !== undefined) {
-      updateFields.push('reorderQuantity = ?');
-      params.push(reorderQuantity);
-    }
-    
-    params.push(itemId);
     
     const [result] = await db.query(`
-      UPDATE InventoryItem 
-      SET ${updateFields.join(', ')}
-      WHERE id = ?
-    `, params);
+      UPDATE StockLevel 
+      SET minLevel = ?
+      WHERE inventoryItemId = ?
+    `, [minimumStockLevel, itemId]);
     
     if (result.affectedRows === 0) {
       return res.status(404).send('Inventory item not found');
@@ -115,97 +123,6 @@ router.put('/settings/:itemId', async (req, res) => {
   }
 });
 
-// Update stock alert settings for multiple items
-router.put('/settings/batch', async (req, res) => {
-  try {
-    const { settings } = req.body;
-    
-    if (!Array.isArray(settings)) {
-      return res.status(400).send('Settings must be an array');
-    }
-    
-    const updatePromises = settings.map(async (setting) => {
-      const { itemId, minimumStockLevel, maximumStockLevel, reorderPoint, reorderQuantity } = setting;
-      
-      let updateFields = [];
-      let params = [];
-      
-      if (minimumStockLevel !== undefined) {
-        updateFields.push('minimumStockLevel = ?');
-        params.push(minimumStockLevel);
-      }
-      
-      if (maximumStockLevel !== undefined) {
-        updateFields.push('maximumStockLevel = ?');
-        params.push(maximumStockLevel);
-      }
-      
-      if (reorderPoint !== undefined) {
-        updateFields.push('reorderPoint = ?');
-        params.push(reorderPoint);
-      }
-      
-      if (reorderQuantity !== undefined) {
-        updateFields.push('reorderQuantity = ?');
-        params.push(reorderQuantity);
-      }
-      
-      if (updateFields.length === 0) return null;
-      
-      params.push(itemId);
-      
-      return db.query(`
-        UPDATE InventoryItem 
-        SET ${updateFields.join(', ')}
-        WHERE id = ?
-      `, params);
-    });
-    
-    await Promise.all(updatePromises.filter(p => p !== null));
-    
-    res.json({ message: 'Stock alert settings updated successfully for all items' });
-  } catch (err) {
-    console.error('Error updating batch stock alert settings:', err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Get stock movement alerts (items with unusual movement patterns)
-router.get('/movement-alerts', async (req, res) => {
-  try {
-    const { days = 7 } = req.query;
-    
-    const [rows] = await db.query(`
-      SELECT 
-        ii.id,
-        ii.name,
-        ii.category,
-        sl.quantity,
-        COUNT(sm.id) as movementCount,
-        SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) as totalIn,
-        SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END) as totalOut,
-        (SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) - 
-         SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END)) as netMovement
-      FROM InventoryItem ii
-      JOIN StockLevel sl ON ii.id = sl.inventoryItemId
-      LEFT JOIN StockMovement sm ON ii.id = sm.inventoryItemId 
-        AND sm.createdAt >= DATE_SUB(NOW(), INTERVAL ? DAY)
-      GROUP BY ii.id
-      HAVING movementCount > 0
-      ORDER BY ABS(netMovement) DESC
-      LIMIT 20
-    `, [days]);
-    
-    res.json({
-      days: parseInt(days),
-      movementAlerts: rows
-    });
-  } catch (err) {
-    console.error('Error fetching movement alerts:', err);
-    res.status(500).send('Server Error');
-  }
-});
-
 // Generate reorder suggestions
 router.get('/reorder-suggestions', async (req, res) => {
   try {
@@ -213,21 +130,21 @@ router.get('/reorder-suggestions', async (req, res) => {
       SELECT 
         ii.id,
         ii.name,
-        ii.category,
-        ii.unitPrice,
-        sl.quantity,
-        ii.minimumStockLevel,
-        ii.reorderPoint,
-        ii.reorderQuantity,
-        COALESCE(ii.reorderQuantity, ii.minimumStockLevel * 2) as suggestedQuantity,
-        (COALESCE(ii.reorderQuantity, ii.minimumStockLevel * 2) * ii.unitPrice) as estimatedCost
+        ii.type as category,
+        ii.purchasePrice as unitPrice,
+        SUM(sl.quantity) as quantity,
+        sl.minLevel as reorderPoint,
+        (sl.minLevel * 2) as suggestedQuantity,
+        ((sl.minLevel * 2) * ii.purchasePrice) as estimatedCost
       FROM InventoryItem ii
       JOIN StockLevel sl ON ii.id = sl.inventoryItemId
-      WHERE sl.quantity <= ii.reorderPoint
-      ORDER BY (sl.quantity - ii.reorderPoint) ASC
+      WHERE ii.deletedAt IS NULL
+      GROUP BY ii.id, sl.minLevel
+      HAVING SUM(sl.quantity) <= sl.minLevel
+      ORDER BY (SUM(sl.quantity) - sl.minLevel) ASC
     `);
     
-    const totalEstimatedCost = rows.reduce((sum, row) => sum + row.estimatedCost, 0);
+    const totalEstimatedCost = rows.reduce((sum, row) => sum + parseFloat(row.estimatedCost || 0), 0);
     
     res.json({
       suggestions: rows,
@@ -241,4 +158,3 @@ router.get('/reorder-suggestions', async (req, res) => {
 });
 
 module.exports = router;
-

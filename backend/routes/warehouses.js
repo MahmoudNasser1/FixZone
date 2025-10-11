@@ -6,12 +6,16 @@ const db = require('../db');
 router.get('/', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM Warehouse');
-    res.json(rows);
+    res.json({
+      success: true,
+      data: rows
+    });
   } catch (err) {
     console.error('Error fetching warehouses:', err);
     res.status(500).json({ 
+      success: false,
       error: 'Server Error',
-      details: err.message 
+      message: err.message 
     });
   }
 });
@@ -22,14 +26,21 @@ router.get('/:id', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM Warehouse WHERE id = ?', [id]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Warehouse not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Warehouse not found' 
+      });
     }
-    res.json(rows[0]);
+    res.json({
+      success: true,
+      data: rows[0]
+    });
   } catch (err) {
     console.error(`Error fetching warehouse with ID ${id}:`, err);
     res.status(500).json({ 
+      success: false,
       error: 'Server Error',
-      details: err.message 
+      message: err.message 
     });
   }
 });

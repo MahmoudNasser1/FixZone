@@ -15,6 +15,9 @@ router.use(cors({
 const db = require('./db');
 const path = require('path');
 
+// Import middleware
+const errorHandler = require('./middleware/errorHandler');
+
 router.use(express.json());
 router.use(cookieParser());
 
@@ -70,6 +73,11 @@ const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
 const messagingRouter = require('./routes/messaging');
+const inventoryEnhancedRouter = require('./routes/inventoryEnhanced');
+const stockCountRouter = require('./routes/stockCount');
+const stockTransferRouter = require('./routes/stockTransfer');
+const itemVendorsRouter = require('./routes/itemVendors');
+const barcodeRouter = require('./routes/barcode');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -116,6 +124,7 @@ router.use('/auditlogs', auditLogsRouter);
 router.use('/invoicetemplates', invoiceTemplatesRouter);
 router.use('/reports', reportRoutes);
 router.use('/stocklevels', stockLevelsRouter);
+router.use('/stock-levels', stockLevelsRouter); // Alias مع شرطة
 router.use('/stockmovements', stockMovementsRouter);
 router.use('/stock-movements', stockMovementsRouter); // Alias مع شرطة
 router.use('/stock-alerts', stockAlertsRouter);
@@ -126,6 +135,15 @@ router.use('/notificationtemplates', notificationTemplatesRouter);
 router.use('/auth', authRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/messaging', messagingRouter);
+router.use('/inventory-enhanced', inventoryEnhancedRouter);
+router.use('/inventory', itemVendorsRouter); // ItemVendor routes
+router.use('/stock-count', stockCountRouter);
+router.use('/stock-transfer', stockTransferRouter);
+router.use('/barcode', barcodeRouter);
+
+// Error handling middleware (must be last)
+router.use(errorHandler);
+
 // Using existing routes instead:
 // router.use('/delivery', deliveryRouter); // Use existing repairs route for delivery
 // router.use('/payment', paymentRouter); // Use existing payments route

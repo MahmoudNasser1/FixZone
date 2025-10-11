@@ -33,7 +33,7 @@ exports.login = async (req, res) => {
         const payload = {
             id: user.id,
             role: user.roleId,
-            name: `${user.firstName} ${user.lastName}`
+            name: user.name
         };
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
@@ -49,7 +49,7 @@ exports.login = async (req, res) => {
         // Send user info back to the client (without the password)
         res.json({
             id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
+            name: user.name,
             role: user.roleId
         });
 
@@ -64,7 +64,7 @@ exports.login = async (req, res) => {
 
 
 exports.register = async (req, res) => {
-    const { firstName, lastName, email, password, roleId } = req.body;
+    const { name, email, password, roleId } = req.body;
 
     try {
         // Check if user already exists
@@ -76,10 +76,10 @@ exports.register = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10); // 10 salt rounds
 
-        // Insert new user into database (schema uses roleId lowercase per SQL)
+        // Insert new user into database
         const [result] = await db.query(
-            'INSERT INTO User (firstName, lastName, email, password, roleId) VALUES (?, ?, ?, ?, ?)',
-            [firstName, lastName, email, hashedPassword, roleId || 2]
+            'INSERT INTO User (name, email, password, roleId) VALUES (?, ?, ?, ?)',
+            [name, email, hashedPassword, roleId || 2]
         );
 
         res.status(201).json({ message: 'User registered successfully', userId: result.insertId });

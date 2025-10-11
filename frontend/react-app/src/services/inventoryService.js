@@ -5,7 +5,7 @@ import apiService from './api';
  * Supports: Advanced filtering, stock management, bulk actions, statistics
  */
 const inventoryService = {
-  // Inventory Items with enhanced filtering
+  // Inventory Items with enhanced filtering (using new Enhanced APIs)
   listItems(params = {}) {
     const {
       page = 1,
@@ -14,6 +14,7 @@ const inventoryService = {
       type = '',
       stockStatus = '',
       warehouseId = '',
+      categoryId = '',
       sortBy = 'name',
       sortOrder = 'ASC'
     } = params;
@@ -25,23 +26,24 @@ const inventoryService = {
       ...(type && { type }),
       ...(stockStatus && { stockStatus }),
       ...(warehouseId && { warehouseId }),
+      ...(categoryId && { categoryId }),
       sortBy,
       sortOrder
     });
     
-    return apiService.request(`/inventory?${query}`);
+    return apiService.request(`/inventory-enhanced/items?${query}`);
   },
   getItem(id) {
-    return apiService.request(`/inventory/${id}`);
+    return apiService.request(`/inventory-enhanced/items/${id}`);
   },
   createItem(payload) {
-    return apiService.request('/inventory', { method: 'POST', body: JSON.stringify(payload) });
+    return apiService.request('/inventory-enhanced/items', { method: 'POST', body: JSON.stringify(payload) });
   },
   updateItem(id, payload) {
-    return apiService.request(`/inventory/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    return apiService.request(`/inventory-enhanced/items/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
   },
   deleteItem(id) {
-    return apiService.request(`/inventory/${id}`, { method: 'DELETE' });
+    return apiService.request(`/inventory-enhanced/items/${id}`, { method: 'DELETE' });
   },
 
   // Bulk actions for inventory items
@@ -60,9 +62,9 @@ const inventoryService = {
     });
   },
 
-  // Get inventory statistics
+  // Get inventory statistics (using Enhanced API)
   async getStatistics() {
-    return apiService.request('/inventoryitems/stats');
+    return apiService.request('/inventory-enhanced/stats');
   },
 
   // Get low stock alerts
@@ -78,6 +80,29 @@ const inventoryService = {
   // Warehouses
   listWarehouses() {
     return apiService.request('/warehouses');
+  },
+
+  // Vendors
+  listVendors(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return apiService.request(`/vendors${qs ? `?${qs}` : ''}`);
+  },
+  getVendor(id) {
+    return apiService.request(`/vendors/${id}`);
+  },
+  createVendor(payload) {
+    return apiService.request('/vendors', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  updateVendor(id, payload) {
+    return apiService.request(`/vendors/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  },
+  deleteVendor(id) {
+    return apiService.request(`/vendors/${id}`, { method: 'DELETE' });
+  },
+
+  // Categories
+  listCategories() {
+    return apiService.request('/inventoryitems/categories');
   },
 
   // Stock Levels (legacy endpoints - kept for compatibility)
@@ -101,13 +126,13 @@ const inventoryService = {
     return apiService.request('/stocklevels/low-stock');
   },
 
-  // Stock Movements (legacy endpoints - kept for compatibility)
+  // Stock Movements (Enhanced APIs)
   listMovements(params = {}) {
     const qs = new URLSearchParams(params).toString();
-    return apiService.request(`/stockmovements${qs ? `?${qs}` : ''}`);
+    return apiService.request(`/inventory-enhanced/movements${qs ? `?${qs}` : ''}`);
   },
   createMovement(payload) {
-    return apiService.request('/stockmovements', { method: 'POST', body: JSON.stringify(payload) });
+    return apiService.request('/inventory-enhanced/movements', { method: 'POST', body: JSON.stringify(payload) });
   },
   updateMovement(id, payload) {
     return apiService.request(`/stockmovements/${id}`, { method: 'PUT', body: JSON.stringify(payload) });

@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     const query = `
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail
       FROM RepairRequest rr
@@ -88,7 +88,7 @@ router.get('/:id', async (req, res) => {
     const query = `
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail
       FROM RepairRequest rr
@@ -396,7 +396,7 @@ router.get('/tracking', async (req, res) => {
     let query = `
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         b.name as branchName,

@@ -15,16 +15,12 @@ router.get('/', async (req, res) => {
       const [rows] = await db.query(`
         SELECT 
           id,
-          CONCAT(firstName, ' ', lastName) as name,
-          firstName,
-          lastName,
+          name,
           phone,
           email,
           address,
           companyId,
-          status,
-          isActive,
-          notes,
+          customFields,
           createdAt,
           updatedAt
         FROM Customer 
@@ -37,7 +33,7 @@ router.get('/', async (req, res) => {
     const where = ['deletedAt IS NULL'];
     const params = [];
     if (q) {
-      where.push('(CONCAT(firstName, " ", lastName) LIKE ? OR phone LIKE ? OR email LIKE ?)');
+      where.push('(name LIKE ? OR phone LIKE ? OR email LIKE ?)');
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
@@ -46,14 +42,12 @@ router.get('/', async (req, res) => {
     const [rows] = await db.query(
       `SELECT 
         id, 
-        CONCAT(firstName, ' ', lastName) as name,
-        firstName,
-        lastName,
+        name,
         phone, 
         email, 
         address, 
         companyId,
-        status,
+        customFields,
         createdAt, 
         updatedAt
        FROM Customer
@@ -89,14 +83,12 @@ router.get('/search', async (req, res) => {
     const [rows] = await db.query(
       `SELECT 
         id, 
-        CONCAT(firstName, ' ', lastName) as name,
-        firstName,
-        lastName,
+        name,
         phone, 
         email, 
         address
        FROM Customer
-       WHERE deletedAt IS NULL AND (CONCAT(firstName, ' ', lastName) LIKE ? OR phone LIKE ?)
+       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)
        ORDER BY createdAt DESC
        LIMIT ? OFFSET ?`,
       [like, like, pageSize, offset]
@@ -106,7 +98,7 @@ router.get('/search', async (req, res) => {
     const [countRows] = await db.query(
       `SELECT COUNT(*) as cnt
        FROM Customer
-       WHERE deletedAt IS NULL AND (CONCAT(firstName, ' ', lastName) LIKE ? OR phone LIKE ?)`,
+       WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)`,
       [like, like]
     );
 
@@ -123,8 +115,7 @@ router.get('/:id', async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT 
-        *,
-        CONCAT(firstName, ' ', lastName) as name
+        *
       FROM Customer 
       WHERE id = ? AND deletedAt IS NULL
     `, [id]);
@@ -143,12 +134,12 @@ router.get('/:id', async (req, res) => {
 
 // Create a new customer
 router.post('/', authMiddleware, async (req, res) => {
-  const { firstName, lastName, phone, email, address, companyId, status = 'active', notes } = req.body;
+  const { name, phone, email, address, companyId, customFields } = req.body;
   
-  console.log('Creating customer:', { firstName, lastName, phone, email, address, companyId, status, notes });
+  console.log('Creating customer:', { name, phone, email, address, companyId, customFields });
   
-  if (!firstName || !phone) {
-    return res.status(400).json({ success: false, message: 'First name and phone are required' });
+  if (!name || !phone) {
+    return res.status(400).json({ success: false, message: 'Name and phone are required' });
   }
   
   try {
@@ -166,22 +157,20 @@ router.post('/', authMiddleware, async (req, res) => {
     }
     
     const [result] = await db.query(
-      'INSERT INTO Customer (firstName, lastName, phone, email, address, companyId, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-      [firstName, lastName || '', phone, email, address, companyId, status, notes]
+      'INSERT INTO Customer (name, phone, email, address, companyId, customFields) VALUES (?, ?, ?, ?, ?, ?)', 
+      [name, phone, email, address, companyId, JSON.stringify(customFields || {})]
     );
     
     console.log('Create result:', result);
     
     const customer = {
       id: result.insertId,
-      firstName,
-      lastName,
+      name,
       phone,
       email,
       address,
       companyId,
-      status,
-      notes
+      customFields
     };
     
     res.status(201).json({ success: true, customer });
@@ -197,21 +186,17 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update a customer
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, phone, email, address, companyId, status, notes } = req.body;
+  const { name, phone, email, address, companyId, customFields } = req.body;
   
-  console.log('Updating customer:', { id, firstName, lastName, phone, email, address, companyId, status, notes });
+  console.log('Updating customer:', { id, name, phone, email, address, companyId, customFields });
   
   // Build dynamic update query
   const updates = [];
   const values = [];
   
-  if (firstName !== undefined) {
-    updates.push('firstName = ?');
-    values.push(firstName);
-  }
-  if (lastName !== undefined) {
-    updates.push('lastName = ?');
-    values.push(lastName);
+  if (name !== undefined) {
+    updates.push('name = ?');
+    values.push(name);
   }
   if (phone !== undefined) {
     updates.push('phone = ?');
@@ -229,13 +214,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     updates.push('companyId = ?');
     values.push(companyId);
   }
-  if (status !== undefined) {
-    updates.push('status = ?');
-    values.push(status);
-  }
-  if (notes !== undefined) {
-    updates.push('notes = ?');
-    values.push(notes);
+  if (customFields !== undefined) {
+    updates.push('customFields = ?');
+    values.push(JSON.stringify(customFields));
   }
   
   if (updates.length === 0) {

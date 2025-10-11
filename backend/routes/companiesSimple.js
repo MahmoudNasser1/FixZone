@@ -11,8 +11,7 @@ router.get('/', async (req, res) => {
     
     let query = `
       SELECT 
-        c.id, c.name, c.email, c.phone, c.address, c.industry, c.website, c.description,
-        c.contactPerson, c.taxNumber, c.notes, c.isActive,
+        c.id, c.name, c.email, c.phone, c.address, c.taxNumber, c.customFields,
         c.createdAt, c.updatedAt,
         COUNT(cust.id) as customersCount
       FROM Company c
@@ -28,11 +27,11 @@ router.get('/', async (req, res) => {
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
     
-    // إضافة فلتر الحالة
-    if (status) {
-      query += ` AND c.isActive = ?`;
-      params.push(status === 'active' ? 1 : 0);
-    }
+    // إضافة فلتر الحالة (تم إزالته لعدم وجود عمود isActive)
+    // if (status) {
+    //   query += ` AND c.isActive = ?`;
+    //   params.push(status === 'active' ? 1 : 0);
+    // }
     
     query += ` GROUP BY c.id ORDER BY c.createdAt DESC`;
     
@@ -45,14 +44,8 @@ router.get('/', async (req, res) => {
         email: company.email,
         phone: company.phone,
         address: company.address,
-        industry: company.industry,
-        website: company.website,
-        description: company.description,
-        contactPerson: company.contactPerson,
         taxNumber: company.taxNumber,
-        notes: company.notes,
-        isActive: company.isActive,
-        status: company.isActive ? 'active' : 'inactive',
+        customFields: company.customFields,
         customersCount: company.customersCount,
         createdAt: company.createdAt,
         updatedAt: company.updatedAt
@@ -81,10 +74,10 @@ router.get('/', async (req, res) => {
         countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
       
-      if (status) {
-        countQuery += ` AND c.isActive = ?`;
-        countParams.push(status === 'active' ? 1 : 0);
-      }
+      // if (status) {
+      //   countQuery += ` AND c.isActive = ?`;
+      //   countParams.push(status === 'active' ? 1 : 0);
+      // }
       
       const [countResult] = await db.query(countQuery, countParams);
       const total = countResult[0].total;
@@ -95,14 +88,8 @@ router.get('/', async (req, res) => {
         email: company.email,
         phone: company.phone,
         address: company.address,
-        industry: company.industry,
-        website: company.website,
-        description: company.description,
-        contactPerson: company.contactPerson,
         taxNumber: company.taxNumber,
-        notes: company.notes,
-        isActive: company.isActive,
-        status: company.isActive ? 'active' : 'inactive',
+        customFields: company.customFields,
         customersCount: company.customersCount,
         createdAt: company.createdAt,
         updatedAt: company.updatedAt
@@ -135,8 +122,7 @@ router.get('/:id', async (req, res) => {
     
     const query = `
       SELECT 
-        c.id, c.name, c.email, c.phone, c.address, c.industry, c.website, c.description,
-        c.contactPerson, c.taxNumber, c.notes, c.isActive,
+        c.id, c.name, c.email, c.phone, c.address, c.taxNumber, c.customFields,
         c.createdAt, c.updatedAt,
         COUNT(cust.id) as customersCount
       FROM Company c
@@ -158,14 +144,8 @@ router.get('/:id', async (req, res) => {
       email: company.email,
       phone: company.phone,
       address: company.address,
-      industry: company.industry,
-      website: company.website,
-      description: company.description,
-      contactPerson: company.contactPerson,
       taxNumber: company.taxNumber,
-      notes: company.notes,
-      isActive: company.isActive,
-      status: company.isActive ? 'active' : 'inactive',
+      customFields: company.customFields,
       customersCount: company.customersCount,
       createdAt: company.createdAt,
       updatedAt: company.updatedAt
@@ -190,7 +170,6 @@ router.post('/', async (req, res) => {
       email,
       phone,
       address,
-      industry,
       website,
       description,
       contactPerson,
@@ -220,9 +199,8 @@ router.post('/', async (req, res) => {
     
     const query = `
       INSERT INTO Company (
-        name, email, phone, address, industry, website, description,
-        contactPerson, taxNumber, notes, isActive, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        name, email, phone, address, taxNumber, customFields, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
     
     const [result] = await db.query(query, [
@@ -230,18 +208,13 @@ router.post('/', async (req, res) => {
       email || null, 
       phone, 
       address || null,
-      industry || null,
-      website || null,
-      description || null,
-      contactPerson || null,
       taxNumber || null, 
-      notes || null,
-      isActive ? 1 : 0
+      JSON.stringify(customFields || {})
     ]);
     
     // جلب الشركة المنشأة
     const [newCompanyRows] = await db.query(
-      'SELECT id, name, email, phone, address, industry, website, description, contactPerson, taxNumber, notes, isActive, createdAt, updatedAt FROM Company WHERE id = ?',
+      'SELECT id, name, email, phone, address, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [result.insertId]
     );
     
@@ -268,7 +241,6 @@ router.put('/:id', async (req, res) => {
       email,
       phone,
       address,
-      industry,
       website,
       description,
       contactPerson,
@@ -308,9 +280,8 @@ router.put('/:id', async (req, res) => {
     
     const query = `
       UPDATE Company SET 
-        name = ?, email = ?, phone = ?, address = ?, industry = ?, website = ?, description = ?,
-        contactPerson = ?, taxNumber = ?, notes = ?,
-        isActive = ?, updatedAt = NOW()
+        name = ?, email = ?, phone = ?, address = ?, taxNumber = ?, customFields = ?,
+        updatedAt = NOW()
       WHERE id = ? AND deletedAt IS NULL
     `;
     
@@ -319,19 +290,14 @@ router.put('/:id', async (req, res) => {
       email || null, 
       phone, 
       address || null,
-      industry || null,
-      website || null,
-      description || null,
-      contactPerson || null, 
       taxNumber || null, 
-      notes || null,
-      isActive ? 1 : 0,
+      JSON.stringify(customFields || {}),
       id
     ]);
     
     // جلب الشركة المحدثة
     const [updatedCompanyRows] = await db.query(
-      'SELECT id, name, email, phone, address, industry, website, description, contactPerson, taxNumber, notes, isActive, createdAt, updatedAt FROM Company WHERE id = ?',
+      'SELECT id, name, email, phone, address, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [id]
     );
     

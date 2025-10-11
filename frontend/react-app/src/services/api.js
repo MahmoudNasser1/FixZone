@@ -24,8 +24,14 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       
-      // Return the full response object for components that need to check response.ok
-      return response;
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Parse JSON and return
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;

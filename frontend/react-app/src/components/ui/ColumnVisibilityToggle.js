@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Eye, EyeOff, RotateCcw } from 'lucide-react';
 
 const ColumnVisibilityToggle = ({ 
@@ -23,10 +23,10 @@ const ColumnVisibilityToggle = ({
         console.error('Error parsing saved column visibility:', error);
       }
     }
-  }, [storageKey, onVisibilityChange]);
+  }, [storageKey]); // إزالة onVisibilityChange من dependencies
 
   // حفظ التفضيلات عند التغيير
-  const handleVisibilityChange = (columnKey, isVisible) => {
+  const handleVisibilityChange = useCallback((columnKey, isVisible) => {
     let newVisibleColumns;
     
     if (isVisible) {
@@ -40,10 +40,10 @@ const ColumnVisibilityToggle = ({
     
     // حفظ في localStorage
     localStorage.setItem(storageKey, JSON.stringify(newVisibleColumns));
-  };
+  }, [localVisibleColumns, onVisibilityChange, storageKey]);
 
   // إعادة تعيين إلى الافتراضي
-  const resetToDefault = () => {
+  const resetToDefault = useCallback(() => {
     const defaultColumns = columns
       .filter(col => col.defaultVisible !== false)
       .map(col => col.key);
@@ -51,10 +51,10 @@ const ColumnVisibilityToggle = ({
     setLocalVisibleColumns(defaultColumns);
     onVisibilityChange(defaultColumns);
     localStorage.removeItem(storageKey);
-  };
+  }, [columns, onVisibilityChange, storageKey]);
 
   // تحديد/إلغاء تحديد الكل
-  const toggleAll = () => {
+  const toggleAll = useCallback(() => {
     const allColumnKeys = columns.map(col => col.key);
     const newVisibleColumns = localVisibleColumns.length === allColumnKeys.length 
       ? [] 
@@ -63,7 +63,7 @@ const ColumnVisibilityToggle = ({
     setLocalVisibleColumns(newVisibleColumns);
     onVisibilityChange(newVisibleColumns);
     localStorage.setItem(storageKey, JSON.stringify(newVisibleColumns));
-  };
+  }, [columns, localVisibleColumns, onVisibilityChange, storageKey]);
 
   const visibleCount = localVisibleColumns.length;
   const totalCount = columns.length;
