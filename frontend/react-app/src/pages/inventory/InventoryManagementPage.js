@@ -281,7 +281,7 @@ const InventoryManagementPage = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">تاريخ الإنشاء:</span>
                       <span className="font-medium">
-                        {new Date(warehouse.createdAt).toLocaleDateString('ar-EG')}
+                        {new Date(warehouse.createdAt).toLocaleDateString('en-GB')}
                       </span>
                     </div>
                   </div>
@@ -376,7 +376,7 @@ const InventoryManagementPage = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-gray-600">
-                        {new Date(movement.createdAt).toLocaleDateString('ar-EG')}
+                        {new Date(movement.createdAt).toLocaleDateString('en-GB')}
                       </div>
                       <SimpleBadge 
                         className={

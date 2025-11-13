@@ -58,11 +58,11 @@ const PaymentCard = ({ payment, onEdit, onDelete, onView }) => {
             <span className="font-medium">{formatDate(payment.paymentDate)}</span>
           </div>
 
-          {payment.customerFirstName && (
+          {payment.customerName && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">العميل:</span>
               <span className="font-medium">
-                {payment.customerFirstName} {payment.customerLastName}
+                {payment.customerName}
               </span>
             </div>
           )}

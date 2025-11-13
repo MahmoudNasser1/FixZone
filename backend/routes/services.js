@@ -13,23 +13,46 @@ router.get('/', async (req, res) => {
       sortDir = 'asc',
       limit = '50',
       offset = '0',
+      page,
+      pageSize,
       isActive,
     } = req.query;
 
     // Whitelists to prevent SQL injection for identifiers
-    const allowedSortBy = new Set(['id', 'serviceName', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
-    const safeSortBy = allowedSortBy.has(String(sortBy)) ? String(sortBy) : 'id';
+    const allowedSortBy = new Set(['id', 'name', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
+    
+    // Map frontend sortBy values to database column names
+    const sortByMapping = {
+      'serviceName': 'name',
+      'name': 'name'
+    };
+    
+    const mappedSortBy = sortByMapping[String(sortBy)] || String(sortBy);
+    const safeSortBy = allowedSortBy.has(mappedSortBy) ? mappedSortBy : 'id';
+    
+    console.log('Debug - sortBy:', sortBy, 'mappedSortBy:', mappedSortBy, 'safeSortBy:', safeSortBy);
     const safeSortDir = String(sortDir).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
-    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
-    const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+    // Handle both pagination formats: page/pageSize and limit/offset
+    let safeLimit, safeOffset;
+    if (page && pageSize) {
+      // Frontend pagination format
+      const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+      const size = Math.min(Math.max(parseInt(pageSize, 10) || 20, 1), 200);
+      safeLimit = size;
+      safeOffset = (pageNum - 1) * size;
+    } else {
+      // Backend pagination format
+      safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+      safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+    }
 
     const whereClauses = ['deletedAt IS NULL'];
     const params = [];
 
     if (q && String(q).trim() !== '') {
       const like = `%${String(q).trim()}%`;
-      whereClauses.push('(serviceName LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
+      whereClauses.push('(name LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
       params.push(like, like, like);
     }
 
@@ -56,7 +79,21 @@ router.get('/', async (req, res) => {
     const [countRows] = await db.query(countSql, params);
     const total = countRows?.[0]?.total || 0;
 
-    res.json({ items: rows, total, limit: safeLimit, offset: safeOffset, sortBy: safeSortBy, sortDir: safeSortDir });
+    // Calculate pagination info for frontend
+    const totalPages = Math.ceil(total / safeLimit);
+    const currentPage = Math.floor(safeOffset / safeLimit) + 1;
+    
+    res.json({ 
+      items: rows, 
+      total, 
+      limit: safeLimit, 
+      offset: safeOffset, 
+      sortBy: safeSortBy, 
+      sortDir: safeSortDir,
+      totalPages,
+      currentPage,
+      pageSize: safeLimit
+    });
   } catch (err) {
     console.error('Error fetching services:', err);
     res.status(500).send('Server Error');
@@ -86,7 +123,7 @@ router.post('/', auth, authorize([1]), async (req, res) => {
   }
   try {
     const [result] = await db.query(
-      'INSERT INTO Service (serviceName, description, basePrice, isActive) VALUES (?, ?, ?, ?)',
+      'INSERT INTO Service (name, description, basePrice, isActive) VALUES (?, ?, ?, ?)',
       [name, description, basePrice, isActive]
     );
     res.status(201).json({ id: result.insertId, name, description, basePrice, isActive });
@@ -105,7 +142,7 @@ router.put('/:id', auth, authorize([1]), async (req, res) => {
   }
   try {
     const [result] = await db.query(
-      'UPDATE Service SET serviceName = ?, description = ?, basePrice = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
+      'UPDATE Service SET name = ?, description = ?, basePrice = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
       [name, description, basePrice, isActive, id]
     );
     if (result.affectedRows === 0) {
@@ -115,6 +152,55 @@ router.put('/:id', auth, authorize([1]), async (req, res) => {
   } catch (err) {
     console.error(`Error updating service with ID ${id}:`, err);
     res.status(500).send('Server Error');
+  }
+});
+
+// Get service statistics
+router.get('/:id/stats', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Check if service exists
+    const [serviceRows] = await db.query('SELECT id FROM Service WHERE id = ? AND deletedAt IS NULL', [id]);
+    if (serviceRows.length === 0) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Get service usage statistics
+    const [usageStats] = await db.query(`
+      SELECT 
+        COUNT(*) as totalUsage,
+        SUM(CASE WHEN rrs.status = 'completed' THEN 1 ELSE 0 END) as completedUsage,
+        SUM(CASE WHEN rrs.status = 'completed' THEN COALESCE(rrs.finalPrice, rrs.price, rrs.baseCost, 0) ELSE 0 END) as totalRevenue,
+        AVG(CASE WHEN rrs.status = 'completed' THEN COALESCE(rrs.finalPrice, rrs.price, rrs.baseCost, 0) ELSE NULL END) as avgPrice,
+        MAX(rrs.createdAt) as lastUsed,
+        MIN(rrs.createdAt) as firstUsed
+      FROM RepairRequestService rrs
+      WHERE rrs.serviceId = ?
+    `, [id]);
+
+    const stats = usageStats[0] || {
+      totalUsage: 0,
+      completedUsage: 0,
+      totalRevenue: 0,
+      avgPrice: 0,
+      lastUsed: null,
+      firstUsed: null
+    };
+
+    res.json({ 
+      success: true,
+      stats: {
+        totalUsage: parseInt(stats.totalUsage) || 0,
+        completedUsage: parseInt(stats.completedUsage) || 0,
+        totalRevenue: parseFloat(stats.totalRevenue) || 0,
+        avgPrice: parseFloat(stats.avgPrice) || 0,
+        lastUsed: stats.lastUsed,
+        firstUsed: stats.firstUsed
+      }
+    });
+  } catch (err) {
+    console.error(`Error fetching service stats for ID ${id}:`, err);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 

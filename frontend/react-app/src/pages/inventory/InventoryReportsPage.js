@@ -519,7 +519,7 @@ const InventoryReportsPage = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-gray-600">
-                        {new Date(movement.createdAt).toLocaleDateString('ar-EG')}
+                        {new Date(movement.createdAt).toLocaleDateString('en-GB')}
                       </div>
                       <SimpleBadge 
                         className={

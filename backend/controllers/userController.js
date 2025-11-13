@@ -1,6 +1,17 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
-const { logActivity } = require('./activityLogController');
+
+// Helper function for logging activities (with error handling)
+const logActivity = async (userId, action, details = null) => {
+  try {
+    const query = 'INSERT INTO activity_log (userId, action, details) VALUES (?, ?, ?)';
+    await db.query(query, [userId, action, details ? JSON.stringify(details) : null]);
+    console.log(`Activity logged for user ${userId}: ${action}`);
+  } catch (error) {
+    console.error('Error logging activity:', error);
+    // Continue execution even if logging fails
+  }
+};
 
 // Get all users with optional filtering, sorting, and pagination
 exports.getAllUsers = async (req, res) => {
@@ -19,8 +30,8 @@ exports.getAllUsers = async (req, res) => {
         const params = [];
 
         if (q) {
-            conditions.push('(firstName LIKE ? OR lastName LIKE ? OR email LIKE ?)');
-            params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+            conditions.push('(name LIKE ? OR email LIKE ?)');
+            params.push(`%${q}%`, `%${q}%`);
         }
         if (roleId) {
             conditions.push('roleId = ?');
@@ -47,20 +58,18 @@ exports.getAllUsers = async (req, res) => {
             const [countRows] = await db.query(`SELECT COUNT(*) AS cnt FROM User ${whereClause}`, params);
             const total = countRows[0]?.cnt || 0;
 
-            const [rows] = await db.query(
-                `SELECT 
-                  id, 
-                  firstName, 
-                  lastName, 
-                  CONCAT(firstName, ' ', lastName) as name,
-                  email, 
-                  roleId, 
-                  isActive, 
-                  createdAt, 
-                  updatedAt 
-                FROM User ${whereClause} ORDER BY ${orderBy} ${direction} LIMIT ? OFFSET ?`,
-                [...params, ps, offset]
-            );
+        const [rows] = await db.query(
+            `SELECT 
+              id, 
+              name,
+              email, 
+              roleId, 
+              isActive, 
+              createdAt, 
+              updatedAt 
+            FROM User ${whereClause} ORDER BY ${orderBy} ${direction} LIMIT ? OFFSET ?`,
+            [...params, ps, offset]
+        );
             return res.json({ items: rows, total, page: pg, pageSize: ps });
         }
 
@@ -68,9 +77,7 @@ exports.getAllUsers = async (req, res) => {
         const [users] = await db.query(
             `SELECT 
               id, 
-              firstName, 
-              lastName, 
-              CONCAT(firstName, ' ', lastName) as name,
+              name,
               email, 
               roleId, 
               isActive, 
@@ -91,7 +98,7 @@ exports.getUserById = async (req, res) => {
     const { id } = req.params;
     try {
         const [user] = await db.query(
-            'SELECT id, firstName, lastName, email, roleId, isActive, createdAt, updatedAt FROM User WHERE id = ? AND deletedAt IS NULL',
+            'SELECT id, name, email, roleId, isActive, createdAt, updatedAt FROM User WHERE id = ? AND deletedAt IS NULL',
             [id]
         );
         if (!user.length) {
@@ -136,7 +143,11 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found or no changes made' });
         }
         res.json({ message: 'User updated successfully' });
-        await logActivity(req.user.id, 'User Updated', { targetUserId: id, updatedFields: updateFields.map(field => field.split(' ')[0]) });
+        
+        // Log activity safely
+        if (req.user && req.user.id) {
+            await logActivity(req.user.id, 'User Updated', { targetUserId: id, updatedFields: updateFields.map(field => field.split(' ')[0]) });
+        }
     } catch (error) {
         console.error('Error updating user:', error);
         res.status(500).json({ message: 'Server error' });
@@ -152,7 +163,11 @@ exports.deleteUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
         res.json({ message: 'User deleted successfully' });
-        await logActivity(req.user.id, 'User Deleted (Soft)', { targetUserId: id });
+        
+        // Log activity safely
+        if (req.user && req.user.id) {
+            await logActivity(req.user.id, 'User Deleted (Soft)', { targetUserId: id });
+        }
     } catch (error) {
         console.error('Error deleting user:', error);
         res.status(500).json({ message: 'Server error' });

@@ -74,10 +74,12 @@ const NewRepairPage = () => {
         
         const accessoriesResponse = await apiService.getVariables({ category: 'ACCESSORY', active: true });
         console.log('Accessories response:', accessoriesResponse);
-        if (accessoriesResponse.ok) {
-          const accessories = await accessoriesResponse.json();
-          console.log('Accessories loaded:', accessories);
-          setAccessoryOptions(Array.isArray(accessories) ? accessories : []);
+        if (accessoriesResponse && accessoriesResponse.ok && Array.isArray(accessoriesResponse)) {
+          console.log('Accessories loaded:', accessoriesResponse);
+          setAccessoryOptions(accessoriesResponse);
+        } else if (Array.isArray(accessoriesResponse)) {
+          console.log('Accessories loaded (direct array):', accessoriesResponse);
+          setAccessoryOptions(accessoriesResponse);
         } else {
           console.log('Accessories response not ok, using fallback data');
           setAccessoryOptions([
@@ -85,7 +87,10 @@ const NewRepairPage = () => {
             { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
             { id: 3, label: 'سماعات', value: 'EARPHONES' },
             { id: 4, label: 'حافظة', value: 'CASE' },
-            { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' }
+            { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' },
+            { id: 6, label: 'قلم الكتابة', value: 'STYLUS' },
+            { id: 7, label: 'ماوس', value: 'MOUSE' },
+            { id: 8, label: 'لوحة مفاتيح', value: 'KEYBOARD' }
           ]);
         }
 
@@ -311,14 +316,26 @@ const NewRepairPage = () => {
         gpu: formData.gpu.trim() || null,
         ram: formData.ram.trim() || null,
         storage: formData.storage.trim() || null,
-        accessories: (formData.accessories || []).map(x => Number(x)).filter(Number.isFinite),
-        issueDescription: formData.problemDescription.trim(), // Backend expects issueDescription
+        accessories: (formData.accessories || []).map(id => {
+          // البحث في accessoryOptions عن id المطابق
+          const accessory = accessoryOptions.find(a => a.id === Number(id) || a.value === id);
+          // إذا وجدنا accessory، نعيد label، وإلا نعيد القيمة الأصلية
+          if (accessory) {
+            return accessory.label || accessory.value || id;
+          }
+          // إذا لم نجد accessory، نعيد القيمة كما هي (هذا للمتعلقات المخصصة)
+          return id;
+        }).filter(Boolean),
+        problemDescription: formData.problemDescription.trim(), // Backend expects problemDescription
         customerNotes: formData.notes ? formData.notes.trim() : null,
         priority: formData.priority.toLowerCase(), // Convert to lowercase for backend
         estimatedCost: parseFloat(formData.estimatedCost || 0) || 0,
         expectedDeliveryDate: formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate).toISOString() : null
       };
 
+      console.log('Sending repair data:', repairData);
+      console.log('Accessories being sent:', repairData.accessories);
+      console.log('Accessory options available:', accessoryOptions);
       const newRepair = await apiService.createRepairRequest(repairData);
       
       // إظهار رسالة نجاح والانتقال لصفحة الطلبات

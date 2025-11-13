@@ -50,7 +50,7 @@ const WarehouseManagementPage = () => {
       setError('');
       
       const warehousesRes = await inventoryService.listWarehouses();
-      setWarehouses(Array.isArray(warehousesRes) ? warehousesRes : []);
+      setWarehouses(warehousesRes?.data || []);
     } catch (err) {
       setError('تعذر تحميل بيانات المخازن');
       console.error('Error loading warehouses:', err);
@@ -86,13 +86,13 @@ const WarehouseManagementPage = () => {
         body: JSON.stringify(warehouseForm)
       });
 
-      if (res.ok) {
+      if (res.id) {
         notifications.success('تم إنشاء المخزن بنجاح');
         setShowCreateModal(false);
         resetForm();
         await loadWarehouses();
       } else {
-        throw new Error('فشل في إنشاء المخزن');
+        throw new Error(res.message || 'فشل في إنشاء المخزن');
       }
     } catch (err) {
       notifications.error(err.message || 'فشل في إنشاء المخزن');
@@ -140,12 +140,11 @@ const WarehouseManagementPage = () => {
         method: 'DELETE'
       });
 
-      if (response.ok) {
+      if (response.message) {
         notifications.success('تم حذف المخزن بنجاح');
         await loadWarehouses();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'فشل في حذف المخزن');
+        throw new Error(response.error || 'فشل في حذف المخزن');
       }
     } catch (err) {
       console.error('Error deleting warehouse:', err);

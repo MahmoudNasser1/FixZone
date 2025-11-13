@@ -1,0 +1,51 @@
+{
+  "module": "Inventory",
+  "timestamp": "2025-10-20T02:32:40.485Z",
+  "results": {
+    "passed": 1,
+    "failed": 7,
+    "total": 8,
+    "tests": [
+      {
+        "name": "Get all inventory items",
+        "passed": false,
+        "details": "Status: 404"
+      },
+      {
+        "name": "Get single item",
+        "passed": false,
+        "details": "No items available to test"
+      },
+      {
+        "name": "Create inventory item",
+        "passed": false,
+        "details": "Status: 404 - {\"error\":\"Route not found\",\"path\":\"/api/inventory\"}"
+      },
+      {
+        "name": "Update item",
+        "passed": false,
+        "details": "No item to update (previous test failed)"
+      },
+      {
+        "name": "Adjust quantity",
+        "passed": false,
+        "details": "No item to adjust (previous test failed)"
+      },
+      {
+        "name": "Get low stock items",
+        "passed": false,
+        "details": "Status: 404"
+      },
+      {
+        "name": "Search inventory",
+        "passed": false,
+        "details": "Status: 404"
+      },
+      {
+        "name": "Get non-existent item",
+        "passed": true,
+        "details": "Correctly returned 404"
+      }
+    ]
+  }
+}

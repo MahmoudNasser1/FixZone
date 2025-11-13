@@ -245,7 +245,7 @@ const OverduePaymentsPage = () => {
                           <div className="flex items-center space-x-2 space-x-reverse">
                             <Calendar className="w-4 h-4 text-gray-400" />
                             <span className="text-sm text-gray-600">
-                              استحقاق: {new Date(payment.dueDate).toLocaleDateString('ar-EG')}
+                              استحقاق: {new Date(payment.dueDate).toLocaleDateString('en-GB')}
                             </span>
                           </div>
                         </div>

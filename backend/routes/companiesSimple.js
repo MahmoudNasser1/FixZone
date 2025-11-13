@@ -175,6 +175,7 @@ router.post('/', async (req, res) => {
       contactPerson,
       taxNumber,
       notes,
+      customFields,
       isActive = true
     } = req.body;
     
@@ -220,8 +221,11 @@ router.post('/', async (req, res) => {
     
     const newCompany = newCompanyRows[0];
     res.status(201).json({
-      ...newCompany,
-      status: newCompany.isActive ? 'active' : 'inactive'
+      success: true,
+      data: {
+        company: newCompany
+      },
+      message: 'تم إنشاء الشركة بنجاح'
     });
   } catch (error) {
     console.error('Error creating company:', error);
@@ -246,6 +250,7 @@ router.put('/:id', async (req, res) => {
       contactPerson,
       taxNumber,
       notes,
+      customFields,
       isActive
     } = req.body;
     

@@ -42,33 +42,27 @@ export default function EditInvoicePage() {
       try {
         setLoading(true);
         console.log('Loading invoice with ID:', id);
-        const response = await apiService.getInvoiceById(id);
+        const responseData = await apiService.getInvoiceById(id);
+        console.log('API Response:', responseData);
+        const invoiceData = responseData.data || responseData;
+        setInvoice(invoiceData);
         
-        if (response.ok) {
-          const responseData = await response.json();
-          console.log('API Response:', responseData);
-          const invoiceData = responseData.data || responseData;
-          setInvoice(invoiceData);
-          
-          // Ensure all numeric values are properly converted
-          const totalAmount = Number(invoiceData.totalAmount) || 0;
-          const amountPaid = Number(invoiceData.amountPaid) || 0;
-          const taxAmount = Number(invoiceData.taxAmount) || 0;
-          const discountAmount = Number(invoiceData.discountAmount) || 0;
-          
-          setForm({
-            totalAmount,
-            amountPaid,
-            status: invoiceData.status || 'draft',
-            currency: invoiceData.currency || 'EGP',
-            taxAmount,
-            discountAmount,
-            notes: invoiceData.notes || '',
-            dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
-          });
-        } else {
-          throw new Error('فشل في تحميل بيانات الفاتورة');
-        }
+        // Ensure all numeric values are properly converted
+        const totalAmount = Number(invoiceData.totalAmount) || 0;
+        const amountPaid = Number(invoiceData.amountPaid) || 0;
+        const taxAmount = Number(invoiceData.taxAmount) || 0;
+        const discountAmount = Number(invoiceData.discountAmount) || 0;
+        
+        setForm({
+          totalAmount,
+          amountPaid,
+          status: invoiceData.status || 'draft',
+          currency: invoiceData.currency || 'EGP',
+          taxAmount,
+          discountAmount,
+          notes: invoiceData.notes || '',
+          dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
+        });
       } catch (error) {
         console.error('Error loading invoice:', error);
         notifications.error('فشل في تحميل بيانات الفاتورة: ' + error.message);
@@ -98,15 +92,9 @@ export default function EditInvoicePage() {
         dueDate: form.dueDate || null
       };
 
-      const response = await apiService.updateInvoice(id, updateData);
-      
-      if (response.ok) {
-        notifications.success('تم حفظ التغييرات بنجاح');
-        navigate(`/invoices/${id}`);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || 'فشل في حفظ التغييرات');
-      }
+      await apiService.updateInvoice(id, updateData);
+      notifications.success('تم حفظ التغييرات بنجاح');
+      navigate(`/invoices/${id}`);
     } catch (error) {
       console.error('Error saving invoice:', error);
       notifications.error('فشل في حفظ التغييرات: ' + (error.message || 'خطأ غير معروف'));
@@ -171,13 +159,13 @@ export default function EditInvoicePage() {
                     <div>
                       <span className="text-gray-600">تاريخ الإنشاء: </span>
                       <span className="font-medium">
-                        {invoice?.createdAt ? new Date(invoice.createdAt).toLocaleDateString('ar-EG') : '—'}
+                        {invoice?.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : '—'}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-600">آخر تحديث: </span>
                       <span className="font-medium">
-                        {invoice?.updatedAt ? new Date(invoice.updatedAt).toLocaleDateString('ar-EG') : '—'}
+                        {invoice?.updatedAt ? new Date(invoice.updatedAt).toLocaleDateString('en-GB') : '—'}
                       </span>
                     </div>
                   </div>
@@ -369,7 +357,7 @@ export default function EditInvoicePage() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">تاريخ الاستحقاق:</span>
                     <span className="font-medium">
-                      {new Date(form.dueDate).toLocaleDateString('ar-EG')}
+                      {new Date(form.dueDate).toLocaleDateString('en-GB')}
                     </span>
                   </div>
                 )}

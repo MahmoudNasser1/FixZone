@@ -114,7 +114,7 @@ const Topbar = () => {
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
             <div className="flex items-center space-x-1 space-x-reverse text-green-600">
               <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">{quickStats.todayRevenue} ر.س</span>
+              <span className="font-medium">{quickStats.todayRevenue} جنية</span>
             </div>
             <span className="text-gray-500">اليوم</span>
           </div>

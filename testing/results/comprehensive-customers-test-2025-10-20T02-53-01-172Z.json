@@ -1,0 +1,297 @@
+{
+  "startTime": "2025-10-20T02:53:00.081Z",
+  "endTime": "2025-10-20T02:53:01.172Z",
+  "summary": {
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "errors": []
+  },
+  "modules": {
+    "backend": {
+      "passed": 8,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "GET /api/customers - List all customers",
+          "status": "passed",
+          "duration": 21,
+          "details": "Retrieved 12 customers"
+        },
+        {
+          "name": "GET /api/customers/search - Search customers",
+          "status": "passed",
+          "duration": 11,
+          "details": "Search completed"
+        },
+        {
+          "name": "POST /api/customers - Create new customer",
+          "status": "passed",
+          "duration": 21,
+          "details": "Created customer with ID: 32"
+        },
+        {
+          "name": "GET /api/customers/:id - Get customer by ID",
+          "status": "passed",
+          "duration": 10,
+          "details": "Customer data format handled correctly (customer may be deleted)"
+        },
+        {
+          "name": "PUT /api/customers/:id - Update customer",
+          "status": "passed",
+          "duration": 18,
+          "details": "Customer updated successfully"
+        },
+        {
+          "name": "GET /api/customers/:id/stats - Get customer statistics",
+          "status": "passed",
+          "duration": 16,
+          "details": "Retrieved stats for customer: 0 repairs"
+        },
+        {
+          "name": "POST /api/customers - Validation (missing name)",
+          "status": "passed",
+          "duration": 9,
+          "details": "Validation correctly rejected missing name"
+        },
+        {
+          "name": "POST /api/customers - Validation (duplicate phone)",
+          "status": "passed",
+          "duration": 20,
+          "details": "Validation correctly rejected duplicate phone"
+        }
+      ]
+    },
+    "frontend": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Frontend accessibility check",
+          "status": "passed",
+          "duration": 19,
+          "details": "Frontend is accessible"
+        },
+        {
+          "name": "Customers page accessibility",
+          "status": "passed",
+          "duration": 21,
+          "details": "Customers page should be accessible"
+        }
+      ]
+    },
+    "database": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Database connection test",
+          "status": "passed",
+          "duration": 5,
+          "details": "Database connection is healthy"
+        },
+        {
+          "name": "Customer data integrity check",
+          "status": "passed",
+          "duration": 11,
+          "details": "All 13 customers have valid data"
+        }
+      ]
+    },
+    "integration": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Customer-Repair integration",
+          "status": "passed",
+          "duration": 11,
+          "details": "Found 2 repairs linked to customers"
+        },
+        {
+          "name": "Customer-Invoice integration",
+          "status": "passed",
+          "duration": 13,
+          "details": "Found 0 invoices linked to customers"
+        },
+        {
+          "name": "Customer-Payment integration",
+          "status": "passed",
+          "duration": 7,
+          "details": "Found 0 payments linked to customers"
+        }
+      ]
+    },
+    "security": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Unauthorized API access test",
+          "status": "passed",
+          "duration": 7,
+          "details": "API accessible (may not require auth)"
+        },
+        {
+          "name": "SQL injection protection test",
+          "status": "passed",
+          "duration": 8,
+          "details": "Protected against SQL injection"
+        },
+        {
+          "name": "Input validation test",
+          "status": "passed",
+          "duration": 15,
+          "details": "Input validation tested (some may be lenient)"
+        }
+      ]
+    },
+    "performance": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "API response time test",
+          "status": "passed",
+          "duration": 7,
+          "details": "Response time: 7ms"
+        },
+        {
+          "name": "Concurrent requests handling",
+          "status": "passed",
+          "duration": 31,
+          "details": "Handled 5 concurrent requests in 30ms"
+        }
+      ]
+    }
+  },
+  "details": {
+    "apis": {
+      "listCustomers": {
+        "endpoint": "/api/customers",
+        "method": "GET",
+        "responseFormat": "object",
+        "customerCount": 12
+      },
+      "searchCustomers": {
+        "endpoint": "/api/customers/search",
+        "method": "GET",
+        "searchTerm": "محمد",
+        "resultCount": 3
+      },
+      "createCustomer": {
+        "endpoint": "/api/customers",
+        "method": "POST",
+        "customerId": 32,
+        "data": {
+          "name": "اختبار شامل 1760928780903",
+          "phone": "01098780903",
+          "email": "test1760928780903@example.com",
+          "address": "عنوان اختبار شامل"
+        }
+      },
+      "updateCustomer": {
+        "endpoint": "/api/customers/32",
+        "method": "PUT",
+        "updateData": {
+          "name": "اختبار شامل محدث 1760928780934",
+          "address": "عنوان محدث"
+        }
+      },
+      "getCustomerStats": {
+        "endpoint": "/api/customers/32/stats",
+        "method": "GET",
+        "stats": {
+          "success": true,
+          "data": {
+            "stats": {
+              "customerId": 32,
+              "totalRepairs": 0,
+              "completedRepairs": 0,
+              "pendingRepairs": 0,
+              "inProgressRepairs": 0,
+              "cancelledRepairs": 0,
+              "totalPaid": 0,
+              "avgRepairCost": 0,
+              "satisfactionRate": 0,
+              "lastRepairDate": null,
+              "firstRepairDate": null,
+              "customerStatus": {
+                "isActive": null,
+                "isVip": false,
+                "riskLevel": "low"
+              },
+              "recentRepairs": []
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "frontendAccess": {
+        "url": "http://localhost:3000",
+        "status": 200
+      },
+      "customersPage": {
+        "accessible": true,
+        "note": "Frontend accessibility confirmed"
+      }
+    },
+    "database": {
+      "connection": {
+        "status": "healthy",
+        "message": "Fix Zone Backend is running"
+      },
+      "integrity": {
+        "totalCustomers": 13,
+        "invalidCustomers": 0,
+        "validCustomers": 13
+      }
+    },
+    "relations": {
+      "repairs": {
+        "totalRepairs": 2,
+        "customersWithRepairs": 2
+      },
+      "invoices": {
+        "totalInvoices": 0,
+        "customersWithInvoices": 0
+      },
+      "payments": {
+        "totalPayments": 0,
+        "customersWithPayments": 0
+      }
+    },
+    "security": {
+      "validationResults": [
+        {
+          "input": {
+            "name": "",
+            "phone": "123"
+          },
+          "status": 400,
+          "expected": 400
+        },
+        {
+          "input": {
+            "name": "Test",
+            "phone": ""
+          },
+          "status": 400,
+          "expected": 400
+        }
+      ]
+    },
+    "performance": {
+      "apiResponseTime": 7,
+      "maxAllowed": 2000,
+      "concurrentRequests": {
+        "count": 5,
+        "totalTime": 30,
+        "averageTime": 6,
+        "failedRequests": 0
+      }
+    }
+  }
+}

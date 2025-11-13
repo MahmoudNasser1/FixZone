@@ -125,7 +125,8 @@ router.get('/', async (req, res) => {
     const query = `
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        rr.accessories as accessoriesJson,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -159,6 +160,7 @@ router.get('/', async (req, res) => {
       actualCost: row.actualCost || null,
       expectedDeliveryDate: row.expectedDeliveryDate || null,
       notes: row.notes || null,
+      accessories: row.accessoriesJson ? JSON.parse(row.accessoriesJson).filter(a => a != null) : [],
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }));
@@ -282,7 +284,7 @@ router.get('/:id/track', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         d.deviceType,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -368,7 +370,7 @@ router.get('/track/:token', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         d.deviceType,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -468,7 +470,7 @@ router.get('/:id', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         u.name as technicianName,
@@ -511,9 +513,9 @@ router.get('/:id', async (req, res) => {
       deviceId: repair.deviceId,
       technicianId: repair.technicianId,
       technicianName: repair.technicianName || null,
-      deviceType: repair.deviceType,
-      deviceBrand: repair.deviceBrand,
-      deviceModel: repair.deviceModel,
+      deviceType: repair.deviceType || 'غير محدد',
+      deviceBrand: repair.deviceBrand || 'غير محدد',
+      deviceModel: repair.deviceModel || 'غير محدد',
       serialNumber: repair.serialNumber,
       reportedProblem: repair.reportedProblem,
       problemDescription: repair.reportedProblem || repair.problemDescription || null,
@@ -531,7 +533,7 @@ router.get('/:id', async (req, res) => {
         ram: repair.ram || null,
         storage: repair.storage || null,
       },
-      accessories: (accRows || []).map(a => ({ id: a.id, label: a.label }))
+      accessories: repair.accessories ? JSON.parse(repair.accessories).filter(a => a != null) : []
     };
 
     res.json(response);
@@ -542,15 +544,26 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new repair request
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   const { 
     customerId, customerName, customerPhone, customerEmail,
     deviceType, deviceBrand, brandId, deviceModel, serialNumber,
     devicePassword,
     cpu, gpu, ram, storage,
     accessories,
-    problemDescription, priority, estimatedCost, notes, status 
+    problemDescription, priority, estimatedCost, notes, status, expectedDeliveryDate
   } = req.body;
+  
+  // Debug logging
+  console.log('Received repair data:', {
+    estimatedCost,
+    expectedDeliveryDate,
+    customerName,
+    deviceType,
+    problemDescription,
+    accessories
+  });
+  console.log('Accessories type:', typeof accessories, 'Is array:', Array.isArray(accessories), 'Value:', accessories);
   
   // التحقق من البيانات المطلوبة
   if (!customerName || !customerPhone || !deviceType || !problemDescription) {
@@ -610,33 +623,36 @@ router.post('/', authMiddleware, async (req, res) => {
     const trackingToken = crypto.randomBytes(24).toString('hex');
     const insertQuery = `
       INSERT INTO RepairRequest (
-        deviceId, reportedProblem, status, trackingToken, customerId, branchId, technicianId
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        deviceId, reportedProblem, status, trackingToken, customerId, branchId, technicianId, estimatedCost, expectedDeliveryDate
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
+    console.log('Inserting repair with values:', {
+      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 
+      estimatedCost: estimatedCost || 0, expectedDeliveryDate: expectedDeliveryDate || null
+    });
+    
     const [result] = await db.query(insertQuery, [
-      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 1, null // branchId = 1 افتراضي
+      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 1, null, estimatedCost || 0, expectedDeliveryDate || null // branchId = 1 افتراضي
     ]);
 
     // رابعاً: حفظ الملحقات إن وجدت
     if (Array.isArray(accessories) && accessories.length > 0) {
-      const values = accessories
-        .filter((id) => Number.isInteger(Number(id)))
-        .map((id) => [result.insertId, Number(id)]);
-      if (values.length > 0) {
-        await db.query(
-          'INSERT INTO RepairRequestAccessory (repairRequestId, accessoryOptionId) VALUES ' +
-          values.map(() => '(?, ?)').join(', '),
-          values.flat()
-        );
-      }
+      // حفظ المتعلقات كـ JSON في حقل accessories
+      const accessoriesJson = JSON.stringify(accessories);
+      await db.query(
+        'UPDATE RepairRequest SET accessories = ? WHERE id = ?',
+        [accessoriesJson, result.insertId]
+      );
+      console.log('Accessories saved:', accessories);
     }
     
     // إرجاع البيانات المُنشأة مع تفاصيل كاملة
     const [newRepairData] = await db.query(`
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        rr.accessories as accessoriesJson,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         COALESCE(vo.label, d.brand) as deviceBrand,
@@ -671,7 +687,7 @@ router.post('/', authMiddleware, async (req, res) => {
         ram: newRepairData[0]?.ram || ram || null,
         storage: newRepairData[0]?.storage || storage || null,
       },
-      accessories: Array.isArray(accessories) ? accessories.map((x) => Number(x)) : [],
+      accessories: newRepairData[0]?.accessoriesJson ? JSON.parse(newRepairData[0].accessoriesJson).filter(a => a != null) : (Array.isArray(accessories) ? accessories.filter(a => a != null) : []),
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -762,6 +778,88 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
   }
 });
 
+// Update repair details (estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories)
+router.patch('/:id/details', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
+  
+  try {
+    // Validate priority if provided
+    const validPriorities = ['low', 'normal', 'high', 'urgent'];
+    const priorityMap = {
+      'medium': 'normal',
+      'MEDIUM': 'normal',
+      'LOW': 'low',
+      'HIGH': 'high',
+      'URGENT': 'urgent'
+    };
+    
+    let normalizedPriority = priority;
+    if (priority) {
+      // Convert to lowercase and map common values
+      normalizedPriority = priorityMap[priority] || priority.toLowerCase();
+      
+      if (!validPriorities.includes(normalizedPriority)) {
+        return res.status(400).json({ error: 'Invalid priority. Must be one of: low, normal, high, urgent' });
+      }
+    }
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    
+    if (estimatedCost !== undefined) {
+      updates.push('estimatedCost = ?');
+      values.push(parseFloat(estimatedCost));
+    }
+    
+    if (actualCost !== undefined) {
+      updates.push('actualCost = ?');
+      values.push(actualCost ? parseFloat(actualCost) : null);
+    }
+    
+    if (priority !== undefined) {
+      updates.push('priority = ?');
+      values.push(normalizedPriority);
+    }
+    
+    if (expectedDeliveryDate !== undefined) {
+      updates.push('expectedDeliveryDate = ?');
+      values.push(expectedDeliveryDate ? new Date(expectedDeliveryDate) : null);
+    }
+    
+    if (notes !== undefined) {
+      updates.push('notes = ?');
+      values.push(notes);
+    }
+    
+    if (accessories !== undefined) {
+      updates.push('accessories = ?');
+      values.push(Array.isArray(accessories) ? JSON.stringify(accessories) : null);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    
+    updates.push('updatedAt = CURRENT_TIMESTAMP');
+    values.push(id);
+    
+    const query = `UPDATE RepairRequest SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`;
+    
+    const [result] = await db.query(query, values);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Repair request not found or already deleted' });
+    }
+    
+    res.json({ message: 'Repair details updated successfully' });
+  } catch (err) {
+    console.error('Error updating repair details:', err);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 // Rotate tracking token for a single repair request
 router.post('/:id/rotate-token', authMiddleware, async (req, res) => {
   const { id } = req.params;
@@ -815,11 +913,41 @@ const upload = multer({ storage });
 
 // List attachments
 router.get('/:id/attachments', async (req, res) => {
-  const dir = path.join(uploadRoot, String(req.params.id));
+  const repairId = req.params.id;
   try {
-    const files = fs.existsSync(dir) ? await fs.promises.readdir(dir) : [];
-    const baseUrl = `${req.protocol}://${req.get('host')}/uploads/repairs/${req.params.id}`;
-    res.json(files.map((f) => ({ id: f, name: f, url: `${baseUrl}/${encodeURIComponent(f)}` })));
+    // Get attachments from database
+    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    if (!repairRows || repairRows.length === 0) {
+      return res.status(404).json({ error: 'Repair request not found' });
+    }
+    
+    // Parse attachments from JSON field
+    let attachments = [];
+    try {
+      attachments = repairRows[0].attachments ? JSON.parse(repairRows[0].attachments) : [];
+    } catch (e) {
+      console.warn('Failed to parse attachments from database:', e);
+      attachments = [];
+    }
+    
+    // Verify files still exist on filesystem and filter out missing ones
+    const validAttachments = [];
+    for (const attachment of attachments) {
+      const filePath = path.join(uploadRoot, String(repairId), attachment.id);
+      if (fs.existsSync(filePath)) {
+        validAttachments.push(attachment);
+      } else {
+        console.warn(`Attachment file not found: ${filePath}`);
+      }
+    }
+    
+    // If there are missing files, update the database
+    if (validAttachments.length !== attachments.length) {
+      await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+        [JSON.stringify(validAttachments), repairId]);
+    }
+    
+    res.json(validAttachments);
   } catch (e) {
     console.error('List attachments error:', e);
     res.status(500).json({ error: 'Failed to list attachments' });
@@ -830,8 +958,45 @@ router.get('/:id/attachments', async (req, res) => {
 router.post('/:id/attachments', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const url = `${req.protocol}://${req.get('host')}/uploads/repairs/${req.params.id}/${encodeURIComponent(req.file.filename)}`;
-    res.status(201).json({ id: req.file.filename, name: req.file.originalname, url });
+    
+    const repairId = req.params.id;
+    const url = `${req.protocol}://${req.get('host')}/uploads/repairs/${repairId}/${encodeURIComponent(req.file.filename)}`;
+    
+    // Create attachment object
+    const attachmentData = {
+      id: req.file.filename,
+      name: req.file.originalname,
+      title: req.file.originalname.replace(/\.[^/.]+$/, ''),
+      url: url,
+      size: req.file.size,
+      type: req.file.mimetype,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: req.user?.name || 'Unknown User'
+    };
+    
+    // Get current attachments from database
+    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    if (!repairRows || repairRows.length === 0) {
+      return res.status(404).json({ error: 'Repair request not found' });
+    }
+    
+    // Parse existing attachments or create empty array
+    let existingAttachments = [];
+    try {
+      existingAttachments = repairRows[0].attachments ? JSON.parse(repairRows[0].attachments) : [];
+    } catch (e) {
+      console.warn('Failed to parse existing attachments, starting fresh:', e);
+      existingAttachments = [];
+    }
+    
+    // Add new attachment to the array
+    existingAttachments.push(attachmentData);
+    
+    // Update database with new attachments array
+    await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      [JSON.stringify(existingAttachments), repairId]);
+    
+    res.status(201).json(attachmentData);
   } catch (e) {
     console.error('Upload attachment error:', e);
     res.status(500).json({ error: 'Failed to upload attachment' });
@@ -840,9 +1005,36 @@ router.post('/:id/attachments', authMiddleware, upload.single('file'), async (re
 
 // Delete attachment
 router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res) => {
-  const filePath = path.join(uploadRoot, String(req.params.id), req.params.attachmentId);
+  const repairId = req.params.id;
+  const attachmentId = req.params.attachmentId;
+  const filePath = path.join(uploadRoot, String(repairId), attachmentId);
+  
   try {
+    // Remove file from filesystem
     await fs.promises.unlink(filePath);
+    
+    // Get current attachments from database
+    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    if (!repairRows || repairRows.length === 0) {
+      return res.status(404).json({ error: 'Repair request not found' });
+    }
+    
+    // Parse existing attachments
+    let existingAttachments = [];
+    try {
+      existingAttachments = repairRows[0].attachments ? JSON.parse(repairRows[0].attachments) : [];
+    } catch (e) {
+      console.warn('Failed to parse existing attachments:', e);
+      existingAttachments = [];
+    }
+    
+    // Remove attachment from array
+    const updatedAttachments = existingAttachments.filter(att => att.id !== attachmentId);
+    
+    // Update database with updated attachments array
+    await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      [JSON.stringify(updatedAttachments), repairId]);
+    
     res.json({ success: true });
   } catch (e) {
     console.error('Delete attachment error:', e);
@@ -941,7 +1133,7 @@ router.get('/:id/print/receipt', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         rr.*,
-        CONCAT(c.firstName, ' ', c.lastName) as customerName,
+        c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
         d.deviceType,
@@ -969,7 +1161,7 @@ router.get('/:id/print/receipt', async (req, res) => {
       WHERE rra.repairRequestId = ?
     `, [id]);
 
-    const accessories = (accRows || []).map(a => a.label).filter(Boolean);
+    const accessories = repair.accessories ? JSON.parse(repair.accessories).filter(a => a != null) : [];
     const reqDate = new Date(repair.createdAt);
     const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
     const dates = formatDates(reqDate, dateMode);
@@ -1132,12 +1324,14 @@ router.get('/:id/print/inspection', async (req, res) => {
     const [rows] = await db.query(`
       SELECT ir.*, it.name as inspectionTypeName,
              rr.id as repairId, rr.createdAt as repairCreatedAt,
-             CONCAT(c.firstName, ' ', c.lastName) as customerName, c.phone as customerPhone,
+             c.name as customerName, c.phone as customerPhone,
+             u.name as technicianName,
              d.deviceType, COALESCE(vo.label, d.brand) as deviceBrand, d.model as deviceModel, d.serialNumber
       FROM InspectionReport ir
       LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id
       LEFT JOIN RepairRequest rr ON ir.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON ir.technicianId = u.id
       LEFT JOIN Device d ON rr.deviceId = d.id
       LEFT JOIN VariableOption vo ON d.brandId = vo.id
       WHERE ir.repairRequestId = ?
@@ -1215,8 +1409,31 @@ router.get('/:id/print/inspection', async (req, res) => {
         </div>
 
         <div class="section">
-          <div class="label">نتيجة الفحص</div>
-          <div class="value" style="white-space:pre-wrap">${rep.result || rep.summary || '—'}</div>
+          <div class="row">
+            <div class="col"><div class="label">نوع الفحص</div><div class="value">${rep.inspectionTypeName || '—'}</div></div>
+            <div class="col"><div class="label">الفني المسؤول</div><div class="value">${rep.technicianName || '—'}</div></div>
+            <div class="col"><div class="label">تاريخ التقرير</div><div class="value">${new Date(rep.reportDate).toLocaleDateString('ar-SA') || '—'}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="label">ملخص الفحص</div>
+          <div class="value" style="white-space:pre-wrap">${rep.summary || '—'}</div>
+        </div>
+
+        <div class="section">
+          <div class="label">النتيجة والتشخيص</div>
+          <div class="value" style="white-space:pre-wrap">${rep.result || '—'}</div>
+        </div>
+
+        <div class="section">
+          <div class="label">التوصيات</div>
+          <div class="value" style="white-space:pre-wrap">${rep.recommendations || '—'}</div>
+        </div>
+
+        <div class="section">
+          <div class="label">ملاحظات إضافية</div>
+          <div class="value" style="white-space:pre-wrap">${rep.notes || '—'}</div>
         </div>
 
         <div class="section">

@@ -1,524 +1,343 @@
 🚀 Fix Zone Backend Server is running on port 3001
 📊 API Base URL: http://localhost:3001/api
 🏥 Health Check: http://localhost:3001/health
-Error fetching low stock items: Error: Unknown column 'ii.type' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/stockLevels.js:29:29
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '      SELECT\n' +
-    '        sl.id AS stockLevelId,\n' +
-    '        ii.id AS inventoryItemId,\n' +
-    '        ii.sku,\n' +
-    '        ii.name,\n' +
-    '        ii.type,\n' +
-    '        sl.quantity,\n' +
-    '        sl.minLevel,\n' +
-    '        sl.isLowStock,\n' +
-    '        w.id AS warehouseId,\n' +
-    '        w.name AS warehouseName,\n' +
-    '        (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1) AS isLow\n' +
-    '      FROM StockLevel sl\n' +
-    '      INNER JOIN InventoryItem ii ON ii.id = sl.inventoryItemId\n' +
-    '      INNER JOIN Warehouse w ON w.id = sl.warehouseId\n' +
-    '      WHERE (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1)\n' +
-    '    ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'ii.type' in 'field list'"
+Fetched customer: {
+  id: 34,
+  name: 'سارة أحمد محمد',
+  phone: '01098765432',
+  email: 'sara@example.com',
+  address: 'الإسكندرية، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone"}',
+  createdAt: 2025-10-20T03:04:00.000Z,
+  updatedAt: 2025-10-20T03:04:00.000Z,
+  deletedAt: null
 }
-Total payments in database: 0
-Total payments in database: 0
-Error fetching low stock items: Error: Unknown column 'ii.type' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/stockLevels.js:29:29
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '      SELECT\n' +
-    '        sl.id AS stockLevelId,\n' +
-    '        ii.id AS inventoryItemId,\n' +
-    '        ii.sku,\n' +
-    '        ii.name,\n' +
-    '        ii.type,\n' +
-    '        sl.quantity,\n' +
-    '        sl.minLevel,\n' +
-    '        sl.isLowStock,\n' +
-    '        w.id AS warehouseId,\n' +
-    '        w.name AS warehouseName,\n' +
-    '        (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1) AS isLow\n' +
-    '      FROM StockLevel sl\n' +
-    '      INNER JOIN InventoryItem ii ON ii.id = sl.inventoryItemId\n' +
-    '      INNER JOIN Warehouse w ON w.id = sl.warehouseId\n' +
-    '      WHERE (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1)\n' +
-    '    ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'ii.type' in 'field list'"
+Fetched customer: {
+  id: 34,
+  name: 'سارة أحمد محمد',
+  phone: '01098765432',
+  email: 'sara@example.com',
+  address: 'الإسكندرية، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone"}',
+  createdAt: 2025-10-20T03:04:00.000Z,
+  updatedAt: 2025-10-20T03:04:00.000Z,
+  deletedAt: null
 }
-Total payments in database: 0
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Fetched customer: {
+  id: 34,
+  name: 'سارة أحمد محمد',
+  phone: '01098765432',
+  email: 'sara@example.com',
+  address: 'الإسكندرية، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone"}',
+  createdAt: 2025-10-20T03:04:00.000Z,
+  updatedAt: 2025-10-20T03:04:00.000Z,
+  deletedAt: null
 }
-Total payments in database: 0
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Fetched customer: {
+  id: 34,
+  name: 'سارة أحمد محمد',
+  phone: '01098765432',
+  email: 'sara@example.com',
+  address: 'الإسكندرية، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone"}',
+  createdAt: 2025-10-20T03:04:00.000Z,
+  updatedAt: 2025-10-20T03:04:00.000Z,
+  deletedAt: null
 }
-Total payments in database: 0
-Error fetching low stock items: Error: Unknown column 'ii.type' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/stockLevels.js:29:29
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '      SELECT\n' +
-    '        sl.id AS stockLevelId,\n' +
-    '        ii.id AS inventoryItemId,\n' +
-    '        ii.sku,\n' +
-    '        ii.name,\n' +
-    '        ii.type,\n' +
-    '        sl.quantity,\n' +
-    '        sl.minLevel,\n' +
-    '        sl.isLowStock,\n' +
-    '        w.id AS warehouseId,\n' +
-    '        w.name AS warehouseName,\n' +
-    '        (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1) AS isLow\n' +
-    '      FROM StockLevel sl\n' +
-    '      INNER JOIN InventoryItem ii ON ii.id = sl.inventoryItemId\n' +
-    '      INNER JOIN Warehouse w ON w.id = sl.warehouseId\n' +
-    '      WHERE (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1)\n' +
-    '    ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'ii.type' in 'field list'"
+Fetched customer: {
+  id: 33,
+  name: 'أحمد محمد علي',
+  phone: '01234567890',
+  email: 'ahmed@example.com',
+  address: 'القاهرة، مصر',
+  companyId: null,
+  customFields: '{}',
+  createdAt: 2025-10-20T03:03:32.000Z,
+  updatedAt: 2025-10-20T03:03:32.000Z,
+  deletedAt: null
 }
-Total payments in database: 0
-Error fetching low stock items: Error: Unknown column 'ii.type' in 'field list'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/stockLevels.js:29:29
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: '\n' +
-    '      SELECT\n' +
-    '        sl.id AS stockLevelId,\n' +
-    '        ii.id AS inventoryItemId,\n' +
-    '        ii.sku,\n' +
-    '        ii.name,\n' +
-    '        ii.type,\n' +
-    '        sl.quantity,\n' +
-    '        sl.minLevel,\n' +
-    '        sl.isLowStock,\n' +
-    '        w.id AS warehouseId,\n' +
-    '        w.name AS warehouseName,\n' +
-    '        (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1) AS isLow\n' +
-    '      FROM StockLevel sl\n' +
-    '      INNER JOIN InventoryItem ii ON ii.id = sl.inventoryItemId\n' +
-    '      INNER JOIN Warehouse w ON w.id = sl.warehouseId\n' +
-    '      WHERE (sl.quantity <= COALESCE(sl.minLevel, 0) OR sl.isLowStock = 1)\n' +
-    '    ',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'ii.type' in 'field list'"
+Fetched customer: {
+  id: 33,
+  name: 'أحمد محمد علي',
+  phone: '01234567890',
+  email: 'ahmed@example.com',
+  address: 'القاهرة، مصر',
+  companyId: null,
+  customFields: '{}',
+  createdAt: 2025-10-20T03:03:32.000Z,
+  updatedAt: 2025-10-20T03:03:32.000Z,
+  deletedAt: null
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'BRAND' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Updating customer: {
+  id: '33',
+  name: 'أحمد محمد علي المحدث',
+  phone: '01234567890',
+  email: 'ahmed.updated@example.com',
+  address: 'القاهرة الجديدة، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone","notes":"هذه بيانات تجريبية - حدث خطأ في تحميل البيانات"}'
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'BRAND' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Update result: ResultSetHeader {
+  fieldCount: 0,
+  affectedRows: 1,
+  insertId: 0,
+  info: 'Rows matched: 1  Changed: 1  Warnings: 0',
+  serverStatus: 2,
+  warningStatus: 0,
+  changedRows: 1
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Updating customer: {
+  id: '33',
+  name: 'أحمد محمد علي المحدث',
+  phone: '01234567890',
+  email: 'ahmed.updated@example.com',
+  address: 'القاهرة الجديدة، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone","notes":"هذه بيانات تجريبية - حدث خطأ في تحميل البيانات"}'
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'ACCESSORY' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Update result: ResultSetHeader {
+  fieldCount: 0,
+  affectedRows: 1,
+  insertId: 0,
+  info: 'Rows matched: 1  Changed: 1  Warnings: 0',
+  serverStatus: 2,
+  warningStatus: 0,
+  changedRows: 1
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'DEVICE_TYPE' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Updating customer: {
+  id: '33',
+  name: 'أحمد محمد علي المحدث',
+  phone: '01234567890',
+  email: 'ahmed.updated@example.com',
+  address: 'القاهرة الجديدة، مصر',
+  companyId: null,
+  customFields: '{"isVip":false,"preferredContact":"phone","notes":"هذه بيانات تجريبية - حدث خطأ في تحميل البيانات"}'
 }
-Error fetching variables: Error: Unknown column 'code' in 'where clause'
-    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/variables.js:14:32
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: "SELECT id FROM VariableCategory WHERE code = 'DEVICE_TYPE' AND (deletedAt IS NULL)",
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'code' in 'where clause'"
+Update result: ResultSetHeader {
+  fieldCount: 0,
+  affectedRows: 1,
+  insertId: 0,
+  info: 'Rows matched: 1  Changed: 1  Warnings: 0',
+  serverStatus: 2,
+  warningStatus: 0,
+  changedRows: 1
 }
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+Fetched customer: {
+  id: 33,
+  name: 'أحمد محمد علي المحدث',
+  phone: '01234567890',
+  email: 'ahmed.updated@example.com',
+  address: 'القاهرة الجديدة، مصر',
+  companyId: null,
+  customFields: '"{\\"isVip\\":false,\\"preferredContact\\":\\"phone\\",\\"notes\\":\\"هذه بيانات تجريبية - حدث خطأ في تحميل البيانات\\"}"',
+  createdAt: 2025-10-20T03:03:32.000Z,
+  updatedAt: 2025-10-20T03:12:52.000Z,
+  deletedAt: null
+}
+Fetched customer: {
+  id: 33,
+  name: 'أحمد محمد علي المحدث',
+  phone: '01234567890',
+  email: 'ahmed.updated@example.com',
+  address: 'القاهرة الجديدة، مصر',
+  companyId: null,
+  customFields: '"{\\"isVip\\":false,\\"preferredContact\\":\\"phone\\",\\"notes\\":\\"هذه بيانات تجريبية - حدث خطأ في تحميل البيانات\\"}"',
+  createdAt: 2025-10-20T03:03:32.000Z,
+  updatedAt: 2025-10-20T03:12:52.000Z,
+  deletedAt: null
+}
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error fetching users: Error: Unknown column 'firstName' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.getAllUsers (/opt/lampp/htdocs/FixZone/backend/controllers/userController.js:68:34)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
   code: 'ER_BAD_FIELD_ERROR',
   errno: 1054,
   sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
+    '              id, \n' +
+    '              firstName, \n' +
+    '              lastName, \n' +
+    "              CONCAT(firstName, ' ', lastName) as name,\n" +
+    '              email, \n' +
+    '              roleId, \n' +
+    '              isActive, \n' +
+    '              createdAt, \n' +
+    '              updatedAt \n' +
+    '            FROM User WHERE deletedAt IS NULL AND isActive = 1 ORDER BY createdAt DESC',
   sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
+  sqlMessage: "Unknown column 'firstName' in 'field list'"
 }
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error listing roles: Error: Unknown column 'description' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.listRoles (/opt/lampp/htdocs/FixZone/backend/controllers/rolesController.js:14:29)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT id, name, description, permissions FROM Role',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'description' in 'field list'"
+}
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error fetching users: Error: Unknown column 'firstName' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.getAllUsers (/opt/lampp/htdocs/FixZone/backend/controllers/userController.js:68:34)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
   code: 'ER_BAD_FIELD_ERROR',
   errno: 1054,
   sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
+    '              id, \n' +
+    '              firstName, \n' +
+    '              lastName, \n' +
+    "              CONCAT(firstName, ' ', lastName) as name,\n" +
+    '              email, \n' +
+    '              roleId, \n' +
+    '              isActive, \n' +
+    '              createdAt, \n' +
+    '              updatedAt \n' +
+    '            FROM User WHERE deletedAt IS NULL AND isActive = 1 ORDER BY createdAt DESC',
   sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
+  sqlMessage: "Unknown column 'firstName' in 'field list'"
 }
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error fetching users: Error: Unknown column 'firstName' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.getAllUsers (/opt/lampp/htdocs/FixZone/backend/controllers/userController.js:68:34)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
   code: 'ER_BAD_FIELD_ERROR',
   errno: 1054,
   sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
+    '              id, \n' +
+    '              firstName, \n' +
+    '              lastName, \n' +
+    "              CONCAT(firstName, ' ', lastName) as name,\n" +
+    '              email, \n' +
+    '              roleId, \n' +
+    '              isActive, \n' +
+    '              createdAt, \n' +
+    '              updatedAt \n' +
+    '            FROM User WHERE deletedAt IS NULL AND isActive = 1 ORDER BY createdAt DESC',
   sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
+  sqlMessage: "Unknown column 'firstName' in 'field list'"
 }
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error fetching users: Error: Unknown column 'firstName' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.getAllUsers (/opt/lampp/htdocs/FixZone/backend/controllers/userController.js:68:34)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
   code: 'ER_BAD_FIELD_ERROR',
   errno: 1054,
   sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
+    '              id, \n' +
+    '              firstName, \n' +
+    '              lastName, \n' +
+    "              CONCAT(firstName, ' ', lastName) as name,\n" +
+    '              email, \n' +
+    '              roleId, \n' +
+    '              isActive, \n' +
+    '              createdAt, \n' +
+    '              updatedAt \n' +
+    '            FROM User WHERE deletedAt IS NULL AND isActive = 1 ORDER BY createdAt DESC',
   sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
+  sqlMessage: "Unknown column 'firstName' in 'field list'"
 }
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+User object in authorizeMiddleware: {
+  id: 2,
+  role: 1,
+  name: 'Admin User',
+  iat: 1760930816,
+  exp: 1760959616
+}
+User role in authorizeMiddleware: 1
+Error listing roles: Error: Unknown column 'description' in 'field list'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at exports.listRoles (/opt/lampp/htdocs/FixZone/backend/controllers/rolesController.js:14:29)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
-}
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
+    at /opt/lampp/htdocs/FixZone/backend/middleware/authorizeMiddleware.js:17:9
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9)
     at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13) {
   code: 'ER_BAD_FIELD_ERROR',
   errno: 1054,
-  sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
+  sql: 'SELECT id, name, description, permissions FROM Role',
   sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
-}
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
-}
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
-}
-Error getting stock counts: Error: Unknown column 'sci.deletedAt' in 'on clause'
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at getStockCounts (/opt/lampp/htdocs/FixZone/backend/controllers/stockCountController.js:106:38)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
-    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
-    at Function.handle (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:175:3) {
-  code: 'ER_BAD_FIELD_ERROR',
-  errno: 1054,
-  sql: 'SELECT \n' +
-    '          sc.*,\n' +
-    '          w.name as warehouseName,\n' +
-    '          COUNT(sci.id) as itemsCount\n' +
-    '        FROM StockCount sc\n' +
-    '        LEFT JOIN Warehouse w ON sc.warehouseId = w.id\n' +
-    '        LEFT JOIN StockCountItem sci ON sc.id = sci.stockCountId AND sci.deletedAt IS NULL\n' +
-    '        WHERE 1=1\n' +
-    '        GROUP BY sc.id\n' +
-    '        ORDER BY sc.createdAt DESC\n' +
-    '        LIMIT ? OFFSET ?',
-  sqlState: '42S22',
-  sqlMessage: "Unknown column 'sci.deletedAt' in 'on clause'"
+  sqlMessage: "Unknown column 'description' in 'field list'"
 }

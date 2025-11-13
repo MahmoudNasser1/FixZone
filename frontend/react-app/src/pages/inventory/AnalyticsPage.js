@@ -8,7 +8,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import analyticsService from '../../services/analyticsService';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 

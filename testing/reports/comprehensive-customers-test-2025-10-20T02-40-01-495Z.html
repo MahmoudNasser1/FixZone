@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير اختبار شامل - سيكشن العملاء</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin: 0; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-card { background: #ecf0f1; padding: 20px; border-radius: 8px; text-align: center; }
+        .summary-card.success { background: #d5f4e6; color: #27ae60; }
+        .summary-card.error { background: #fadbd8; color: #e74c3c; }
+        .summary-card h3 { margin: 0 0 10px 0; font-size: 2em; }
+        .summary-card p { margin: 0; color: #7f8c8d; }
+        .modules { margin-bottom: 30px; }
+        .module { background: #f8f9fa; margin-bottom: 15px; padding: 15px; border-radius: 5px; }
+        .module h4 { margin: 0 0 10px 0; color: #2c3e50; }
+        .test { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #ecf0f1; }
+        .test:last-child { border-bottom: none; }
+        .test.passed { color: #27ae60; }
+        .test.failed { color: #e74c3c; }
+        .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .details h3 { color: #2c3e50; margin-top: 0; }
+        .timestamp { text-align: center; color: #7f8c8d; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تقرير اختبار شامل - سيكشن العملاء</h1>
+            <p>Fix Zone ERP System - Customers Module</p>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card error">
+                <h3>19</h3>
+                <p>اختبارات نجحت</p>
+            </div>
+            <div class="summary-card error">
+                <h3>1</h3>
+                <p>اختبارات فشلت</p>
+            </div>
+            <div class="summary-card">
+                <h3>20</h3>
+                <p>إجمالي الاختبارات</p>
+            </div>
+            <div class="summary-card">
+                <h3>95%</h3>
+                <p>معدل النجاح</p>
+            </div>
+            <div class="summary-card">
+                <h3>1s</h3>
+                <p>مدة الاختبار</p>
+            </div>
+        </div>
+        
+        <div class="modules">
+            <h3>📦 تفاصيل الموديولات</h3>
+            
+                <div class="module">
+                    <h4>backend (7/8)</h4>
+                    
+                        <div class="test passed">
+                            <span>GET /api/customers - List all customers</span>
+                            <span>✅ 20ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>GET /api/customers/search - Search customers</span>
+                            <span>✅ 14ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>POST /api/customers - Create new customer</span>
+                            <span>✅ 20ms</span>
+                        </div>
+                    
+                        <div class="test failed">
+                            <span>GET /api/customers/:id - Get customer by ID</span>
+                            <span>❌ 12ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>PUT /api/customers/:id - Update customer</span>
+                            <span>✅ 16ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>GET /api/customers/:id/stats - Get customer statistics</span>
+                            <span>✅ 14ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>POST /api/customers - Validation (missing name)</span>
+                            <span>✅ 9ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>POST /api/customers - Validation (duplicate phone)</span>
+                            <span>✅ 16ms</span>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h4>frontend (2/2)</h4>
+                    
+                        <div class="test passed">
+                            <span>Frontend accessibility check</span>
+                            <span>✅ 18ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Customers page accessibility</span>
+                            <span>✅ 19ms</span>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h4>database (2/2)</h4>
+                    
+                        <div class="test passed">
+                            <span>Database connection test</span>
+                            <span>✅ 6ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Customer data integrity check</span>
+                            <span>✅ 9ms</span>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h4>integration (3/3)</h4>
+                    
+                        <div class="test passed">
+                            <span>Customer-Repair integration</span>
+                            <span>✅ 12ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Customer-Invoice integration</span>
+                            <span>✅ 14ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Customer-Payment integration</span>
+                            <span>✅ 8ms</span>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h4>security (3/3)</h4>
+                    
+                        <div class="test passed">
+                            <span>Unauthorized API access test</span>
+                            <span>✅ 7ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>SQL injection protection test</span>
+                            <span>✅ 9ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Input validation test</span>
+                            <span>✅ 15ms</span>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h4>performance (2/2)</h4>
+                    
+                        <div class="test passed">
+                            <span>API response time test</span>
+                            <span>✅ 6ms</span>
+                        </div>
+                    
+                        <div class="test passed">
+                            <span>Concurrent requests handling</span>
+                            <span>✅ 28ms</span>
+                        </div>
+                    
+                </div>
+            
+        </div>
+        
+        <div class="details">
+            <h3>📊 تفاصيل إضافية</h3>
+            <pre>{
+  "apis": {
+    "listCustomers": {
+      "endpoint": "/api/customers",
+      "method": "GET",
+      "responseFormat": "object",
+      "customerCount": 12
+    },
+    "searchCustomers": {
+      "endpoint": "/api/customers/search",
+      "method": "GET",
+      "searchTerm": "محمد",
+      "resultCount": 3
+    },
+    "createCustomer": {
+      "endpoint": "/api/customers",
+      "method": "POST",
+      "customerId": 28,
+      "data": {
+        "name": "اختبار شامل 1760928001236",
+        "phone": "01098001236",
+        "email": "test1760928001236@example.com",
+        "address": "عنوان اختبار شامل"
+      }
+    },
+    "updateCustomer": {
+      "endpoint": "/api/customers/28",
+      "method": "PUT",
+      "updateData": {
+        "name": "اختبار شامل محدث 1760928001269",
+        "address": "عنوان محدث"
+      }
+    },
+    "getCustomerStats": {
+      "endpoint": "/api/customers/28/stats",
+      "method": "GET",
+      "stats": {
+        "success": true,
+        "data": {
+          "stats": {
+            "customerId": 28,
+            "totalRepairs": 0,
+            "completedRepairs": 0,
+            "pendingRepairs": 0,
+            "inProgressRepairs": 0,
+            "cancelledRepairs": 0,
+            "totalPaid": 0,
+            "avgRepairCost": 0,
+            "satisfactionRate": 0,
+            "lastRepairDate": null,
+            "firstRepairDate": null,
+            "customerStatus": {
+              "isActive": null,
+              "isVip": false,
+              "riskLevel": "low"
+            },
+            "recentRepairs": []
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "frontendAccess": {
+      "url": "http://localhost:3000",
+      "status": 200
+    },
+    "customersPage": {
+      "accessible": true,
+      "note": "Frontend accessibility confirmed"
+    }
+  },
+  "database": {
+    "connection": {
+      "status": "healthy",
+      "message": "Fix Zone Backend is running"
+    },
+    "integrity": {
+      "totalCustomers": 13,
+      "invalidCustomers": 0,
+      "validCustomers": 13
+    }
+  },
+  "relations": {
+    "repairs": {
+      "totalRepairs": 2,
+      "customersWithRepairs": 2
+    },
+    "invoices": {
+      "totalInvoices": 0,
+      "customersWithInvoices": 0
+    },
+    "payments": {
+      "totalPayments": 0,
+      "customersWithPayments": 0
+    }
+  },
+  "security": {
+    "validationResults": [
+      {
+        "input": {
+          "name": "",
+          "phone": "123"
+        },
+        "status": 400,
+        "expected": 400
+      },
+      {
+        "input": {
+          "name": "Test",
+          "phone": ""
+        },
+        "status": 400,
+        "expected": 400
+      }
+    ]
+  },
+  "performance": {
+    "apiResponseTime": 6,
+    "maxAllowed": 2000,
+    "concurrentRequests": {
+      "count": 5,
+      "totalTime": 27,
+      "averageTime": 5.4,
+      "failedRequests": 0
+    }
+  }
+}</pre>
+        </div>
+        
+        <div class="timestamp">
+            <p>تم إنشاء التقرير في: ٢٠‏/١٠‏/٢٠٢٥، ٥:٤٠:٠١ ص</p>
+        </div>
+    </div>
+</body>
+</html>

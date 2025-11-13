@@ -170,30 +170,24 @@ const CreateInvoicePage = () => {
         amountPaid: 0
       };
 
-      const response = await apiService.createInvoice(invoiceData);
+      const createdInvoice = await apiService.createInvoice(invoiceData);
+      const invoiceId = createdInvoice.data?.id || createdInvoice.id;
       
-      if (response.ok) {
-        const createdInvoice = await response.json();
-        const invoiceId = createdInvoice.data?.id || createdInvoice.id;
-        
-        // Add invoice items
-        for (const item of invoiceItems) {
-          const itemData = {
-            description: item.description,
-            quantity: parseInt(item.quantity) || 1,
-            unitPrice: parseFloat(item.unitPrice) || 0,
-            itemType: item.itemType,
-            serviceId: item.serviceId || null,
-            inventoryItemId: item.inventoryItemId || null
-          };
-          await apiService.addInvoiceItem(invoiceId, itemData);
-        }
-
-        alert('تم إنشاء الفاتورة بنجاح');
-        navigate(`/invoices/${invoiceId}`);
-      } else {
-        throw new Error('Failed to create invoice');
+      // Add invoice items
+      for (const item of invoiceItems) {
+        const itemData = {
+          description: item.description,
+          quantity: parseInt(item.quantity) || 1,
+          unitPrice: parseFloat(item.unitPrice) || 0,
+          itemType: item.itemType,
+          serviceId: item.serviceId || null,
+          inventoryItemId: item.inventoryItemId || null
+        };
+        await apiService.addInvoiceItem(invoiceId, itemData);
       }
+
+      alert('تم إنشاء الفاتورة بنجاح');
+      navigate(`/invoices/${invoiceId}`);
     } catch (err) {
       console.error('Error creating invoice:', err);
       setError('حدث خطأ في إنشاء الفاتورة');

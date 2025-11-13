@@ -369,7 +369,7 @@ const AttachmentManager = ({
                                 <span>رفع بواسطة: {attachment.uploadedBy}</span>
                               )}
                               {attachment.uploadedAt && (
-                                <span>{new Date(attachment.uploadedAt).toLocaleDateString('ar-SA')}</span>
+                                <span>{new Date(attachment.uploadedAt).toLocaleDateString('en-GB')}</span>
                               )}
                             </div>
                           </div>

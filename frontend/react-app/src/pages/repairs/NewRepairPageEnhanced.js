@@ -23,7 +23,44 @@ const NewRepairPageEnhanced = () => {
   const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
-  const [brandOptions, setBrandOptions] = useState([]);
+  const [brandOptions, setBrandOptions] = useState([
+    { id: 1, label: 'Apple', value: 'APPLE' },
+    { id: 2, label: 'Samsung', value: 'SAMSUNG' },
+    { id: 3, label: 'Huawei', value: 'HUAWEI' },
+    { id: 4, label: 'Dell', value: 'DELL' },
+    { id: 5, label: 'HP', value: 'HP' },
+    { id: 6, label: 'Microsoft', value: 'MICROSOFT' },
+    { id: 7, label: 'Lenovo', value: 'LENOVO' },
+    { id: 8, label: 'Acer', value: 'ACER' },
+    { id: 9, label: 'Xiaomi', value: 'XIAOMI' },
+    { id: 10, label: 'OnePlus', value: 'ONEPLUS' },
+    { id: 11, label: 'Google', value: 'GOOGLE' },
+    { id: 12, label: 'Fitbit', value: 'FITBIT' },
+    { id: 13, label: 'Garmin', value: 'GARMIN' },
+    { id: 14, label: 'Sony', value: 'SONY' },
+    { id: 15, label: 'Bose', value: 'BOSE' },
+    { id: 16, label: 'JBL', value: 'JBL' },
+    { id: 17, label: 'Sennheiser', value: 'SENNHEISER' }
+  ]);
+  const [allBrandOptions, setAllBrandOptions] = useState([
+    { id: 1, label: 'Apple', value: 'APPLE' },
+    { id: 2, label: 'Samsung', value: 'SAMSUNG' },
+    { id: 3, label: 'Huawei', value: 'HUAWEI' },
+    { id: 4, label: 'Dell', value: 'DELL' },
+    { id: 5, label: 'HP', value: 'HP' },
+    { id: 6, label: 'Microsoft', value: 'MICROSOFT' },
+    { id: 7, label: 'Lenovo', value: 'LENOVO' },
+    { id: 8, label: 'Acer', value: 'ACER' },
+    { id: 9, label: 'Xiaomi', value: 'XIAOMI' },
+    { id: 10, label: 'OnePlus', value: 'ONEPLUS' },
+    { id: 11, label: 'Google', value: 'GOOGLE' },
+    { id: 12, label: 'Fitbit', value: 'FITBIT' },
+    { id: 13, label: 'Garmin', value: 'GARMIN' },
+    { id: 14, label: 'Sony', value: 'SONY' },
+    { id: 15, label: 'Bose', value: 'BOSE' },
+    { id: 16, label: 'JBL', value: 'JBL' },
+    { id: 17, label: 'Sennheiser', value: 'SENNHEISER' }
+  ]); // Store all brands for filtering
   const [accessoryOptions, setAccessoryOptions] = useState([]);
   const [deviceTypeOptions, setDeviceTypeOptions] = useState([]);
   
@@ -69,18 +106,33 @@ const NewRepairPageEnhanced = () => {
     try {
       // تحميل الماركات والملحقات الأساسية
       const brandsResponse = await apiService.getVariables({ category: 'BRAND', active: true });
-      if (brandsResponse.ok) {
-        const brands = await brandsResponse.json();
-        setBrandOptions(Array.isArray(brands) ? brands : []);
+      let allBrands = [];
+      if (Array.isArray(brandsResponse) && brandsResponse.length > 0) {
+        allBrands = brandsResponse;
       } else {
-        setBrandOptions([
+        allBrands = [
           { id: 1, label: 'Apple', value: 'APPLE' },
           { id: 2, label: 'Samsung', value: 'SAMSUNG' },
           { id: 3, label: 'Huawei', value: 'HUAWEI' },
           { id: 4, label: 'Dell', value: 'DELL' },
-          { id: 5, label: 'HP', value: 'HP' }
-        ]);
+          { id: 5, label: 'HP', value: 'HP' },
+          { id: 6, label: 'Microsoft', value: 'MICROSOFT' },
+          { id: 7, label: 'Lenovo', value: 'LENOVO' },
+          { id: 8, label: 'Acer', value: 'ACER' },
+          { id: 9, label: 'Xiaomi', value: 'XIAOMI' },
+          { id: 10, label: 'OnePlus', value: 'ONEPLUS' },
+          { id: 11, label: 'Google', value: 'GOOGLE' },
+          { id: 12, label: 'Fitbit', value: 'FITBIT' },
+          { id: 13, label: 'Garmin', value: 'GARMIN' },
+          { id: 14, label: 'Sony', value: 'SONY' },
+          { id: 15, label: 'Bose', value: 'BOSE' },
+          { id: 16, label: 'JBL', value: 'JBL' },
+          { id: 17, label: 'Sennheiser', value: 'SENNHEISER' }
+        ];
       }
+      
+      setAllBrandOptions(allBrands);
+      setBrandOptions(allBrands); // Initially show all brands
       
       const accessoriesResponse = await apiService.getVariables({ category: 'ACCESSORY', active: true });
       if (accessoriesResponse.ok) {
@@ -177,6 +229,44 @@ const NewRepairPageEnhanced = () => {
       ...prev,
       [name]: value
     }));
+
+    // Filter brands based on device type
+    if (name === 'deviceType') {
+      filterBrandsByDeviceType(value);
+    }
+  };
+
+  // Filter brands based on device type
+  const filterBrandsByDeviceType = (deviceType) => {
+    const deviceBrandMap = {
+      'LAPTOP': ['DELL', 'HP', 'MICROSOFT', 'LENOVO', 'ACER', 'APPLE'],
+      'SMARTPHONE': ['APPLE', 'SAMSUNG', 'HUAWEI', 'XIAOMI', 'ONEPLUS', 'GOOGLE'],
+      'TABLET': ['APPLE', 'SAMSUNG', 'HUAWEI', 'MICROSOFT', 'LENOVO'],
+      'SMARTWATCH': ['APPLE', 'SAMSUNG', 'HUAWEI', 'FITBIT', 'GARMIN'],
+      'EARPHONES': ['APPLE', 'SAMSUNG', 'SONY', 'BOSE', 'JBL', 'SENNHEISER']
+    };
+
+    const allowedBrands = deviceBrandMap[deviceType] || [];
+    
+    // If no device type selected or device type not in map, show all brands
+    if (!deviceType || !deviceBrandMap[deviceType]) {
+      setBrandOptions(allBrandOptions);
+      return;
+    }
+    
+    const filteredBrands = allBrandOptions.filter(brand => 
+      allowedBrands.includes(brand.value)
+    );
+    
+    setBrandOptions(filteredBrands);
+    
+    // Clear device brand if it's not available for the selected device type
+    if (formData.deviceBrand && !allowedBrands.includes(formData.deviceBrand)) {
+      setFormData(prev => ({
+        ...prev,
+        deviceBrand: ''
+      }));
+    }
   };
 
   const handleCustomerSearchChange = (e) => {
@@ -237,8 +327,8 @@ const NewRepairPageEnhanced = () => {
         customerName: formData.customerName.trim(),
         customerPhone: formData.customerPhone.trim(),
         customerEmail: formData.customerEmail.trim() || null,
-        deviceType: formData.deviceType,
-        deviceBrand: formData.deviceBrand,
+        deviceType: formData.deviceType, // Device type options already have correct English values
+        deviceBrand: formData.deviceBrand, // Brand options already have correct English values
         deviceModel: formData.deviceModel.trim(),
         serialNumber: formData.serialNumber.trim() || null,
         devicePassword: formData.devicePassword.trim() || null,
@@ -246,25 +336,23 @@ const NewRepairPageEnhanced = () => {
         gpu: formData.gpu.trim() || null,
         ram: formData.ram.trim() || null,
         storage: formData.storage.trim() || null,
-        accessories: formData.accessories,
-        issueDescription: formData.problemDescription.trim(), // Backend expects issueDescription
+        accessories: formData.accessories.map(a => a.label || a.value || a.name || a),
+        problemDescription: formData.problemDescription.trim(), // Backend expects problemDescription
         customerNotes: formData.notes.trim() || null,
-        priority: formData.priority.toLowerCase(), // Convert to lowercase for backend
+        priority: formData.priority === 'عالية' ? 'high' : formData.priority === 'متوسطة' ? 'medium' : formData.priority === 'منخفضة' ? 'low' : 'normal', // Convert Arabic to English
         estimatedCost: formData.estimatedCost ? parseFloat(formData.estimatedCost) : null,
         expectedDeliveryDate: formData.expectedDeliveryDate || null
       };
 
       console.log('Submitting repair request:', repairData);
 
-      const response = await apiService.createRepairRequest(repairData);
+      const result = await apiService.createRepairRequest(repairData);
       
-      if (response.ok) {
-        const result = await response.json();
+      if (result && result.id) {
         notifications.success('تم إنشاء طلب الإصلاح بنجاح');
-        navigate(`/repairs/${result.id || result.insertId}`);
+        navigate(`/repairs/${result.id}`);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create repair request');
+        throw new Error('Failed to create repair request');
       }
       
     } catch (err) {
@@ -520,10 +608,10 @@ const NewRepairPageEnhanced = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Shield className="w-4 h-4 inline ml-1" />
-            كلمة مرور الجهاز
+            كلمة مرور الجهاز (اختياري)
           </label>
           <Input
-            type="password"
+            type="text"
             name="devicePassword"
             value={formData.devicePassword}
             onChange={handleInputChange}
@@ -541,6 +629,8 @@ const NewRepairPageEnhanced = () => {
             name="expectedDeliveryDate"
             value={formData.expectedDeliveryDate}
             onChange={handleInputChange}
+            min={new Date().toISOString().split('T')[0]} // Set minimum date to today
+            required
           />
         </div>
       </div>
@@ -591,6 +681,54 @@ const NewRepairPageEnhanced = () => {
           </div>
         </div>
       )}
+
+      {/* قسم المتعلقات المستلمة */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <FileText className="w-5 h-5 ml-2" />
+          المتعلقات المستلمة من العميل
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">اختر المتعلقات التي استلمتها من العميل مع الجهاز</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {accessoryOptions.map((option) => (
+            <label key={option.id} className="flex items-center space-x-2 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.accessories.some(a => a.id === option.id || a.label === option.label)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData(prev => ({
+                      ...prev,
+                      accessories: [...prev.accessories, { id: option.id, label: option.label, value: option.value }]
+                    }));
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      accessories: prev.accessories.filter(a => a.id !== option.id && a.label !== option.label)
+                    }));
+                  }
+                }}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm">{option.label}</span>
+            </label>
+          ))}
+        </div>
+        
+        {formData.accessories.length > 0 && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">المتعلقات المختارة:</h4>
+            <div className="flex flex-wrap gap-2">
+              {formData.accessories.map((accessory, index) => (
+                <span key={accessory.id || index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                  {accessory.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -730,6 +868,29 @@ const NewRepairPageEnhanced = () => {
                 <p className="text-gray-900">{formData.serialNumber || 'غير محدد'}</p>
               </div>
             </div>
+          </SimpleCardContent>
+        </SimpleCard>
+
+        {/* المتعلقات المستلمة */}
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle className="flex items-center">
+              <FileText className="w-5 h-5 ml-2" />
+              المتعلقات المستلمة
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            {formData.accessories.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {formData.accessories.map((accessory, index) => (
+                  <span key={accessory.id || index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                    {accessory.label}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">لا توجد متعلقات مستلمة</p>
+            )}
           </SimpleCardContent>
         </SimpleCard>
 

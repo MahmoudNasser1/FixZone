@@ -5,7 +5,7 @@ const db = require('../db');
 // Get all warehouses
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM Warehouse');
+    const [rows] = await db.query('SELECT * FROM Warehouse WHERE deletedAt IS NULL');
     res.json({
       success: true,
       data: rows
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query('SELECT * FROM Warehouse WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT * FROM Warehouse WHERE id = ? AND deletedAt IS NULL', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ 
         success: false,

@@ -177,7 +177,7 @@ const LayoutDemo = () => {
     },
     {
       title: 'الإيرادات',
-      value: '45,230 ر.س',
+      value: '45,230 جنية',
       change: '+18%',
       changeType: 'positive',
       icon: TrendingUp,

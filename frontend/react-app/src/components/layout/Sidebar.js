@@ -60,8 +60,8 @@ const navItems = [
       { href: '/inventory/stock-alerts', label: 'تنبيهات المخزون', icon: Activity, badge: '3' },
       { href: '/inventory/reports', label: 'تقارير المخزون', icon: BarChart2 },
       { href: '/inventory/parts', label: 'قطع الغيار', icon: Package, badge: 'نقص' },
-      { href: '/inventory/suppliers', label: 'الموردين', icon: Building2 },
-      { href: '/inventory/orders', label: 'طلبات الشراء', icon: FileText },
+      { href: '/vendors', label: 'الموردين', icon: Building2 },
+      { href: '/purchase-orders', label: 'طلبات الشراء', icon: FileText },
     ]
   },
   {

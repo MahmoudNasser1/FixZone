@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const http = require('http');
+const websocketService = require('./services/websocketService');
+const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,6 +23,9 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(cookieParser());
 
+// Apply rate limiting middleware
+app.use('/api', applyEndpointRateLimit);
+
 // Import the main router
 const apiRouter = require('./app');
 
@@ -28,6 +34,9 @@ app.use('/api', apiRouter);
 
 // Serve uploads statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve public files statically (for logos, etc.)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -51,8 +60,15 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize WebSocket service
+websocketService.initialize(server);
+
+server.listen(PORT, () => {
   console.log(`🚀 Fix Zone Backend Server is running on port ${PORT}`);
   console.log(`📊 API Base URL: http://localhost:${PORT}/api`);
   console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket URL: ws://localhost:${PORT}/ws`);
 });

@@ -40,10 +40,12 @@ const CustomerDetailsPage = () => {
       const response = await apiService.getCustomer(id);
       console.log('Customer response:', response);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Customer details:', data);
-        setCustomer(data);
+      if (response && response.success && response.data) {
+        console.log('Customer details:', response.data);
+        setCustomer(response.data);
+      } else if (response && response.id) {
+        console.log('Customer details:', response);
+        setCustomer(response);
       } else {
         throw new Error('Failed to fetch customer');
       }
@@ -58,9 +60,8 @@ const CustomerDetailsPage = () => {
   const fetchCompany = async (companyId) => {
     try {
       const response = await apiService.getCompany(companyId);
-      if (response.ok) {
-        const company = await response.json();
-        setCompany(company);
+      if (response && response.id) {
+        setCompany(response);
       }
     } catch (err) {
       console.error('Error fetching company:', err);
@@ -70,64 +71,25 @@ const CustomerDetailsPage = () => {
   const fetchCustomerRepairs = async () => {
     try {
       setRepairsLoading(true);
-      // جلب طلبات الإصلاح للعميل
-      const response = await apiService.getRepairRequests({ customerId: id });
+      // استخدام الـ API الصحيح لجلب طلبات الإصلاح للعميل
+      const response = await apiService.request(`/customers/${id}/repairs`);
       console.log('Customer repairs response:', response);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Customer repairs data:', data);
-        // إصلاح إضافي: التأكد من أن البيانات صحيحة
-        let repairsData = [];
-        if (Array.isArray(data)) {
-          repairsData = data;
-        } else if (data.repairs && Array.isArray(data.repairs)) {
-          repairsData = data.repairs;
-        } else if (data.data && Array.isArray(data.data)) {
-          repairsData = data.data;
-        }
-        
-        // إصلاح إضافي: إذا كانت البيانات في شكل غير متوقع
-        if (repairsData.length > 0 && Array.isArray(repairsData[0])) {
-          console.log('Repairs data is in nested array format, flattening...');
-          repairsData = repairsData.flat();
-        }
-        
-        setCustomerRepairs(repairsData);
+      // معالجة البيانات من API
+      let repairsData = [];
+      if (response && response.success && response.data && response.data.repairs) {
+        repairsData = response.data.repairs;
+      } else if (Array.isArray(response)) {
+        repairsData = response;
       } else {
-        throw new Error('Failed to fetch customer repairs');
+        repairsData = [];
       }
+      
+      console.log('Customer repairs data:', repairsData);
+      setCustomerRepairs(repairsData);
     } catch (err) {
       console.error('Error fetching customer repairs:', err);
-      // في حالة الخطأ، استخدام بيانات تجريبية
-      setCustomerRepairs([
-        {
-          id: 1,
-          requestNumber: 'REP-20241203-001',
-          deviceType: 'لابتوب',
-          deviceBrand: 'Dell',
-          deviceModel: 'Inspiron 15',
-          problemDescription: 'الشاشة لا تعمل والجهاز يصدر صوت تنبيه',
-          status: 'pending',
-          priority: 'high',
-          estimatedCost: 450.00,
-          createdAt: '2024-12-03T14:30:00Z',
-          updatedAt: '2024-12-03T14:30:00Z'
-        },
-        {
-          id: 2,
-          requestNumber: 'REP-20241201-002',
-          deviceType: 'هاتف ذكي',
-          deviceBrand: 'iPhone',
-          deviceModel: '13 Pro',
-          problemDescription: 'الشاشة مكسورة والهاتف لا يستجيب للمس',
-          status: 'completed',
-          priority: 'medium',
-          estimatedCost: 800.00,
-          createdAt: '2024-12-01T10:15:00Z',
-          updatedAt: '2024-12-02T16:30:00Z'
-        }
-      ]);
+      setCustomerRepairs([]);
     } finally {
       setRepairsLoading(false);
     }
@@ -139,25 +101,45 @@ const CustomerDetailsPage = () => {
       const response = await apiService.getCustomerStats(id);
       console.log('Customer stats response:', response);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Customer stats data:', data);
-        setCustomerStats(data);
+      if (response && response.customerId) {
+        console.log('Customer stats data:', response);
+        setCustomerStats(response);
       } else {
-        throw new Error('Failed to fetch customer stats');
+        console.log('No customer stats data available');
+        setCustomerStats({
+          totalRepairs: 0,
+          completedRepairs: 0,
+          pendingRepairs: 0,
+          inProgressRepairs: 0,
+          cancelledRepairs: 0,
+          totalPaid: 0,
+          avgRepairCost: 0,
+          satisfactionRate: 0,
+          customerStatus: {
+            isActive: false,
+            isVip: false,
+            riskLevel: 'low'
+          },
+          recentRepairs: []
+        });
       }
     } catch (err) {
       console.error('Error fetching customer stats:', err);
-      // في حالة الخطأ، استخدام بيانات تجريبية
+      // Set empty stats instead of hardcoded data
       setCustomerStats({
-        totalRepairs: 2,
-        completedRepairs: 1,
-        pendingRepairs: 1,
+        totalRepairs: 0,
+        completedRepairs: 0,
+        pendingRepairs: 0,
+        inProgressRepairs: 0,
         cancelledRepairs: 0,
-        totalPaid: 800,
-        averageRepairCost: 625,
-        satisfactionRate: 4.5,
-        customerStatus: 'active',
+        totalPaid: 0,
+        avgRepairCost: 0,
+        satisfactionRate: 0,
+        customerStatus: {
+          isActive: false,
+          isVip: false,
+          riskLevel: 'low'
+        },
         recentRepairs: []
       });
     } finally {
@@ -235,7 +217,7 @@ const CustomerDetailsPage = () => {
             )}
           </div>
           <p className="text-gray-600">
-            تاريخ التسجيل: {new Date(customer.createdAt).toLocaleDateString('ar-SA')}
+            تاريخ التسجيل: {new Date(customer.createdAt).toLocaleDateString('en-GB')}
           </p>
         </div>
         
@@ -468,38 +450,48 @@ const CustomerDetailsPage = () => {
                 {customerRepairs.map((repair) => {
                   const getStatusColor = (status) => {
                     const colors = {
-                      pending: 'bg-yellow-100 text-yellow-800',
+                      'RECEIVED': 'bg-yellow-100 text-yellow-800',
+                      'UNDER_REPAIR': 'bg-blue-100 text-blue-800',
+                      'COMPLETED': 'bg-green-100 text-green-800',
+                      'CANCELLED': 'bg-red-100 text-red-800',
+                      'pending': 'bg-yellow-100 text-yellow-800',
                       'in-progress': 'bg-blue-100 text-blue-800',
-                      completed: 'bg-green-100 text-green-800',
-                      cancelled: 'bg-red-100 text-red-800'
+                      'completed': 'bg-green-100 text-green-800',
+                      'cancelled': 'bg-red-100 text-red-800'
                     };
                     return colors[status] || 'bg-gray-100 text-gray-800';
                   };
 
                   const getStatusText = (status) => {
                     const statusTexts = {
-                      pending: 'في الانتظار',
+                      'RECEIVED': 'في الانتظار',
+                      'UNDER_REPAIR': 'قيد الإصلاح',
+                      'COMPLETED': 'مكتمل',
+                      'CANCELLED': 'ملغي',
+                      'pending': 'في الانتظار',
                       'in-progress': 'قيد الإصلاح',
-                      completed: 'مكتمل',
-                      cancelled: 'ملغي'
+                      'completed': 'مكتمل',
+                      'cancelled': 'ملغي'
                     };
                     return statusTexts[status] || status;
                   };
 
                   const getPriorityColor = (priority) => {
                     const colors = {
-                      low: 'bg-gray-100 text-gray-800',
-                      medium: 'bg-yellow-100 text-yellow-800',
-                      high: 'bg-red-100 text-red-800'
+                      'low': 'bg-gray-100 text-gray-800',
+                      'medium': 'bg-yellow-100 text-yellow-800',
+                      'high': 'bg-red-100 text-red-800',
+                      'normal': 'bg-gray-100 text-gray-800'
                     };
                     return colors[priority] || 'bg-gray-100 text-gray-800';
                   };
 
                   const getPriorityText = (priority) => {
                     const priorityTexts = {
-                      low: 'منخفضة',
-                      medium: 'متوسطة',
-                      high: 'عالية'
+                      'low': 'منخفضة',
+                      'medium': 'متوسطة',
+                      'high': 'عالية',
+                      'normal': 'عادية'
                     };
                     return priorityTexts[priority] || priority;
                   };
@@ -509,10 +501,10 @@ const CustomerDetailsPage = () => {
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-lg text-gray-900">
-                            {repair.requestNumber}
+                            REP-{new Date(repair.createdAt).getFullYear()}-{String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}-{String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-{String(repair.id).padStart(3, '0')}
                           </h4>
                           <p className="text-gray-600 text-sm">
-                            {repair.deviceBrand} {repair.deviceModel} - {repair.deviceType}
+                            {repair.deviceBrand || 'غير محدد'} {repair.deviceModel || ''} - {repair.deviceType || 'غير محدد'}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -526,14 +518,14 @@ const CustomerDetailsPage = () => {
                       </div>
                       
                       <p className="text-gray-700 mb-3 text-sm">
-                        <strong>المشكلة:</strong> {repair.problemDescription}
+                        <strong>المشكلة:</strong> {repair.problem}
                       </p>
                       
                       <div className="flex items-center justify-between text-sm text-gray-600">
                         <div className="flex items-center gap-4">
                           <span>
                             <Calendar className="w-4 h-4 inline ml-1" />
-                            {new Date(repair.createdAt).toLocaleDateString('ar-EG')}
+                            {new Date(repair.createdAt).toLocaleDateString('en-GB')}
                           </span>
                           {repair.estimatedCost && repair.estimatedCost !== 0 && (
                             <span className="font-semibold text-green-600">

@@ -10,13 +10,21 @@ const PaymentHistory = ({ payments = [] }) => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!date) return 'غير محدد';
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'تاريخ غير صحيح';
+      return dateObj.toLocaleDateString('en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date value:', date);
+      return 'تاريخ غير صحيح';
+    }
   };
 
   const getPaymentMethodIcon = (method) => {

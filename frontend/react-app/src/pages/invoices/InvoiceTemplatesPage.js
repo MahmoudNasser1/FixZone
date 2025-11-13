@@ -26,7 +26,7 @@ const InvoiceTemplatesPage = () => {
       companyAddress: 'الرياض، المملكة العربية السعودية',
       companyPhone: '+966-11-1234567',
       companyEmail: 'info@fixzone.sa',
-      currency: 'ر.س',
+      currency: 'جنية',
       footerText: 'جميع الحقوق محفوظة'
     },
     isDefault: false,
@@ -155,7 +155,7 @@ const InvoiceTemplatesPage = () => {
         companyAddress: 'الرياض، المملكة العربية السعودية',
         companyPhone: '+966-11-1234567',
         companyEmail: 'info@fixzone.sa',
-        currency: 'ر.س',
+        currency: 'جنية',
         footerText: 'جميع الحقوق محفوظة'
       },
       isDefault: false,
@@ -427,7 +427,7 @@ const InvoiceTemplatesPage = () => {
                       value={formData.settings.currency || ''}
                       onChange={(e) => handleFormChange('settings.currency', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="ر.س"
+                      placeholder="جنية"
                     />
                   </div>
                 </div>

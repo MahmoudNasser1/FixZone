@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-10-20T11:24:23.697Z",
+  "module": "Repairs Module Comprehensive Test",
+  "successRate": 50,
+  "total": 12,
+  "passed": 6,
+  "failed": 6,
+  "results": [
+    {
+      "test": "صفحة طلبات الإصلاح",
+      "success": false,
+      "status": 404
+    },
+    {
+      "test": "صفحة إنشاء طلب إصلاح",
+      "success": false,
+      "status": 404
+    },
+    {
+      "test": "صفحة العملاء",
+      "success": false,
+      "status": 404
+    },
+    {
+      "test": "صفحة الفواتير",
+      "success": false,
+      "status": 404
+    },
+    {
+      "test": "لوحة التحكم",
+      "success": false,
+      "status": 404
+    },
+    {
+      "test": "جلب طلبات الإصلاح",
+      "success": true,
+      "status": 200
+    },
+    {
+      "test": "جلب العملاء",
+      "success": true,
+      "status": 200
+    },
+    {
+      "test": "جلب الفواتير",
+      "success": true,
+      "status": 200
+    },
+    {
+      "test": "جلب المستخدمين",
+      "success": true,
+      "status": 200
+    },
+    {
+      "test": "جلب الشركات",
+      "success": true,
+      "status": 200
+    },
+    {
+      "test": "سير العمل الكامل",
+      "success": false,
+      "error": "Request failed with status code 409"
+    },
+    {
+      "test": "اختبار الأداء",
+      "success": true,
+      "duration": 33
+    }
+  ]
+}

@@ -44,7 +44,7 @@ const RepairTrackingPage = () => {
   const [requestNumber, setRequestNumber] = useState('');
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState('trackingToken'); // 'trackingToken' or 'requestNumber'
+  const [searchType, setSearchType] = useState('requestNumber'); // 'trackingToken' or 'requestNumber'
 
   // Repair status configuration
   const statusConfig = {
@@ -98,6 +98,28 @@ const RepairTrackingPage = () => {
     }
   };
 
+  // Convert Arabic status to English status code
+  const normalizeStatus = (status) => {
+    const statusMap = {
+      'تم الاستلام': 'RECEIVED',
+      'قيد الفحص': 'INSPECTION',
+      'في انتظار الموافقة': 'QUOTATION_SENT',
+      'قيد الإصلاح': 'UNDER_REPAIR',
+      'جاهز للتسليم': 'READY_FOR_DELIVERY',
+      'تم التسليم': 'DELIVERED',
+      'مكتمل': 'COMPLETED',
+      'RECEIVED': 'RECEIVED',
+      'INSPECTION': 'INSPECTION',
+      'QUOTATION_SENT': 'QUOTATION_SENT',
+      'QUOTATION_APPROVED': 'QUOTATION_APPROVED',
+      'UNDER_REPAIR': 'UNDER_REPAIR',
+      'READY_FOR_DELIVERY': 'READY_FOR_DELIVERY',
+      'DELIVERED': 'DELIVERED',
+      'COMPLETED': 'COMPLETED'
+    };
+    return statusMap[status] || status;
+  };
+
   // Get device icon based on type
   const getDeviceIcon = (deviceType) => {
     switch (deviceType?.toLowerCase()) {
@@ -137,16 +159,10 @@ const RepairTrackingPage = () => {
         params.append('requestNumber', requestNumber);
       }
 
-      const response = await apiService.request(`/repairs/tracking?${params.toString()}`);
+      const data = await apiService.request(`/repairs/tracking?${params.toString()}`);
       
-      if (response.ok) {
-        const data = await response.json();
-        setRepairData(data);
-        notify('success', 'تم العثور على طلب الإصلاح بنجاح');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'لم يتم العثور على طلب الإصلاح');
-      }
+      setRepairData(data);
+      notify('success', 'تم العثور على طلب الإصلاح بنجاح');
     } catch (error) {
       console.error('Error tracking repair:', error);
       notify('error', error.message || 'خطأ في البحث عن طلب الإصلاح');
@@ -166,7 +182,7 @@ const RepairTrackingPage = () => {
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'غير محدد';
-    return new Date(dateString).toLocaleDateString('ar-EG', {
+    return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -334,7 +350,8 @@ const RepairTrackingPage = () => {
             {/* Current Status */}
             <div className="flex items-center justify-center">
               {(() => {
-                const config = statusConfig[repairData.status] || statusConfig['RECEIVED'];
+                const normalizedStatus = normalizeStatus(repairData.status);
+                const config = statusConfig[normalizedStatus] || statusConfig['RECEIVED'];
                 const Icon = config.icon;
                 return (
                   <div className="text-center">

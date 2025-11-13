@@ -45,8 +45,8 @@ const VendorsPage = () => {
     try {
       setLoading(true);
       const response = await vendorService.getAllVendors(filters);
-      setVendors(response.vendors || []);
-      setPagination(response.pagination || {});
+      setVendors(response.data?.vendors || []);
+      setPagination(response.data?.pagination || {});
     } catch (error) {
       addNotification('error', 'خطأ في جلب قائمة الموردين');
     } finally {
@@ -57,7 +57,7 @@ const VendorsPage = () => {
   const fetchStats = async () => {
     try {
       const response = await vendorService.getVendorStats();
-      setStats(response);
+      setStats(response.data || {});
     } catch (error) {
       console.error('Error fetching vendor stats:', error);
     }
@@ -79,7 +79,7 @@ const VendorsPage = () => {
     }
 
     try {
-      await vendorService.deleteVendor(vendor.vendor_id);
+      await vendorService.deleteVendor(vendor.id);
       addNotification('success', 'تم حذف المورد بنجاح');
       fetchVendors();
       fetchStats();
@@ -91,7 +91,7 @@ const VendorsPage = () => {
   const handleToggleStatus = async (vendor) => {
     try {
       const newStatus = vendor.status === 'active' ? 'inactive' : 'active';
-      await vendorService.updateVendorStatus(vendor.vendor_id, newStatus);
+      await vendorService.updateVendorStatus(vendor.id, newStatus);
       addNotification('success', 'تم تحديث حالة المورد بنجاح');
       fetchVendors();
       fetchStats();
@@ -103,7 +103,7 @@ const VendorsPage = () => {
   const handleSaveVendor = async (vendorData) => {
     try {
       if (editingVendor) {
-        await vendorService.updateVendor(editingVendor.vendor_id, vendorData);
+        await vendorService.updateVendor(editingVendor.id, vendorData);
         addNotification('success', 'تم تحديث المورد بنجاح');
       } else {
         await vendorService.createVendor(vendorData);
@@ -113,7 +113,9 @@ const VendorsPage = () => {
       fetchVendors();
       fetchStats();
     } catch (error) {
-      addNotification('error', 'فشل في حفظ بيانات المورد');
+      // عرض رسالة الخطأ الفعلية من API
+      const errorMessage = error.message || 'فشل في حفظ بيانات المورد';
+      addNotification('error', errorMessage);
     }
   };
 
@@ -131,92 +133,112 @@ const VendorsPage = () => {
 
   const columns = [
     {
-      key: 'name',
-      label: 'اسم المورد',
-      sortable: true,
-      render: (vendor) => (
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3">
-            <Building2 className="w-4 h-4 text-blue-600" />
+      id: 'name',
+      header: 'اسم المورد',
+      accessorKey: 'name',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+              <Building2 className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">{vendor.name}</div>
+              <div className="text-sm text-gray-500">{vendor.contactPerson}</div>
+            </div>
           </div>
-          <div>
-            <div className="font-medium text-gray-900">{vendor.name}</div>
-            <div className="text-sm text-gray-500">{vendor.company_name}</div>
+        );
+      }
+    },
+    {
+      id: 'contact_info',
+      header: 'معلومات الاتصال',
+      accessorKey: 'phone',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <div className="text-sm">
+            <div className="text-gray-900">{vendor.phone}</div>
+            <div className="text-gray-500">{vendor.email}</div>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
-      key: 'contact_info',
-      label: 'معلومات الاتصال',
-      render: (vendor) => (
-        <div className="text-sm">
-          <div className="text-gray-900">{vendor.phone}</div>
-          <div className="text-gray-500">{vendor.email}</div>
-        </div>
-      )
+      id: 'address',
+      header: 'العنوان',
+      accessorKey: 'address',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <div className="text-sm text-gray-600">
+            {vendor.address || 'غير محدد'}
+          </div>
+        );
+      }
     },
     {
-      key: 'address',
-      label: 'العنوان',
-      render: (vendor) => (
-        <div className="text-sm text-gray-600">
-          {vendor.address}
-        </div>
-      )
+      id: 'status',
+      header: 'الحالة',
+      accessorKey: 'status',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+            vendor.status === 'active' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {vendor.status === 'active' ? 'نشط' : 'غير نشط'}
+          </span>
+        );
+      }
     },
     {
-      key: 'status',
-      label: 'الحالة',
-      sortable: true,
-      render: (vendor) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          vendor.status === 'active' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {vendor.status === 'active' ? 'نشط' : 'غير نشط'}
-        </span>
-      )
+      id: 'totalOrders',
+      header: 'عدد الطلبات',
+      accessorKey: 'totalOrders',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <span className="text-sm font-medium text-gray-900">
+            {vendor.totalOrders || 0}
+          </span>
+        );
+      }
     },
     {
-      key: 'purchase_orders_count',
-      label: 'عدد الطلبات',
-      sortable: true,
-      render: (vendor) => (
-        <span className="text-sm font-medium text-gray-900">
-          {vendor.purchase_orders_count || 0}
-        </span>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'الإجراءات',
-      render: (vendor) => (
-        <div className="flex space-x-2 space-x-reverse">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleEditVendor(vendor)}
-          >
-            تعديل
-          </Button>
-          <Button
-            variant={vendor.status === 'active' ? 'danger' : 'success'}
-            size="sm"
-            onClick={() => handleToggleStatus(vendor)}
-          >
-            {vendor.status === 'active' ? 'إلغاء تفعيل' : 'تفعيل'}
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => handleDeleteVendor(vendor)}
-          >
-            حذف
-          </Button>
-        </div>
-      )
+      id: 'actions',
+      header: 'الإجراءات',
+      cell: ({ row }) => {
+        const vendor = row.original;
+        return (
+          <div className="flex space-x-2 space-x-reverse">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEditVendor(vendor)}
+            >
+              تعديل
+            </Button>
+            <Button
+              variant={vendor.status === 'active' ? 'danger' : 'success'}
+              size="sm"
+              onClick={() => handleToggleStatus(vendor)}
+            >
+              {vendor.status === 'active' ? 'إلغاء تفعيل' : 'تفعيل'}
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => handleDeleteVendor(vendor)}
+            >
+              حذف
+            </Button>
+          </div>
+        );
+      }
     }
   ];
 
@@ -308,20 +330,63 @@ const VendorsPage = () => {
           <DataTable
             data={vendors}
             columns={columns}
-            loading={loading}
-            searchable={true}
-            onSearch={handleSearch}
-            filterable={true}
-            filterOptions={filterOptions}
-            onFilterChange={handleFilterChange}
-            sortable={true}
-            onSort={(sortBy, order) => handleFilterChange('sortBy', sortBy) || handleFilterChange('order', order)}
-            pagination={{
-              ...pagination,
-              onPageChange: handlePageChange
-            }}
-            emptyMessage="لا توجد موردين"
-          />
+          >
+            {(table) => (
+              <div className="space-y-4">
+                {/* Search and Filters */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <input
+                      type="text"
+                      placeholder="البحث في الموردين..."
+                      value={filters.search}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <select
+                      value={filters.status}
+                      onChange={(e) => handleFilterChange('status', e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">جميع الحالات</option>
+                      <option value="active">نشط</option>
+                      <option value="inactive">غير نشط</option>
+                    </select>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {pagination.totalItems} مورد
+                  </div>
+                </div>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      صفحة {pagination.page} من {pagination.totalPages}
+                    </div>
+                    <div className="flex space-x-2 space-x-reverse">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page <= 1}
+                      >
+                        السابق
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page >= pagination.totalPages}
+                      >
+                        التالي
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DataTable>
         </div>
       </Card>
 

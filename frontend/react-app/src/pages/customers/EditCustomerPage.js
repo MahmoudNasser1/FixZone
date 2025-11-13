@@ -50,15 +50,15 @@ const EditCustomerPage = () => {
       setError(null);
       const response = await apiService.getCustomer(id);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const customer = await response.json();
-      console.log('Customer data received:', customer);
+      console.log('Customer data received:', response);
       
       // التحقق من وجود البيانات
-      if (!customer || !customer.id) {
+      let customer;
+      if (response && response.id) {
+        customer = response;
+      } else if (response && response.success && response.data) {
+        customer = response.data;
+      } else {
         throw new Error('العميل غير موجود أو البيانات غير صحيحة');
       }
       
@@ -129,10 +129,11 @@ const EditCustomerPage = () => {
   const fetchCompanies = async () => {
     try {
       const response = await apiService.getCompanies();
-      if (response.ok) {
-        const companiesData = await response.json();
-        console.log('Companies data received:', companiesData);
-        setCompanies(companiesData);
+      console.log('Companies data received:', response);
+      if (Array.isArray(response)) {
+        setCompanies(response);
+      } else if (response && Array.isArray(response.data)) {
+        setCompanies(response.data);
       } else {
         console.error('Failed to fetch companies:', response.status);
         // إضافة شركات تجريبية في حالة الخطأ
@@ -231,10 +232,12 @@ const EditCustomerPage = () => {
       console.log('Company ID being sent:', customerData.companyId);
 
       const response = await apiService.updateCustomer(id, customerData);
+      console.log('Update response:', response);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'فشل في تحديث بيانات العميل');
+      if (response && response.success) {
+        console.log('Customer updated successfully:', response);
+      } else {
+        throw new Error('فشل في تحديث بيانات العميل');
       }
       
       setSuccess(true);
@@ -603,7 +606,7 @@ const EditCustomerPage = () => {
         <div className="flex justify-between items-center bg-gray-50 p-6 rounded-lg">
           <div className="flex items-center text-sm text-gray-600">
             <Clock className="w-4 h-4 ml-2" />
-            آخر تحديث: {new Date().toLocaleDateString('ar-SA')}
+            آخر تحديث: {new Date().toLocaleDateString('en-GB')}
           </div>
           
           <div className="flex items-center space-x-4 space-x-reverse">

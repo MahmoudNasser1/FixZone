@@ -333,7 +333,7 @@ const StockAlertsPage = () => {
                             {item.suggestedQuantity}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {item.estimatedCost?.toLocaleString('ar-SA')} ر.س
+                            {item.estimatedCost?.toLocaleString('ar-SA')} جنية
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">

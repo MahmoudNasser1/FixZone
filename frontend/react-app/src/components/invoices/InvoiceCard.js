@@ -35,7 +35,15 @@ const InvoiceCard = ({ invoice, onDelete, onPrint, onSend }) => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('ar-SA');
+    if (!date) return 'غير محدد';
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'تاريخ غير صحيح';
+      return dateObj.toLocaleDateString('en-GB');
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date value:', date);
+      return 'تاريخ غير صحيح';
+    }
   };
 
   const getPaymentProgress = () => {

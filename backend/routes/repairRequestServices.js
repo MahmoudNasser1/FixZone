@@ -17,11 +17,16 @@ router.get('/', async (req, res) => {
     let query = `
       SELECT 
         rrs.*,
-        s.serviceName,
-        CONCAT(u.firstName, ' ', u.lastName) as technicianName
+        s.name as serviceName,
+        u.name as technicianName,
+        ii.id as invoiceItemId,
+        ii.invoiceId as linkedInvoiceId
       FROM RepairRequestService rrs
       LEFT JOIN Service s ON rrs.serviceId = s.id
       LEFT JOIN User u ON rrs.technicianId = u.id
+      LEFT JOIN InvoiceItem ii ON ii.serviceId = rrs.serviceId AND ii.invoiceId IN (
+        SELECT id FROM Invoice WHERE repairRequestId = rrs.repairRequestId
+      )
     `;
     
     const params = [];

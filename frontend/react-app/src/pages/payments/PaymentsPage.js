@@ -9,10 +9,12 @@ import BulkOperations from '../../components/payments/BulkOperations';
 import paymentService from '../../services/paymentService';
 import exportService from '../../services/exportService';
 import apiService from '../../services/api';
+import useAuthStore from '../../stores/authStore';
 
 export default function PaymentsPage() {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
+  const user = useAuthStore((state) => state.user);
   
   const [loading, setLoading] = useState(false);
   const [payments, setPayments] = useState([]);
@@ -88,7 +90,7 @@ export default function PaymentsPage() {
       
       const response = await paymentService.createPayment({
         ...paymentData,
-        createdBy: 1 // TODO: Get from auth context
+        createdBy: user?.id || 2 // Use current user ID, fallback to 2 if not available
       });
 
       if (response.success) {
@@ -272,9 +274,7 @@ export default function PaymentsPage() {
     {
       key: 'customer',
       label: 'العميل',
-      render: (payment) => payment.customerFirstName ? 
-        `${payment.customerFirstName} ${payment.customerLastName}` : 
-        'غير محدد'
+      render: (payment) => payment.customerName || 'غير محدد'
     },
     {
       key: 'invoiceNumber',

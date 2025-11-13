@@ -44,6 +44,8 @@ import LayoutDemo from './pages/LayoutDemo';
 import NotificationDemoPage from './pages/NotificationDemoPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import InventoryPageEnhanced from './pages/inventory/InventoryPageEnhanced';
+import NewInventoryItemPage from './pages/inventory/NewInventoryItemPage';
+import EditInventoryItemPage from './pages/inventory/EditInventoryItemPage';
 import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
 import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
 import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
@@ -70,8 +72,8 @@ import EditInvoicePage from './pages/invoices/EditInvoicePage';
 // Temporarily commented out missing pages:
 // import DeliveryPage from './pages/Delivery/DeliveryPage';
 import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage, EditPaymentPage, PaymentReportsPage, OverduePaymentsPage } from './pages/payments';
-// import { VendorsPage } from './pages/vendors';
-// import { PurchaseOrdersPage } from './pages/PurchaseOrders';
+import VendorsPage from './pages/vendors/VendorsPage';
+import PurchaseOrdersPage from './pages/PurchaseOrders/PurchaseOrdersPage';
 import ServicesCatalogPage from './pages/services/ServicesCatalog';
 import ServiceForm from './pages/services/ServiceForm';
 import ServiceDetails from './pages/services/ServiceDetails';
@@ -157,6 +159,8 @@ function App() {
 
                       {/* Inventory, Settings, Payments */}
                       <Route path="inventory" element={<InventoryPageEnhanced />} />
+                      <Route path="inventory/new" element={<NewInventoryItemPage />} />
+                      <Route path="inventory/:id/edit" element={<EditInventoryItemPage />} />
                       <Route path="inventory-old" element={<InventoryPage />} />
                       <Route path="inventory/transfer" element={<InventoryTransferPage />} />
                       <Route path="inventory/reports" element={<InventoryReportsPage />} />
@@ -194,9 +198,9 @@ function App() {
                       {/* Delivery - Temporarily disabled */}
                       {/* <Route path="delivery" element={<DeliveryPage />} /> */}
                       
-                      {/* Vendors & Purchase Orders - Temporarily disabled */}
-                      {/* <Route path="vendors" element={<VendorsPage />} /> */}
-                      {/* <Route path="purchase-orders" element={<PurchaseOrdersPage />} /> */}
+                      {/* Vendors & Purchase Orders */}
+                      <Route path="vendors" element={<VendorsPage />} />
+                      <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
                       
                       <Route path="settings" element={<SystemSettingsPage />} />
                        <Route path="users" element={<UsersPageEnhanced />} />

@@ -157,8 +157,24 @@ const ConfirmModal = ({
   );
 };
 
+// Complete Modal component that handles isOpen and onClose props
+const ModalWrapper = ({ isOpen, onClose, title, children, size = "md", ...props }) => {
+  return (
+    <Modal open={isOpen} onOpenChange={onClose} {...props}>
+      <ModalContent size={size}>
+        {title && (
+          <ModalHeader>
+            <ModalTitle>{title}</ModalTitle>
+          </ModalHeader>
+        )}
+        {children}
+      </ModalContent>
+    </Modal>
+  );
+};
+
 export {
-  Modal,
+  ModalWrapper as Modal,
   ModalPortal,
   ModalOverlay,
   ModalTrigger,

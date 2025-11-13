@@ -203,7 +203,7 @@ const RepairsPageSimple = () => {
                       </p>
                       
                       <p className="mt-2 text-sm text-gray-500">
-                        <strong>تاريخ الإنشاء:</strong> {new Date(repair.createdAt).toLocaleDateString('ar-SA')}
+                        <strong>تاريخ الإنشاء:</strong> {new Date(repair.createdAt).toLocaleDateString('en-GB')}
                       </p>
                     </div>
                     

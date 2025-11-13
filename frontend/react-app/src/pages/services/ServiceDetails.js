@@ -42,14 +42,8 @@ const ServiceDetails = () => {
   const loadServiceData = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getService(id);
-      
-      if (response.ok) {
-        const serviceData = await response.json();
-        setService(serviceData);
-      } else {
-        throw new Error('Service not found');
-      }
+      const serviceData = await apiService.getService(id);
+      setService(serviceData);
     } catch (error) {
       console.error('Error loading service:', error);
       notify('error', 'خطأ في تحميل بيانات الخدمة');
@@ -62,14 +56,8 @@ const ServiceDetails = () => {
   const loadUsageStats = async () => {
     try {
       setLoadingStats(true);
-      const response = await apiService.getServiceStats(id);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUsageStats(data.stats);
-      } else {
-        throw new Error('Failed to load usage stats');
-      }
+      const data = await apiService.getServiceStats(id);
+      setUsageStats(data.stats);
     } catch (error) {
       console.error('Error loading usage stats:', error);
       notify('error', 'خطأ في تحميل إحصائيات الاستخدام');
@@ -91,13 +79,9 @@ const ServiceDetails = () => {
   const handleDelete = async () => {
     if (window.confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
       try {
-        const response = await apiService.deleteService(id);
-        if (response.ok) {
-          notify('success', 'تم حذف الخدمة بنجاح');
-          navigate('/services');
-        } else {
-          throw new Error('Failed to delete service');
-        }
+        await apiService.deleteService(id);
+        notify('success', 'تم حذف الخدمة بنجاح');
+        navigate('/services');
       } catch (error) {
         console.error('Error deleting service:', error);
         notify('error', 'خطأ في حذف الخدمة');
@@ -148,7 +132,7 @@ const ServiceDetails = () => {
               العودة
             </SimpleButton>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{service.serviceName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{service.name}</h1>
               <p className="text-gray-600">تفاصيل الخدمة</p>
             </div>
           </div>
@@ -185,7 +169,7 @@ const ServiceDetails = () => {
                 <Package className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
                   <h3 className="font-medium text-gray-900">اسم الخدمة</h3>
-                  <p className="text-gray-600">{service.serviceName}</p>
+                  <p className="text-gray-600">{service.name}</p>
                 </div>
               </div>
 
@@ -270,13 +254,13 @@ const ServiceDetails = () => {
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      {usageStats?.totalRevenue ? `${usageStats.totalRevenue.toFixed(2)} ج.م` : '0 ج.م'}
+                      {usageStats?.totalRevenue ? `${parseFloat(usageStats.totalRevenue).toFixed(2)} ج.م` : '0 ج.م'}
                     </div>
                     <div className="text-sm text-gray-600">إجمالي الإيرادات</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">
-                      {usageStats?.avgPrice ? `${usageStats.avgPrice.toFixed(2)} ج.م` : '0 ج.م'}
+                      {usageStats?.avgPrice ? `${parseFloat(usageStats.avgPrice).toFixed(2)} ج.م` : '0 ج.م'}
                     </div>
                     <div className="text-sm text-gray-600">متوسط السعر</div>
                   </div>
@@ -287,13 +271,13 @@ const ServiceDetails = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-900">
-                        {usageStats?.lastUsed ? new Date(usageStats.lastUsed).toLocaleDateString('ar-EG') : 'لم يتم الاستخدام'}
+                        {usageStats?.lastUsed ? new Date(usageStats.lastUsed).toLocaleDateString('en-GB') : 'لم يتم الاستخدام'}
                       </div>
                       <div className="text-sm text-gray-600">آخر استخدام</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-900">
-                        {usageStats?.firstUsed ? new Date(usageStats.firstUsed).toLocaleDateString('ar-EG') : 'لم يتم الاستخدام'}
+                        {usageStats?.firstUsed ? new Date(usageStats.firstUsed).toLocaleDateString('en-GB') : 'لم يتم الاستخدام'}
                       </div>
                       <div className="text-sm text-gray-600">أول استخدام</div>
                     </div>
@@ -353,7 +337,7 @@ const ServiceDetails = () => {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">تاريخ الإنشاء</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {new Date(service.createdAt).toLocaleDateString('ar-EG')}
+                    {new Date(service.createdAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
               )}
@@ -362,7 +346,7 @@ const ServiceDetails = () => {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">آخر تحديث</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {new Date(service.updatedAt).toLocaleDateString('ar-EG')}
+                    {new Date(service.updatedAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
               )}

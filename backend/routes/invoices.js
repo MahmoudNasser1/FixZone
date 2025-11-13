@@ -30,14 +30,14 @@ router.post('/create-from-repair/:repairId', invoicesController.createInvoiceFro
 // توليد PDF للفاتورة
 router.get('/:id/pdf', invoicesController.generatePDF);
 
+// حذف فاتورة (soft delete)
+router.delete('/:id', invoicesController.deleteInvoice);
+
 // جلب تفاصيل فاتورة محددة
 router.get('/:id', invoicesController.getInvoiceById);
 
 // تحديث فاتورة
 router.put('/:id', invoicesController.updateInvoice);
-
-// حذف فاتورة (soft delete)
-router.delete('/:id', invoicesController.deleteInvoice);
 
 // عمليات عناصر الفاتورة
 router.get('/:id/items', invoicesController.getInvoiceItems);

@@ -166,7 +166,7 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
       {/* Last Activity */}
       {stats.lastRepairDate && (
         <div className="text-xs text-gray-600 text-center">
-          آخر طلب: {new Date(stats.lastRepairDate).toLocaleDateString('ar-EG')}
+          آخر طلب: {new Date(stats.lastRepairDate).toLocaleDateString('en-GB')}
         </div>
       )}
     </div>

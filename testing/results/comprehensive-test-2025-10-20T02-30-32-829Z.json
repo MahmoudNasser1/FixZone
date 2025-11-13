@@ -1,0 +1,208 @@
+{
+  "startTime": "2025-10-20T02:30:30.947Z",
+  "endTime": "2025-10-20T02:30:32.829Z",
+  "summary": {
+    "total": 19,
+    "passed": 18,
+    "failed": 1,
+    "skipped": 0,
+    "errors": [
+      {
+        "testName": "Get all repairs",
+        "error": "Repairs data format is invalid"
+      }
+    ]
+  },
+  "modules": {
+    "connectivity": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Backend Health Check",
+          "status": "passed",
+          "duration": 12,
+          "details": "Backend is healthy"
+        },
+        {
+          "name": "API Base Endpoint",
+          "status": "passed",
+          "duration": 8,
+          "details": "API base returned 404"
+        }
+      ]
+    },
+    "authentication": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Login with valid credentials",
+          "status": "passed",
+          "duration": 423,
+          "details": "Login successful"
+        },
+        {
+          "name": "Login with invalid credentials",
+          "status": "passed",
+          "duration": 390,
+          "details": "Correctly rejected invalid credentials"
+        }
+      ]
+    },
+    "customers": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Get all customers",
+          "status": "passed",
+          "duration": 17,
+          "details": "Retrieved 3 customers"
+        },
+        {
+          "name": "Create new customer",
+          "status": "passed",
+          "duration": 24,
+          "details": "Created customer with ID: 18"
+        }
+      ]
+    },
+    "repairs": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Get all repairs",
+          "status": "failed",
+          "duration": 12,
+          "error": "Repairs data format is invalid"
+        }
+      ]
+    },
+    "inventory": {
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Get inventory items",
+          "status": "passed",
+          "duration": 47,
+          "details": "Retrieved inventory from enhanced endpoint"
+        }
+      ]
+    },
+    "invoices": {
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Get all invoices",
+          "status": "passed",
+          "duration": 15,
+          "details": "Invoices endpoint accessible"
+        }
+      ]
+    },
+    "payments": {
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Get all payments",
+          "status": "passed",
+          "duration": 9,
+          "details": "Payments endpoint accessible"
+        }
+      ]
+    },
+    "database": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Database connection test",
+          "status": "passed",
+          "duration": 5,
+          "details": "Database connection is healthy"
+        },
+        {
+          "name": "Customer data integrity",
+          "status": "passed",
+          "duration": 8,
+          "details": "All 4 customers have valid data"
+        }
+      ]
+    },
+    "security": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Unauthorized API access",
+          "status": "passed",
+          "duration": 7,
+          "details": "API accessible (may not require auth)"
+        },
+        {
+          "name": "CORS headers",
+          "status": "passed",
+          "duration": 7,
+          "details": "CORS header present: http://localhost:3000"
+        },
+        {
+          "name": "SQL injection protection",
+          "status": "passed",
+          "duration": 7,
+          "details": "Protected against SQL injection"
+        }
+      ]
+    },
+    "performance": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "API response time",
+          "status": "passed",
+          "duration": 7,
+          "details": "Response time: 7ms"
+        },
+        {
+          "name": "Concurrent requests handling",
+          "status": "passed",
+          "duration": 56,
+          "details": "Handled 10 concurrent requests in 54ms"
+        }
+      ]
+    },
+    "integration": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Customer-Repair integration",
+          "status": "passed",
+          "duration": 17,
+          "details": "Integration between customers and repairs working"
+        },
+        {
+          "name": "Repair-Invoice integration",
+          "status": "passed",
+          "duration": 9,
+          "details": "Repairs endpoint accessible for integration"
+        }
+      ]
+    }
+  },
+  "performance": {
+    "apiResponseTime": 7,
+    "concurrentRequests": {
+      "count": 10,
+      "totalTime": 54,
+      "averageTime": 5.4
+    }
+  },
+  "security": {},
+  "integration": {}
+}

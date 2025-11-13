@@ -64,36 +64,33 @@ const InvoiceDetailsPage = () => {
       
       // Fetch invoice details
       console.log('Fetching invoice with ID:', effectiveId);
-      const invoiceResponse = await apiService.getInvoiceById(effectiveId);
-      console.log('Invoice response status:', invoiceResponse.status);
-      if (invoiceResponse.ok) {
-        const responseData = await invoiceResponse.json();
-        console.log('Invoice response data:', responseData);
-        const invoiceData = responseData.data || responseData;
-        console.log('Processed invoice data:', invoiceData);
-        setInvoice(invoiceData);
-        
-        // Fetch invoice items
-        const itemsResponse = await apiService.getInvoiceItems(effectiveId);
-        console.log('Items response status:', itemsResponse.status);
-        if (itemsResponse.ok) {
-          const itemsResponseData = await itemsResponse.json();
-          console.log('Items response data:', itemsResponseData);
-          const itemsData = itemsResponseData.data || itemsResponseData;
-          setInvoiceItems(Array.isArray(itemsData) ? itemsData : []);
-        }
-        
-        // Fetch payments
-        const paymentsResponse = await apiService.getInvoicePayments(effectiveId);
-        console.log('Payments response status:', paymentsResponse.status);
-        if (paymentsResponse.ok) {
-          const paymentsResponseData = await paymentsResponse.json();
-          console.log('Payments response data:', paymentsResponseData);
-          const paymentsData = paymentsResponseData.data || paymentsResponseData;
-          setPayments(Array.isArray(paymentsData) ? paymentsData : []);
-        }
-    } else {
-        throw new Error('Failed to fetch invoice details');
+      const invoiceData = await apiService.getInvoiceById(effectiveId);
+      console.log('Invoice response data:', invoiceData);
+      const invoice = invoiceData.data || invoiceData;
+      console.log('Processed invoice data:', invoice);
+      setInvoice(invoice);
+      
+      // Fetch invoice items (with error handling)
+      try {
+        const itemsData = await apiService.getInvoiceItems(effectiveId);
+        console.log('Items response data:', itemsData);
+        const items = itemsData.data || itemsData;
+        setInvoiceItems(Array.isArray(items) ? items : []);
+      } catch (itemsErr) {
+        console.warn('Could not fetch invoice items:', itemsErr.message);
+        setInvoiceItems([]);
+      }
+      
+      // Fetch payments (with error handling)
+      try {
+        const paymentsData = await apiService.getInvoicePayments(effectiveId);
+        console.log('Payments response data:', paymentsData);
+        // API returns { payments: [...], summary: {...} }
+        const payments = paymentsData.payments || paymentsData.data || (Array.isArray(paymentsData) ? paymentsData : []);
+        setPayments(Array.isArray(payments) ? payments : []);
+      } catch (paymentsErr) {
+        console.warn('Could not fetch invoice payments:', paymentsErr.message);
+        setPayments([]);
       }
     } catch (err) {
       console.error('Error fetching invoice details:', err);
@@ -139,29 +136,19 @@ const InvoiceDetailsPage = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('ar-SA');
+    if (!date) return 'غير محدد';
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'تاريخ غير صحيح';
+      return dateObj.toLocaleDateString('en-GB');
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date value:', date);
+      return 'تاريخ غير صحيح';
+    }
   };
 
-  const handlePrintInvoice = async () => {
-    try {
-      const response = await apiService.generateInvoicePDF(id);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice-${id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('حدث خطأ في طباعة الفاتورة');
-      }
-    } catch (err) {
-      console.error('Error printing invoice:', err);
-      alert('حدث خطأ في طباعة الفاتورة');
-    }
+  const handlePrintInvoice = () => {
+    window.print();
   };
 
   const handleSendInvoice = async () => {

@@ -1,80 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const purchaseOrderController = require('../controllers/purchaseOrders');
 
-// Get all purchase orders
-router.get('/', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM PurchaseOrder');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching purchase orders:', err);
-    res.status(500).send('Server Error');
-  }
-});
+// Get purchase order statistics (must be before /:id route)
+router.get('/stats', purchaseOrderController.getPurchaseOrderStats);
 
-// Get purchase order by ID
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await db.query('SELECT * FROM PurchaseOrder WHERE id = ?', [id]);
-    if (rows.length === 0) {
-      return res.status(404).send('Purchase order not found');
-    }
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(`Error fetching purchase order with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+// Get all purchase orders with advanced filtering, pagination, and search
+router.get('/', purchaseOrderController.getAllPurchaseOrders);
+
+// Get purchase order by ID with detailed information
+router.get('/:id', purchaseOrderController.getPurchaseOrderById);
 
 // Create a new purchase order
-router.post('/', async (req, res) => {
-  const { status, vendorId, approvalStatus, approvedById, approvalDate } = req.body;
-  if (!status || !vendorId) {
-    return res.status(400).send('Status and Vendor ID are required');
-  }
-  try {
-    const [result] = await db.query('INSERT INTO PurchaseOrder (status, vendorId, approvalStatus, approvedById, approvalDate) VALUES (?, ?, ?, ?, ?)', [status, vendorId, approvalStatus, approvedById, approvalDate]);
-    res.status(201).json({ id: result.insertId, status, vendorId, approvalStatus, approvedById, approvalDate });
-  } catch (err) {
-    console.error('Error creating purchase order:', err);
-    res.status(500).send('Server Error');
-  }
-});
+router.post('/', purchaseOrderController.createPurchaseOrder);
 
 // Update a purchase order
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { status, vendorId, approvalStatus, approvedById, approvalDate } = req.body;
-  if (!status || !vendorId) {
-    return res.status(400).send('Status and Vendor ID are required');
-  }
-  try {
-    const [result] = await db.query('UPDATE PurchaseOrder SET status = ?, vendorId = ?, approvalStatus = ?, approvedById = ?, approvalDate = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', [status, vendorId, approvalStatus, approvedById, approvalDate, id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Purchase order not found');
-    }
-    res.json({ message: 'Purchase order updated successfully' });
-  } catch (err) {
-    console.error(`Error updating purchase order with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+router.put('/:id', purchaseOrderController.updatePurchaseOrder);
 
-// Delete a purchase order
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [result] = await db.query('DELETE FROM PurchaseOrder WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Purchase order not found');
-    }
-    res.json({ message: 'Purchase order deleted successfully' });
-  } catch (err) {
-    console.error(`Error deleting purchase order with ID ${id}:`, err);
-    res.status(500).send('Server Error');
-  }
-});
+// Approve a purchase order
+router.patch('/:id/approve', purchaseOrderController.approvePurchaseOrder);
+
+// Reject a purchase order
+router.patch('/:id/reject', purchaseOrderController.rejectPurchaseOrder);
+
+// Soft delete a purchase order
+router.delete('/:id', purchaseOrderController.deletePurchaseOrder);
 
 module.exports = router;

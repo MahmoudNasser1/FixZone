@@ -11,6 +11,7 @@ import StatusFlow from '../../components/ui/StatusFlow';
 import AttachmentManager from '../../components/ui/AttachmentManager';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { useSettings } from '../../context/SettingsContext';
+import useAuthStore from '../../stores/authStore';
 import { 
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
@@ -23,6 +24,7 @@ const RepairDetailsPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const { formatMoney } = useSettings();
+  const user = useAuthStore((state) => state.user);
   const [repair, setRepair] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [notes, setNotes] = useState([]);
@@ -141,7 +143,17 @@ const RepairDetailsPage = () => {
       console.log('Loading items map...');
       const res = await inventoryService.listItems();
       console.log('Items response:', res);
-      const list = Array.isArray(res) ? res : (res.data?.items || res.items || []);
+      // Handle the new inventory-enhanced API response format
+      let list = [];
+      if (res && res.success && res.data && res.data.items) {
+        list = res.data.items;
+      } else if (Array.isArray(res)) {
+        list = res;
+      } else if (res && res.items) {
+        list = res.items;
+      } else if (res && res.data && Array.isArray(res.data)) {
+        list = res.data;
+      }
       console.log('Processed items list:', list);
       const map = {};
       for (const it of list) {
@@ -196,7 +208,7 @@ const RepairDetailsPage = () => {
           const nowMin = Number(rowAfter.minLevel || 0);
           const nowLow = !!rowAfter.isLowStock || nowQty <= nowMin;
           if (nowLow) {
-            notifications.warn('تنبيه: المخزون منخفض لهذا العنصر في هذا المخزن بعد عملية الصرف');
+            notifications.warning('تنبيه: المخزون منخفض لهذا العنصر في هذا المخزن بعد عملية الصرف');
           }
         }
       } catch {}
@@ -216,6 +228,33 @@ const RepairDetailsPage = () => {
   };
 
   // تحميل خيارات المتعلقات من المتغيرات
+  // Function to get Arabic label for accessory value
+  const getAccessoryLabel = (value) => {
+    if (typeof value === 'string') {
+      // Check if it's already in Arabic (contains Arabic characters)
+      if (/[\u0600-\u06FF]/.test(value)) {
+        return value; // Already Arabic
+      }
+      
+      // Map English values to Arabic labels
+      const valueToLabel = {
+        'CHARGER': 'شاحن الجهاز',
+        'USB_CABLE': 'كابل USB',
+        'EARPHONES': 'سماعات',
+        'CASE': 'حافظة',
+        'SCREEN_PROTECTOR': 'حامي الشاشة',
+        'STYLUS': 'قلم رقمي',
+        'MOUSE': 'ماوس',
+        'KEYBOARD': 'لوحة مفاتيح',
+        'MEMORY_CARD': 'بطاقة ذاكرة',
+        'POWER_BANK': 'بطارية خارجية'
+      };
+      
+      return valueToLabel[value] || value; // Return Arabic label or original value if not found
+    }
+    return value;
+  };
+
   const loadAccessoryOptions = async () => {
     try {
       const response = await apiService.getVariables({ category: 'ACCESSORY', active: true });
@@ -280,15 +319,10 @@ const RepairDetailsPage = () => {
       setPartsLoading(true);
       setPartsError('');
       console.log('Loading parts used for repair request:', id);
-      const response = await apiService.request(`/partsused?repairRequestId=${id}`);
-      console.log('Parts used response:', response);
+      const data = await apiService.request(`/partsused?repairRequestId=${id}`);
+      console.log('Parts used response:', data);
       
-      if (response.ok) {
-        const data = await response.json();
-        setPartsUsed(Array.isArray(data) ? data : []);
-      } else {
-        throw new Error('فشل في تحميل الأجزاء المصروفة');
-      }
+      setPartsUsed(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Error loading parts used:', e);
       setPartsError('تعذر تحميل الأجزاء المصروفة');
@@ -330,22 +364,17 @@ const RepairDetailsPage = () => {
       setServicesLoading(true);
       setServicesError('');
       console.log('Loading services for repair request:', id);
-      const response = await repairService.getRepairRequestServices(id);
-      console.log('Services response:', response);
+      const data = await repairService.getRepairRequestServices(id);
+      console.log('Services response:', data);
       
       // التأكد من أن الاستجابة صحيحة
       let servicesData = [];
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          servicesData = data;
-        } else if (data && Array.isArray(data.data)) {
-          servicesData = data.data;
-        } else if (data && data.services && Array.isArray(data.services)) {
-          servicesData = data.services;
-        }
-      } else {
-        throw new Error('Failed to fetch services');
+      if (Array.isArray(data)) {
+        servicesData = data;
+      } else if (data && Array.isArray(data.data)) {
+        servicesData = data.data;
+      } else if (data && data.services && Array.isArray(data.services)) {
+        servicesData = data.services;
       }
       
       setServices(servicesData);
@@ -405,7 +434,10 @@ const RepairDetailsPage = () => {
       }
 
       // First, we need to get the invoice for this repair request
-      const invoice = invoices.find(inv => inv.repairRequestId === parseInt(id));
+      // Get fresh invoices from the API directly to avoid state timing issues
+      const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+      const freshInvoices = freshInvoicesData.data || [];
+      const invoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
       if (!invoice) {
         notifications.error('لا توجد فاتورة لهذا الطلب. يرجى إنشاء فاتورة أولاً');
         return;
@@ -417,7 +449,7 @@ const RepairDetailsPage = () => {
         paymentMethod: paymentForm.method,
         referenceNumber: paymentForm.reference || `${paymentForm.method.toUpperCase()}-${Date.now()}`,
         notes: paymentForm.notes,
-        createdBy: 1, // TODO: Get from auth context
+        createdBy: user?.id || 2, // Use current user ID, fallback to 2 if not available
         currency: 'EGP',
         paymentDate: new Date().toISOString().split('T')[0]
       };
@@ -581,28 +613,50 @@ const RepairDetailsPage = () => {
         
         // معالجة بيانات المخازن
         let warehousesData = [];
-        if (whResponse && whResponse.ok) {
-          const wh = await whResponse.json();
-          if (Array.isArray(wh)) {
-            warehousesData = wh;
-          } else if (wh && Array.isArray(wh.data)) {
-            warehousesData = wh.data;
-          } else if (wh && wh.warehouses && Array.isArray(wh.warehouses)) {
-            warehousesData = wh.warehouses;
+        if (whResponse) {
+          // Handle new API response format (direct JSON)
+          if (Array.isArray(whResponse)) {
+            warehousesData = whResponse;
+          } else if (whResponse && Array.isArray(whResponse.data)) {
+            warehousesData = whResponse.data;
+          } else if (whResponse && whResponse.warehouses && Array.isArray(whResponse.warehouses)) {
+            warehousesData = whResponse.warehouses;
+          } else if (whResponse && whResponse.ok) {
+            // Handle old API response format
+            const wh = await whResponse.json();
+            if (Array.isArray(wh)) {
+              warehousesData = wh;
+            } else if (wh && Array.isArray(wh.data)) {
+              warehousesData = wh.data;
+            } else if (wh && wh.warehouses && Array.isArray(wh.warehouses)) {
+              warehousesData = wh.warehouses;
+            }
           }
         }
         setWarehouses(warehousesData);
         
         // معالجة بيانات العناصر
         let itemsData = [];
-        if (itResponse && itResponse.ok) {
-          const it = await itResponse.json();
-          if (Array.isArray(it)) {
-            itemsData = it;
-          } else if (it && Array.isArray(it.data)) {
-            itemsData = it.data;
-          } else if (it && it.items && Array.isArray(it.items)) {
-            itemsData = it.items;
+        if (itResponse) {
+          // Handle new API response format (direct JSON)
+          if (itResponse && itResponse.success && itResponse.data && itResponse.data.items) {
+            itemsData = itResponse.data.items;
+          } else if (Array.isArray(itResponse)) {
+            itemsData = itResponse;
+          } else if (itResponse && Array.isArray(itResponse.data)) {
+            itemsData = itResponse.data;
+          } else if (itResponse && itResponse.items && Array.isArray(itResponse.items)) {
+            itemsData = itResponse.items;
+          } else if (itResponse && itResponse.ok) {
+            // Handle old API response format
+            const it = await itResponse.json();
+            if (Array.isArray(it)) {
+              itemsData = it;
+            } else if (it && Array.isArray(it.data)) {
+              itemsData = it.data;
+            } else if (it && it.items && Array.isArray(it.items)) {
+              itemsData = it.items;
+            }
           }
         }
         setItems(itemsData);
@@ -637,16 +691,21 @@ const RepairDetailsPage = () => {
         const svcResponse = await repairService.getAvailableServices();
         console.log('Available services response:', svcResponse);
         
-        if (svcResponse && svcResponse.ok) {
+        // Handle new API response format (direct JSON)
+        let servicesList = [];
+        if (svcResponse && svcResponse.items && Array.isArray(svcResponse.items)) {
+          servicesList = svcResponse.items;
+        } else if (Array.isArray(svcResponse)) {
+          servicesList = svcResponse;
+        } else if (svcResponse && svcResponse.ok) {
+          // Handle old API response format
           const svcData = await svcResponse.json();
           console.log('Services data:', svcData);
-          const servicesList = Array.isArray(svcData) ? svcData : (svcData.items || []);
-          setAvailableServices(servicesList);
-          console.log('Available services set:', servicesList.length);
-        } else {
-          console.error('Failed to load services');
-          setAvailableServices([]);
+          servicesList = Array.isArray(svcData) ? svcData : (svcData.items || []);
         }
+        
+        setAvailableServices(servicesList);
+        console.log('Available services set:', servicesList.length);
         
         // تحميل الفنيين إن لم يكونوا محملين مسبقًا
         if (techOptions.length === 0) {
@@ -655,16 +714,17 @@ const RepairDetailsPage = () => {
             const techResponse = await apiService.listTechnicians();
             console.log('Technicians response:', techResponse);
             
-            if (techResponse && techResponse.ok) {
+            // Handle new API response format (direct JSON)
+            let techList = [];
+            if (Array.isArray(techResponse)) {
+              techList = techResponse;
+            } else if (techResponse && techResponse.ok) {
+              // Handle old API response format
               const techData = await techResponse.json();
-              console.log('Technicians data:', techData);
-              const techList = Array.isArray(techData) ? techData : (techData.items || []);
-              setTechOptions(techList);
-              console.log('Tech options set:', techList.length);
-            } else {
-              console.error('Failed to load technicians');
-              setTechOptions([]);
+              techList = Array.isArray(techData) ? techData : (techData.items || []);
             }
+            setTechOptions(techList);
+            console.log('Tech options set:', techList.length);
           } catch (e) {
             console.error('Error loading technicians:', e);
             setTechOptions([]);
@@ -710,16 +770,35 @@ const RepairDetailsPage = () => {
       });
       // ربط اختياري بالفاتورة
       try {
-        const invId = invoiceId ? Number(invoiceId) : (invoices[0]?.id || invoices[0]?.invoiceId || null);
-        if (invId) {
-          await apiService.addInvoiceItem(invId, {
-            serviceId: Number(serviceId),
-            quantity: 1,
-            unitPrice: Number(price),
-            description: notes || ''
-          });
+        // Auto-select the invoice for this repair request if not manually selected
+        let targetInvoiceId = invoiceId ? Number(invoiceId) : null;
+        
+        if (!targetInvoiceId) {
+          // Get fresh invoices and auto-select the one for this repair
+          const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+          const freshInvoices = freshInvoicesData.data || [];
+          const repairInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+          targetInvoiceId = repairInvoice?.id || repairInvoice?.invoiceId;
         }
-      } catch {}
+        
+        if (targetInvoiceId) {
+          // Get service name for description
+          const selectedService = availableServices.find(s => s.id === Number(serviceId));
+          const serviceName = selectedService?.name || 'خدمة غير محددة';
+          
+          await apiService.addInvoiceItem(targetInvoiceId, {
+            serviceId: Number(serviceId) || null,
+            quantity: 1,
+            unitPrice: Number(price) || 0,
+            description: `${serviceName} - ${notes || ''}`.trim(),
+            itemType: 'service'
+          });
+          
+          console.log('Service automatically linked to invoice:', targetInvoiceId);
+        }
+      } catch (e) {
+        console.log('Service added but not linked to invoice:', e.message);
+      }
       notifications.success('تمت إضافة الخدمة بنجاح');
       setAddServiceOpen(false);
       setSvcForm({ serviceId: '', price: '', technicianId: '', notes: '', invoiceId: '' });
@@ -771,10 +850,9 @@ const RepairDetailsPage = () => {
       console.log('Fetching repair details for ID:', id);
       // محاولة الجلب من API أولاً
       try {
-        const response = await apiService.getRepairRequest(id);
-        console.log('Repair response:', response);
-        if (response.ok) {
-          const rep = await response.json();
+        const rep = await apiService.getRepairRequest(id);
+        console.log('Repair response:', rep);
+        if (rep) {
           setRepair(rep);
           
           // تحديد مواصفات الجهاز من البيانات المحملة
@@ -798,31 +876,24 @@ const RepairDetailsPage = () => {
           
           // ملاحظات/سجل
           try {
-            const logsResponse = await apiService.getRepairLogs(id);
-            if (logsResponse.ok) {
-              const logs = await logsResponse.json();
-              setNotes(Array.isArray(logs) ? logs : (logs.items || []));
-            }
+            const logs = await apiService.getRepairLogs(id);
+            setNotes(Array.isArray(logs) ? logs : (logs.items || []));
           } catch {}
           
           // المرفقات
           try {
-            const attsResponse = await apiService.listAttachments(id);
-            if (attsResponse.ok) {
-              const atts = await attsResponse.json();
-              setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
-            }
+            const atts = await apiService.listAttachments(id);
+            setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
           } catch {}
           
-          // بيانات العميل إن وجدت
-          if (rep?.customerId) {
-            try {
-              const custResponse = await apiService.getCustomer(rep.customerId);
-              if (custResponse.ok) {
-                const cust = await custResponse.json();
-                setCustomer(cust);
-              }
-            } catch {}
+          // بيانات العميل - استخدم البيانات المتاحة في الطلب مباشرة
+          if (rep?.customerName) {
+            setCustomer({
+              id: rep.customerId,
+              name: rep.customerName,
+              phone: rep.customerPhone,
+              email: rep.customerEmail
+            });
           }
           
           setNewStatus(rep?.status || 'pending');
@@ -883,32 +954,20 @@ const RepairDetailsPage = () => {
       setInvoicesError(null);
       
       console.log('Loading invoices for repair request:', id);
+      console.log('API call params:', { repairRequestId: id, limit: 50 });
       
       // Use the new invoices service with repair request filter
-      const response = await apiService.getInvoices({
-        repairRequestId: id,
-        limit: 50 // Get all invoices for this repair
-      });
+      const data = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
       
-      console.log('Invoices response:', response);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Invoices data:', data);
-        setInvoices(data.data?.invoices || data.invoices || data.data || []);
-      } else {
-        // Fallback to old API if new one fails
-        const res = await apiService.listRepairInvoices(id);
-        console.log('Fallback invoices response:', res);
-        if (res.ok) {
-          const fallbackData = await res.json();
-          setInvoices(fallbackData.data?.invoices || fallbackData.invoices || fallbackData.data || []);
-        } else {
-          throw new Error('Failed to load invoices from fallback API');
-        }
-      }
+      console.log('Invoices response:', data);
+      console.log('Invoices data:', data);
+      console.log('Invoices data.data:', data.data);
+      console.log('Invoices data.data type:', typeof data.data);
+      console.log('Invoices data.data length:', data.data?.length);
+      setInvoices(data.data || []);
     } catch (e) {
       console.error('Error loading invoices:', e);
+      console.error('Error details:', e.message, e.stack);
       setInvoicesError('تعذر تحميل الفواتير');
     } finally {
       setInvoicesLoading(false);
@@ -930,21 +989,16 @@ const RepairDetailsPage = () => {
       
       console.log('Creating invoice with payload:', payload);
       // Use the new invoices service
-      const response = await apiService.createInvoiceFromRepair(id, payload);
-      console.log('Invoice creation response:', response);
+      const responseData = await apiService.createInvoiceFromRepair(id, payload);
+      console.log('Invoice creation response:', responseData);
       
-      if (response.ok) {
-        const responseData = await response.json();
-        if (responseData.success) {
-          notifications.success('تم إنشاء الفاتورة بنجاح مع ربط تلقائي للقطع والخدمات');
-          await loadInvoices();
-          await loadPartsUsed(); // Refresh to show updated invoice status
-          await loadServices();
-        } else {
-          throw new Error(responseData.message || 'فشل في إنشاء الفاتورة');
-        }
+      if (responseData.success) {
+        notifications.success('تم إنشاء الفاتورة بنجاح مع ربط تلقائي للقطع والخدمات');
+        await loadInvoices();
+        await loadPartsUsed(); // Refresh to show updated invoice status
+        await loadServices();
       } else {
-        throw new Error('فشل في إنشاء الفاتورة');
+        throw new Error(responseData.message || 'فشل في إنشاء الفاتورة');
       }
     } catch (e) {
       console.error('Error creating invoice:', e);
@@ -952,15 +1006,16 @@ const RepairDetailsPage = () => {
       const isDuplicate = typeof e?.message === 'string' && e.message.includes('409');
       if (isDuplicate) {
         try {
-          const res = await apiService.listRepairInvoices(id);
-          const list = Array.isArray(res) ? res : (res?.data?.invoices || res?.invoices || []);
-          const existing = list && list[0];
-          if (existing?.id) {
-            notifications.warn('هناك فاتورة موجودة لهذا الطلب. تم فتحها.');
-            window.location.assign(`/invoices/${existing.id}`);
+          // Load existing invoices to find the duplicate
+          await loadInvoices();
+          const existingInvoice = invoices.find(inv => inv.repairRequestId === parseInt(id));
+          if (existingInvoice?.id) {
+            notifications.warning('هناك فاتورة موجودة لهذا الطلب. يرجى فتح الفاتورة الموجودة من قائمة الفواتير أدناه.');
             return;
           }
         } catch (_) {}
+        notifications.warning('هناك فاتورة موجودة لهذا الطلب. يرجى إنشاء فاتورة جديدة أو فتح الفاتورة الموجودة.');
+        return;
       }
       notifications.error(`فشل إنشاء الفاتورة: ${e.message || 'خطأ غير معروف'}`);
     } finally {
@@ -1190,7 +1245,7 @@ const RepairDetailsPage = () => {
             تاريخ الإنشاء: {repair.createdAt ? (() => {
               try {
                 const date = new Date(repair.createdAt);
-                return isNaN(date.getTime()) ? 'غير محدد' : date.toLocaleDateString('ar-SA');
+                return isNaN(date.getTime()) ? 'غير محدد' : date.toLocaleDateString('en-GB');
               } catch (e) {
                 return 'غير محدد';
               }
@@ -1430,7 +1485,7 @@ const RepairDetailsPage = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
-                        <p className="text-gray-900">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('ar-SA') : 'لم يتم تحديده بعد'}</p>
+                        <p className="text-gray-900">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('en-GB') : 'لم يتم تحديده بعد'}</p>
                       </div>
                     </div>
                     
@@ -1656,7 +1711,7 @@ const RepairDetailsPage = () => {
                               
                               <div className="flex flex-col items-end gap-3">
                                 <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
-                                  {invoiced ? '✓ مفوتر' : '⏳ غير مفوتر'}
+                                  {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
                                 </SimpleBadge>
                                 
                                 <div className="flex gap-2">
@@ -1670,37 +1725,40 @@ const RepairDetailsPage = () => {
                                           if (invoices.length === 0) {
                                             await loadInvoices();
                                           }
-                                          const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
+                                          
+                                          // Wait a moment for state to update, then get fresh invoices
+                                          await new Promise(resolve => setTimeout(resolve, 100));
+                                          
+                                          // Get fresh invoices from the API directly to avoid state timing issues
+                                          const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+                                          const freshInvoices = freshInvoicesData.data || [];
+                                          
+                                          console.log('Debug - Fresh invoices (parts):', freshInvoices);
+                                          const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+                                          const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                           if (!targetInvoiceId) {
-                                            notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+                                            notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
                                             return;
                                           }
                                           // إضافة عنصر فاتورة للقطعة المصروفة
-                                          const addResponse = await apiService.addInvoiceItem(targetInvoiceId, {
-                                            inventoryItemId: pu.inventoryItemId,
+                                          const addData = await apiService.addInvoiceItem(targetInvoiceId, {
+                                            inventoryItemId: pu.inventoryItemId || null,
                                             quantity: Number(pu.quantity || 1),
-                                            partsUsedId: pu.id
+                                            partsUsedId: pu.id || null,
+                                            itemType: 'part'
                                           });
                                           
-                                          if (addResponse.ok) {
-                                            const addData = await addResponse.json();
-                                        if (addData.success) {
-                                          notifications.success('تم إضافة القطعة إلى الفاتورة');
-                                          await loadPartsUsed();
-                                          await loadServices();
-                                          await loadInvoices();
-                                        } else {
-                                              throw new Error(addData.error || 'Failed to add part to invoice');
-                                            }
-                                      } else {
-                                        const errorData = await addResponse.json();
-                                        if (addResponse.status === 409) {
-                                          // Duplicate item error
-                                          notifications.warn(errorData.error || 'تم إضافة هذه القطعة مسبقاً');
-                                          return;
-                                        }
-                                        throw new Error(errorData.error || 'Failed to add part to invoice');
-                                      }
+                                          if (addData.success) {
+                                            notifications.success('تم إضافة القطعة إلى الفاتورة');
+                                            await loadPartsUsed();
+                                            await loadServices();
+                                            await loadInvoices();
+                                          } else if (addData.duplicate) {
+                                            notifications.warning('هذه القطعة موجودة بالفعل في الفاتورة');
+                                            await loadPartsUsed(); // Refresh to update button state
+                                          } else {
+                                            throw new Error(addData.error || 'Failed to add part to invoice');
+                                          }
                                     } catch (e) {
                                       console.error('Error adding part to invoice:', e);
                                       notifications.error(`تعذر إضافة القطعة إلى الفاتورة: ${e.message}`);
@@ -1852,57 +1910,65 @@ const RepairDetailsPage = () => {
                               
                               <div className="flex flex-col items-end gap-3">
                                 <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
-                                  {invoiced ? '✓ مفوتر' : '⏳ غير مفوتر'}
+                                  {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
                                 </SimpleBadge>
                                 {!invoiced && (
                                   <SimpleButton
                                     size="sm"
                                     onClick={async () => {
-                                      try {
+                                        try {
                                         // تأكد من وجود فاتورة واحدة على الأقل
                                         if (invoices.length === 0) {
                                           await loadInvoices();
                                         }
-                                        const targetInvoiceId = (invoices[0]?.id || invoices[0]?.invoiceId);
+                                        
+                                        // Wait a moment for state to update, then get fresh invoices
+                                        await new Promise(resolve => setTimeout(resolve, 100));
+                                        
+                                        // Get fresh invoices from the API directly to avoid state timing issues
+                                        const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+                                        const freshInvoices = freshInvoicesData.data || [];
+                                        
+                                        console.log('Debug - Fresh invoices:', freshInvoices);
+                                        console.log('Debug - Looking for repairRequestId:', parseInt(id));
+                                        console.log('Debug - Invoice repairRequestIds:', freshInvoices.map(inv => ({ id: inv.id, repairRequestId: inv.repairRequestId, type: typeof inv.repairRequestId })));
+                                        const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+                                        console.log('Debug - Found target invoice:', targetInvoice);
+                                        const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                         if (!targetInvoiceId) {
-                                          notifications.warn('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+                                          notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
                                           return;
                                         }
                                         console.log('Adding service to invoice:', {
                                           targetInvoiceId,
                                           service,
+                                          serviceKeys: Object.keys(service),
                                           payload: {
                                             serviceId: service.serviceId || service.id,
                                             quantity: 1,
                                             unitPrice: Number(service.price || 0),
-                                            description: service.notes || service.serviceName || ''
+                                            description: service.notes || service.serviceName || '',
+                                            itemType: 'service'
                                           }
                                         });
                                         // إضافة عنصر فاتورة للخدمة
-                                        const addResponse = await apiService.addInvoiceItem(targetInvoiceId, {
-                                          serviceId: service.serviceId || service.id,
+                                        const addData = await apiService.addInvoiceItem(targetInvoiceId, {
+                                          serviceId: service.serviceId || service.id || null,
                                           quantity: 1,
                                           unitPrice: Number(service.price || 0),
-                                          description: service.notes || service.serviceName || ''
+                                          description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
+                                          itemType: 'service'
                                         });
                                         
-                                        if (addResponse.ok) {
-                                          const addData = await addResponse.json();
-                                          if (addData.success) {
-                                            notifications.success('تم إضافة الخدمة إلى الفاتورة');
-                                            await loadServices();
-                                            await loadInvoices();
-                                          } else {
-                                            throw new Error(addData.error || 'Failed to add service to invoice');
-                                          }
+                                        if (addData.success) {
+                                          notifications.success('تم إضافة الخدمة إلى الفاتورة');
+                                          await loadServices();
+                                          await loadInvoices();
+                                        } else if (addData.duplicate) {
+                                          notifications.warning('هذه الخدمة موجودة بالفعل في الفاتورة');
+                                          await loadServices(); // Refresh to update button state
                                         } else {
-                                          const errorData = await addResponse.json();
-                                          if (addResponse.status === 409) {
-                                            // Duplicate item error
-                                            notifications.warn(errorData.error || 'تم إضافة هذه الخدمة مسبقاً');
-                                            return;
-                                          }
-                                          throw new Error(errorData.error || 'Failed to add service to invoice');
+                                          throw new Error(addData.error || 'Failed to add service to invoice');
                                         }
                                       } catch (e) {
                                         console.error('Error adding service to invoice:', e);
@@ -2548,7 +2614,32 @@ const RepairDetailsPage = () => {
                   <SimpleButton size="sm" variant="outline" onClick={() => {
                     setEditingAccessories(!editingAccessories);
                     if (!editingAccessories) {
-                      setAccessoriesForm(repair.accessories || []);
+                      // Convert accessories data to proper form format
+                      const accessoriesData = repair.accessories || [];
+                      const formattedAccessories = accessoriesData
+                        .filter(item => item != null)
+                        .map((item, index) => {
+                          if (typeof item === 'string') {
+                            // It's already a string (manual entry)
+                            return { id: index, value: item, label: item };
+                          } else if (typeof item === 'number') {
+                            // It's an ID, find the corresponding option
+                            const option = accessoryOptions.find(opt => opt.id === item);
+                            if (option) {
+                              return { id: option.id, value: option.value, label: option.label };
+                            } else {
+                              // If option not found, treat as manual entry
+                              return { id: index, value: `Item ${item}`, label: getAccessoryLabel(`Item ${item}`) };
+                            }
+                          } else if (typeof item === 'object' && item.label) {
+                            // It's already an object with label
+                            return item;
+                          } else {
+                            // Fallback
+                            return { id: index, value: String(item), label: getAccessoryLabel(String(item)) };
+                          }
+                        });
+                      setAccessoriesForm(formattedAccessories);
                     }
                   }}>
                     <Edit className="w-4 h-4 ml-1" />
@@ -2579,17 +2670,53 @@ const RepairDetailsPage = () => {
                       ))}
                     </div>
                     <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t">
-                      <SimpleButton size="sm" onClick={() => {
-                        setRepair(prev => ({ ...prev, accessories: accessoriesForm }));
-                        setEditingAccessories(false);
-                        notifications.success('تم تحديث المتعلقات المستلمة');
+                      <SimpleButton size="sm" onClick={async () => {
+                        try {
+                          // إرسال المتعلقات المحدثة للخادم
+                          const updatedRepair = await apiService.updateRepairRequest(repair.id, {
+                            accessories: accessoriesForm.filter(a => a != null).map(a => a.label || a.value || a.name || a)
+                          });
+                          
+                          // تحديث البيانات محلياً
+                          setRepair(prev => ({ ...prev, accessories: accessoriesForm }));
+                          setEditingAccessories(false);
+                          notifications.success('تم تحديث المتعلقات المستلمة');
+                        } catch (error) {
+                          console.error('Error updating accessories:', error);
+                          notifications.error('حدث خطأ في تحديث المتعلقات');
+                        }
                       }}>
                         <Save className="w-4 h-4 ml-1" />
                         حفظ التغييرات
                       </SimpleButton>
                       <SimpleButton size="sm" variant="ghost" onClick={() => {
                         setEditingAccessories(false);
-                        setAccessoriesForm(repair.accessories || []);
+                        // Convert accessories data to proper form format
+                        const accessoriesData = repair.accessories || [];
+                        const formattedAccessories = accessoriesData
+                          .filter(item => item != null)
+                          .map((item, index) => {
+                            if (typeof item === 'string') {
+                              // It's already a string (manual entry)
+                              return { id: index, value: item, label: item };
+                            } else if (typeof item === 'number') {
+                              // It's an ID, find the corresponding option
+                              const option = accessoryOptions.find(opt => opt.id === item);
+                              if (option) {
+                                return { id: option.id, value: option.value, label: option.label };
+                              } else {
+                                // If option not found, treat as manual entry
+                                return { id: index, value: `Item ${item}`, label: `Item ${item}` };
+                              }
+                            } else if (typeof item === 'object' && item.label) {
+                              // It's already an object with label
+                              return item;
+                            } else {
+                              // Fallback
+                              return { id: index, value: String(item), label: getAccessoryLabel(String(item)) };
+                            }
+                          });
+                        setAccessoriesForm(formattedAccessories);
                       }}>
                         <X className="w-4 h-4 ml-1" />
                         إلغاء
@@ -2600,8 +2727,10 @@ const RepairDetailsPage = () => {
                   <div>
                     {Array.isArray(repair.accessories) && repair.accessories.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {repair.accessories.map((a) => (
-                          <span key={a.id} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">{a.label}</span>
+                        {repair.accessories.filter(a => a != null).map((a, index) => (
+                          <span key={a?.id || index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                            {getAccessoryLabel(typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown'))}
+                          </span>
                         ))}
                       </div>
                     ) : (

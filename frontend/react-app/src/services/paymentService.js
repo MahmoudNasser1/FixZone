@@ -11,70 +11,42 @@ class PaymentService {
       }
     });
     
-    const response = await apiService.request(`/payments?${queryParams.toString()}`);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return await apiService.request(`/payments?${queryParams.toString()}`);
   }
 
   // Get payment by ID
   async getPaymentById(id) {
-    const response = await apiService.request(`/payments/${id}`);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return await apiService.request(`/payments/${id}`);
   }
 
   // Get payments by invoice ID
   async getPaymentsByInvoice(invoiceId) {
-    const response = await apiService.request(`/payments/invoice/${invoiceId}`);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return await apiService.request(`/payments/invoice/${invoiceId}`);
   }
 
   // Create new payment
   async createPayment(paymentData) {
+    console.log('PaymentService.createPayment called with:', paymentData);
     const response = await apiService.request('/payments', {
       method: 'POST',
       body: JSON.stringify(paymentData)
     });
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return response;
   }
 
   // Update payment
   async updatePayment(id, paymentData) {
-    const response = await apiService.request(`/payments/${id}`, {
+    return await apiService.request(`/payments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(paymentData)
     });
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
   }
 
   // Delete payment
   async deletePayment(id) {
-    const response = await apiService.request(`/payments/${id}`, {
+    return await apiService.request(`/payments/${id}`, {
       method: 'DELETE'
     });
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
   }
 
   // Get payment statistics
@@ -87,22 +59,12 @@ class PaymentService {
       }
     });
     
-    const response = await apiService.request(`/payments/stats/summary?${queryParams.toString()}`);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return await apiService.request(`/payments/stats/summary?${queryParams.toString()}`);
   }
 
   // Get overdue payments
   async getOverduePayments() {
-    const response = await apiService.request('/payments/overdue/list');
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    return await apiService.request('/payments/overdue/list');
   }
 
   // Get payment methods options
@@ -127,11 +89,27 @@ class PaymentService {
 
   // Format payment date
   formatDate(date) {
-    return new Intl.DateTimeFormat('ar-EG', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(new Date(date));
+    if (!date) {
+      return 'غير محدد';
+    }
+    
+    try {
+      const dateObj = new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'تاريخ غير صحيح';
+      }
+      
+      return new Intl.DateTimeFormat('ar-EG', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(dateObj);
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date value:', date);
+      return 'تاريخ غير صحيح';
+    }
   }
 
   // Get payment status color

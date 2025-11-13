@@ -35,158 +35,35 @@ const CompaniesPage = () => {
       const response = await apiService.getCompanies();
       console.log('Companies response:', response);
       
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Companies raw response:', result);
-        
-        // التحقق من شكل البيانات وإصلاحها
-        let companiesData = [];
-        if (Array.isArray(result)) {
-          // إذا كانت البيانات array مباشرة
-          companiesData = result;
-        } else if (result.companies && Array.isArray(result.companies)) {
-          // إذا كانت البيانات في object.companies
-          companiesData = result.companies;
-        } else if (result.data && Array.isArray(result.data)) {
-          // إذا كانت البيانات في object.data
-          companiesData = result.data;
-        }
-        
-        // إصلاح إضافي: إذا كانت البيانات في شكل غير متوقع
-        if (companiesData.length > 0 && Array.isArray(companiesData[0])) {
-          console.log('Data is in nested array format, flattening...');
-          companiesData = companiesData.flat();
-        }
-        
-        // إصلاح إضافي: إذا كانت البيانات في شكل nested array من nested arrays
-        if (companiesData.length > 0 && Array.isArray(companiesData[0]) && Array.isArray(companiesData[0][0])) {
-          console.log('Data is in deeply nested array format, flattening deeply...');
-          companiesData = companiesData.flat(2);
-        }
-        
-        console.log('Companies processed:', companiesData);
-        
-        // إصلاح إضافي: تنظيف البيانات من العناصر الفارغة
-        companiesData = companiesData.filter(company => 
-          company && 
-          company.id && 
-          company.name && 
-          typeof company.id !== 'undefined' && 
-          company.id !== null
-        );
-        
-        console.log('Companies after cleanup:', companiesData);
-        
-        // إصلاح إضافي: التأكد من أن البيانات صحيحة
-        if (companiesData.length === 0) {
-          console.log('No companies found, using fallback data');
-          // استخدام البيانات التجريبية إذا لم توجد بيانات
-          setCompanies([
-            {
-              id: 1,
-              name: 'شركة التقنيات المتقدمة',
-              email: 'info@advanced-tech.com',
-              phone: '0112345678',
-              address: 'الرياض، حي العليا',
-              website: 'www.advanced-tech.com',
-              industry: 'تقنية المعلومات',
-              description: 'شركة متخصصة في حلول تقنية المعلومات',
-              status: 'active',
-              taxNumber: '123456789',
-              createdAt: '2023-01-15',
-              customersCount: 5
-            },
-            {
-              id: 2,
-              name: 'مؤسسة الإنشاءات الحديثة',
-              email: 'contact@modern-construction.com',
-              phone: '0123456789',
-              address: 'جدة، حي الروضة',
-              website: 'www.modern-construction.com',
-              industry: 'الإنشاءات',
-              description: 'مؤسسة متخصصة في الإنشاءات والتطوير العقاري',
-              status: 'active',
-              taxNumber: '987654321',
-              createdAt: '2023-02-20',
-              customersCount: 3
-            }
-          ]);
-        } else {
-          // تنظيف البيانات التجريبية أيضاً
-          const cleanData = companiesData.filter(company => 
-            company && 
-            company.id && 
-            company.name && 
-            typeof company.id !== 'undefined' && 
-            company.id !== null
-          );
-          setCompanies(cleanData);
-        }
-      } else {
-        throw new Error('Failed to fetch companies');
+      // apiService.getCompanies() يعيد البيانات مباشرة
+      let companiesData = [];
+      if (Array.isArray(response)) {
+        companiesData = response;
+      } else if (response && Array.isArray(response.data)) {
+        companiesData = response.data;
+      } else if (response && response.companies && Array.isArray(response.companies)) {
+        companiesData = response.companies;
       }
-    } catch (err) {
-      console.error('Error fetching companies:', err);
-      setError('حدث خطأ في تحميل بيانات الشركات');
-      // بيانات تجريبية في حالة الخطأ
-      setCompanies([
-        {
-          id: 1,
-          name: 'شركة التقنيات المتقدمة',
-          email: 'info@advanced-tech.com',
-          phone: '0112345678',
-          address: 'الرياض، حي العليا',
-          website: 'www.advanced-tech.com',
-          industry: 'تقنية المعلومات',
-          description: 'شركة متخصصة في حلول تقنية المعلومات',
-          status: 'active',
-          taxNumber: '123456789',
-          createdAt: '2023-01-15',
-          customersCount: 5
-        },
-        {
-          id: 2,
-          name: 'مؤسسة الإنشاءات الحديثة',
-          email: 'contact@modern-construction.com',
-          phone: '0123456789',
-          address: 'جدة، حي الروضة',
-          website: 'www.modern-construction.com',
-          industry: 'الإنشاءات',
-          description: 'مؤسسة متخصصة في الإنشاءات والتطوير العقاري',
-          status: 'active',
-          taxNumber: '987654321',
-          createdAt: '2023-02-20',
-          customersCount: 3
-        },
-        {
-          id: 3,
-          name: 'شركة النقل السريع',
-          email: 'info@fast-transport.com',
-          phone: '0134567890',
-          address: 'الدمام، حي الفيصلية',
-          website: 'www.fast-transport.com',
-          industry: 'النقل',
-          description: 'شركة متخصصة في خدمات النقل والشحن',
-          status: 'inactive',
-          taxNumber: '456789123',
-          createdAt: '2023-03-10',
-          customersCount: 2
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-    
-    // تنظيف البيانات النهائية
-    setCompanies(prevCompanies => 
-      prevCompanies.filter(company => 
+      
+      // تنظيف البيانات من العناصر الفارغة
+      companiesData = companiesData.filter(company => 
         company && 
         company.id && 
         company.name && 
         typeof company.id !== 'undefined' && 
         company.id !== null
-      )
-    );
+      );
+      
+      console.log('Companies after cleanup:', companiesData);
+      setCompanies(companiesData);
+      
+    } catch (err) {
+      console.error('Error fetching companies:', err);
+      setError('حدث خطأ في تحميل بيانات الشركات');
+      setCompanies([]); // إعداد array فارغ بدلاً من البيانات التجريبية
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteCompany = async (companyId) => {

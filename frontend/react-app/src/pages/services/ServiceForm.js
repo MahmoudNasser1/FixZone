@@ -65,21 +65,16 @@ const ServiceForm = () => {
   const loadServiceData = async () => {
     try {
       setInitialLoading(true);
-      const response = await apiService.getService(id);
+      const service = await apiService.getService(id);
       
-      if (response.ok) {
-        const service = await response.json();
-        setFormData({
-          serviceName: service.serviceName || '',
-          description: service.description || '',
-          basePrice: service.basePrice || '',
-          category: service.category || '',
-          estimatedDuration: service.estimatedDuration || '',
-          isActive: service.isActive !== undefined ? service.isActive : true
-        });
-      } else {
-        throw new Error('Service not found');
-      }
+      setFormData({
+        serviceName: service.name || '',
+        description: service.description || '',
+        basePrice: service.basePrice || '',
+        category: service.category || '',
+        estimatedDuration: service.estimatedDuration || '',
+        isActive: service.isActive !== undefined ? service.isActive : true
+      });
     } catch (error) {
       console.error('Error loading service:', error);
       notify('error', 'خطأ في تحميل بيانات الخدمة');
@@ -146,20 +141,14 @@ const ServiceForm = () => {
         isActive: formData.isActive
       };
 
-      let response;
       if (isEdit) {
-        response = await apiService.updateService(id, serviceData);
+        await apiService.updateService(id, serviceData);
       } else {
-        response = await apiService.createService(serviceData);
+        await apiService.createService(serviceData);
       }
 
-      if (response.ok) {
-        notify('success', `تم ${isEdit ? 'تحديث' : 'إنشاء'} الخدمة بنجاح`);
-        navigate('/services');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save service');
-      }
+      notify('success', `تم ${isEdit ? 'تحديث' : 'إنشاء'} الخدمة بنجاح`);
+      navigate('/services');
     } catch (error) {
       console.error('Error saving service:', error);
       notify('error', `خطأ في ${isEdit ? 'تحديث' : 'إنشاء'} الخدمة: ${error.message}`);

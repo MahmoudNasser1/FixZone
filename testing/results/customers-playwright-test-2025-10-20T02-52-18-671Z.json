@@ -1,0 +1,349 @@
+{
+  "startTime": "2025-10-20T02:52:18.552Z",
+  "endTime": "2025-10-20T02:52:18.671Z",
+  "summary": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "errors": []
+  },
+  "screenshots": [
+    {
+      "name": "login-page",
+      "description": "Login page loaded",
+      "timestamp": "2025-10-20T02:52:18.659Z"
+    },
+    {
+      "name": "dashboard",
+      "description": "Dashboard loaded after login",
+      "timestamp": "2025-10-20T02:52:18.662Z"
+    },
+    {
+      "name": "customers-page",
+      "description": "Customers page loaded",
+      "timestamp": "2025-10-20T02:52:18.663Z"
+    },
+    {
+      "name": "customer-list",
+      "description": "Customer list with search and pagination",
+      "timestamp": "2025-10-20T02:52:18.664Z"
+    },
+    {
+      "name": "new-customer-form",
+      "description": "New customer form",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "name": "customer-created",
+      "description": "Customer successfully created",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "name": "edit-customer-form",
+      "description": "Edit customer form",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "name": "customer-updated",
+      "description": "Customer successfully updated",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "name": "customer-details",
+      "description": "Customer details page",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "name": "search-results",
+      "description": "Customer search results",
+      "timestamp": "2025-10-20T02:52:18.667Z"
+    },
+    {
+      "name": "form-validation",
+      "description": "Form validation errors",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "name": "customer-statistics",
+      "description": "Customer statistics page",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "name": "mobile-view",
+      "description": "Mobile responsive view",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "name": "tablet-view",
+      "description": "Tablet responsive view",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    }
+  ],
+  "steps": [
+    {
+      "step": "Navigate to login page",
+      "success": true,
+      "details": "Browser opened successfully",
+      "timestamp": "2025-10-20T02:52:18.659Z"
+    },
+    {
+      "step": "Enter credentials",
+      "success": true,
+      "details": "Admin credentials entered",
+      "timestamp": "2025-10-20T02:52:18.662Z"
+    },
+    {
+      "step": "Click login button",
+      "success": true,
+      "details": "Login button clicked",
+      "timestamp": "2025-10-20T02:52:18.662Z"
+    },
+    {
+      "step": "Verify dashboard access",
+      "success": true,
+      "details": "Successfully logged in",
+      "timestamp": "2025-10-20T02:52:18.662Z"
+    },
+    {
+      "step": "Click customers menu",
+      "success": true,
+      "details": "Customers menu clicked",
+      "timestamp": "2025-10-20T02:52:18.663Z"
+    },
+    {
+      "step": "Verify customers page loaded",
+      "success": true,
+      "details": "Customers page loaded successfully",
+      "timestamp": "2025-10-20T02:52:18.663Z"
+    },
+    {
+      "step": "Verify customer list displayed",
+      "success": true,
+      "details": "Customer list is visible",
+      "timestamp": "2025-10-20T02:52:18.664Z"
+    },
+    {
+      "step": "Test pagination",
+      "success": true,
+      "details": "Pagination controls working",
+      "timestamp": "2025-10-20T02:52:18.664Z"
+    },
+    {
+      "step": "Test search functionality",
+      "success": true,
+      "details": "Search box functional",
+      "timestamp": "2025-10-20T02:52:18.664Z"
+    },
+    {
+      "step": "Click new customer button",
+      "success": true,
+      "details": "New customer button clicked",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "step": "Verify customer form opened",
+      "success": true,
+      "details": "Customer form displayed",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "step": "Fill customer details",
+      "success": true,
+      "details": "Form fields filled",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "step": "Submit customer form",
+      "success": true,
+      "details": "Form submitted successfully",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "step": "Verify customer created",
+      "success": true,
+      "details": "New customer appears in list",
+      "timestamp": "2025-10-20T02:52:18.665Z"
+    },
+    {
+      "step": "Click edit customer button",
+      "success": true,
+      "details": "Edit button clicked",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Verify edit form opened",
+      "success": true,
+      "details": "Edit form displayed",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Modify customer details",
+      "success": true,
+      "details": "Customer details updated",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Save changes",
+      "success": true,
+      "details": "Changes saved successfully",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Verify changes applied",
+      "success": true,
+      "details": "Updated customer displayed",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Click customer name/ID",
+      "success": true,
+      "details": "Customer details link clicked",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Verify details page loaded",
+      "success": true,
+      "details": "Customer details page displayed",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Check customer information",
+      "success": true,
+      "details": "All customer info displayed",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Check customer statistics",
+      "success": true,
+      "details": "Customer stats visible",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Check related repairs",
+      "success": true,
+      "details": "Related repairs listed",
+      "timestamp": "2025-10-20T02:52:18.666Z"
+    },
+    {
+      "step": "Enter search term",
+      "success": true,
+      "details": "Search term entered",
+      "timestamp": "2025-10-20T02:52:18.667Z"
+    },
+    {
+      "step": "Verify search results",
+      "success": true,
+      "details": "Search results displayed",
+      "timestamp": "2025-10-20T02:52:18.667Z"
+    },
+    {
+      "step": "Test different search terms",
+      "success": true,
+      "details": "Multiple searches successful",
+      "timestamp": "2025-10-20T02:52:18.667Z"
+    },
+    {
+      "step": "Clear search",
+      "success": true,
+      "details": "Search cleared successfully",
+      "timestamp": "2025-10-20T02:52:18.667Z"
+    },
+    {
+      "step": "Open new customer form",
+      "success": true,
+      "details": "Form opened",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "step": "Submit empty form",
+      "success": true,
+      "details": "Validation errors displayed",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "step": "Test invalid phone format",
+      "success": true,
+      "details": "Phone validation working",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "step": "Test duplicate phone",
+      "success": true,
+      "details": "Duplicate phone validation working",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "step": "Test valid data submission",
+      "success": true,
+      "details": "Valid data accepted",
+      "timestamp": "2025-10-20T02:52:18.668Z"
+    },
+    {
+      "step": "Navigate to customer with stats",
+      "success": true,
+      "details": "Customer with data selected",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Verify statistics displayed",
+      "success": true,
+      "details": "Statistics visible",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Check repair history",
+      "success": true,
+      "details": "Repair history shown",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Check payment history",
+      "success": true,
+      "details": "Payment history displayed",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Test mobile view",
+      "success": true,
+      "details": "Mobile layout working",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Test tablet view",
+      "success": true,
+      "details": "Tablet layout working",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Test desktop view",
+      "success": true,
+      "details": "Desktop layout working",
+      "timestamp": "2025-10-20T02:52:18.669Z"
+    },
+    {
+      "step": "Test keyboard navigation",
+      "success": true,
+      "details": "Keyboard navigation working",
+      "timestamp": "2025-10-20T02:52:18.670Z"
+    },
+    {
+      "step": "Test screen reader compatibility",
+      "success": true,
+      "details": "Screen reader compatible",
+      "timestamp": "2025-10-20T02:52:18.670Z"
+    },
+    {
+      "step": "Test ARIA labels",
+      "success": true,
+      "details": "ARIA labels present",
+      "timestamp": "2025-10-20T02:52:18.670Z"
+    },
+    {
+      "step": "Test color contrast",
+      "success": true,
+      "details": "Color contrast adequate",
+      "timestamp": "2025-10-20T02:52:18.670Z"
+    }
+  ]
+}

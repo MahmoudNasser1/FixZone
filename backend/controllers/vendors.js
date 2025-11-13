@@ -1,4 +1,4 @@
-const db = require('../../db');
+const db = require('../db');
 
 // إدارة الموردين
 const vendorController = {
@@ -56,7 +56,7 @@ const vendorController = {
       query += ` LIMIT ? OFFSET ?`;
       params.push(parseInt(limit), parseInt(offset));
 
-      const [vendors] = await db.promise().execute(query, params);
+      const [vendors] = await db.execute(query, params);
 
       // عد الإجمالي
       let countQuery = `
@@ -82,7 +82,7 @@ const vendorController = {
         countParams.push(status);
       }
 
-      const [countResult] = await db.promise().execute(countQuery, countParams);
+      const [countResult] = await db.execute(countQuery, countParams);
       const totalItems = countResult[0].total;
 
       res.json({
@@ -113,7 +113,7 @@ const vendorController = {
     const { id } = req.params;
 
     try {
-      const [vendor] = await db.promise().execute(
+      const [vendor] = await db.execute(
         `SELECT 
           v.*,
           COUNT(po.id) as totalOrders,
@@ -134,7 +134,7 @@ const vendorController = {
       }
 
       // جلب آخر 5 طلبات شراء
-      const [recentOrders] = await db.promise().execute(
+      const [recentOrders] = await db.execute(
         `SELECT 
           id,
           orderNumber,
@@ -192,7 +192,7 @@ const vendorController = {
 
     try {
       // التحقق من عدم تكرار البريد الإلكتروني أو الهاتف
-      const [existing] = await db.promise().execute(
+      const [existing] = await db.execute(
         'SELECT id FROM Vendor WHERE (email = ? OR phone = ?) AND deletedAt IS NULL',
         [email, phone]
       );
@@ -204,16 +204,31 @@ const vendorController = {
         });
       }
 
-      const [result] = await db.promise().execute(
+      // تنظيف البيانات - تحويل undefined إلى null
+      const cleanData = {
+        name: name || null,
+        email: email || null,
+        phone: phone || null,
+        contactPerson: contactPerson || null,
+        address: address || null,
+        taxNumber: taxNumber || null,
+        paymentTerms: paymentTerms || 'net30',
+        creditLimit: creditLimit || 0,
+        notes: notes || null,
+        status: status || 'active',
+        createdBy: req.user?.id || null
+      };
+
+      const [result] = await db.execute(
         `INSERT INTO Vendor (
           name, email, phone, contactPerson, address, 
           taxNumber, paymentTerms, creditLimit, notes, 
           status, createdBy, createdAt, updatedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
-          name, email, phone, contactPerson, address,
-          taxNumber, paymentTerms, creditLimit, notes,
-          status, req.user?.id
+          cleanData.name, cleanData.email, cleanData.phone, cleanData.contactPerson, cleanData.address,
+          cleanData.taxNumber, cleanData.paymentTerms, cleanData.creditLimit, cleanData.notes,
+          cleanData.status, cleanData.createdBy
         ]
       );
 
@@ -251,7 +266,7 @@ const vendorController = {
 
     try {
       // التحقق من وجود المورد
-      const [vendor] = await db.promise().execute(
+      const [vendor] = await db.execute(
         'SELECT id FROM Vendor WHERE id = ? AND deletedAt IS NULL',
         [id]
       );
@@ -265,7 +280,7 @@ const vendorController = {
 
       // التحقق من عدم تكرار البريد الإلكتروني أو الهاتف مع موردين آخرين
       if (email || phone) {
-        const [existing] = await db.promise().execute(
+        const [existing] = await db.execute(
           'SELECT id FROM Vendor WHERE (email = ? OR phone = ?) AND id != ? AND deletedAt IS NULL',
           [email, phone, id]
         );
@@ -278,7 +293,21 @@ const vendorController = {
         }
       }
 
-      const [result] = await db.promise().execute(
+      // تنظيف البيانات - تحويل undefined إلى null
+      const cleanData = {
+        name: name || null,
+        email: email || null,
+        phone: phone || null,
+        contactPerson: contactPerson || null,
+        address: address || null,
+        taxNumber: taxNumber || null,
+        paymentTerms: paymentTerms || null,
+        creditLimit: creditLimit || null,
+        notes: notes || null,
+        status: status || null
+      };
+
+      const [result] = await db.execute(
         `UPDATE Vendor SET 
           name = COALESCE(?, name),
           email = COALESCE(?, email),
@@ -293,9 +322,9 @@ const vendorController = {
           updatedAt = NOW()
         WHERE id = ? AND deletedAt IS NULL`,
         [
-          name, email, phone, contactPerson, address,
-          taxNumber, paymentTerms, creditLimit, notes,
-          status, id
+          cleanData.name, cleanData.email, cleanData.phone, cleanData.contactPerson, cleanData.address,
+          cleanData.taxNumber, cleanData.paymentTerms, cleanData.creditLimit, cleanData.notes,
+          cleanData.status, id
         ]
       );
 
@@ -327,7 +356,7 @@ const vendorController = {
 
     try {
       // التحقق من وجود طلبات شراء مفتوحة
-      const [openOrders] = await db.promise().execute(
+      const [openOrders] = await db.execute(
         'SELECT COUNT(*) as count FROM PurchaseOrder WHERE vendorId = ? AND status IN ("pending", "approved") AND deletedAt IS NULL',
         [id]
       );
@@ -339,7 +368,7 @@ const vendorController = {
         });
       }
 
-      const [result] = await db.promise().execute(
+      const [result] = await db.execute(
         'UPDATE Vendor SET deletedAt = NOW() WHERE id = ? AND deletedAt IS NULL',
         [id]
       );
@@ -370,7 +399,7 @@ const vendorController = {
   async getVendorStats(req, res) {
     try {
       // إحصائيات عامة
-      const [stats] = await db.promise().execute(`
+      const [stats] = await db.execute(`
         SELECT 
           COUNT(*) as totalVendors,
           COUNT(CASE WHEN status = 'active' THEN 1 END) as activeVendors,
@@ -381,7 +410,7 @@ const vendorController = {
       `);
 
       // أفضل الموردين حسب قيمة الطلبات
-      const [topVendors] = await db.promise().execute(`
+      const [topVendors] = await db.execute(`
         SELECT 
           v.id,
           v.name,
@@ -426,7 +455,7 @@ const vendorController = {
     }
 
     try {
-      const [result] = await db.promise().execute(
+      const [result] = await db.execute(
         'UPDATE Vendor SET status = ?, updatedAt = NOW() WHERE id = ? AND deletedAt IS NULL',
         [status, id]
       );

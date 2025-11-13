@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useAuthStore from '../../stores/authStore';
 import {
   Box,
   Typography,
@@ -49,6 +50,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorHandler from '../../components/common/ErrorHandler';
 
 const StockTransferPage = () => {
+  const user = useAuthStore((state) => state.user);
   const [transfers, setTransfers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [items, setItems] = useState([]);
@@ -66,7 +68,7 @@ const StockTransferPage = () => {
     reason: '',
     notes: '',
     items: [],
-    createdBy: 1
+    createdBy: user?.id || 2
   });
 
   // Item selection state
@@ -155,7 +157,7 @@ const StockTransferPage = () => {
         reason: '',
         notes: '',
         items: [],
-        createdBy: 1
+        createdBy: user?.id || 2
       });
       await loadData();
     } catch (err) {

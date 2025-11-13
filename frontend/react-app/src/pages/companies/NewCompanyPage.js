@@ -47,29 +47,33 @@ const NewCompanyPage = () => {
       setSaving(true);
       setError(null);
 
-      // تحضير البيانات للإرسال
+      // تحضير البيانات للإرسال - فقط الحقول الموجودة في قاعدة البيانات
       const companyData = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        email: formData.email.trim() || null,
-        address: formData.address.trim() || null,
-        website: formData.website.trim() || null,
-        industry: formData.industry.trim() || null,
-        description: formData.description.trim() || null,
-        isActive: formData.status === 'active', // تحويل status إلى isActive boolean
-        taxNumber: formData.taxNumber.trim() || null,
-        customFields: formData.customFields
+        email: formData.email && formData.email.trim() ? formData.email.trim() : null,
+        address: formData.address && formData.address.trim() ? formData.address.trim() : null,
+        taxNumber: formData.taxNumber && formData.taxNumber.trim() ? formData.taxNumber.trim() : null,
+        customFields: {
+          website: formData.website && formData.website.trim() ? formData.website.trim() : null,
+          industry: formData.industry && formData.industry.trim() ? formData.industry.trim() : null,
+          description: formData.description && formData.description.trim() ? formData.description.trim() : null,
+          status: formData.status || 'active'
+        }
       };
 
+      console.log('Sending company data:', companyData);
       const response = await apiService.createCompany(companyData);
+      console.log('API response:', response);
       
-      if (response.ok) {
+      // apiService.createCompany() يعيد البيانات مباشرة
+      if (response && response.success !== false) {
         // إظهار رسالة نجاح والانتقال لصفحة الشركات
         alert('تم إنشاء الشركة بنجاح');
         navigate('/companies');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create company');
+        const errorMessage = response?.error || response?.message || 'Failed to create company';
+        throw new Error(errorMessage);
       }
       
     } catch (err) {

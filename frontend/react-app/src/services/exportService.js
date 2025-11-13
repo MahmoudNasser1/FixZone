@@ -33,7 +33,7 @@ class ExportService {
       this.pdfDoc.text(title, 105, 20, { align: 'center' });
 
       // إضافة التاريخ
-      const currentDate = new Date().toLocaleDateString('ar-EG');
+      const currentDate = new Date().toLocaleDateString('en-GB');
       this.pdfDoc.setFontSize(12);
       this.pdfDoc.text(`تاريخ التقرير: ${currentDate}`, 105, 30, { align: 'center' });
 

@@ -133,7 +133,7 @@ const DailyReportsPage = () => {
         beginAtZero: true,
         ticks: {
           callback: function(value) {
-            return value.toLocaleString('ar-SA') + ' ر.س';
+            return value.toLocaleString('ar-SA') + ' جنية';
           }
         }
       }
@@ -199,7 +199,7 @@ const DailyReportsPage = () => {
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm font-medium text-green-800">إجمالي الإيرادات</div>
               <div className="text-2xl font-bold text-green-900">
-                {dailyData.totalRevenue?.toLocaleString('ar-SA')} ر.س
+                {dailyData.totalRevenue?.toLocaleString('ar-SA')} جنية
               </div>
             </div>
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
@@ -211,7 +211,7 @@ const DailyReportsPage = () => {
             <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
               <div className="text-sm font-medium text-purple-800">متوسط المدفوعات</div>
               <div className="text-2xl font-bold text-purple-900">
-                {dailyData.averagePayment?.toLocaleString('ar-SA')} ر.س
+                {dailyData.averagePayment?.toLocaleString('ar-SA')} جنية
               </div>
             </div>
           </div>

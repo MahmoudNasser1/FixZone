@@ -1,21 +1,32 @@
 const db = require('../db');
-const { logActivity } = require('./activityLogController');
+
+// Helper function for logging activities (with error handling)
+const logActivity = async (userId, action, details = null) => {
+  try {
+    const query = 'INSERT INTO activity_log (userId, action, details) VALUES (?, ?, ?)';
+    await db.query(query, [userId, action, details ? JSON.stringify(details) : null]);
+    console.log(`Activity logged for user ${userId}: ${action}`);
+  } catch (error) {
+    console.error('Error logging activity:', error);
+    // Continue execution even if logging fails
+  }
+};
 
 // List roles (with optional simple search)
 exports.listRoles = async (req, res) => {
   try {
     const { q } = req.query;
-    let sql = 'SELECT id, name, description, permissions FROM Role';
+    let sql = 'SELECT id, name, permissions FROM Role WHERE deletedAt IS NULL';
     const params = [];
     if (q) {
-      sql += ' WHERE name LIKE ?';
+      sql += ' AND name LIKE ?';
       params.push(`%${q}%`);
     }
     const [rows] = await db.query(sql, params);
     res.json(rows);
   } catch (err) {
     console.error('Error listing roles:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
@@ -24,7 +35,7 @@ exports.getRole = async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await db.query(
-      'SELECT id, name, description, permissions FROM Role WHERE id = ?',
+      'SELECT id, name, permissions FROM Role WHERE id = ?',
       [id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Role not found' });

@@ -71,21 +71,22 @@ const CustomersPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getCustomers();
+      const data = await apiService.getCustomers();
       
       // التأكد من أن البيانات هي array
       let customersData = [];
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          customersData = data;
-        } else if (data && Array.isArray(data.data)) {
-          customersData = data.data;
-        } else if (data && data.customers && Array.isArray(data.customers)) {
-          customersData = data.customers;
-        }
+      console.log('Raw API response:', data);
+      if (Array.isArray(data)) {
+        customersData = data;
+      } else if (data && Array.isArray(data.data)) {
+        customersData = data.data;
+      } else if (data && data.customers && Array.isArray(data.customers)) {
+        customersData = data.customers;
+      } else if (data && data.success && data.data && Array.isArray(data.data.customers)) {
+        customersData = data.data.customers;
       } else {
-        throw new Error('Failed to fetch customers');
+        console.error('Unexpected API response format:', data);
+        customersData = [];
       }
       
       setCustomers(customersData);
@@ -101,12 +102,15 @@ const CustomersPage = () => {
   const fetchCompanies = async () => {
     try {
       const response = await apiService.getCompanies();
-      if (response.ok) {
-        const companiesData = await response.json();
-        setCompanies(companiesData);
+      // apiService.getCompanies() يعيد البيانات مباشرة
+      if (Array.isArray(response)) {
+        setCompanies(response);
+      } else if (response && Array.isArray(response.data)) {
+        setCompanies(response.data);
       }
     } catch (err) {
       console.error('Error fetching companies:', err);
+      notify('error', 'حدث خطأ في تحميل بيانات الشركات');
     }
   };
 
@@ -689,7 +693,7 @@ const CustomersPage = () => {
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Calendar className="w-3 h-3" />
-            <span>{new Date(customer.createdAt).toLocaleDateString('ar-SA')}</span>
+            <span>{new Date(customer.createdAt).toLocaleDateString('en-GB')}</span>
           </div>
         );
       }
@@ -1222,7 +1226,7 @@ const CustomersPage = () => {
           onItemClick={handleCustomerClick}
           onEdit={handleEditCustomer}
           onView={handleViewCustomer}
-          loading={false}
+          loading={loading}
           emptyState={
             <div className="text-center py-12">
               <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />

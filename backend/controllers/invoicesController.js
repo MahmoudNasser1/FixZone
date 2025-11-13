@@ -58,7 +58,7 @@ class InvoicesController {
 
       // Search functionality
       if (search) {
-        whereClause += ` AND (CONCAT(c.firstName, ' ', c.lastName) LIKE ? OR i.id LIKE ? OR rr.deviceModel LIKE ?)`;
+        whereClause += ` AND (c.name LIKE ? OR i.id LIKE ? OR rr.deviceModel LIKE ?)`;
         const searchTerm = `%${search}%`;
         queryParams.push(searchTerm, searchTerm, searchTerm);
       }
@@ -100,12 +100,12 @@ class InvoicesController {
       const query = `
         SELECT 
           i.*,
-          CONCAT(c.firstName, ' ', c.lastName) as customerName,
+          c.name as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
           rr.deviceModel as deviceModel,
           rr.deviceBrand as deviceBrand,
-          rr.issueDescription as problemDescription,
+          rr.reportedProblem as problemDescription,
           COUNT(ii.id) as itemsCount,
           COALESCE(SUM(ii.quantity * ii.unitPrice), 0) as calculatedTotal
         FROM Invoice i
@@ -114,13 +114,43 @@ class InvoicesController {
         LEFT JOIN InvoiceItem ii ON i.id = ii.invoiceId
         ${whereClause}
         GROUP BY i.id
-        ORDER BY ${sortField === 'customerName' ? 'CONCAT(c.firstName, \' \', c.lastName)' : `i.${sortField}`} ${order}
+        ORDER BY ${sortField === 'customerName' ? 'c.name' : `i.${sortField}`} ${order}
         LIMIT ? OFFSET ?
       `;
 
       queryParams.push(parseInt(limit), parseInt(offset));
 
       const [invoices] = await db.query(query, queryParams);
+
+      // Calculate actual amountPaid for each invoice from payments
+      const invoicesWithCorrectAmounts = await Promise.all(
+        invoices.map(async (invoice) => {
+          const [payments] = await db.query(`
+            SELECT COALESCE(SUM(amount), 0) as totalPaid 
+            FROM Payment 
+            WHERE invoiceId = ?
+          `, [invoice.id]);
+          
+          const actualAmountPaid = parseFloat(payments[0].totalPaid || 0);
+          const totalAmount = parseFloat(invoice.totalAmount || 0);
+          
+          // Determine correct status based on actual payments
+          let correctStatus = invoice.status;
+          if (actualAmountPaid >= totalAmount && totalAmount > 0) {
+            correctStatus = 'paid';
+          } else if (actualAmountPaid > 0) {
+            correctStatus = 'partially_paid';
+          } else {
+            correctStatus = 'draft';
+          }
+          
+          return {
+            ...invoice,
+            amountPaid: actualAmountPaid,
+            status: correctStatus
+          };
+        })
+      );
 
       // Get total count for pagination
       const countQuery = `
@@ -154,7 +184,7 @@ class InvoicesController {
       res.json({
         success: true,
         data: {
-          invoices,
+          invoices: invoicesWithCorrectAmounts,
           pagination: {
             currentPage: parseInt(page),
             totalPages: Math.ceil(totalCount / limit),
@@ -179,13 +209,13 @@ class InvoicesController {
       const [invoiceRows] = await db.query(`
         SELECT 
           i.*,
-          CONCAT(c.firstName, ' ', c.lastName) as customerName,
+          c.name as customerName,
           c.phone as customerPhone,
           c.email as customerEmail,
           c.address as customerAddress,
           rr.deviceModel as deviceModel,
           rr.deviceBrand as deviceBrand,
-          rr.issueDescription as problemDescription,
+          rr.reportedProblem as problemDescription,
           d.serialNumber as deviceSerial,
           u.name as technicianName
         FROM Invoice i
@@ -229,10 +259,25 @@ class InvoicesController {
         ORDER BY p.createdAt DESC
       `, [id]);
 
+      // Calculate actual amount paid from payments
+      const actualAmountPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0);
+      
+      // Determine correct status based on actual payments
+      let correctStatus = invoice.status;
+      if (actualAmountPaid >= parseFloat(invoice.totalAmount || 0)) {
+        correctStatus = 'paid';
+      } else if (actualAmountPaid > 0) {
+        correctStatus = 'partially_paid';
+      } else {
+        correctStatus = 'draft';
+      }
+
       res.json({
         success: true,
         data: {
           ...invoice,
+          amountPaid: actualAmountPaid, // Use calculated amount instead of table value
+          status: correctStatus, // Use calculated status
           items,
           payments,
           itemsCount: items.length,
@@ -560,7 +605,7 @@ class InvoicesController {
       const { id } = req.params;
 
       // Check if invoice exists
-      const [existing] = await db.query(`
+      const [existing] = await db.execute(`
         SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL
       `, [id]);
 
@@ -569,7 +614,7 @@ class InvoicesController {
       }
 
       // Soft delete
-      await db.query(`
+      await db.execute(`
         UPDATE Invoice SET deletedAt = NOW(), updatedAt = NOW() WHERE id = ?
       `, [id]);
 

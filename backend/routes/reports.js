@@ -173,7 +173,7 @@ router.get('/technician-performance', async (req, res) => {
     
     let query = `
       SELECT 
-        CONCAT(u.firstName, ' ', u.lastName) as technicianName,
+        u.name as technicianName,
         COUNT(rr.id) as totalRepairs,
         COUNT(CASE WHEN rr.status = 'completed' THEN 1 END) as completedRepairs,
         AVG(CASE WHEN rr.status = 'completed' THEN 
@@ -181,8 +181,8 @@ router.get('/technician-performance', async (req, res) => {
         SUM(CASE WHEN rr.status = 'completed' THEN 
           COALESCE(rr.estimatedCost, 0) END) as totalRevenue
       FROM RepairRequest rr
-      JOIN User u ON rr.assignedTechnicianId = u.id
-      WHERE u.role = 'technician'
+      JOIN User u ON rr.technicianId = u.id
+      WHERE u.roleId = 6
     `;
     const params = [];
     
@@ -196,7 +196,7 @@ router.get('/technician-performance', async (req, res) => {
       params.push(endDate);
     }
     
-    query += ' GROUP BY u.id, u.firstName, u.lastName ORDER BY totalRepairs DESC';
+    query += ' GROUP BY u.id, u.name ORDER BY totalRepairs DESC';
     
     const [rows] = await db.query(query, params);
     

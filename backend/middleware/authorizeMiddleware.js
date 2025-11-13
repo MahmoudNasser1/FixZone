@@ -9,7 +9,9 @@ const authorizeMiddleware = (allowedRoles) => {
         console.log('User role in authorizeMiddleware:', req.user.role);
 
         // Check if the user's role is included in the allowedRoles
-        if (!allowedRoles.includes(req.user.role)) {
+        // Support both 'role' and 'roleId' properties
+        const userRole = req.user.role || req.user.roleId;
+        if (!allowedRoles.includes(userRole)) {
             return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
         }
 

@@ -157,7 +157,7 @@ const TechnicianReportsPage = () => {
         beginAtZero: true,
         ticks: {
           callback: function(value) {
-            return value.toLocaleString('ar-SA') + ' ر.س';
+            return value.toLocaleString('ar-SA') + ' جنية';
           }
         }
       }
@@ -247,7 +247,7 @@ const TechnicianReportsPage = () => {
           <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
             <div className="text-sm font-medium text-yellow-800">إجمالي الإيرادات</div>
             <div className="text-2xl font-bold text-yellow-900">
-              {technicianData.reduce((sum, tech) => sum + tech.totalRevenue, 0).toLocaleString('ar-SA')} ر.س
+              {technicianData.reduce((sum, tech) => sum + tech.totalRevenue, 0).toLocaleString('ar-SA')} جنية
             </div>
           </div>
         </div>
@@ -337,7 +337,7 @@ const TechnicianReportsPage = () => {
                       {tech.averageRepairTime} ساعة
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {tech.totalRevenue?.toLocaleString('ar-SA')} ر.س
+                      {tech.totalRevenue?.toLocaleString('ar-SA')} جنية
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">

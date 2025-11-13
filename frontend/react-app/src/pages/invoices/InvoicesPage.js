@@ -27,25 +27,20 @@ const InvoicesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getInvoices();
-      if (response.ok) {
-        const data = await response.json();
-        console.log('API Response:', data);
-        // Handle different response structures from the API
-        if (data.success && Array.isArray(data.data)) {
-          setInvoices(data.data);
-        } else if (data.invoices && Array.isArray(data.invoices)) {
-          setInvoices(data.invoices);
-        } else if (Array.isArray(data)) {
-          setInvoices(data);
-        } else if (data.data && Array.isArray(data.data.invoices)) {
-          setInvoices(data.data.invoices);
-        } else {
-          console.warn('Unexpected API response format:', data);
-          setInvoices([]);
-        }
+      const data = await apiService.getInvoices();
+      console.log('API Response:', data);
+      // Handle different response structures from the API
+      if (data.success && Array.isArray(data.data)) {
+        setInvoices(data.data);
+      } else if (data.invoices && Array.isArray(data.invoices)) {
+        setInvoices(data.invoices);
+      } else if (Array.isArray(data)) {
+        setInvoices(data);
+      } else if (data.data && Array.isArray(data.data.invoices)) {
+        setInvoices(data.data.invoices);
       } else {
-        throw new Error('Failed to fetch invoices');
+        console.warn('Unexpected API response format:', data);
+        setInvoices([]);
       }
     } catch (err) {
       console.error('Error fetching invoices:', err);
@@ -81,7 +76,15 @@ const InvoicesPage = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('ar-SA');
+    if (!date) return 'غير محدد';
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'تاريخ غير صحيح';
+      return dateObj.toLocaleDateString('en-GB');
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date value:', date);
+      return 'تاريخ غير صحيح';
+    }
   };
 
   const filteredInvoices = (invoices || []).filter(invoice => {
@@ -98,12 +101,8 @@ const InvoicesPage = () => {
   const handleDeleteInvoice = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) {
       try {
-        const response = await apiService.deleteInvoice(id);
-        if (response.ok) {
-          setInvoices((invoices || []).filter(invoice => invoice.id !== id));
-        } else {
-          alert('حدث خطأ في حذف الفاتورة');
-        }
+        await apiService.deleteInvoice(id);
+        setInvoices((invoices || []).filter(invoice => invoice.id !== id));
       } catch (err) {
         console.error('Error deleting invoice:', err);
         alert('حدث خطأ في حذف الفاتورة');
@@ -113,12 +112,8 @@ const InvoicesPage = () => {
 
   const handleBulkAction = async (action, selectedIds) => {
     try {
-      const response = await apiService.bulkActionInvoices(action, selectedIds);
-      if (response.ok) {
-        fetchInvoices(); // Refresh the list
-      } else {
-        alert('حدث خطأ في تنفيذ العملية');
-      }
+      await apiService.bulkActionInvoices(action, selectedIds);
+      fetchInvoices(); // Refresh the list
     } catch (err) {
       console.error('Error in bulk action:', err);
       alert('حدث خطأ في تنفيذ العملية');

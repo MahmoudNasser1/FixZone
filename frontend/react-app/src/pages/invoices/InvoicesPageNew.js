@@ -203,7 +203,7 @@ function InvoicesPage() {
     {
       key: 'createdAt',
       title: 'تاريخ الإنشاء',
-      render: (invoice) => new Date(invoice.createdAt).toLocaleDateString('ar-EG'),
+      render: (invoice) => new Date(invoice.createdAt).toLocaleDateString('en-GB'),
       sortable: true
     },
     {

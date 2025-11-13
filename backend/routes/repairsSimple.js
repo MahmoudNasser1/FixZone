@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
+const websocketService = require('../services/websocketService');
 
 // Simplified Repairs Route - Basic functionality only
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware(180), async (req, res) => { // Cache for 3 minutes
   try {
     const { customerId, status, priority } = req.query;
     
@@ -41,29 +43,33 @@ router.get('/', async (req, res) => {
     const formattedData = rows.map(row => {
       // Map database status to frontend status
       const statusMapping = {
-        'pending': 'RECEIVED',
-        'in_progress': 'UNDER_REPAIR',
-        'completed': 'COMPLETED',
-        'cancelled': 'CANCELLED',
-        'delivered': 'DELIVERED'
+        'RECEIVED': 'RECEIVED',
+        'INSPECTION': 'INSPECTION',
+        'AWAITING_APPROVAL': 'AWAITING_APPROVAL',
+        'UNDER_REPAIR': 'UNDER_REPAIR',
+        'READY_FOR_DELIVERY': 'READY_FOR_DELIVERY',
+        'DELIVERED': 'DELIVERED',
+        'REJECTED': 'REJECTED',
+        'WAITING_PARTS': 'WAITING_PARTS',
+        'ON_HOLD': 'ON_HOLD'
       };
       
       return {
         id: row.id,
-        requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(3, '0')}`,
+        requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`,
         customerName: row.customerName || 'غير محدد',
         customerPhone: row.customerPhone || 'غير محدد',
         customerEmail: row.customerEmail || 'غير محدد',
-        deviceType: row.deviceType || 'غير محدد',
-        deviceBrand: row.deviceBrand || 'غير محدد',
-        deviceModel: row.deviceModel || 'غير محدد',
-        problemDescription: row.issueDescription || 'لا توجد تفاصيل محددة للمشكلة',
-        status: statusMapping[row.status] || 'RECEIVED',
-        priority: row.priority || 'medium',
-        estimatedCost: row.estimatedCost || '0.00',
-        actualCost: row.actualCost || null,
-        expectedDeliveryDate: row.expectedDeliveryDate || null,
-        notes: row.notes || null,
+        deviceType: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+        deviceBrand: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+        deviceModel: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+        problemDescription: row.reportedProblem || 'لا توجد تفاصيل محددة للمشكلة',
+        status: row.status || 'RECEIVED',
+        priority: 'normal', // الجدول الحالي لا يحتوي على هذا الحقل
+        estimatedCost: '0.00', // الجدول الحالي لا يحتوي على هذا الحقل
+        actualCost: null, // الجدول الحالي لا يحتوي على هذا الحقل
+        expectedDeliveryDate: null, // الجدول الحالي لا يحتوي على هذا الحقل
+        notes: null, // الجدول الحالي لا يحتوي على هذا الحقل
         createdAt: row.createdAt,
         updatedAt: row.updatedAt
       };
@@ -80,8 +86,110 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get repair by tracking number (for public tracking page) - MUST BE BEFORE /:id
+router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for 5 minutes
+  try {
+    const { trackingToken, requestNumber } = req.query;
+    
+    if (!trackingToken && !requestNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tracking token or request number is required'
+      });
+    }
+    
+    let query = `
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+    `;
+    
+    const params = [];
+    
+    if (trackingToken) {
+      query += ' AND rr.trackingToken = ?';
+      params.push(trackingToken);
+    } else {
+      // البحث بالرقم المولد في Frontend - الصيغة الصحيحة
+      query += ' AND rr.id = ?';
+      // استخراج ID من رقم الطلب REP-20251020-022
+      const idFromRequestNumber = parseInt(requestNumber.split('-')[2]);
+      console.log('Tracking requestNumber:', requestNumber, 'parsed ID:', idFromRequestNumber);
+      params.push(idFromRequestNumber);
+    }
+    
+    console.log('Final query:', query);
+    console.log('Query params:', params);
+    
+    const [rows] = await db.query(query, params);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair request not found'
+      });
+    }
+    
+    const repair = rows[0];
+    
+    // تحويل الحالة من الإنجليزية إلى العربية للعرض
+           const statusMap = {
+             'RECEIVED': 'تم الاستلام',
+             'INSPECTION': 'قيد الفحص',
+             'AWAITING_APPROVAL': 'في انتظار الموافقة',
+             'UNDER_REPAIR': 'قيد الإصلاح',
+             'READY_FOR_DELIVERY': 'جاهز للتسليم',
+             'DELIVERED': 'تم التسليم',
+             'REJECTED': 'مرفوض',
+             'WAITING_PARTS': 'في انتظار القطع',
+             'ON_HOLD': 'معلق'
+           };
+
+           res.json({
+             id: repair.id,
+             requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
+             trackingToken: repair.trackingToken,
+             status: statusMap[repair.status] || repair.status || 'تم الاستلام',
+             deviceType: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+             deviceBrand: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+             deviceModel: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+             problemDescription: repair.reportedProblem,
+             estimatedCost: '0.00', // الجدول الحالي لا يحتوي على هذا الحقل
+             actualCost: null, // الجدول الحالي لا يحتوي على هذا الحقل
+             priority: 'normal', // الجدول الحالي لا يحتوي على هذا الحقل
+             estimatedCompletionDate: null, // الجدول الحالي لا يحتوي على هذا الحقل
+             customerName: repair.customerName,
+             customerPhone: repair.customerPhone,
+             customerEmail: repair.customerEmail,
+             branchName: repair.branchName,
+             technicianName: repair.technicianName,
+             notes: null, // الجدول الحالي لا يحتوي على هذا الحقل
+             createdAt: repair.createdAt,
+             updatedAt: repair.updatedAt
+           });
+    
+  } catch (error) {
+    console.error('Error tracking repair:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      details: error.message
+    });
+  }
+});
+
 // Get repair by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', cacheMiddleware(180), async (req, res) => { // Cache for 3 minutes
   try {
     const { id } = req.params;
     
@@ -105,20 +213,20 @@ router.get('/:id', async (req, res) => {
     const repair = rows[0];
     const formattedRepair = {
       id: repair.id,
-      requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(3, '0')}`,
+      requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
       customerName: repair.customerName || 'غير محدد',
       customerPhone: repair.customerPhone || 'غير محدد',
       customerEmail: repair.customerEmail || 'غير محدد',
-      deviceType: repair.deviceType || 'غير محدد',
-      deviceBrand: repair.deviceBrand || 'غير محدد',
-      deviceModel: repair.deviceModel || 'غير محدد',
-      problemDescription: repair.issueDescription || 'لا توجد تفاصيل محددة للمشكلة',
-      status: repair.status || 'pending',
-      priority: repair.priority || 'medium',
-      estimatedCost: repair.estimatedCost || '0.00',
-      actualCost: repair.actualCost || null,
-      expectedDeliveryDate: repair.expectedDeliveryDate || null,
-      notes: repair.notes || null,
+      deviceType: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+      deviceBrand: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+      deviceModel: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
+      problemDescription: repair.reportedProblem || 'لا توجد تفاصيل محددة للمشكلة',
+      status: repair.status || 'RECEIVED',
+      priority: 'normal', // الجدول الحالي لا يحتوي على هذا الحقل
+      estimatedCost: '0.00', // الجدول الحالي لا يحتوي على هذا الحقل
+      actualCost: null, // الجدول الحالي لا يحتوي على هذا الحقل
+      expectedDeliveryDate: null, // الجدول الحالي لا يحتوي على هذا الحقل
+      notes: null, // الجدول الحالي لا يحتوي على هذا الحقل
       createdAt: repair.createdAt,
       updatedAt: repair.updatedAt
     };
@@ -149,7 +257,6 @@ router.post('/', async (req, res) => {
       serialNumber,
       devicePassword,
       reportedProblem,
-      issueDescription,
       customerNotes,
       priority = 'medium',
       estimatedCost
@@ -200,39 +307,25 @@ router.post('/', async (req, res) => {
       });
     }
     
-    if (!deviceBrand || !deviceModel) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'deviceBrand and deviceModel are required' 
-      });
-    }
+    // deviceBrand and deviceModel are optional for simplified repairs
     
-    const issue = issueDescription || reportedProblem;
+    const issue = reportedProblem;
     if (!issue) {
       return res.status(400).json({ 
         success: false,
-        error: 'issueDescription or reportedProblem is required' 
+        error: 'reportedProblem is required' 
       });
     }
     
     // Create repair request
     const [result] = await db.query(
       `INSERT INTO RepairRequest (
-        customerId, deviceBrand, deviceModel, deviceType, serialNumber, 
-        devicePassword, issueDescription, customerNotes, priority, estimatedCost, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        customerId, reportedProblem, status
+      ) VALUES (?, ?, ?)`,
       [
         finalCustomerId,
-        deviceBrand,
-        deviceModel,
-        deviceType || null,
-        serialNumber || null,
-        devicePassword || null,
         issue,
-        customerNotes || null,
-        priority,
-        estimatedCost || null,
-        'pending' // Set default status
+        'RECEIVED' // Set default status
       ]
     );
     
@@ -245,14 +338,26 @@ router.post('/', async (req, res) => {
       [result.insertId]
     );
     
-    res.status(201).json({
-      success: true,
-      data: {
-        id: result.insertId,
-        ...rows[0]
-      },
-      message: 'تم إنشاء طلب الإصلاح بنجاح'
-    });
+           // مسح الـ cache عند إنشاء طلب جديد
+           invalidateCache('repairs');
+           
+           // إرسال إشعار real-time
+           const repairData = {
+             id: result.insertId,
+             ...rows[0],
+             requestNumber: `REP-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${String(result.insertId).padStart(3, '0')}`
+           };
+           websocketService.sendRepairUpdate('created', repairData);
+           websocketService.sendSystemNotification('طلب إصلاح جديد', `تم إنشاء طلب إصلاح جديد: ${repairData.requestNumber}`, 'success');
+           
+           res.status(201).json({
+             success: true,
+             data: {
+               id: result.insertId,
+               ...rows[0]
+             },
+             message: 'تم إنشاء طلب الإصلاح بنجاح'
+           });
     
   } catch (error) {
     console.error('Error creating repair:', error);
@@ -285,8 +390,7 @@ router.put('/:id', async (req, res) => {
     
     // Build update query
     const allowedFields = [
-      'status', 'priority', 'estimatedCost', 'actualCost', 
-      'customerNotes', 'devicePassword', 'assignedTechnicianId'
+      'status', 'reportedProblem'
     ];
     
     const updateFields = [];
@@ -333,11 +437,26 @@ router.put('/:id', async (req, res) => {
       [id]
     );
     
-    res.json({
-      success: true,
-      data: rows[0],
-      message: 'تم تحديث طلب الإصلاح بنجاح'
-    });
+           // مسح الـ cache عند تحديث طلب
+           invalidateCache('repairs');
+           
+           // إرسال إشعار real-time
+           const repairData = {
+             ...rows[0],
+             requestNumber: `REP-${new Date(rows[0].createdAt).getFullYear()}${String(new Date(rows[0].createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(rows[0].createdAt).getDate()).padStart(2, '0')}-${String(rows[0].id).padStart(3, '0')}`
+           };
+           websocketService.sendRepairUpdate('updated', repairData);
+           
+           // إرسال إشعار خاص عند تغيير الحالة
+           if (updates.status) {
+             websocketService.sendSystemNotification('تحديث حالة الطلب', `تم تحديث حالة الطلب ${repairData.requestNumber} إلى: ${updates.status}`, 'info');
+           }
+           
+           res.json({
+             success: true,
+             data: rows[0],
+             message: 'تم تحديث طلب الإصلاح بنجاح'
+           });
     
   } catch (error) {
     console.error('Error updating repair:', error);
@@ -366,10 +485,13 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    res.json({
-      success: true,
-      message: 'تم حذف طلب الإصلاح بنجاح'
-    });
+           // مسح الـ cache عند حذف طلب
+           invalidateCache('repairs');
+           
+           res.json({
+             success: true,
+             message: 'تم حذف طلب الإصلاح بنجاح'
+           });
     
   } catch (error) {
     console.error('Error deleting repair:', error);
@@ -377,96 +499,6 @@ router.delete('/:id', async (req, res) => {
       success: false,
       error: 'Server Error',
       details: error.message 
-    });
-  }
-});
-
-// Get repair by tracking number (for public tracking page)
-router.get('/tracking', async (req, res) => {
-  try {
-    const { trackingToken, requestNumber } = req.query;
-    
-    if (!trackingToken && !requestNumber) {
-      return res.status(400).json({
-        success: false,
-        error: 'Tracking token or request number is required'
-      });
-    }
-    
-    let query = `
-      SELECT 
-        rr.*,
-        c.name as customerName,
-        c.phone as customerPhone,
-        c.email as customerEmail,
-        b.name as branchName,
-        u.name as technicianName
-      FROM RepairRequest rr
-      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
-      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
-      LEFT JOIN User u ON rr.technicianId = u.id AND u.deletedAt IS NULL
-      WHERE rr.deletedAt IS NULL
-    `;
-    
-    const params = [];
-    
-    if (trackingToken) {
-      query += ' AND rr.trackingToken = ?';
-      params.push(trackingToken);
-    } else {
-      query += ' AND rr.requestNumber = ?';
-      params.push(requestNumber);
-    }
-    
-    const [rows] = await db.query(query, params);
-    
-    if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Repair request not found'
-      });
-    }
-    
-    const repair = rows[0];
-    
-    // Map database status to frontend status
-    const statusMapping = {
-      'pending': 'RECEIVED',
-      'in_progress': 'UNDER_REPAIR',
-      'completed': 'COMPLETED',
-      'cancelled': 'CANCELLED',
-      'delivered': 'DELIVERED'
-    };
-
-    res.json({
-      id: repair.id,
-      requestNumber: repair.requestNumber || `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(3, '0')}`,
-      trackingToken: repair.trackingToken,
-      status: statusMapping[repair.status] || 'RECEIVED',
-      deviceType: repair.deviceType,
-      deviceBrand: repair.deviceBrand,
-      deviceModel: repair.deviceModel,
-      problemDescription: repair.issueDescription,
-      estimatedCost: repair.estimatedCost,
-      actualCost: repair.actualCost,
-      priority: repair.priority,
-      estimatedCompletionDate: repair.estimatedCompletionDate,
-      customerName: repair.customerName,
-      customerPhone: repair.customerPhone,
-      customerEmail: repair.customerEmail,
-      branchName: repair.branchName,
-      technicianName: repair.technicianName,
-      notes: repair.notes,
-      createdAt: repair.createdAt,
-      updatedAt: repair.updatedAt
-    });
-    
-  } catch (error) {
-    console.error('Error tracking repair:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server Error',
-      details: error.message
     });
   }
 });

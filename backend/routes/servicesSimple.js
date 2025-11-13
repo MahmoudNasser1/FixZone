@@ -11,23 +11,44 @@ router.get('/', async (req, res) => {
       sortDir = 'asc',
       limit = '50',
       offset = '0',
+      page,
+      pageSize,
       isActive,
     } = req.query;
 
     // Whitelists to prevent SQL injection for identifiers
-    const allowedSortBy = new Set(['id', 'serviceName', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
-    const safeSortBy = allowedSortBy.has(String(sortBy)) ? String(sortBy) : 'id';
+    const allowedSortBy = new Set(['id', 'name', 'basePrice', 'isActive', 'createdAt', 'updatedAt']);
+    
+    // Map frontend sortBy values to database column names
+    const sortByMapping = {
+      'serviceName': 'name',
+      'name': 'name'
+    };
+    
+    const mappedSortBy = sortByMapping[String(sortBy)] || String(sortBy);
+    const safeSortBy = allowedSortBy.has(mappedSortBy) ? mappedSortBy : 'id';
     const safeSortDir = String(sortDir).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
-    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
-    const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+    // Handle both pagination formats: page/pageSize and limit/offset
+    let safeLimit, safeOffset;
+    if (page && pageSize) {
+      // Frontend pagination format
+      const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+      const size = Math.min(Math.max(parseInt(pageSize, 10) || 20, 1), 200);
+      safeLimit = size;
+      safeOffset = (pageNum - 1) * size;
+    } else {
+      // Backend pagination format
+      safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+      safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+    }
 
     const whereClauses = ['deletedAt IS NULL'];
     const params = [];
 
     if (q && String(q).trim() !== '') {
       const like = `%${String(q).trim()}%`;
-      whereClauses.push('(serviceName LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
+      whereClauses.push('(name LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?)');
       params.push(like, like, like);
     }
 
@@ -113,7 +134,7 @@ router.post('/', async (req, res) => {
     }
     
     const sql = `
-      INSERT INTO Service (serviceName, description, basePrice, category, estimatedDuration, isActive)
+      INSERT INTO Service (name, description, basePrice, category, estimatedDuration, isActive)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     
@@ -150,7 +171,7 @@ router.put('/:id', async (req, res) => {
     
     const sql = `
       UPDATE Service
-      SET serviceName = ?, description = ?, basePrice = ?, category = ?, estimatedDuration = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP
+      SET name = ?, description = ?, basePrice = ?, category = ?, estimatedDuration = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP
       WHERE id = ? AND deletedAt IS NULL
     `;
     
@@ -226,9 +247,9 @@ router.get('/:id/stats', async (req, res) => {
         COUNT(CASE WHEN rr.status = 'completed' THEN 1 END) as completedUsage,
         COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rrs.price END), 0) as totalRevenue,
         COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rrs.price END), 0) as avgPrice,
-        MAX(rr.receivedAt) as lastUsed,
-        MIN(rr.receivedAt) as firstUsed
-      FROM RepairRequestServices rrs
+        MAX(rr.createdAt) as lastUsed,
+        MIN(rr.createdAt) as firstUsed
+      FROM RepairRequestService rrs
       LEFT JOIN RepairRequest rr ON rrs.repairRequestId = rr.id AND rr.deletedAt IS NULL
       WHERE rrs.serviceId = ?
     `;
@@ -242,15 +263,15 @@ router.get('/:id/stats', async (req, res) => {
         rr.id,
         rr.deviceType,
         rr.deviceBrand,
-        rr.receivedAt,
+        rr.createdAt,
         rr.status,
         rrs.price,
         c.name as customerName
-      FROM RepairRequestServices rrs
+      FROM RepairRequestService rrs
       LEFT JOIN RepairRequest rr ON rrs.repairRequestId = rr.id AND rr.deletedAt IS NULL
       LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
       WHERE rrs.serviceId = ?
-      ORDER BY rr.receivedAt DESC
+      ORDER BY rr.createdAt DESC
       LIMIT 5
     `;
     
@@ -259,10 +280,10 @@ router.get('/:id/stats', async (req, res) => {
     res.json({
       service,
       stats: {
-        totalUsage: stats.totalUsage || 0,
-        completedUsage: stats.completedUsage || 0,
-        totalRevenue: stats.totalRevenue || 0,
-        avgPrice: stats.avgPrice || 0,
+        totalUsage: parseInt(stats.totalUsage) || 0,
+        completedUsage: parseInt(stats.completedUsage) || 0,
+        totalRevenue: parseFloat(stats.totalRevenue) || 0,
+        avgPrice: parseFloat(stats.avgPrice) || 0,
         lastUsed: stats.lastUsed,
         firstUsed: stats.firstUsed
       },

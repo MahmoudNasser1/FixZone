@@ -185,7 +185,7 @@ const RepairTimeline = ({ repair, compact = false }) => {
           <Calendar className="w-4 h-4 ml-2" />
           <div>
             <div className="font-medium">تاريخ الإنشاء</div>
-            <div>{new Date(repair.createdAt).toLocaleDateString('ar-EG')}</div>
+            <div>{new Date(repair.createdAt).toLocaleDateString('en-GB')}</div>
           </div>
         </div>
         

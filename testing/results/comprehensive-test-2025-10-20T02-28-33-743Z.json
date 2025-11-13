@@ -1,0 +1,244 @@
+{
+  "startTime": "2025-10-20T02:28:31.952Z",
+  "endTime": "2025-10-20T02:28:33.743Z",
+  "summary": {
+    "total": 19,
+    "passed": 9,
+    "failed": 10,
+    "skipped": 0,
+    "errors": [
+      {
+        "testName": "Get all customers",
+        "error": "Customers data is not an array"
+      },
+      {
+        "testName": "Create new customer",
+        "error": "Failed to create customer: 400"
+      },
+      {
+        "testName": "Get all repairs",
+        "error": "Repairs data is not an array"
+      },
+      {
+        "testName": "Get inventory items",
+        "error": "Failed to get inventory: 404"
+      },
+      {
+        "testName": "Get all invoices",
+        "error": "Invoices data is not an array"
+      },
+      {
+        "testName": "Get all payments",
+        "error": "Payments data is not an array"
+      },
+      {
+        "testName": "Customer data integrity",
+        "error": "customers.filter is not a function"
+      },
+      {
+        "testName": "Unauthorized API access",
+        "error": "Expected 401, got 200"
+      },
+      {
+        "testName": "Customer-Repair integration",
+        "error": "Cannot read properties of undefined (reading 'id')"
+      },
+      {
+        "testName": "Repair-Invoice integration",
+        "error": "repairs.filter is not a function"
+      }
+    ]
+  },
+  "modules": {
+    "connectivity": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Backend Health Check",
+          "status": "passed",
+          "duration": 12,
+          "details": "Backend is healthy"
+        },
+        {
+          "name": "API Base Endpoint",
+          "status": "passed",
+          "duration": 6,
+          "details": "API base returned 404"
+        }
+      ]
+    },
+    "authentication": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Login with valid credentials",
+          "status": "passed",
+          "duration": 408,
+          "details": "Login successful"
+        },
+        {
+          "name": "Login with invalid credentials",
+          "status": "passed",
+          "duration": 409,
+          "details": "Correctly rejected invalid credentials"
+        }
+      ]
+    },
+    "customers": {
+      "passed": 0,
+      "failed": 2,
+      "tests": [
+        {
+          "name": "Get all customers",
+          "status": "failed",
+          "duration": 19,
+          "error": "Customers data is not an array"
+        },
+        {
+          "name": "Create new customer",
+          "status": "failed",
+          "duration": 13,
+          "error": "Failed to create customer: 400"
+        }
+      ]
+    },
+    "repairs": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Get all repairs",
+          "status": "failed",
+          "duration": 13,
+          "error": "Repairs data is not an array"
+        }
+      ]
+    },
+    "inventory": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Get inventory items",
+          "status": "failed",
+          "duration": 12,
+          "error": "Failed to get inventory: 404"
+        }
+      ]
+    },
+    "invoices": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Get all invoices",
+          "status": "failed",
+          "duration": 18,
+          "error": "Invoices data is not an array"
+        }
+      ]
+    },
+    "payments": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Get all payments",
+          "status": "failed",
+          "duration": 10,
+          "error": "Payments data is not an array"
+        }
+      ]
+    },
+    "database": {
+      "passed": 1,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Database connection test",
+          "status": "passed",
+          "duration": 7,
+          "details": "Database connection is healthy"
+        },
+        {
+          "name": "Customer data integrity",
+          "status": "failed",
+          "duration": 10,
+          "error": "customers.filter is not a function"
+        }
+      ]
+    },
+    "security": {
+      "passed": 2,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Unauthorized API access",
+          "status": "failed",
+          "duration": 6,
+          "error": "Expected 401, got 200"
+        },
+        {
+          "name": "CORS headers",
+          "status": "passed",
+          "duration": 7,
+          "details": "CORS header present: http://localhost:3000"
+        },
+        {
+          "name": "SQL injection protection",
+          "status": "passed",
+          "duration": 10,
+          "details": "Protected against SQL injection"
+        }
+      ]
+    },
+    "performance": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "API response time",
+          "status": "passed",
+          "duration": 7,
+          "details": "Response time: 7ms"
+        },
+        {
+          "name": "Concurrent requests handling",
+          "status": "passed",
+          "duration": 103,
+          "details": "Handled 10 concurrent requests in 103ms"
+        }
+      ]
+    },
+    "integration": {
+      "passed": 0,
+      "failed": 2,
+      "tests": [
+        {
+          "name": "Customer-Repair integration",
+          "status": "failed",
+          "duration": 10,
+          "error": "Cannot read properties of undefined (reading 'id')"
+        },
+        {
+          "name": "Repair-Invoice integration",
+          "status": "failed",
+          "duration": 12,
+          "error": "repairs.filter is not a function"
+        }
+      ]
+    }
+  },
+  "performance": {
+    "apiResponseTime": 7,
+    "concurrentRequests": {
+      "count": 10,
+      "totalTime": 103,
+      "averageTime": 10.3
+    }
+  },
+  "security": {},
+  "integration": {}
+}

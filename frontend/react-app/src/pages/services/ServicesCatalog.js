@@ -66,16 +66,11 @@ const ServicesCatalog = () => {
       if (categoryFilter) params.category = categoryFilter;
       if (statusFilter !== '') params.isActive = statusFilter === 'active' ? 'true' : 'false';
 
-      const response = await apiService.getServices(params);
+      const data = await apiService.getServices(params);
       
-      if (response.ok) {
-        const data = await response.json();
-        setServices(data.items || []);
-        setTotalPages(data.totalPages || 1);
-        setTotalItems(data.total || 0);
-      } else {
-        throw new Error('Failed to fetch services');
-      }
+      setServices(data.items || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalItems(data.total || 0);
     } catch (error) {
       console.error('Error loading services:', error);
       notify('error', 'خطأ في تحميل الخدمات');
@@ -161,13 +156,9 @@ const ServicesCatalog = () => {
   const handleDeleteService = async (serviceId) => {
     if (window.confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
       try {
-        const response = await apiService.deleteService(serviceId);
-        if (response.ok) {
-          setServices(prevServices => prevServices.filter(service => service.id !== serviceId));
-          notify('success', 'تم حذف الخدمة بنجاح');
-        } else {
-          throw new Error('Failed to delete service');
-        }
+        await apiService.deleteService(serviceId);
+        setServices(prevServices => prevServices.filter(service => service.id !== serviceId));
+        notify('success', 'تم حذف الخدمة بنجاح');
       } catch (error) {
         console.error('Error deleting service:', error);
         notify('error', 'خطأ في حذف الخدمة');
@@ -205,8 +196,8 @@ const ServicesCatalog = () => {
       const service = services.find(s => s.id === serviceId);
       if (!service) return;
 
-      const response = await apiService.updateService(serviceId, {
-        name: service.serviceName,
+      await apiService.updateService(serviceId, {
+        name: service.name,
         description: service.description,
         basePrice: service.basePrice,
         category: service.category,
@@ -214,16 +205,12 @@ const ServicesCatalog = () => {
         isActive: !currentStatus
       });
 
-      if (response.ok) {
-        setServices(prevServices =>
-          prevServices.map(s =>
-            s.id === serviceId ? { ...s, isActive: !currentStatus } : s
-          )
-        );
-        notify('success', 'تم تحديث حالة الخدمة بنجاح');
-      } else {
-        throw new Error('Failed to update service');
-      }
+      setServices(prevServices =>
+        prevServices.map(s =>
+          s.id === serviceId ? { ...s, isActive: !currentStatus } : s
+        )
+      );
+      notify('success', 'تم تحديث حالة الخدمة بنجاح');
     } catch (error) {
       console.error('Error toggling service status:', error);
       notify('error', 'خطأ في تحديث حالة الخدمة');
@@ -263,7 +250,7 @@ const ServicesCatalog = () => {
         <div className="flex items-center space-x-3 space-x-reverse">
           <Package className="w-5 h-5 text-blue-600" />
           <div>
-            <div className="font-medium text-gray-900">{service.serviceName}</div>
+            <div className="font-medium text-gray-900">{service.name}</div>
             {service.description && (
               <div className="text-sm text-gray-500 truncate max-w-xs">
                 {service.description}
@@ -638,7 +625,7 @@ const ServicesCatalog = () => {
                         <div className="flex items-center space-x-3 space-x-reverse">
                           <Package className="w-5 h-5 text-blue-600" />
                           <div>
-                            <div className="font-medium text-gray-900">{service.serviceName}</div>
+                            <div className="font-medium text-gray-900">{service.name}</div>
                             {service.description && (
                               <div className="text-sm text-gray-500 truncate max-w-xs">
                                 {service.description}

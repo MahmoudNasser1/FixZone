@@ -161,7 +161,7 @@ const FinancialReportsPage = () => {
   const dailyChartData = {
     labels: dailyRevenue.map(item => {
       const date = new Date(item.date);
-      return date.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' });
+      return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
     }),
     datasets: [
       {
@@ -190,7 +190,7 @@ const FinancialReportsPage = () => {
         beginAtZero: true,
         ticks: {
           callback: function(value) {
-            return value.toLocaleString('ar-SA') + ' ر.س';
+            return value.toLocaleString('ar-SA') + ' جنية';
           }
         }
       }
@@ -279,13 +279,13 @@ const FinancialReportsPage = () => {
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm font-medium text-green-800">إجمالي الإيرادات</div>
               <div className="text-2xl font-bold text-green-900">
-                {profitLossData.totalRevenue?.toLocaleString('ar-SA')} ر.س
+                {profitLossData.totalRevenue?.toLocaleString('ar-SA')} جنية
               </div>
             </div>
             <div className="bg-red-50 rounded-lg p-4 border border-red-200">
               <div className="text-sm font-medium text-red-800">إجمالي المصروفات</div>
               <div className="text-2xl font-bold text-red-900">
-                {profitLossData.totalExpenses?.toLocaleString('ar-SA')} ر.س
+                {profitLossData.totalExpenses?.toLocaleString('ar-SA')} جنية
               </div>
             </div>
             <div className={`rounded-lg p-4 border ${
@@ -301,7 +301,7 @@ const FinancialReportsPage = () => {
               <div className={`text-2xl font-bold ${
                 profitLossData.profit >= 0 ? 'text-green-900' : 'text-red-900'
               }`}>
-                {profitLossData.profit?.toLocaleString('ar-SA')} ر.س
+                {profitLossData.profit?.toLocaleString('ar-SA')} جنية
               </div>
               <div className={`text-sm ${
                 profitLossData.profit >= 0 ? 'text-green-600' : 'text-red-600'
@@ -357,7 +357,7 @@ const FinancialReportsPage = () => {
                       {expense.expenseCount}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {expense.totalAmount?.toLocaleString('ar-SA')} ر.س
+                      {expense.totalAmount?.toLocaleString('ar-SA')} جنية
                     </td>
                   </tr>
                 ))}

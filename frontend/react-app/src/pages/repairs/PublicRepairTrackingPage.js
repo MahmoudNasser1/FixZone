@@ -163,7 +163,7 @@ const PublicRepairTrackingPage = () => {
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'غير محدد';
-    return new Date(dateString).toLocaleDateString('ar-EG', {
+    return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

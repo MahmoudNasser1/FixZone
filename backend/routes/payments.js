@@ -58,15 +58,17 @@ router.get('/', async (req, res) => {
         i.id as invoiceId,
         i.totalAmount as invoiceTotal,
         i.totalAmount as invoiceFinal,
-        'عميل غير محدد' as customerFirstName,
-        '' as customerLastName,
-        '' as customerPhone,
+        i.status as invoiceStatus,
+        c.name as customerName,
+        c.phone as customerPhone,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
         (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
+      LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+      LEFT JOIN Customer c ON rr.customerId = c.id
       ${whereClause}
       ORDER BY p.createdAt DESC
       LIMIT ? OFFSET ?
@@ -80,6 +82,8 @@ router.get('/', async (req, res) => {
       SELECT COUNT(*) as total
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
+      LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+      LEFT JOIN Customer c ON rr.customerId = c.id
       ${whereClause}
     `;
     const [countResult] = await db.query(countQuery, queryParams.slice(0, -2));
@@ -161,17 +165,19 @@ router.get('/:id', async (req, res, next) => {
         i.id as invoiceId,
         i.totalAmount as invoiceTotal,
         i.totalAmount as invoiceFinal,
+        i.status as invoiceStatus,
         i.createdAt as invoiceDate,
-        'عميل غير محدد' as customerFirstName,
-        '' as customerLastName,
-        '' as customerPhone,
-        '' as customerEmail,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
         (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
+      LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+      LEFT JOIN Customer c ON rr.customerId = c.id
       WHERE p.id = ?
     `, [id]);
     
@@ -204,11 +210,15 @@ router.get('/invoice/:invoiceId', async (req, res) => {
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName,
         i.id as invoiceId,
-        i.totalAmount as invoiceFinal
+        i.totalAmount as invoiceFinal,
+        i.status as invoiceStatus,
+        c.name as customerName
       FROM Payment p 
       LEFT JOIN Invoice i ON p.invoiceId = i.id
+      LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+      LEFT JOIN Customer c ON rr.customerId = c.id
       WHERE p.invoiceId = ? 
-      ORDER BY p.paymentDate DESC, p.createdAt DESC
+      ORDER BY p.createdAt DESC
     `, [invoiceId]);
     
     // Get invoice summary
@@ -241,6 +251,8 @@ router.get('/invoice/:invoiceId', async (req, res) => {
 
 // Create a new payment
 router.post('/', async (req, res) => {
+  console.log('POST /payments - Request body:', JSON.stringify(req.body, null, 2));
+  
   const { 
     amount, 
     paymentMethod, 
@@ -252,9 +264,20 @@ router.post('/', async (req, res) => {
     notes
   } = req.body;
   
+  console.log('Extracted values:', { amount, paymentMethod, invoiceId, createdBy });
+  
   if (amount === undefined || amount === null || !paymentMethod || !invoiceId || !createdBy) {
+    const missing = [];
+    if (amount === undefined || amount === null) missing.push('amount');
+    if (!paymentMethod) missing.push('paymentMethod');
+    if (!invoiceId) missing.push('invoiceId');
+    if (!createdBy) missing.push('createdBy');
+    
+    console.log('Missing fields:', missing);
+    
     return res.status(400).json({ 
-      error: 'Amount, payment method, invoice ID, and userId are required' 
+      error: 'Amount, payment method, invoice ID, and userId are required',
+      missing: missing
     });
   }
   if (isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -285,59 +308,75 @@ router.post('/', async (req, res) => {
     const totalPaid = paymentSum[0].totalPaid;
     const remainingAmount = invoice.finalAmount - totalPaid;
     
+    console.log('Payment validation:', { 
+      invoiceFinalAmount: invoice.finalAmount, 
+      totalPaid, 
+      remainingAmount, 
+      requestedAmount: amount 
+    });
+    
+    if (remainingAmount <= 0) {
+      return res.status(400).json({ 
+        error: 'Invoice is already fully paid',
+        invoiceAmount: invoice.finalAmount,
+        totalPaid: totalPaid,
+        remaining: remainingAmount
+      });
+    }
+    
     if (parseFloat(amount) > remainingAmount) {
       return res.status(400).json({ 
-        error: `Payment amount (${amount}) exceeds remaining balance (${remainingAmount})` 
+        error: `Payment amount (${amount}) exceeds remaining balance (${remainingAmount})`,
+        invoiceAmount: invoice.finalAmount,
+        totalPaid: totalPaid,
+        remaining: remainingAmount
       });
     }
     
     // Create payment
-    const paymentDate = new Date().toISOString().split('T')[0];
     const [result] = await db.query(`
       INSERT INTO Payment (
-        invoiceId, amount, currency, paymentMethod, paymentDate, createdBy
+        invoiceId, amount, currency, paymentDate, paymentMethod, userId
       ) VALUES (?, ?, ?, ?, ?, ?)
     `, [
       invoiceId,
       amount,
       currency,
+      paymentDate || new Date().toISOString().split('T')[0],
       paymentMethod,
-      paymentDate,
       createdBy
     ]);
     
     const paymentId = result.insertId;
     
-    // Update invoice status based on payment
+    // Update invoice status and amountPaid based on payment
     const newTotalPaid = totalPaid + parseFloat(amount);
     let newStatus = 'partially_paid';
     
     if (newTotalPaid >= invoice.finalAmount) {
       newStatus = 'paid';
-      await db.query(`
-        UPDATE Invoice 
-        SET status = ? 
-        WHERE id = ?
-      `, [newStatus, invoiceId]);
-    } else {
-      await db.query(`
-        UPDATE Invoice 
-        SET status = ? 
-        WHERE id = ?
-      `, [newStatus, invoiceId]);
     }
+    
+    await db.query(`
+      UPDATE Invoice 
+      SET status = ?, amountPaid = ? 
+      WHERE id = ?
+    `, [newStatus, newTotalPaid, invoiceId]);
     
     // Get the created payment with details
     const [newPayment] = await db.query(`
       SELECT 
         p.*,
         i.id as invoiceId,
-        'عميل غير محدد' as customerFirstName,
-        '' as customerLastName,
+        i.status as invoiceStatus,
+        c.name as customerName,
+        c.phone as customerPhone,
         'مستخدم' as createdByFirstName,
         'غير محدد' as createdByLastName
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
+      LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+      LEFT JOIN Customer c ON rr.customerId = c.id
       WHERE p.id = ?
     `, [paymentId]);
     
@@ -536,13 +575,13 @@ router.get('/stats/summary', async (req, res) => {
     let whereClause = '';
     let queryParams = [];
     if (dateFrom && dateTo) {
-      whereClause = 'WHERE DATE(p.paymentDate) BETWEEN ? AND ?';
+      whereClause = 'WHERE DATE(p.createdAt) BETWEEN ? AND ?';
       queryParams = [dateFrom, dateTo];
     } else if (dateFrom) {
-      whereClause = 'WHERE DATE(p.paymentDate) >= ?';
+      whereClause = 'WHERE DATE(p.createdAt) >= ?';
       queryParams = [dateFrom];
     } else if (dateTo) {
-      whereClause = 'WHERE DATE(p.paymentDate) <= ?';
+      whereClause = 'WHERE DATE(p.createdAt) <= ?';
       queryParams = [dateTo];
     }
     

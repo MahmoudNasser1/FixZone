@@ -21,13 +21,28 @@ const errorHandler = require('./middleware/errorHandler');
 router.use(express.json());
 router.use(cookieParser());
 
+// إضافة middleware للتشخيص
+router.use((req, res, next) => {
+  if (req.url.includes('/repairs') && req.method === 'POST') {
+    console.log('=== REPAIR REQUEST DEBUG ===');
+    console.log('URL:', req.url);
+    console.log('Method:', req.method);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Body keys:', Object.keys(req.body || {}));
+    console.log('Accessories in body:', req.body?.accessories);
+    console.log('============================');
+  }
+  next();
+});
+
 
 
 // Import routes
 const customerRoutes = require('./routes/customers');
 const companyRoutes = require('./routes/companiesSimple');
 const deviceRoutes = require('./routes/devices');
-const repairRoutes = require('./routes/repairsSimple');
+const repairRoutes = require('./routes/repairs');
+const repairSimpleRoutes = require('./routes/repairsSimple');
 const technicianRoutes = require('./routes/technicians');
 const inventoryRoutes = require('./routes/inventory');
 const vendorRoutes = require('./routes/vendors');
@@ -101,6 +116,7 @@ router.use('/customers', customerRoutes);
 router.use('/companies', companyRoutes);
 router.use('/devices', deviceRoutes);
 router.use('/repairs', repairRoutes);
+router.use('/repairsSimple', repairSimpleRoutes);
 router.use('/technicians', technicianRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/inventory', inventoryIssueRouter);

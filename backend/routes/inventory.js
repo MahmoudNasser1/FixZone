@@ -43,9 +43,6 @@ router.post('/', async (req, res) => {
     category, 
     purchasePrice, 
     sellingPrice, 
-    minStockLevel = 0,
-    maxStockLevel = 1000,
-    currentQuantity = 0,
     unit = 'قطعة'
   } = req.body;
   
@@ -56,10 +53,9 @@ router.post('/', async (req, res) => {
   try {
     const [result] = await db.query(
       `INSERT INTO InventoryItem (
-        sku, name, description, category, purchasePrice, sellingPrice, 
-        minStockLevel, maxStockLevel, unit
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-      [sku, name, description, category, purchasePrice, sellingPrice, minStockLevel, maxStockLevel, unit]
+        sku, name, description, category, purchasePrice, sellingPrice, unit
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+      [sku, name, description, category, purchasePrice, sellingPrice, unit]
     );
     
     const item = {
@@ -70,8 +66,6 @@ router.post('/', async (req, res) => {
       category,
       purchasePrice,
       sellingPrice,
-      minStockLevel,
-      maxStockLevel,
       unit
     };
     
@@ -88,7 +82,7 @@ router.post('/', async (req, res) => {
 // Update an inventory item
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { sku, name, description, category, purchasePrice, sellingPrice, minStockLevel, maxStockLevel, unit } = req.body;
+  const { sku, name, description, category, purchasePrice, sellingPrice, unit } = req.body;
   
   // Build dynamic update query
   const updates = [];
@@ -117,14 +111,6 @@ router.put('/:id', async (req, res) => {
   if (sellingPrice !== undefined) {
     updates.push('sellingPrice = ?');
     values.push(sellingPrice);
-  }
-  if (minStockLevel !== undefined) {
-    updates.push('minStockLevel = ?');
-    values.push(minStockLevel);
-  }
-  if (maxStockLevel !== undefined) {
-    updates.push('maxStockLevel = ?');
-    values.push(maxStockLevel);
   }
   if (unit !== undefined) {
     updates.push('unit = ?');

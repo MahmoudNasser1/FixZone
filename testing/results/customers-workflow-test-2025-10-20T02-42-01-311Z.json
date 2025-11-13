@@ -1,0 +1,119 @@
+{
+  "startTime": "2025-10-20T02:42:00.396Z",
+  "endTime": "2025-10-20T02:42:01.311Z",
+  "summary": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "errors": []
+  },
+  "workflow": {
+    "customerCreation": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Create new customer",
+          "status": "passed",
+          "duration": 32,
+          "details": "Created customer with ID: 29"
+        },
+        {
+          "name": "Verify customer creation",
+          "status": "passed",
+          "duration": 12,
+          "details": "Customer verified: undefined"
+        },
+        {
+          "name": "Update customer information",
+          "status": "passed",
+          "duration": 19,
+          "details": "Customer updated successfully"
+        }
+      ]
+    },
+    "customerManagement": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Search customers by name",
+          "status": "passed",
+          "duration": 13,
+          "details": "Found 3 customers"
+        },
+        {
+          "name": "Get customer statistics",
+          "status": "passed",
+          "duration": 24,
+          "details": "Retrieved stats: 0 repairs"
+        },
+        {
+          "name": "List customers with pagination",
+          "status": "passed",
+          "duration": 12,
+          "details": "Pagination working correctly"
+        }
+      ]
+    },
+    "integration": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Check customer-repair integration",
+          "status": "passed",
+          "duration": 15,
+          "details": "Found 2 customers with repairs"
+        },
+        {
+          "name": "Check customer-invoice integration",
+          "status": "passed",
+          "duration": 18,
+          "details": "Found 0 invoices"
+        },
+        {
+          "name": "Check customer-payment integration",
+          "status": "passed",
+          "duration": 8,
+          "details": "Found 0 payments"
+        }
+      ]
+    },
+    "reporting": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Test customer statistics API",
+          "status": "passed",
+          "duration": 19,
+          "details": "Stats retrieved: {\"success\":true,\"data\":{\"stats\":{\"customerId\":29,\"totalRepairs\":0,\"completedRepairs\":0,\"pendingRepai..."
+        },
+        {
+          "name": "Test customer data export simulation",
+          "status": "passed",
+          "duration": 10,
+          "details": "Customer data export simulation successful"
+        }
+      ]
+    }
+  },
+  "createdData": {
+    "customers": [
+      {
+        "id": 29,
+        "data": {
+          "name": "عميل اختبار شامل 1760928121113",
+          "phone": "01098121113",
+          "email": "test1760928121113@example.com",
+          "address": "عنوان اختبار شامل"
+        },
+        "createdAt": "2025-10-20T02:42:01.144Z"
+      }
+    ],
+    "repairs": [],
+    "invoices": [],
+    "payments": []
+  }
+}

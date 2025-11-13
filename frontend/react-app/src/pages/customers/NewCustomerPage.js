@@ -81,8 +81,6 @@ const NewCustomerPage = () => {
     // التحقق من رقم الهاتف
     if (!formData.phone.trim()) {
       newErrors.phone = 'رقم الهاتف مطلوب';
-    } else if (!/^05\d{8}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'رقم الهاتف غير صحيح (يجب أن يبدأ بـ 05 ويتكون من 10 أرقام)';
     }
 
     // التحقق من البريد الإلكتروني (اختياري)
@@ -105,22 +103,16 @@ const NewCustomerPage = () => {
     setSuccess(false);
 
     try {
-      // تقسيم الاسم إلى firstName و lastName
-      const nameParts = formData.name.trim().split(' ');
-      const firstName = nameParts[0] || formData.name;
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
       // تحضير بيانات العميل للإرسال
       const customerData = {
-        firstName: firstName,
-        lastName: lastName,
+        name: formData.name.trim(),
         phone: formData.phone,
         email: formData.email || null,
         address: formData.address || null,
         companyId: formData.companyId || null,
         notes: formData.notes || null,
         customFields: {
-          isVip: formData.isVip,
+          isVip: formData.vipCustomer,
           preferredContact: formData.preferredContact
         }
       };
@@ -138,7 +130,20 @@ const NewCustomerPage = () => {
       
     } catch (error) {
       console.error('Error creating customer:', error);
-      setErrors({ submit: 'حدث خطأ أثناء إنشاء العميل. يرجى المحاولة مرة أخرى.' });
+      
+      // Use the error message from the backend if available
+      if (error.message && error.message !== `HTTP error! status: ${error.message}`) {
+        setErrors({ submit: error.message });
+      } else {
+        // Handle specific error cases based on status code
+        if (error.message.includes('409')) {
+          setErrors({ submit: 'رقم الهاتف مستخدم مسبقاً. يرجى استخدام رقم هاتف آخر.' });
+        } else if (error.message.includes('400')) {
+          setErrors({ submit: 'البيانات المدخلة غير صحيحة. يرجى التحقق من جميع الحقول المطلوبة.' });
+        } else {
+          setErrors({ submit: 'حدث خطأ أثناء إنشاء العميل. يرجى المحاولة مرة أخرى.' });
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -217,7 +222,7 @@ const NewCustomerPage = () => {
                       id="phone"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="05xxxxxxxx"
+                      placeholder="أدخل رقم الهاتف"
                       className={`pr-10 ${errors.phone ? 'border-red-500' : ''}`}
                       dir="ltr"
                     />

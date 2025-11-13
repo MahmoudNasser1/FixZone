@@ -5,10 +5,12 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import { useRepairUpdates, useWebSocketStatus } from '../../hooks/useWebSocket';
 import { 
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
   Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter,
-  ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Check, AlertTriangle, Printer
+  ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Check, AlertTriangle, Printer,
+  Wifi, WifiOff
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import Breadcrumb from '../../components/layout/Breadcrumb';
@@ -22,6 +24,36 @@ const RepairsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const notifications = useNotifications();
+  
+  // WebSocket status
+  const { status: wsStatus } = useWebSocketStatus();
+  
+  // Real-time repair updates
+  useRepairUpdates((message) => {
+    console.log('Real-time repair update received:', message);
+    
+    switch (message.updateType) {
+      case 'created':
+        // إضافة طلب إصلاح جديد إلى القائمة
+        setRepairs(prev => [message.data, ...prev]);
+        notifications.success(`تم إنشاء طلب إصلاح جديد: ${message.data.requestNumber}`);
+        break;
+        
+      case 'updated':
+        // تحديث طلب إصلاح موجود
+        setRepairs(prev => prev.map(repair => 
+          repair.id === message.data.id ? { ...repair, ...message.data } : repair
+        ));
+        notifications.info(`تم تحديث طلب الإصلاح: ${message.data.requestNumber}`);
+        break;
+        
+      case 'deleted':
+        // حذف طلب إصلاح من القائمة
+        setRepairs(prev => prev.filter(repair => repair.id !== message.data.id));
+        notifications.warning(`تم حذف طلب الإصلاح: ${message.data.requestNumber}`);
+        break;
+    }
+  });
   
   // State للبيانات والتحميل
   const [repairs, setRepairs] = useState([]);
@@ -261,14 +293,8 @@ const RepairsPage = () => {
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
 
-      const response = await apiService.getRepairRequests(params);
-      console.log('Repairs response:', response);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      const data = await apiService.getRepairRequests(params);
+      console.log('Repairs response:', data);
       console.log('Repairs data:', data, 'with params:', params);
       
       if (Array.isArray(data)) {
@@ -1023,6 +1049,25 @@ const RepairsPage = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          {/* WebSocket Status Indicator */}
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+            wsStatus === 'connected' 
+              ? 'bg-green-100 text-green-800' 
+              : wsStatus === 'connecting'
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {wsStatus === 'connected' ? (
+              <Wifi className="w-3 h-3" />
+            ) : (
+              <WifiOff className="w-3 h-3" />
+            )}
+            <span className="hidden sm:inline">
+              {wsStatus === 'connected' ? 'متصل' : 
+               wsStatus === 'connecting' ? 'جاري الاتصال' : 'غير متصل'}
+            </span>
+          </div>
+          
           <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="whitespace-nowrap">
             <RefreshCw className="w-3.5 h-3.5 ml-2" /> تحديث
           </SimpleButton>

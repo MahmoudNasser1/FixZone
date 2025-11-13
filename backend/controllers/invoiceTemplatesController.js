@@ -486,9 +486,9 @@ class InvoiceTemplatesController {
           </table>
 
           <div class="totals">
-            <p><strong>الإجمالي: ${Number(invoice.totalAmount || 0).toFixed(2)} ${settings.currency || 'ر.س'}</strong></p>
-            <p>المدفوع: ${Number(invoice.amountPaid || 0).toFixed(2)} ${settings.currency || 'ر.س'}</p>
-            <p>المتبقي: ${Number((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)} ${settings.currency || 'ر.س'}</p>
+            <p><strong>الإجمالي: ${Number(invoice.totalAmount || 0).toFixed(2)} ${settings.currency || 'جنية'}</strong></p>
+            <p>المدفوع: ${Number(invoice.amountPaid || 0).toFixed(2)} ${settings.currency || 'جنية'}</p>
+            <p>المتبقي: ${Number((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)} ${settings.currency || 'جنية'}</p>
           </div>
 
           <div class="footer">

@@ -60,7 +60,15 @@ router.get('/', async (req, res) => {
       `SELECT COUNT(*) as cnt FROM Customer ${whereSql}`,
       params
     );
-    return res.json({ data: rows, pagination: { page, pageSize, total: countRows[0]?.cnt || 0 } });
+    return res.json({ 
+      success: true,
+      data: { 
+        customers: rows, 
+        total: countRows[0]?.cnt || 0,
+        page,
+        pageSize 
+      }
+    });
   } catch (err) {
     console.error('Error fetching customers:', err);
     res.status(500).send('Server Error');
@@ -120,27 +128,38 @@ router.get('/:id', async (req, res) => {
       WHERE id = ? AND deletedAt IS NULL
     `, [id]);
     if (rows.length === 0) {
-      return res.status(404).send('Customer not found');
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Customer not found' 
+      });
     }
     
     console.log('Fetched customer:', rows[0]);
     
-    res.json(rows[0]);
+    res.json({
+      success: true,
+      data: rows[0]
+    });
   } catch (err) {
     console.error(`Error fetching customer with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server Error' 
+    });
   }
 });
 
 // Create a new customer
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   const { name, phone, email, address, companyId, customFields } = req.body;
   
   console.log('Creating customer:', { name, phone, email, address, companyId, customFields });
   
   if (!name || !phone) {
-    return res.status(400).json({ success: false, message: 'Name and phone are required' });
+    return res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان' });
   }
+  
+  // Phone number validation removed - accept any format
   
   try {
     // Check if phone already exists
@@ -150,9 +169,9 @@ router.post('/', authMiddleware, async (req, res) => {
     );
     
     if (existing.length > 0) {
-      return res.status(400).json({ 
+      return res.status(409).json({ 
         success: false, 
-        message: 'A customer with this phone number already exists' 
+        message: 'رقم الهاتف مستخدم مسبقاً' 
       });
     }
     
@@ -199,6 +218,21 @@ router.put('/:id', authMiddleware, async (req, res) => {
     values.push(name);
   }
   if (phone !== undefined) {
+    // Phone number validation removed - accept any format
+    
+    // Check if phone already exists (excluding current customer)
+    const [existing] = await db.query(
+      'SELECT id FROM Customer WHERE phone = ? AND id != ? AND deletedAt IS NULL',
+      [phone, id]
+    );
+    
+    if (existing.length > 0) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'رقم الهاتف مستخدم مسبقاً' 
+      });
+    }
+    
     updates.push('phone = ?');
     values.push(phone);
   }
@@ -274,8 +308,8 @@ router.get('/:id/stats', async (req, res) => {
         COUNT(CASE WHEN rr.status = 'cancelled' THEN 1 END) as cancelledRepairs,
         COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as totalPaid,
         COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as avgRepairCost,
-        MAX(rr.receivedAt) as lastRepairDate,
-        MIN(rr.receivedAt) as firstRepairDate
+        MAX(rr.createdAt) as lastRepairDate,
+        MIN(rr.createdAt) as firstRepairDate
       FROM Customer c
       LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
       WHERE c.id = ? AND c.deletedAt IS NULL
@@ -307,15 +341,15 @@ router.get('/:id/stats', async (req, res) => {
     const recentRepairsQuery = `
       SELECT 
         rr.id,
-        rr.issueDescription as reportedProblem,
+        rr.reportedProblem as reportedProblem,
         rr.status,
-        rr.receivedAt as createdAt,
+        rr.createdAt as createdAt,
         rr.actualCost as totalCost,
         rr.deviceType,
         rr.deviceBrand as brand
       FROM RepairRequest rr
       WHERE rr.customerId = ? AND rr.deletedAt IS NULL
-      ORDER BY rr.receivedAt DESC
+      ORDER BY rr.createdAt DESC
       LIMIT 3
     `;
     
@@ -349,6 +383,57 @@ router.get('/:id/stats', async (req, res) => {
   } catch (error) {
     console.error('Error fetching customer stats:', error);
     res.status(500).json({ error: 'حدث خطأ في جلب إحصائيات العميل' });
+  }
+});
+
+// Get customer repairs
+router.get('/:id/repairs', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    
+    const [repairs] = await db.query(`
+               SELECT 
+                 rr.id,
+                 rr.reportedProblem,
+                 rr.status,
+                 rr.createdAt,
+                 rr.actualCost,
+                 rr.deviceType,
+                 rr.deviceBrand,
+                 rr.estimatedCost,
+                 rr.priority,
+                 rr.notes,
+                 rr.accessories
+               FROM RepairRequest rr
+               WHERE rr.customerId = ? AND rr.deletedAt IS NULL
+               ORDER BY rr.createdAt DESC
+    `, [customerId]);
+    
+    res.json({
+      success: true,
+      data: {
+                 repairs: repairs.map(repair => ({
+                   id: repair.id,
+                   problem: repair.reportedProblem,
+                   status: repair.status,
+                   createdAt: repair.createdAt,
+                   actualCost: parseFloat(repair.actualCost) || 0,
+                   estimatedCost: parseFloat(repair.estimatedCost) || 0,
+                   deviceType: repair.deviceType,
+                   deviceBrand: repair.deviceBrand,
+                   priority: repair.priority,
+                   notes: repair.notes,
+                   accessories: repair.accessories ? JSON.parse(repair.accessories) : []
+                 }))
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching customer repairs:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'حدث خطأ في جلب طلبات الإصلاح للعميل' 
+    });
   }
 });
 

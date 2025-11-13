@@ -28,9 +28,11 @@ export default function CreatePaymentPage() {
 
   const loadInvoices = async () => {
     try {
-      const response = await apiService.get('/invoices?status=sent,partially_paid&limit=100');
+      const response = await apiService.getInvoices({ status: 'sent,partially_paid,paid', limit: 100 });
       if (response.invoices) {
         setInvoices(response.invoices);
+      } else if (response.data) {
+        setInvoices(response.data);
       }
     } catch (error) {
       console.error('Error loading invoices:', error);
@@ -39,9 +41,12 @@ export default function CreatePaymentPage() {
 
   const loadInvoiceDetails = async (invoiceId) => {
     try {
-      const response = await apiService.get(`/invoices/${invoiceId}`);
+      const response = await apiService.getInvoiceById(invoiceId);
+      console.log('Invoice details response:', response);
       if (response) {
-        setInvoice(response);
+        // Handle different response structures
+        const invoiceData = response.data || response;
+        setInvoice(invoiceData);
       }
     } catch (error) {
       console.error('Error loading invoice details:', error);
@@ -62,10 +67,26 @@ export default function CreatePaymentPage() {
     try {
       setLoading(true);
       
+      // Check if invoice is fully paid before submitting
+      if (invoice) {
+        const isFullyPaid = (invoice.amountPaid || 0) >= (invoice.totalAmount || invoice.finalAmount || 0);
+        if (isFullyPaid) {
+          addNotification('لا يمكن إضافة دفعة للفاتورة - الفاتورة مدفوعة بالكامل', 'warning');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      console.log('Payment data being sent:', {
+        ...paymentData,
+        invoiceId: selectedInvoiceId || paymentData.invoiceId,
+        createdBy: 2
+      });
+      
       const response = await paymentService.createPayment({
         ...paymentData,
-        invoiceId: selectedInvoiceId,
-        createdBy: 1 // TODO: Get from auth context
+        invoiceId: selectedInvoiceId || paymentData.invoiceId,
+        createdBy: 2 // Using existing admin user - TODO: Get from auth context
       });
 
       if (response.success) {
@@ -76,7 +97,23 @@ export default function CreatePaymentPage() {
       }
     } catch (error) {
       console.error('Error creating payment:', error);
-      addNotification(error.message || 'خطأ في إضافة الدفعة', 'error');
+      
+      // Parse error message from backend
+      let errorMessage = 'خطأ في إضافة الدفعة';
+      
+      if (error.message) {
+        if (error.message.includes('already fully paid')) {
+          errorMessage = 'الفاتورة مدفوعة بالكامل - لا يمكن إضافة دفعة جديدة';
+        } else if (error.message.includes('exceeds remaining balance')) {
+          errorMessage = 'مبلغ الدفعة يتجاوز المبلغ المتبقي في الفاتورة';
+        } else if (error.message.includes('Invoice not found')) {
+          errorMessage = 'الفاتورة غير موجودة';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      addNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -118,54 +155,76 @@ export default function CreatePaymentPage() {
                   <option value="">اختر الفاتورة</option>
                   {invoices.map(inv => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} - {inv.customerFirstName} {inv.customerLastName} - 
-                      {paymentService.formatAmount(inv.finalAmount, inv.currency)}
+                      {inv.invoiceNumber || inv.id} - {inv.customerName || 'عميل غير محدد'} - 
+                      {paymentService.formatAmount(inv.totalAmount || inv.finalAmount || 0, inv.currency)}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {invoice && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">تفاصيل الفاتورة</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">رقم الفاتورة:</span>
-                      <span className="font-medium">{invoice.invoiceNumber}</span>
+              {invoice && (() => {
+                const isFullyPaid = (invoice.amountPaid || 0) >= (invoice.totalAmount || invoice.finalAmount || 0);
+                const bgColor = isFullyPaid ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200';
+                const titleColor = isFullyPaid ? 'text-green-900' : 'text-blue-900';
+                const labelColor = isFullyPaid ? 'text-green-700' : 'text-blue-700';
+                
+                return (
+                  <div className={`${bgColor} p-4 rounded-lg`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className={`font-semibold ${titleColor}`}>تفاصيل الفاتورة</h3>
+                      {isFullyPaid && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
+                          <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-semibold text-green-800">مدفوعة بالكامل</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">العميل:</span>
-                      <span className="font-medium">
-                        {invoice.customerFirstName} {invoice.customerLastName}
-                      </span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className={labelColor}>رقم الفاتورة:</span>
+                        <span className="font-medium">{invoice.invoiceNumber || invoice.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={labelColor}>العميل:</span>
+                        <span className="font-medium">
+                          {invoice.customerName || 'عميل غير محدد'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={labelColor}>إجمالي الفاتورة:</span>
+                        <span className="font-medium">
+                          {paymentService.formatAmount(invoice.totalAmount || invoice.finalAmount || 0, invoice.currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={labelColor}>المدفوع:</span>
+                        <span className="font-medium text-green-600">
+                          {paymentService.formatAmount(invoice.amountPaid || 0, invoice.currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={labelColor}>المتبقي:</span>
+                        <span className={`font-medium ${isFullyPaid ? 'text-green-600' : 'text-red-600'}`}>
+                          {paymentService.formatAmount((invoice.totalAmount || invoice.finalAmount || 0) - (invoice.amountPaid || 0), invoice.currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={labelColor}>تاريخ الاستحقاق:</span>
+                        <span className="font-medium">
+                          {invoice.dueDate ? paymentService.formatDate(invoice.dueDate) : 'غير محدد'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">إجمالي الفاتورة:</span>
-                      <span className="font-medium">
-                        {paymentService.formatAmount(invoice.finalAmount, invoice.currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">المدفوع:</span>
-                      <span className="font-medium text-green-600">
-                        {paymentService.formatAmount(invoice.totalPaid || 0, invoice.currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">المتبقي:</span>
-                      <span className="font-medium text-red-600">
-                        {paymentService.formatAmount(invoice.remainingAmount || invoice.finalAmount, invoice.currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">تاريخ الاستحقاق:</span>
-                      <span className="font-medium">
-                        {invoice.dueDate ? paymentService.formatDate(invoice.dueDate) : 'غير محدد'}
-                      </span>
-                    </div>
+                    {isFullyPaid && (
+                      <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-800">
+                        <strong>تنبيه:</strong> هذه الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة.
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </SimpleCardContent>
           </SimpleCard>
         </div>

@@ -338,7 +338,7 @@ const CompanyDetailsPage = () => {
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 text-gray-400 ml-2" />
                   <span className="text-sm text-gray-900">
-                    {new Date(company.createdAt).toLocaleDateString('ar-SA')}
+                    {new Date(company.createdAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
               </div>
@@ -348,7 +348,7 @@ const CompanyDetailsPage = () => {
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 text-gray-400 ml-2" />
                   <span className="text-sm text-gray-900">
-                    {new Date(company.updatedAt).toLocaleDateString('ar-SA')}
+                    {new Date(company.updatedAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
               </div>

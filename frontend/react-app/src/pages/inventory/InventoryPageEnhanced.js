@@ -147,17 +147,31 @@ const InventoryPageEnhanced = () => {
   };
 
   const getStockForItem = (itemId, warehouseId = null) => {
+    // Try to get from StockLevel table
     if (warehouseId) {
-      return stockLevels.find(s => s.inventoryItemId === itemId && s.warehouseId === warehouseId);
+      const stockLevel = stockLevels.find(s => s.inventoryItemId === itemId && s.warehouseId === warehouseId);
+      if (stockLevel) {
+        return stockLevel;
+      }
     }
-    // مجموع جميع المخازن
-    return stockLevels
-      .filter(s => s.inventoryItemId === itemId)
-      .reduce((acc, curr) => ({
+    
+    // Fallback to StockLevel aggregation across all warehouses
+    const stockData = stockLevels.filter(s => s.inventoryItemId === itemId);
+    if (stockData.length > 0) {
+      return stockData.reduce((acc, curr) => ({
         currentQuantity: (acc.currentQuantity || 0) + (curr.currentQuantity || 0),
         reservedQuantity: (acc.reservedQuantity || 0) + (curr.reservedQuantity || 0),
         availableQuantity: (acc.availableQuantity || 0) + (curr.availableQuantity || 0)
       }), { currentQuantity: 0, reservedQuantity: 0, availableQuantity: 0 });
+    }
+    
+    // No stock level found - return error state
+    return { 
+      currentQuantity: 0, 
+      reservedQuantity: 0, 
+      availableQuantity: 0,
+      error: 'No stock level found. Please add stock to warehouses.' 
+    };
   };
 
   const getFilteredAndSortedItems = () => {
@@ -187,11 +201,11 @@ const InventoryPageEnhanced = () => {
         const available = stock.availableQuantity || 0;
         
         if (stockFilter === 'low') {
-          return available <= (item.minStockLevel || 0) && available > 0;
+          return available > 0 && available <= 5; // Consider low if 5 or less
         } else if (stockFilter === 'out') {
           return available === 0;
         } else if (stockFilter === 'normal') {
-          return available > (item.minStockLevel || 0);
+          return available > 5;
         }
         return true;
       });
@@ -262,7 +276,7 @@ const InventoryPageEnhanced = () => {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
         نفذ
       </span>;
-    } else if (available <= (item.minStockLevel || 0)) {
+    } else if (available <= 5) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
         <AlertTriangle className="w-3 h-3 ml-1" />
         منخفض
@@ -577,12 +591,22 @@ const InventoryPageEnhanced = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              <span className="font-medium">{available}</span> {item.unit}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              محجوز: {stock.reservedQuantity || 0}
-                            </div>
+                            {stock.error ? (
+                              <div className="text-sm text-red-600">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  لا يوجد مخزون
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="text-sm text-gray-900">
+                                  <span className="font-medium">{available}</span> {item.unit}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  محجوز: {stock.reservedQuantity || 0}
+                                </div>
+                              </>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{formatMoney(item.sellingPrice)}</div>

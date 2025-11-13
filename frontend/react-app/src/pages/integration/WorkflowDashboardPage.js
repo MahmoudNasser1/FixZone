@@ -381,7 +381,7 @@ const WorkflowDashboardPage = () => {
             { label: 'معلق', count: stats?.pendingRepairs || 0, color: 'yellow', icon: ExclamationTriangleIcon },
             { label: 'قيد الإصلاح', count: stats?.inProgressRepairs || 0, color: 'blue', icon: ClockIcon },
             { label: 'مكتمل', count: stats?.completedRepairs || 0, color: 'green', icon: CheckCircleIcon },
-            { label: 'مفوتر', count: pendingInvoices.length, color: 'purple', icon: DocumentTextIcon },
+            { label: 'تم الاضافة', count: pendingInvoices.length, color: 'purple', icon: DocumentTextIcon },
             { label: 'مسلم', count: stats?.deliveredRepairs || 0, color: 'emerald', icon: CheckCircleIcon }
           ].map((status, idx) => (
             <div key={idx} className="text-center">
@@ -436,7 +436,7 @@ const WorkflowDashboardPage = () => {
                   <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="h-3 w-3" />
-                      {new Date(repair.createdAt).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}
+                      {new Date(repair.createdAt).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
                     </span>
                     {repair.estimatedCost && (
                       <span className="font-medium text-gray-700">

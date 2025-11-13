@@ -26,7 +26,19 @@ class ApiService {
       
       // Check if response is ok
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error message from response
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // If we can't parse the error response, use the status code
+        }
+        throw new Error(errorMessage);
       }
       
       // Parse JSON and return
@@ -93,7 +105,26 @@ class ApiService {
   // البحث عن العملاء بالاسم أو الهاتف مع ترقيم الصفحات
   async searchCustomers(q, page = 1, pageSize = 20) {
     const qs = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }).toString();
-    return this.request(`/customers/search?${qs}`);
+    const url = `${API_BASE_URL}/customers/search?${qs}`;
+    
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return { ok: true, json: () => Promise.resolve(data) };
+    } catch (error) {
+      console.error('Customer search request failed:', error);
+      return { ok: false, status: 500 };
+    }
   }
 
   // جلب عميل واحد
@@ -196,14 +227,15 @@ class ApiService {
 
   // تحديث طلب إصلاح
   async updateRepairRequest(id, repairData) {
-    return this.request(`/repairs/${id}`, {
-      method: 'PUT',
+    return this.request(`/repairs/${id}/details`, {
+      method: 'PATCH',
       body: JSON.stringify(repairData),
     });
   }
 
   // تحديث حالة طلب الإصلاح
   async updateRepairStatus(id, status) {
+    // إرسال الحالة كما هي والسماح للخادم بالتعامل مع التحويل
     return this.request(`/repairs/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
@@ -307,7 +339,9 @@ class ApiService {
   // جلب جميع الفواتير
   async getInvoices(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(`/invoices${queryString ? `?${queryString}` : ''}`);
+    const url = `/invoices${queryString ? `?${queryString}` : ''}`;
+    console.log('getInvoices API call:', url, 'with params:', params);
+    return this.request(url);
   }
 
   // جلب فاتورة واحدة

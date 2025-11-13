@@ -114,7 +114,7 @@ const RepairsPageEnhanced = () => {
     {
       accessorKey: "createdAt",
       header: "تاريخ الإنشاء",
-      cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString('ar-SA'),
+      cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString('en-GB'),
     },
     {
       id: "actions",
