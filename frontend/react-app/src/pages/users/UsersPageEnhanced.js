@@ -49,43 +49,74 @@ const UsersPageEnhanced = () => {
       setError(null);
       
       // جلب المستخدمين والأدوار
-      const [usersResponse, rolesResponse] = await Promise.all([
-        apiService.listUsers({ includeInactive: 1 }),
-        apiService.listRoles()
-      ]);
-      
+      // apiService.listUsers() يرجع JSON مباشرة وليس Response object
       let usersData = [];
-      if (usersResponse.ok) {
-        const result = await usersResponse.json();
-        usersData = Array.isArray(result) ? result : (result.items || []);
+      let rolesData = [];
+      
+      try {
+        const usersResult = await apiService.listUsers({ includeInactive: 1 });
+        
+        // Backend يرجع array مباشر (بدون pagination) أو { success: true, data: { items, total } } (مع pagination)
+        if (Array.isArray(usersResult)) {
+          usersData = usersResult;
+        } else if (usersResult?.data?.items) {
+          usersData = usersResult.data.items;
+        } else if (usersResult?.items) {
+          usersData = usersResult.items;
+        } else if (usersResult?.success && usersResult?.data) {
+          usersData = Array.isArray(usersResult.data) ? usersResult.data : (usersResult.data.items || []);
+        } else {
+          usersData = [];
+        }
+      } catch (err) {
+        console.error('Error loading users:', err);
+        notifications.error('خطأ في تحميل المستخدمين', { message: err.message || 'حدث خطأ غير متوقع' });
+        usersData = [];
       }
       
-      let rolesData = [];
-      if (rolesResponse.ok) {
-        const result = await rolesResponse.json();
-        rolesData = Array.isArray(result) ? result : (result.items || []);
+      try {
+        const rolesResult = await apiService.listRoles();
+        
+        // Backend يرجع array مباشر
+        if (Array.isArray(rolesResult)) {
+          rolesData = rolesResult;
+        } else if (rolesResult?.items) {
+          rolesData = rolesResult.items;
+        } else if (rolesResult?.data) {
+          rolesData = Array.isArray(rolesResult.data) ? rolesResult.data : (rolesResult.data.items || []);
+        } else {
+          rolesData = [];
+        }
+      } catch (err) {
+        console.error('Error loading roles:', err);
+        notifications.error('خطأ في تحميل الأدوار', { message: err.message || 'حدث خطأ غير متوقع' });
+        rolesData = [];
       }
       
       setUsers(usersData);
       setRoles(rolesData);
       
       // حساب الإحصائيات
-      const activeUsers = usersData.filter(u => u.isActive);
-      const inactiveUsers = usersData.filter(u => !u.isActive);
+      const activeUsers = usersData.filter(u => u?.isActive);
+      const inactiveUsers = usersData.filter(u => !u?.isActive);
       
       setStats({
         total: usersData.length,
         active: activeUsers.length,
         inactive: inactiveUsers.length,
-        admins: usersData.filter(u => u.roleId === 1).length,
-        technicians: usersData.filter(u => u.roleId === 3).length,
-        managers: usersData.filter(u => u.roleId === 2).length
+        admins: usersData.filter(u => u?.roleId === 1).length,
+        technicians: usersData.filter(u => u?.roleId === 3 || u?.roleId === 6).length,
+        managers: usersData.filter(u => u?.roleId === 2).length
       });
       
+      if (usersData.length === 0) {
+        console.warn('No users found. Check database or API response.');
+      }
+      
     } catch (err) {
-      console.error('Error loading users:', err);
-      setError('حدث خطأ في تحميل البيانات');
-      notifications.error('حدث خطأ في تحميل البيانات');
+      console.error('Error loading data:', err);
+      setError(err.message || 'حدث خطأ في تحميل البيانات');
+      notifications.error('حدث خطأ في تحميل البيانات', { message: err.message || 'حدث خطأ غير متوقع' });
     } finally {
       setLoading(false);
     }
@@ -94,36 +125,53 @@ const UsersPageEnhanced = () => {
   const handleToggleActive = async (user) => {
     const newStatus = !user.isActive;
     
+    // Optimistic update
+    const prevStatus = user.isActive;
+    setUsers(users.map(u => u.id === user.id ? { ...u, isActive: newStatus } : u));
+    
     try {
-      const response = await apiService.updateUser(user.id, { isActive: newStatus });
+      // apiService.updateUser() يرجع JSON مباشر وليس Response object
+      const result = await apiService.updateUser(user.id, { isActive: newStatus });
       
-      if (response.ok) {
-        setUsers(users.map(u => u.id === user.id ? { ...u, isActive: newStatus } : u));
+      // Backend يرجع { success: true, message, data } أو { message }
+      if (result?.success || result?.message) {
         notifications.success(`تم ${newStatus ? 'تفعيل' : 'تعطيل'} المستخدم بنجاح`);
         loadData(); // إعادة تحميل لتحديث الإحصائيات
       } else {
-        throw new Error('فشل تحديث حالة المستخدم');
+        throw new Error(result?.message || 'فشل تحديث حالة المستخدم');
       }
     } catch (err) {
       console.error('Error toggling user status:', err);
-      notifications.error('حدث خطأ في تحديث حالة المستخدم');
+      // Rollback optimistic update
+      setUsers(users.map(u => u.id === user.id ? { ...u, isActive: prevStatus } : u));
+      notifications.error('حدث خطأ في تحديث حالة المستخدم', { message: err.message || 'حدث خطأ غير متوقع' });
     }
   };
 
   const handleChangeRole = async (user, newRoleId) => {
+    const prevRoleId = user.roleId;
+    const newRoleIdNum = Number(newRoleId);
+    
+    // Optimistic update
+    setUsers(users.map(u => u.id === user.id ? { ...u, roleId: newRoleIdNum } : u));
+    
     try {
-      const response = await apiService.updateUser(user.id, { roleId: Number(newRoleId) });
+      // apiService.updateUser() يرجع JSON مباشر وليس Response object
+      const result = await apiService.updateUser(user.id, { roleId: newRoleIdNum });
       
-      if (response.ok) {
-        setUsers(users.map(u => u.id === user.id ? { ...u, roleId: Number(newRoleId) } : u));
-        notifications.success('تم تغيير دور المستخدم بنجاح');
+      // Backend يرجع { success: true, message, data } أو { message }
+      if (result?.success || result?.message) {
+        const roleName = roles.find(r => r.id === newRoleIdNum)?.name || 'غير محدد';
+        notifications.success(`تم تغيير دور المستخدم إلى ${roleName}`);
         loadData(); // إعادة تحميل لتحديث الإحصائيات
       } else {
-        throw new Error('فشل تغيير دور المستخدم');
+        throw new Error(result?.message || 'فشل تغيير دور المستخدم');
       }
     } catch (err) {
       console.error('Error changing user role:', err);
-      notifications.error('حدث خطأ في تغيير دور المستخدم');
+      // Rollback optimistic update
+      setUsers(users.map(u => u.id === user.id ? { ...u, roleId: prevRoleId } : u));
+      notifications.error('حدث خطأ في تغيير دور المستخدم', { message: err.message || 'حدث خطأ غير متوقع' });
     }
   };
 
@@ -132,19 +180,28 @@ const UsersPageEnhanced = () => {
       return;
     }
     
+    // Optimistic update
+    const userToDelete = users.find(u => u.id === userId);
+    setUsers(users.filter(u => u.id !== userId));
+    
     try {
-      const response = await apiService.deleteUser(userId);
+      // apiService.deleteUser() يرجع JSON مباشر وليس Response object
+      const result = await apiService.deleteUser(userId);
       
-      if (response.ok) {
-        setUsers(users.filter(u => u.id !== userId));
+      // Backend يرجع { success: true, message } أو { message }
+      if (result?.success || result?.message) {
         notifications.success('تم حذف المستخدم بنجاح');
         loadData(); // إعادة تحميل لتحديث الإحصائيات
       } else {
-        throw new Error('فشل حذف المستخدم');
+        throw new Error(result?.message || 'فشل حذف المستخدم');
       }
     } catch (err) {
       console.error('Error deleting user:', err);
-      notifications.error('حدث خطأ في حذف المستخدم');
+      // Rollback optimistic update
+      if (userToDelete) {
+        setUsers([...users, userToDelete]);
+      }
+      notifications.error('حدث خطأ في حذف المستخدم', { message: err.message || 'حدث خطأ غير متوقع' });
     }
   };
 

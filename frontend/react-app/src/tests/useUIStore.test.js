@@ -31,3 +31,4 @@ describe('useUIStore', () => {
     expect(result.current.isSidebarOpen).toBe(true);
   });
 });
+

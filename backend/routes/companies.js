@@ -4,7 +4,7 @@ const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // GET /api/companies - جلب جميع الشركات
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { search, status } = req.query;
     const page = parseInt(req.query.page || '0', 10);
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
     query += ` GROUP BY c.id ORDER BY c.createdAt DESC`;
     
     if (!page) {
-      const [companiesRows] = await db.query(query, params);
+      const [companiesRows] = await db.execute(query, params);
       // تحويل MySQL objects إلى JSON objects عادية
       const formattedCompanies = companiesRows.map(company => ({
         id: company.id,
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
     // pagination
     const offsetVal = (page - 1) * pageSize;
     const paginatedQuery = `${query} LIMIT ? OFFSET ?`;
-    const [companiesRows] = await db.query(paginatedQuery, [...params, pageSize, offsetVal]);
+    const [companiesRows] = await db.execute(paginatedQuery, [...params, pageSize, offsetVal]);
 
     // تحويل MySQL objects إلى JSON objects عادية
     const formattedCompanies = companiesRows.map(company => ({
@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
     }));
 
     // total count
-    const [countRows] = await db.query(
+    const [countRows] = await db.execute(
       `SELECT COUNT(*) as cnt FROM Company c ${search || status ? 'WHERE' : ''}
        ${[search ? '(c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)' : null, status ? 'c.status = ?' : null].filter(Boolean).join(' AND ')}`,
       (search ? [`%${search}%`,`%${search}%`,`%${search}%`] : []).concat(status ? [status] : [])
@@ -91,7 +91,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/companies/:id - جلب شركة واحدة
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -107,7 +107,7 @@ router.get('/:id', async (req, res) => {
       GROUP BY c.id
     `;
     
-    const [companiesRows] = await db.query(query, [id]);
+    const [companiesRows] = await db.execute(query, [id]);
     
     if (companiesRows.length === 0) {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
@@ -159,7 +159,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
     
     // التحقق من عدم وجود شركة بنفس الاسم
-    const [existingCompanyRows] = await db.query(
+    const [existingCompanyRows] = await db.execute(
       'SELECT id FROM Company WHERE name = ? AND deletedAt IS NULL',
       [name]
     );
@@ -177,14 +177,14 @@ router.post('/', authMiddleware, async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
     
-    const [result] = await db.query(query, [
+    const [result] = await db.execute(query, [
       name, email, phone, address, website,
  description, status, req.body.taxNumber || null, 
       JSON.stringify(req.body.customFields || {})
     ]);
     
     // جلب الشركة المنشأة
-    const [newCompanyRows] = await db.query(
+    const [newCompanyRows] = await db.execute(
       'SELECT id, name, email, phone, address, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [result.insertId]
     );
@@ -214,7 +214,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     } = req.body;
     
     // التحقق من وجود الشركة
-    const [existingCompanyRows] = await db.query(
+    const [existingCompanyRows] = await db.execute(
       'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
@@ -237,14 +237,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
       WHERE id = ? AND deletedAt IS NULL
     `;
     
-    await db.query(query, [
+    await db.execute(query, [
       name, email, phone, address, website,
  description, status, req.body.taxNumber || null,
       JSON.stringify(req.body.customFields || {}), id
     ]);
     
     // جلب الشركة المحدثة
-    const [updatedCompanyRows] = await db.query(
+    const [updatedCompanyRows] = await db.execute(
       'SELECT id, name, email, phone, address, taxNumber, customFields, createdAt, updatedAt FROM Company WHERE id = ?',
       [id]
     );
@@ -266,7 +266,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const { force } = req.query; // إضافة خيار force للحذف الإجباري
     
     // التحقق من وجود الشركة
-    const [existingCompanyRows] = await db.query(
+    const [existingCompanyRows] = await db.execute(
       'SELECT id, name FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
@@ -276,7 +276,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
     
     // التحقق من وجود عملاء نشطين مرتبطين بالشركة
-    const [activeCustomersRows] = await db.query(
+    const [activeCustomersRows] = await db.execute(
       'SELECT id, firstName, lastName FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
       [id]
     );
@@ -299,7 +299,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     
     // إذا كان force delete، إلغاء ربط العملاء بالشركة أولاً
     if (activeCustomersRows.length > 0 && force === 'true') {
-      await db.query(
+      await db.execute(
         'UPDATE Customer SET companyId = NULL WHERE companyId = ?',
         [id]
       );
@@ -307,7 +307,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
     
     // Soft delete للشركة
-    await db.query(
+    await db.execute(
       'UPDATE Company SET deletedAt = NOW() WHERE id = ?',
       [id]
     );
@@ -326,12 +326,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // GET /api/companies/:id/customers - جلب عملاء شركة معينة
-router.get('/:id/customers', async (req, res) => {
+router.get('/:id/customers', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     
     // التحقق من وجود الشركة
-    const [companyRows] = await db.query(
+    const [companyRows] = await db.execute(
       'SELECT id FROM Company WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
@@ -340,7 +340,7 @@ router.get('/:id/customers', async (req, res) => {
       return res.status(404).json({ error: 'الشركة غير موجودة' });
     }
     
-    const [customersRows] = await db.query(
+    const [customersRows] = await db.execute(
       'SELECT * FROM Customer WHERE companyId = ? AND deletedAt IS NULL ORDER BY createdAt DESC',
       [id]
     );

@@ -72,6 +72,11 @@ class ApiService {
     return this.request(`/users${qs ? `?${qs}` : ''}`);
   }
 
+  // جلب مستخدم واحد
+  async getUserById(id) {
+    return this.request(`/users/${id}`);
+  }
+
   // تحديث مستخدم (دور/نشط/بيانات عامة)
   async updateUser(id, payload) {
     return this.request(`/users/${id}`, {

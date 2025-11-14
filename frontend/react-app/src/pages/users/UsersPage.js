@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../services/api';
+import { useNotifications } from '../../components/notifications/NotificationSystem';
 
 export default function UsersPage() {
+  const notifications = useNotifications();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,12 +27,14 @@ export default function UsersPage() {
           api.listUsers({ q, roleId, sortBy, sortDir, includeInactive: includeInactive ? 1 : 0 }).catch(() => []),
         ]);
         if (!mounted) return;
-        setRoles(Array.isArray(rolesRes) ? rolesRes : (rolesRes.items || []));
-        setUsers(Array.isArray(usersRes) ? usersRes : (usersRes.items || []));
+        setRoles(Array.isArray(rolesRes) ? rolesRes : (rolesRes.data?.items || rolesRes.items || rolesRes.data || []));
+        setUsers(Array.isArray(usersRes) ? usersRes : (usersRes.data?.items || usersRes.items || usersRes.data || usersRes));
         setError(null);
       } catch (e) {
         if (!mounted) return;
-        setError('تعذر تحميل البيانات');
+        const errorMsg = e.message || 'تعذر تحميل البيانات';
+        setError(errorMsg);
+        notifications.error('خطأ في التحميل', { message: errorMsg });
       } finally {
         if (mounted) setLoading(false);
       }
@@ -45,11 +49,17 @@ export default function UsersPage() {
     // تحديث متفائل
     setUsers((list) => list.map((u) => (u.id === user.id ? { ...u, isActive: next } : u)));
     try {
-      await api.updateUser(user.id, { isActive: next });
+      const result = await api.updateUser(user.id, { isActive: next });
+      if (result?.success) {
+        notifications.success(`تم ${next ? 'تفعيل' : 'تعطيل'} المستخدم بنجاح`);
+      } else {
+        throw new Error(result?.message || 'فشل التحديث');
+      }
     } catch (e) {
       // تراجع عند الفشل
       setUsers((list) => list.map((u) => (u.id === user.id ? { ...u, isActive: user.isActive } : u)));
-      alert('تعذر تحديث حالة المستخدم');
+      const errorMsg = e.message || 'تعذر تحديث حالة المستخدم';
+      notifications.error('خطأ في التحديث', { message: errorMsg });
     }
   };
 
@@ -58,10 +68,17 @@ export default function UsersPage() {
     const nr = Number(newRoleId);
     setUsers((list) => list.map((u) => (u.id === user.id ? { ...u, roleId: nr } : u)));
     try {
-      await api.updateUser(user.id, { roleId: nr });
+      const result = await api.updateUser(user.id, { roleId: nr });
+      if (result?.success) {
+        const roleName = roles.find(r => r.id === nr)?.name || 'غير محدد';
+        notifications.success(`تم تغيير دور المستخدم إلى ${roleName}`);
+      } else {
+        throw new Error(result?.message || 'فشل التحديث');
+      }
     } catch (e) {
       setUsers((list) => list.map((u) => (u.id === user.id ? { ...u, roleId: prev } : u)));
-      alert('تعذر تغيير دور المستخدم');
+      const errorMsg = e.message || 'تعذر تغيير دور المستخدم';
+      notifications.error('خطأ في التحديث', { message: errorMsg });
     }
   };
 

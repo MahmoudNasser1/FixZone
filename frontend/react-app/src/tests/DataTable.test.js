@@ -78,3 +78,4 @@ describe('DataTable Component', () => {
     checkboxes.forEach(cb => expect(cb).not.toBeChecked());
   });
 });
+

@@ -82,3 +82,4 @@ describe('CustomersPage', () => {
     expect(addButton).toHaveAttribute('href', '/customers/new');
   });
 });
+

@@ -38,6 +38,8 @@ import { SettingsProvider } from './context/SettingsContext';
 import SystemSettingsPage from './pages/settings/SystemSettingsPage';
 import UsersPage from './pages/users/UsersPage';
 import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
+import UserDetailsPage from './pages/users/UserDetailsPage';
+import EditUserPage from './pages/users/EditUserPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
@@ -208,6 +210,8 @@ function App() {
                       <Route path="settings" element={<SystemSettingsPage />} />
                        <Route path="users" element={<UsersPageEnhanced />} />
                        <Route path="users-old" element={<UsersPage />} />
+                       <Route path="users/:id" element={<UserDetailsPage />} />
+                       <Route path="users/:id/edit" element={<EditUserPage />} />
                       {/* Admin / Roles & Permissions */}
                       <Route
                         path="admin/roles"

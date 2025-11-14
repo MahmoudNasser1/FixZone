@@ -74,3 +74,4 @@ describe('Sidebar Component', () => {
     expect(toggleSidebarMock).toHaveBeenCalledTimes(1);
   });
 });
+

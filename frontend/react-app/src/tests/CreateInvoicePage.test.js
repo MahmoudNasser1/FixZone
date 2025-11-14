@@ -124,3 +124,4 @@ describe('CreateInvoicePage', () => {
     expect(await screen.findByText(/invoice created successfully/i)).toBeInTheDocument();
   });
 });
+
