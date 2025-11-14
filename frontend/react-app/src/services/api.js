@@ -703,39 +703,3 @@ const apiService = new ApiService();
 
 export default apiService;
 export { apiService };
-
-      method: 'PUT',
-      body: JSON.stringify(setting),
-    });
-  }
-
-  async deleteSystemSetting(key) {
-    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
-      method: 'DELETE',
-    });
-  }
-}
-
-// إنشاء instance واحد للاستخدام في التطبيق
-const apiService = new ApiService();
-
-export default apiService;
-export { apiService };
-
-      method: 'PUT',
-      body: JSON.stringify(setting),
-    });
-  }
-
-  async deleteSystemSetting(key) {
-    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
-      method: 'DELETE',
-    });
-  }
-}
-
-// إنشاء instance واحد للاستخدام في التطبيق
-const apiService = new ApiService();
-
-export default apiService;
-export { apiService };

@@ -588,9 +588,3 @@ const InvoiceDetailsPage = () => {
 };
 
 export default InvoiceDetailsPage;
-};
-
-export default InvoiceDetailsPage;
-};
-
-export default InvoiceDetailsPage;

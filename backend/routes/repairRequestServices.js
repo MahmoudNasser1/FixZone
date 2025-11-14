@@ -138,33 +138,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
-  const { id } = req.params;
-  try {
-    const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Repair request service not found' });
-    }
-    res.json({ message: 'Repair request service deleted successfully' });
-  } catch (err) {
-    console.error(`Error deleting repair request service with ID ${id}:`, err);
-    res.status(500).json({ error: 'Server Error', details: err.message });
-  }
-});
-
-module.exports = router;
-
-  const { id } = req.params;
-  try {
-    const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Repair request service not found' });
-    }
-    res.json({ message: 'Repair request service deleted successfully' });
-  } catch (err) {
-    console.error(`Error deleting repair request service with ID ${id}:`, err);
-    res.status(500).json({ error: 'Server Error', details: err.message });
-  }
-});
-
-module.exports = router;
