@@ -522,8 +522,105 @@ class ApiService {
   }
 
   // جلب الإشعارات
-  async getNotifications() {
-    return this.request('/notifications');
+  // ==================
+  // Notifications APIs
+  // ==================
+  
+  // Get all notifications (with filters and pagination)
+  async getNotifications(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.type) queryParams.append('type', params.type);
+    if (params.isRead !== undefined) queryParams.append('isRead', params.isRead);
+    if (params.channel) queryParams.append('channel', params.channel);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    
+    const query = queryParams.toString();
+    return this.request(`/notifications${query ? `?${query}` : ''}`);
+  }
+  
+  // Get unread notifications count
+  async getUnreadNotificationsCount() {
+    return this.request('/notifications/unread/count');
+  }
+  
+  // Get notification by ID
+  async getNotification(id) {
+    return this.request(`/notifications/${id}`);
+  }
+  
+  // Create a new notification
+  async createNotification(data) {
+    return this.request('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+  
+  // Update a notification
+  async updateNotification(id, data) {
+    return this.request(`/notifications/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+  
+  // Mark notification as read
+  async markNotificationAsRead(id) {
+    return this.request(`/notifications/${id}/read`, {
+      method: 'PATCH'
+    });
+  }
+  
+  // Mark all notifications as read
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/read/all', {
+      method: 'PATCH'
+    });
+  }
+  
+  // Delete a notification
+  async deleteNotification(id) {
+    return this.request(`/notifications/${id}`, {
+      method: 'DELETE'
+    });
+  }
+  
+  // ==================
+  // Notification Templates APIs (Admin only)
+  // ==================
+  
+  // Get all notification templates
+  async getNotificationTemplates() {
+    return this.request('/notificationtemplates');
+  }
+  
+  // Get notification template by ID
+  async getNotificationTemplate(id) {
+    return this.request(`/notificationtemplates/${id}`);
+  }
+  
+  // Create a new notification template
+  async createNotificationTemplate(data) {
+    return this.request('/notificationtemplates', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+  
+  // Update a notification template
+  async updateNotificationTemplate(id, data) {
+    return this.request(`/notificationtemplates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+  
+  // Delete a notification template
+  async deleteNotificationTemplate(id) {
+    return this.request(`/notificationtemplates/${id}`, {
+      method: 'DELETE'
+    });
   }
 
   // ==================
