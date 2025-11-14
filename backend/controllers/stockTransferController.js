@@ -10,9 +10,10 @@ class StockTransferController {
         transferDate,
         reason,
         notes,
-        items,
-        createdBy
+        items
       } = req.body;
+      
+      const requestedBy = req.user?.id || req.body.createdBy || req.body.requestedBy;
 
       // التحقق من المخازن
       if (fromWarehouseId === toWarehouseId) {
@@ -42,7 +43,7 @@ class StockTransferController {
         `INSERT INTO StockTransfer (
           transferNumber, fromWarehouseId, toWarehouseId, transferDate, reason, notes, requestedBy, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [transferNumber, fromWarehouseId, toWarehouseId, transferDate, reason, notes, createdBy]
+        [transferNumber, fromWarehouseId, toWarehouseId, transferDate, reason, notes, requestedBy]
       );
 
       const stockTransferId = result.insertId;
@@ -354,17 +355,30 @@ class StockTransferController {
 
   // استلام النقل
   async receiveStockTransfer(req, res) {
+    const connection = await db.getConnection();
+    
     try {
+      await connection.beginTransaction();
+      
       const { id } = req.params;
-      const { receivedBy } = req.body;
+      const receivedBy = req.user?.id || req.body.receivedBy;
+
+      if (!receivedBy) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'معرف المستلم مطلوب'
+        });
+      }
 
       // التحقق من وجود النقل
-      const [transferResult] = await db.execute(
+      const [transferResult] = await connection.execute(
         'SELECT id, status FROM StockTransfer WHERE id = ?',
         [id]
       );
 
       if (transferResult.length === 0) {
+        await connection.rollback();
         return res.status(404).json({
           success: false,
           message: 'النقل غير موجود'
@@ -373,26 +387,29 @@ class StockTransferController {
 
       const transfer = transferResult[0];
 
-      if (transfer.status !== 'shipped') {
+      if (transfer.status !== 'shipped' && transfer.status !== 'in_transit') {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
-          message: 'لا يمكن استلام نقل في حالة ' + transfer.status
+          message: `لا يمكن استلام نقل في حالة ${transfer.status}`
         });
       }
 
       // تحديث الحالة
-      await db.execute(
+      await connection.execute(
         `UPDATE StockTransfer SET 
           status = 'received',
           receivedBy = ?,
-          receivedAt = CURRENT_TIMESTAMP,
-          updatedAt = CURRENT_TIMESTAMP
+          receivedAt = NOW(),
+          updatedAt = NOW()
         WHERE id = ?`,
         [receivedBy, id]
       );
 
-      // تحديث المخزون
-      await this.updateStockLevels(id);
+      // تحديث المخزون (استخدام connection نفسه للـ transaction)
+      await this.updateStockLevels(id, connection);
+
+      await connection.commit();
 
       res.json({
         success: true,
@@ -400,12 +417,15 @@ class StockTransferController {
       });
 
     } catch (error) {
+      await connection.rollback();
       console.error('Error receiving stock transfer:', error);
       res.status(500).json({
         success: false,
         message: 'حدث خطأ في استلام النقل',
         error: error.message
       });
+    } finally {
+      connection.release();
     }
   }
 
@@ -461,10 +481,12 @@ class StockTransferController {
   }
 
   // تحديث مستويات المخزون
-  async updateStockLevels(stockTransferId) {
+  async updateStockLevels(stockTransferId, connection = null) {
+    const dbConnection = connection || db;
+    
     try {
       // جلب بيانات النقل
-      const [transferResult] = await db.execute(
+      const [transferResult] = await dbConnection.execute(
         'SELECT fromWarehouseId, toWarehouseId FROM StockTransfer WHERE id = ?',
         [stockTransferId]
       );
@@ -473,55 +495,67 @@ class StockTransferController {
 
       const { fromWarehouseId, toWarehouseId } = transferResult[0];
 
-      // جلب عناصر النقل
-      const [itemsResult] = await db.execute(
-        'SELECT inventoryItemId, quantity FROM StockTransferItem WHERE stockTransferId = ?',
+      // جلب عناصر النقل (استخدام receivedQuantity إذا متوفر، وإلا requestedQuantity)
+      const [itemsResult] = await dbConnection.execute(
+        'SELECT inventoryItemId, receivedQuantity, requestedQuantity FROM StockTransferItem WHERE transferId = ?',
         [stockTransferId]
       );
 
       // تحديث المخزون لكل عنصر
       for (const item of itemsResult) {
+        const quantity = item.receivedQuantity > 0 ? item.receivedQuantity : item.requestedQuantity;
+        
+        // التحقق من وجود كمية كافية في المخزن المصدر
+        const [sourceStock] = await dbConnection.execute(
+          'SELECT quantity FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ?',
+          [item.inventoryItemId, fromWarehouseId]
+        );
+        
+        const availableQuantity = sourceStock.length > 0 ? (sourceStock[0].quantity || 0) : 0;
+        if (availableQuantity < quantity) {
+          throw new Error(`الكمية المتاحة (${availableQuantity}) أقل من المطلوب (${quantity}) للصنف ${item.inventoryItemId}`);
+        }
+        
         // خصم من المخزن المرسل
-        await db.execute(
+        await dbConnection.execute(
           `UPDATE StockLevel SET 
-            currentQuantity = currentQuantity - ?,
-            availableQuantity = availableQuantity - ?,
-            updatedAt = CURRENT_TIMESTAMP
+            quantity = quantity - ?,
+            updatedAt = NOW()
           WHERE inventoryItemId = ? AND warehouseId = ?`,
-          [item.quantity, item.quantity, item.inventoryItemId, fromWarehouseId]
+          [quantity, item.inventoryItemId, fromWarehouseId]
         );
 
         // إضافة للمخزن المستقبل
-        await db.execute(
+        await dbConnection.execute(
           `INSERT INTO StockLevel (
-            inventoryItemId, warehouseId, currentQuantity, availableQuantity, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            inventoryItemId, warehouseId, quantity, minLevel, createdAt, updatedAt
+          ) VALUES (?, ?, ?, 0, NOW(), NOW())
           ON DUPLICATE KEY UPDATE
-            currentQuantity = currentQuantity + VALUES(currentQuantity),
-            availableQuantity = availableQuantity + VALUES(availableQuantity),
-            updatedAt = CURRENT_TIMESTAMP`,
-          [item.inventoryItemId, toWarehouseId, item.quantity, item.quantity]
+            quantity = quantity + VALUES(quantity),
+            updatedAt = NOW()`,
+          [item.inventoryItemId, toWarehouseId, quantity]
         );
 
-        // إنشاء StockMovement للمخزن المرسل
-        await db.execute(
+        // إنشاء StockMovement للمخزن المرسل (OUT)
+        await dbConnection.execute(
           `INSERT INTO StockMovement (
-            inventoryItemId, warehouseId, movementType, quantity, referenceType, referenceId, createdAt
-          ) VALUES (?, ?, 'transfer_out', ?, 'stock_transfer', ?, CURRENT_TIMESTAMP)`,
-          [item.inventoryItemId, fromWarehouseId, -item.quantity, stockTransferId]
+            inventoryItemId, fromWarehouseId, type, quantity, userId, createdAt
+          ) VALUES (?, ?, 'OUT', ?, ?, NOW())`,
+          [item.inventoryItemId, fromWarehouseId, quantity, null]
         );
 
-        // إنشاء StockMovement للمخزن المستقبل
-        await db.execute(
+        // إنشاء StockMovement للمخزن المستقبل (IN)
+        await dbConnection.execute(
           `INSERT INTO StockMovement (
-            inventoryItemId, warehouseId, movementType, quantity, referenceType, referenceId, createdAt
-          ) VALUES (?, ?, 'transfer_in', ?, 'stock_transfer', ?, CURRENT_TIMESTAMP)`,
-          [item.inventoryItemId, toWarehouseId, item.quantity, stockTransferId]
+            inventoryItemId, toWarehouseId, type, quantity, userId, createdAt
+          ) VALUES (?, ?, 'IN', ?, ?, NOW())`,
+          [item.inventoryItemId, toWarehouseId, quantity, null]
         );
       }
 
     } catch (error) {
       console.error('Error updating stock levels:', error);
+      throw error; // إعادة رمي الخطأ للسماح بالـ rollback
     }
   }
 

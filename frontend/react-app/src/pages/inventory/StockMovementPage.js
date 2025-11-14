@@ -8,11 +8,15 @@ import {
   FunnelIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
+import inventoryService from '../../services/inventoryService';
+import { useNotifications } from '../../components/notifications/NotificationSystem';
 
 const StockMovementPage = () => {
+  const notifications = useNotifications();
   const [movements, setMovements] = useState([]);
   const [filteredMovements, setFilteredMovements] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
   const [filters, setFilters] = useState({
     search: '',
     type: '',
@@ -22,122 +26,81 @@ const StockMovementPage = () => {
   });
 
   const movementTypes = [
-    { value: 'in', label: 'دخول', icon: ArrowUpIcon, color: 'text-green-600' },
-    { value: 'out', label: 'خروج', icon: ArrowDownIcon, color: 'text-red-600' },
-    { value: 'transfer', label: 'نقل', icon: ArrowsRightLeftIcon, color: 'text-blue-600' },
-    { value: 'adjustment', label: 'تسوية', icon: AdjustmentsHorizontalIcon, color: 'text-purple-600' }
+    { value: 'IN', label: 'دخول', icon: ArrowUpIcon, color: 'text-green-600' },
+    { value: 'OUT', label: 'خروج', icon: ArrowDownIcon, color: 'text-red-600' },
+    { value: 'TRANSFER', label: 'نقل', icon: ArrowsRightLeftIcon, color: 'text-blue-600' }
   ];
 
   const fetchStockMovements = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/inventory-enhanced/movements', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      console.log('Stock movements data:', data);
+      
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit
+      };
+      
+      if (filters.type) params.type = filters.type;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.itemId) params.inventoryItemId = filters.itemId;
+      
+      const response = await inventoryService.listMovements(params);
       
       // معالجة الاستجابة بشكل صحيح
-      const movementsData = Array.isArray(data) ? data : (data.data?.movements || data.movements || []);
-      setMovements(movementsData);
-      setFilteredMovements(movementsData);
+      let movementsData = [];
+      if (Array.isArray(response)) {
+        movementsData = response;
+      } else if (response && response.success) {
+        movementsData = response.data || [];
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
+      } else if (response && response.data && Array.isArray(response.data)) {
+        movementsData = response.data;
+      }
+      
+      // معالجة البيانات لاستخدام نفس البنية
+      const processedMovements = movementsData.map(m => ({
+        ...m,
+        // استخدام type من الـ API (IN/OUT/TRANSFER)
+        type: m.type || 'IN',
+        // استخدام warehouseName من fromWarehouseName أو toWarehouseName
+        warehouseName: m.type === 'IN' ? m.toWarehouseName : 
+                       m.type === 'OUT' ? m.fromWarehouseName : 
+                       `${m.fromWarehouseName || ''} → ${m.toWarehouseName || ''}`.trim()
+      }));
+      
+      setMovements(processedMovements);
+      setFilteredMovements(processedMovements);
     } catch (error) {
       console.error('Error fetching stock movements:', error);
-      // Mock data for demonstration
-      const mockMovements = [
-        {
-          id: 1,
-          type: 'in',
-          quantity: 50,
-          inventoryItemId: 1,
-          itemName: 'شاشة LCD 15.6 بوصة',
-          fromWarehouseId: null,
-          toWarehouseId: 1,
-          warehouseName: 'المخزن الرئيسي',
-          userId: 1,
-          userName: 'أحمد محمد',
-          createdAt: new Date().toISOString(),
-          reason: 'شراء جديد'
-        },
-        {
-          id: 2,
-          type: 'out',
-          quantity: 2,
-          inventoryItemId: 2,
-          itemName: 'بطارية لابتوب',
-          fromWarehouseId: 1,
-          toWarehouseId: null,
-          warehouseName: 'المخزن الرئيسي',
-          userId: 2,
-          userName: 'سارة أحمد',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          reason: 'استخدام في إصلاح'
-        },
-        {
-          id: 3,
-          type: 'transfer',
-          quantity: 10,
-          inventoryItemId: 3,
-          itemName: 'لوحة مفاتيح',
-          fromWarehouseId: 1,
-          toWarehouseId: 2,
-          warehouseName: 'مخزن الفرع',
-          userId: 1,
-          userName: 'أحمد محمد',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          reason: 'نقل بين المخازن'
-        }
-      ];
-      setMovements(mockMovements);
-      setFilteredMovements(mockMovements);
+      notifications.error('حدث خطأ في تحميل حركات المخزون');
+      setMovements([]);
+      setFilteredMovements([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const loadMovements = async () => {
-      setLoading(true);
-      await fetchStockMovements();
-      setLoading(false);
-    };
-
-    loadMovements();
-  }, []);
+    fetchStockMovements();
+  }, [pagination.page, filters.type, filters.startDate, filters.endDate, filters.itemId]);
 
   useEffect(() => {
+    // Filter locally for search term only (other filters are handled server-side)
     let filtered = movements;
 
     if (filters.search) {
       filtered = filtered.filter(movement =>
         movement.itemName?.toLowerCase().includes(filters.search.toLowerCase()) ||
         movement.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        movement.reason?.toLowerCase().includes(filters.search.toLowerCase())
+        movement.sku?.toLowerCase().includes(filters.search.toLowerCase())
       );
-    }
-
-    if (filters.type) {
-      filtered = filtered.filter(movement => movement.type === filters.type);
-    }
-
-    if (filters.startDate) {
-      filtered = filtered.filter(movement => 
-        new Date(movement.createdAt) >= new Date(filters.startDate)
-      );
-    }
-
-    if (filters.endDate) {
-      filtered = filtered.filter(movement => 
-        new Date(movement.createdAt) <= new Date(filters.endDate)
-      );
-    }
-
-    if (filters.itemId) {
-      filtered = filtered.filter(movement => movement.inventoryItemId == filters.itemId);
     }
 
     setFilteredMovements(filtered);
-  }, [filters, movements]);
+  }, [filters.search, movements]);
 
   const getMovementIcon = (type) => {
     const movementType = movementTypes.find(t => t.value === type);
@@ -155,14 +118,12 @@ const StockMovementPage = () => {
   const getMovementColor = (type) => {
     const movementType = movementTypes.find(t => t.value === type);
     switch (type) {
-      case 'in':
+      case 'IN':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'out':
+      case 'OUT':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'transfer':
+      case 'TRANSFER':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'adjustment':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -249,12 +210,25 @@ const StockMovementPage = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              صنف محدد (ID)
+            </label>
+            <input
+              type="number"
+              placeholder="معرف الصنف"
+              value={filters.itemId}
+              onChange={(e) => setFilters({...filters, itemId: e.target.value, page: 1})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               تاريخ البداية
             </label>
             <input
               type="date"
               value={filters.startDate}
-              onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+              onChange={(e) => setFilters({...filters, startDate: e.target.value, page: 1})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -266,20 +240,23 @@ const StockMovementPage = () => {
             <input
               type="date"
               value={filters.endDate}
-              onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+              onChange={(e) => setFilters({...filters, endDate: e.target.value, page: 1})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div className="flex items-end">
             <button
-              onClick={() => setFilters({
-                search: '',
-                type: '',
-                startDate: '',
-                endDate: '',
-                itemId: ''
-              })}
+              onClick={() => {
+                setFilters({
+                  search: '',
+                  type: '',
+                  startDate: '',
+                  endDate: '',
+                  itemId: ''
+                });
+                setPagination({ ...pagination, page: 1 });
+              }}
               className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
             >
               مسح الفلاتر
@@ -289,7 +266,7 @@ const StockMovementPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {movementTypes.map((type) => {
           const count = Array.isArray(movements) ? movements.filter(m => m.type === type.value).length : 0;
           const IconComponent = type.icon;
@@ -307,6 +284,34 @@ const StockMovementPage = () => {
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-700">
+            عرض {((pagination.page - 1) * pagination.limit) + 1} إلى {Math.min(pagination.page * pagination.limit, pagination.total)} من {pagination.total} حركة
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPagination({ ...pagination, page: Math.max(1, pagination.page - 1) })}
+              disabled={pagination.page === 1}
+              className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              السابق
+            </button>
+            <span className="px-3 py-2 text-sm text-gray-700">
+              صفحة {pagination.page} من {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => setPagination({ ...pagination, page: Math.min(pagination.totalPages, pagination.page + 1) })}
+              disabled={pagination.page === pagination.totalPages}
+              className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              التالي
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Movements Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -370,13 +375,13 @@ const StockMovementPage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.warehouseName}
+                      {movement.warehouseName || movement.fromWarehouseName || movement.toWarehouseName || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.userName}
+                      {movement.userName || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.reason}
+                      {movement.reason || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(movement.createdAt)}

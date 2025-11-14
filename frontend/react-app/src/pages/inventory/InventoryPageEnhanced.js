@@ -14,6 +14,7 @@ import {
 import { Input } from '../../components/ui/Input';
 import { LoadingSpinner, TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import StatsDashboard from '../../components/inventory/StatsDashboard';
+import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 
 const InventoryPageEnhanced = () => {
   const navigate = useNavigate();
@@ -43,6 +44,12 @@ const InventoryPageEnhanced = () => {
     totalQuantity: 0,
     potentialProfit: 0
   });
+
+  // State لإدارة المخزون
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [stockForm, setStockForm] = useState({ warehouseId: '', quantity: '', minLevel: '' });
+  const [savingStock, setSavingStock] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -122,15 +129,15 @@ const InventoryPageEnhanced = () => {
     stockData.forEach(stock => {
       const item = itemsData.find(i => i.id === stock.inventoryItemId);
       if (item) {
-        const qty = stock.currentQuantity || 0;
+        const qty = stock.quantity || 0;
         totalQuantity += qty;
         totalValue += qty * (item.purchasePrice || 0);
         potentialProfit += qty * ((item.sellingPrice || 0) - (item.purchasePrice || 0));
         
-        if ((stock.availableQuantity || 0) <= (item.minStockLevel || 0)) {
+        if (qty <= (stock.minLevel || 0)) {
           lowStockItems++;
         }
-        if ((stock.availableQuantity || 0) === 0) {
+        if (qty === 0) {
           outOfStockItems++;
         }
       }
@@ -151,26 +158,36 @@ const InventoryPageEnhanced = () => {
     if (warehouseId) {
       const stockLevel = stockLevels.find(s => s.inventoryItemId === itemId && s.warehouseId === warehouseId);
       if (stockLevel) {
-        return stockLevel;
+        return {
+          quantity: stockLevel.quantity || 0,
+          minLevel: stockLevel.minLevel || 0,
+          isLowStock: stockLevel.isLowStock || false,
+          warehouseId: stockLevel.warehouseId,
+          warehouseName: stockLevel.warehouseName
+        };
       }
     }
     
     // Fallback to StockLevel aggregation across all warehouses
     const stockData = stockLevels.filter(s => s.inventoryItemId === itemId);
     if (stockData.length > 0) {
-      return stockData.reduce((acc, curr) => ({
-        currentQuantity: (acc.currentQuantity || 0) + (curr.currentQuantity || 0),
-        reservedQuantity: (acc.reservedQuantity || 0) + (curr.reservedQuantity || 0),
-        availableQuantity: (acc.availableQuantity || 0) + (curr.availableQuantity || 0)
-      }), { currentQuantity: 0, reservedQuantity: 0, availableQuantity: 0 });
+      const total = stockData.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
+      return {
+        quantity: total,
+        warehouses: stockData.map(s => ({
+          warehouseId: s.warehouseId,
+          warehouseName: s.warehouseName,
+          quantity: s.quantity || 0,
+          minLevel: s.minLevel || 0
+        }))
+      };
     }
     
     // No stock level found - return error state
     return { 
-      currentQuantity: 0, 
-      reservedQuantity: 0, 
-      availableQuantity: 0,
-      error: 'No stock level found. Please add stock to warehouses.' 
+      quantity: 0, 
+      error: 'No stock level found. Please add stock to warehouses.',
+      warehouses: []
     };
   };
 
@@ -198,14 +215,14 @@ const InventoryPageEnhanced = () => {
     if (stockFilter !== 'all') {
       filtered = filtered.filter(item => {
         const stock = getStockForItem(item.id);
-        const available = stock.availableQuantity || 0;
+        const available = stock.quantity || 0;
         
         if (stockFilter === 'low') {
-          return available > 0 && available <= 5; // Consider low if 5 or less
+          return available > 0 && available <= (stock.minLevel || 5); // Consider low if at or below min level
         } else if (stockFilter === 'out') {
           return available === 0;
         } else if (stockFilter === 'normal') {
-          return available > 5;
+          return available > (stock.minLevel || 5);
         }
         return true;
       });
@@ -240,8 +257,8 @@ const InventoryPageEnhanced = () => {
       } else if (sortField === 'stock') {
         const stockA = getStockForItem(a.id);
         const stockB = getStockForItem(b.id);
-        aValue = stockA.availableQuantity || 0;
-        bValue = stockB.availableQuantity || 0;
+        aValue = stockA.quantity || 0;
+        bValue = stockB.quantity || 0;
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
       return 0;
@@ -270,13 +287,13 @@ const InventoryPageEnhanced = () => {
 
   const getStockStatusBadge = (item) => {
     const stock = getStockForItem(item.id);
-    const available = stock.availableQuantity || 0;
+    const available = stock.quantity || 0;
     
     if (available === 0) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
         نفذ
       </span>;
-    } else if (available <= 5) {
+    } else if (available <= (stock.minLevel || 5)) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
         <AlertTriangle className="w-3 h-3 ml-1" />
         منخفض
@@ -286,6 +303,57 @@ const InventoryPageEnhanced = () => {
         متوفر
       </span>;
     }
+  };
+
+  const handleManageStock = (item) => {
+    setSelectedItem(item);
+    setStockForm({ warehouseId: '', quantity: '', minLevel: '' });
+    setShowStockModal(true);
+  };
+
+  const handleCloseStockModal = () => {
+    setShowStockModal(false);
+    setSelectedItem(null);
+    setStockForm({ warehouseId: '', quantity: '', minLevel: '' });
+  };
+
+  const handleSaveStock = async () => {
+    if (!stockForm.warehouseId || stockForm.quantity === '') {
+      notifications.error('يرجى اختيار المخزن وإدخال الكمية');
+      return;
+    }
+
+    try {
+      setSavingStock(true);
+      
+      const payload = {
+        inventoryItemId: selectedItem.id,
+        warehouseId: parseInt(stockForm.warehouseId),
+        quantity: parseInt(stockForm.quantity),
+        minLevel: stockForm.minLevel ? parseInt(stockForm.minLevel) : 0,
+        notes: 'تحديث من واجهة إدارة المخزون'
+      };
+
+      const response = await inventoryService.createStockLevel(payload);
+      
+      if (response.success || response.data) {
+        notifications.success('تم تحديث المخزون بنجاح');
+        await loadData(); // إعادة تحميل البيانات
+        handleCloseStockModal();
+      } else {
+        notifications.error('حدث خطأ في تحديث المخزون');
+      }
+    } catch (error) {
+      console.error('Error saving stock:', error);
+      notifications.error('حدث خطأ في تحديث المخزون: ' + (error.message || 'Unknown error'));
+    } finally {
+      setSavingStock(false);
+    }
+  };
+
+  const getItemStockLevels = () => {
+    if (!selectedItem) return [];
+    return stockLevels.filter(s => s.inventoryItemId === selectedItem.id);
   };
 
   const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
@@ -567,7 +635,8 @@ const InventoryPageEnhanced = () => {
                   ) : (
                     filteredItems.map((item) => {
                       const stock = getStockForItem(item.id);
-                      const available = stock.availableQuantity || 0;
+                      const available = stock.quantity || 0;
+                      const warehouses = stock.warehouses || [];
                       
                       return (
                         <tr key={item.id} className="hover:bg-gray-50">
@@ -600,11 +669,13 @@ const InventoryPageEnhanced = () => {
                             ) : (
                               <>
                                 <div className="text-sm text-gray-900">
-                                  <span className="font-medium">{available}</span> {item.unit}
+                                  <span className="font-medium">{available}</span> {item.unit || 'قطعة'}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  محجوز: {stock.reservedQuantity || 0}
-                                </div>
+                                {warehouses.length > 0 && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {warehouses.length} مخزن{warehouses.length > 1 ? 'ات' : ''}
+                                  </div>
+                                )}
                               </>
                             )}
                           </td>
@@ -622,14 +693,25 @@ const InventoryPageEnhanced = () => {
                                 size="sm"
                                 onClick={() => navigate(`/inventory/${item.id}`)}
                                 className="text-blue-600 hover:text-blue-800"
+                                title="عرض التفاصيل"
                               >
                                 <Eye className="w-4 h-4" />
                               </SimpleButton>
                               <SimpleButton
                                 variant="ghost"
                                 size="sm"
+                                onClick={() => handleManageStock(item)}
+                                className="text-purple-600 hover:text-purple-800"
+                                title="إدارة المخزون"
+                              >
+                                <Warehouse className="w-4 h-4" />
+                              </SimpleButton>
+                              <SimpleButton
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => navigate(`/inventory/${item.id}/edit`)}
                                 className="text-green-600 hover:text-green-800"
+                                title="تعديل"
                               >
                                 <Edit className="w-4 h-4" />
                               </SimpleButton>
@@ -699,6 +781,121 @@ const InventoryPageEnhanced = () => {
           </SimpleCardContent>
         </SimpleCard>
       </div>
+
+      {/* Modal إدارة المخزون */}
+      <Modal open={showStockModal} onOpenChange={setShowStockModal}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>إدارة المخزون - {selectedItem?.name}</ModalTitle>
+            <ModalDescription>
+              إضافة أو تحديث الكمية في المخازن المختلفة
+            </ModalDescription>
+          </ModalHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* المخازن الموجودة */}
+            {getItemStockLevels().length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">المخازن الحالية:</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {getItemStockLevels().map((level) => (
+                    <div key={level.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <div className="font-medium text-gray-900">{level.warehouseName}</div>
+                        <div className="text-sm text-gray-500">
+                          الكمية: {level.quantity} | الحد الأدنى: {level.minLevel || 0}
+                        </div>
+                      </div>
+                      <SimpleButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setStockForm({
+                            warehouseId: level.warehouseId,
+                            quantity: level.quantity || '',
+                            minLevel: level.minLevel || ''
+                          });
+                        }}
+                        className="text-blue-600"
+                      >
+                        تعديل
+                      </SimpleButton>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* نموذج إضافة/تحديث */}
+            <div className="border-t pt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  المخزن <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={stockForm.warehouseId}
+                  onChange={(e) => setStockForm({ ...stockForm, warehouseId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">اختر المخزن</option>
+                  {warehouses.map(warehouse => (
+                    <option key={warehouse.id} value={warehouse.id}>
+                      {warehouse.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الكمية <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    value={stockForm.quantity}
+                    onChange={(e) => setStockForm({ ...stockForm, quantity: e.target.value })}
+                    placeholder="أدخل الكمية"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الحد الأدنى
+                  </label>
+                  <Input
+                    type="number"
+                    value={stockForm.minLevel}
+                    onChange={(e) => setStockForm({ ...stockForm, minLevel: e.target.value })}
+                    placeholder="الحد الأدنى للمخزون"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ModalFooter>
+            <SimpleButton
+              variant="outline"
+              onClick={handleCloseStockModal}
+              disabled={savingStock}
+            >
+              إلغاء
+            </SimpleButton>
+            <SimpleButton
+              onClick={handleSaveStock}
+              disabled={savingStock || !stockForm.warehouseId || stockForm.quantity === ''}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {savingStock ? 'جاري الحفظ...' : 'حفظ'}
+            </SimpleButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };

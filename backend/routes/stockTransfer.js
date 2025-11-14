@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const stockTransferController = require('../controllers/stockTransferController');
 const { validate } = require('../middleware/validation');
+const authMiddleware = require('../middleware/authMiddleware');
 const Joi = require('joi');
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // Validation schemas
 const createStockTransferSchema = Joi.object({
@@ -31,9 +35,8 @@ const createStockTransferSchema = Joi.object({
     'array.min': 'يجب إضافة عنصر واحد على الأقل',
     'any.required': 'عناصر النقل مطلوبة'
   }),
-  createdBy: Joi.number().integer().required().messages({
-    'number.base': 'معرف المنشئ يجب أن يكون رقم',
-    'any.required': 'معرف المنشئ مطلوب'
+  createdBy: Joi.number().integer().optional().messages({
+    'number.base': 'معرف المنشئ يجب أن يكون رقم'
   })
 }).custom((value, helpers) => {
   if (value.fromWarehouseId === value.toWarehouseId) {
@@ -59,10 +62,12 @@ const shipSchema = Joi.object({
 });
 
 const receiveSchema = Joi.object({
-  receivedBy: Joi.number().integer().required().messages({
-    'number.base': 'معرف المستقبل يجب أن يكون رقم',
-    'any.required': 'معرف المستقبل مطلوب'
+  receivedBy: Joi.number().integer().optional().messages({
+    'number.base': 'معرف المستقبل يجب أن يكون رقم'
   })
+}).custom((value, helpers) => {
+  // إذا لم يتم إرسال receivedBy، سيتم استخدام req.user.id في controller
+  return value;
 });
 
 // Routes

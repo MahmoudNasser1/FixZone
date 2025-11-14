@@ -129,7 +129,10 @@ const inventoryService = {
   // Stock Movements (Enhanced APIs)
   listMovements(params = {}) {
     const qs = new URLSearchParams(params).toString();
-    return apiService.request(`/inventory-enhanced/movements${qs ? `?${qs}` : ''}`);
+    // Try new API first, fallback to old one
+    return apiService.request(`/stock-movements${qs ? `?${qs}` : ''}`).catch(() => {
+      return apiService.request(`/inventory-enhanced/movements${qs ? `?${qs}` : ''}`);
+    });
   },
   createMovement(payload) {
     return apiService.request('/inventory-enhanced/movements', { method: 'POST', body: JSON.stringify(payload) });

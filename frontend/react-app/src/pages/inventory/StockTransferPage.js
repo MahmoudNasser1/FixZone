@@ -67,8 +67,7 @@ const StockTransferPage = () => {
     transferDate: format(new Date(), 'yyyy-MM-dd'),
     reason: '',
     notes: '',
-    items: [],
-    createdBy: user?.id || 2
+    items: []
   });
 
   // Item selection state
@@ -92,10 +91,44 @@ const StockTransferPage = () => {
         stockTransferService.getStockTransferStats()
       ]);
 
-      setTransfers(transfersData.transfers || []);
-      setWarehouses(warehousesData || []);
-      setItems(itemsData || []);
-      setStats(statsData || null);
+      // Parse API response
+      let transfers = [];
+      if (transfersData && transfersData.success) {
+        transfers = transfersData.data?.transfers || transfersData.data || [];
+      } else if (Array.isArray(transfersData)) {
+        transfers = transfersData;
+      } else if (transfersData && transfersData.transfers) {
+        transfers = transfersData.transfers;
+      }
+
+      // Parse warehouses
+      let warehouses = [];
+      if (Array.isArray(warehousesData)) {
+        warehouses = warehousesData;
+      } else if (warehousesData && warehousesData.success) {
+        warehouses = warehousesData.data || [];
+      }
+
+      // Parse items
+      let items = [];
+      if (Array.isArray(itemsData)) {
+        items = itemsData;
+      } else if (itemsData && itemsData.success) {
+        items = itemsData.data?.items || itemsData.data || [];
+      }
+
+      // Parse stats
+      let statsDataParsed = null;
+      if (statsData && statsData.success) {
+        statsDataParsed = statsData.data || statsData;
+      } else if (statsData) {
+        statsDataParsed = statsData;
+      }
+
+      setTransfers(transfers);
+      setWarehouses(warehouses);
+      setItems(items);
+      setStats(statsDataParsed);
     } catch (err) {
       setError(err.message || 'حدث خطأ في تحميل البيانات');
       console.error('Error loading transfer data:', err);
@@ -156,8 +189,7 @@ const StockTransferPage = () => {
         transferDate: format(new Date(), 'yyyy-MM-dd'),
         reason: '',
         notes: '',
-        items: [],
-        createdBy: user?.id || 2
+        items: []
       });
       await loadData();
     } catch (err) {
@@ -171,10 +203,12 @@ const StockTransferPage = () => {
   const handleApprove = async (id) => {
     try {
       setLoading(true);
-      await stockTransferService.approveStockTransfer(id, 1); // TODO: Get user ID from auth
+      setError(null);
+      await stockTransferService.approveStockTransfer(id); // Will use req.user.id from authMiddleware
       await loadData();
     } catch (err) {
       setError(err.message || 'حدث خطأ في الموافقة على النقل');
+      console.error('Error approving transfer:', err);
     } finally {
       setLoading(false);
     }
@@ -183,10 +217,12 @@ const StockTransferPage = () => {
   const handleShip = async (id) => {
     try {
       setLoading(true);
-      await stockTransferService.shipStockTransfer(id, 1);
+      setError(null);
+      await stockTransferService.shipStockTransfer(id); // Will use req.user.id from authMiddleware
       await loadData();
     } catch (err) {
       setError(err.message || 'حدث خطأ في شحن النقل');
+      console.error('Error shipping transfer:', err);
     } finally {
       setLoading(false);
     }
@@ -195,10 +231,12 @@ const StockTransferPage = () => {
   const handleReceive = async (id) => {
     try {
       setLoading(true);
-      await stockTransferService.receiveStockTransfer(id, 1);
+      setError(null);
+      await stockTransferService.receiveStockTransfer(id); // Will use req.user.id from authMiddleware
       await loadData();
     } catch (err) {
       setError(err.message || 'حدث خطأ في استلام النقل');
+      console.error('Error receiving transfer:', err);
     } finally {
       setLoading(false);
     }
@@ -232,24 +270,28 @@ const StockTransferPage = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'draft': return 'default';
+      case 'pending': return 'default';
       case 'approved': return 'info';
+      case 'in_transit': return 'warning';
       case 'shipped': return 'warning';
       case 'received': return 'primary';
       case 'completed': return 'success';
       case 'cancelled': return 'error';
+      case 'rejected': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'draft': return 'مسودة';
+      case 'pending': return 'قيد الانتظار';
       case 'approved': return 'معتمد';
+      case 'in_transit': return 'في الطريق';
       case 'shipped': return 'تم الشحن';
       case 'received': return 'تم الاستلام';
       case 'completed': return 'مكتمل';
       case 'cancelled': return 'ملغي';
+      case 'rejected': return 'مرفوض';
       default: return status;
     }
   };
@@ -351,7 +393,7 @@ const StockTransferPage = () => {
           <TableBody>
             {transfers.map((transfer) => (
               <TableRow key={transfer.id}>
-                <TableCell>{transfer.referenceNumber}</TableCell>
+                <TableCell>{transfer.transferNumber || transfer.referenceNumber || `#${transfer.id}`}</TableCell>
                 <TableCell>{transfer.fromWarehouseName}</TableCell>
                 <TableCell>{transfer.toWarehouseName}</TableCell>
                 <TableCell>
@@ -364,7 +406,7 @@ const StockTransferPage = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{transfer.totalItems || 0}</TableCell>
+                <TableCell>{transfer.items?.length || transfer.totalItems || 0}</TableCell>
                 <TableCell>{transfer.reason || '-'}</TableCell>
                 <TableCell>
                   <IconButton
@@ -374,31 +416,34 @@ const StockTransferPage = () => {
                     <ViewIcon />
                   </IconButton>
                   
-                  {transfer.status === 'draft' && (
+                  {transfer.status === 'pending' && (
                     <IconButton
                       size="small"
                       onClick={() => handleApprove(transfer.id)}
                       color="success"
+                      title="موافقة"
                     >
                       <CheckIcon />
                     </IconButton>
                   )}
                   
-                  {transfer.status === 'approved' && (
+                  {(transfer.status === 'approved' || transfer.status === 'pending') && (
                     <IconButton
                       size="small"
                       onClick={() => handleShip(transfer.id)}
                       color="primary"
+                      title="شحن"
                     >
                       <ShippingIcon />
                     </IconButton>
                   )}
                   
-                  {transfer.status === 'shipped' && (
+                  {(transfer.status === 'shipped' || transfer.status === 'in_transit') && (
                     <IconButton
                       size="small"
                       onClick={() => handleReceive(transfer.id)}
                       color="info"
+                      title="استلام"
                     >
                       <CheckIcon />
                     </IconButton>
@@ -409,16 +454,18 @@ const StockTransferPage = () => {
                       size="small"
                       onClick={() => handleComplete(transfer.id)}
                       color="success"
+                      title="إكمال"
                     >
                       <CheckIcon />
                     </IconButton>
                   )}
                   
-                  {(transfer.status === 'draft' || transfer.status === 'approved') && (
+                  {(transfer.status === 'pending' || transfer.status === 'approved') && (
                     <IconButton
                       size="small"
                       onClick={() => handleDelete(transfer.id)}
                       color="error"
+                      title="حذف"
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -608,7 +655,7 @@ const StockTransferPage = () => {
         {selectedTransfer && (
           <>
             <DialogTitle>
-              تفاصيل النقل - {selectedTransfer.referenceNumber}
+              تفاصيل النقل - {selectedTransfer.transferNumber || selectedTransfer.referenceNumber || `#${selectedTransfer.id}`}
             </DialogTitle>
             <DialogContent>
               <Grid container spacing={2}>
