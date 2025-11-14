@@ -511,14 +511,19 @@ class ApiService {
   // Dashboard APIs
   // ==================
   
-  // جلب إحصائيات لوحة التحكم
+  // Get dashboard statistics
   async getDashboardStats() {
     return this.request('/dashboard/stats');
   }
 
-  // جلب الطلبات الحديثة
+  // Get recent repairs
   async getRecentRepairs(limit = 10) {
     return this.request(`/dashboard/recent-repairs?limit=${limit}`);
+  }
+  
+  // Get alerts (overdue repairs and low stock items)
+  async getDashboardAlerts() {
+    return this.request('/dashboard/alerts');
   }
 
   // جلب الإشعارات

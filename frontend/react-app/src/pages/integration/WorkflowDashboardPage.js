@@ -22,17 +22,22 @@ import {
   ShoppingCartIcon
 } from '@heroicons/react/24/outline';
 import { useSettings } from '../../context/SettingsContext';
+import api from '../../services/api';
+import { useNotifications } from '../../components/notifications/NotificationSystem';
 
 const WorkflowDashboardPage = () => {
   const navigate = useNavigate();
   const { formatMoney } = useSettings();
+  const notifications = useNotifications();
   const [stats, setStats] = useState(null);
   const [recentRepairs, setRecentRepairs] = useState([]);
   const [todayStats, setTodayStats] = useState(null);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [pendingInvoices, setPendingInvoices] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
+  const [dashboardAlerts, setDashboardAlerts] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadAllData();
@@ -42,49 +47,89 @@ const WorkflowDashboardPage = () => {
   }, []);
 
   const loadAllData = async () => {
-    setLoading(true);
-    await Promise.all([
-      fetchStats(),
-      fetchRecentRepairs(),
-      fetchTodayStats(),
-      fetchLowStockItems(),
-      fetchPendingInvoices(),
-      fetchRecentPayments()
-    ]);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      // Fetch alerts first (needed for low stock items)
+      await fetchDashboardAlerts();
+      // Then fetch all other data in parallel
+      await Promise.all([
+        fetchDashboardStats(),
+        fetchRecentRepairs(),
+        fetchTodayStats(),
+        fetchLowStockItems(),
+        fetchPendingInvoices(),
+        fetchRecentPayments()
+      ]);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setError(err.message || 'Failed to load dashboard data');
+      notifications.error('خطأ في التحميل', { 
+        message: err.message || 'فشل تحميل بيانات لوحة التحكم' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fetchStats = async () => {
+  // Use new Dashboard API
+  const fetchDashboardStats = async () => {
+    try {
+      const dashboardStats = await api.getDashboardStats().catch(() => null);
+      if (dashboardStats?.success && dashboardStats?.data) {
+        const data = dashboardStats.data;
+        setStats({
+          totalRepairs: data.totalRequests || 0,
+          pendingRepairs: data.pendingRequests || 0,
+          inProgressRepairs: data.requestsByStatus?.find(s => s.status === 'in_progress')?.count || 0,
+          completedRepairs: data.completedRequests || 0,
+          deliveredRepairs: data.requestsByStatus?.find(s => s.status === 'delivered')?.count || 0,
+          delayedCount: data.delayedCount || 0,
+          lowStockCount: data.lowStockCount || 0,
+          technicianTasksCount: data.technicianTasksCount || 0
+        });
+        setTodayStats({
+          totalRevenue: 0, // Will be fetched separately
+          paymentCount: 0, // Will be fetched separately
+          repairs: data.todayStats?.repairs || 0,
+          pending: data.todayStats?.pending || 0
+        });
+      } else {
+        // Fallback to old method if new API fails
+        await fetchStatsFallback();
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      await fetchStatsFallback();
+    }
+  };
+
+  // Fallback method using old API
+  const fetchStatsFallback = async () => {
     try {
       const [repairsRes, customersRes, inventoryRes] = await Promise.all([
-        fetch('http://localhost:3001/api/repairs', { credentials: 'include' }),
-        fetch('http://localhost:3001/api/customers', { credentials: 'include' }),
-        fetch('http://localhost:3001/api/inventory', { credentials: 'include' })
+        api.getRepairRequests().catch(() => ({ data: [] })),
+        api.getCustomers().catch(() => ({ data: [] })),
+        api.getInventoryItems().catch(() => ({ data: [] }))
       ]);
 
-      const repairs = await repairsRes.json();
-      const customers = await customersRes.json();
-      const inventory = await inventoryRes.json();
-
-      const repairsArray = Array.isArray(repairs) ? repairs : (repairs.data || []);
-      const customersArray = Array.isArray(customers) ? customers : (customers.data || []);
-      const inventoryArray = Array.isArray(inventory) ? inventory : (inventory.items || inventory.data || []);
+      const repairsArray = Array.isArray(repairsRes) ? repairsRes : (repairsRes.data || repairsRes || []);
+      const customersArray = Array.isArray(customersRes) ? customersRes : (customersRes.data || customersRes || []);
+      const inventoryArray = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes.data || inventoryRes.items || inventoryRes || []);
 
       setStats({
         totalRepairs: repairsArray.length,
-        pendingRepairs: repairsArray.filter(r => r.status === 'pending').length,
-        inProgressRepairs: repairsArray.filter(r => r.status === 'in_progress').length,
-        completedRepairs: repairsArray.filter(r => r.status === 'completed').length,
-        deliveredRepairs: repairsArray.filter(r => r.status === 'delivered').length,
+        pendingRepairs: repairsArray.filter(r => ['pending', 'RECEIVED', 'في الانتظار'].includes(r.status)).length,
+        inProgressRepairs: repairsArray.filter(r => ['in_progress', 'DIAGNOSED', 'قيد الإصلاح'].includes(r.status)).length,
+        completedRepairs: repairsArray.filter(r => ['completed', 'COMPLETED', 'مكتمل'].includes(r.status)).length,
+        deliveredRepairs: repairsArray.filter(r => ['delivered', 'DELIVERED', 'مسلم'].includes(r.status)).length,
         totalCustomers: customersArray.length,
-        activeCustomers: customersArray.filter(c => c.status === 'active').length,
+        activeCustomers: customersArray.filter(c => !c.deletedAt && c.status !== 'deleted').length,
         totalInventoryItems: inventoryArray.length,
-        lowStockCount: inventoryArray.filter(item => 
-          item.currentQuantity <= (item.minStockLevel || 0)
-        ).length
+        lowStockCount: 0
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching stats (fallback):', error);
       setStats({
         totalRepairs: 0,
         pendingRepairs: 0,
@@ -101,12 +146,18 @@ const WorkflowDashboardPage = () => {
 
   const fetchRecentRepairs = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/repairs?limit=5', { 
-        credentials: 'include' 
-      });
-      const data = await response.json();
-      const repairsArray = Array.isArray(data) ? data : (data.data || []);
-      setRecentRepairs(repairsArray.slice(0, 5));
+      // Use new Dashboard API for recent repairs
+      const recentData = await api.getRecentRepairs(5).catch(() => null);
+      if (recentData?.success && recentData?.data) {
+        setRecentRepairs(Array.isArray(recentData.data) ? recentData.data : []);
+      } else if (Array.isArray(recentData)) {
+        setRecentRepairs(recentData);
+      } else {
+        // Fallback to old method
+        const repairsRes = await api.getRepairRequests().catch(() => ({ data: [] }));
+        const repairsArray = Array.isArray(repairsRes) ? repairsRes : (repairsRes.data || repairsRes || []);
+        setRecentRepairs(repairsArray.slice(0, 5));
+      }
     } catch (error) {
       console.error('Error fetching recent repairs:', error);
       setRecentRepairs([]);
@@ -116,25 +167,60 @@ const WorkflowDashboardPage = () => {
   const fetchTodayStats = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`http://localhost:3001/api/reports/daily-revenue?date=${today}`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      setTodayStats(data);
+      const data = await api.request(`/reports/daily-revenue?date=${today}`).catch(() => null);
+      if (data) {
+        setTodayStats({
+          totalRevenue: data.totalRevenue || 0,
+          paymentCount: data.paymentCount || 0
+        });
+      } else {
+        // Calculate from recent payments if API fails
+        const paymentsRes = await api.request('/payments').catch(() => ({ data: [] }));
+        const paymentsArray = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes.data || paymentsRes.payments || paymentsRes || []);
+        const todayPayments = paymentsArray.filter(p => {
+          const paymentDate = new Date(p.createdAt || p.paymentDate);
+          return paymentDate.toISOString().split('T')[0] === today;
+        });
+        setTodayStats({
+          totalRevenue: todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+          paymentCount: todayPayments.length
+        });
+      }
     } catch (error) {
       console.error('Error fetching today stats:', error);
       setTodayStats({ totalRevenue: 0, paymentCount: 0 });
     }
   };
 
+  const fetchDashboardAlerts = async () => {
+    try {
+      const alertsData = await api.getDashboardAlerts().catch(() => null);
+      if (alertsData?.success && alertsData?.data) {
+        setDashboardAlerts(alertsData.data);
+        // Update low stock items from alerts
+        if (alertsData.data.lowStockItems && alertsData.data.lowStockItems.length > 0) {
+          setLowStockItems(alertsData.data.lowStockItems.slice(0, 5));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard alerts:', error);
+    }
+  };
+
   const fetchLowStockItems = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/stocklevels/low-stock', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setLowStockItems(Array.isArray(data) ? data.slice(0, 5) : []);
+      // Try to use dashboard alerts first
+      if (dashboardAlerts?.lowStockItems && dashboardAlerts.lowStockItems.length > 0) {
+        setLowStockItems(dashboardAlerts.lowStockItems.slice(0, 5));
+        return;
+      }
+      
+      // Fallback to old endpoint
+      const response = await api.request('/stocklevels/low-stock').catch(() => null);
+      if (response && Array.isArray(response)) {
+        setLowStockItems(response.slice(0, 5));
+      } else if (response?.data && Array.isArray(response.data)) {
+        setLowStockItems(response.data.slice(0, 5));
       } else {
         setLowStockItems([]);
       }
@@ -146,12 +232,11 @@ const WorkflowDashboardPage = () => {
 
   const fetchPendingInvoices = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/invoices', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      const invoicesArray = Array.isArray(data) ? data : (data.data || data.invoices || []);
-      const pending = invoicesArray.filter(inv => inv.status === 'unpaid' || inv.paymentStatus === 'unpaid');
+      const invoicesRes = await api.getInvoices().catch(() => ({ data: [] }));
+      const invoicesArray = Array.isArray(invoicesRes) ? invoicesRes : (invoicesRes.data || invoicesRes.invoices || invoicesRes || []);
+      const pending = invoicesArray.filter(inv => 
+        inv.status === 'unpaid' || inv.paymentStatus === 'unpaid' || inv.status === 'pending'
+      );
       setPendingInvoices(pending.slice(0, 5));
     } catch (error) {
       console.error('Error fetching pending invoices:', error);
@@ -161,11 +246,8 @@ const WorkflowDashboardPage = () => {
 
   const fetchRecentPayments = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/payments', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      const paymentsArray = Array.isArray(data) ? data : (data.data || data.payments || []);
+      const paymentsRes = await api.request('/payments').catch(() => ({ data: [] }));
+      const paymentsArray = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes.data || paymentsRes.payments || paymentsRes || []);
       setRecentPayments(paymentsArray.slice(0, 5));
     } catch (error) {
       console.error('Error fetching recent payments:', error);

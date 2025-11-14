@@ -131,7 +131,8 @@ function App() {
 
                     {/* App routes under main layout */}
                     <Route path="/*" element={<MainLayout />}>
-                      <Route index element={<DashboardPage />} />
+                      <Route index element={<WorkflowDashboardPage />} />
+                      <Route path="dashboard" element={<DashboardPage />} />
 
                       {/* Repairs */}
                       <Route path="repairs" element={<RepairsPage />} />
