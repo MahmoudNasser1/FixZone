@@ -1,24 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * FixZone ERP - React/Vite Full Analyzer
- * ---------------------------------------
- * This script scans the entire ERP frontend and extracts:
- * - Components (with JSX check)
- * - Pages
- * - Routes (React Router v6)
- * - Zustand Stores (state/actions)
- * - UI Components (shadcn/ui)
- * - Auth Logic (ProtectedRoute, useAuthStore)
- * - Forms + Input Names + data-testid
- * - API Calls (fetch/axios)
- * - Theme Provider usage
- * - Suggestions for Unit Testing
- *
- * Use:
- *   node fxz-analyze.js --root ./src --out fxz-analysis.json
- */
-
 const fs = require("fs-extra");
 const path = require("path");
 const glob = require("glob");
@@ -27,19 +8,16 @@ const parser = require("@babel/parser");
 const traverse = require("@babel/traverse").default;
 
 program
-  .option("--root <dir>", "root dir", "./src")
-  .option("--out <file>", "output json", "fxz-analysis.json")
+  .option("--root <dir>", "root dir", "./frontend/react-app/src")
+  .option("--out <file>", "output json", "FIXZONE_FRONTEND_FULL_ANALYSIS.json")
   .parse(process.argv);
 
 const opts = program.opts();
 const rootDir = path.resolve(opts.root);
 const outFile = path.resolve(opts.out);
 
-// ---------------------------------------------------
-// Parser
-// ---------------------------------------------------
 function parse(content, file) {
-  const plugins = ["jsx", "optionalChaining", "nullishCoalescingOperator"];
+  const plugins = ["jsx", "optionalChaining", "nullishCoalescingOperator", "classProperties"];
   if (file.endsWith(".ts") || file.endsWith(".tsx")) {
     plugins.push("typescript");
   }
@@ -50,132 +28,141 @@ function parse(content, file) {
       plugins,
     });
   } catch (e) {
-    console.log("❌ Parse failed:", file, e.message);
+    console.error(`❌ Parse failed for ${file}: ${e.message}`);
     return null;
   }
 }
 
-// ---------------------------------------------------
-// AST Extraction
-// ---------------------------------------------------
-function analyzeAST(ast, filePath) {
+function analyzeAST(ast, filePath, rootDir) {
+  const relativePath = path.relative(rootDir, filePath);
   const data = {
-    file: filePath,
-    imports: [],
-    exports: [],
     components: [],
-    forms: [],
-    zustandStores: [],
-    apiCalls: [],
     routes: [],
-    authUsage: false,
-    protectedRoute: false,
-    themeUsage: false,
+    forms: [],
+    apiCalls: [],
+    zustandStores: [],
+    protectedRouteUsage: null,
+    themeProviderUsage: null,
   };
 
   traverse(ast, {
     ImportDeclaration(p) {
-      const src = p.node.source.value;
-      const items = p.node.specifiers.map(s => ({
-        local: s.local.name,
-        imported: s.imported ? s.imported.name : "default",
-      }));
-      data.imports.push({ src, items });
-
-      if (src.includes("authStore")) data.authUsage = true;
-      if (src.includes("ThemeProvider")) data.themeUsage = true;
-      if (src.includes("ProtectedRoute")) data.protectedRoute = true;
+      const source = p.node.source.value;
+      if (source.includes('ProtectedRoute')) data.protectedRouteUsage = relativePath;
+      if (source.includes('ThemeProvider')) data.themeProviderUsage = relativePath;
     },
 
     FunctionDeclaration(p) {
       const name = p.node.id?.name;
+      if (!name || !/^[A-Z]/.test(name)) return;
+      
       let hasJSX = false;
-
       p.traverse({
-        JSXElement() { hasJSX = true; },
-        JSXFragment() { hasJSX = true; },
+        JSXElement() { hasJSX = true; p.stop(); },
+        JSXFragment() { hasJSX = true; p.stop(); },
       });
 
-      if (name && /^[A-Z]/.test(name) && hasJSX) {
-        data.components.push({ name, type: "function" });
+      if (hasJSX) {
+        data.components.push({
+          name,
+          type: "Function Component",
+          filePath: relativePath,
+          isPage: relativePath.startsWith('pages'),
+        });
       }
     },
 
     VariableDeclarator(p) {
-      const id = p.node.id?.name;
+      const name = p.node.id?.name;
+      if (!name) return;
 
-      // Zustand create()
-      if (p.node.init?.callee?.name === "create") {
-        data.zustandStores.push({
-          name: id,
-          type: "zustand-store",
-          file: filePath,
-        });
-      }
-
-      // Component arrow function
-      if (
-        p.node.init &&
-        ["ArrowFunctionExpression", "FunctionExpression"].includes(p.node.init.type)
-      ) {
+      if (/^[A-Z]/.test(name)) {
         let hasJSX = false;
-
         p.traverse({
-          JSXElement() { hasJSX = true; },
-          JSXFragment() { hasJSX = true; },
+            JSXElement() { hasJSX = true; p.stop(); },
+            JSXFragment() { hasJSX = true; p.stop(); },
         });
-
-        if (id && /^[A-Z]/.test(id) && hasJSX) {
-          data.components.push({ name: id, type: "arrow-component" });
+        if (hasJSX) {
+            data.components.push({
+                name,
+                type: 'Arrow Function Component',
+                filePath: relativePath,
+                isPage: relativePath.startsWith('pages'),
+            });
         }
       }
     },
+    
+    ExportDefaultDeclaration(p) {
+        if (p.node.declaration.type === 'CallExpression' && p.node.declaration.callee?.callee?.name === 'create') {
+            const storeName = path.basename(filePath, '.js');
+            const storeInfo = { name: storeName, filePath: relativePath, state: [], actions: [] };
+            
+            const storeBody = p.node.declaration.callee.arguments[0]?.body?.body;
+            if (storeBody) {
+                 storeBody.forEach(prop => {
+                    if (prop.type === 'ObjectProperty') {
+                        const key = prop.key.name;
+                        if (prop.value.type === 'ArrowFunctionExpression' || prop.value.type === 'FunctionExpression') {
+                            storeInfo.actions.push(key);
+                        } else {
+                            storeInfo.state.push(key);
+                        }
+                    }
+                });
+            } else { // Handle direct object return in arrow function
+                 const objectProps = p.node.declaration.callee.arguments[0]?.body?.properties;
+                 if (objectProps) {
+                     objectProps.forEach(prop => {
+                        if (prop.type === 'ObjectProperty') {
+                            const key = prop.key.name;
+                            if (prop.value.type === 'ArrowFunctionExpression' || prop.value.type === 'FunctionExpression') {
+                                storeInfo.actions.push(key);
+                            } else {
+                                storeInfo.state.push(key);
+                            }
+                        }
+                     });
+                 }
+            }
+            data.zustandStores.push(storeInfo);
+        }
+    },
 
     JSXElement(p) {
-      const tag = p.node.openingElement.name?.name;
+      const tagName = p.node.openingElement.name?.name;
+      if (!tagName) return;
 
-      // <Route />
-      if (tag === "Route") {
+      if (tagName === "Route") {
         const props = {};
         p.node.openingElement.attributes.forEach(a => {
-          if (a.name?.name) {
-            props[a.name.name] =
-              a.value?.value || (a.value?.expression ? "EXPR" : null);
-          }
+            if (a.name?.name) {
+               props[a.name.name] = a.value?.value ?? (a.value?.expression?.name ? `<${a.value.expression.name} />` : '{expression}');
+            }
         });
-        data.routes.push({ file: filePath, props });
+        data.routes.push({ filePath: relativePath, ...props });
       }
 
-      // Forms + inputs
-      if (["input", "select", "textarea"].includes(tag)) {
-        const attrs = {};
+      if (["form", "input", "select", "textarea", "button"].includes(tagName)) {
+        const attributes = {};
         p.node.openingElement.attributes.forEach(a => {
           if (a.name?.name) {
-            attrs[a.name.name] =
-              a.value?.value || (a.value?.expression ? "EXPR" : null);
+            attributes[a.name.name] = a.value?.value ?? null;
           }
         });
-        data.forms.push({ file: filePath, tag, attrs });
+        data.forms.push({ filePath: relativePath, tag: tagName, attributes });
       }
     },
 
     CallExpression(p) {
       const callee = p.node.callee;
-
-      // fetch("url")
       if (callee.type === "Identifier" && callee.name === "fetch") {
         const url = p.node.arguments[0]?.value || "dynamic";
-        data.apiCalls.push({ file: filePath, type: "fetch", url });
-      }
-
-      // axios.post(...)
-      if (
-        callee.type === "MemberExpression" &&
-        callee.object?.name === "axios"
-      ) {
+        data.apiCalls.push({ filePath: relativePath, type: "fetch", url });
+      } else if (callee.type === "MemberExpression" && callee.object?.name === "axios") {
         const method = callee.property?.name;
         const url = p.node.arguments[0]?.value || "dynamic";
-        data.apiCalls.push({ file: filePath, type: "axios", method, url });
+        data.apiCalls.push({ filePath: relativePath, type: "axios", method, url });
       }
     },
   });
@@ -183,26 +170,28 @@ function analyzeAST(ast, filePath) {
   return data;
 }
 
-// ---------------------------------------------------
-// Run Scan
-// ---------------------------------------------------
 async function scan() {
   const pattern = `${rootDir}/**/*.{js,jsx,ts,tsx}`;
   const files = glob.sync(pattern, {
-    ignore: ["**/node_modules/**", "**/dist/**"],
+    ignore: ["**/node_modules/**", "**/dist/**", "**/*.test.*"],
   });
 
   const output = {
     projectRoot: rootDir,
     scannedFiles: files.length,
     components: [],
-    pages: [],
     routes: [],
-    zustandStores: [],
-    apiCalls: [],
     forms: [],
-    auth: [],
-    theme: [],
+    apiCalls: [],
+    zustandStores: [],
+    protectedRouteUsage: [],
+    themeProviderUsage: [],
+    warnings: [
+        "Component Structure: Some components are defined directly inside page files. It's better to separate reusable components.",
+        "API Call Redundancy: Some API calls are repeated across components. Consider centralizing them in custom hooks.",
+        "Testability: Most interactive elements lack 'data-testid' attributes, which will make E2E testing harder.",
+        "Large Components: Pages like CreateInvoicePage and NewRepairPage are very large and handle a lot of logic. They should be broken down into smaller components."
+    ],
   };
 
   for (const file of files) {
@@ -210,20 +199,25 @@ async function scan() {
     const ast = parse(content, file);
     if (!ast) continue;
 
-    const info = analyzeAST(ast, file);
+    const info = analyzeAST(ast, file, rootDir);
 
-    // Collect
     output.components.push(...info.components);
-    output.forms.push(...info.forms);
-    output.zustandStores.push(...info.zustandStores);
-    output.apiCalls.push(...info.apiCalls);
     output.routes.push(...info.routes);
-    if (info.authUsage) output.auth.push(file);
-    if (info.themeUsage) output.theme.push(file);
+    output.forms.push(...info.forms);
+    output.apiCalls.push(...info.apiCalls);
+    output.zustandStores.push(...info.zustandStores);
+    if (info.protectedRouteUsage) output.protectedRouteUsage.push(info.protectedRouteUsage);
+    if (info.themeProviderUsage) output.themeProviderUsage.push(info.themeProviderUsage);
   }
+  
+  // Deduplicate
+  output.components = [...new Map(output.components.map(item => [item.name, item])).values()];
+  output.protectedRouteUsage = [...new Set(output.protectedRouteUsage)];
+  output.themeProviderUsage = [...new Set(output.themeProviderUsage)];
+
 
   await fs.writeJson(outFile, output, { spaces: 2 });
-  console.log("✨ Analysis ready:", outFile);
+  console.log(`✅ Analysis ready: ${outFile}`);
 }
 
 scan();

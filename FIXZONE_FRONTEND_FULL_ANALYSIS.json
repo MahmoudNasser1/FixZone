@@ -1,0 +1,944 @@
+{
+  "projectRoot": "/opt/lampp/htdocs/FixZone/frontend/react-app/src",
+  "scannedFiles": 189,
+  "components": [
+    {
+      "name": "Boot",
+      "type": "Arrow Function Component",
+      "filePath": "index.js",
+      "isPage": false
+    },
+    {
+      "name": "ProtectedRoute",
+      "type": "Arrow Function Component",
+      "filePath": "components/auth/ProtectedRoute.js",
+      "isPage": false
+    },
+    {
+      "name": "NotificationDemoPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/NotificationDemoPage.js",
+      "isPage": true
+    },
+    {
+      "name": "LoginPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/LoginPage.js",
+      "isPage": true
+    },
+    {
+      "name": "LayoutDemo",
+      "type": "Arrow Function Component",
+      "filePath": "pages/LayoutDemo.js",
+      "isPage": true
+    },
+    {
+      "name": "InvoiceFinalizationPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/InvoiceFinalizationPage.js",
+      "isPage": true
+    },
+    {
+      "name": "DeliveryPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/DeliveryPage.js",
+      "isPage": true
+    },
+    {
+      "name": "DashboardPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/DashboardPage.js",
+      "isPage": true
+    },
+    {
+      "name": "VendorsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/vendors/VendorsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "VendorForm",
+      "type": "Arrow Function Component",
+      "filePath": "pages/vendors/VendorForm.js",
+      "isPage": true
+    },
+    {
+      "name": "UsersPageEnhanced",
+      "type": "Arrow Function Component",
+      "filePath": "pages/users/UsersPageEnhanced.js",
+      "isPage": true
+    },
+    {
+      "name": "UsersPage",
+      "type": "Function Component",
+      "filePath": "pages/users/UsersPage.js",
+      "isPage": true
+    },
+    {
+      "name": "SystemVariablesPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/settings/SystemVariablesPage.js",
+      "isPage": true
+    },
+    {
+      "name": "SystemSettingsPage",
+      "type": "Function Component",
+      "filePath": "pages/settings/SystemSettingsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "ServicesCatalogPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/services/ServicesCatalogPage.js",
+      "isPage": true
+    },
+    {
+      "name": "ServicesCatalog",
+      "type": "Arrow Function Component",
+      "filePath": "pages/services/ServicesCatalog.js",
+      "isPage": true
+    },
+    {
+      "name": "ServiceForm",
+      "type": "Arrow Function Component",
+      "filePath": "pages/services/ServiceForm.js",
+      "isPage": true
+    },
+    {
+      "name": "ServiceDetails",
+      "type": "Arrow Function Component",
+      "filePath": "pages/services/ServiceDetails.js",
+      "isPage": true
+    },
+    {
+      "name": "TechnicianReportsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/reports/TechnicianReportsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "FinancialReportsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/reports/FinancialReportsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "DailyReportsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/reports/DailyReportsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairsPageSimple",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/RepairsPageSimple.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairsPageEnhanced",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/RepairsPageEnhanced.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/RepairsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairTrackingPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/RepairTrackingPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairQRPrintPage",
+      "type": "Function Component",
+      "filePath": "pages/repairs/RepairQRPrintPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairPrintPage",
+      "type": "Function Component",
+      "filePath": "pages/repairs/RepairPrintPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RepairDetailsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/RepairDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PublicRepairTrackingPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/PublicRepairTrackingPage.js",
+      "isPage": true
+    },
+    {
+      "name": "NewRepairPageEnhanced",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/NewRepairPageEnhanced.js",
+      "isPage": true
+    },
+    {
+      "name": "NewRepairPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/repairs/NewRepairPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PaymentsPage",
+      "type": "Function Component",
+      "filePath": "pages/payments/PaymentsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PaymentReportsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/payments/PaymentReportsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PaymentDetailsPage",
+      "type": "Function Component",
+      "filePath": "pages/payments/PaymentDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "OverduePaymentsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/payments/OverduePaymentsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "EditPaymentPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/payments/EditPaymentPage.js",
+      "isPage": true
+    },
+    {
+      "name": "CreatePaymentPage",
+      "type": "Function Component",
+      "filePath": "pages/payments/CreatePaymentPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InvoicesPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/invoices/InvoicesPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InvoiceTemplatesPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/invoices/InvoiceTemplatesPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InvoiceDetailsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/invoices/InvoiceDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "EditInvoicePage",
+      "type": "Function Component",
+      "filePath": "pages/invoices/EditInvoicePage.js",
+      "isPage": true
+    },
+    {
+      "name": "CreateInvoicePage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/invoices/CreateInvoicePage.js",
+      "isPage": true
+    },
+    {
+      "name": "WarehouseManagementPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/WarehouseManagementPage.js",
+      "isPage": true
+    },
+    {
+      "name": "StockTransferPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/StockTransferPage.js",
+      "isPage": true
+    },
+    {
+      "name": "StockMovementPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/StockMovementPage.js",
+      "isPage": true
+    },
+    {
+      "name": "StockCountPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/StockCountPage.js",
+      "isPage": true
+    },
+    {
+      "name": "StockAlertsPageEnhanced",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/StockAlertsPageEnhanced.js",
+      "isPage": true
+    },
+    {
+      "name": "StockAlertsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/StockAlertsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PartsUsageReportPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/PartsUsageReportPage.js",
+      "isPage": true
+    },
+    {
+      "name": "NewInventoryItemPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/NewInventoryItemPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryTransferPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/InventoryTransferPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryReportsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/InventoryReportsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryPageEnhanced",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/InventoryPageEnhanced.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryPage",
+      "type": "Function Component",
+      "filePath": "pages/inventory/InventoryPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryManagementPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/InventoryManagementPage.js",
+      "isPage": true
+    },
+    {
+      "name": "InventoryItemDetailsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/InventoryItemDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "ImportExportPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/ImportExportPage.js",
+      "isPage": true
+    },
+    {
+      "name": "EditInventoryItemPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/EditInventoryItemPage.js",
+      "isPage": true
+    },
+    {
+      "name": "BarcodeScannerPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/BarcodeScannerPage.js",
+      "isPage": true
+    },
+    {
+      "name": "AnalyticsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/inventory/AnalyticsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "WorkflowDashboardPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/integration/WorkflowDashboardPage.js",
+      "isPage": true
+    },
+    {
+      "name": "TestPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/TestPage.js",
+      "isPage": true
+    },
+    {
+      "name": "NewCustomerPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/NewCustomerPage.js",
+      "isPage": true
+    },
+    {
+      "name": "EditCustomerPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/EditCustomerPage.js",
+      "isPage": true
+    },
+    {
+      "name": "CustomersPageSimple",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/CustomersPageSimple.js",
+      "isPage": true
+    },
+    {
+      "name": "CustomersPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/CustomersPage.js",
+      "isPage": true
+    },
+    {
+      "name": "CustomerDetailsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/customers/CustomerDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "NewCompanyPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/companies/NewCompanyPage.js",
+      "isPage": true
+    },
+    {
+      "name": "EditCompanyPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/companies/EditCompanyPage.js",
+      "isPage": true
+    },
+    {
+      "name": "CompanyDetailsPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/companies/CompanyDetailsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "CompaniesPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/companies/CompaniesPage.js",
+      "isPage": true
+    },
+    {
+      "name": "RolesPermissionsPage",
+      "type": "Function Component",
+      "filePath": "pages/admin/RolesPermissionsPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PurchaseOrdersPage",
+      "type": "Arrow Function Component",
+      "filePath": "pages/PurchaseOrders/PurchaseOrdersPage.js",
+      "isPage": true
+    },
+    {
+      "name": "PurchaseOrderForm",
+      "type": "Arrow Function Component",
+      "filePath": "pages/PurchaseOrders/PurchaseOrderForm.js",
+      "isPage": true
+    },
+    {
+      "name": "SettingsProvider",
+      "type": "Function Component",
+      "filePath": "context/SettingsContext.js",
+      "isPage": false
+    },
+    {
+      "name": "ThemeProvider",
+      "type": "Function Component",
+      "filePath": "components/ThemeProvider.js",
+      "isPage": false
+    },
+    {
+      "name": "Sidebar",
+      "type": "Arrow Function Component",
+      "filePath": "components/layout/Sidebar.js",
+      "isPage": false
+    },
+    {
+      "name": "Navbar",
+      "type": "Arrow Function Component",
+      "filePath": "components/Navbar.js",
+      "isPage": false
+    },
+    {
+      "name": "Layout",
+      "type": "Arrow Function Component",
+      "filePath": "components/Layout.js",
+      "isPage": false
+    },
+    {
+      "name": "Dashboard",
+      "type": "Arrow Function Component",
+      "filePath": "components/Dashboard.js",
+      "isPage": false
+    },
+    {
+      "name": "ViewModeToggle",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/ViewModeToggle.js",
+      "isPage": false
+    },
+    {
+      "name": "ToastViewport",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Toast.js",
+      "isPage": false
+    },
+    {
+      "name": "Textarea",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Textarea.js",
+      "isPage": false
+    },
+    {
+      "name": "Tabs",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Tabs.js",
+      "isPage": false
+    },
+    {
+      "name": "Table",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Table.js",
+      "isPage": false
+    },
+    {
+      "name": "Switch",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Switch.js",
+      "isPage": false
+    },
+    {
+      "name": "StockMovementHistory",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/StockMovementHistory.js",
+      "isPage": false
+    },
+    {
+      "name": "StatusFlow",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/StatusFlow.js",
+      "isPage": false
+    },
+    {
+      "name": "Toaster",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Sonner.js",
+      "isPage": false
+    },
+    {
+      "name": "Skeleton",
+      "type": "Function Component",
+      "filePath": "components/ui/Skeleton.js",
+      "isPage": false
+    },
+    {
+      "name": "SimpleCard",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/SimpleCard.js",
+      "isPage": false
+    },
+    {
+      "name": "SimpleButton",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/SimpleButton.js",
+      "isPage": false
+    },
+    {
+      "name": "SimpleBadge",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/SimpleBadge.js",
+      "isPage": false
+    },
+    {
+      "name": "Separator",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Separator.js",
+      "isPage": false
+    },
+    {
+      "name": "Select",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Select.js",
+      "isPage": false
+    },
+    {
+      "name": "RepairTimeline",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/RepairTimeline.js",
+      "isPage": false
+    },
+    {
+      "name": "QuickStatsCard",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/QuickStatsCard.js",
+      "isPage": false
+    },
+    {
+      "name": "Progress",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Progress.js",
+      "isPage": false
+    },
+    {
+      "name": "PopoverContent",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Popover.js",
+      "isPage": false
+    },
+    {
+      "name": "PerformanceAnalytics",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/PerformanceAnalytics.js",
+      "isPage": false
+    },
+    {
+      "name": "Pagination",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Pagination.js",
+      "isPage": false
+    },
+    {
+      "name": "MultiSelectTable",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/MultiSelectTable.js",
+      "isPage": false
+    },
+    {
+      "name": "ModalOverlay",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Modal.js",
+      "isPage": false
+    },
+    {
+      "name": "LoadingSpinner",
+      "type": "Arrow Function Component",
+      "filePath": "components/common/LoadingSpinner.js",
+      "isPage": false
+    },
+    {
+      "name": "Loading",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Loading.js",
+      "isPage": false
+    },
+    {
+      "name": "Label",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Label.js",
+      "isPage": false
+    },
+    {
+      "name": "Input",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Input.js",
+      "isPage": false
+    },
+    {
+      "name": "Form",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Form.js",
+      "isPage": false
+    },
+    {
+      "name": "DropdownMenuSubTrigger",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/DropdownMenu.js",
+      "isPage": false
+    },
+    {
+      "name": "DialogOverlay",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Dialog.js",
+      "isPage": false
+    },
+    {
+      "name": "DataView",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/DataView.js",
+      "isPage": false
+    },
+    {
+      "name": "DataTableToolbar",
+      "type": "Function Component",
+      "filePath": "components/ui/DataTableToolbar.js",
+      "isPage": false
+    },
+    {
+      "name": "DataTablePagination",
+      "type": "Function Component",
+      "filePath": "components/ui/DataTablePagination.js",
+      "isPage": false
+    },
+    {
+      "name": "DataTableFacetedFilter",
+      "type": "Function Component",
+      "filePath": "components/ui/DataTableFacetedFilter.js",
+      "isPage": false
+    },
+    {
+      "name": "DataTable",
+      "type": "Function Component",
+      "filePath": "components/ui/DataTable.js",
+      "isPage": false
+    },
+    {
+      "name": "CustomerStatsCard",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/CustomerStatsCard.js",
+      "isPage": false
+    },
+    {
+      "name": "Command",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Command.js",
+      "isPage": false
+    },
+    {
+      "name": "ColumnVisibilityToggle",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/ColumnVisibilityToggle.js",
+      "isPage": false
+    },
+    {
+      "name": "Checkbox",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Checkbox.js",
+      "isPage": false
+    },
+    {
+      "name": "Card",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Card.js",
+      "isPage": false
+    },
+    {
+      "name": "Button",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Button.js",
+      "isPage": false
+    },
+    {
+      "name": "BulkActions",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/BulkActions.js",
+      "isPage": false
+    },
+    {
+      "name": "Breadcrumb",
+      "type": "Arrow Function Component",
+      "filePath": "components/layout/Breadcrumb.js",
+      "isPage": false
+    },
+    {
+      "name": "Badge",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Badge.js",
+      "isPage": false
+    },
+    {
+      "name": "Avatar",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Avatar.js",
+      "isPage": false
+    },
+    {
+      "name": "AttachmentManager",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/AttachmentManager.js",
+      "isPage": false
+    },
+    {
+      "name": "Alert",
+      "type": "Arrow Function Component",
+      "filePath": "components/ui/Alert.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentStats",
+      "type": "Arrow Function Component",
+      "filePath": "components/payments/PaymentStats.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentForm",
+      "type": "Arrow Function Component",
+      "filePath": "components/payments/PaymentForm.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentCard",
+      "type": "Arrow Function Component",
+      "filePath": "components/payments/PaymentCard.js",
+      "isPage": false
+    },
+    {
+      "name": "BulkOperations",
+      "type": "Arrow Function Component",
+      "filePath": "components/payments/BulkOperations.js",
+      "isPage": false
+    },
+    {
+      "name": "NotificationItem",
+      "type": "Arrow Function Component",
+      "filePath": "components/notifications/NotificationSystem.js",
+      "isPage": false
+    },
+    {
+      "name": "NotificationDemo",
+      "type": "Arrow Function Component",
+      "filePath": "components/notifications/NotificationDemo.js",
+      "isPage": false
+    },
+    {
+      "name": "NotificationCenter",
+      "type": "Arrow Function Component",
+      "filePath": "components/notifications/NotificationCenter.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentModal",
+      "type": "Arrow Function Component",
+      "filePath": "components/modals/PaymentModal.js",
+      "isPage": false
+    },
+    {
+      "name": "Topbar",
+      "type": "Arrow Function Component",
+      "filePath": "components/layout/Topbar.js",
+      "isPage": false
+    },
+    {
+      "name": "MainLayout",
+      "type": "Arrow Function Component",
+      "filePath": "components/layout/MainLayout.js",
+      "isPage": false
+    },
+    {
+      "name": "TaxCalculator",
+      "type": "Arrow Function Component",
+      "filePath": "components/invoices/TaxCalculator.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentHistory",
+      "type": "Arrow Function Component",
+      "filePath": "components/invoices/PaymentHistory.js",
+      "isPage": false
+    },
+    {
+      "name": "InvoiceItemRow",
+      "type": "Arrow Function Component",
+      "filePath": "components/invoices/InvoiceItemRow.js",
+      "isPage": false
+    },
+    {
+      "name": "InvoiceCard",
+      "type": "Arrow Function Component",
+      "filePath": "components/invoices/InvoiceCard.js",
+      "isPage": false
+    },
+    {
+      "name": "StatsDashboard",
+      "type": "Arrow Function Component",
+      "filePath": "components/inventory/StatsDashboard.js",
+      "isPage": false
+    },
+    {
+      "name": "SearchAndFilter",
+      "type": "Arrow Function Component",
+      "filePath": "components/inventory/SearchAndFilter.js",
+      "isPage": false
+    },
+    {
+      "name": "ItemVendorsManager",
+      "type": "Arrow Function Component",
+      "filePath": "components/inventory/ItemVendorsManager.js",
+      "isPage": false
+    },
+    {
+      "name": "EnhancedInventoryTable",
+      "type": "Arrow Function Component",
+      "filePath": "components/inventory/EnhancedInventoryTable.js",
+      "isPage": false
+    },
+    {
+      "name": "BatchOperations",
+      "type": "Arrow Function Component",
+      "filePath": "components/inventory/BatchOperations.js",
+      "isPage": false
+    },
+    {
+      "name": "ErrorHandler",
+      "type": "Arrow Function Component",
+      "filePath": "components/common/ErrorHandler.js",
+      "isPage": false
+    },
+    {
+      "name": "PaymentCharts",
+      "type": "Arrow Function Component",
+      "filePath": "components/charts/PaymentCharts.js",
+      "isPage": false
+    }
+  ],
+  "routes": [],
+  "forms": [],
+  "apiCalls": [
+    {
+      "filePath": "stores/authStore.js",
+      "type": "axios",
+      "method": "post",
+      "url": "dynamic"
+    },
+    {
+      "filePath": "stores/authStore.js",
+      "type": "axios",
+      "method": "get",
+      "url": "dynamic"
+    },
+    {
+      "filePath": "stores/authStore.js",
+      "type": "axios",
+      "method": "post",
+      "url": "dynamic"
+    },
+    {
+      "filePath": "services/api.js",
+      "type": "fetch",
+      "url": "dynamic"
+    },
+    {
+      "filePath": "services/api.js",
+      "type": "fetch",
+      "url": "dynamic"
+    },
+    {
+      "filePath": "services/api.js",
+      "type": "fetch",
+      "url": "dynamic"
+    }
+  ],
+  "zustandStores": [],
+  "protectedRouteUsage": [],
+  "themeProviderUsage": [
+    "App.js",
+    "components/Sidebar.js",
+    "components/layout/Topbar.js"
+  ],
+  "warnings": [
+    "Component Structure: Some components are defined directly inside page files. It's better to separate reusable components.",
+    "API Call Redundancy: Some API calls are repeated across components. Consider centralizing them in custom hooks.",
+    "Testability: Most interactive elements lack 'data-testid' attributes, which will make E2E testing harder.",
+    "Large Components: Pages like CreateInvoicePage and NewRepairPage are very large and handle a lot of logic. They should be broken down into smaller components."
+  ]
+}
