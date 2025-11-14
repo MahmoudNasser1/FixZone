@@ -7,17 +7,22 @@ const authMiddleware = require('../middleware/authMiddleware');
 const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 
 // Rate limiting for login endpoint (5 attempts per 15 minutes)
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
-  message: {
-    message: 'Too many login attempts from this IP, please try again after 15 minutes.'
-  },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  skipSuccessfulRequests: false, // Count successful requests too
-  skipFailedRequests: false // Count failed requests
-});
+// TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
+const loginLimiter = (req, res, next) => {
+  // Rate limiting disabled during development
+  next();
+};
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // 5 attempts
+//   message: {
+//     message: 'Too many login attempts from this IP, please try again after 15 minutes.'
+//   },
+//   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+//   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+//   skipSuccessfulRequests: false, // Count successful requests too
+//   skipFailedRequests: false // Count failed requests
+// });
 
 // Validation schemas using Joi
 const loginSchema = Joi.object({

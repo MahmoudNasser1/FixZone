@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import api from '../../services/api';
 import SystemVariablesPage from './SystemVariablesPage';
+import { useNotifications } from '../../components/notifications/NotificationSystem';
 
 const tabs = [
   { key: 'general', label: 'عام' },
@@ -16,8 +17,10 @@ const tabs = [
 
 export default function SystemSettingsPage() {
   const { settings, setSettings, formatMoney } = useSettings();
+  const notifications = useNotifications();
 
   const [active, setActive] = useState('general');
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState(() => ({
     // Company / Branding
@@ -123,70 +126,115 @@ export default function SystemSettingsPage() {
     const loadSys = async () => {
       try {
         setSysLoading(true);
+        setSysError('');
         const list = await api.listSystemSettings();
         if (!mounted) return;
-        setSysItems(Array.isArray(list) ? list : (list.items || []));
-        setSysError('');
+        
+        // Handle different response formats
+        let items = [];
+        if (list && list.success && list.data) {
+          items = Array.isArray(list.data) ? list.data : [];
+        } else if (Array.isArray(list)) {
+          items = list;
+        } else if (list && list.data && Array.isArray(list.data)) {
+          items = list.data;
+        }
+        
+        setSysItems(items);
       } catch (e) {
         if (!mounted) return;
-        setSysError('تعذر تحميل إعدادات النظام');
+        const errorMsg = e.message || 'تعذر تحميل إعدادات النظام';
+        setSysError(errorMsg);
+        notifications.error('خطأ في التحميل', { message: errorMsg });
       } finally {
         if (mounted) setSysLoading(false);
       }
     };
     loadSys();
     return () => { mounted = false; };
-  }, [active]);
+  }, [active, notifications]);
 
   const handleSysEdit = async (key) => {
     try {
       const item = await api.getSystemSetting(key);
-      setEditingKey(key);
-      setSysForm({ key, value: item?.value ?? '', description: item?.description ?? '' });
+      if (item?.success && item.data) {
+        const data = item.data;
+        setEditingKey(key);
+        setSysForm({ key, value: data.value ?? '', description: data.description ?? '' });
+      } else if (item) {
+        setEditingKey(key);
+        setSysForm({ key, value: item.value ?? '', description: item.description ?? '' });
+      }
     } catch (e) {
-      alert('تعذر جلب الإعداد');
+      notifications.error('تعذر جلب الإعداد', { 
+        message: e.message || 'حدث خطأ أثناء جلب بيانات الإعداد'
+      });
     }
   };
 
   const handleSysDelete = async (key) => {
-    if (!window.confirm('حذف هذا الإعداد؟')) return;
+    const confirmed = window.confirm(`هل أنت متأكد من حذف الإعداد "${key}"؟`);
+    if (!confirmed) return;
+    
     const prev = sysItems;
     setSysItems((items) => items.filter((i) => i.key !== key));
+    
     try {
       await api.deleteSystemSetting(key);
+      notifications.success('تم الحذف بنجاح', {
+        message: `تم حذف الإعداد "${key}" بنجاح`
+      });
     } catch (e) {
-      alert('تعذر الحذف');
+      notifications.error('تعذر الحذف', { 
+        message: e.message || 'حدث خطأ أثناء حذف الإعداد'
+      });
       setSysItems(prev);
     }
   };
 
   const handleSysSubmit = async (e) => {
     e.preventDefault();
+    
+    const payload = { key: sysForm.key.trim(), value: sysForm.value, description: sysForm.description || '' };
+    
+    // Validation
+    if (!payload.key) {
+      notifications.warning('حقل مطلوب', { message: 'المفتاح (Key) مطلوب' });
+      return;
+    }
+    
+    if (payload.key.length > 100) {
+      notifications.warning('خطأ في المدخلات', { message: 'المفتاح يجب ألا يتجاوز 100 حرف' });
+      return;
+    }
+    
     try {
-      const payload = { key: sysForm.key.trim(), value: sysForm.value, description: sysForm.description };
-      if (!payload.key) {
-        alert('المفتاح مطلوب');
-        return;
-      }
       if (editingKey && editingKey === payload.key) {
-        await api.updateSystemSetting(payload.key, payload);
+        // تحديث نفس المفتاح
+        await api.updateSystemSetting(payload.key, { value: payload.value, description: payload.description });
+        notifications.success('تم التحديث بنجاح', { message: `تم تحديث الإعداد "${payload.key}" بنجاح` });
       } else if (editingKey && editingKey !== payload.key) {
         // تغيير المفتاح: أنشئ جديد ثم احذف القديم
         await api.createSystemSetting(payload);
         await api.deleteSystemSetting(editingKey);
+        notifications.success('تم التحديث بنجاح', { message: `تم تحديث المفتاح من "${editingKey}" إلى "${payload.key}"` });
       } else {
+        // إنشاء جديد
         await api.createSystemSetting(payload);
+        notifications.success('تم الإنشاء بنجاح', { message: `تم إنشاء الإعداد "${payload.key}" بنجاح` });
       }
+      
       // تحديث القائمة محلياً
       const next = sysItems.filter((i) => i.key !== (editingKey || payload.key));
-      next.push(payload);
+      next.push({ key: payload.key, value: payload.value, description: payload.description, type: 'string' });
       next.sort((a, b) => a.key.localeCompare(b.key));
       setSysItems(next);
       setEditingKey('');
       setSysForm({ key: '', value: '', description: '' });
-      alert('تم الحفظ');
     } catch (e) {
-      alert('تعذر الحفظ');
+      notifications.error('تعذر الحفظ', { 
+        message: e.message || 'حدث خطأ أثناء حفظ الإعداد. تأكد من أن المفتاح غير موجود مسبقاً.'
+      });
     }
   };
 
@@ -200,43 +248,54 @@ export default function SystemSettingsPage() {
     }));
   };
 
-  const handleSave = () => {
-    setSettings((prev) => ({
-      ...prev,
-      company: {
-        ...prev.company,
-        name: form.name,
-        address: form.address,
-        phone: form.phone,
-        website: form.website,
-        logoUrl: form.logoUrl,
-      },
-      currency: {
-        ...prev.currency,
-        code: form.currencyCode,
-        symbol: form.currencySymbol,
-        name: form.currencyName,
-        locale: form.currencyLocale,
-        minimumFractionDigits: form.minimumFractionDigits,
-      },
-      printing: {
-        ...prev.printing,
-        defaultCopy: form.defaultCopy,
-        showWatermark: form.showWatermark,
-        paperSize: form.paperSize,
-        showSerialBarcode: form.showSerialBarcode,
-      },
-      locale: {
-        ...prev.locale,
-        rtl: form.rtl,
-        dateFormat: form.dateFormat,
-      },
-      receipt: {
-        ...prev.receipt,
-        terms: form.receiptTerms,
-      },
-    }));
-    alert('تم حفظ الإعدادات بنجاح');
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      setSettings((prev) => ({
+        ...prev,
+        company: {
+          ...prev.company,
+          name: form.name,
+          address: form.address,
+          phone: form.phone,
+          website: form.website,
+          logoUrl: form.logoUrl,
+        },
+        currency: {
+          ...prev.currency,
+          code: form.currencyCode,
+          symbol: form.currencySymbol,
+          name: form.currencyName,
+          locale: form.currencyLocale,
+          minimumFractionDigits: form.minimumFractionDigits,
+        },
+        printing: {
+          ...prev.printing,
+          defaultCopy: form.defaultCopy,
+          showWatermark: form.showWatermark,
+          paperSize: form.paperSize,
+          showSerialBarcode: form.showSerialBarcode,
+        },
+        locale: {
+          ...prev.locale,
+          rtl: form.rtl,
+          dateFormat: form.dateFormat,
+        },
+        receipt: {
+          ...prev.receipt,
+          terms: form.receiptTerms,
+        },
+      }));
+      notifications.success('تم الحفظ بنجاح', { 
+        message: 'تم حفظ إعدادات النظام العامة بنجاح'
+      });
+    } catch (e) {
+      notifications.error('تعذر الحفظ', { 
+        message: e.message || 'حدث خطأ أثناء حفظ الإعدادات'
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePrintChange = (e) => {
@@ -280,10 +339,14 @@ export default function SystemSettingsPage() {
         terms: print.terms,
       };
       await api.updatePrintSettings(payload);
-      alert('تم حفظ إعدادات إيصال الاستلام بنجاح');
+      notifications.success('تم الحفظ بنجاح', { 
+        message: 'تم حفظ إعدادات إيصال الاستلام بنجاح'
+      });
     } catch (e) {
       console.error(e);
-      alert('تعذر حفظ إعدادات الإيصال');
+      notifications.error('تعذر الحفظ', { 
+        message: e.message || 'حدث خطأ أثناء حفظ إعدادات الإيصال'
+      });
     }
   };
 
@@ -313,10 +376,14 @@ export default function SystemSettingsPage() {
         value: JSON.stringify(messagingSettings),
         description: 'إعدادات المراسلة والإشعارات'
       });
-      alert('تم حفظ إعدادات المراسلة بنجاح');
+      notifications.success('تم الحفظ بنجاح', { 
+        message: 'تم حفظ إعدادات المراسلة بنجاح'
+      });
     } catch (error) {
       console.error('Error saving messaging settings:', error);
-      alert('تعذر حفظ إعدادات المراسلة');
+      notifications.error('تعذر الحفظ', { 
+        message: error.message || 'حدث خطأ أثناء حفظ إعدادات المراسلة'
+      });
     } finally {
       setSavingMessaging(false);
     }
@@ -344,33 +411,43 @@ export default function SystemSettingsPage() {
       });
       
       if (response.ok) {
-        alert('تم إرسال الرسالة بنجاح عبر API');
+        notifications.success('تم الإرسال بنجاح', { 
+          message: 'تم إرسال الرسالة بنجاح عبر API'
+        });
       } else {
         throw new Error('فشل في إرسال الرسالة');
       }
     } catch (error) {
       console.error('WhatsApp API Error:', error);
-      alert('فشل في إرسال الرسالة عبر API');
+      notifications.error('فشل الإرسال', { 
+        message: error.message || 'فشل في إرسال الرسالة عبر API'
+      });
     }
   };
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold">إعدادات النظام</h1>
         <div className="flex gap-2">
-          <button onClick={handleSave} className="px-4 py-2 border rounded bg-blue-600 text-white">حفظ</button>
+          <button 
+            onClick={handleSave} 
+            disabled={saving}
+            className="px-4 py-2 border rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {saving ? 'جاري الحفظ...' : 'حفظ'}
+          </button>
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-auto mb-4 border-b pb-2">
+      <div className="flex gap-2 overflow-auto mb-6 border-b pb-3">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setActive(t.key)}
             className={[
-              'px-3 py-1 rounded',
-              active === t.key ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap',
+              active === t.key ? 'bg-blue-600 text-white shadow-sm border border-blue-700' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
             ].join(' ')}
           >
             {t.label}
@@ -379,28 +456,55 @@ export default function SystemSettingsPage() {
       </div>
 
       {active === 'general' && (
-        <section className="space-y-4 max-w-3xl">
-          <h2 className="font-semibold">معلومات الشركة والهوية</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <section className="space-y-6 max-w-3xl bg-white rounded-lg border p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">معلومات الشركة والهوية</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">اسم الشركة</label>
-              <input name="name" value={form.name} onChange={handleChange} className="w-full border rounded p-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">اسم الشركة</label>
+              <input 
+                name="name" 
+                value={form.name} 
+                onChange={handleChange} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">رقم الهاتف</label>
-              <input name="phone" value={form.phone} onChange={handleChange} className="w-full border rounded p-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+              <input 
+                name="phone" 
+                value={form.phone} 
+                onChange={handleChange} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+              />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm text-gray-600 mb-1">العنوان</label>
-              <input name="address" value={form.address} onChange={handleChange} className="w-full border rounded p-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+              <input 
+                name="address" 
+                value={form.address} 
+                onChange={handleChange} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+              />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm text-gray-600 mb-1">الموقع</label>
-              <input name="website" value={form.website} onChange={handleChange} className="w-full border rounded p-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">الموقع</label>
+              <input 
+                name="website" 
+                value={form.website} 
+                onChange={handleChange} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                placeholder="https://example.com"
+              />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm text-gray-600 mb-1">رابط الشعار (Logo URL)</label>
-              <input name="logoUrl" value={form.logoUrl} onChange={handleChange} className="w-full border rounded p-2" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">رابط الشعار (Logo URL)</label>
+              <input 
+                name="logoUrl" 
+                value={form.logoUrl} 
+                onChange={handleChange} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                placeholder="/logo.png"
+              />
               <div className="text-xs text-gray-500 mt-1">يمكنك رفع الشعار داخل مجلد public واستخدام المسار مثل /logo.png</div>
             </div>
           </div>
@@ -411,7 +515,13 @@ export default function SystemSettingsPage() {
         <section className="space-y-4 max-w-4xl">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">إعدادات إيصال الاستلام</h2>
-            <button onClick={handleSavePrint} className="px-4 py-2 border rounded bg-blue-600 text-white">حفظ</button>
+            <button 
+              onClick={handleSavePrint} 
+              disabled={saving}
+              className="px-4 py-2 border rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {saving ? 'جاري الحفظ...' : 'حفظ'}
+            </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
@@ -832,60 +942,114 @@ export default function SystemSettingsPage() {
         <section className="space-y-4 max-w-5xl">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">إعدادات النظام العامة</h2>
-            {sysLoading && <div className="text-sm text-gray-500">جاري التحميل...</div>}
+            {sysLoading && (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span>جاري التحميل...</span>
+              </div>
+            )}
           </div>
-          {sysError && <div className="text-red-600 text-sm">{sysError}</div>}
+          {sysError && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded text-sm">
+              {sysError}
+            </div>
+          )}
 
-          <form onSubmit={handleSysSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end border rounded p-3 bg-white">
+          <form onSubmit={handleSysSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end border rounded-lg p-4 bg-white shadow-sm">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">المفتاح (Key)</label>
-              <input value={sysForm.key} onChange={(e) => setSysForm({ ...sysForm, key: e.target.value })} className="w-full border rounded p-2" placeholder="مثال: defaultBranch" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">المفتاح (Key) *</label>
+              <input 
+                value={sysForm.key} 
+                onChange={(e) => setSysForm({ ...sysForm, key: e.target.value })} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                placeholder="مثال: defaultBranch"
+                disabled={!!editingKey}
+              />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm text-gray-600 mb-1">القيمة (Value)</label>
-              <input value={sysForm.value} onChange={(e) => setSysForm({ ...sysForm, value: e.target.value })} className="w-full border rounded p-2" placeholder="قيمة نصية أو JSON" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">القيمة (Value) *</label>
+              <input 
+                value={sysForm.value} 
+                onChange={(e) => setSysForm({ ...sysForm, value: e.target.value })} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                placeholder="قيمة نصية أو JSON"
+                required
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">الوصف</label>
-              <input value={sysForm.description} onChange={(e) => setSysForm({ ...sysForm, description: e.target.value })} className="w-full border rounded p-2" placeholder="وصف مختصر" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+              <input 
+                value={sysForm.description} 
+                onChange={(e) => setSysForm({ ...sysForm, description: e.target.value })} 
+                className="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                placeholder="وصف مختصر"
+              />
             </div>
-            <div className="md:col-span-4 flex gap-2 justify-end">
+            <div className="md:col-span-4 flex gap-2 justify-end mt-2">
               {editingKey && (
-                <button type="button" onClick={() => { setEditingKey(''); setSysForm({ key: '', value: '', description: '' }); }} className="px-3 py-2 border rounded">إلغاء</button>
+                <button 
+                  type="button" 
+                  onClick={() => { setEditingKey(''); setSysForm({ key: '', value: '', description: '' }); }} 
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  إلغاء
+                </button>
               )}
-              <button type="submit" className="px-4 py-2 rounded text-white bg-blue-600">{editingKey ? 'تحديث' : 'إضافة'}</button>
+              <button 
+                type="submit" 
+                className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                {editingKey ? 'تحديث' : 'إضافة'}
+              </button>
             </div>
           </form>
 
-          <div className="overflow-auto border rounded bg-white">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-2 text-right border-b">المفتاح</th>
-                  <th className="p-2 text-right border-b">القيمة</th>
-                  <th className="p-2 text-right border-b">الوصف</th>
-                  <th className="p-2 text-right border-b">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sysItems.sort((a, b) => a.key.localeCompare(b.key)).map((it) => (
-                  <tr key={it.key}>
-                    <td className="p-2 border-b align-top font-mono text-sm">{it.key}</td>
-                    <td className="p-2 border-b align-top">
-                      <pre className="text-xs whitespace-pre-wrap break-words">{String(it.value)}</pre>
-                    </td>
-                    <td className="p-2 border-b align-top text-sm text-gray-600">{it.description}</td>
-                    <td className="p-2 border-b align-top">
-                      <div className="flex gap-2">
-                        <button onClick={() => handleSysEdit(it.key)} className="px-3 py-1 rounded bg-gray-200">تعديل</button>
-                        <button onClick={() => handleSysDelete(it.key)} className="px-3 py-1 rounded bg-red-600 text-white">حذف</button>
-                      </div>
-                    </td>
+          {sysItems.length === 0 && !sysLoading ? (
+            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+              <p className="text-sm">لا توجد إعدادات مضافة حالياً</p>
+              <p className="text-xs mt-1">استخدم النموذج أعلاه لإضافة إعداد جديد</p>
+            </div>
+          ) : (
+            <div className="overflow-auto border rounded-lg bg-white shadow-sm">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="p-3 text-right border-b text-sm font-semibold text-gray-700">المفتاح</th>
+                    <th className="p-3 text-right border-b text-sm font-semibold text-gray-700">القيمة</th>
+                    <th className="p-3 text-right border-b text-sm font-semibold text-gray-700">الوصف</th>
+                    <th className="p-3 text-right border-b text-sm font-semibold text-gray-700">إجراءات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {sysItems.sort((a, b) => a.key.localeCompare(b.key)).map((it) => (
+                    <tr key={it.key} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-3 border-b align-top font-mono text-sm text-gray-900">{it.key}</td>
+                      <td className="p-3 border-b align-top max-w-md">
+                        <pre className="text-xs whitespace-pre-wrap break-words text-gray-700 bg-gray-50 p-2 rounded">{String(it.value)}</pre>
+                      </td>
+                      <td className="p-3 border-b align-top text-sm text-gray-600">{it.description || '-'}</td>
+                      <td className="p-3 border-b align-top">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleSysEdit(it.key)} 
+                            className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap-md bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm transition-colors"
+                          >
+                            تعديل
+                          </button>
+                          <button 
+                            onClick={() => handleSysDelete(it.key)} 
+                            className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap-md bg-red-600 hover:bg-red-700 text-white text-sm transition-colors"
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 

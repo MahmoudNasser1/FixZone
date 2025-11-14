@@ -4,7 +4,8 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const http = require('http');
 const websocketService = require('./services/websocketService');
-const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
+// TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
+// const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,7 +25,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Apply rate limiting middleware
-app.use('/api', applyEndpointRateLimit);
+// TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
+// app.use('/api', applyEndpointRateLimit);
 
 // Import the main router
 const apiRouter = require('./app');
