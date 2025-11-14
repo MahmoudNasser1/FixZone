@@ -449,6 +449,24 @@ class ApiService {
     });
   }
 
+  // Repair Request Services APIs
+  async getRepairRequestServices(repairRequestId) {
+    return this.request(`/repairrequestservices?repairRequestId=${repairRequestId}`);
+  }
+
+  async updateRepairRequestService(serviceId, serviceData) {
+    return this.request(`/repairrequestservices/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(serviceData),
+    });
+  }
+
+  async deleteRepairRequestService(serviceId) {
+    return this.request(`/repairrequestservices/${serviceId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // طباعة إيصال/ملصق
   async printRepair(id, type = 'receipt') {
     const endpoint = `/repairs/${id}/print/${type}`;
@@ -668,6 +686,42 @@ class ApiService {
 
   async updateSystemSetting(key, setting) {
     return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  async deleteSystemSetting(key) {
+    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+// إنشاء instance واحد للاستخدام في التطبيق
+const apiService = new ApiService();
+
+export default apiService;
+export { apiService };
+
+      method: 'PUT',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  async deleteSystemSetting(key) {
+    return this.request(`/systemsettings/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+// إنشاء instance واحد للاستخدام في التطبيق
+const apiService = new ApiService();
+
+export default apiService;
+export { apiService };
+
       method: 'PUT',
       body: JSON.stringify(setting),
     });

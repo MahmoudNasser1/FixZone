@@ -148,7 +148,10 @@ const InvoiceDetailsPage = () => {
   };
 
   const handlePrintInvoice = () => {
-    window.print();
+    if (!id) return;
+    const base = 'http://localhost:3001/api/invoices';
+    const url = `${base}/${id}/print`;
+    window.open(url, '_blank');
   };
 
   const handleSendInvoice = async () => {
@@ -582,6 +585,12 @@ const InvoiceDetailsPage = () => {
       </div>
     </div>
   );
+};
+
+export default InvoiceDetailsPage;
+};
+
+export default InvoiceDetailsPage;
 };
 
 export default InvoiceDetailsPage;

@@ -724,14 +724,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     // Soft delete instead of hard delete
-    const [result] = await db.query('UPDATE RepairRequest SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [result] = await db.execute('UPDATE RepairRequest SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Repair request not found');
+      return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
-    res.json({ message: 'Repair request deleted successfully' });
+    res.json({ success: true, message: 'Repair request deleted successfully' });
   } catch (err) {
     console.error(`Error deleting repair request with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
@@ -1093,34 +1093,34 @@ router.post('/:id/assign', authMiddleware, async (req, res) => {
   const { technicianId } = req.body || {};
   const techIdNum = Number(technicianId);
   if (!techIdNum || Number.isNaN(techIdNum)) {
-    return res.status(400).json({ error: 'Valid technicianId is required' });
+    return res.status(400).json({ success: false, error: 'Valid technicianId is required' });
   }
   try {
     // Ensure repair exists
-    const [repRows] = await db.query('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [repRows] = await db.execute('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!repRows || repRows.length === 0) {
-      return res.status(404).json({ error: 'Repair request not found' });
+      return res.status(404).json({ success: false, error: 'Repair request not found' });
     }
 
     // Ensure technician exists (optionally check role)
-    const [userRows] = await db.query('SELECT u.id, u.name, r.name AS roleName FROM User u LEFT JOIN Role r ON u.roleId = r.id WHERE u.id = ? AND u.deletedAt IS NULL', [techIdNum]);
+    const [userRows] = await db.execute('SELECT u.id, u.name, r.name AS roleName FROM User u LEFT JOIN Role r ON u.roleId = r.id WHERE u.id = ? AND u.deletedAt IS NULL', [techIdNum]);
     if (!userRows || userRows.length === 0) {
-      return res.status(404).json({ error: 'Technician not found' });
+      return res.status(404).json({ success: false, error: 'Technician not found' });
     }
 
-    await db.query('UPDATE RepairRequest SET technicianId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [techIdNum, id]);
+    await db.execute('UPDATE RepairRequest SET technicianId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [techIdNum, id]);
 
     // Audit
     const changedById = (req.user && req.user.id) ? req.user.id : null;
-    await db.query(
+    await db.execute(
       'INSERT INTO AuditLog (action, actionType, details, entityType, entityId, userId) VALUES (?, ?, ?, ?, ?, ?)',
       ['assign_technician', 'UPDATE', JSON.stringify({ technicianId: techIdNum }), 'RepairRequest', id, changedById]
     );
 
-    res.json({ message: 'Technician assigned successfully', technician: { id: userRows[0].id, name: userRows[0].name } });
+    res.json({ success: true, message: 'Technician assigned successfully', technician: { id: userRows[0].id, name: userRows[0].name } });
   } catch (e) {
     console.error('Error assigning technician:', e);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({ success: false, error: 'Server Error', details: e.message });
   }
 });
 
@@ -1767,6 +1767,486 @@ router.get('/:id/print/delivery', async (req, res) => {
     return res.send(html);
   } catch (err) {
     console.error('Error printing delivery:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Print sticker with basic laptop details
+router.get('/:id/print/sticker', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const settings = loadPrintSettings();
+    const [rows] = await db.query(`
+      SELECT 
+        rr.*,
+        c.name as customerName,
+        c.phone as customerPhone,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        d.serialNumber
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      WHERE rr.id = ? AND rr.deletedAt IS NULL
+    `, [id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).send('Repair request not found');
+    }
+
+    const repair = rows[0];
+    const reqDate = new Date(repair.createdAt);
+    const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
+    const dates = formatDates(reqDate, 'both');
+
+    const html = `<!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>استيكر - ${requestNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
+      <style>
+        @page { 
+          size: 10cm 5cm; 
+          margin: 5mm;
+        }
+        body { 
+          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
+          direction: rtl; 
+          color: #111827; 
+          font-size: 11px;
+          margin: 0;
+          padding: 5mm;
+        }
+        .sticker-container {
+          width: 100%;
+          height: 100%;
+          border: 2px solid #111827;
+          padding: 8px;
+          box-sizing: border-box;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 4px;
+          margin-bottom: 6px;
+        }
+        .title {
+          font-size: 14px;
+          font-weight: bold;
+        }
+        .request-number {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+        }
+        .content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-top: 4px;
+        }
+        .field {
+          font-size: 10px;
+        }
+        .label {
+          color: #6b7280;
+          font-size: 9px;
+          margin-bottom: 2px;
+        }
+        .value {
+          font-weight: 600;
+          font-size: 10px;
+          color: #111827;
+        }
+        .full-width {
+          grid-column: 1 / -1;
+        }
+        .footer {
+          margin-top: 6px;
+          padding-top: 4px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 9px;
+          color: #6b7280;
+          text-align: center;
+        }
+        @media print { 
+          .no-print { display: none; }
+          body { margin: 0; padding: 5mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="sticker-container">
+        <div class="header">
+          <div class="title">${settings.branchName || 'FixZone'}</div>
+          <div class="request-number">${requestNumber}</div>
+        </div>
+        <div class="content">
+          <div class="field">
+            <div class="label">العميل</div>
+            <div class="value">${repair.customerName || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الهاتف</div>
+            <div class="value">${repair.customerPhone || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">الجهاز</div>
+            <div class="value">${repair.deviceBrand || '—'} ${repair.deviceModel || ''}</div>
+          </div>
+          <div class="field">
+            <div class="label">نوع الجهاز</div>
+            <div class="value">${repair.deviceType || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الرقم التسلسلي</div>
+            <div class="value">${repair.serialNumber || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">التاريخ</div>
+            <div class="value">${dates.primary || '—'}</div>
+          </div>
+        </div>
+        <div class="footer">
+          ${settings.branchPhone ? `📞 ${settings.branchPhone}` : ''}
+        </div>
+      </div>
+      <div class="no-print" style="text-align:center; margin-top:12px;">
+        <button onclick="window.print()" style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px; background:#111827; color:#fff;">طباعة الاستيكر</button>
+      </div>
+    </body>
+    </html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    return res.send(html);
+  } catch (err) {
+    console.error('Error printing sticker:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+module.exports = router;
+
+  const { id } = req.params;
+  try {
+    const settings = loadPrintSettings();
+    const [rows] = await db.query(`
+      SELECT 
+        rr.*,
+        c.name as customerName,
+        c.phone as customerPhone,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        d.serialNumber
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      WHERE rr.id = ? AND rr.deletedAt IS NULL
+    `, [id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).send('Repair request not found');
+    }
+
+    const repair = rows[0];
+    const reqDate = new Date(repair.createdAt);
+    const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
+    const dates = formatDates(reqDate, 'both');
+
+    const html = `<!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>استيكر - ${requestNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
+      <style>
+        @page { 
+          size: 10cm 5cm; 
+          margin: 5mm;
+        }
+        body { 
+          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
+          direction: rtl; 
+          color: #111827; 
+          font-size: 11px;
+          margin: 0;
+          padding: 5mm;
+        }
+        .sticker-container {
+          width: 100%;
+          height: 100%;
+          border: 2px solid #111827;
+          padding: 8px;
+          box-sizing: border-box;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 4px;
+          margin-bottom: 6px;
+        }
+        .title {
+          font-size: 14px;
+          font-weight: bold;
+        }
+        .request-number {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+        }
+        .content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-top: 4px;
+        }
+        .field {
+          font-size: 10px;
+        }
+        .label {
+          color: #6b7280;
+          font-size: 9px;
+          margin-bottom: 2px;
+        }
+        .value {
+          font-weight: 600;
+          font-size: 10px;
+          color: #111827;
+        }
+        .full-width {
+          grid-column: 1 / -1;
+        }
+        .footer {
+          margin-top: 6px;
+          padding-top: 4px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 9px;
+          color: #6b7280;
+          text-align: center;
+        }
+        @media print { 
+          .no-print { display: none; }
+          body { margin: 0; padding: 5mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="sticker-container">
+        <div class="header">
+          <div class="title">${settings.branchName || 'FixZone'}</div>
+          <div class="request-number">${requestNumber}</div>
+        </div>
+        <div class="content">
+          <div class="field">
+            <div class="label">العميل</div>
+            <div class="value">${repair.customerName || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الهاتف</div>
+            <div class="value">${repair.customerPhone || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">الجهاز</div>
+            <div class="value">${repair.deviceBrand || '—'} ${repair.deviceModel || ''}</div>
+          </div>
+          <div class="field">
+            <div class="label">نوع الجهاز</div>
+            <div class="value">${repair.deviceType || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الرقم التسلسلي</div>
+            <div class="value">${repair.serialNumber || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">التاريخ</div>
+            <div class="value">${dates.primary || '—'}</div>
+          </div>
+        </div>
+        <div class="footer">
+          ${settings.branchPhone ? `📞 ${settings.branchPhone}` : ''}
+        </div>
+      </div>
+      <div class="no-print" style="text-align:center; margin-top:12px;">
+        <button onclick="window.print()" style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px; background:#111827; color:#fff;">طباعة الاستيكر</button>
+      </div>
+    </body>
+    </html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    return res.send(html);
+  } catch (err) {
+    console.error('Error printing sticker:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+module.exports = router;
+
+  const { id } = req.params;
+  try {
+    const settings = loadPrintSettings();
+    const [rows] = await db.query(`
+      SELECT 
+        rr.*,
+        c.name as customerName,
+        c.phone as customerPhone,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        d.serialNumber
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      WHERE rr.id = ? AND rr.deletedAt IS NULL
+    `, [id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).send('Repair request not found');
+    }
+
+    const repair = rows[0];
+    const reqDate = new Date(repair.createdAt);
+    const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
+    const dates = formatDates(reqDate, 'both');
+
+    const html = `<!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>استيكر - ${requestNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
+      <style>
+        @page { 
+          size: 10cm 5cm; 
+          margin: 5mm;
+        }
+        body { 
+          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
+          direction: rtl; 
+          color: #111827; 
+          font-size: 11px;
+          margin: 0;
+          padding: 5mm;
+        }
+        .sticker-container {
+          width: 100%;
+          height: 100%;
+          border: 2px solid #111827;
+          padding: 8px;
+          box-sizing: border-box;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 4px;
+          margin-bottom: 6px;
+        }
+        .title {
+          font-size: 14px;
+          font-weight: bold;
+        }
+        .request-number {
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+        }
+        .content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-top: 4px;
+        }
+        .field {
+          font-size: 10px;
+        }
+        .label {
+          color: #6b7280;
+          font-size: 9px;
+          margin-bottom: 2px;
+        }
+        .value {
+          font-weight: 600;
+          font-size: 10px;
+          color: #111827;
+        }
+        .full-width {
+          grid-column: 1 / -1;
+        }
+        .footer {
+          margin-top: 6px;
+          padding-top: 4px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 9px;
+          color: #6b7280;
+          text-align: center;
+        }
+        @media print { 
+          .no-print { display: none; }
+          body { margin: 0; padding: 5mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="sticker-container">
+        <div class="header">
+          <div class="title">${settings.branchName || 'FixZone'}</div>
+          <div class="request-number">${requestNumber}</div>
+        </div>
+        <div class="content">
+          <div class="field">
+            <div class="label">العميل</div>
+            <div class="value">${repair.customerName || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الهاتف</div>
+            <div class="value">${repair.customerPhone || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">الجهاز</div>
+            <div class="value">${repair.deviceBrand || '—'} ${repair.deviceModel || ''}</div>
+          </div>
+          <div class="field">
+            <div class="label">نوع الجهاز</div>
+            <div class="value">${repair.deviceType || '—'}</div>
+          </div>
+          <div class="field">
+            <div class="label">الرقم التسلسلي</div>
+            <div class="value">${repair.serialNumber || '—'}</div>
+          </div>
+          <div class="field full-width">
+            <div class="label">التاريخ</div>
+            <div class="value">${dates.primary || '—'}</div>
+          </div>
+        </div>
+        <div class="footer">
+          ${settings.branchPhone ? `📞 ${settings.branchPhone}` : ''}
+        </div>
+      </div>
+      <div class="no-print" style="text-align:center; margin-top:12px;">
+        <button onclick="window.print()" style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px; background:#111827; color:#fff;">طباعة الاستيكر</button>
+      </div>
+    </body>
+    </html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    return res.send(html);
+  } catch (err) {
+    console.error('Error printing sticker:', err);
     res.status(500).send('Server Error');
   }
 });

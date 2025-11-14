@@ -17,17 +17,28 @@ const InvoicesPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [invoiceTypeFilter, setInvoiceTypeFilter] = useState('all'); // 'all', 'sale', 'purchase'
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+  }, [invoiceTypeFilter, selectedFilter, searchTerm]);
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getInvoices();
+      const params = {};
+      if (invoiceTypeFilter !== 'all') {
+        params.invoiceType = invoiceTypeFilter;
+      }
+      if (selectedFilter !== 'all') {
+        params.status = selectedFilter;
+      }
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      const data = await apiService.getInvoices(params);
       console.log('API Response:', data);
       // Handle different response structures from the API
       if (data.success && Array.isArray(data.data)) {
@@ -87,16 +98,7 @@ const InvoicesPage = () => {
     }
   };
 
-  const filteredInvoices = (invoices || []).filter(invoice => {
-    const matchesSearch = !searchTerm || 
-      invoice.id?.toString().includes(searchTerm) ||
-      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.repairRequestId?.toString().includes(searchTerm);
-    
-    const matchesFilter = selectedFilter === 'all' || invoice.status === selectedFilter;
-    
-    return matchesSearch && matchesFilter;
-  });
+  const filteredInvoices = invoices || [];
 
   const handleDeleteInvoice = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) {
@@ -180,6 +182,15 @@ const InvoicesPage = () => {
             </div>
             <div className="flex gap-2">
               <select
+                value={invoiceTypeFilter}
+                onChange={(e) => setInvoiceTypeFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">جميع الأنواع</option>
+                <option value="sale">فاتورة بيع</option>
+                <option value="purchase">فاتورة شراء</option>
+              </select>
+              <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -191,11 +202,7 @@ const InvoicesPage = () => {
                 <option value="overdue">متأخرة</option>
                 <option value="cancelled">ملغاة</option>
               </select>
-              <SimpleButton variant="outline">
-                <Filter className="w-4 h-4 ml-2" />
-                فلترة
-              </SimpleButton>
-                </div>
+            </div>
                 </div>
         </SimpleCardContent>
       </SimpleCard>
@@ -311,12 +318,26 @@ const InvoicesPage = () => {
               </div>
             </div>
             
-                      {invoice.customerName && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                          <User className="w-4 h-4" />
-                          <span>العميل: {invoice.customerName}</span>
-                        </div>
+                      {invoice.invoiceType === 'purchase' ? (
+                        invoice.vendorName && (
+                          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                            <Building2 className="w-4 h-4" />
+                            <span>المورد: {invoice.vendorName}</span>
+                          </div>
+                        )
+                      ) : (
+                        invoice.customerName && (
+                          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                            <User className="w-4 h-4" />
+                            <span>العميل: {invoice.customerName}</span>
+                          </div>
+                        )
                       )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <SimpleBadge variant={invoice.invoiceType === 'purchase' ? 'secondary' : 'default'} className="text-xs">
+                          {invoice.invoiceType === 'purchase' ? 'فاتورة شراء' : 'فاتورة بيع'}
+                        </SimpleBadge>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -336,6 +357,48 @@ const InvoicesPage = () => {
                       )}
                       {invoice.id && (
               <SimpleButton 
+                variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+              </SimpleButton>
+                      )}
+            </div>
+          </div>
+                </div>
+              ))}
+        </div>
+      )}
+        </SimpleCardContent>
+      </SimpleCard>
+    </div>
+  );
+};
+
+export default InvoicesPage;
+                variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+              </SimpleButton>
+                      )}
+            </div>
+          </div>
+                </div>
+              ))}
+        </div>
+      )}
+        </SimpleCardContent>
+      </SimpleCard>
+    </div>
+  );
+};
+
+export default InvoicesPage;
                 variant="outline" 
                           size="sm"
                           onClick={() => handleDeleteInvoice(invoice.id)}

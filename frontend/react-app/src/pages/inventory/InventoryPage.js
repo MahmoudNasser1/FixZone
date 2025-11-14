@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import inventoryService from '../../services/inventoryService';
 import apiService from '../../services/api';
 import Breadcrumb from '../../components/layout/Breadcrumb';
@@ -76,6 +77,7 @@ const createInventoryColumns = (handleEditItem, handleDeleteItem) => [
 ];
 
 export default function InventoryPage() {
+  const navigate = useNavigate();
   const notifications = useNotifications();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -534,7 +536,7 @@ export default function InventoryPage() {
               loading={loading}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
-              onView={(item) => console.log('View item:', item)}
+              onView={(item) => navigate(`/inventory/${item.id}`)}
               viewMode={viewMode}
             />
           );
@@ -1020,4 +1022,8 @@ export default function InventoryPage() {
       )}
     </div>
   );
+}
+
+}
+
 }

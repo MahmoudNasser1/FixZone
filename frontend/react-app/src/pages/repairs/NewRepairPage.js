@@ -83,14 +83,10 @@ const NewRepairPage = () => {
         } else {
           console.log('Accessories response not ok, using fallback data');
           setAccessoryOptions([
-            { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
-            { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
-            { id: 3, label: 'سماعات', value: 'EARPHONES' },
-            { id: 4, label: 'حافظة', value: 'CASE' },
-            { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' },
-            { id: 6, label: 'قلم الكتابة', value: 'STYLUS' },
-            { id: 7, label: 'ماوس', value: 'MOUSE' },
-            { id: 8, label: 'لوحة مفاتيح', value: 'KEYBOARD' }
+            { id: 1, label: 'شاحن', value: 'CHARGER' },
+            { id: 2, label: 'كابل باور', value: 'POWER_CABLE' },
+            { id: 3, label: 'شنطة', value: 'BAG' },
+            { id: 4, label: 'بطارية خارجية', value: 'POWER_BANK' }
           ]);
         }
 

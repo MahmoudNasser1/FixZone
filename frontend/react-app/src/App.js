@@ -46,6 +46,7 @@ import InventoryPage from './pages/inventory/InventoryPage';
 import InventoryPageEnhanced from './pages/inventory/InventoryPageEnhanced';
 import NewInventoryItemPage from './pages/inventory/NewInventoryItemPage';
 import EditInventoryItemPage from './pages/inventory/EditInventoryItemPage';
+import InventoryItemDetailsPage from './pages/inventory/InventoryItemDetailsPage';
 import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
 import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
 import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
@@ -160,13 +161,14 @@ function App() {
                       {/* Inventory, Settings, Payments */}
                       <Route path="inventory" element={<InventoryPageEnhanced />} />
                       <Route path="inventory/new" element={<NewInventoryItemPage />} />
-                      <Route path="inventory/:id/edit" element={<EditInventoryItemPage />} />
-                      <Route path="inventory-old" element={<InventoryPage />} />
                       <Route path="inventory/transfer" element={<InventoryTransferPage />} />
                       <Route path="inventory/reports" element={<InventoryReportsPage />} />
                       <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />
                       <Route path="inventory/stock-movements" element={<StockMovementPage />} />
                       <Route path="inventory/stock-alerts" element={<StockAlertsPage />} />
+                      <Route path="inventory/:id/edit" element={<EditInventoryItemPage />} />
+                      <Route path="inventory/:id" element={<InventoryItemDetailsPage />} />
+                      <Route path="inventory-old" element={<InventoryPage />} />
                       <Route path="stock-count" element={<StockCountPage />} />
                       <Route path="stock-transfer" element={<StockTransferPage />} />
                       <Route path="barcode-scanner" element={<BarcodeScannerPage />} />
@@ -232,5 +234,9 @@ function App() {
     </ThemeProvider>
   );
 }
+
+export default App;
+
+export default App;
 
 export default App;

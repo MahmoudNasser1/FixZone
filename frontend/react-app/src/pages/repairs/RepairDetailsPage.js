@@ -95,6 +95,8 @@ const RepairDetailsPage = () => {
   });
   // Add Service modal state
   const [addServiceOpen, setAddServiceOpen] = useState(false);
+  const [editingService, setEditingService] = useState(null);
+  const [deletingService, setDeletingService] = useState(null);
   
   // Edit accessories state
   const [editingAccessories, setEditingAccessories] = useState(false);
@@ -264,27 +266,20 @@ const RepairDetailsPage = () => {
       } else {
         // بيانات تجريبية في حالة عدم توفر البيانات
         setAccessoryOptions([
-          { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
-          { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
-          { id: 3, label: 'سماعات', value: 'EARPHONES' },
-          { id: 4, label: 'حافظة', value: 'CASE' },
-          { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' },
-          { id: 6, label: 'قلم رقمي', value: 'STYLUS' },
-          { id: 7, label: 'ماوس', value: 'MOUSE' },
-          { id: 8, label: 'لوحة مفاتيح', value: 'KEYBOARD' },
-          { id: 9, label: 'بطاقة ذاكرة', value: 'MEMORY_CARD' },
-          { id: 10, label: 'بطارية خارجية', value: 'POWER_BANK' }
+          { id: 1, label: 'شاحن', value: 'CHARGER' },
+          { id: 2, label: 'كابل باور', value: 'POWER_CABLE' },
+          { id: 3, label: 'شنطة', value: 'BAG' },
+          { id: 4, label: 'بطارية خارجية', value: 'POWER_BANK' }
         ]);
       }
     } catch (error) {
       console.warn('Failed to load accessory options:', error);
       // بيانات تجريبية في حالة الخطأ
       setAccessoryOptions([
-        { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
-        { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
-        { id: 3, label: 'سماعات', value: 'EARPHONES' },
-        { id: 4, label: 'حافظة', value: 'CASE' },
-        { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' }
+        { id: 1, label: 'شاحن', value: 'CHARGER' },
+        { id: 2, label: 'كابل باور', value: 'POWER_CABLE' },
+        { id: 3, label: 'شنطة', value: 'BAG' },
+        { id: 4, label: 'بطارية خارجية', value: 'POWER_BANK' }
       ]);
     }
   };
@@ -1040,11 +1035,42 @@ const RepairDetailsPage = () => {
     }
   };
 
+  const handleUpdateService = async (serviceId, serviceData) => {
+    try {
+      await apiService.updateRepairRequestService(serviceId, {
+        repairRequestId: parseInt(id),
+        ...serviceData
+      });
+      notifications.success('تم تحديث الخدمة بنجاح');
+      setEditingService(null);
+      await loadServices();
+    } catch (e) {
+      console.error('Error updating service:', e);
+      notifications.error('تعذر تحديث الخدمة');
+    }
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذه الخدمة؟');
+    if (!confirmed) return;
+    try {
+      await apiService.deleteRepairRequestService(serviceId);
+      notifications.success('تم حذف الخدمة بنجاح');
+      setDeletingService(null);
+      await loadServices();
+    } catch (e) {
+      console.error('Error deleting service:', e);
+      notifications.error('تعذر حذف الخدمة');
+    }
+  };
+
   const handlePrint = (type) => {
     console.log('Printing repair request:', id, 'with type:', type);
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
     const base = 'http://localhost:3001/api/repairs';
     let url = `${base}/${id}/print/receipt`;
+    if (type === 'receipt') url = `${base}/${id}/print/receipt`;
+    if (type === 'sticker') url = `${base}/${id}/print/sticker`;
     if (type === 'qr') url = `${base}/${id}/print/receipt`;
     if (type === 'inspection') url = `${base}/${id}/print/inspection`;
     if (type === 'delivery') url = `${base}/${id}/print/delivery`;
@@ -1278,6 +1304,10 @@ const RepairDetailsPage = () => {
               <Printer className="w-4 h-4 ml-2" />
               طباعة إيصال
             </SimpleButton>
+            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('sticker')} className="rounded-lg">
+              <QrCode className="w-4 h-4 ml-2" />
+              طباعة استيكر
+            </SimpleButton>
             <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('inspection')} className="rounded-lg">
               <Printer className="w-4 h-4 ml-2" />
               طباعة تقرير فحص
@@ -1427,7 +1457,7 @@ const RepairDetailsPage = () => {
                   <option value="">بدون ربط</option>
                   {invoices.map((inv) => (
                     <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
-                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.amount || 0)}
+                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
                     </option>
                   ))}
                 </select>
@@ -1869,42 +1899,84 @@ const RepairDetailsPage = () => {
                     <div className="space-y-3">
                       {getSortedPagedServices().items.map((service) => {
                         const invoiced = !!service.invoiceItemId;
+                        const isEditing = editingService?.id === service.id;
                         return (
                           <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <Settings className="w-5 h-5 text-purple-600" />
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold text-gray-900 text-lg">
-                                      {service.serviceName || `خدمة إصلاح #${service.serviceId}`}
+                                {isEditing ? (
+                                  <div className="space-y-3">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editingService.price || service.price || ''}
+                                        onChange={(e) => setEditingService({...editingService, price: e.target.value})}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                      />
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                      كود الخدمة: {service.serviceId || 'غير محدد'}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
+                                      <select
+                                        value={editingService.technicianId || service.technicianId || ''}
+                                        onChange={(e) => setEditingService({...editingService, technicianId: e.target.value})}
+                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                                      >
+                                        <option value="">اختر الفني...</option>
+                                        {techOptions.map((tech) => (
+                                          <option key={tech.id} value={tech.id}>
+                                            {tech.name || `مستخدم #${tech.id}`}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
+                                      <textarea
+                                        value={editingService.notes || service.notes || ''}
+                                        onChange={(e) => setEditingService({...editingService, notes: e.target.value})}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        rows={3}
+                                      />
                                     </div>
                                   </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4 text-sm mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-gray-600">السعر:</span>
-                                    <span className="font-medium text-gray-900">{Number(service.price || 0).toFixed(2)} ج.م</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                    <span className="text-gray-600">الفني:</span>
-                                    <span className="font-medium text-gray-900">{service.technicianName || 'غير محدد'}</span>
-                                  </div>
-                                </div>
-                                
-                                {service.notes && (
-                                  <div className="bg-white/70 rounded-lg p-3 mt-2">
-                                    <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
-                                    <div className="text-sm text-gray-700">{service.notes}</div>
-                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <Settings className="w-5 h-5 text-purple-600" />
+                                      </div>
+                                      <div>
+                                        <div className="font-semibold text-gray-900 text-lg">
+                                          {service.serviceName || `خدمة إصلاح #${service.serviceId}`}
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                          كود الخدمة: {service.serviceId || 'غير محدد'}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4 text-sm mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="text-gray-600">السعر:</span>
+                                        <span className="font-medium text-gray-900">{Number(service.price || 0).toFixed(2)} ج.م</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span className="text-gray-600">الفني:</span>
+                                        <span className="font-medium text-gray-900">{service.technicianName || 'غير محدد'}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    {service.notes && (
+                                      <div className="bg-white/70 rounded-lg p-3 mt-2">
+                                        <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
+                                        <div className="text-sm text-gray-700">{service.notes}</div>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                               
@@ -1912,6 +1984,58 @@ const RepairDetailsPage = () => {
                                 <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
                                   {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
                                 </SimpleBadge>
+                                <div className="flex gap-2">
+                                  {editingService?.id === service.id ? (
+                                    <>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          handleUpdateService(service.id, {
+                                            serviceId: editingService.serviceId || service.serviceId,
+                                            technicianId: editingService.technicianId || service.technicianId,
+                                            price: editingService.price || service.price,
+                                            notes: editingService.notes !== undefined ? editingService.notes : service.notes
+                                          });
+                                        }}
+                                        className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                                      >
+                                        <Save className="w-4 h-4 ml-1" />
+                                        حفظ
+                                      </SimpleButton>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingService(null)}
+                                        className="bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                      >
+                                        <X className="w-4 h-4 ml-1" />
+                                        إلغاء
+                                      </SimpleButton>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingService(service)}
+                                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                                      >
+                                        <Edit className="w-4 h-4 ml-1" />
+                                        تعديل
+                                      </SimpleButton>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleDeleteService(service.id)}
+                                        className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                                      >
+                                        <Trash2 className="w-4 h-4 ml-1" />
+                                        حذف
+                                      </SimpleButton>
+                                    </>
+                                  )}
+                                </div>
                                 {!invoiced && (
                                   <SimpleButton
                                     size="sm"
@@ -2101,7 +2225,8 @@ const RepairDetailsPage = () => {
                           <div key={inv.id || inv.invoiceId} className="py-3 flex items-center justify-between">
                             <div>
                               <p className="font-medium text-gray-900">{inv.title || `فاتورة #${inv.id || inv.invoiceId}`}</p>
-                              <p className="text-sm text-gray-600">المبلغ: {formatMoney(inv.amount || 0)}</p>
+                              <p className="text-sm text-gray-600">المبلغ: {formatMoney(inv.totalAmount || inv.amount || 0)}</p>
+                              <p className="text-xs text-gray-500">الحالة: {inv.status || 'غير محدد'}</p>
                             </div>
                             <div className="flex items-center space-x-2 space-x-reverse">
                               <Link to={`/invoices/${inv.id || inv.invoiceId}`}>
@@ -2993,7 +3118,257 @@ const RepairDetailsPage = () => {
                   <option value="">بدون ربط</option>
                   {invoices.map((inv) => (
                     <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
-                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.amount || 0)}
+                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
+                    </option>
+                  ))}
+                </select>
+                {invoices.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">لا توجد فواتير بعد لهذا الطلب. يمكنك الإنشاء من تبويب "الفواتير".</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الكمية</label>
+                <input
+                  type="number"
+                  min="1"
+                  name="quantity"
+                  value={issueForm.quantity}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                />
+                {availableQty !== null && (
+                  <p className="mt-1 text-xs">
+                    <span className="text-gray-500">المتاح بالمخزن المحدد: </span>
+                    <span className={Number(issueForm.quantity) > Number(availableQty) ? 'text-red-600 font-semibold' : 'text-gray-900'}>
+                      {availableQty}
+                    </span>
+                  </p>
+                )}
+                {minLevel !== null && availableQty !== null && (
+                  <div className={`mt-2 text-xs p-2 rounded ${availableQty <= minLevel ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                    الحد الأدنى: {minLevel} — {availableQty <= minLevel ? 'المخزون منخفض' : 'تنبيه: قد يقترب المخزون من الحد الأدنى'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
+              <SimpleButton variant="ghost" onClick={() => setIssueOpen(false)} disabled={issueLoading}>إلغاء</SimpleButton>
+              <SimpleButton onClick={handleIssueSubmit} disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))} className="bg-blue-600 hover:bg-blue-700">
+                {issueLoading ? 'جاري التنفيذ...' : 'صرف'}
+              </SimpleButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default RepairDetailsPage;
+
+                      notifications.success('تم حفظ تقرير الفحص بنجاح');
+                      setInspectionOpen(false);
+                      // إعادة تحميل البيانات
+                      fetchRepairDetails();
+                    } catch (e) {
+                      notifications.error('تعذر حفظ تقرير الفحص');
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <CheckCircle className="w-4 h-4 ml-2" />
+                  حفظ التقرير
+                </SimpleButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* حوار صرف قطعة */}
+      {issueOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">صرف قطعة من المخزون</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {issueError && (
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
+                  {issueError}
+                </div>
+              )}
+              {Array.isArray(warehouses) && warehouses.length === 0 && (
+                <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded">
+                  لا توجد مخازن متاحة. يرجى إنشاء مخزن من إعدادات المخزون أولاً.
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">المخزن</label>
+                <select
+                  name="warehouseId"
+                  value={issueForm.warehouseId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">اختر المخزن...</option>
+                  {warehouses.map((wh) => (
+                    <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">العنصر</label>
+                <select
+                  name="inventoryItemId"
+                  value={issueForm.inventoryItemId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">اختر العنصر...</option>
+                  {items.map((it) => (
+                    <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
+                  ))}
+                </select>
+              </div>
+              {/* اختيار فاتورة اختياري لربط الصرف مباشرة بالفاتورة */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الربط بفاتورة (اختياري)</label>
+                <select
+                  name="invoiceId"
+                  value={issueForm.invoiceId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">بدون ربط</option>
+                  {invoices.map((inv) => (
+                    <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
+                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
+                    </option>
+                  ))}
+                </select>
+                {invoices.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">لا توجد فواتير بعد لهذا الطلب. يمكنك الإنشاء من تبويب "الفواتير".</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الكمية</label>
+                <input
+                  type="number"
+                  min="1"
+                  name="quantity"
+                  value={issueForm.quantity}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                />
+                {availableQty !== null && (
+                  <p className="mt-1 text-xs">
+                    <span className="text-gray-500">المتاح بالمخزن المحدد: </span>
+                    <span className={Number(issueForm.quantity) > Number(availableQty) ? 'text-red-600 font-semibold' : 'text-gray-900'}>
+                      {availableQty}
+                    </span>
+                  </p>
+                )}
+                {minLevel !== null && availableQty !== null && (
+                  <div className={`mt-2 text-xs p-2 rounded ${availableQty <= minLevel ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                    الحد الأدنى: {minLevel} — {availableQty <= minLevel ? 'المخزون منخفض' : 'تنبيه: قد يقترب المخزون من الحد الأدنى'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
+              <SimpleButton variant="ghost" onClick={() => setIssueOpen(false)} disabled={issueLoading}>إلغاء</SimpleButton>
+              <SimpleButton onClick={handleIssueSubmit} disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))} className="bg-blue-600 hover:bg-blue-700">
+                {issueLoading ? 'جاري التنفيذ...' : 'صرف'}
+              </SimpleButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default RepairDetailsPage;
+
+                      notifications.success('تم حفظ تقرير الفحص بنجاح');
+                      setInspectionOpen(false);
+                      // إعادة تحميل البيانات
+                      fetchRepairDetails();
+                    } catch (e) {
+                      notifications.error('تعذر حفظ تقرير الفحص');
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <CheckCircle className="w-4 h-4 ml-2" />
+                  حفظ التقرير
+                </SimpleButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* حوار صرف قطعة */}
+      {issueOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">صرف قطعة من المخزون</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {issueError && (
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
+                  {issueError}
+                </div>
+              )}
+              {Array.isArray(warehouses) && warehouses.length === 0 && (
+                <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded">
+                  لا توجد مخازن متاحة. يرجى إنشاء مخزن من إعدادات المخزون أولاً.
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">المخزن</label>
+                <select
+                  name="warehouseId"
+                  value={issueForm.warehouseId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">اختر المخزن...</option>
+                  {warehouses.map((wh) => (
+                    <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">العنصر</label>
+                <select
+                  name="inventoryItemId"
+                  value={issueForm.inventoryItemId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">اختر العنصر...</option>
+                  {items.map((it) => (
+                    <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
+                  ))}
+                </select>
+              </div>
+              {/* اختيار فاتورة اختياري لربط الصرف مباشرة بالفاتورة */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الربط بفاتورة (اختياري)</label>
+                <select
+                  name="invoiceId"
+                  value={issueForm.invoiceId}
+                  onChange={handleIssueChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                >
+                  <option value="">بدون ربط</option>
+                  {invoices.map((inv) => (
+                    <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
+                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
                     </option>
                   ))}
                 </select>

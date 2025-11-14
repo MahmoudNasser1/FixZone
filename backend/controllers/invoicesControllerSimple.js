@@ -138,16 +138,86 @@ class InvoicesControllerSimple {
   // Create a new invoice - minimal required fields
   async createInvoice(req, res) {
     try {
-      const { totalAmount, status = 'draft', currency = 'EGP', taxAmount = 0, amountPaid = 0 } = req.body;
+      const { 
+        repairRequestId, 
+        customerId,
+        vendorId,
+        invoiceType = 'sale',
+        totalAmount, 
+        status = 'draft', 
+        currency = 'EGP', 
+        taxAmount = 0, 
+        amountPaid = 0 
+      } = req.body;
 
       if (totalAmount === undefined || isNaN(Number(totalAmount))) {
         return res.status(400).json({ success: false, message: 'totalAmount is required and must be a number' });
       }
 
+      // Validate invoiceType
+      if (!['sale', 'purchase'].includes(invoiceType)) {
+        return res.status(400).json({
+          success: false,
+          error: 'نوع الفاتورة يجب أن يكون sale أو purchase'
+        });
+      }
+
+      // Validate: يجب تحديد إما repairRequestId أو customerId (لفواتير البيع) أو vendorId (لفواتير الشراء)
+      if (invoiceType === 'sale') {
+        if ((!repairRequestId || repairRequestId === '' || repairRequestId === null) && 
+            (!customerId || customerId === '' || customerId === null)) {
+          return res.status(400).json({
+            success: false,
+            error: 'لفواتير البيع: يجب تحديد إما طلب إصلاح (repairRequestId) أو عميل (customerId)'
+          });
+        }
+      } else if (invoiceType === 'purchase') {
+        if (!vendorId || vendorId === '' || vendorId === null) {
+          return res.status(400).json({
+            success: false,
+            error: 'لفواتير الشراء: يجب تحديد مورد (vendorId)'
+          });
+        }
+        // التحقق من وجود المورد
+        const [vendor] = await db.query(
+          'SELECT id FROM Vendor WHERE id = ? AND deletedAt IS NULL',
+          [vendorId]
+        );
+        if (vendor.length === 0) {
+          return res.status(400).json({
+            success: false,
+            error: 'المورد غير موجود'
+          });
+        }
+      }
+
+      // التحقق من وجود العميل إذا تم تحديده
+      let finalCustomerId = customerId;
+      if (!finalCustomerId && repairRequestId) {
+        const [repair] = await db.query(
+          'SELECT customerId FROM RepairRequest WHERE id = ?',
+          [repairRequestId]
+        );
+        if (repair.length > 0) {
+          finalCustomerId = repair[0].customerId;
+        }
+      } else if (customerId) {
+        const [customer] = await db.query(
+          'SELECT id FROM Customer WHERE id = ? AND deletedAt IS NULL',
+          [customerId]
+        );
+        if (customer.length === 0) {
+          return res.status(400).json({
+            success: false,
+            error: 'العميل غير موجود'
+          });
+        }
+      }
+
       const [result] = await db.query(
-        `INSERT INTO Invoice (totalAmount, amountPaid, status, currency, taxAmount)
-         VALUES (?, ?, ?, ?, ?)`,
-        [totalAmount, amountPaid, status, currency, taxAmount]
+        `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
       );
 
       // Send notification
@@ -172,12 +242,13 @@ class InvoicesControllerSimple {
       const [rows] = await db.query(`
         SELECT 
           i.*,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail
+          COALESCE(c_direct.name, c_via_repair.name) as customerName,
+          COALESCE(c_direct.phone, c_via_repair.phone) as customerPhone,
+          COALESCE(c_direct.email, c_via_repair.email) as customerEmail
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
+        LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
+        LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
         WHERE i.id = ? AND i.deletedAt IS NULL
       `, [id]);
       
@@ -671,6 +742,148 @@ class InvoicesControllerSimple {
           const totalPrice = quantity * unitPrice;
 
           await connection.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'part', ?)
+          `, [invoiceId, part.inventoryItemId, quantity, unitPrice, totalPrice, `قطعة غيار: ${part.name || 'غير محدد'}`]);
+        }
+
+        // Add services used in repair
+        const [services] = await connection.query(`
+          SELECT rrs.*, s.name, s.basePrice
+          FROM RepairRequestService rrs
+          LEFT JOIN Service s ON rrs.serviceId = s.id
+          WHERE rrs.repairRequestId = ?
+        `, [repairId]);
+
+        for (const service of services) {
+          const unitPrice = service.price || service.basePrice || 0;
+          await connection.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'service', ?)
+          `, [invoiceId, service.serviceId, 1, unitPrice, unitPrice, `خدمة: ${service.name || 'غير محدد'}`]);
+        }
+
+        // Calculate and update total amount
+        const [totalResult] = await connection.query(`
+          SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+          FROM InvoiceItem WHERE invoiceId = ?
+        `, [invoiceId]);
+
+        const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount);
+
+        await connection.query(`
+          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+        `, [finalTotal, invoiceId]);
+
+        await connection.commit();
+
+        // Fetch the created invoice with details
+        const [createdInvoice] = await connection.query(`
+          SELECT i.*, 
+            c.name as customerName,
+            c.phone as customerPhone,
+            c.email as customerEmail,
+            rr.deviceModel as deviceModel,
+            rr.deviceBrand as deviceBrand
+          FROM Invoice i
+          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+          LEFT JOIN Customer c ON rr.customerId = c.id
+          WHERE i.id = ?
+        `, [invoiceId]);
+
+        res.status(201).json({
+          success: true,
+          data: createdInvoice[0],
+          message: 'Invoice created successfully from repair request'
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error creating invoice from repair:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+}
+
+module.exports = new InvoicesControllerSimple();
+
+            INSERT INTO InvoiceItem (
+              invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'part', ?)
+          `, [invoiceId, part.inventoryItemId, quantity, unitPrice, totalPrice, `قطعة غيار: ${part.name || 'غير محدد'}`]);
+        }
+
+        // Add services used in repair
+        const [services] = await connection.query(`
+          SELECT rrs.*, s.name, s.basePrice
+          FROM RepairRequestService rrs
+          LEFT JOIN Service s ON rrs.serviceId = s.id
+          WHERE rrs.repairRequestId = ?
+        `, [repairId]);
+
+        for (const service of services) {
+          const unitPrice = service.price || service.basePrice || 0;
+          await connection.query(`
+            INSERT INTO InvoiceItem (
+              invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
+            ) VALUES (?, ?, ?, ?, ?, 'service', ?)
+          `, [invoiceId, service.serviceId, 1, unitPrice, unitPrice, `خدمة: ${service.name || 'غير محدد'}`]);
+        }
+
+        // Calculate and update total amount
+        const [totalResult] = await connection.query(`
+          SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+          FROM InvoiceItem WHERE invoiceId = ?
+        `, [invoiceId]);
+
+        const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount);
+
+        await connection.query(`
+          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+        `, [finalTotal, invoiceId]);
+
+        await connection.commit();
+
+        // Fetch the created invoice with details
+        const [createdInvoice] = await connection.query(`
+          SELECT i.*, 
+            c.name as customerName,
+            c.phone as customerPhone,
+            c.email as customerEmail,
+            rr.deviceModel as deviceModel,
+            rr.deviceBrand as deviceBrand
+          FROM Invoice i
+          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+          LEFT JOIN Customer c ON rr.customerId = c.id
+          WHERE i.id = ?
+        `, [invoiceId]);
+
+        res.status(201).json({
+          success: true,
+          data: createdInvoice[0],
+          message: 'Invoice created successfully from repair request'
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error creating invoice from repair:', error);
+      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    }
+  }
+}
+
+module.exports = new InvoicesControllerSimple();
+
             INSERT INTO InvoiceItem (
               invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
             ) VALUES (?, ?, ?, ?, ?, 'part', ?)

@@ -43,26 +43,26 @@ export default function EditInvoicePage() {
         setLoading(true);
         console.log('Loading invoice with ID:', id);
         const responseData = await apiService.getInvoiceById(id);
-        console.log('API Response:', responseData);
-        const invoiceData = responseData.data || responseData;
-        setInvoice(invoiceData);
-        
-        // Ensure all numeric values are properly converted
-        const totalAmount = Number(invoiceData.totalAmount) || 0;
-        const amountPaid = Number(invoiceData.amountPaid) || 0;
-        const taxAmount = Number(invoiceData.taxAmount) || 0;
-        const discountAmount = Number(invoiceData.discountAmount) || 0;
-        
-        setForm({
-          totalAmount,
-          amountPaid,
-          status: invoiceData.status || 'draft',
-          currency: invoiceData.currency || 'EGP',
-          taxAmount,
-          discountAmount,
-          notes: invoiceData.notes || '',
-          dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
-        });
+          console.log('API Response:', responseData);
+          const invoiceData = responseData.data || responseData;
+          setInvoice(invoiceData);
+          
+          // Ensure all numeric values are properly converted
+          const totalAmount = Number(invoiceData.totalAmount) || 0;
+          const amountPaid = Number(invoiceData.amountPaid) || 0;
+          const taxAmount = Number(invoiceData.taxAmount) || 0;
+          const discountAmount = Number(invoiceData.discountAmount) || 0;
+          
+          setForm({
+            totalAmount,
+            amountPaid,
+            status: invoiceData.status || 'draft',
+            currency: invoiceData.currency || 'EGP',
+            taxAmount,
+            discountAmount,
+            notes: invoiceData.notes || '',
+            dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
+          });
       } catch (error) {
         console.error('Error loading invoice:', error);
         notifications.error('فشل في تحميل بيانات الفاتورة: ' + error.message);
@@ -93,8 +93,8 @@ export default function EditInvoicePage() {
       };
 
       await apiService.updateInvoice(id, updateData);
-      notifications.success('تم حفظ التغييرات بنجاح');
-      navigate(`/invoices/${id}`);
+        notifications.success('تم حفظ التغييرات بنجاح');
+        navigate(`/invoices/${id}`);
     } catch (error) {
       console.error('Error saving invoice:', error);
       notifications.error('فشل في حفظ التغييرات: ' + (error.message || 'خطأ غير معروف'));

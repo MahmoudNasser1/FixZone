@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
     });
   }
   try {
-    const [result] = await db.query(
+    const [result] = await db.execute(
       'INSERT INTO RepairRequestService (repairRequestId, serviceId, technicianId, price, notes) VALUES (?, ?, ?, ?, ?)',
       [repairRequestId, serviceId, technicianId, price, notes]
     );
@@ -87,15 +87,30 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
-  if (!repairRequestId || !serviceId || !technicianId || !price) {
-    return res.status(400).json({ 
-      error: 'repairRequestId, serviceId, technicianId, and price are required' 
-    });
-  }
+  
+  // Get existing service to use current values if not provided
   try {
-    const [result] = await db.query(
+    const [existing] = await db.query('SELECT * FROM RepairRequestService WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Repair request service not found' });
+    }
+    
+    const current = existing[0];
+    const updateRepairRequestId = repairRequestId !== undefined ? repairRequestId : current.repairRequestId;
+    const updateServiceId = serviceId !== undefined ? serviceId : current.serviceId;
+    const updateTechnicianId = technicianId !== undefined ? technicianId : current.technicianId;
+    const updatePrice = price !== undefined ? price : current.price;
+    const updateNotes = notes !== undefined ? notes : current.notes;
+    
+    if (!updateRepairRequestId || !updateServiceId || !updateTechnicianId || updatePrice === undefined) {
+      return res.status(400).json({ 
+        error: 'repairRequestId, serviceId, technicianId, and price are required' 
+      });
+    }
+    
+    const [result] = await db.execute(
       'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, technicianId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
-      [repairRequestId, serviceId, technicianId, price, notes, id]
+      [updateRepairRequestId, updateServiceId, updateTechnicianId, updatePrice, updateNotes, id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Repair request service not found' });
@@ -111,7 +126,37 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('DELETE FROM RepairRequestService WHERE id = ?', [id]);
+    const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Repair request service not found' });
+    }
+    res.json({ message: 'Repair request service deleted successfully' });
+  } catch (err) {
+    console.error(`Error deleting repair request service with ID ${id}:`, err);
+    res.status(500).json({ error: 'Server Error', details: err.message });
+  }
+});
+
+module.exports = router;
+
+  const { id } = req.params;
+  try {
+    const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Repair request service not found' });
+    }
+    res.json({ message: 'Repair request service deleted successfully' });
+  } catch (err) {
+    console.error(`Error deleting repair request service with ID ${id}:`, err);
+    res.status(500).json({ error: 'Server Error', details: err.message });
+  }
+});
+
+module.exports = router;
+
+  const { id } = req.params;
+  try {
+    const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Repair request service not found' });
     }
