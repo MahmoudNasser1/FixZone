@@ -98,7 +98,19 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       await login(loginIdentifier, password);
-      navigate('/');
+      
+      // Get user data after login to determine redirect
+      const user = useAuthStore.getState().user;
+      const roleId = user?.roleId || user?.role;
+      
+      // Redirect based on user role
+      // Customer (roleId === 8) → Customer Dashboard
+      // Admin/Staff (other roles) → Main Dashboard
+      if (roleId === 8 || user?.type === 'customer') {
+        navigate('/customer/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       // Map error messages to Arabic
       let errorMessage = err.message || 'حدث خطأ غير متوقع';

@@ -3,6 +3,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const Joi = require('joi');
 const authController = require('../controllers/authController');
+const customerAuthController = require('../controllers/customerAuthController');
 const authMiddleware = require('../middleware/authMiddleware');
 const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 
@@ -97,9 +98,26 @@ const validate = (schema) => {
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
 router.post('/register', validate(registerSchema), authController.register);
 
+// Customer authentication routes
+router.post('/customer/login', loginLimiter, validate(loginSchema), customerAuthController.customerLogin);
+router.get('/customer/profile', authMiddleware, customerAuthController.getCustomerProfile);
+router.put('/customer/profile', authMiddleware, customerAuthController.updateCustomerProfile);
+router.post('/customer/change-password', authMiddleware, validate(changePasswordSchema), customerAuthController.changeCustomerPassword);
+
 // Current user (restore session)
 router.get('/me', authMiddleware, (req, res) => {
-    res.json({ id: req.user.id, role: req.user.role, name: req.user.name });
+    // Ensure roleId is included (from JWT payload)
+    const roleId = req.user.roleId || req.user.role;
+    const role = req.user.role || req.user.roleId;
+    
+    res.json({ 
+        id: req.user.id, 
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone,
+        role: role,
+        roleId: roleId  // Add roleId explicitly for frontend
+    });
 });
 
 // Logout (clear cookie)

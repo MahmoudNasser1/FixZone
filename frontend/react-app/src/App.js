@@ -82,12 +82,43 @@ import ServiceForm from './pages/services/ServiceForm';
 import ServiceDetails from './pages/services/ServiceDetails';
 import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
+// Customer Portal Pages
+import CustomerLoginPage from './pages/customer/CustomerLoginPage';
+import CustomerDashboard from './pages/customer/CustomerDashboard';
+
 // Placeholder components removed; using real pages instead
 
 // This component protects routes that require authentication.
+// Also redirects customers away from admin pages
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const user = useAuthStore((state) => state.user);
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Check if user is customer
+  const roleId = user?.roleId || user?.role;
+  const isCustomer = roleId === 8 || roleId === '8' || user?.type === 'customer';
+  
+  // If user is customer, redirect them to customer dashboard
+  // Customers should ONLY access /customer/* routes
+  if (isCustomer) {
+    const currentPath = window.location.pathname;
+    // Allow access to customer routes
+    if (currentPath.startsWith('/customer/')) {
+      return children;
+    }
+    // Allow access to public routes (track, print)
+    if (currentPath.startsWith('/track') || currentPath.includes('/print')) {
+      return children;
+    }
+    // Redirect all other routes to customer dashboard
+    return <Navigate to="/customer/dashboard" replace />;
+  }
+  
+  return children;
 };
 
 // This component handles routes that should only be accessible to unauthenticated users.
@@ -96,11 +127,57 @@ const PublicRoute = ({ children }) => {
   return !isAuthenticated ? children : <Navigate to="/" replace />;
 };
 
+// Customer route wrapper - checks if user is customer
+const CustomerRoute = ({ children }) => {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isCustomer = user && (user.type === 'customer' || user.roleId === 8 || user.role === 8);
+  return isAuthenticated && isCustomer ? children : <Navigate to="/customer/login" replace />;
+};
+
+// Public customer route - redirect to unified login
+const PublicCustomerRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const roleId = user?.roleId || user?.role;
+  const isCustomer = user && (user.type === 'customer' || roleId === 8 || roleId === '8');
+  
+  // If logged in, redirect based on role
+  if (isAuthenticated) {
+    if (isCustomer) {
+      return <Navigate to="/customer/dashboard" replace />;
+    } else {
+      return <Navigate to="/" replace />;
+    }
+  }
+  
+  // If not logged in, redirect to unified login page
+  return <Navigate to="/login" replace />;
+};
+
 // Admin-only route wrapper
 const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
-  const isAdmin = user && (user.roleId === 1 || user.role === 'admin');
-  return isAdmin ? children : <Navigate to="/" replace />;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const roleId = user?.roleId || user?.role;
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Check if user is customer - redirect to customer dashboard
+  const isCustomer = roleId === 8 || user?.type === 'customer';
+  if (isCustomer) {
+    return <Navigate to="/customer/dashboard" replace />;
+  }
+  
+  // Check if user is admin
+  const isAdmin = roleId === 1 || roleId === '1' || user?.role === 1 || user?.role === 'admin';
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
 };
 
 function App() {
@@ -110,6 +187,7 @@ function App() {
         <SystemNotifications />
         <SettingsProvider>
           <Routes>
+            {/* Staff/Admin Login */}
             <Route
               path="/login"
               element={
@@ -119,6 +197,29 @@ function App() {
               }
             />
 
+            {/* Customer Portal Routes - Login redirects to unified login */}
+            <Route
+              path="/customer/login"
+              element={<Navigate to="/login" replace />}
+            />
+            <Route
+              path="/customer/*"
+              element={
+                <CustomerRoute>
+                  <Routes>
+                    <Route path="dashboard" element={<CustomerDashboard />} />
+                    <Route path="repairs" element={<div>Customer Repairs Page (Coming Soon)</div>} />
+                    <Route path="repairs/:id" element={<div>Customer Repair Details (Coming Soon)</div>} />
+                    <Route path="invoices" element={<div>Customer Invoices Page (Coming Soon)</div>} />
+                    <Route path="invoices/:id" element={<div>Customer Invoice Details (Coming Soon)</div>} />
+                    <Route path="devices" element={<div>Customer Devices Page (Coming Soon)</div>} />
+                    <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
+                  </Routes>
+                </CustomerRoute>
+              }
+            />
+
+            {/* Staff/Admin Routes */}
             <Route
               path="/*"
               element={

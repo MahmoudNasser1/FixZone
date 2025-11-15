@@ -1,8 +1,9 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Breadcrumb from './Breadcrumb';
+import useAuthStore from '../../stores/authStore';
 
 const MainLayout = ({ 
   showBreadcrumb = true, 
@@ -10,9 +11,18 @@ const MainLayout = ({
   pageTitle = null,
   pageActions = null 
 }) => {
+  const location = useLocation();
+  const user = useAuthStore((state) => state.user);
+  const roleId = user?.roleId || user?.role;
+  const isCustomer = roleId === 8 || user?.type === 'customer';
+  const isCustomerRoute = location.pathname.startsWith('/customer');
+  
+  // Hide Sidebar for customer routes
+  const showSidebar = !isCustomer && !isCustomerRoute;
+  
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
+      {showSidebar && <Sidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
         

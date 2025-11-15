@@ -23,6 +23,13 @@ const useAuthStore = create(
 
           // The backend now sends user info directly, not a token.
           const userData = response.data;
+          
+          // Ensure roleId is set for frontend (check both role and roleId)
+          if (!userData.roleId && userData.role) {
+            userData.roleId = userData.role;
+          } else if (!userData.role && userData.roleId) {
+            userData.role = userData.roleId;
+          }
 
           set({ isAuthenticated: true, user: userData, token: null }); // Token is in httpOnly cookie
         } catch (error) {
@@ -39,6 +46,14 @@ const useAuthStore = create(
           axios.defaults.withCredentials = true;
           const response = await axios.get(`${API_URL}/me`);
           const userData = response.data;
+          
+          // Ensure roleId is set for frontend (check both role and roleId)
+          if (!userData.roleId && userData.role) {
+            userData.roleId = userData.role;
+          } else if (!userData.role && userData.roleId) {
+            userData.role = userData.roleId;
+          }
+          
           set({ isAuthenticated: true, user: userData, token: null });
           return true;
         } catch (_e) {

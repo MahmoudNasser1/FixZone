@@ -35,6 +35,7 @@ exports.login = async (req, res) => {
     try {
         // Check if user exists by email or phone (table name and casing per schema: User)
         // Use db.execute instead of db.query for better security
+        // SELECT * includes all columns including customerId
         const query = 'SELECT * FROM User WHERE (email = ? OR phone = ?) AND deletedAt IS NULL';
         const [rows] = await db.execute(query, [loginIdentifier, loginIdentifier]);
         const user = rows[0];
@@ -54,12 +55,67 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Incorrect password' });
         }
 
+        // Check if user is Customer (roleId === 8) and get customerId
+        let customerId = null;
+        let customerData = null;
+        
+        // First check if customerId is already in User table
+        if (user.customerId) {
+            customerId = user.customerId;
+            // Fetch customer data
+            try {
+                const [customers] = await db.execute(
+                    'SELECT id, name, phone, email FROM Customer WHERE id = ? AND deletedAt IS NULL',
+                    [customerId]
+                );
+                if (customers.length > 0) {
+                    customerData = customers[0];
+                }
+            } catch (error) {
+                console.error('Error fetching customer data by customerId:', error);
+            }
+        } else if (user.roleId === 8 || user.role === 8) {
+            // If customerId not in User table, find by userId
+            try {
+                const [customers] = await db.execute(
+                    'SELECT id, name, phone, email FROM Customer WHERE userId = ? AND deletedAt IS NULL',
+                    [user.id]
+                );
+                if (customers.length > 0) {
+                    customerId = customers[0].id;
+                    customerData = customers[0];
+                    
+                    // Update User table with customerId for future queries
+                    try {
+                        await db.execute(
+                            'UPDATE User SET customerId = ? WHERE id = ?',
+                            [customerId, user.id]
+                        );
+                    } catch (updateError) {
+                        console.error('Error updating User.customerId:', updateError);
+                        // Continue even if update fails
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching customer data by userId:', error);
+                // Continue even if customer fetch fails
+            }
+        }
+
         // Generate JWT
         const payload = {
             id: user.id,
             role: user.roleId,
+            roleId: user.roleId,
             name: user.name
         };
+        
+        // Add customerId to JWT if user is Customer
+        if (customerId) {
+            payload.customerId = customerId;
+            payload.type = 'customer';
+        }
+        
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
         // Send the token in a secure, httpOnly cookie
@@ -74,12 +130,30 @@ exports.login = async (req, res) => {
         // Log successful login attempt
         await logLoginAttempt(user.id, true, ipAddress, userAgent);
 
-        // Send user info back to the client (without the password)
-        res.json({
+        // Prepare response data
+        const responseData = {
             id: user.id,
             name: user.name,
-            role: user.roleId
-        });
+            email: user.email,
+            phone: user.phone,
+            role: user.roleId,
+            roleId: user.roleId  // Add roleId explicitly for frontend
+        };
+        
+        // Add customerId and customer data if user is Customer
+        if (customerId) {
+            responseData.customerId = customerId;
+            responseData.type = 'customer';
+            // Merge customer data if available
+            if (customerData) {
+                responseData.name = customerData.name || responseData.name;
+                responseData.phone = customerData.phone || responseData.phone;
+                responseData.email = customerData.email || responseData.email;
+            }
+        }
+
+        // Send user info back to the client (without the password)
+        res.json(responseData);
 
     } catch (error) {
         console.error('Login error:', error);
@@ -259,7 +333,15 @@ exports.getProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.json({ user });
+        // Return user with roleId explicitly
+        res.json({ 
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.roleId,
+            roleId: user.roleId  // Add roleId explicitly for frontend
+        });
 
     } catch (error) {
         console.error('Get profile error:', error);

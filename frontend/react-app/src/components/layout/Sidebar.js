@@ -111,9 +111,19 @@ const Sidebar = () => {
   const location = useLocation();
   const { isSidebarOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
-  const isAdmin = !!(user && (user.roleId === 1 || user.role === 'admin'));
+  // Check for Admin: roleId === 1 OR role === 1 OR role === 'admin'
+  // Also handle case where API returns role as number but not roleId
+  const roleId = user?.roleId || user?.role;
+  const isAdmin = !!(user && (
+    roleId === 1 || 
+    roleId === '1' ||
+    user.role === 1 || 
+    user.role === 'admin' ||
+    user.roleId === 1 ||
+    user.roleId === '1'
+  ));
   const [openMenus, setOpenMenus] = useState(new Set());
-  const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات']));
+  const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات', 'الإعدادات والإدارة']));
 
   const handleMenuToggle = (label) => {
     if (!isSidebarOpen) return;
