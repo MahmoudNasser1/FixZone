@@ -127,7 +127,7 @@ const EditUserPage = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim() || null,
         roleId: Number(formData.roleId),
-        isActive: formData.isActive
+        isActive: Boolean(formData.isActive) // Ensure boolean
       };
       
       // إضافة كلمة المرور فقط إذا تم إدخالها
@@ -145,7 +145,27 @@ const EditUserPage = () => {
       }
     } catch (err) {
       console.error('Error updating user:', err);
-      const errorMsg = err.message || 'حدث خطأ في تحديث المستخدم';
+      
+      // Handle validation errors with details
+      let errorMsg = err.message || 'حدث خطأ في تحديث المستخدم';
+      
+      // If there are validation error details, show them
+      if (err.details && Array.isArray(err.details)) {
+        const validationErrors = {};
+        err.details.forEach(detail => {
+          if (typeof detail === 'object' && detail.field) {
+            validationErrors[detail.field] = detail.message || 'خطأ في التحقق';
+          }
+        });
+        
+        if (Object.keys(validationErrors).length > 0) {
+          setValidationErrors(validationErrors);
+          // Build user-friendly error message
+          const errorMessages = Object.values(validationErrors).join(', ');
+          errorMsg = `خطأ في التحقق من البيانات: ${errorMessages}`;
+        }
+      }
+      
       setError(errorMsg);
       notifications.error('خطأ في تحديث المستخدم', { message: errorMsg });
     } finally {
@@ -331,6 +351,11 @@ const EditUserPage = () => {
                 <Input
                   type="password"
                   name="password"
+                  lang="en"
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="اتركه فارغاً للحفاظ على كلمة المرور الحالية"
@@ -349,6 +374,11 @@ const EditUserPage = () => {
                 <Input
                   type="password"
                   name="confirmPassword"
+                  lang="en"
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="أعد إدخال كلمة المرور"

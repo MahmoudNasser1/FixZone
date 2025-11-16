@@ -28,6 +28,7 @@ class ApiService {
       if (!response.ok) {
         // Try to get error message from response
         let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorDetails = null;
         try {
           const errorData = await response.json();
           if (errorData.error) {
@@ -35,10 +36,25 @@ class ApiService {
           } else if (errorData.message) {
             errorMessage = errorData.message;
           }
+          // Include validation errors if available
+          if (errorData.errors && Array.isArray(errorData.errors)) {
+            errorDetails = errorData.errors;
+            // Build detailed error message from validation errors
+            if (errorData.errors.length > 0) {
+              const errorMessages = errorData.errors.map(e => 
+                typeof e === 'string' ? e : `${e.field || ''}: ${e.message || e}`
+              ).join(', ');
+              errorMessage = errorMessage + (errorMessages ? ` - ${errorMessages}` : '');
+            }
+          }
         } catch (parseError) {
           // If we can't parse the error response, use the status code
         }
-        throw new Error(errorMessage);
+        const error = new Error(errorMessage);
+        if (errorDetails) {
+          error.details = errorDetails;
+        }
+        throw error;
       }
       
       // Parse JSON and return

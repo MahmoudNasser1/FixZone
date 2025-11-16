@@ -745,6 +745,11 @@ export default function SystemSettingsPage() {
                         <label className="block text-sm text-gray-600 mb-1">API Token</label>
                         <input 
                           type="password"
+                          lang="en"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
                           value={messagingSettings.whatsapp.apiToken}
                           onChange={(e) => handleMessagingChange('whatsapp', 'apiToken', e.target.value)}
                           className="w-full border rounded p-2 text-sm"

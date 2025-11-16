@@ -5,7 +5,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { 
-  Modal as DialogRoot, 
+  Modal as DialogRoot,
   ModalHeader, 
   ModalTitle, 
   ModalDescription, 
@@ -205,9 +205,13 @@ export default function RolesPermissionsPage() {
   };
 
   const handleManagePermissions = (role) => {
+    // عند إدارة الصلاحيات لازم نضمن إن اسم الدور وباقي البيانات موجودة في النموذج
     setFormData({
-      ...formData,
-      permissions: role.permissions || {}
+      name: role.name || '',
+      description: role.description || '',
+      permissions: role.permissions || {},
+      parentRoleId: role.parentRoleId || null,
+      isActive: role.isActive !== false
     });
     setSelectedRole(role);
     setIsPermissionsModalOpen(true);
@@ -231,7 +235,8 @@ export default function RolesPermissionsPage() {
       };
 
       let result;
-      if (selectedRole && isEditModalOpen) {
+      // إذا في selectedRole فإحنا بنعمل تعديل سواء من مودال التعديل أو مودال الصلاحيات
+      if (selectedRole && (isEditModalOpen || isPermissionsModalOpen)) {
         result = await api.updateRole(selectedRole.id, payload);
       } else {
         result = await api.createRole(payload);
@@ -550,7 +555,7 @@ export default function RolesPermissionsPage() {
               اختر الصلاحيات المتاحة لهذا الدور
             </ModalDescription>
           </ModalHeader>
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto">
             {Object.entries(PERMISSIONS_BY_MODULE).map(([moduleKey, moduleData]) => (
               <div key={moduleKey} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">

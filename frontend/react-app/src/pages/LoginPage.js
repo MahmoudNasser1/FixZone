@@ -185,6 +185,11 @@ const LoginPage = () => {
                 id="password"
                 name="password"
                 type="password"
+                lang="en"
+                autoComplete="current-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
                 required
                 value={password}
                 onChange={handleChange}

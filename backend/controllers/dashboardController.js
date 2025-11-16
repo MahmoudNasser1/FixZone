@@ -141,7 +141,8 @@ exports.getRecentRepairs = async (req, res) => {
         const [rows] = await db.execute(
             `SELECT 
                 rr.id, 
-                rr.requestNumber,
+                /* بعض السكيمات لا تحتوي على requestNumber، لذلك نستخدم id كبديل آمن */
+                rr.id AS requestNumber,
                 rr.reportedProblem, 
                 rr.status, 
                 rr.createdAt,
@@ -181,7 +182,8 @@ exports.getAlerts = async (_req, res) => {
         const [delayedRequests] = await db.execute(
             `SELECT 
                 id, 
-                requestNumber,
+                /* استخدام id كرقم الطلب لضمان التوافق مع السكيمات الحالية */
+                id AS requestNumber,
                 reportedProblem, 
                 status, 
                 createdAt, 

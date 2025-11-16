@@ -139,28 +139,55 @@ exports.updateUser = async (req, res) => {
         name: Joi.string().min(2).max(100).optional(),
         email: Joi.string().email().max(255).optional(),
         phone: Joi.string().max(20).optional().allow('', null),
-        password: Joi.string().min(6).optional(),
-        roleId: Joi.number().integer().min(1).optional(),
-        isActive: Joi.boolean().optional()
-    });
+        password: Joi.string().min(6).optional().allow('', null),
+        roleId: Joi.alternatives().try(
+            Joi.number().integer().min(1),
+            Joi.string().pattern(/^\d+$/).messages({ 'string.pattern.base': 'roleId must be a valid number' })
+        ).optional(),
+        isActive: Joi.alternatives().try(
+            Joi.boolean(),
+            Joi.string().valid('true', 'false', '1', '0').messages({
+                'any.only': 'isActive must be a boolean'
+            })
+        ).optional(),
+        confirmPassword: Joi.string().optional().strip() // Allow but strip confirmPassword
+    }); // Remove unknown(false) - we'll use stripUnknown in options
 
-    const { error: validationError } = updateSchema.validate(req.body, { allowUnknown: false });
+    const { error: validationError, value: validatedData } = updateSchema.validate(req.body, { 
+        stripUnknown: true, // Strip unknown fields instead of rejecting
+        abortEarly: false,
+        allowUnknown: false // Don't allow unknown fields, but strip them
+    });
     if (validationError) {
         return res.status(400).json({ 
             success: false,
             message: 'Validation error',
-            errors: validationError.details.map(d => d.message)
+            errors: validationError.details.map(d => ({
+                field: d.path.join('.'),
+                message: d.message
+            }))
         });
     }
 
+    // Use validated data (avoid redeclaring variables already destructured from req.body)
+    const validatedName = validatedData?.name;
+    const validatedEmail = validatedData?.email;
+    const validatedPhone = validatedData?.phone;
+    const validatedPassword = validatedData?.password;
+    const validatedRoleId = validatedData?.roleId;
+    const validatedIsActive = validatedData?.isActive;
+    
+    // Convert roleId to number if it's a string
+    const finalRoleId = validatedRoleId !== undefined ? parseInt(validatedRoleId) : roleId;
+    
     // Validate roleId exists if provided
-    if (roleId !== undefined) {
+    if (finalRoleId !== undefined && finalRoleId !== null) {
         try {
-            const [roleCheck] = await db.execute('SELECT id FROM Role WHERE id = ?', [roleId]);
+            const [roleCheck] = await db.execute('SELECT id FROM Role WHERE id = ?', [finalRoleId]);
             if (roleCheck.length === 0) {
                 return res.status(400).json({ 
                     success: false,
-                    message: `Invalid roleId: ${roleId}` 
+                    message: `Invalid roleId: ${finalRoleId}` 
                 });
             }
         } catch (error) {
@@ -175,15 +202,50 @@ exports.updateUser = async (req, res) => {
     let updateFields = [];
     let updateValues = [];
 
-    if (name) { updateFields.push('name = ?'); updateValues.push(name); }
-    if (email) { updateFields.push('email = ?'); updateValues.push(email); }
-    if (phone !== undefined) { updateFields.push('phone = ?'); updateValues.push(phone || null); }
-    if (password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        updateFields.push('password = ?'); updateValues.push(hashedPassword);
+    // Use validated data (it's already stripped of unknown fields)
+    // Use validated variables (avoid conflict with req.body destructured variables)
+    const finalName = validatedName;
+    const finalEmail = validatedEmail;
+    const finalPhone = validatedPhone !== undefined ? validatedPhone : undefined;
+    const finalPassword = validatedPassword;
+    // Ensure isActive is boolean - handle string 'true'/'false' or 1/0
+    let finalIsActive = validatedIsActive;
+    if (validatedIsActive !== undefined) {
+      if (typeof validatedIsActive === 'string') {
+        finalIsActive = validatedIsActive === 'true' || validatedIsActive === '1';
+      } else if (typeof validatedIsActive === 'number') {
+        finalIsActive = validatedIsActive === 1;
+      } else {
+        finalIsActive = Boolean(validatedIsActive);
+      }
     }
-    if (roleId !== undefined) { updateFields.push('roleId = ?'); updateValues.push(roleId); }
-    if (isActive !== undefined) { updateFields.push('isActive = ?'); updateValues.push(isActive); }
+
+    // Build update query from validated data only
+    if (finalName) { 
+        updateFields.push('name = ?'); 
+        updateValues.push(finalName.trim()); 
+    }
+    if (finalEmail) { 
+        updateFields.push('email = ?'); 
+        updateValues.push(finalEmail.trim()); 
+    }
+    if (finalPhone !== undefined) { 
+        updateFields.push('phone = ?'); 
+        updateValues.push(finalPhone && finalPhone.trim() ? finalPhone.trim() : null); 
+    }
+    if (finalPassword && finalPassword.trim()) {
+        const hashedPassword = await bcrypt.hash(finalPassword.trim(), 10);
+        updateFields.push('password = ?'); 
+        updateValues.push(hashedPassword);
+    }
+    if (finalRoleId !== undefined && finalRoleId !== null && !isNaN(finalRoleId)) { 
+        updateFields.push('roleId = ?'); 
+        updateValues.push(parseInt(finalRoleId)); 
+    }
+    if (finalIsActive !== undefined) { 
+        updateFields.push('isActive = ?'); 
+        updateValues.push(!!finalIsActive); // Ensure boolean
+    }
 
     if (updateFields.length === 0) {
         return res.status(400).json({ 

@@ -153,7 +153,7 @@ exports.login = async (req, res) => {
         }
 
         // Send user info back to the client (without the password)
-        res.json(responseData);
+        res.status(200).json(responseData);
 
     } catch (error) {
         console.error('Login error:', error);
