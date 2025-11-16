@@ -1,5 +1,12 @@
 const db = require('../db');
 
+// Helper function: تحويل undefined إلى null في جميع القيم
+const cleanUndefined = (obj) => {
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, v === undefined ? null : v])
+  );
+};
+
 // إدارة الموردين
 const vendorController = {
   // الحصول على جميع الموردين مع البحث والفلترة والترقيم
@@ -194,7 +201,7 @@ const vendorController = {
       // التحقق من عدم تكرار البريد الإلكتروني أو الهاتف
       const [existing] = await db.execute(
         'SELECT id FROM Vendor WHERE (email = ? OR phone = ?) AND deletedAt IS NULL',
-        [email, phone]
+        [email ?? null, phone ?? null]
       );
 
       if (existing.length) {
@@ -205,19 +212,34 @@ const vendorController = {
       }
 
       // تنظيف البيانات - تحويل undefined إلى null
-      const cleanData = {
-        name: name || null,
-        email: email || null,
-        phone: phone || null,
-        contactPerson: contactPerson || null,
-        address: address || null,
-        taxNumber: taxNumber || null,
-        paymentTerms: paymentTerms || 'net30',
-        creditLimit: creditLimit || 0,
-        notes: notes || null,
-        status: status || 'active',
-        createdBy: req.user?.id || null
-      };
+      const cleanData = cleanUndefined({
+        name: name ?? null,
+        email: email ?? null,
+        phone: phone ?? null,
+        contactPerson: contactPerson ?? null,
+        address: address ?? null,
+        taxNumber: taxNumber ?? null,
+        paymentTerms: paymentTerms ?? 'net30',
+        creditLimit: creditLimit ?? 0,
+        notes: notes ?? null,
+        status: status ?? 'active',
+        createdBy: req.user?.id ?? null
+      });
+
+      // إنشاء params array
+      const params = [
+        cleanData.name,
+        cleanData.email,
+        cleanData.phone,
+        cleanData.contactPerson,
+        cleanData.address,
+        cleanData.taxNumber,
+        cleanData.paymentTerms,
+        cleanData.creditLimit,
+        cleanData.notes,
+        cleanData.status,
+        cleanData.createdBy
+      ];
 
       const [result] = await db.execute(
         `INSERT INTO Vendor (
@@ -225,11 +247,7 @@ const vendorController = {
           taxNumber, paymentTerms, creditLimit, notes, 
           status, createdBy, createdAt, updatedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [
-          cleanData.name, cleanData.email, cleanData.phone, cleanData.contactPerson, cleanData.address,
-          cleanData.taxNumber, cleanData.paymentTerms, cleanData.creditLimit, cleanData.notes,
-          cleanData.status, cleanData.createdBy
-        ]
+        params
       );
 
       res.status(201).json({
@@ -282,7 +300,7 @@ const vendorController = {
       if (email || phone) {
         const [existing] = await db.execute(
           'SELECT id FROM Vendor WHERE (email = ? OR phone = ?) AND id != ? AND deletedAt IS NULL',
-          [email, phone, id]
+          [email ?? null, phone ?? null, id]
         );
 
         if (existing.length) {
@@ -294,18 +312,33 @@ const vendorController = {
       }
 
       // تنظيف البيانات - تحويل undefined إلى null
-      const cleanData = {
-        name: name || null,
-        email: email || null,
-        phone: phone || null,
-        contactPerson: contactPerson || null,
-        address: address || null,
-        taxNumber: taxNumber || null,
-        paymentTerms: paymentTerms || null,
-        creditLimit: creditLimit || null,
-        notes: notes || null,
-        status: status || null
-      };
+      const cleanData = cleanUndefined({
+        name: name ?? null,
+        email: email ?? null,
+        phone: phone ?? null,
+        contactPerson: contactPerson ?? null,
+        address: address ?? null,
+        taxNumber: taxNumber ?? null,
+        paymentTerms: paymentTerms ?? null,
+        creditLimit: creditLimit ?? null,
+        notes: notes ?? null,
+        status: status ?? null
+      });
+
+      // إنشاء params array
+      const params = [
+        cleanData.name, 
+        cleanData.email, 
+        cleanData.phone, 
+        cleanData.contactPerson, 
+        cleanData.address,
+        cleanData.taxNumber, 
+        cleanData.paymentTerms, 
+        cleanData.creditLimit, 
+        cleanData.notes,
+        cleanData.status, 
+        id
+      ];
 
       const [result] = await db.execute(
         `UPDATE Vendor SET 
@@ -321,11 +354,7 @@ const vendorController = {
           status = COALESCE(?, status),
           updatedAt = NOW()
         WHERE id = ? AND deletedAt IS NULL`,
-        [
-          cleanData.name, cleanData.email, cleanData.phone, cleanData.contactPerson, cleanData.address,
-          cleanData.taxNumber, cleanData.paymentTerms, cleanData.creditLimit, cleanData.notes,
-          cleanData.status, id
-        ]
+        params
       );
 
       if (result.affectedRows === 0) {

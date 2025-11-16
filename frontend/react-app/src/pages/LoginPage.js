@@ -104,11 +104,14 @@ const LoginPage = () => {
       const roleId = user?.roleId || user?.role;
       
       // Redirect based on user role
-      // Customer (roleId === 8) → Customer Dashboard
-      // Admin/Staff (other roles) → Main Dashboard
-      if (roleId === 8 || user?.type === 'customer') {
+      if (roleId === 3 || roleId === '3') {
+        // Technician → Technician Dashboard
+        navigate('/tech/dashboard');
+      } else if (roleId === 8 || user?.type === 'customer') {
+        // Customer → Customer Dashboard
         navigate('/customer/dashboard');
       } else {
+        // Admin/Staff → Main Dashboard
         navigate('/');
       }
     } catch (err) {

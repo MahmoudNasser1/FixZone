@@ -86,6 +86,9 @@ import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 
+// Technician Portal Pages
+import { TechnicianDashboard, JobsListPage, JobDetailsPage } from './pages/technician';
+
 // Placeholder components removed; using real pages instead
 
 // This component protects routes that require authentication.
@@ -101,6 +104,7 @@ const ProtectedRoute = ({ children }) => {
   // Check if user is customer
   const roleId = user?.roleId || user?.role;
   const isCustomer = roleId === 8 || roleId === '8' || user?.type === 'customer';
+  const isTechnician = roleId === 3 || roleId === '3';
   
   // If user is customer, redirect them to customer dashboard
   // Customers should ONLY access /customer/* routes
@@ -118,6 +122,22 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/customer/dashboard" replace />;
   }
   
+  // If user is technician, redirect them to technician dashboard
+  // Technicians should ONLY access /tech/* routes
+  if (isTechnician) {
+    const currentPath = window.location.pathname;
+    // Allow access to technician routes
+    if (currentPath.startsWith('/tech/')) {
+      return children;
+    }
+    // Allow access to public routes (track, print)
+    if (currentPath.startsWith('/track') || currentPath.includes('/print')) {
+      return children;
+    }
+    // Redirect all other routes to technician dashboard
+    return <Navigate to="/tech/dashboard" replace />;
+  }
+  
   return children;
 };
 
@@ -133,6 +153,24 @@ const CustomerRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isCustomer = user && (user.type === 'customer' || user.roleId === 8 || user.role === 8);
   return isAuthenticated && isCustomer ? children : <Navigate to="/customer/login" replace />;
+};
+
+// Technician route wrapper - checks if user is technician
+const TechnicianRoute = ({ children }) => {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const roleId = user?.roleId || user?.role;
+  const isTechnician = user && (roleId === 3 || roleId === '3');
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!isTechnician) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
 };
 
 // Public customer route - redirect to unified login
@@ -216,6 +254,22 @@ function App() {
                     <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
                   </Routes>
                 </CustomerRoute>
+              }
+            />
+
+            {/* Technician Portal Routes */}
+            <Route
+              path="/tech/*"
+              element={
+                <TechnicianRoute>
+                  <Routes>
+                    <Route path="dashboard" element={<TechnicianDashboard />} />
+                    <Route path="jobs" element={<JobsListPage />} />
+                    <Route path="jobs/:id" element={<JobDetailsPage />} />
+                    <Route path="profile" element={<div>Technician Profile (Coming Soon)</div>} />
+                    <Route path="*" element={<Navigate to="/tech/dashboard" replace />} />
+                  </Routes>
+                </TechnicianRoute>
               }
             />
 

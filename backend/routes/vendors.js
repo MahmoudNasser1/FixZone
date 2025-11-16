@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const vendorController = require('../controllers/vendors');
+const authMiddleware = require('../middleware/authMiddleware');
+
+// جميع مسارات الموردين تتطلب تسجيل الدخول
+router.use(authMiddleware);
 
 // Get vendor statistics (must be before /:id route)
 router.get('/stats', vendorController.getVendorStats);

@@ -79,7 +79,7 @@
 - [x] Dashboard ✅
 - [x] User Management ✅
 - [x] Company Management ✅
-- [ ] Vendor Management
+- [x] Vendor Management ✅
 - [ ] Services Catalog
 - [ ] Customer Management
 - [ ] Expenses

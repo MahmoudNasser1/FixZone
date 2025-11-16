@@ -1,0 +1,261 @@
+🧾 Vendor API Test (Cookie-based)
+================================
+🔐 Logging in as: [1;33madmin@test.com[0m
+Login HTTP: 200
+[0;32m✅ Login success[0m
+
+📋 GET /api/vendors
+HTTP: 200
+{
+  "success": true,
+  "data": {
+    "vendors": [
+      {
+        "id": 6,
+        "name": "BIT",
+        "email": null,
+        "phone": "0100001000",
+        "createdAt": "2025-10-27T22:36:59.000Z",
+        "updatedAt": "2025-10-27T22:36:59.000Z",
+        "deletedAt": null,
+        "contactPerson": "mina",
+        "address": "مول البستان الدور الرابع",
+        "taxNumber": "032222239",
+        "paymentTerms": "net15",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      },
+      {
+        "id": 5,
+        "name": "Saif Nasser",
+        "email": null,
+        "phone": "01120352161",
+        "createdAt": "2025-10-27T17:49:34.000Z",
+        "updatedAt": "2025-10-27T17:49:34.000Z",
+        "deletedAt": null,
+        "contactPerson": "saif",
+        "address": "حاره قناوي الزيتون",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 1,
+        "pendingOrders": "1",
+        "totalOrderValue": "0.00"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "totalItems": 2,
+      "totalPages": 1
+    }
+  }
+}
+
+📋 POST /api/vendors (create)
+HTTP: 201
+{
+  "success": true,
+  "message": "تم إنشاء المورد بنجاح",
+  "data": {
+    "id": 7
+  }
+}
+
+📋 GET /api/vendors?search=اختبار
+HTTP: 200
+{
+  "success": true,
+  "data": {
+    "vendors": [
+      {
+        "id": 7,
+        "name": "مورد اختبار 1763294441",
+        "email": "vendor1763294441@example.com",
+        "phone": "01012345678",
+        "createdAt": "2025-11-16T12:00:41.000Z",
+        "updatedAt": "2025-11-16T12:00:41.000Z",
+        "deletedAt": null,
+        "contactPerson": null,
+        "address": "عنوان المورد",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  }
+}
+
+📋 GET /api/vendors?page=1&pageSize=5
+HTTP: 200
+{
+  "success": true,
+  "data": {
+    "vendors": [
+      {
+        "id": 6,
+        "name": "BIT",
+        "email": null,
+        "phone": "0100001000",
+        "createdAt": "2025-10-27T22:36:59.000Z",
+        "updatedAt": "2025-10-27T22:36:59.000Z",
+        "deletedAt": null,
+        "contactPerson": "mina",
+        "address": "مول البستان الدور الرابع",
+        "taxNumber": "032222239",
+        "paymentTerms": "net15",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      },
+      {
+        "id": 5,
+        "name": "Saif Nasser",
+        "email": null,
+        "phone": "01120352161",
+        "createdAt": "2025-10-27T17:49:34.000Z",
+        "updatedAt": "2025-10-27T17:49:34.000Z",
+        "deletedAt": null,
+        "contactPerson": "saif",
+        "address": "حاره قناوي الزيتون",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 1,
+        "pendingOrders": "1",
+        "totalOrderValue": "0.00"
+      },
+      {
+        "id": 7,
+        "name": "مورد اختبار 1763294441",
+        "email": "vendor1763294441@example.com",
+        "phone": "01012345678",
+        "createdAt": "2025-11-16T12:00:41.000Z",
+        "updatedAt": "2025-11-16T12:00:41.000Z",
+        "deletedAt": null,
+        "contactPerson": null,
+        "address": "عنوان المورد",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "totalItems": 3,
+      "totalPages": 1
+    }
+  }
+}
+
+📋 GET /api/vendors without auth (expect 401)
+HTTP: 200
+{
+  "success": true,
+  "data": {
+    "vendors": [
+      {
+        "id": 6,
+        "name": "BIT",
+        "email": null,
+        "phone": "0100001000",
+        "createdAt": "2025-10-27T22:36:59.000Z",
+        "updatedAt": "2025-10-27T22:36:59.000Z",
+        "deletedAt": null,
+        "contactPerson": "mina",
+        "address": "مول البستان الدور الرابع",
+        "taxNumber": "032222239",
+        "paymentTerms": "net15",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      },
+      {
+        "id": 5,
+        "name": "Saif Nasser",
+        "email": null,
+        "phone": "01120352161",
+        "createdAt": "2025-10-27T17:49:34.000Z",
+        "updatedAt": "2025-10-27T17:49:34.000Z",
+        "deletedAt": null,
+        "contactPerson": "saif",
+        "address": "حاره قناوي الزيتون",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 1,
+        "pendingOrders": "1",
+        "totalOrderValue": "0.00"
+      },
+      {
+        "id": 7,
+        "name": "مورد اختبار 1763294441",
+        "email": "vendor1763294441@example.com",
+        "phone": "01012345678",
+        "createdAt": "2025-11-16T12:00:41.000Z",
+        "updatedAt": "2025-11-16T12:00:41.000Z",
+        "deletedAt": null,
+        "contactPerson": null,
+        "address": "عنوان المورد",
+        "taxNumber": null,
+        "paymentTerms": "net30",
+        "creditLimit": "0.00",
+        "notes": null,
+        "status": "active",
+        "createdBy": null,
+        "totalOrders": 0,
+        "pendingOrders": "0",
+        "totalOrderValue": "0.00"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "totalItems": 3,
+      "totalPages": 1
+    }
+  }
+}
+
+[0;32m✅ Done. Results saved to RESULTS/07_VENDOR_MANAGEMENT_API_RUN_COOKIE.log[0m

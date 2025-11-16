@@ -191,3 +191,4 @@ echo ""
 echo "📝 ملاحظة: سجل النتائج في ملف:"
 echo "TESTING/RESULTS/06_COMPANY_MANAGEMENT_TEST_EXECUTION_RESULTS.md"
 
+
