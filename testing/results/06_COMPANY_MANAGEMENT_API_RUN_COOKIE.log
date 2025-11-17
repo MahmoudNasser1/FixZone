@@ -1,0 +1,320 @@
+🏢 Company API Test (Cookie-based)
+==================================
+🔐 Logging in as: [1;33madmin@test.com[0m
+Login HTTP: 200
+[0;32m✅ Login success[0m
+
+📋 GET /api/companies (list)
+HTTP: 200
+[
+  {
+    "id": 11,
+    "name": "x",
+    "email": null,
+    "phone": "01013148007",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{\"website\":null,\"industry\":null,\"description\":null,\"status\":\"active\"}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:46:16.000Z",
+    "updatedAt": "2025-10-24T18:46:16.000Z"
+  },
+  {
+    "id": 10,
+    "name": "شركة اختبار نهائية",
+    "email": "final@test.com",
+    "phone": "0555555555",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:39:28.000Z",
+    "updatedAt": "2025-10-24T18:39:28.000Z"
+  },
+  {
+    "id": 9,
+    "name": "شركة اختبار Frontend",
+    "email": "frontend@test.com",
+    "phone": "0444444444",
+    "address": "الرياض",
+    "taxNumber": "123456789",
+    "customFields": "{\"website\":\"www.test.com\",\"industry\":\"تقنية المعلومات\",\"description\":\"شركة اختبار\",\"status\":\"active\"}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:39:12.000Z",
+    "updatedAt": "2025-10-24T18:39:12.000Z"
+  },
+  {
+    "id": 8,
+    "name": "شركة اختبار مباشر",
+    "email": "direct@test.com",
+    "phone": "0333333333",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:38:35.000Z",
+    "updatedAt": "2025-10-24T18:38:35.000Z"
+  },
+  {
+    "id": 7,
+    "name": "شركة اختبار محدثة",
+    "email": "test2@company.com",
+    "phone": "0222222222",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{\"website\":\"www.test.com\",\"industry\":\"تقنية المعلومات\",\"status\":\"active\"}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:33:20.000Z",
+    "updatedAt": "2025-10-24T18:33:20.000Z"
+  },
+  {
+    "id": 6,
+    "name": "شركة اختبار",
+    "email": "test@company.com",
+    "phone": "0111111111",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:32:53.000Z",
+    "updatedAt": "2025-10-24T18:32:53.000Z"
+  },
+  {
+    "id": 5,
+    "name": "شركة اختبار جديدة",
+    "email": "test@newcompany.com",
+    "phone": "0999999999",
+    "address": "الرياض",
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:24:38.000Z",
+    "updatedAt": "2025-10-24T18:24:38.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Xtreem",
+    "email": null,
+    "phone": "0112345678",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:23:08.000Z",
+    "updatedAt": "2025-10-24T18:23:08.000Z"
+  },
+  {
+    "id": 3,
+    "name": "شركة حقيقية",
+    "email": "real@company.com",
+    "phone": "0555555555",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:20:05.000Z",
+    "updatedAt": "2025-10-24T18:20:05.000Z"
+  },
+  {
+    "id": 1,
+    "name": "شركة التقنية المتقدمة",
+    "email": "info@tech.com",
+    "phone": "0112345678",
+    "address": "الرياض",
+    "taxNumber": "123456789",
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-12T18:32:38.000Z",
+    "updatedAt": "2025-10-12T18:32:38.000Z"
+  }
+]
+
+📋 POST /api/companies (create)
+HTTP: 201
+{
+  "success": true,
+  "data": {
+    "company": {
+      "id": 12,
+      "name": "شركة اختبار 1763293999",
+      "email": "test1763293999@company.com",
+      "phone": "01000000000",
+      "address": "عنوان",
+      "taxNumber": "TAX1763293999",
+      "customFields": "{}",
+      "createdAt": "2025-11-16T11:53:19.000Z",
+      "updatedAt": "2025-11-16T11:53:19.000Z"
+    }
+  },
+  "message": "تم إنشاء الشركة بنجاح"
+}
+
+📋 GET /api/companies?page=1&pageSize=5
+HTTP: 200
+{
+  "companies": [
+    {
+      "id": 7,
+      "name": "شركة اختبار محدثة",
+      "email": "test2@company.com",
+      "phone": "0222222222",
+      "address": null,
+      "taxNumber": null,
+      "customFields": "{\"website\":\"www.test.com\",\"industry\":\"تقنية المعلومات\",\"status\":\"active\"}",
+      "customersCount": 0,
+      "createdAt": "2025-10-24T18:33:20.000Z",
+      "updatedAt": "2025-10-24T18:33:20.000Z"
+    },
+    {
+      "id": 6,
+      "name": "شركة اختبار",
+      "email": "test@company.com",
+      "phone": "0111111111",
+      "address": null,
+      "taxNumber": null,
+      "customFields": "{}",
+      "customersCount": 0,
+      "createdAt": "2025-10-24T18:32:53.000Z",
+      "updatedAt": "2025-10-24T18:32:53.000Z"
+    },
+    {
+      "id": 5,
+      "name": "شركة اختبار جديدة",
+      "email": "test@newcompany.com",
+      "phone": "0999999999",
+      "address": "الرياض",
+      "taxNumber": null,
+      "customFields": "{}",
+      "customersCount": 0,
+      "createdAt": "2025-10-24T18:24:38.000Z",
+      "updatedAt": "2025-10-24T18:24:38.000Z"
+    },
+    {
+      "id": 4,
+      "name": "Xtreem",
+      "email": null,
+      "phone": "0112345678",
+      "address": null,
+      "taxNumber": null,
+      "customFields": "{}",
+      "customersCount": 0,
+      "createdAt": "2025-10-24T18:23:08.000Z",
+      "updatedAt": "2025-10-24T18:23:08.000Z"
+    },
+    {
+      "id": 3,
+      "name": "شركة حقيقية",
+      "email": "real@company.com",
+      "phone": "0555555555",
+      "address": null,
+      "taxNumber": null,
+      "customFields": "{}",
+      "customersCount": 0,
+      "createdAt": "2025-10-24T18:20:05.000Z",
+      "updatedAt": "2025-10-24T18:20:05.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 5,
+    "total": 11,
+    "totalPages": 3
+  }
+}
+
+📋 GET /api/companies?search=اختبار
+HTTP: 200
+[
+  {
+    "id": 12,
+    "name": "شركة اختبار 1763293999",
+    "email": "test1763293999@company.com",
+    "phone": "01000000000",
+    "address": "عنوان",
+    "taxNumber": "TAX1763293999",
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-11-16T11:53:19.000Z",
+    "updatedAt": "2025-11-16T11:53:19.000Z"
+  },
+  {
+    "id": 10,
+    "name": "شركة اختبار نهائية",
+    "email": "final@test.com",
+    "phone": "0555555555",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:39:28.000Z",
+    "updatedAt": "2025-10-24T18:39:28.000Z"
+  },
+  {
+    "id": 9,
+    "name": "شركة اختبار Frontend",
+    "email": "frontend@test.com",
+    "phone": "0444444444",
+    "address": "الرياض",
+    "taxNumber": "123456789",
+    "customFields": "{\"website\":\"www.test.com\",\"industry\":\"تقنية المعلومات\",\"description\":\"شركة اختبار\",\"status\":\"active\"}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:39:12.000Z",
+    "updatedAt": "2025-10-24T18:39:12.000Z"
+  },
+  {
+    "id": 8,
+    "name": "شركة اختبار مباشر",
+    "email": "direct@test.com",
+    "phone": "0333333333",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:38:35.000Z",
+    "updatedAt": "2025-10-24T18:38:35.000Z"
+  },
+  {
+    "id": 7,
+    "name": "شركة اختبار محدثة",
+    "email": "test2@company.com",
+    "phone": "0222222222",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{\"website\":\"www.test.com\",\"industry\":\"تقنية المعلومات\",\"status\":\"active\"}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:33:20.000Z",
+    "updatedAt": "2025-10-24T18:33:20.000Z"
+  },
+  {
+    "id": 6,
+    "name": "شركة اختبار",
+    "email": "test@company.com",
+    "phone": "0111111111",
+    "address": null,
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:32:53.000Z",
+    "updatedAt": "2025-10-24T18:32:53.000Z"
+  },
+  {
+    "id": 5,
+    "name": "شركة اختبار جديدة",
+    "email": "test@newcompany.com",
+    "phone": "0999999999",
+    "address": "الرياض",
+    "taxNumber": null,
+    "customFields": "{}",
+    "customersCount": 0,
+    "createdAt": "2025-10-24T18:24:38.000Z",
+    "updatedAt": "2025-10-24T18:24:38.000Z"
+  }
+]
+
+📋 GET /api/companies/9999999 (expect 404)
+HTTP: 404
+{
+  "error": "Company not found"
+}
+
+[0;32m✅ Done. Results saved to RESULTS/06_COMPANY_MANAGEMENT_API_RUN_COOKIE.log[0m

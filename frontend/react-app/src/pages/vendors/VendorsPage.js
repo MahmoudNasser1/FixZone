@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Building2, Users, TrendingUp, DollarSign, Eye } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -9,6 +10,7 @@ import vendorService from '../../services/vendorService';
 import VendorForm from './VendorForm';
 
 const VendorsPage = () => {
+  const navigate = useNavigate();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -215,6 +217,15 @@ const VendorsPage = () => {
         const vendor = row.original;
         return (
           <div className="flex space-x-2 space-x-reverse">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/vendors/${vendor.id}`)}
+              title="عرض التفاصيل"
+            >
+              <Eye className="w-4 h-4 ml-1" />
+              تفاصيل
+            </Button>
             <Button
               variant="outline"
               size="sm"

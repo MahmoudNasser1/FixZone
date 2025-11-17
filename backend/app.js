@@ -95,6 +95,7 @@ const stockTransferRouter = require('./routes/stockTransfer');
 const itemVendorsRouter = require('./routes/itemVendors');
 const barcodeRouter = require('./routes/barcode');
 const analyticsRouter = require('./routes/analytics');
+const vendorPaymentsRouter = require('./routes/vendorPayments');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -121,6 +122,8 @@ router.use('/repairsSimple', repairSimpleRoutes);
 router.use('/technicians', techniciansRouter);
 router.use('/inventory', inventoryRoutes);
 router.use('/inventory', inventoryIssueRouter);
+// Vendor payments routes must be before /vendors route to avoid conflicts
+router.use('/', vendorPaymentsRouter); // Vendor payments routes are under /api/vendors/:vendorId/payments
 router.use('/vendors', vendorRoutes);
 router.use('/purchaseorders', purchaseOrdersRouter);
 router.use('/purchaseorderitems', purchaseOrderItemsRouter);

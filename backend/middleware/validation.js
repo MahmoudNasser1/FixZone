@@ -287,19 +287,82 @@ const vendorSchemas = {
   // Update vendor
   updateVendor: Joi.object({
     name: Joi.string().max(100).optional(),
-    contactPerson: Joi.string().max(100).allow('', null).optional(),
+    contactPerson: Joi.string().max(100).optional(),
     phone: Joi.string().max(20).optional(),
     email: Joi.string().email().max(100).allow('', null).optional(),
-    address: Joi.string().max(500).allow('', null).optional(),
-    taxNumber: Joi.string().max(50).allow('', null).optional(),
+    address: Joi.string().max(500).optional(),
+    taxNumber: Joi.string().max(50).optional(),
     paymentTerms: Joi.string().valid('cash', 'net15', 'net30', 'net45', 'net60').optional(),
     creditLimit: Joi.number().min(0).precision(2).optional(),
     website: Joi.string().uri().max(255).allow('', null).optional(),
     country: Joi.string().max(100).optional(),
-    city: Joi.string().max(100).allow('', null).optional(),
+    city: Joi.string().max(100).optional(),
     notes: Joi.string().max(1000).allow('', null).optional(),
     status: Joi.string().valid('active', 'inactive', 'blocked').optional()
-  }).min(1)
+  })
+};
+
+/**
+ * Vendor Payment Validation Schemas
+ */
+const vendorPaymentSchemas = {
+  // Create vendor payment
+  createVendorPayment: Joi.object({
+    purchaseOrderId: Joi.number().integer().positive().allow(null).optional(),
+    amount: Joi.number().positive().precision(2).required()
+      .messages({
+        'number.positive': 'المبلغ يجب أن يكون أكبر من صفر',
+        'any.required': 'المبلغ مطلوب'
+      }),
+    paymentMethod: Joi.string().valid('cash', 'bank_transfer', 'check', 'credit_card').default('cash'),
+    paymentDate: Joi.date().iso().required()
+      .messages({
+        'date.base': 'تاريخ الدفع غير صحيح',
+        'any.required': 'تاريخ الدفع مطلوب'
+      }),
+    referenceNumber: Joi.string().max(100).allow('', null).optional(),
+    bankName: Joi.string().max(100).allow('', null).optional(),
+    checkNumber: Joi.string().max(50).allow('', null).optional(),
+    notes: Joi.string().max(1000).allow('', null).optional(),
+    status: Joi.string().valid('pending', 'completed', 'cancelled').default('pending')
+  }),
+
+  // Update vendor payment
+  updateVendorPayment: Joi.object({
+    amount: Joi.number().positive().precision(2).optional(),
+    paymentMethod: Joi.string().valid('cash', 'bank_transfer', 'check', 'credit_card').optional(),
+    paymentDate: Joi.date().iso().optional(),
+    referenceNumber: Joi.string().max(100).allow('', null).optional(),
+    bankName: Joi.string().max(100).allow('', null).optional(),
+    checkNumber: Joi.string().max(50).allow('', null).optional(),
+    notes: Joi.string().max(1000).allow('', null).optional(),
+    status: Joi.string().valid('pending', 'completed', 'cancelled').optional()
+  }),
+
+  // Update payment status
+  updatePaymentStatus: Joi.object({
+    status: Joi.string().valid('pending', 'completed', 'cancelled').required()
+      .messages({
+        'any.required': 'حالة الدفع مطلوبة',
+        'any.only': 'حالة الدفع يجب أن تكون: pending, completed, أو cancelled'
+      })
+  }),
+
+  // Get vendor payments query
+  getVendorPayments: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid('pending', 'completed', 'cancelled').allow('', null).optional(),
+    paymentMethod: Joi.string().valid('cash', 'bank_transfer', 'check', 'credit_card').allow('', null).optional(),
+    dateFrom: Joi.date().iso().allow('', null).optional(),
+    dateTo: Joi.date().iso().allow('', null).optional()
+  }),
+
+  // Get vendor payment stats query
+  getVendorPaymentStats: Joi.object({
+    year: Joi.number().integer().min(2000).max(2100).optional(),
+    month: Joi.number().integer().min(1).max(12).optional()
+  })
 };
 
 /**
@@ -349,6 +412,7 @@ module.exports = {
   inventorySchemas,
   stockMovementSchemas,
   vendorSchemas,
+  vendorPaymentSchemas,
   warehouseSchemas
 };
 

@@ -76,6 +76,7 @@ import EditInvoicePage from './pages/invoices/EditInvoicePage';
 // import DeliveryPage from './pages/Delivery/DeliveryPage';
 import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage, EditPaymentPage, PaymentReportsPage, OverduePaymentsPage } from './pages/payments';
 import VendorsPage from './pages/vendors/VendorsPage';
+import VendorDetailsPage from './pages/vendors/VendorDetailsPage';
 import PurchaseOrdersPage from './pages/PurchaseOrders/PurchaseOrdersPage';
 import ServicesCatalogPage from './pages/services/ServicesCatalog';
 import ServiceForm from './pages/services/ServiceForm';
@@ -360,6 +361,7 @@ function App() {
                       
                       {/* Vendors & Purchase Orders */}
                       <Route path="vendors" element={<VendorsPage />} />
+                      <Route path="vendors/:id" element={<VendorDetailsPage />} />
                       <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
                       
                       <Route path="settings" element={<SystemSettingsPage />} />
