@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const auth = require('../middleware/authMiddleware');
+const authorize = require('../middleware/authorizeMiddleware');
+const { validate, serviceSchemas } = require('../middleware/validation');
 
 // Simplified Services Route - Basic functionality only
-router.get('/', async (req, res) => {
+// GET /services - يجب أن يكون محمي (أو public حسب المتطلبات)
+router.get('/', auth, validate(serviceSchemas.getServices, 'query'), async (req, res) => {
   try {
     const {
       q = '',
@@ -59,6 +63,12 @@ router.get('/', async (req, res) => {
       params.push(active ? 1 : 0);
     }
 
+    // Category filter
+    if (req.query.category && String(req.query.category).trim() !== '') {
+      whereClauses.push('category = ?');
+      params.push(String(req.query.category).trim());
+    }
+
     const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const sql = `
       SELECT *
@@ -97,7 +107,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get service by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -124,76 +134,195 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new service
-router.post('/', async (req, res) => {
+// Create a new service - Admin only
+router.post('/', auth, authorize([1]), validate(serviceSchemas.createService), async (req, res) => {
   try {
-    const { name, description, basePrice, category, estimatedDuration, isActive = true } = req.body;
+    const { name, description, basePrice, category, categoryId, estimatedDuration, isActive = true } = req.body;
     
-    if (!name || !basePrice) {
-      return res.status(400).json({ error: 'Name and base price are required' });
+    // Check for duplicate service name
+    const [existing] = await db.query(
+      'SELECT id FROM Service WHERE name = ? AND deletedAt IS NULL',
+      [name]
+    );
+    
+    if (existing.length > 0) {
+      return res.status(409).json({ 
+        success: false,
+        error: 'Service name already exists',
+        message: 'اسم الخدمة موجود مسبقاً'
+      });
     }
     
+    // Determine category value (use categoryId if provided, else use category string)
+    const finalCategory = categoryId ? null : (category || null);
+    const finalCategoryId = categoryId || null;
+    
+    // Insert service - note: category field is string, we'll use it for backward compatibility
     const sql = `
       INSERT INTO Service (name, description, basePrice, category, estimatedDuration, isActive)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     
-    const [result] = await db.query(sql, [name, description, basePrice, category, estimatedDuration, isActive]);
+    const [result] = await db.query(sql, [name, description, basePrice, finalCategory, estimatedDuration, isActive]);
+    
+    // If categoryId is provided, we might want to create a ServiceCategory relationship in future
+    // For now, we'll store category as string for backward compatibility
     
     res.status(201).json({
+      success: true,
       id: result.insertId,
       serviceName: name,
+      name,
       description,
       basePrice,
-      category,
+      category: finalCategory,
+      categoryId: finalCategoryId,
       estimatedDuration,
       isActive
     });
     
   } catch (error) {
     console.error('Error creating service:', error);
+    
+    // Handle duplicate entry error
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ 
+        success: false,
+        error: 'Service name already exists',
+        message: 'اسم الخدمة موجود مسبقاً'
+      });
+    }
+    
     res.status(500).json({ 
+      success: false,
       error: 'Server Error',
+      message: 'خطأ في الخادم',
       details: error.message 
     });
   }
 });
 
-// Update a service
-router.put('/:id', async (req, res) => {
+// Update a service - Admin only
+router.put('/:id', auth, authorize([1]), validate(serviceSchemas.updateService), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, basePrice, category, estimatedDuration, isActive } = req.body;
+    const { name, description, basePrice, category, categoryId, estimatedDuration, isActive } = req.body;
     
-    if (!name || !basePrice) {
-      return res.status(400).json({ error: 'Name and base price are required' });
+    // Check if service exists
+    const [existingService] = await db.query(
+      'SELECT name FROM Service WHERE id = ? AND deletedAt IS NULL',
+      [id]
+    );
+    
+    if (!existingService.length) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Service not found',
+        message: 'الخدمة غير موجودة'
+      });
     }
+    
+    // If name is being updated, check for duplicate
+    if (name && name !== existingService[0].name) {
+      const [duplicate] = await db.query(
+        'SELECT id FROM Service WHERE name = ? AND id != ? AND deletedAt IS NULL',
+        [name, id]
+      );
+      
+      if (duplicate.length > 0) {
+        return res.status(409).json({ 
+          success: false,
+          error: 'Service name already exists',
+          message: 'اسم الخدمة موجود مسبقاً'
+        });
+      }
+    }
+    
+    // Build update query dynamically based on provided fields
+    const updateFields = [];
+    const updateValues = [];
+    
+    if (name !== undefined) {
+      updateFields.push('name = ?');
+      updateValues.push(name);
+    }
+    
+    if (description !== undefined) {
+      updateFields.push('description = ?');
+      updateValues.push(description || null);
+    }
+    
+    if (basePrice !== undefined) {
+      updateFields.push('basePrice = ?');
+      updateValues.push(basePrice);
+    }
+    
+    if (category !== undefined || categoryId !== undefined) {
+      // Use categoryId if provided, else use category string
+      const finalCategory = categoryId ? null : (category !== undefined ? category : null);
+      updateFields.push('category = ?');
+      updateValues.push(finalCategory);
+    }
+    
+    if (estimatedDuration !== undefined) {
+      updateFields.push('estimatedDuration = ?');
+      updateValues.push(estimatedDuration || null);
+    }
+    
+    if (isActive !== undefined) {
+      updateFields.push('isActive = ?');
+      updateValues.push(isActive);
+    }
+    
+    // Always update updatedAt
+    updateFields.push('updatedAt = CURRENT_TIMESTAMP');
+    updateValues.push(id);
     
     const sql = `
       UPDATE Service
-      SET name = ?, description = ?, basePrice = ?, category = ?, estimatedDuration = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP
+      SET ${updateFields.join(', ')}
       WHERE id = ? AND deletedAt IS NULL
     `;
     
-    const [result] = await db.query(sql, [name, description, basePrice, category, estimatedDuration, isActive, id]);
+    const [result] = await db.query(sql, updateValues);
     
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Service not found' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Service not found',
+        message: 'الخدمة غير موجودة'
+      });
     }
     
-    res.json({ message: 'Service updated successfully' });
+    res.json({ 
+      success: true,
+      message: 'Service updated successfully',
+      messageAr: 'تم تحديث الخدمة بنجاح'
+    });
     
   } catch (error) {
     console.error('Error updating service:', error);
+    
+    // Handle duplicate entry error
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ 
+        success: false,
+        error: 'Service name already exists',
+        message: 'اسم الخدمة موجود مسبقاً'
+      });
+    }
+    
     res.status(500).json({ 
+      success: false,
       error: 'Server Error',
+      message: 'خطأ في الخادم',
       details: error.message 
     });
   }
 });
 
-// Delete a service (soft delete)
-router.delete('/:id', async (req, res) => {
+// Delete a service (soft delete) - Admin only
+router.delete('/:id', auth, authorize([1]), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -221,7 +350,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Get service usage statistics
-router.get('/:id/stats', async (req, res) => {
+router.get('/:id/stats', auth, async (req, res) => {
   try {
     const { id } = req.params;
     

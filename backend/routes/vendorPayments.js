@@ -4,31 +4,32 @@ const vendorPaymentsController = require('../controllers/vendorPaymentsControlle
 const authMiddleware = require('../middleware/authMiddleware');
 
 // جميع مسارات مدفوعات الموردين تتطلب تسجيل الدخول
-router.use(authMiddleware);
+// لكن يجب التأكد من عدم تطبيق authMiddleware على routes أخرى
+// لذلك سنطبق authMiddleware على كل route بشكل فردي بدلاً من router.use
 
 // Get vendor payment stats (must be before /:id route)
-router.get('/vendors/:vendorId/payments/stats', vendorPaymentsController.getVendorPaymentStats);
+router.get('/vendors/:vendorId/payments/stats', authMiddleware, vendorPaymentsController.getVendorPaymentStats);
 
 // Get vendor balance
-router.get('/vendors/:vendorId/payments/balance', vendorPaymentsController.getVendorBalance);
+router.get('/vendors/:vendorId/payments/balance', authMiddleware, vendorPaymentsController.getVendorBalance);
 
 // Get all payments for a vendor
-router.get('/vendors/:vendorId/payments', vendorPaymentsController.getVendorPayments);
+router.get('/vendors/:vendorId/payments', authMiddleware, vendorPaymentsController.getVendorPayments);
 
 // Get single payment
-router.get('/vendors/:vendorId/payments/:id', vendorPaymentsController.getVendorPaymentById);
+router.get('/vendors/:vendorId/payments/:id', authMiddleware, vendorPaymentsController.getVendorPaymentById);
 
 // Create new payment
-router.post('/vendors/:vendorId/payments', vendorPaymentsController.createVendorPayment);
+router.post('/vendors/:vendorId/payments', authMiddleware, vendorPaymentsController.createVendorPayment);
 
 // Update payment
-router.put('/vendors/:vendorId/payments/:id', vendorPaymentsController.updateVendorPayment);
+router.put('/vendors/:vendorId/payments/:id', authMiddleware, vendorPaymentsController.updateVendorPayment);
 
 // Update payment status
-router.patch('/vendors/:vendorId/payments/:id/status', vendorPaymentsController.updatePaymentStatus);
+router.patch('/vendors/:vendorId/payments/:id/status', authMiddleware, vendorPaymentsController.updatePaymentStatus);
 
 // Delete payment
-router.delete('/vendors/:vendorId/payments/:id', vendorPaymentsController.deleteVendorPayment);
+router.delete('/vendors/:vendorId/payments/:id', authMiddleware, vendorPaymentsController.deleteVendorPayment);
 
 module.exports = router;
 

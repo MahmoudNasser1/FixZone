@@ -31,6 +31,7 @@ const ServiceDetails = () => {
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [usageStats, setUsageStats] = useState(null);
+  const [recentUsage, setRecentUsage] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
   // Load service data
@@ -58,6 +59,7 @@ const ServiceDetails = () => {
       setLoadingStats(true);
       const data = await apiService.getServiceStats(id);
       setUsageStats(data.stats);
+      setRecentUsage(data.recentUsage || []);
     } catch (error) {
       console.error('Error loading usage stats:', error);
       notify('error', 'خطأ في تحميل إحصائيات الاستخدام');
@@ -70,6 +72,7 @@ const ServiceDetails = () => {
         lastUsed: null,
         firstUsed: null
       });
+      setRecentUsage([]);
     } finally {
       setLoadingStats(false);
     }
@@ -286,6 +289,84 @@ const ServiceDetails = () => {
               </>
             )}
           </div>
+
+          {/* Recent Usage */}
+          {recentUsage && recentUsage.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">آخر الاستخدامات</h2>
+              
+              <div className="space-y-3">
+                {recentUsage.map((usage, index) => (
+                  <div 
+                    key={usage.id || index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => usage.id && navigate(`/repairs/${usage.id}`)}
+                  >
+                    <div className="flex items-center space-x-3 space-x-reverse flex-1">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Package className="w-5 h-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <span className="text-sm font-medium text-gray-900">
+                            {usage.customerName || 'عميل غير محدد'}
+                          </span>
+                          {usage.status && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              usage.status === 'completed' 
+                                ? 'bg-green-100 text-green-800'
+                                : usage.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {usage.status === 'completed' ? 'مكتمل' : 
+                               usage.status === 'cancelled' ? 'ملغي' :
+                               usage.status === 'delivered' ? 'تم التسليم' :
+                               'قيد التنفيذ'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center space-x-3 space-x-reverse text-xs text-gray-600">
+                          {usage.deviceType && usage.deviceBrand && (
+                            <span>{usage.deviceBrand} {usage.deviceType}</span>
+                          )}
+                          {usage.createdAt && (
+                            <span>{new Date(usage.createdAt).toLocaleDateString('ar-EG', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {usage.price && (
+                      <div className="flex-shrink-0 mr-3">
+                        <span className="text-sm font-semibold text-green-600">
+                          {parseFloat(usage.price).toFixed(2)} ج.م
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {recentUsage.length >= 5 && (
+                <div className="mt-4 text-center">
+                  <SimpleButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/repairs?serviceId=${id}`)}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  >
+                    عرض جميع الاستخدامات
+                  </SimpleButton>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

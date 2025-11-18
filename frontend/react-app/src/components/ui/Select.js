@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, createContext, useContext, useCallback } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -60,9 +60,13 @@ export const Select = ({
     onChange?.({ target: { value: newValue } });
   };
 
-  const registerOptionLabel = (value, label) => {
-    setOptionLabels(prev => new Map(prev).set(value, label));
-  };
+  const registerOptionLabel = useCallback((value, label) => {
+    setOptionLabels(prev => {
+      const newMap = new Map(prev);
+      newMap.set(value, label);
+      return newMap;
+    });
+  }, []);
 
   // If options are provided, render a simple dropdown
   if (options.length > 0) {

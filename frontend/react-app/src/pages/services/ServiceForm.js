@@ -40,27 +40,47 @@ const ServiceForm = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEdit);
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  // Categories options
-  const categories = [
-    'صيانة عامة',
-    'إصلاح الشاشة',
-    'إصلاح البطارية',
-    'إصلاح الكاميرا',
-    'إصلاح السماعات',
-    'إصلاح الشاحن',
-    'تحديث البرامج',
-    'استعادة البيانات',
-    'إصلاح الهاردوير',
-    'خدمات أخرى'
-  ];
+  // Load categories from API
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   // Load service data for editing
   useEffect(() => {
     if (isEdit) {
       loadServiceData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEdit]);
+
+  const loadCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const response = await apiService.getServiceCategories(true); // Get only active categories
+      const categoriesData = response.categories || response || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Fallback to hardcoded categories if API fails
+      setCategories([
+        { id: 1, name: 'صيانة عامة' },
+        { id: 2, name: 'إصلاح الشاشة' },
+        { id: 3, name: 'إصلاح البطارية' },
+        { id: 4, name: 'إصلاح الكاميرا' },
+        { id: 5, name: 'إصلاح السماعات' },
+        { id: 6, name: 'إصلاح الشاحن' },
+        { id: 7, name: 'تحديث البرامج' },
+        { id: 8, name: 'استعادة البيانات' },
+        { id: 9, name: 'إصلاح الهاردوير' },
+        { id: 10, name: 'خدمات أخرى' }
+      ]);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   const loadServiceData = async () => {
     try {
@@ -250,9 +270,18 @@ const ServiceForm = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">اختر الفئة</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
+                  {loadingCategories ? (
+                    <SelectItem value="" disabled>جاري التحميل...</SelectItem>
+                  ) : (
+                    categories.map(cat => (
+                      <SelectItem 
+                        key={cat.id || cat.name || cat} 
+                        value={cat.name || cat}
+                      >
+                        {cat.name || cat}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

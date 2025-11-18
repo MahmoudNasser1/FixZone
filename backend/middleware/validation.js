@@ -406,6 +406,101 @@ const warehouseSchemas = {
   }).min(1)
 };
 
+/**
+ * Service Validation Schemas
+ */
+const serviceSchemas = {
+  // Create service
+  createService: Joi.object({
+    name: Joi.string().min(3).max(100).trim().required()
+      .messages({
+        'string.empty': 'اسم الخدمة مطلوب',
+        'string.min': 'اسم الخدمة يجب أن يكون على الأقل 3 أحرف',
+        'string.max': 'اسم الخدمة يجب ألا يزيد عن 100 حرف',
+        'any.required': 'اسم الخدمة مطلوب'
+      }),
+    
+    description: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
+      }),
+    
+    basePrice: Joi.number().positive().precision(2).required()
+      .messages({
+        'number.base': 'السعر الأساسي يجب أن يكون رقم',
+        'number.positive': 'السعر الأساسي يجب أن يكون أكبر من صفر',
+        'any.required': 'السعر الأساسي مطلوب'
+      }),
+    
+    category: Joi.string().max(50).allow('', null).optional()
+      .messages({
+        'string.max': 'الفئة يجب ألا تزيد عن 50 حرف'
+      }),
+    
+    categoryId: Joi.number().integer().positive().allow(null).optional(),
+    
+    estimatedDuration: Joi.number().integer().min(0).allow(null).optional()
+      .messages({
+        'number.base': 'المدة المقدرة يجب أن تكون رقم',
+        'number.min': 'المدة المقدرة يجب أن تكون صفر أو أكبر'
+      }),
+    
+    isActive: Joi.boolean().default(true)
+  }),
+
+  // Update service
+  updateService: Joi.object({
+    name: Joi.string().min(3).max(100).trim().optional()
+      .messages({
+        'string.min': 'اسم الخدمة يجب أن يكون على الأقل 3 أحرف',
+        'string.max': 'اسم الخدمة يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    description: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
+      }),
+    
+    basePrice: Joi.number().positive().precision(2).optional()
+      .messages({
+        'number.base': 'السعر الأساسي يجب أن يكون رقم',
+        'number.positive': 'السعر الأساسي يجب أن يكون أكبر من صفر'
+      }),
+    
+    category: Joi.string().max(50).allow('', null).optional()
+      .messages({
+        'string.max': 'الفئة يجب ألا تزيد عن 50 حرف'
+      }),
+    
+    categoryId: Joi.number().integer().positive().allow(null).optional(),
+    
+    estimatedDuration: Joi.number().integer().min(0).allow(null).optional()
+      .messages({
+        'number.base': 'المدة المقدرة يجب أن تكون رقم',
+        'number.min': 'المدة المقدرة يجب أن تكون صفر أو أكبر'
+      }),
+    
+    isActive: Joi.boolean().optional()
+  }).min(1), // At least one field must be present
+
+  // Get services query
+  getServices: Joi.object({
+    q: Joi.string().max(100).allow('', null).optional(),
+    page: Joi.number().integer().min(1).default(1),
+    pageSize: Joi.number().integer().min(1).max(200).default(20),
+    limit: Joi.number().integer().min(1).max(200).optional(),
+    offset: Joi.number().integer().min(0).optional(),
+    sortBy: Joi.string().valid('id', 'name', 'basePrice', 'isActive', 'createdAt', 'updatedAt', 'serviceName').optional(),
+    sortDir: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('asc'),
+    isActive: Joi.alternatives().try(
+      Joi.boolean(),
+      Joi.string().valid('true', 'false', '1', '0', 'yes', 'no')
+    ).optional(),
+    category: Joi.string().max(50).allow('', null).optional(),
+    categoryId: Joi.number().integer().positive().optional()
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -413,6 +508,7 @@ module.exports = {
   stockMovementSchemas,
   vendorSchemas,
   vendorPaymentSchemas,
-  warehouseSchemas
+  warehouseSchemas,
+  serviceSchemas
 };
 

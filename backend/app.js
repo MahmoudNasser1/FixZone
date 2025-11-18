@@ -66,6 +66,8 @@ const paymentsRouter = require('./routes/payments');
 const expenseCategoriesRouter = require('./routes/expenseCategories');
 const expensesRouter = require('./routes/expenses');
 const servicesRouter = require('./routes/servicesSimple');
+const serviceCategoriesRouter = require('./routes/serviceCategories');
+const servicePricingRulesRouter = require('./routes/servicePricingRules');
 const repairRequestServicesRouter = require('./routes/repairRequestServices');
 const inspectionTypesRouter = require('./routes/inspectionTypes');
 const inspectionReportsRouter = require('./routes/inspectionReports');
@@ -122,9 +124,9 @@ router.use('/repairsSimple', repairSimpleRoutes);
 router.use('/technicians', techniciansRouter);
 router.use('/inventory', inventoryRoutes);
 router.use('/inventory', inventoryIssueRouter);
-// Vendor payments routes must be before /vendors route to avoid conflicts
-router.use('/', vendorPaymentsRouter); // Vendor payments routes are under /api/vendors/:vendorId/payments
 router.use('/vendors', vendorRoutes);
+// Vendor payments routes must be after /vendors route to avoid conflicts
+router.use('/', vendorPaymentsRouter); // Vendor payments routes are under /api/vendors/:vendorId/payments
 router.use('/purchaseorders', purchaseOrdersRouter);
 router.use('/purchaseorderitems', purchaseOrderItemsRouter);
 router.use('/partsused', partsUsedRouter);
@@ -134,6 +136,8 @@ router.use('/payments', paymentsRouter);
 router.use('/expensecategories', expenseCategoriesRouter);
 router.use('/expenses', expensesRouter);
 router.use('/services', servicesRouter);
+router.use('/servicecategories', serviceCategoriesRouter);
+router.use('/servicepricingrules', servicePricingRulesRouter);
 router.use('/repairrequestservices', repairRequestServicesRouter);
 router.use('/inspectiontypes', inspectionTypesRouter);
 router.use('/inspectionreports', inspectionReportsRouter);
@@ -153,8 +157,8 @@ router.use('/workflow', workflowIntegrationRouter);
 router.use('/inventory-integration', inventoryIntegrationRouter);
 router.use('/financial-integration', financialIntegrationRouter);
 router.use('/notificationtemplates', notificationTemplatesRouter);
+router.use('/auth', authRouter); // Must be before vendorPaymentsRouter to avoid authMiddleware blocking login
 router.use('/tech', technicianRoutes);
-router.use('/auth', authRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/messaging', messagingRouter);
 router.use('/inventory-enhanced', inventoryEnhancedRouter);

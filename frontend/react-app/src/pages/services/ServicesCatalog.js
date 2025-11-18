@@ -217,8 +217,29 @@ const ServicesCatalog = () => {
     }
   };
 
-  // Get unique categories
-  const categories = [...new Set(services.map(service => service.category).filter(Boolean))];
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // Load categories from API
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const response = await apiService.getServiceCategories(true); // Get only active categories
+      const categoriesData = response.categories || response || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Fallback: get unique categories from services
+      const uniqueCategories = [...new Set(services.map(service => service.category).filter(Boolean))];
+      setCategories(uniqueCategories.map(name => ({ name })));
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   // Table columns
   const columns = [
@@ -404,9 +425,18 @@ const ServicesCatalog = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">جميع الفئات</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
+                {loadingCategories ? (
+                  <SelectItem value="" disabled>جاري التحميل...</SelectItem>
+                ) : (
+                  categories.map(cat => (
+                    <SelectItem 
+                      key={cat.id || cat.name || cat} 
+                      value={cat.name || cat}
+                    >
+                      {cat.name || cat}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -532,7 +562,10 @@ const ServicesCatalog = () => {
               <p className="text-sm font-medium text-gray-600">متوسط السعر</p>
               <p className="text-2xl font-bold text-gray-900">
                 {services.length > 0 
-                  ? Math.round(services.reduce((sum, s) => sum + (s.basePrice || 0), 0) / services.length)
+                  ? Math.round(services.reduce((sum, s) => {
+                      const price = parseFloat(s.basePrice) || 0;
+                      return sum + price;
+                    }, 0) / services.length)
                   : 0} ج.م
               </p>
             </div>

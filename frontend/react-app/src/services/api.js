@@ -692,6 +692,97 @@ class ApiService {
   }
 
   // ==================
+  // Service Categories APIs
+  // ==================
+  
+  // جلب جميع فئات الخدمات
+  async getServiceCategories(isActive = null) {
+    const params = isActive !== null ? `?isActive=${isActive}` : '';
+    return this.request(`/servicecategories${params}`);
+  }
+
+  // جلب فئة خدمة واحدة
+  async getServiceCategory(id) {
+    return this.request(`/servicecategories/${id}`);
+  }
+
+  // إنشاء فئة خدمة جديدة
+  async createServiceCategory(categoryData) {
+    return this.request('/servicecategories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  // تحديث فئة الخدمة
+  async updateServiceCategory(id, categoryData) {
+    return this.request(`/servicecategories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  // حذف فئة الخدمة
+  async deleteServiceCategory(id) {
+    return this.request(`/servicecategories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // جلب إحصائيات الفئات
+  async getCategoryStats() {
+    return this.request('/servicecategories/stats/summary');
+  }
+
+  // ==================
+  // Service Pricing Rules APIs
+  // ==================
+  
+  // حساب سعر الخدمة بناءً على القواعد
+  async calculateServicePrice(serviceId, deviceType = null, brandId = null, brand = null) {
+    const params = new URLSearchParams();
+    if (deviceType) params.append('deviceType', deviceType);
+    if (brandId) params.append('brandId', brandId);
+    if (brand) params.append('brand', brand);
+    const query = params.toString();
+    return this.request(`/servicepricingrules/${serviceId}/calculate${query ? '?' + query : ''}`);
+  }
+
+  // جلب جميع قواعد التسعير لخدمة
+  async getServicePricingRules(serviceId, isActive = null) {
+    const params = isActive !== null ? `?isActive=${isActive}` : '';
+    return this.request(`/servicepricingrules/service/${serviceId}${params}`);
+  }
+
+  // جلب قاعدة تسعير واحدة
+  async getPricingRule(id) {
+    return this.request(`/servicepricingrules/${id}`);
+  }
+
+  // إنشاء قاعدة تسعير جديدة
+  async createPricingRule(ruleData) {
+    return this.request('/servicepricingrules', {
+      method: 'POST',
+      body: JSON.stringify(ruleData),
+    });
+  }
+
+  // تحديث قاعدة التسعير
+  async updatePricingRule(id, ruleData) {
+    return this.request(`/servicepricingrules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(ruleData),
+    });
+  }
+
+  // حذف قاعدة التسعير
+  async deletePricingRule(id) {
+    return this.request(`/servicepricingrules/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================
   // Inventory APIs
   // ==================
   
