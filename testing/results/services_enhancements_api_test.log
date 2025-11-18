@@ -1,0 +1,106 @@
+=========================================
+Services Catalog Enhancements - API Tests
+=========================================
+
+1. Logging in...
+{
+  "id": 2,
+  "name": "محمود الدروال",
+  "email": "admin@fixzone.com",
+  "phone": null,
+  "role": 1,
+  "roleId": 1
+}
+
+2. Testing Backend Validation - Empty Name...
+"اسم الخدمة مطلوب"
+
+3. Testing Backend Validation - Name Too Short...
+"اسم الخدمة يجب أن يكون على الأقل 3 أحرف"
+
+4. Testing Backend Validation - Missing basePrice...
+"السعر الأساسي مطلوب"
+
+5. Testing Backend Validation - Negative basePrice...
+"السعر الأساسي يجب أن يكون أكبر من صفر"
+
+6. Creating Service Successfully...
+{
+  "success": true,
+  "id": 19,
+  "serviceName": "خدمة اختبار التحسينات",
+  "name": "خدمة اختبار التحسينات",
+  "description": "خدمة للاختبار",
+  "basePrice": 250,
+  "category": "صيانة عامة",
+  "categoryId": null,
+  "estimatedDuration": 60,
+  "isActive": true
+}
+Service ID: 19
+
+7. Testing Duplicate Name Check...
+"اسم الخدمة موجود مسبقاً"
+
+8. Testing Get Service Categories...
+10
+
+9. Testing Get Active Categories Only...
+10
+
+10. Testing Create Service Category...
+{
+  "success": true,
+  "id": 11,
+  "message": "تم إنشاء الفئة بنجاح",
+  "category": {
+    "id": 11,
+    "name": "فئة اختبار التحسينات",
+    "description": "فئة للاختبار",
+    "icon": "Test",
+    "color": "#FF0000",
+    "sortOrder": 0,
+    "isActive": true
+  }
+}
+Category ID: 11
+
+11. Testing Duplicate Category Check...
+"اسم الفئة موجود مسبقاً"
+
+12. Testing Calculate Service Price (No Rules)...
+250
+
+13. Testing Create Pricing Rule...
+{
+  "success": true,
+  "id": 1,
+  "message": "تم إنشاء قاعدة التسعير بنجاح",
+  "rule": {
+    "id": 1,
+    "serviceId": 19,
+    "deviceType": "phone",
+    "pricingType": "multiplier",
+    "value": 1.5,
+    "isActive": true,
+    "priority": 1
+  }
+}
+Rule ID: 1
+
+14. Testing Calculate Price with Rule...
+375
+
+15. Testing Get Service Pricing Rules...
+1
+
+16. Testing Get Service Stats (Recent Usage)...
+{
+  "totalUsage": 0,
+  "completedUsage": 0,
+  "recentUsageCount": 0
+}
+
+=========================================
+Tests Completed
+=========================================

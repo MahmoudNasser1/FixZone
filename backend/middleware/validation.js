@@ -366,6 +366,97 @@ const vendorPaymentSchemas = {
 };
 
 /**
+ * Customer Validation Schemas
+ */
+const customerSchemas = {
+  // Create customer
+  createCustomer: Joi.object({
+    name: Joi.string().min(2).max(100).trim().required()
+      .messages({
+        'string.empty': 'اسم العميل مطلوب',
+        'string.min': 'اسم العميل يجب أن يكون على الأقل 2 أحرف',
+        'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف',
+        'any.required': 'اسم العميل مطلوب'
+      }),
+    
+    phone: Joi.string().min(5).max(30).trim().required()
+      .messages({
+        'string.empty': 'رقم الهاتف مطلوب',
+        'string.min': 'رقم الهاتف يجب أن يكون على الأقل 5 أحرف',
+        'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف',
+        'any.required': 'رقم الهاتف مطلوب'
+      }),
+    
+    email: Joi.string().email().max(100).allow('', null).optional()
+      .messages({
+        'string.email': 'البريد الإلكتروني غير صحيح',
+        'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    address: Joi.string().max(500).allow('', null).optional()
+      .messages({
+        'string.max': 'العنوان يجب ألا يزيد عن 500 حرف'
+      }),
+    
+    companyId: Joi.number().integer().positive().allow(null).optional(),
+    
+    customFields: Joi.object().optional()
+  }),
+
+  // Update customer
+  updateCustomer: Joi.object({
+    name: Joi.string().min(2).max(100).trim().optional()
+      .messages({
+        'string.min': 'اسم العميل يجب أن يكون على الأقل 2 أحرف',
+        'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    phone: Joi.string().min(5).max(30).trim().optional()
+      .messages({
+        'string.min': 'رقم الهاتف يجب أن يكون على الأقل 5 أحرف',
+        'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف'
+      }),
+    
+    email: Joi.string().email().max(100).allow('', null).optional()
+      .messages({
+        'string.email': 'البريد الإلكتروني غير صحيح',
+        'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    address: Joi.string().max(500).allow('', null).optional()
+      .messages({
+        'string.max': 'العنوان يجب ألا يزيد عن 500 حرف'
+      }),
+    
+    companyId: Joi.number().integer().positive().allow(null).optional(),
+    
+    customFields: Joi.object().optional()
+  }).min(1), // At least one field must be present
+
+  // Get customers query
+  getCustomers: Joi.object({
+    q: Joi.string().max(100).allow('', null).optional(),
+    page: Joi.number().integer().min(0).default(0),
+    pageSize: Joi.number().integer().min(1).max(100).default(20),
+    isActive: Joi.boolean().optional(),
+    hasDebt: Joi.boolean().optional(),
+    sort: Joi.string().valid('id', 'name', 'phone', 'email', 'createdAt', 'updatedAt', 'outstandingBalance', 'isActive').optional(),
+    sortDir: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('desc')
+  }),
+
+  // Search customers query
+  searchCustomers: Joi.object({
+    q: Joi.string().min(1).max(100).required()
+      .messages({
+        'string.empty': 'كلمة البحث مطلوبة',
+        'any.required': 'كلمة البحث مطلوبة'
+      }),
+    page: Joi.number().integer().min(1).default(1),
+    pageSize: Joi.number().integer().min(1).max(100).default(20)
+  })
+};
+
+/**
  * Warehouse Validation Schemas
  */
 const warehouseSchemas = {
@@ -501,6 +592,97 @@ const serviceSchemas = {
   })
 };
 
+/**
+ * Expense Validation Schemas
+ */
+const expenseSchemas = {
+  // Get expenses query
+  getExpenses: Joi.object({
+    categoryId: Joi.number().integer().positive().optional(),
+    vendorId: Joi.number().integer().positive().optional(),
+    invoiceId: Joi.number().integer().positive().optional(),
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().optional(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(50)
+  }),
+
+  // Create expense
+  createExpense: Joi.object({
+    categoryId: Joi.number().integer().positive().required()
+      .messages({
+        'any.required': 'فئة المصروف مطلوبة',
+        'number.positive': 'فئة المصروف غير صحيحة'
+      }),
+    
+    vendorId: Joi.number().integer().positive().allow(null).optional(),
+    
+    amount: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'المبلغ يجب أن يكون أكبر من أو يساوي صفر',
+        'any.required': 'المبلغ مطلوب'
+      }),
+    
+    description: Joi.string().max(1000).allow('', null).optional(),
+    
+    expenseDate: Joi.date().iso().required()
+      .messages({
+        'date.base': 'تاريخ المصروف غير صحيح',
+        'any.required': 'تاريخ المصروف مطلوب'
+      }),
+    
+    invoiceId: Joi.number().integer().positive().allow(null).optional(),
+    
+    receiptUrl: Joi.string().uri().max(500).allow('', null).optional(),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+  }),
+
+  // Update expense
+  updateExpense: Joi.object({
+    categoryId: Joi.number().integer().positive().optional(),
+    vendorId: Joi.number().integer().positive().allow(null).optional(),
+    amount: Joi.number().min(0).precision(2).optional(),
+    description: Joi.string().max(1000).allow('', null).optional(),
+    expenseDate: Joi.date().iso().optional(),
+    invoiceId: Joi.number().integer().positive().allow(null).optional(),
+    receiptUrl: Joi.string().uri().max(500).allow('', null).optional(),
+    notes: Joi.string().max(2000).allow('', null).optional()
+  }),
+
+  // Get expense stats query
+  getExpenseStats: Joi.object({
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().optional(),
+    categoryId: Joi.number().integer().positive().optional()
+  })
+};
+
+/**
+ * Expense Category Validation Schemas
+ */
+const expenseCategorySchemas = {
+  // Create expense category
+  createExpenseCategory: Joi.object({
+    name: Joi.string().min(2).max(100).trim().required()
+      .messages({
+        'string.empty': 'اسم الفئة مطلوب',
+        'string.min': 'اسم الفئة يجب أن يكون على الأقل حرفين',
+        'any.required': 'اسم الفئة مطلوب'
+      })
+  }),
+
+  // Update expense category
+  updateExpenseCategory: Joi.object({
+    name: Joi.string().min(2).max(100).trim().required()
+      .messages({
+        'string.empty': 'اسم الفئة مطلوب',
+        'string.min': 'اسم الفئة يجب أن يكون على الأقل حرفين',
+        'any.required': 'اسم الفئة مطلوب'
+      })
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -509,6 +691,9 @@ module.exports = {
   vendorSchemas,
   vendorPaymentSchemas,
   warehouseSchemas,
-  serviceSchemas
+  serviceSchemas,
+  customerSchemas,
+  expenseSchemas,
+  expenseCategorySchemas
 };
 

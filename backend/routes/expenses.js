@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validate, expenseSchemas } = require('../middleware/validation');
 
 // Apply authentication to all routes
 router.use(authMiddleware);
 
 // Get all expenses (excluding soft-deleted ones) with filters and pagination
-router.get('/', async (req, res) => {
+router.get('/', validate(expenseSchemas.getExpenses, 'query'), async (req, res) => {
   try {
     const { 
       categoryId, 
@@ -19,61 +20,136 @@ router.get('/', async (req, res) => {
       limit = 50
     } = req.query;
     
+    // First, check which columns exist in the Expense table
+    let hasVendorId = false;
+    let hasInvoiceId = false;
+    let userColumnName = 'createdBy'; // default
+    try {
+      const [colCheck] = await db.query(`
+        SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'Expense' 
+        AND COLUMN_NAME = 'vendorId'
+      `);
+      hasVendorId = colCheck[0].exists > 0;
+      
+      const [invoiceColCheck] = await db.query(`
+        SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'Expense' 
+        AND COLUMN_NAME = 'invoiceId'
+      `);
+      hasInvoiceId = invoiceColCheck[0].exists > 0;
+      
+      // Check which user column exists (prefer createdBy, fallback to userId)
+      const [createdByCheck] = await db.query(`
+        SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'Expense' 
+        AND COLUMN_NAME = 'createdBy'
+      `);
+      if (createdByCheck[0].exists > 0) {
+        userColumnName = 'createdBy';
+      } else {
+        const [userColCheck] = await db.query(`
+          SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+          WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'Expense' 
+          AND COLUMN_NAME = 'userId'
+        `);
+        if (userColCheck[0].exists > 0) {
+          userColumnName = 'userId';
+        }
+      }
+    } catch (err) {
+      console.warn('Could not check Expense table columns:', err.message);
+    }
+    
+    // Build where clause and params based on available columns
     let whereClause = 'WHERE e.deletedAt IS NULL';
     const queryParams = [];
+    const countParams = [];
     
     if (categoryId) {
       whereClause += ' AND e.categoryId = ?';
       queryParams.push(categoryId);
+      countParams.push(categoryId);
     }
     
-    if (vendorId) {
+    // Only add vendorId filter if column exists
+    if (vendorId && hasVendorId) {
       whereClause += ' AND e.vendorId = ?';
       queryParams.push(vendorId);
+      countParams.push(vendorId);
     }
     
-    if (invoiceId) {
+    // Only add invoiceId filter if column exists
+    if (invoiceId && hasInvoiceId) {
       whereClause += ' AND e.invoiceId = ?';
       queryParams.push(invoiceId);
+      countParams.push(invoiceId);
     }
     
     if (dateFrom) {
       whereClause += ' AND e.expenseDate >= ?';
       queryParams.push(dateFrom);
+      countParams.push(dateFrom);
     }
     
     if (dateTo) {
       whereClause += ' AND e.expenseDate <= ?';
       queryParams.push(dateTo);
+      countParams.push(dateTo);
     }
     
     const offset = (page - 1) * limit;
     
-    const query = `
-      SELECT 
-        e.*,
-        ec.name as categoryName,
-        v.name as vendorName,
-        i.id as invoiceNumber,
-        u.name as createdByName
-      FROM Expense e
-      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id
-      LEFT JOIN Vendor v ON e.vendorId = v.id
-      LEFT JOIN Invoice i ON e.invoiceId = i.id
-      LEFT JOIN User u ON e.createdBy = u.id
-      ${whereClause}
-      ORDER BY e.expenseDate DESC, e.createdAt DESC
-      LIMIT ? OFFSET ?
-    `;
+    // Build query based on available columns
+    let query;
+    if (hasVendorId && hasInvoiceId) {
+      // New schema with vendorId and invoiceId
+      query = `
+        SELECT 
+          e.*,
+          ec.name as categoryName,
+          v.name as vendorName,
+          i.id as invoiceNumber,
+          u.name as createdByName
+        FROM Expense e
+        LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id
+        LEFT JOIN Vendor v ON e.vendorId = v.id AND v.deletedAt IS NULL
+        LEFT JOIN Invoice i ON e.invoiceId = i.id AND i.deletedAt IS NULL
+        LEFT JOIN User u ON e.` + userColumnName + ` = u.id
+        ${whereClause}
+        ORDER BY e.expenseDate DESC, e.createdAt DESC
+        LIMIT ? OFFSET ?
+      `;
+    } else {
+      // Old schema - use vendorName column and no invoiceId
+      query = `
+        SELECT 
+          e.*,
+          ec.name as categoryName,
+          COALESCE(e.vendorName, '') as vendorName,
+          NULL as invoiceNumber,
+          u.name as createdByName
+        FROM Expense e
+        LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id
+        LEFT JOIN User u ON e.` + userColumnName + ` = u.id
+        ${whereClause}
+        ORDER BY e.expenseDate DESC, e.createdAt DESC
+        LIMIT ? OFFSET ?
+      `;
+    }
     
     queryParams.push(parseInt(limit), parseInt(offset));
     
     const [rows] = await db.query(query, queryParams);
     
-    // Get total count
+    // Get total count (use countParams which doesn't include limit/offset)
     const [countResult] = await db.query(
       `SELECT COUNT(*) as total FROM Expense e ${whereClause}`,
-      queryParams.slice(0, -2)
+      countParams
     );
     
     res.json({
@@ -96,6 +172,30 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
+    // Check which user column exists
+    let userColumnName = 'createdBy';
+    try {
+      const [createdByCheck] = await db.query(`
+        SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'Expense' 
+        AND COLUMN_NAME = 'createdBy'
+      `);
+      if (createdByCheck[0].exists === 0) {
+        const [userColCheck] = await db.query(`
+          SELECT COUNT(*) as exists FROM information_schema.COLUMNS 
+          WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'Expense' 
+          AND COLUMN_NAME = 'userId'
+        `);
+        if (userColCheck[0].exists > 0) {
+          userColumnName = 'userId';
+        }
+      }
+    } catch (err) {
+      console.warn('Could not check user column:', err.message);
+    }
+    
     const [rows] = await db.query(`
       SELECT 
         e.*,
@@ -105,9 +205,9 @@ router.get('/:id', async (req, res) => {
         u.name as createdByName
       FROM Expense e
       LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id
-      LEFT JOIN Vendor v ON e.vendorId = v.id
-      LEFT JOIN Invoice i ON e.invoiceId = i.id
-      LEFT JOIN User u ON e.createdBy = u.id
+      LEFT JOIN Vendor v ON e.vendorId = v.id AND v.deletedAt IS NULL
+      LEFT JOIN Invoice i ON e.invoiceId = i.id AND i.deletedAt IS NULL
+      LEFT JOIN User u ON e.` + userColumnName + ` = u.id
       WHERE e.id = ? AND e.deletedAt IS NULL
     `, [id]);
     
@@ -123,7 +223,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new expense
-router.post('/', async (req, res) => {
+router.post('/', validate(expenseSchemas.createExpense, 'body'), async (req, res) => {
   try {
     const { 
       categoryId, 
@@ -212,7 +312,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update an expense
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(expenseSchemas.updateExpense, 'body'), async (req, res) => {
   try {
     const { id } = req.params;
     const { 

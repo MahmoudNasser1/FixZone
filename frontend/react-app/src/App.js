@@ -83,6 +83,9 @@ import ServiceForm from './pages/services/ServiceForm';
 import ServiceDetails from './pages/services/ServiceDetails';
 import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
+// Expenses Pages
+import { ExpensesPage } from './pages/expenses';
+
 // Customer Portal Pages
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -304,6 +307,9 @@ function App() {
                       <Route path="services/new" element={<ServiceForm />} />
                       <Route path="services/:id" element={<ServiceDetails />} />
                       <Route path="services/:id/edit" element={<ServiceForm />} />
+
+                      {/* Expenses */}
+                      <Route path="expenses" element={<ExpensesPage />} />
 
                       {/* Customers */}
                       <Route path="customers" element={<CustomersPage />} />

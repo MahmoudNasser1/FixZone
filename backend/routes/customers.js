@@ -2,68 +2,245 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validate, customerSchemas } = require('../middleware/validation');
+
+// Apply authMiddleware to all routes
+router.use(authMiddleware);
 
 // Get all customers (optional pagination & search)
-router.get('/', async (req, res) => {
+router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res) => {
   try {
     const page = parseInt(req.query.page || '0', 10);
     const pageSize = Math.min(parseInt(req.query.pageSize || '20', 10), 100);
     const q = (req.query.q || '').trim();
 
+    // Calculate isActive: customer is active if last repair was within last 90 days
+    // Also calculate outstandingBalance: total invoices - total payments
+    const activeDaysThreshold = 90;
+    
     // If no pagination requested, return full list for backward compatibility
     if (!page) {
       const [rows] = await db.query(`
         SELECT 
-          id,
-          name,
-          phone,
-          email,
-          address,
-          companyId,
-          customFields,
-          createdAt,
-          updatedAt
-        FROM Customer 
-        WHERE deletedAt IS NULL 
-        ORDER BY createdAt DESC
-      `);
-      return res.json(rows);
+          c.id,
+          c.name,
+          c.phone,
+          c.email,
+          c.address,
+          c.companyId,
+          c.customFields,
+          c.createdAt,
+          c.updatedAt,
+          MAX(rr.createdAt) as lastRepairDate,
+          COALESCE(
+            CASE 
+              WHEN MAX(rr.createdAt) IS NOT NULL AND 
+                   DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+              ELSE 0
+            END, 0
+          ) as isActive,
+          COALESCE(
+            (SELECT SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0))
+             FROM Invoice i
+             WHERE i.customerId = c.id 
+               AND i.deletedAt IS NULL
+               AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
+          ) as outstandingBalance
+        FROM Customer c
+        LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
+        WHERE c.deletedAt IS NULL 
+        GROUP BY c.id
+        ORDER BY c.createdAt DESC
+      `, [activeDaysThreshold]);
+      
+      // Format results
+      const formattedRows = rows.map(row => ({
+        ...row,
+        isActive: row.isActive !== null && row.isActive !== undefined ? Boolean(row.isActive) : false,
+        outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0
+      }));
+      
+      return res.json(formattedRows);
     }
 
-    const where = ['deletedAt IS NULL'];
+    const where = ['c.deletedAt IS NULL'];
     const params = [];
     if (q) {
-      where.push('(name LIKE ? OR phone LIKE ? OR email LIKE ?)');
+      where.push('(c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?)');
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    
+    // Add filter for isActive if provided (we'll handle this with HAVING clause in the query)
+    const isActiveFilter = req.query.isActive;
+    const isActiveValue = isActiveFilter !== undefined 
+      ? ['1', 'true', 'TRUE', 'yes'].includes(String(isActiveFilter))
+      : undefined;
+    
+    // Add filter for outstandingBalance (customers with debt)
+    const hasDebtFilter = req.query.hasDebt;
+    const hasDebtValue = hasDebtFilter !== undefined 
+      ? ['1', 'true', 'TRUE', 'yes'].includes(String(hasDebtFilter))
+      : undefined;
+    
+    // Add sort parameters
+    const sortField = req.query.sort || 'createdAt';
+    const sortDirection = req.query.sortDir || 'DESC';
+    const allowedSortFields = ['id', 'name', 'phone', 'email', 'createdAt', 'outstandingBalance', 'isActive'];
+    const safeSortField = allowedSortFields.includes(sortField) ? sortField : 'createdAt';
+    const safeSortDirection = ['ASC', 'DESC'].includes(sortDirection.toUpperCase()) ? sortDirection.toUpperCase() : 'DESC';
+    
+    const baseWhereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const offset = (page - 1) * pageSize;
-    const [rows] = await db.query(
-      `SELECT 
-        id, 
-        name,
-        phone, 
-        email, 
-        address, 
-        companyId,
-        customFields,
-        createdAt, 
-        updatedAt
-       FROM Customer
-       ${whereSql}
-       ORDER BY createdAt DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
-    );
-    const [countRows] = await db.query(
-      `SELECT COUNT(*) as cnt FROM Customer ${whereSql}`,
-      params
-    );
+    
+    // Build main query with HAVING clause for filters
+    let mainQuery = `
+      SELECT 
+        c.id, 
+        c.name,
+        c.phone, 
+        c.email, 
+        c.address, 
+        c.companyId,
+        c.customFields,
+        c.createdAt, 
+        c.updatedAt,
+        MAX(rr.createdAt) as lastRepairDate,
+        COALESCE(
+          CASE 
+            WHEN MAX(rr.createdAt) IS NOT NULL AND 
+                 DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+            ELSE 0
+          END, 0
+        ) as isActive,
+        COALESCE(
+          (SELECT SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0))
+           FROM Invoice i
+           WHERE i.customerId = c.id 
+             AND i.deletedAt IS NULL
+             AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
+        ) as outstandingBalance
+       FROM Customer c
+       LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
+       ${baseWhereSql}
+       GROUP BY c.id
+    `;
+    
+    const mainParams = [...params, activeDaysThreshold];
+    
+    // Add HAVING clause for filters if needed
+    const havingConditions = [];
+    
+    if (isActiveValue !== undefined) {
+      havingConditions.push(`(
+        CASE 
+          WHEN MAX(rr.createdAt) IS NOT NULL AND 
+               DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+          ELSE 0
+        END
+      ) = ?`);
+      mainParams.push(activeDaysThreshold, isActiveValue ? 1 : 0);
+    }
+    
+    if (hasDebtValue !== undefined) {
+      havingConditions.push(`COALESCE(
+        (SELECT SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0))
+         FROM Invoice i
+         WHERE i.customerId = c.id 
+           AND i.deletedAt IS NULL
+           AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
+      ) > 0`);
+    }
+    
+    if (havingConditions.length > 0) {
+      mainQuery += ` HAVING ${havingConditions.join(' AND ')}`;
+    }
+    
+    // Add ORDER BY clause
+    let orderByClause = '';
+    if (safeSortField === 'outstandingBalance' || safeSortField === 'isActive') {
+      // These are calculated fields, need to repeat the calculation
+      if (safeSortField === 'outstandingBalance') {
+        orderByClause = `ORDER BY COALESCE(
+          (SELECT SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0))
+           FROM Invoice i
+           WHERE i.customerId = c.id 
+             AND i.deletedAt IS NULL
+             AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
+        ) ${safeSortDirection}`;
+      } else if (safeSortField === 'isActive') {
+        orderByClause = `ORDER BY CASE 
+          WHEN MAX(rr.createdAt) IS NOT NULL AND 
+               DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+          ELSE 0
+        END ${safeSortDirection}`;
+        mainParams.push(activeDaysThreshold);
+      }
+    } else {
+      // Regular fields
+      orderByClause = `ORDER BY c.${safeSortField} ${safeSortDirection}`;
+    }
+    
+    mainQuery += ` ${orderByClause} LIMIT ? OFFSET ?`;
+    mainParams.push(pageSize, offset);
+    
+    const [rows] = await db.query(mainQuery, mainParams);
+    
+    // Format results
+    const formattedRows = rows.map(row => ({
+      ...row,
+      isActive: row.isActive !== null && row.isActive !== undefined ? Boolean(row.isActive) : false,
+      outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0
+    }));
+    
+    // Count query - use subquery to match the main query structure
+    let countQuery = `
+      SELECT COUNT(*) as cnt FROM (
+        SELECT c.id
+        FROM Customer c
+        LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
+        ${baseWhereSql}
+        GROUP BY c.id
+    `;
+    
+    const countParams = [...params, activeDaysThreshold];
+    
+    // Add HAVING clause for count query if isActive filter is used
+           const countHavingConditions = [];
+           
+           if (isActiveValue !== undefined) {
+             countHavingConditions.push(`(
+               CASE
+                 WHEN MAX(rr.createdAt) IS NOT NULL AND
+                      DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+                 ELSE 0
+               END
+             ) = ?`);
+             countParams.push(activeDaysThreshold, isActiveValue ? 1 : 0);
+           }
+           
+           if (hasDebtValue !== undefined) {
+             countHavingConditions.push(`COALESCE(
+               (SELECT SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0))
+                FROM Invoice i
+                WHERE i.customerId = c.id 
+                  AND i.deletedAt IS NULL
+                  AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
+             ) > 0`);
+           }
+           
+           if (countHavingConditions.length > 0) {
+             countQuery += ` HAVING ${countHavingConditions.join(' AND ')}`;
+           }
+    
+    countQuery += `) as filtered_customers`;
+    
+    const [countRows] = await db.query(countQuery, countParams);
+    
     return res.json({ 
       success: true,
       data: { 
-        customers: rows, 
+        customers: formattedRows, 
         total: countRows[0]?.cnt || 0,
         page,
         pageSize 
@@ -76,7 +253,7 @@ router.get('/', async (req, res) => {
 });
 
 // Search customers by name or phone with pagination
-router.get('/search', async (req, res) => {
+router.get('/search', validate(customerSchemas.searchCustomers, 'query'), async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
     const page = parseInt(req.query.page || '1', 10);
@@ -150,7 +327,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new customer
-router.post('/', async (req, res) => {
+router.post('/', validate(customerSchemas.createCustomer), async (req, res) => {
   const { name, phone, email, address, companyId, customFields } = req.body;
   
   console.log('Creating customer:', { name, phone, email, address, companyId, customFields });
@@ -203,7 +380,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a customer
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', validate(customerSchemas.updateCustomer), async (req, res) => {
   const { id } = req.params;
   const { name, phone, email, address, companyId, customFields } = req.body;
   
@@ -279,7 +456,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 });
 
 // Soft delete a customer
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await db.query('UPDATE Customer SET deletedAt = NOW() WHERE id = ? AND deletedAt IS NULL', [id]);
@@ -299,6 +476,7 @@ router.get('/:id/stats', async (req, res) => {
     const customerId = req.params.id;
     
     // جلب إحصائيات العميل
+    const activeDaysThreshold = 90;
     const statsQuery = `
       SELECT 
         COUNT(rr.id) as totalRepairs,
@@ -309,20 +487,38 @@ router.get('/:id/stats', async (req, res) => {
         COALESCE(SUM(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as totalPaid,
         COALESCE(AVG(CASE WHEN rr.status = 'completed' THEN rr.actualCost END), 0) as avgRepairCost,
         MAX(rr.createdAt) as lastRepairDate,
-        MIN(rr.createdAt) as firstRepairDate
+        MIN(rr.createdAt) as firstRepairDate,
+        COALESCE(
+          CASE 
+            WHEN MAX(rr.createdAt) IS NOT NULL AND 
+                 DATEDIFF(NOW(), MAX(rr.createdAt)) <= ? THEN 1
+            ELSE 0
+          END, 0
+        ) as isActive
       FROM Customer c
       LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
       WHERE c.id = ? AND c.deletedAt IS NULL
       GROUP BY c.id
     `;
     
-    const [statsRows] = await db.query(statsQuery, [customerId]);
+    const [statsRows] = await db.query(statsQuery, [activeDaysThreshold, customerId]);
     
     if (statsRows.length === 0) {
       return res.status(404).json({ error: 'العميل غير موجود' });
     }
     
     const stats = statsRows[0];
+    
+    // حساب الرصيد المستحق
+    const [balanceRows] = await db.query(`
+      SELECT COALESCE(SUM(COALESCE(i.totalAmount, 0) - COALESCE(i.amountPaid, 0)), 0) as outstandingBalance
+      FROM Invoice i
+      WHERE i.customerId = ? 
+        AND i.deletedAt IS NULL
+        AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0
+    `, [customerId]);
+    
+    const outstandingBalance = parseFloat(balanceRows[0]?.outstandingBalance || 0);
     
     // حساب معدل الرضا (افتراضي بناءً على الطلبات المكتملة)
     const satisfactionRate = stats.totalRepairs > 0 
@@ -331,8 +527,7 @@ router.get('/:id/stats', async (req, res) => {
     
     // تحديد حالة العميل
     const customerStatus = {
-      isActive: stats.lastRepairDate && 
-        new Date(stats.lastRepairDate) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // آخر 90 يوم
+      isActive: Boolean(stats.isActive),
       isVip: stats.totalPaid > 5000 || stats.totalRepairs > 10, // VIP إذا دفع أكثر من 5000 أو لديه أكثر من 10 طلبات
       riskLevel: stats.cancelledRepairs > 2 ? 'high' : stats.pendingRepairs > 3 ? 'medium' : 'low'
     };
@@ -364,6 +559,7 @@ router.get('/:id/stats', async (req, res) => {
       cancelledRepairs: stats.cancelledRepairs || 0,
       totalPaid: parseFloat(stats.totalPaid) || 0,
       avgRepairCost: parseFloat(stats.avgRepairCost) || 0,
+      outstandingBalance: outstandingBalance,
       satisfactionRate,
       lastRepairDate: stats.lastRepairDate,
       firstRepairDate: stats.firstRepairDate,

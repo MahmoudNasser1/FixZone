@@ -7,7 +7,7 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import PerformanceAnalytics from '../../components/ui/PerformanceAnalytics';
 import { 
   ArrowRight, User, Phone, Mail, MapPin, Calendar, 
-  Building2, Settings, History, Plus 
+  Building2, Settings, History, Plus, DollarSign 
 } from 'lucide-react';
 
 const CustomerDetailsPage = () => {
@@ -385,6 +385,43 @@ const CustomerDetailsPage = () => {
               </SimpleCardContent>
             </SimpleCard>
           )}
+
+          {/* الملخص المالي */}
+          <SimpleCard>
+            <SimpleCardHeader>
+              <SimpleCardTitle className="flex items-center">
+                <DollarSign className="w-5 h-5 ml-2" />
+                الملخص المالي
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">إجمالي المدفوعات:</span>
+                  <span className="font-semibold text-green-600">
+                    {customerStats?.totalPaid ? parseFloat(customerStats.totalPaid).toFixed(2) : '0.00'} ج.م
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">متوسط التكلفة:</span>
+                  <span className="font-semibold text-gray-900">
+                    {customerStats?.avgRepairCost ? parseFloat(customerStats.avgRepairCost).toFixed(2) : '0.00'} ج.م
+                  </span>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">الرصيد المستحق:</span>
+                    <span className={`font-semibold ${customerStats?.outstandingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {customerStats?.outstandingBalance ? parseFloat(customerStats.outstandingBalance).toFixed(2) : '0.00'} ج.م
+                    </span>
+                  </div>
+                  {customerStats?.outstandingBalance > 0 && (
+                    <p className="text-xs text-red-500 mt-1">⚠️ يوجد رصيد مستحق</p>
+                  )}
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
           {/* إجراءات سريعة */}
           <SimpleCard>

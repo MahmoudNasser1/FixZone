@@ -13,7 +13,7 @@ import {
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX, History,
-  Upload, File, ArrowUpDown, ArrowUp, ArrowDown
+  Upload, File, ArrowUpDown, ArrowUp, ArrowDown, DollarSign
 } from 'lucide-react';
 
 const CustomersPage = () => {
@@ -55,7 +55,7 @@ const CustomersPage = () => {
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // جلب البيانات من Backend
+  // جلب البيانات من Backend - re-fetch when filters change
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -65,35 +65,73 @@ const CustomersPage = () => {
       }
     };
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, selectedFilter, searchTerm, sortField, sortDirection]);
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getCustomers();
+      
+      // Use pagination API with isActive filter if needed
+      const params = {
+        page: currentPage,
+        pageSize: itemsPerPage
+      };
+      
+      // Add isActive filter if selected
+      if (selectedFilter === 'active') {
+        params.isActive = true;
+      } else if (selectedFilter === 'inactive') {
+        params.isActive = false;
+      } else if (selectedFilter === 'hasDebt') {
+        params.hasDebt = true;
+      }
+      
+      // Add search term if provided
+      if (searchTerm) {
+        params.q = searchTerm;
+      }
+      
+      // Add sort parameters if provided
+      if (sortField) {
+        params.sort = sortField;
+        params.sortDir = sortDirection === 'asc' ? 'ASC' : 'DESC';
+      }
+      
+      const data = await apiService.getCustomers(params);
       
       // التأكد من أن البيانات هي array
       let customersData = [];
+      let totalCount = 0;
+      
       console.log('Raw API response:', data);
-      if (Array.isArray(data)) {
+      
+      if (data && data.success && data.data && Array.isArray(data.data.customers)) {
+        customersData = data.data.customers;
+        totalCount = data.data.total || 0;
+      } else if (Array.isArray(data)) {
         customersData = data;
+        totalCount = data.length;
       } else if (data && Array.isArray(data.data)) {
         customersData = data.data;
+        totalCount = data.data.length;
       } else if (data && data.customers && Array.isArray(data.customers)) {
         customersData = data.customers;
-      } else if (data && data.success && data.data && Array.isArray(data.data.customers)) {
-        customersData = data.data.customers;
+        totalCount = data.customers.length;
       } else {
         console.error('Unexpected API response format:', data);
         customersData = [];
+        totalCount = 0;
       }
       
       setCustomers(customersData);
+      setTotalItems(totalCount);
     } catch (err) {
       console.error('Error fetching customers:', err);
       setError('حدث خطأ في تحميل بيانات العملاء');
       setCustomers([]); // تأكد من أن customers هو array فارغ في حالة الخطأ
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -236,8 +274,10 @@ const CustomersPage = () => {
         })();
         return matchesSearch && customFields.isVip === true;
       }
-      if (selectedFilter === 'active') return matchesSearch && customer.status === 'active';
-      if (selectedFilter === 'inactive') return matchesSearch && customer.status === 'inactive';
+      // Use isActive from API (calculated based on last repair date)
+      if (selectedFilter === 'active') return matchesSearch && customer.isActive === true;
+      if (selectedFilter === 'inactive') return matchesSearch && customer.isActive === false;
+      if (selectedFilter === 'hasDebt') return matchesSearch && (customer.outstandingBalance || 0) > 0;
       return matchesSearch;
     }) : [];
 
@@ -254,9 +294,9 @@ const CustomersPage = () => {
         }
 
         // معالجة الأرقام
-        if (sortField === 'id' || sortField === 'phone') {
-          aValue = parseInt(aValue) || 0;
-          bValue = parseInt(bValue) || 0;
+        if (sortField === 'id' || sortField === 'phone' || sortField === 'outstandingBalance') {
+          aValue = parseFloat(aValue) || 0;
+          bValue = parseFloat(bValue) || 0;
         }
 
         // معالجة النصوص
@@ -278,20 +318,14 @@ const CustomersPage = () => {
     return filtered;
   };
 
-  // Pagination helpers
+  // Pagination helpers - customers are already paginated from API
   const getPaginatedCustomers = () => {
-    const filtered = getFilteredCustomers();
-    
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filtered.slice(startIndex, endIndex);
+    // Since we're using server-side pagination, return customers as-is
+    return Array.isArray(customers) ? customers : [];
   };
 
-  // Update total items when filtered customers change
-  useEffect(() => {
-    const filtered = getFilteredCustomers();
-    setTotalItems(filtered.length);
-  }, [customers, searchTerm, selectedFilter]);
+  // Total items is now set from API response in fetchCustomers()
+  // No need to calculate from filtered customers anymore
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -644,13 +678,39 @@ const CustomersPage = () => {
       }
     },
     {
+      id: 'outstandingBalance',
+      key: 'outstandingBalance',
+      header: (
+        <button
+          onClick={() => handleSort('outstandingBalance')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          الرصيد المستحق
+          {renderSortIcon('outstandingBalance')}
+        </button>
+      ),
+      label: 'الرصيد المستحق',
+      description: 'المبلغ المستحق على العميل',
+      defaultVisible: true,
+      accessorKey: 'outstandingBalance',
+      cell: ({ row }) => {
+        const customer = row.original;
+        const balance = parseFloat(customer.outstandingBalance || 0);
+        return (
+          <div className={`font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {balance.toFixed(2)} ج.م
+          </div>
+        );
+      }
+    },
+    {
       id: 'status',
-      key: 'status',
+      key: 'isActive',
       header: 'الحالة',
       label: 'الحالة',
       description: 'حالة العميل',
       defaultVisible: true,
-      accessorKey: 'status',
+      accessorKey: 'isActive',
       cell: ({ row }) => {
         const customer = row.original;
         const customFields = (() => {
@@ -666,10 +726,10 @@ const CustomersPage = () => {
         return (
           <div className="flex items-center gap-2">
             <SimpleBadge 
-              variant={customer.status === 'active' ? 'success' : 'secondary'}
+              variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
-              {customer.status === 'active' ? 'نشط' : 'غير نشط'}
+              {customer.isActive === true ? 'نشط' : 'غير نشط'}
             </SimpleBadge>
             {customFields.isVip && (
               <SimpleBadge variant="warning" className="text-xs">
@@ -885,20 +945,30 @@ const CustomersPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {show('status') && (
-            <SimpleBadge 
-              variant={customer.status === 'active' ? 'success' : 'secondary'}
-              className="text-xs"
-            >
-              {customer.status === 'active' ? 'نشط' : 'غير نشط'}
-            </SimpleBadge>
-          )}
-          {customFields.isVip && (
-            <SimpleBadge variant="warning" className="text-xs">
-              VIP
-            </SimpleBadge>
-          )}
+        <div className="flex items-center gap-2 flex-col items-end">
+          {show('outstandingBalance') && (() => {
+            const balance = parseFloat(customer.outstandingBalance || 0);
+            return balance > 0 ? (
+              <div className={`text-xs font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                مدين: {balance.toFixed(2)} ج.م
+              </div>
+            ) : null;
+          })()}
+          <div className="flex items-center gap-2">
+            {show('status') && (
+              <SimpleBadge 
+                variant={customer.isActive === true ? 'success' : 'secondary'}
+                className="text-xs"
+              >
+                {customer.isActive === true ? 'نشط' : 'غير نشط'}
+              </SimpleBadge>
+            )}
+            {customFields.isVip && (
+              <SimpleBadge variant="warning" className="text-xs">
+                VIP
+              </SimpleBadge>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -931,10 +1001,10 @@ const CustomersPage = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <SimpleBadge 
-              variant={customer.status === 'active' ? 'success' : 'secondary'}
+              variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
-              {customer.status === 'active' ? 'نشط' : 'غير نشط'}
+              {customer.isActive === true ? 'نشط' : 'غير نشط'}
             </SimpleBadge>
             {customFields.isVip && (
               <SimpleBadge variant="warning" className="text-xs">
@@ -996,10 +1066,10 @@ const CustomersPage = () => {
           </div>
           <div className="flex items-center justify-center gap-1">
             <SimpleBadge 
-              variant={customer.status === 'active' ? 'success' : 'secondary'}
+              variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
-              {customer.status === 'active' ? 'نشط' : 'غير نشط'}
+              {customer.isActive === true ? 'نشط' : 'غير نشط'}
             </SimpleBadge>
             {customFields.isVip && (
               <SimpleBadge variant="warning" className="text-xs">
@@ -1017,7 +1087,7 @@ const CustomersPage = () => {
 
   // حساب الإحصائيات
   const stats = {
-          total: Array.isArray(customers) ? customers.length : 0,
+          total: totalItems, // Use totalItems from API for accurate count across all pages
             vip: Array.isArray(customers) ? customers.filter(customer => {
       const customFields = (() => {
         try {
@@ -1030,8 +1100,9 @@ const CustomersPage = () => {
       })();
       return customFields.isVip;
     }).length : 0,
-          active: Array.isArray(customers) ? customers.filter(customer => customer.status === 'active').length : 0,
-      inactive: Array.isArray(customers) ? customers.filter(customer => customer.status === 'inactive').length : 0
+          active: Array.isArray(customers) ? customers.filter(customer => customer.isActive === true).length : 0,
+      inactive: Array.isArray(customers) ? customers.filter(customer => customer.isActive === false).length : 0,
+      hasDebt: Array.isArray(customers) ? customers.filter(customer => (parseFloat(customer.outstandingBalance || 0)) > 0).length : 0
   };
 
   if (loading) {
@@ -1077,7 +1148,7 @@ const CustomersPage = () => {
       {loading ? (
         <CardLoadingSkeleton count={4} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
@@ -1133,6 +1204,20 @@ const CustomersPage = () => {
               </div>
             </SimpleCardContent>
           </SimpleCard>
+
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">عملاء مدينون</p>
+                  <p className="text-2xl font-bold text-orange-600">{stats.hasDebt || 0}</p>
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
         </div>
       )}
 
@@ -1160,6 +1245,7 @@ const CustomersPage = () => {
                 <option value="vip">عملاء VIP</option>
                 <option value="active">نشط</option>
                 <option value="inactive">غير نشط</option>
+                <option value="hasDebt">عملاء مدينون</option>
               </select>
             </div>
             <div className="relative" ref={actionsRef}>

@@ -910,6 +910,96 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // ==================
+  // Expenses APIs
+  // ==================
+  
+  // جلب جميع المصروفات
+  async getExpenses(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/expenses${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // جلب مصروف واحد
+  async getExpense(id) {
+    return this.request(`/expenses/${id}`);
+  }
+
+  // إنشاء مصروف جديد
+  async createExpense(expenseData) {
+    return this.request('/expenses', {
+      method: 'POST',
+      body: JSON.stringify(expenseData),
+    });
+  }
+
+  // تحديث مصروف
+  async updateExpense(id, expenseData) {
+    return this.request(`/expenses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(expenseData),
+    });
+  }
+
+  // حذف مصروف
+  async deleteExpense(id) {
+    return this.request(`/expenses/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // جلب إحصائيات المصروفات
+  async getExpenseStats(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/expenses/stats/summary${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // ==================
+  // Expense Categories APIs
+  // ==================
+  
+  // جلب جميع فئات المصروفات
+  async getExpenseCategories() {
+    const response = await this.request('/expensecategories');
+    // Handle both response formats
+    if (response && response.success && response.data) {
+      return response.data;
+    }
+    return Array.isArray(response) ? response : [];
+  }
+
+  // جلب فئة مصروف واحدة
+  async getExpenseCategory(id) {
+    const response = await this.request(`/expensecategories/${id}`);
+    if (response && response.success && response.data) {
+      return response.data;
+    }
+    return response;
+  }
+
+  // إنشاء فئة مصروف جديدة
+  async createExpenseCategory(categoryData) {
+    return this.request('/expensecategories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  // تحديث فئة مصروف
+  async updateExpenseCategory(id, categoryData) {
+    return this.request(`/expensecategories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  }
+
+  // حذف فئة مصروف
+  async deleteExpenseCategory(id) {
+    return this.request(`/expensecategories/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // إنشاء instance واحد للاستخدام في التطبيق

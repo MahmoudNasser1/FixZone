@@ -1,0 +1,1963 @@
+Ignoring invalid configuration option passed to Connection: prepare. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
+🔌 WebSocket service initialized
+🚀 Fix Zone Backend Server is running on port 3001
+📊 API Base URL: http://localhost:3001/api
+🏥 Health Check: http://localhost:3001/health
+🔌 WebSocket URL: ws://localhost:3001/ws
+🔗 Client connected: client_1763473124432_3wxwbm7i4 (Total: 1)
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.vendorId' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.vendorId' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.createdBy' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.createdBy' in 'on clause'"
+}
+Error fetching expenses: Error: Unknown column 'e.createdBy' in 'on clause'
+    at PromisePool.query (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:71:29
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:280:10)
+    at authMiddleware (/opt/lampp/htdocs/FixZone/backend/middleware/authMiddleware.js:34:9) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: '\n' +
+    '      SELECT \n' +
+    '        e.*,\n' +
+    '        ec.name as categoryName,\n' +
+    '        v.name as vendorName,\n' +
+    '        i.id as invoiceNumber,\n' +
+    '        u.name as createdByName\n' +
+    '      FROM Expense e\n' +
+    '      LEFT JOIN ExpenseCategory ec ON e.categoryId = ec.id\n' +
+    '      LEFT JOIN Vendor v ON e.vendorId = v.id\n' +
+    '      LEFT JOIN Invoice i ON e.invoiceId = i.id\n' +
+    '      LEFT JOIN User u ON e.createdBy = u.id\n' +
+    '      WHERE e.deletedAt IS NULL\n' +
+    '      ORDER BY e.expenseDate DESC, e.createdAt DESC\n' +
+    '      LIMIT 5 OFFSET 0\n' +
+    '    ',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'e.createdBy' in 'on clause'"
+}
+🔌 Client disconnected: client_1763473124432_3wxwbm7i4 (Total: 0)
+🔗 Client connected: client_1763475178250_wzvgxjmi9 (Total: 1)
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+Total payments in database: 11
+Total payments in database: 11
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+🔌 Client disconnected: client_1763475178250_wzvgxjmi9 (Total: 0)
+🔗 Client connected: client_1763475197080_bcmxn520t (Total: 1)
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+🔌 Client disconnected: client_1763475197080_bcmxn520t (Total: 0)
+🔗 Client connected: client_1763475484316_etgkxtp9b (Total: 1)
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+🔌 Client disconnected: client_1763475484316_etgkxtp9b (Total: 0)
+🔗 Client connected: client_1763475951454_gtil5tkcr (Total: 1)
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
