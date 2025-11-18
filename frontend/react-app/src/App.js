@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './stores/authStore';
 
@@ -223,6 +223,13 @@ const AdminRoute = ({ children }) => {
 };
 
 function App() {
+  const restoreSession = useAuthStore((state) => state.restoreSession);
+
+  // Restore session from httpOnly cookie on app load
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <NotificationProvider position="top-right" maxNotifications={5}>

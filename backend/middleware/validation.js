@@ -601,10 +601,13 @@ const expenseSchemas = {
     categoryId: Joi.number().integer().positive().optional(),
     vendorId: Joi.number().integer().positive().optional(),
     invoiceId: Joi.number().integer().positive().optional(),
+    repairId: Joi.number().integer().positive().optional(),
+    branchId: Joi.number().integer().positive().optional(),
     dateFrom: Joi.date().iso().optional(),
     dateTo: Joi.date().iso().optional(),
     page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(50)
+    limit: Joi.number().integer().min(1).max(100).default(50),
+    q: Joi.string().max(200).allow('', null).optional()
   }),
 
   // Create expense
@@ -612,42 +615,115 @@ const expenseSchemas = {
     categoryId: Joi.number().integer().positive().required()
       .messages({
         'any.required': 'فئة المصروف مطلوبة',
-        'number.positive': 'فئة المصروف غير صحيحة'
+        'number.positive': 'فئة المصروف غير صحيحة',
+        'number.base': 'فئة المصروف يجب أن تكون رقم'
       }),
     
-    vendorId: Joi.number().integer().positive().allow(null).optional(),
+    vendorId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف المورد غير صحيح',
+        'number.base': 'معرف المورد يجب أن يكون رقم'
+      }),
     
     amount: Joi.number().min(0).precision(2).required()
       .messages({
         'number.min': 'المبلغ يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ يجب أن يكون رقم',
         'any.required': 'المبلغ مطلوب'
       }),
     
-    description: Joi.string().max(1000).allow('', null).optional(),
+    description: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
+      }),
     
     expenseDate: Joi.date().iso().required()
       .messages({
-        'date.base': 'تاريخ المصروف غير صحيح',
+        'date.base': 'تاريخ المصروف غير صحيح (يجب أن يكون بصيغة ISO: YYYY-MM-DD)',
+        'date.format': 'تاريخ المصروف غير صحيح (يجب أن يكون بصيغة: YYYY-MM-DD)',
         'any.required': 'تاريخ المصروف مطلوب'
       }),
     
-    invoiceId: Joi.number().integer().positive().allow(null).optional(),
+    invoiceId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفاتورة غير صحيح',
+        'number.base': 'معرف الفاتورة يجب أن يكون رقم'
+      }),
     
-    receiptUrl: Joi.string().uri().max(500).allow('', null).optional(),
+    receiptUrl: Joi.string().uri().max(500).allow('', null).optional()
+      .messages({
+        'string.uri': 'رابط الإيصال غير صحيح (يجب أن يبدأ بـ http:// أو https://)',
+        'string.max': 'رابط الإيصال يجب ألا يزيد عن 500 حرف'
+      }),
     
     notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    
+    repairId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
+      }),
+    
+    branchId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفرع غير صحيح',
+        'number.base': 'معرف الفرع يجب أن يكون رقم'
+      })
   }),
 
   // Update expense
   updateExpense: Joi.object({
-    categoryId: Joi.number().integer().positive().optional(),
-    vendorId: Joi.number().integer().positive().allow(null).optional(),
-    amount: Joi.number().min(0).precision(2).optional(),
-    description: Joi.string().max(1000).allow('', null).optional(),
-    expenseDate: Joi.date().iso().optional(),
-    invoiceId: Joi.number().integer().positive().allow(null).optional(),
-    receiptUrl: Joi.string().uri().max(500).allow('', null).optional(),
+    categoryId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'فئة المصروف غير صحيحة',
+        'number.base': 'فئة المصروف يجب أن تكون رقم'
+      }),
+    vendorId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف المورد غير صحيح',
+        'number.base': 'معرف المورد يجب أن يكون رقم'
+      }),
+    amount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'المبلغ يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ يجب أن يكون رقم'
+      }),
+    description: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
+      }),
+    expenseDate: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ المصروف غير صحيح (يجب أن يكون بصيغة ISO: YYYY-MM-DD)',
+        'date.format': 'تاريخ المصروف غير صحيح'
+      }),
+    invoiceId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفاتورة غير صحيح',
+        'number.base': 'معرف الفاتورة يجب أن يكون رقم'
+      }),
+    receiptUrl: Joi.string().uri().max(500).allow('', null).optional()
+      .messages({
+        'string.uri': 'رابط الإيصال غير صحيح',
+        'string.max': 'رابط الإيصال يجب ألا يزيد عن 500 حرف'
+      }),
     notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    repairId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
+      }),
+    branchId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفرع غير صحيح',
+        'number.base': 'معرف الفرع يجب أن يكون رقم'
+      })
   }),
 
   // Get expense stats query

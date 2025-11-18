@@ -15,7 +15,8 @@ import {
   Plus, Search, Filter, Download, RefreshCw,
   DollarSign, Calendar, Tag, Building2, Receipt,
   Eye, Edit, Trash2, TrendingUp, TrendingDown,
-  ArrowUpDown, ArrowUp, ArrowDown, FileText, X
+  ArrowUpDown, ArrowUp, ArrowDown, FileText, X,
+  Wrench, MapPin
 } from 'lucide-react';
 
 const ExpensesPage = () => {
@@ -156,9 +157,9 @@ const ExpensesPage = () => {
         params.dateTo = dateTo;
       }
 
-      // Search in description
-      if (searchTerm) {
-        // Backend doesn't support search yet, filter client-side for now
+      // Search in description (server-side via 'q' parameter)
+      if (searchTerm && searchTerm.trim()) {
+        params.q = searchTerm.trim();
       }
 
       const response = await apiService.getExpenses(params);
@@ -177,15 +178,8 @@ const ExpensesPage = () => {
         totalCount = response.pagination?.total || 0;
       }
 
-      // Client-side search filter if searchTerm exists
-      if (searchTerm) {
-        expensesData = expensesData.filter(expense => 
-          (expense.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (expense.categoryName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (expense.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (expense.amount || '').toString().includes(searchTerm)
-        );
-      }
+      // Note: Search is now handled server-side via 'q' parameter
+      // Client-side search is removed to use backend search instead
 
       // Client-side sorting
       if (sortField) {
@@ -229,7 +223,12 @@ const ExpensesPage = () => {
   const fetchStats = async () => {
     try {
       setLoadingStats(true);
-      const response = await apiService.getExpenseStats();
+      const params = {};
+      if (selectedCategory) params.categoryId = selectedCategory;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+
+      const response = await apiService.getExpenseStats(params);
       
       if (response?.success && response?.data) {
         const summary = response.data.summary || {};
@@ -237,21 +236,9 @@ const ExpensesPage = () => {
           totalExpenses: summary.totalExpenses || 0,
           totalAmount: parseFloat(summary.totalAmount || 0),
           averageAmount: parseFloat(summary.averageAmount || 0),
-          todayExpenses: 0, // Calculate separately
-          todayAmount: 0
+          todayExpenses: summary.todayExpenses || 0,
+          todayAmount: parseFloat(summary.todayAmount || 0)
         });
-      }
-
-      // Calculate today's stats
-      const today = new Date().toISOString().split('T')[0];
-      const todayResponse = await apiService.getExpenseStats({ dateFrom: today, dateTo: today });
-      if (todayResponse?.success && todayResponse?.data) {
-        const todaySummary = todayResponse.data.summary || {};
-        setStats(prev => ({
-          ...prev,
-          todayExpenses: todaySummary.totalExpenses || 0,
-          todayAmount: parseFloat(todaySummary.totalAmount || 0)
-        }));
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -475,6 +462,54 @@ const ExpensesPage = () => {
       }
     },
     {
+      id: 'repair',
+      key: 'repair',
+      header: 'طلب الإصلاح',
+      label: 'طلب الإصلاح',
+      description: 'طلب الإصلاح المرتبط',
+      defaultVisible: false,
+      accessorKey: 'repairRequestId',
+      cell: ({ row }) => {
+        const expense = row.original;
+        return expense.repairRequestId ? (
+          <div className="flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-blue-400" />
+            <button
+              className="text-sm text-blue-600 hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/repairs/${expense.repairRequestId}`);
+              }}
+            >
+              {expense.repairTrackingToken || `طلب #${expense.repairRequestId}`}
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      }
+    },
+    {
+      id: 'branch',
+      key: 'branch',
+      header: 'الفرع',
+      label: 'الفرع',
+      description: 'الفرع المرتبط',
+      defaultVisible: false,
+      accessorKey: 'branchName',
+      cell: ({ row }) => {
+        const expense = row.original;
+        return expense.branchName ? (
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-green-400" />
+            <span className="text-sm text-gray-700">{expense.branchName}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      }
+    },
+    {
       id: 'createdBy',
       key: 'createdBy',
       header: 'أنشئ بواسطة',
@@ -568,6 +603,28 @@ const ExpensesPage = () => {
                 <div className="flex items-center gap-1">
                   <Building2 className="w-3 h-3" />
                   <span>{expense.vendorName}</span>
+                </div>
+              )}
+              {expense.repairRequestId && (
+                <div className="flex items-center gap-1">
+                  <Wrench className="w-3 h-3 text-blue-600" />
+                  <a 
+                    href={`/repairs/${expense.repairRequestId}`}
+                    className="text-xs text-blue-600 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      navigate(`/repairs/${expense.repairRequestId}`);
+                    }}
+                  >
+                    {expense.repairTrackingToken || `طلب #${expense.repairRequestId}`}
+                  </a>
+                </div>
+              )}
+              {expense.branchName && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-green-600" />
+                  <span className="text-xs">{expense.branchName}</span>
                 </div>
               )}
             </div>

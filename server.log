@@ -1961,3 +1961,29 @@ Found invoices: [
     deviceModel: null
   }
 ]
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+Error creating expense: Error: Unknown column 'notes' in 'field list'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at /opt/lampp/htdocs/FixZone/backend/routes/expenses.js:187:31
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'INSERT INTO Expense \n' +
+    '       (categoryId, vendorId, amount, description, expenseDate, invoiceId, receiptUrl, notes, createdBy)\n' +
+    '       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'notes' in 'field list'"
+}
+🔌 Client disconnected: client_1763475951454_gtil5tkcr (Total: 0)
+🔗 Client connected: client_1763477493040_uzrchmiry (Total: 1)

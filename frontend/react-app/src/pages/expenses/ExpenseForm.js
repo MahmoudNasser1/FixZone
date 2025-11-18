@@ -13,7 +13,9 @@ import {
   Tag, 
   FileText,
   Building2,
-  Receipt
+  Receipt,
+  Wrench,
+  MapPin
 } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
@@ -35,12 +37,16 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
     expenseDate: new Date().toISOString().split('T')[0],
     invoiceId: '',
     receiptUrl: '',
-    notes: ''
+    notes: '',
+    repairId: '',
+    branchId: ''
   });
 
   const [categories, setCategories] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [repairs, setRepairs] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [errors, setErrors] = useState({});
@@ -61,7 +67,9 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
         expenseDate: expense.expenseDate ? expense.expenseDate.split('T')[0] : new Date().toISOString().split('T')[0],
         invoiceId: expense.invoiceId || '',
         receiptUrl: expense.receiptUrl || '',
-        notes: expense.notes || ''
+        notes: expense.notes || '',
+        repairId: expense.repairId || '',
+        branchId: expense.branchId || ''
       });
     }
   }, [expense]);
@@ -72,7 +80,9 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
       await Promise.all([
         loadCategories(),
         loadVendors(),
-        loadInvoices()
+        loadInvoices(),
+        loadRepairs(),
+        loadBranches()
       ]);
     } catch (error) {
       console.error('Error loading initial data:', error);
@@ -140,6 +150,42 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
     }
   };
 
+  const loadRepairs = async () => {
+    try {
+      const response = await apiService.getRepairRequests({ limit: 100 });
+      if (Array.isArray(response)) {
+        setRepairs(response);
+      } else if (response?.repairs) {
+        setRepairs(response.repairs);
+      } else if (response?.data?.repairs) {
+        setRepairs(response.data.repairs);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setRepairs(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading repairs:', error);
+      setRepairs([]);
+    }
+  };
+
+  const loadBranches = async () => {
+    try {
+      const response = await apiService.request('/branches?isActive=true&limit=100');
+      if (Array.isArray(response)) {
+        setBranches(response);
+      } else if (response?.branches) {
+        setBranches(response.branches);
+      } else if (response?.data?.branches) {
+        setBranches(response.data.branches);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setBranches(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading branches:', error);
+      setBranches([]);
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -193,7 +239,9 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
         expenseDate: formData.expenseDate,
         invoiceId: formData.invoiceId ? parseInt(formData.invoiceId) : null,
         receiptUrl: formData.receiptUrl.trim() || null,
-        notes: formData.notes.trim() || null
+        notes: formData.notes.trim() || null,
+        repairId: formData.repairId ? parseInt(formData.repairId) : null,
+        branchId: formData.branchId ? parseInt(formData.branchId) : null
       };
 
       let response;
@@ -342,6 +390,54 @@ const ExpenseForm = ({ expense, onSave, onCancel, onSuccess }) => {
               {invoices.map(invoice => (
                 <SelectItem key={invoice.id} value={invoice.id.toString()}>
                   {invoice.id} - {invoice.totalAmount ? `${invoice.totalAmount} ج.م` : 'فاتورة شراء'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Repair Request */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Wrench className="inline w-4 h-4 ml-1" />
+            طلب الإصلاح (اختياري)
+          </label>
+          <Select
+            value={formData.repairId?.toString() || ''}
+            onValueChange={(value) => handleInputChange('repairId', value || '')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر طلب الإصلاح" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">لا يوجد</SelectItem>
+              {repairs.map(repair => (
+                <SelectItem key={repair.id} value={repair.id.toString()}>
+                  {repair.trackingToken || `طلب #${repair.id}`} - {repair.customerName || 'عميل'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Branch */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <MapPin className="inline w-4 h-4 ml-1" />
+            الفرع (اختياري)
+          </label>
+          <Select
+            value={formData.branchId?.toString() || ''}
+            onValueChange={(value) => handleInputChange('branchId', value || '')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الفرع" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">لا يوجد</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id.toString()}>
+                  {branch.name}
                 </SelectItem>
               ))}
             </SelectContent>
