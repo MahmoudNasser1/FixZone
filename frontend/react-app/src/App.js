@@ -86,6 +86,9 @@ import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 // Expenses Pages
 import { ExpensesPage } from './pages/expenses';
 
+// Quotations Pages
+import { QuotationsPage } from './pages/quotations';
+
 // Customer Portal Pages
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -317,6 +320,9 @@ function App() {
 
                       {/* Expenses */}
                       <Route path="expenses" element={<ExpensesPage />} />
+
+                      {/* Quotations */}
+                      <Route path="quotations" element={<QuotationsPage />} />
 
                       {/* Customers */}
                       <Route path="customers" element={<CustomersPage />} />

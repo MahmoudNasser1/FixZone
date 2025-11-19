@@ -69,6 +69,7 @@ const navItems = [
     items: [
       { href: '/finance', label: 'النظام المالي', icon: DollarSign },
       { href: '/invoices', label: 'الفواتير', icon: Receipt, badge: '8' },
+      { href: '/quotations', label: 'العروض السعرية', icon: FileText },
       { href: '/payments', label: 'المدفوعات', icon: CreditCard },
       { href: '/expenses', label: 'المصروفات', icon: Banknote },
       { href: '/financial-reports', label: 'التقارير المالية', icon: Calculator },
@@ -123,7 +124,7 @@ const Sidebar = () => {
     user.roleId === '1'
   ));
   const [openMenus, setOpenMenus] = useState(new Set());
-  const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات', 'الإعدادات والإدارة']));
+  const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات', 'النظام المالي', 'الإعدادات والإدارة']));
 
   const handleMenuToggle = (label) => {
     if (!isSidebarOpen) return;

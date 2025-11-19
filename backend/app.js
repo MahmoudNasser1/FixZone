@@ -104,6 +104,7 @@ const vendorPaymentsRouter = require('./routes/vendorPayments');
 // const purchaseOrderRouter = require('./routes/purchaseOrder');
 
 router.use('/cities', citiesRouter);
+router.use('/quotations', quotationsRouter);
 router.use('/quotationitems', quotationItemsRouter);
 router.use('/warehouses', warehousesRouter);
 router.use('/inventoryitems', inventoryItemsRouter);

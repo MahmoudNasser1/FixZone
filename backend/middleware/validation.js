@@ -759,6 +759,185 @@ const expenseCategorySchemas = {
   })
 };
 
+/**
+ * Quotation Validation Schemas
+ */
+const quotationSchemas = {
+  // Get quotations query
+  getQuotations: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    status: Joi.string().valid('PENDING', 'SENT', 'APPROVED', 'REJECTED').optional(),
+    repairRequestId: Joi.number().integer().positive().optional(),
+    q: Joi.string().max(200).allow('', null).optional(),
+    sort: Joi.string().valid('id', 'status', 'totalAmount', 'taxAmount', 'createdAt', 'updatedAt', 'sentAt', 'responseAt').default('createdAt'),
+    sortDir: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('DESC'),
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().optional()
+  }),
+
+  // Create quotation
+  createQuotation: Joi.object({
+    status: Joi.string().valid('PENDING', 'SENT', 'APPROVED', 'REJECTED').default('PENDING')
+      .messages({
+        'any.only': 'الحالة يجب أن تكون واحدة من: PENDING, SENT, APPROVED, REJECTED',
+        'any.required': 'الحالة مطلوبة'
+      }),
+    totalAmount: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'المبلغ الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ الإجمالي يجب أن يكون رقم',
+        'any.required': 'المبلغ الإجمالي مطلوب'
+      }),
+    taxAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    sentAt: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ الإرسال غير صحيح (يجب أن يكون بصيغة ISO: YYYY-MM-DDTHH:mm:ss)',
+        'date.format': 'تاريخ الإرسال غير صحيح'
+      }),
+    responseAt: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ الرد غير صحيح (يجب أن يكون بصيغة ISO: YYYY-MM-DDTHH:mm:ss)',
+        'date.format': 'تاريخ الرد غير صحيح'
+      }),
+    repairRequestId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم',
+        'any.required': 'معرف طلب الإصلاح مطلوب'
+      }),
+    currency: Joi.string().max(10).default('EGP').optional()
+      .messages({
+        'string.max': 'العملة يجب ألا تزيد عن 10 أحرف'
+      })
+  }),
+
+  // Update quotation
+  updateQuotation: Joi.object({
+    status: Joi.string().valid('PENDING', 'SENT', 'APPROVED', 'REJECTED').optional()
+      .messages({
+        'any.only': 'الحالة يجب أن تكون واحدة من: PENDING, SENT, APPROVED, REJECTED'
+      }),
+    totalAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'المبلغ الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ الإجمالي يجب أن يكون رقم'
+      }),
+    taxAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    sentAt: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ الإرسال غير صحيح',
+        'date.format': 'تاريخ الإرسال غير صحيح'
+      }),
+    responseAt: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ الرد غير صحيح',
+        'date.format': 'تاريخ الرد غير صحيح'
+      }),
+    repairRequestId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
+      }),
+    currency: Joi.string().max(10).optional()
+      .messages({
+        'string.max': 'العملة يجب ألا تزيد عن 10 أحرف'
+      })
+  })
+};
+
+/**
+ * Quotation Item Validation Schemas
+ */
+const quotationItemSchemas = {
+  // Get quotation items query
+  getQuotationItems: Joi.object({
+    quotationId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف العرض السعري غير صحيح',
+        'number.base': 'معرف العرض السعري يجب أن يكون رقم',
+        'any.required': 'معرف العرض السعري مطلوب'
+      })
+  }),
+
+  // Create quotation item
+  createQuotationItem: Joi.object({
+    description: Joi.string().max(255).required()
+      .messages({
+        'string.empty': 'الوصف مطلوب',
+        'string.max': 'الوصف يجب ألا يزيد عن 255 حرف',
+        'any.required': 'الوصف مطلوب'
+      }),
+    quantity: Joi.number().integer().min(1).required()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح',
+        'any.required': 'الكمية مطلوبة'
+      }),
+    unitPrice: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'سعر الوحدة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'سعر الوحدة يجب أن يكون رقم',
+        'any.required': 'سعر الوحدة مطلوب'
+      }),
+    totalPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'السعر الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'السعر الإجمالي يجب أن يكون رقم'
+      }),
+    quotationId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف العرض السعري غير صحيح',
+        'number.base': 'معرف العرض السعري يجب أن يكون رقم',
+        'any.required': 'معرف العرض السعري مطلوب'
+      })
+  }),
+
+  // Update quotation item
+  updateQuotationItem: Joi.object({
+    description: Joi.string().max(255).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 255 حرف'
+      }),
+    quantity: Joi.number().integer().min(1).optional()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح'
+      }),
+    unitPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'سعر الوحدة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'سعر الوحدة يجب أن يكون رقم'
+      }),
+    totalPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'السعر الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'السعر الإجمالي يجب أن يكون رقم'
+      }),
+    quotationId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف العرض السعري غير صحيح',
+        'number.base': 'معرف العرض السعري يجب أن يكون رقم'
+      })
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -770,6 +949,8 @@ module.exports = {
   serviceSchemas,
   customerSchemas,
   expenseSchemas,
-  expenseCategorySchemas
+  expenseCategorySchemas,
+  quotationSchemas,
+  quotationItemSchemas
 };
 

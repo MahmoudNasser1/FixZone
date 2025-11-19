@@ -1000,6 +1000,81 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // ==================
+  // Quotations APIs
+  // ==================
+  
+  // جلب جميع العروض السعرية
+  async getQuotations(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/quotations${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // جلب عرض سعري واحد
+  async getQuotation(id) {
+    return this.request(`/quotations/${id}`);
+  }
+
+  // إنشاء عرض سعري جديد
+  async createQuotation(quotationData) {
+    return this.request('/quotations', {
+      method: 'POST',
+      body: JSON.stringify(quotationData),
+    });
+  }
+
+  // تحديث عرض سعري
+  async updateQuotation(id, quotationData) {
+    return this.request(`/quotations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(quotationData),
+    });
+  }
+
+  // حذف عرض سعري
+  async deleteQuotation(id) {
+    return this.request(`/quotations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================
+  // Quotation Items APIs
+  // ==================
+  
+  // جلب عناصر عرض سعري
+  async getQuotationItems(quotationId) {
+    return this.request(`/quotationitems?quotationId=${quotationId}`);
+  }
+
+  // جلب عنصر عرض سعري واحد
+  async getQuotationItem(id) {
+    return this.request(`/quotationitems/${id}`);
+  }
+
+  // إنشاء عنصر عرض سعري جديد
+  async createQuotationItem(itemData) {
+    return this.request('/quotationitems', {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // تحديث عنصر عرض سعري
+  async updateQuotationItem(id, itemData) {
+    return this.request(`/quotationitems/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // حذف عنصر عرض سعري
+  async deleteQuotationItem(id) {
+    return this.request(`/quotationitems/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // إنشاء instance واحد للاستخدام في التطبيق
