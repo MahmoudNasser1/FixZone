@@ -80,11 +80,19 @@ class PaymentService {
 
   // Format payment amount
   formatAmount(amount, currency = 'EGP') {
-    return new Intl.NumberFormat('ar-EG', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2
-    }).format(amount);
+    if (!amount && amount !== 0) {
+      return '0.00 ج.م';
+    }
+    try {
+      return new Intl.NumberFormat('ar-EG', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2
+      }).format(Number(amount));
+    } catch (error) {
+      console.error('Error formatting amount:', error, 'Amount:', amount);
+      return `${Number(amount || 0).toFixed(2)} ${currency}`;
+    }
   }
 
   // Format payment date

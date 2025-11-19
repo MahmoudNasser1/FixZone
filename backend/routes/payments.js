@@ -65,14 +65,14 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
         i.status as invoiceStatus,
         c.name as customerName,
         c.phone as customerPhone,
-        'مستخدم' as createdByFirstName,
-        'غير محدد' as createdByLastName,
+        u.name as createdByName,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
         (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
       LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON p.userId = u.id
       ${whereClause}
       ORDER BY p.createdAt DESC
       LIMIT ? OFFSET ?
@@ -88,6 +88,7 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
       LEFT JOIN Invoice i ON p.invoiceId = i.id
       LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON p.userId = u.id
       ${whereClause}
     `;
     const [countResult] = await db.execute(countQuery, queryParams.slice(0, -2));
@@ -213,8 +214,7 @@ router.get('/invoice/:invoiceId', validate(paymentSchemas.getPaymentsByInvoice, 
     const [rows] = await db.execute(`
       SELECT 
         p.*,
-        'مستخدم' as createdByFirstName,
-        'غير محدد' as createdByLastName,
+        u.name as createdByName,
         i.id as invoiceId,
         i.totalAmount as invoiceFinal,
         i.status as invoiceStatus,
@@ -223,6 +223,7 @@ router.get('/invoice/:invoiceId', validate(paymentSchemas.getPaymentsByInvoice, 
       LEFT JOIN Invoice i ON p.invoiceId = i.id
       LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON p.userId = u.id
       WHERE p.invoiceId = ? 
       ORDER BY p.createdAt DESC
     `, [invoiceId]);
@@ -266,16 +267,8 @@ router.get('/overdue/list', async (req, res) => {
 });
 
 // Get payment by ID with detailed information
-router.get('/:id', async (req, res) => {
+router.get('/:id', validate(paymentSchemas.getPaymentById, 'params'), async (req, res) => {
   const { id } = req.params;
-  // Validate numeric ID
-  if (!/^\d+$/.test(String(id))) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid payment ID',
-      message: 'Payment ID must be a number'
-    });
-  }
   try {
     const [rows] = await db.execute(`
       SELECT 
@@ -288,14 +281,14 @@ router.get('/:id', async (req, res) => {
         c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
-        'مستخدم' as createdByFirstName,
-        'غير محدد' as createdByLastName,
+        u.name as createdByName,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId) as totalPaid,
         (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = p.invoiceId)) as remainingAmount
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
       LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON p.userId = u.id
       WHERE p.id = ?
     `, [id]);
     
@@ -335,15 +328,29 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     notes
   } = req.body;
   
+  // Use req.user.id as fallback for createdBy
+  const userId = createdBy || req.user?.id;
+  
+  if (!userId) {
+    return res.status(400).json({
+      success: false,
+      error: 'User ID is required'
+    });
+  }
+  
   try {
-    // Validate invoice exists and get its details
+    // Start transaction
+    await db.execute('START TRANSACTION');
+    
+    // Validate invoice exists and get its details with repairRequestId
     const [invoiceRows] = await db.execute(`
-      SELECT totalAmount as finalAmount, status 
-      FROM Invoice 
-      WHERE id = ? AND deletedAt IS NULL
+      SELECT i.repairRequestId, i.totalAmount as finalAmount, i.status 
+      FROM Invoice i
+      WHERE i.id = ? AND i.deletedAt IS NULL
     `, [invoiceId]);
     
     if (invoiceRows.length === 0) {
+      await db.execute('ROLLBACK');
       return res.status(404).json({ 
         success: false,
         error: 'Invoice not found' 
@@ -363,6 +370,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     const remainingAmount = invoice.finalAmount - totalPaid;
     
     if (remainingAmount <= 0) {
+      await db.execute('ROLLBACK');
       return res.status(400).json({ 
         success: false,
         error: 'Invoice is already fully paid',
@@ -373,6 +381,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     }
     
     if (parseFloat(amount) > remainingAmount) {
+      await db.execute('ROLLBACK');
       return res.status(400).json({ 
         success: false,
         error: `Payment amount (${amount}) exceeds remaining balance (${remainingAmount})`,
@@ -385,15 +394,17 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     // Create payment
     const [result] = await db.execute(`
       INSERT INTO Payment (
-        invoiceId, amount, currency, paymentDate, paymentMethod, userId
-      ) VALUES (?, ?, ?, ?, ?, ?)
+        invoiceId, amount, currency, paymentDate, paymentMethod, userId, referenceNumber, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       invoiceId,
       amount,
       currency,
       paymentDate || new Date().toISOString().split('T')[0],
       paymentMethod,
-      createdBy
+      userId,
+      referenceNumber || null,
+      notes || null
     ]);
     
     const paymentId = result.insertId;
@@ -412,6 +423,29 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
       WHERE id = ?
     `, [newStatus, newTotalPaid, invoiceId]);
     
+    // If fully paid, update RepairRequest status to ready_for_delivery
+    if (newStatus === 'paid' && invoice.repairRequestId) {
+      await db.execute(`
+        UPDATE RepairRequest 
+        SET status = 'ready_for_delivery'
+        WHERE id = ?
+      `, [invoice.repairRequestId]);
+      
+      // Create status update log if StatusUpdateLog table exists
+      try {
+        await db.execute(`
+          INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes, createdAt)
+          VALUES (?, 'ready_for_delivery', ?, 'تم الدفع بالكامل - جاهز للتسليم', NOW())
+        `, [invoice.repairRequestId, userId]);
+      } catch (logError) {
+        // Ignore if StatusUpdateLog table doesn't exist
+        console.warn('Could not create status update log:', logError.message);
+      }
+    }
+    
+    // Commit transaction
+    await db.execute('COMMIT');
+    
     // Get the created payment with details
     const [newPayment] = await db.execute(`
       SELECT 
@@ -420,12 +454,12 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
         i.status as invoiceStatus,
         c.name as customerName,
         c.phone as customerPhone,
-        'مستخدم' as createdByFirstName,
-        'غير محدد' as createdByLastName
+        u.name as createdByName
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
       LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
       LEFT JOIN Customer c ON rr.customerId = c.id
+      LEFT JOIN User u ON p.userId = u.id
       WHERE p.id = ?
     `, [paymentId]);
     
@@ -437,6 +471,11 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
       remainingAmount: invoice.finalAmount - newTotalPaid
     });
   } catch (err) {
+    // Rollback transaction on error
+    await db.execute('ROLLBACK').catch(rollbackErr => {
+      console.error('Rollback error:', rollbackErr);
+    });
+    
     console.error('Error creating payment:', err);
     res.status(500).json({ 
       success: false,
@@ -468,15 +507,23 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
   }
   
   try {
-    // Get current payment details
+    // Start transaction
+    await db.execute('START TRANSACTION');
+    
+    // Get current payment details with invoice info
     const [currentPayment] = await db.execute(`
-      SELECT invoiceId, amount as oldAmount 
-      FROM Payment 
-      WHERE id = ?
+      SELECT p.invoiceId, p.amount as oldAmount, i.repairRequestId
+      FROM Payment p
+      LEFT JOIN Invoice i ON p.invoiceId = i.id
+      WHERE p.id = ?
     `, [id]);
     
     if (currentPayment.length === 0) {
-      return res.status(404).json({ error: 'Payment not found' });
+      await db.execute('ROLLBACK');
+      return res.status(404).json({ 
+        success: false,
+        error: 'Payment not found' 
+      });
     }
     
     const payment = currentPayment[0];
@@ -517,6 +564,7 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
     `, updateValues);
     
     if (result.affectedRows === 0) {
+      await db.execute('ROLLBACK');
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -554,15 +602,43 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
             SET status = ?, amountPaid = ?
             WHERE id = ?
           `, [newStatus, totalPaid, payment.invoiceId]);
+          
+          // If fully paid, update RepairRequest status to ready_for_delivery
+          if (newStatus === 'paid' && payment.repairRequestId) {
+            await db.execute(`
+              UPDATE RepairRequest 
+              SET status = 'ready_for_delivery'
+              WHERE id = ?
+            `, [payment.repairRequestId]);
+            
+            // Create status update log if StatusUpdateLog table exists
+            try {
+              await db.execute(`
+                INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes, createdAt)
+                VALUES (?, 'ready_for_delivery', ?, 'تم الدفع بالكامل - جاهز للتسليم', NOW())
+              `, [payment.repairRequestId, req.user?.id || null]);
+            } catch (logError) {
+              // Ignore if StatusUpdateLog table doesn't exist
+              console.warn('Could not create status update log:', logError.message);
+            }
+          }
         }
       }
     }
+    
+    // Commit transaction
+    await db.execute('COMMIT');
     
     res.json({ 
       success: true,
       message: 'Payment updated successfully' 
     });
   } catch (err) {
+    // Rollback transaction on error
+    await db.execute('ROLLBACK').catch(rollbackErr => {
+      console.error('Rollback error:', rollbackErr);
+    });
+    
     console.error(`Error updating payment with ID ${id}:`, err);
     res.status(500).json({ 
       success: false,
@@ -575,18 +651,26 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
 });
 
 // Delete a payment
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (req, res) => {
   const { id } = req.params;
   try {
-    // Get payment details before deletion
+    // Start transaction
+    await db.execute('START TRANSACTION');
+    
+    // Get payment details before deletion with invoice info
     const [paymentRows] = await db.execute(`
-      SELECT invoiceId, amount 
-      FROM Payment 
-      WHERE id = ?
+      SELECT p.invoiceId, p.amount, i.repairRequestId
+      FROM Payment p
+      LEFT JOIN Invoice i ON p.invoiceId = i.id
+      WHERE p.id = ?
     `, [id]);
     
     if (paymentRows.length === 0) {
-      return res.status(404).json({ error: 'Payment not found' });
+      await db.execute('ROLLBACK');
+      return res.status(404).json({ 
+        success: false,
+        error: 'Payment not found' 
+      });
     }
     
     const payment = paymentRows[0];
@@ -595,6 +679,7 @@ router.delete('/:id', async (req, res) => {
     const [result] = await db.execute('DELETE FROM Payment WHERE id = ?', [id]);
     
     if (result.affectedRows === 0) {
+      await db.execute('ROLLBACK');
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -628,13 +713,37 @@ router.delete('/:id', async (req, res) => {
         SET status = ?, amountPaid = ?
         WHERE id = ?
       `, [newStatus, totalPaid, payment.invoiceId]);
+      
+      // Update RepairRequest status if no longer fully paid
+      if (newStatus !== 'paid' && payment.repairRequestId) {
+        // Revert RepairRequest status if it was ready_for_delivery
+        const [repairRequest] = await db.execute(`
+          SELECT status FROM RepairRequest WHERE id = ?
+        `, [payment.repairRequestId]);
+        
+        if (repairRequest.length > 0 && repairRequest[0].status === 'ready_for_delivery') {
+          await db.execute(`
+            UPDATE RepairRequest 
+            SET status = 'completed'
+            WHERE id = ?
+          `, [payment.repairRequestId]);
+        }
+      }
     }
+    
+    // Commit transaction
+    await db.execute('COMMIT');
     
     res.json({ 
       success: true,
       message: 'Payment deleted successfully' 
     });
   } catch (err) {
+    // Rollback transaction on error
+    await db.execute('ROLLBACK').catch(rollbackErr => {
+      console.error('Rollback error:', rollbackErr);
+    });
+    
     console.error(`Error deleting payment with ID ${id}:`, err);
     res.status(500).json({ 
       success: false,

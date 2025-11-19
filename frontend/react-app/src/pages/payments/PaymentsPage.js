@@ -89,8 +89,8 @@ export default function PaymentsPage() {
       setLoading(true);
       
       const response = await paymentService.createPayment({
-        ...paymentData,
-        createdBy: user?.id || 2 // Use current user ID, fallback to 2 if not available
+        ...paymentData
+        // createdBy will be set automatically from req.user.id in backend
       });
 
       if (response.success) {
@@ -227,8 +227,8 @@ export default function PaymentsPage() {
   };
 
   const handleEditPaymentClick = (payment) => {
-    setSelectedPayment(payment);
-    setShowEditModal(true);
+    // Navigate to edit page instead of using modal
+    navigate(`/payments/${payment.id}/edit`);
   };
 
   const handleAddPaymentClick = (invoice = null) => {
@@ -252,54 +252,54 @@ export default function PaymentsPage() {
 
   const tableColumns = [
     {
-      key: 'amount',
-      label: 'المبلغ',
-      render: (payment) => paymentService.formatAmount(payment.amount, payment.currency)
+      accessorKey: 'amount',
+      header: 'المبلغ',
+      cell: ({ row }) => paymentService.formatAmount(row.original.amount, row.original.currency)
     },
     {
-      key: 'paymentMethod',
-      label: 'طريقة الدفع',
-      render: (payment) => (
+      accessorKey: 'paymentMethod',
+      header: 'طريقة الدفع',
+      cell: ({ row }) => (
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span>{paymentService.getPaymentMethodIcon(payment.paymentMethod)}</span>
-          <span>{paymentMethods.find(m => m.value === payment.paymentMethod)?.label}</span>
+          <span>{paymentService.getPaymentMethodIcon(row.original.paymentMethod)}</span>
+          <span>{paymentMethods.find(m => m.value === row.original.paymentMethod)?.label}</span>
         </div>
       )
     },
     {
-      key: 'paymentDate',
-      label: 'تاريخ الدفع',
-      render: (payment) => paymentService.formatDate(payment.paymentDate)
+      accessorKey: 'paymentDate',
+      header: 'تاريخ الدفع',
+      cell: ({ row }) => paymentService.formatDate(row.original.paymentDate)
     },
     {
-      key: 'customer',
-      label: 'العميل',
-      render: (payment) => payment.customerName || 'غير محدد'
+      accessorKey: 'customerName',
+      header: 'العميل',
+      cell: ({ row }) => row.original.customerName || 'غير محدد'
     },
     {
-      key: 'invoiceNumber',
-      label: 'رقم الفاتورة',
-      render: (payment) => payment.invoiceNumber || 'غير محدد'
+      accessorKey: 'invoiceNumber',
+      header: 'رقم الفاتورة',
+      cell: ({ row }) => row.original.invoiceNumber || 'غير محدد'
     },
     {
-      key: 'actions',
-      label: 'الإجراءات',
-      render: (payment) => (
+      id: 'actions',
+      header: 'الإجراءات',
+      cell: ({ row }) => (
         <div className="flex space-x-2 rtl:space-x-reverse">
           <button
-            onClick={() => handleViewPayment(payment)}
+            onClick={() => handleViewPayment(row.original)}
             className="text-blue-600 hover:text-blue-800 text-sm"
           >
             عرض
           </button>
           <button
-            onClick={() => handleEditPaymentClick(payment)}
+            onClick={() => handleEditPaymentClick(row.original)}
             className="text-green-600 hover:text-green-800 text-sm"
           >
             تعديل
           </button>
           <button
-            onClick={() => handleDeletePayment(payment)}
+            onClick={() => handleDeletePayment(row.original)}
             className="text-red-600 hover:text-red-800 text-sm"
           >
             حذف

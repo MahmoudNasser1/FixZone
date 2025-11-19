@@ -85,8 +85,8 @@ export default function CreatePaymentPage() {
       
       const response = await paymentService.createPayment({
         ...paymentData,
-        invoiceId: selectedInvoiceId || paymentData.invoiceId,
-        createdBy: 2 // Using existing admin user - TODO: Get from auth context
+        invoiceId: selectedInvoiceId || paymentData.invoiceId
+        // createdBy will be set automatically from req.user.id in backend
       });
 
       if (response.success) {

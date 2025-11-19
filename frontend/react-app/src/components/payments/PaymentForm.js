@@ -26,12 +26,42 @@ const PaymentForm = ({
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
 
+  // Helper function to convert date to YYYY-MM-DD format
+  const formatDateForInput = (date) => {
+    if (!date) return new Date().toISOString().split('T')[0];
+    
+    try {
+      // If already in YYYY-MM-DD format, return as is
+      if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return date;
+      }
+      
+      // Try to parse the date
+      const dateObj = new Date(date);
+      
+      // Check if valid date
+      if (isNaN(dateObj.getTime())) {
+        return new Date().toISOString().split('T')[0];
+      }
+      
+      // Convert to YYYY-MM-DD format
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date:', date);
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
   useEffect(() => {
     if (payment) {
       setFormData({
         amount: payment.amount || '',
         paymentMethod: payment.paymentMethod || 'cash',
-        paymentDate: payment.paymentDate || new Date().toISOString().split('T')[0],
+        paymentDate: formatDateForInput(payment.paymentDate),
         referenceNumber: payment.referenceNumber || '',
         notes: payment.notes || '',
         invoiceId: payment.invoiceId || ''

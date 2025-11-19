@@ -1150,7 +1150,17 @@ const paymentSchemas = {
   }),
 
   // Get payment by invoice ID
-  getPaymentsByInvoice: commonSchemas.id
+  getPaymentsByInvoice: commonSchemas.id,
+
+  // Get payment by ID params
+  getPaymentById: Joi.object({
+    id: commonSchemas.id
+  }),
+
+  // Delete payment params
+  deletePayment: Joi.object({
+    id: commonSchemas.id
+  })
 };
 
 /**

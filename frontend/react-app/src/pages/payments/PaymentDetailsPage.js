@@ -23,10 +23,11 @@ export default function PaymentDetailsPage() {
     try {
       setLoading(true);
       const response = await paymentService.getPaymentById(id);
-      setPayment(response);
+      // Handle both response.payment and direct response
+      setPayment(response.payment || response);
     } catch (error) {
       console.error('Error loading payment details:', error);
-      addNotification('خطأ في تحميل تفاصيل الدفعة', 'error');
+      addNotification({ type: 'error', message: 'خطأ في تحميل تفاصيل الدفعة' });
       navigate('/payments');
     } finally {
       setLoading(false);
@@ -51,14 +52,14 @@ export default function PaymentDetailsPage() {
       const response = await paymentService.deletePayment(id);
       
       if (response.success) {
-        addNotification('تم حذف الدفعة بنجاح', 'success');
+        addNotification({ type: 'success', message: 'تم حذف الدفعة بنجاح' });
         navigate('/payments');
       } else {
         throw new Error(response.error || 'فشل في حذف الدفعة');
       }
     } catch (error) {
       console.error('Error deleting payment:', error);
-      addNotification(error.message || 'خطأ في حذف الدفعة', 'error');
+      addNotification({ type: 'error', message: error.message || 'خطأ في حذف الدفعة' });
     } finally {
       setLoading(false);
     }
@@ -181,21 +182,21 @@ export default function PaymentDetailsPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">إجمالي الفاتورة:</span>
                 <span className="font-medium">
-                  {paymentService.formatAmount(payment.invoiceFinal, payment.currency)}
+                  {payment && payment.invoiceFinal ? paymentService.formatAmount(payment.invoiceFinal, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-600">المدفوع:</span>
                 <span className="font-medium text-green-600">
-                  {paymentService.formatAmount(payment.totalPaid, payment.currency)}
+                  {payment && payment.totalPaid !== undefined ? paymentService.formatAmount(payment.totalPaid, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-600">المتبقي:</span>
-                <span className={`font-medium ${payment.remainingAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {paymentService.formatAmount(payment.remainingAmount, payment.currency)}
+                <span className={`font-medium ${payment && payment.remainingAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {payment && payment.remainingAmount !== undefined ? paymentService.formatAmount(payment.remainingAmount, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
               
@@ -232,7 +233,7 @@ export default function PaymentDetailsPage() {
       </div>
 
       {/* Customer Details */}
-      {payment.customerFirstName && (
+      {(payment.customerName || payment.customerFirstName) && (
         <SimpleCard>
           <SimpleCardContent className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل العميل</h2>
@@ -240,7 +241,7 @@ export default function PaymentDetailsPage() {
               <div>
                 <span className="text-gray-600 block">الاسم:</span>
                 <span className="font-medium">
-                  {payment.customerFirstName} {payment.customerLastName}
+                  {payment.customerName || `${payment.customerFirstName || ''} ${payment.customerLastName || ''}`.trim() || 'غير محدد'}
                 </span>
               </div>
               {payment.customerPhone && (
@@ -261,14 +262,14 @@ export default function PaymentDetailsPage() {
       )}
 
       {/* Created By */}
-      {payment.createdByFirstName && (
+      {payment.createdByName && (
         <SimpleCard>
           <SimpleCardContent className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">معلومات الإنشاء</h2>
             <div className="flex justify-between">
               <span className="text-gray-600">أنشئ بواسطة:</span>
               <span className="font-medium">
-                {payment.createdByFirstName} {payment.createdByLastName}
+                {payment.createdByName}
               </span>
             </div>
           </SimpleCardContent>

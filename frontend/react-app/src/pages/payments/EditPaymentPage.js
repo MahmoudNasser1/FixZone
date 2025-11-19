@@ -21,11 +21,13 @@ const EditPaymentPage = () => {
   const loadPayment = async () => {
     try {
       setLoading(true);
-      const paymentData = await paymentService.getPaymentById(id);
+      const response = await paymentService.getPaymentById(id);
+      // Handle different response structures
+      const paymentData = response.payment || response.data || response;
       setPayment(paymentData);
     } catch (error) {
       console.error('Error loading payment:', error);
-      addNotification('فشل في تحميل بيانات المدفوعة', 'error');
+      addNotification({ type: 'error', message: 'فشل في تحميل بيانات المدفوعة' });
       navigate('/payments');
     } finally {
       setLoading(false);
@@ -36,11 +38,11 @@ const EditPaymentPage = () => {
     try {
       setSaving(true);
       await paymentService.updatePayment(id, formData);
-      addNotification('تم تحديث المدفوعة بنجاح', 'success');
+      addNotification({ type: 'success', message: 'تم تحديث المدفوعة بنجاح' });
       navigate('/payments');
     } catch (error) {
       console.error('Error updating payment:', error);
-      addNotification('فشل في تحديث المدفوعة', 'error');
+      addNotification({ type: 'error', message: 'فشل في تحديث المدفوعة' });
     } finally {
       setSaving(false);
     }
