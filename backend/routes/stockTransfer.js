@@ -47,25 +47,26 @@ const createStockTransferSchema = Joi.object({
   'custom.sameWarehouse': 'المخزن المرسل والمستقبل يجب أن يكونا مختلفين'
 });
 
+// Schemas for approve/ship/receive - all fields optional, will use req.user.id in controller
 const approveSchema = Joi.object({
-  approvedBy: Joi.number().integer().required().messages({
-    'number.base': 'معرف الموافق يجب أن يكون رقم',
-    'any.required': 'معرف الموافق مطلوب'
+  approvedBy: Joi.number().integer().optional().allow(null).messages({
+    'number.base': 'معرف الموافق يجب أن يكون رقم'
+    // سيتم استخدام req.user.id كـ fallback في controller
   })
-});
+}).unknown(false); // Allow empty object
 
 const shipSchema = Joi.object({
-  shippedBy: Joi.number().integer().required().messages({
-    'number.base': 'معرف الشاحن يجب أن يكون رقم',
-    'any.required': 'معرف الشاحن مطلوب'
+  shippedBy: Joi.number().integer().optional().allow(null).messages({
+    'number.base': 'معرف الشاحن يجب أن يكون رقم'
+    // سيتم استخدام req.user.id كـ fallback في controller
   })
-});
+}).unknown(false); // Allow empty object
 
 const receiveSchema = Joi.object({
-  receivedBy: Joi.number().integer().optional().messages({
+  receivedBy: Joi.number().integer().optional().allow(null).messages({
     'number.base': 'معرف المستقبل يجب أن يكون رقم'
   })
-}).custom((value, helpers) => {
+}).unknown(false).custom((value, helpers) => {
   // إذا لم يتم إرسال receivedBy، سيتم استخدام req.user.id في controller
   return value;
 });
@@ -75,9 +76,10 @@ router.post('/', validate(createStockTransferSchema), stockTransferController.cr
 router.get('/', stockTransferController.getStockTransfers);
 router.get('/stats', stockTransferController.getStockTransferStats);
 router.get('/:id', stockTransferController.getStockTransfer);
-router.put('/:id/approve', validate(approveSchema), stockTransferController.approveStockTransfer);
-router.put('/:id/ship', validate(shipSchema), stockTransferController.shipStockTransfer);
-router.put('/:id/receive', validate(receiveSchema), stockTransferController.receiveStockTransfer);
+// Approve, ship, receive routes - validation done in controller (approvedBy/shippedBy/receivedBy optional, uses req.user.id)
+router.put('/:id/approve', stockTransferController.approveStockTransfer);
+router.put('/:id/ship', stockTransferController.shipStockTransfer);
+router.put('/:id/receive', stockTransferController.receiveStockTransfer);
 router.put('/:id/complete', stockTransferController.completeStockTransfer);
 router.delete('/:id', stockTransferController.deleteStockTransfer);
 

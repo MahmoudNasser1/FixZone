@@ -1009,3 +1009,331 @@ Found invoices: [
 ]
 🔌 Client disconnected: client_1763583774084_rconpgw7o (Total: 0)
 🔗 Client connected: client_1763584613647_ee8gyp443 (Total: 1)
+🔌 Client disconnected: client_1763584613647_ee8gyp443 (Total: 0)
+🔗 Client connected: client_1763585242558_wbmi5kgit (Total: 1)
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+getAllInvoices called with repairRequestId: undefined
+Query executed: 
+        SELECT 
+          i.id,
+          i.totalAmount,
+          i.amountPaid,
+          i.status,
+          i.currency,
+          i.taxAmount,
+          i.repairRequestId,
+          i.createdAt,
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceBrand,
+          rr.deviceModel
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.deletedAt IS NULL
+        ORDER BY i.createdAt DESC
+        LIMIT 50
+      
+Query params: []
+Found invoices: [
+  {
+    id: 15,
+    totalAmount: '3000.00',
+    amountPaid: null,
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-11-14T07:50:33.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 14,
+    totalAmount: '2340.00',
+    amountPaid: '340.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 75,
+    createdAt: 2025-10-27T16:23:18.000Z,
+    customerName: 'Mahmoud Nasser',
+    customerPhone: '01111111111',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 13,
+    totalAmount: '300.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T16:21:20.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 12,
+    totalAmount: '2340.00',
+    amountPaid: '100.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: 74,
+    createdAt: 2025-10-27T14:58:47.000Z,
+    customerName: 'saif',
+    customerPhone: '01000000000',
+    customerEmail: 'admin@laapak.com',
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 11,
+    totalAmount: '300.00',
+    amountPaid: '300.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-27T14:07:54.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 10,
+    totalAmount: '2000.00',
+    amountPaid: '2000.00',
+    status: 'paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:59:51.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 9,
+    totalAmount: '670.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:55:37.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 8,
+    totalAmount: '600.00',
+    amountPaid: '0.00',
+    status: 'draft',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:59.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  },
+  {
+    id: 7,
+    totalAmount: '600.00',
+    amountPaid: '200.00',
+    status: 'partially_paid',
+    currency: 'EGP',
+    taxAmount: '0.00',
+    repairRequestId: null,
+    createdAt: 2025-10-26T22:40:50.000Z,
+    customerName: null,
+    customerPhone: null,
+    customerEmail: null,
+    deviceBrand: null,
+    deviceModel: null
+  }
+]
+🔌 Client disconnected: client_1763585242558_wbmi5kgit (Total: 0)
+🔗 Client connected: client_1763585290726_fplbxdov2 (Total: 1)
+🔌 Client disconnected: client_1763585290726_fplbxdov2 (Total: 0)
+🔗 Client connected: client_1763585301531_fdbv74x1t (Total: 1)

@@ -3,7 +3,11 @@ const db = require('../db');
 class StockTransferController {
   // إنشاء نقل جديد
   async createStockTransfer(req, res) {
+    const connection = await db.getConnection();
+    
     try {
+      await connection.beginTransaction();
+      
       const {
         fromWarehouseId,
         toWarehouseId,
@@ -15,31 +19,75 @@ class StockTransferController {
       
       const requestedBy = req.user?.id || req.body.createdBy || req.body.requestedBy;
 
+      if (!requestedBy) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'معرف الطالب مطلوب'
+        });
+      }
+
       // التحقق من المخازن
       if (fromWarehouseId === toWarehouseId) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'المخزن المرسل والمستقبل يجب أن يكونا مختلفين'
         });
       }
 
-      const [warehousesResult] = await db.execute(
+      const [warehousesResult] = await connection.execute(
         'SELECT id, name FROM Warehouse WHERE id IN (?, ?)',
         [fromWarehouseId, toWarehouseId]
       );
 
       if (warehousesResult.length !== 2) {
+        await connection.rollback();
         return res.status(404).json({
           success: false,
           message: 'واحد أو أكثر من المخازن غير موجود'
         });
       }
 
+      // التحقق من وجود InventoryItems والكمية المتاحة
+      if (items && items.length > 0) {
+        for (const item of items) {
+          // التحقق من وجود InventoryItem
+          const [itemResult] = await connection.execute(
+            'SELECT id, name FROM InventoryItem WHERE id = ?',
+            [item.inventoryItemId]
+          );
+
+          if (itemResult.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({
+              success: false,
+              message: `الصنف ${item.inventoryItemId} غير موجود`
+            });
+          }
+
+          // التحقق من الكمية المتاحة في المخزن المرسل (إذا كانت موجودة)
+          const [stockLevel] = await connection.execute(
+            'SELECT quantity FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ?',
+            [item.inventoryItemId, fromWarehouseId]
+          );
+
+          const availableQuantity = stockLevel.length > 0 ? (stockLevel[0].quantity || 0) : 0;
+          if (availableQuantity < item.quantity) {
+            await connection.rollback();
+            return res.status(400).json({
+              success: false,
+              message: `الكمية المتاحة (${availableQuantity}) أقل من المطلوب (${item.quantity}) للصنف ${itemResult[0].name}`
+            });
+          }
+        }
+      }
+
       // إنشاء رقم مرجعي
       const transferNumber = `ST-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
 
       // إنشاء النقل (استخدام الحقول الموجودة في الجدول الفعلي)
-      const [result] = await db.execute(
+      const [result] = await connection.execute(
         `INSERT INTO StockTransfer (
           transferNumber, fromWarehouseId, toWarehouseId, transferDate, reason, notes, requestedBy, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
@@ -51,7 +99,7 @@ class StockTransferController {
       // إضافة العناصر (استخدام الحقول الموجودة في الجدول الفعلي)
       if (items && items.length > 0) {
         for (const item of items) {
-          await db.execute(
+          await connection.execute(
             `INSERT INTO StockTransferItem (
               transferId, inventoryItemId, requestedQuantity, notes
             ) VALUES (?, ?, ?, ?)`,
@@ -64,6 +112,8 @@ class StockTransferController {
           );
         }
       }
+
+      await connection.commit();
 
       // جلب النقل المُنشأ
       const [transferResult] = await db.execute(
@@ -85,12 +135,15 @@ class StockTransferController {
       });
 
     } catch (error) {
+      await connection.rollback();
       console.error('Error creating stock transfer:', error);
       res.status(500).json({
         success: false,
         message: 'حدث خطأ في إنشاء النقل',
         error: error.message
       });
+    } finally {
+      connection.release();
     }
   }
 
@@ -267,10 +320,20 @@ class StockTransferController {
 
       const transfer = transferResult[0];
 
-      if (transfer.status !== 'draft') {
+      if (transfer.status !== 'pending') {
         return res.status(400).json({
           success: false,
           message: 'لا يمكن الموافقة على نقل في حالة ' + transfer.status
+        });
+      }
+
+      // استخدام req.user.id كـ fallback لـ approvedBy
+      const approverId = approvedBy || req.user?.id;
+      
+      if (!approverId) {
+        return res.status(400).json({
+          success: false,
+          message: 'معرف الموافق مطلوب'
         });
       }
 
@@ -281,7 +344,7 @@ class StockTransferController {
           approvedBy = ?,
           updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?`,
-        [approvedBy, id]
+        [approverId, id]
       );
 
       res.json({
@@ -327,6 +390,16 @@ class StockTransferController {
         });
       }
 
+      // استخدام req.user.id كـ fallback لـ shippedBy
+      const shipperId = shippedBy || req.user?.id;
+      
+      if (!shipperId) {
+        return res.status(400).json({
+          success: false,
+          message: 'معرف الشاحن مطلوب'
+        });
+      }
+
       // تحديث الحالة
       await db.execute(
         `UPDATE StockTransfer SET 
@@ -335,7 +408,7 @@ class StockTransferController {
           shippedAt = CURRENT_TIMESTAMP,
           updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?`,
-        [shippedBy, id]
+        [shipperId, id]
       );
 
       res.json({
@@ -561,16 +634,21 @@ class StockTransferController {
 
   // حذف النقل
   async deleteStockTransfer(req, res) {
+    const connection = await db.getConnection();
+    
     try {
+      await connection.beginTransaction();
+      
       const { id } = req.params;
 
       // التحقق من وجود النقل
-      const [transferResult] = await db.execute(
+      const [transferResult] = await connection.execute(
         'SELECT id, status FROM StockTransfer WHERE id = ?',
         [id]
       );
 
       if (transferResult.length === 0) {
+        await connection.rollback();
         return res.status(404).json({
           success: false,
           message: 'النقل غير موجود'
@@ -580,23 +658,26 @@ class StockTransferController {
       const transfer = transferResult[0];
 
       if (transfer.status === 'completed' || transfer.status === 'received') {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'لا يمكن حذف نقل مكتمل أو مستلم'
         });
       }
 
+      // حذف العناصر المرتبطة أولاً (Foreign Key constraint)
+      await connection.execute(
+        'DELETE FROM StockTransferItem WHERE transferId = ?',
+        [id]
+      );
+
       // Hard delete (جدول StockTransfer لا يحتوي على deletedAt)
-      await db.execute(
+      await connection.execute(
         'DELETE FROM StockTransfer WHERE id = ?',
         [id]
       );
 
-      // حذف العناصر المرتبطة
-      await db.execute(
-        'DELETE FROM StockTransferItem WHERE transferId = ?',
-        [id]
-      );
+      await connection.commit();
 
       res.json({
         success: true,
@@ -604,12 +685,15 @@ class StockTransferController {
       });
 
     } catch (error) {
+      await connection.rollback();
       console.error('Error deleting stock transfer:', error);
       res.status(500).json({
         success: false,
         message: 'حدث خطأ في حذف النقل',
         error: error.message
       });
+    } finally {
+      connection.release();
     }
   }
 
