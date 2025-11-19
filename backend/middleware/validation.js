@@ -188,63 +188,151 @@ const inventorySchemas = {
 const stockMovementSchemas = {
   // Create movement
   createMovement: Joi.object({
-    movementType: Joi.string().valid(
-      'in', 'out', 'transfer_out', 'transfer_in', 
-      'adjustment', 'reserve', 'unreserve', 'write_off',
-      'return_from_customer', 'return_to_vendor'
-    ).required()
+    type: Joi.string().valid('IN', 'OUT', 'TRANSFER').required()
       .messages({
-        'any.only': 'نوع الحركة غير صحيح',
+        'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER',
         'any.required': 'نوع الحركة مطلوب'
       }),
     
     inventoryItemId: Joi.number().integer().positive().required()
       .messages({
+        'number.positive': 'معرف الصنف غير صحيح',
+        'number.base': 'معرف الصنف يجب أن يكون رقم',
         'any.required': 'معرف الصنف مطلوب'
-      }),
-    
-    warehouseId: Joi.number().integer().positive().required()
-      .messages({
-        'any.required': 'معرف المخزن مطلوب'
-      }),
-    
-    toWarehouseId: Joi.number().integer().positive().optional()
-      .when('movementType', {
-        is: Joi.string().valid('transfer_out', 'transfer_in'),
-        then: Joi.required()
-          .messages({
-            'any.required': 'المخزن المستقبل مطلوب للنقل'
-          })
       }),
     
     quantity: Joi.number().integer().min(1).required()
       .messages({
         'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح',
         'any.required': 'الكمية مطلوبة'
       }),
     
-    unitCost: Joi.number().min(0).precision(2).optional(),
-    totalCost: Joi.number().min(0).precision(2).optional(),
+    fromWarehouseId: Joi.number().integer().positive().allow(null).optional()
+      .when('type', {
+        is: Joi.string().valid('OUT', 'TRANSFER'),
+        then: Joi.required()
+          .messages({
+            'any.required': 'المخزن المصدر مطلوب لحركات OUT و TRANSFER'
+          })
+      })
+      .messages({
+        'number.positive': 'معرف المخزن المصدر غير صحيح',
+        'number.base': 'معرف المخزن المصدر يجب أن يكون رقم'
+      }),
     
-    referenceType: Joi.string().max(50).optional(),
-    referenceId: Joi.number().integer().positive().optional(),
+    toWarehouseId: Joi.number().integer().positive().allow(null).optional()
+      .when('type', {
+        is: Joi.string().valid('IN', 'TRANSFER'),
+        then: Joi.required()
+          .messages({
+            'any.required': 'المخزن المستقبل مطلوب لحركات IN و TRANSFER'
+          })
+      })
+      .messages({
+        'number.positive': 'معرف المخزن المستقبل غير صحيح',
+        'number.base': 'معرف المخزن المستقبل يجب أن يكون رقم'
+      }),
     
-    batchNumber: Joi.string().max(50).optional(),
-    expiryDate: Joi.date().optional(),
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Update movement
+  updateMovement: Joi.object({
+    type: Joi.string().valid('IN', 'OUT', 'TRANSFER').optional()
+      .messages({
+        'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER'
+      }),
     
-    notes: Joi.string().max(500).optional()
+    inventoryItemId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الصنف غير صحيح',
+        'number.base': 'معرف الصنف يجب أن يكون رقم'
+      }),
+    
+    quantity: Joi.number().integer().min(1).optional()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح'
+      }),
+    
+    fromWarehouseId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف المخزن المصدر غير صحيح',
+        'number.base': 'معرف المخزن المصدر يجب أن يكون رقم'
+      }),
+    
+    toWarehouseId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف المخزن المستقبل غير صحيح',
+        'number.base': 'معرف المخزن المستقبل يجب أن يكون رقم'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
   }),
 
   // Get movements query
   getMovements: Joi.object({
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(50),
-    warehouseId: Joi.number().integer().positive().optional(),
-    itemId: Joi.number().integer().positive().optional(),
-    movementType: Joi.string().optional(),
-    dateFrom: Joi.date().iso().optional(),
-    dateTo: Joi.date().iso().optional(),
-    referenceType: Joi.string().max(50).optional()
+    page: Joi.number().integer().min(1).default(1).optional()
+      .messages({
+        'number.min': 'رقم الصفحة يجب أن يكون على الأقل 1',
+        'number.base': 'رقم الصفحة يجب أن يكون رقم'
+      }),
+    
+    limit: Joi.number().integer().min(1).max(100).default(50).optional()
+      .messages({
+        'number.min': 'عدد العناصر يجب أن يكون على الأقل 1',
+        'number.max': 'عدد العناصر يجب ألا يزيد عن 100',
+        'number.base': 'عدد العناصر يجب أن يكون رقم'
+      }),
+    
+    type: Joi.string().valid('IN', 'OUT', 'TRANSFER').optional()
+      .messages({
+        'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER'
+      }),
+    
+    inventoryItemId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الصنف غير صحيح',
+        'number.base': 'معرف الصنف يجب أن يكون رقم'
+      }),
+    
+    warehouseId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف المخزن غير صحيح',
+        'number.base': 'معرف المخزن يجب أن يكون رقم'
+      }),
+    
+    startDate: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ البداية غير صحيح'
+      }),
+    
+    endDate: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ النهاية غير صحيح'
+      }),
+    
+    sort: Joi.string().valid('createdAt', 'quantity', 'type', 'itemName').default('createdAt').optional()
+      .messages({
+        'any.only': 'حقل الترتيب غير صحيح'
+      }),
+    
+    sortDir: Joi.string().valid('ASC', 'DESC').default('DESC').optional()
+      .messages({
+        'any.only': 'اتجاه الترتيب يجب أن يكون ASC أو DESC'
+      }),
+    
+    q: Joi.string().max(255).allow('').optional()
+      .messages({
+        'string.max': 'نص البحث يجب ألا يزيد عن 255 حرف'
+      })
   })
 };
 

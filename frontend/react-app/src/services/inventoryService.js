@@ -129,19 +129,26 @@ const inventoryService = {
   // Stock Movements (Enhanced APIs)
   listMovements(params = {}) {
     const qs = new URLSearchParams(params).toString();
-    // Try new API first, fallback to old one
-    return apiService.request(`/stock-movements${qs ? `?${qs}` : ''}`).catch(() => {
-      return apiService.request(`/inventory-enhanced/movements${qs ? `?${qs}` : ''}`);
-    });
+    return apiService.request(`/stock-movements${qs ? `?${qs}` : ''}`);
+  },
+  getMovement(id) {
+    return apiService.request(`/stock-movements/${id}`);
+  },
+  getMovementsByItem(itemId) {
+    return apiService.request(`/stock-movements/inventory/${itemId}`);
   },
   createMovement(payload) {
-    return apiService.request('/inventory-enhanced/movements', { method: 'POST', body: JSON.stringify(payload) });
+    return apiService.request('/stock-movements', { method: 'POST', body: JSON.stringify(payload) });
   },
   updateMovement(id, payload) {
-    return apiService.request(`/stockmovements/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    return apiService.request(`/stock-movements/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
   },
   deleteMovement(id) {
-    return apiService.request(`/stockmovements/${id}`, { method: 'DELETE' });
+    return apiService.request(`/stock-movements/${id}`, { method: 'DELETE' });
+  },
+  getMovementStats(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return apiService.request(`/stock-movements/stats/summary${qs ? `?${qs}` : ''}`);
   },
 
   // Issue a part to a repair request (transactional backend endpoint)

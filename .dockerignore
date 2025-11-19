@@ -1,0 +1,68 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+Documentation
+DEPLOYMENT/*.md
+TESTING
+
+# Node modules
+**/node_modules
+node_modules
+
+# Build outputs
+**/build
+**/dist
+build
+dist
+
+# Environment files
+**/.env
+**/.env.*
+.env
+.env.local
+
+# Logs
+**/*.log
+logs
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+**/coverage
+**/tests
+**/__tests__
+*.test.js
+*.spec.js
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Backups
+backups
+*.sql
+*.tar.gz
+
+# Cookies and test files
+cookie_*.txt
+*.txt
+
+# Archives
+archive
+

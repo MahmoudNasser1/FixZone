@@ -1,401 +1,867 @@
-import React, { useState, useEffect } from 'react';
-import {
-  ArrowUpIcon,
-  ArrowDownIcon,
-  ArrowsRightLeftIcon,
-  AdjustmentsHorizontalIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  PlusIcon
-} from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import apiService from '../../services/api';
 import inventoryService from '../../services/inventoryService';
+import SimpleButton from '../../components/ui/SimpleButton';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import DataView from '../../components/ui/DataView';
+import { Input } from '../../components/ui/Input';
+import { Modal } from '../../components/ui/Modal';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/Select';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
+import StockMovementForm from './StockMovementForm';
+import { 
+  Plus, Search, Filter, Download, RefreshCw,
+  ArrowUp, ArrowDown, ArrowRightLeft,
+  Package, Warehouse, Calendar, Hash,
+  Eye, Edit, Trash2, TrendingUp, TrendingDown,
+  ArrowUpDown, X, Users, FileText
+} from 'lucide-react';
 
 const StockMovementPage = () => {
+  const navigate = useNavigate();
   const notifications = useNotifications();
+  
+  // مساعد تنبيهات بسيط لتقليل الإزعاج
+  const notify = useCallback((type, message) => {
+    if (notifications?.addNotification) {
+      notifications.addNotification({ type, message });
+    } else if (notifications?.[type]) {
+      notifications[type](message);
+    }
+  }, [notifications]);
+
   const [movements, setMovements] = useState([]);
-  const [filteredMovements, setFilteredMovements] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
-  const [filters, setFilters] = useState({
-    search: '',
-    type: '',
-    startDate: '',
-    endDate: '',
-    itemId: ''
+  const [warehouses, setWarehouses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [selectedItem, setSelectedItem] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [error, setError] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalItems, setTotalItems] = useState(0);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortDirection, setSortDirection] = useState('desc');
+  
+  // Modal state
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingMovement, setEditingMovement] = useState(null);
+  
+  // Stats state
+  const [stats, setStats] = useState({
+    totalMovements: 0,
+    counts: { in: 0, out: 0, transfer: 0 },
+    totalQuantity: { in: 0, out: 0, transfer: 0 },
+    today: { movements: 0, inQuantity: 0, outQuantity: 0, transferQuantity: 0 }
   });
 
+  const isInitialMount = useRef(true);
+
+  // Movement types
   const movementTypes = [
-    { value: 'IN', label: 'دخول', icon: ArrowUpIcon, color: 'text-green-600' },
-    { value: 'OUT', label: 'خروج', icon: ArrowDownIcon, color: 'text-red-600' },
-    { value: 'TRANSFER', label: 'نقل', icon: ArrowsRightLeftIcon, color: 'text-blue-600' }
+    { value: 'IN', label: 'دخول', icon: ArrowUp, color: 'text-green-600', bgColor: 'bg-green-100', borderColor: 'border-green-200' },
+    { value: 'OUT', label: 'خروج', icon: ArrowDown, color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200' },
+    { value: 'TRANSFER', label: 'نقل', icon: ArrowRightLeft, color: 'text-blue-600', bgColor: 'bg-blue-100', borderColor: 'border-blue-200' }
   ];
 
-  const fetchStockMovements = async () => {
+  // جلب البيانات
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    
+    const timer = setTimeout(() => {
+      fetchMovements();
+    }, searchTerm ? 500 : 0);
+
+    return () => clearTimeout(timer);
+  }, [currentPage, itemsPerPage, selectedType, selectedWarehouse, selectedItem, dateFrom, dateTo, sortField, sortDirection, searchTerm]);
+
+  const loadInitialData = async () => {
     try {
-      setLoading(true);
+      await Promise.all([
+        loadWarehouses(),
+        fetchMovements(),
+        fetchStats()
+      ]);
+      isInitialMount.current = false;
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      notify('error', 'خطأ في تحميل البيانات');
+      isInitialMount.current = false;
+    }
+  };
+
+  const loadWarehouses = async () => {
+    try {
+      const response = await inventoryService.listWarehouses();
+      let warehousesData = [];
       
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit
-      };
-      
-      if (filters.type) params.type = filters.type;
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
-      if (filters.itemId) params.inventoryItemId = filters.itemId;
-      
-      const response = await inventoryService.listMovements(params);
-      
-      // معالجة الاستجابة بشكل صحيح
-      let movementsData = [];
       if (Array.isArray(response)) {
-        movementsData = response;
-      } else if (response && response.success) {
-        movementsData = response.data || [];
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
-      } else if (response && response.data && Array.isArray(response.data)) {
-        movementsData = response.data;
+        warehousesData = response;
+      } else if (response?.data && Array.isArray(response.data)) {
+        warehousesData = response.data;
+      } else if (response?.warehouses && Array.isArray(response.warehouses)) {
+        warehousesData = response.warehouses;
       }
       
-      // معالجة البيانات لاستخدام نفس البنية
-      const processedMovements = movementsData.map(m => ({
-        ...m,
-        // استخدام type من الـ API (IN/OUT/TRANSFER)
-        type: m.type || 'IN',
-        // استخدام warehouseName من fromWarehouseName أو toWarehouseName
-        warehouseName: m.type === 'IN' ? m.toWarehouseName : 
-                       m.type === 'OUT' ? m.fromWarehouseName : 
-                       `${m.fromWarehouseName || ''} → ${m.toWarehouseName || ''}`.trim()
-      }));
-      
-      setMovements(processedMovements);
-      setFilteredMovements(processedMovements);
+      setWarehouses(warehousesData);
     } catch (error) {
-      console.error('Error fetching stock movements:', error);
-      notifications.error('حدث خطأ في تحميل حركات المخزون');
+      console.error('Error loading warehouses:', error);
+      setWarehouses([]);
+    }
+  };
+
+  const fetchMovements = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sort: sortField,
+        sortDir: sortDirection === 'asc' ? 'ASC' : 'DESC'
+      };
+
+      if (selectedType) {
+        params.type = selectedType;
+      }
+
+      if (selectedWarehouse) {
+        params.warehouseId = selectedWarehouse;
+      }
+
+      if (selectedItem) {
+        params.inventoryItemId = selectedItem;
+      }
+
+      if (dateFrom) {
+        params.startDate = dateFrom;
+      }
+
+      if (dateTo) {
+        params.endDate = dateTo;
+      }
+
+      // Search (server-side via 'q' parameter)
+      if (searchTerm && searchTerm.trim()) {
+        params.q = searchTerm.trim();
+      }
+
+      const response = await apiService.getStockMovements(params);
+      
+      let movementsData = [];
+      let totalCount = 0;
+
+      if (response?.success && response?.data && Array.isArray(response.data)) {
+        movementsData = response.data;
+        totalCount = response.pagination?.total || 0;
+      } else if (Array.isArray(response)) {
+        movementsData = response;
+        totalCount = response.length;
+      } else if (response?.data && Array.isArray(response.data)) {
+        movementsData = response.data;
+        totalCount = response.pagination?.total || 0;
+      }
+
+      setMovements(movementsData);
+      setTotalItems(totalCount);
+    } catch (err) {
+      console.error('Error fetching movements:', err);
+      setError('حدث خطأ في تحميل بيانات حركات المخزون');
       setMovements([]);
-      setFilteredMovements([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, selectedType, selectedWarehouse, selectedItem, dateFrom, dateTo, sortField, sortDirection, searchTerm]);
 
-  useEffect(() => {
-    fetchStockMovements();
-  }, [pagination.page, filters.type, filters.startDate, filters.endDate, filters.itemId]);
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+      const params = {};
+      if (selectedType) params.type = selectedType;
+      if (selectedWarehouse) params.warehouseId = selectedWarehouse;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
 
-  useEffect(() => {
-    // Filter locally for search term only (other filters are handled server-side)
-    let filtered = movements;
-
-    if (filters.search) {
-      filtered = filtered.filter(movement =>
-        movement.itemName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        movement.userName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        movement.sku?.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    setFilteredMovements(filtered);
-  }, [filters.search, movements]);
-
-  const getMovementIcon = (type) => {
-    const movementType = movementTypes.find(t => t.value === type);
-    if (!movementType) return null;
-    
-    const IconComponent = movementType.icon;
-    return <IconComponent className={`h-5 w-5 ${movementType.color}`} />;
-  };
-
-  const getMovementLabel = (type) => {
-    const movementType = movementTypes.find(t => t.value === type);
-    return movementType ? movementType.label : type;
-  };
-
-  const getMovementColor = (type) => {
-    const movementType = movementTypes.find(t => t.value === type);
-    switch (type) {
-      case 'IN':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'OUT':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'TRANSFER':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      const response = await apiService.getStockMovementStats(params);
+      
+      if (response?.success && response?.data) {
+        const summary = response.data.summary || {};
+        setStats({
+          totalMovements: summary.totalMovements || 0,
+          counts: summary.counts || { in: 0, out: 0, transfer: 0 },
+          totalQuantity: summary.totalQuantity || { in: 0, out: 0, transfer: 0 },
+          today: summary.today || { movements: 0, inQuantity: 0, outQuantity: 0, transferQuantity: 0 }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoadingStats(false);
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  // Handle create movement
+  const handleCreateMovement = () => {
+    setEditingMovement(null);
+    setIsFormModalOpen(true);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // Handle edit movement
+  const handleEditMovement = (movement) => {
+    setEditingMovement(movement);
+    setIsFormModalOpen(true);
+  };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ArrowsRightLeftIcon className="h-8 w-8 text-blue-600" />
-              حركة المخزون
-            </h1>
-            <p className="text-gray-600 mt-1">تتبع جميع حركات المخزون والتحويلات</p>
-          </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-            <PlusIcon className="h-4 w-4" />
-            إضافة حركة جديدة
-          </button>
-        </div>
-      </div>
+  // Handle delete movement
+  const handleDeleteMovement = async (movementId) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه الحركة؟ سيتم عكس تأثيرها على المخزون.')) {
+      return;
+    }
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <FunnelIcon className="h-5 w-5 text-blue-600" />
-          فلاتر البحث
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              البحث
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="البحث في الحركات..."
-                value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value})}
-                className="w-full pr-10 pl-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+    try {
+      await apiService.deleteStockMovement(movementId);
+      notify('success', 'تم حذف الحركة بنجاح');
+      fetchMovements();
+      fetchStats();
+    } catch (error) {
+      console.error('Error deleting movement:', error);
+      notify('error', 'خطأ في حذف الحركة');
+    }
+  };
+
+  // Handle form success
+  const handleFormSuccess = () => {
+    setIsFormModalOpen(false);
+    setEditingMovement(null);
+    fetchMovements();
+    fetchStats();
+  };
+
+  // Handle sort
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  // Render sort icon
+  const renderSortIcon = (field) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+      <ArrowDown className="w-4 h-4 text-blue-600" />;
+  };
+
+  // Clear filters
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedType('');
+    setSelectedWarehouse('');
+    setSelectedItem('');
+    setDateFrom('');
+    setDateTo('');
+    setCurrentPage(1);
+  };
+
+  // Get movement type info
+  const getMovementTypeInfo = (type) => {
+    return movementTypes.find(t => t.value === type) || movementTypes[0];
+  };
+
+  // Columns definition for DataView
+  const columns = [
+    {
+      id: 'type',
+      key: 'type',
+      header: (
+        <button
+          onClick={() => handleSort('type')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          نوع الحركة
+          {renderSortIcon('type')}
+        </button>
+      ),
+      label: 'نوع الحركة',
+      description: 'نوع الحركة',
+      defaultVisible: true,
+      accessorKey: 'type',
+      cell: ({ row }) => {
+        const movement = row.original;
+        const typeInfo = getMovementTypeInfo(movement.type);
+        const IconComponent = typeInfo.icon;
+        return (
+          <SimpleBadge 
+            variant="secondary" 
+            className={`flex items-center gap-1.5 ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
+          >
+            <IconComponent className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">{typeInfo.label}</span>
+          </SimpleBadge>
+        );
+      }
+    },
+    {
+      id: 'itemName',
+      key: 'itemName',
+      header: (
+        <button
+          onClick={() => handleSort('itemName')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          الصنف
+          {renderSortIcon('itemName')}
+        </button>
+      ),
+      label: 'الصنف',
+      description: 'اسم الصنف',
+      defaultVisible: true,
+      accessorKey: 'itemName',
+      cell: ({ row }) => {
+        const movement = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">{movement.itemName || '-'}</p>
+              {movement.sku && (
+                <p className="text-xs text-gray-500">SKU: {movement.sku}</p>
+              )}
             </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              نوع الحركة
-            </label>
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({...filters, type: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">جميع الأنواع</option>
-              {movementTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+        );
+      }
+    },
+    {
+      id: 'quantity',
+      key: 'quantity',
+      header: (
+        <button
+          onClick={() => handleSort('quantity')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          الكمية
+          {renderSortIcon('quantity')}
+        </button>
+      ),
+      label: 'الكمية',
+      description: 'كمية الحركة',
+      defaultVisible: true,
+      accessorKey: 'quantity',
+      cell: ({ row }) => {
+        const movement = row.original;
+        const quantity = parseInt(movement.quantity || 0);
+        const isIn = movement.type === 'IN';
+        const isOut = movement.type === 'OUT';
+        return (
+          <div className="flex items-center gap-2">
+            <Hash className={`w-4 h-4 ${isIn ? 'text-green-600' : isOut ? 'text-red-600' : 'text-blue-600'}`} />
+            <span className={`font-semibold ${isIn ? 'text-green-600' : isOut ? 'text-red-600' : 'text-blue-600'}`}>
+              {isIn ? '+' : isOut ? '-' : '→'} {quantity}
+            </span>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              صنف محدد (ID)
-            </label>
-            <input
-              type="number"
-              placeholder="معرف الصنف"
-              value={filters.itemId}
-              onChange={(e) => setFilters({...filters, itemId: e.target.value, page: 1})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+        );
+      }
+    },
+    {
+      id: 'warehouse',
+      key: 'warehouse',
+      header: 'المخزن',
+      label: 'المخزن',
+      description: 'المخزن',
+      defaultVisible: true,
+      accessorKey: 'warehouseName',
+      cell: ({ row }) => {
+        const movement = row.original;
+        const warehouseName = movement.type === 'IN' 
+          ? movement.toWarehouseName 
+          : movement.type === 'OUT' 
+          ? movement.fromWarehouseName 
+          : movement.type === 'TRANSFER'
+          ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
+          : '-';
+        return (
+          <div className="flex items-center gap-2">
+            <Warehouse className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-700">{warehouseName}</span>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              تاريخ البداية
-            </label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({...filters, startDate: e.target.value, page: 1})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+        );
+      }
+    },
+    {
+      id: 'user',
+      key: 'user',
+      header: 'المستخدم',
+      label: 'المستخدم',
+      description: 'المستخدم الذي أنشأ الحركة',
+      defaultVisible: true,
+      accessorKey: 'userName',
+      cell: ({ row }) => {
+        const movement = row.original;
+        return movement.userName ? (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-700">{movement.userName}</span>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              تاريخ النهاية
-            </label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({...filters, endDate: e.target.value, page: 1})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      }
+    },
+    {
+      id: 'notes',
+      key: 'notes',
+      header: 'الملاحظات',
+      label: 'الملاحظات',
+      description: 'ملاحظات الحركة',
+      defaultVisible: false,
+      accessorKey: 'notes',
+      cell: ({ row }) => {
+        const movement = row.original;
+        return (
+          <div className="max-w-xs">
+            <p className="text-sm text-gray-700 truncate">
+              {movement.notes || '-'}
+            </p>
           </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                setFilters({
-                  search: '',
-                  type: '',
-                  startDate: '',
-                  endDate: '',
-                  itemId: ''
-                });
-                setPagination({ ...pagination, page: 1 });
+        );
+      }
+    },
+    {
+      id: 'createdAt',
+      key: 'createdAt',
+      header: (
+        <button
+          onClick={() => handleSort('createdAt')}
+          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+        >
+          التاريخ
+          {renderSortIcon('createdAt')}
+        </button>
+      ),
+      label: 'التاريخ',
+      description: 'تاريخ الحركة',
+      defaultVisible: true,
+      accessorKey: 'createdAt',
+      cell: ({ row }) => {
+        const movement = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-900">
+              {movement.createdAt ? new Date(movement.createdAt).toLocaleDateString('ar-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : '-'}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      id: 'actions',
+      key: 'actions',
+      header: 'الإجراءات',
+      label: 'الإجراءات',
+      description: 'إجراءات الحركة',
+      defaultVisible: true,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const movement = row.original;
+        return (
+          <div className="flex items-center gap-1">
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditMovement(movement);
               }}
-              className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+              className="h-8 w-8 p-0"
+              title="تعديل"
             >
-              مسح الفلاتر
-            </button>
+              <Edit className="w-4 h-4" />
+            </SimpleButton>
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteMovement(movement.id);
+              }}
+              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+              title="حذف"
+            >
+              <Trash2 className="w-4 h-4" />
+            </SimpleButton>
           </div>
-        </div>
-      </div>
+        );
+      }
+    }
+  ];
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {movementTypes.map((type) => {
-          const count = Array.isArray(movements) ? movements.filter(m => m.type === type.value).length : 0;
-          const IconComponent = type.icon;
-          
-          return (
-            <div key={type.value} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <IconComponent className={`h-8 w-8 ${type.color}`} />
-                <div className="mr-3">
-                  <div className="text-sm font-medium text-gray-800">{type.label}</div>
-                  <div className="text-2xl font-bold text-gray-900">{count}</div>
+  // Render card
+  const renderCard = (movement) => {
+    const quantity = parseInt(movement.quantity || 0);
+    const typeInfo = getMovementTypeInfo(movement.type);
+    const IconComponent = typeInfo.icon;
+    const warehouseName = movement.type === 'IN' 
+      ? movement.toWarehouseName 
+      : movement.type === 'OUT' 
+      ? movement.fromWarehouseName 
+      : movement.type === 'TRANSFER'
+      ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
+      : '-';
+    
+    return (
+      <SimpleCard className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200" onClick={() => handleEditMovement(movement)}>
+        <SimpleCardContent className="p-5">
+          {/* Header with Type */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-3">
+                <SimpleBadge 
+                  variant="secondary" 
+                  className={`flex items-center gap-1.5 px-2.5 py-1 ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">{typeInfo.label}</span>
+                </SimpleBadge>
+              </div>
+              
+              {/* Quantity */}
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                {movement.type === 'IN' ? '+' : movement.type === 'OUT' ? '-' : '→'} {quantity}
+              </h3>
+              
+              {/* Item Info */}
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium">الصنف:</span>
+                  <span className="text-gray-900">{movement.itemName || '-'}</span>
+                </div>
+                {movement.sku && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mr-6">
+                    <span>SKU: {movement.sku}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Warehouse className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium">المخزن:</span>
+                  <span className="text-gray-900">{warehouseName}</span>
                 </div>
               </div>
+              
+              {/* Notes */}
+              {movement.notes && (
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2 bg-gray-50 p-2 rounded">
+                  {movement.notes}
+                </p>
+              )}
             </div>
-          );
-        })}
+          </div>
+          
+          {/* Footer with Meta Info */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-4 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <span>{movement.createdAt ? new Date(movement.createdAt).toLocaleDateString('ar-EG') : '-'}</span>
+              </div>
+              {movement.userName && (
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <span>{movement.userName}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <SimpleButton
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditMovement(movement);
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <Edit className="w-3 h-3" />
+              </SimpleButton>
+              <SimpleButton
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteMovement(movement.id);
+                }}
+                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="w-3 h-3" />
+              </SimpleButton>
+            </div>
+          </div>
+        </SimpleCardContent>
+      </SimpleCard>
+    );
+  };
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <ArrowRightLeft className="w-8 h-8 text-blue-600" />
+            إدارة حركات المخزون
+          </h1>
+          <p className="text-gray-600 mt-1">تتبع جميع حركات المخزون والتحويلات</p>
+        </div>
+        <SimpleButton onClick={handleCreateMovement}>
+          <Plus className="w-5 h-5 ml-2" />
+          إضافة حركة جديدة
+        </SimpleButton>
       </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-700">
-            عرض {((pagination.page - 1) * pagination.limit) + 1} إلى {Math.min(pagination.page * pagination.limit, pagination.total)} من {pagination.total} حركة
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPagination({ ...pagination, page: Math.max(1, pagination.page - 1) })}
-              disabled={pagination.page === 1}
-              className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              السابق
-            </button>
-            <span className="px-3 py-2 text-sm text-gray-700">
-              صفحة {pagination.page} من {pagination.totalPages}
-            </span>
-            <button
-              onClick={() => setPagination({ ...pagination, page: Math.min(pagination.totalPages, pagination.page + 1) })}
-              disabled={pagination.page === pagination.totalPages}
-              className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              التالي
-            </button>
-          </div>
+      {/* Stats Cards */}
+      {!loadingStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <SimpleCard>
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <ArrowRightLeft className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="mr-4">
+                  <p className="text-sm font-medium text-gray-600">إجمالي الحركات</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalMovements}</p>
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+
+          {movementTypes.map((type) => {
+            const count = stats.counts[type.value.toLowerCase()] || 0;
+            const quantity = stats.totalQuantity[type.value.toLowerCase()] || 0;
+            const IconComponent = type.icon;
+            
+            return (
+              <SimpleCard key={type.value}>
+                <SimpleCardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className={`p-2 ${type.bgColor} rounded-lg`}>
+                      <IconComponent className={`w-6 h-6 ${type.color}`} />
+                    </div>
+                    <div className="mr-4">
+                      <p className="text-sm font-medium text-gray-600">{type.label}</p>
+                      <p className="text-2xl font-bold text-gray-900">{count}</p>
+                      <p className="text-xs text-gray-500">{quantity} وحدة</p>
+                    </div>
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
+            );
+          })}
         </div>
       )}
 
-      {/* Movements Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            سجل حركة المخزون ({filteredMovements.length})
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  نوع الحركة
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  اسم القطعة
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  الكمية
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  المخزن
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  المستخدم
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  السبب
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  التاريخ
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMovements.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                    لا توجد حركات مخزون
-                  </td>
-                </tr>
-              ) : (
-                filteredMovements.map((movement) => (
-                  <tr key={movement.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getMovementColor(movement.type)}`}>
-                        {getMovementIcon(movement.type)}
-                        <span className="mr-1">{getMovementLabel(movement.type)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {movement.itemName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className={`font-medium ${
-                        movement.type === 'in' ? 'text-green-600' : 
-                        movement.type === 'out' ? 'text-red-600' : 'text-gray-600'
-                      }`}>
-                        {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{movement.quantity}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.warehouseName || movement.fromWarehouseName || movement.toWarehouseName || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.userName || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {movement.reason || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(movement.createdAt)}
-                    </td>
-                  </tr>
-                ))
+      {/* Filters */}
+      <SimpleCard>
+        <SimpleCardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="البحث في الحركات..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10 w-64"
+                />
+              </div>
+
+              {/* Type Filter */}
+              <Select
+                value={selectedType}
+                onValueChange={(value) => {
+                  setSelectedType(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="جميع الأنواع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">جميع الأنواع</SelectItem>
+                  {movementTypes.map((type) => {
+                    const IconComponent = type.icon;
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <IconComponent className={`w-4 h-4 ${type.color}`} />
+                          <span>{type.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              {/* Warehouse Filter */}
+              <Select
+                value={selectedWarehouse}
+                onValueChange={(value) => {
+                  setSelectedWarehouse(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="جميع المخازن" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">جميع المخازن</SelectItem>
+                  {warehouses.map((warehouse) => (
+                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                      {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Item Filter */}
+              <Input
+                type="number"
+                placeholder="معرف الصنف"
+                value={selectedItem}
+                onChange={(e) => {
+                  setSelectedItem(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-32"
+              />
+
+              {/* Date From */}
+              <Input
+                type="date"
+                placeholder="تاريخ البداية"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-40"
+              />
+
+              {/* Date To */}
+              <Input
+                type="date"
+                placeholder="تاريخ النهاية"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-40"
+              />
+
+              {/* Clear Filters */}
+              {(selectedType || selectedWarehouse || selectedItem || dateFrom || dateTo || searchTerm) && (
+                <SimpleButton
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  مسح
+                </SimpleButton>
               )}
-            </tbody>
-          </table>
+            </div>
+          </div>
+        </SimpleCardContent>
+      </SimpleCard>
+
+      {/* Data View */}
+      {loading && isInitialMount.current ? (
+        <div className="space-y-4">
+          <CardLoadingSkeleton count={6} />
         </div>
-      </div>
+      ) : error ? (
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="text-center text-red-600">{error}</div>
+          </SimpleCardContent>
+        </SimpleCard>
+      ) : (
+        <DataView
+          data={movements}
+          columns={columns}
+          renderCard={renderCard}
+          pagination={{
+            currentPage,
+            totalPages,
+            itemsPerPage,
+            totalItems,
+            onPageChange: setCurrentPage,
+            onItemsPerPageChange: setItemsPerPage
+          }}
+          emptyMessage="لا توجد حركات مخزون"
+          loading={loading && !isInitialMount.current}
+        />
+      )}
+
+      {/* Form Modal */}
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setEditingMovement(null);
+        }}
+        title={editingMovement ? 'تعديل حركة مخزون' : 'إضافة حركة مخزون جديدة'}
+        size="xl"
+      >
+        <StockMovementForm
+          movement={editingMovement}
+          onSave={handleFormSuccess}
+          onCancel={() => {
+            setIsFormModalOpen(false);
+            setEditingMovement(null);
+          }}
+          onSuccess={handleFormSuccess}
+        />
+      </Modal>
     </div>
   );
 };
 
 export default StockMovementPage;
-

@@ -18,13 +18,29 @@
 
 ## 🚀 **البداية السريعة**
 
-### **1. الوصول للنظام:**
+### **🐳 النشر باستخدام Docker (موصى به):**
+```bash
+# استنساخ المشروع
+git clone YOUR_REPO_URL fixzone
+cd fixzone
+
+# إعداد ملف البيئة
+cp DEPLOYMENT/env.docker.example .env
+nano .env
+
+# بناء وتشغيل
+docker compose up -d
+```
+
+**للمزيد:** راجع [`README_DOCKER.md`](README_DOCKER.md) أو [`DEPLOYMENT/DOCKER_DEPLOYMENT_GUIDE.md`](DEPLOYMENT/DOCKER_DEPLOYMENT_GUIDE.md)
+
+### **📦 النشر التقليدي:**
 ```
 Frontend:  http://localhost:3000
 Backend:   http://localhost:3001
 ```
 
-### **2. تسجيل الدخول:**
+### **🔐 تسجيل الدخول:**
 ```
 Email:     admin@fixzone.com
 Password:  password

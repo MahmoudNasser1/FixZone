@@ -1040,6 +1040,61 @@ class ApiService {
   }
 
   // ==================
+  // Stock Movements APIs
+  // ==================
+  
+  // جلب جميع حركات المخزون
+  async getStockMovements(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/stock-movements${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // جلب حركة مخزون واحدة
+  async getStockMovement(id) {
+    return this.request(`/stock-movements/${id}`);
+  }
+
+  // جلب حركات مخزون صنف محدد
+  async getStockMovementsByItem(itemId) {
+    return this.request(`/stock-movements/inventory/${itemId}`);
+  }
+
+  // إنشاء حركة مخزون جديدة
+  async createStockMovement(movementData) {
+    return this.request('/stock-movements', {
+      method: 'POST',
+      body: JSON.stringify(movementData),
+    });
+  }
+
+  // تحديث حركة مخزون
+  async updateStockMovement(id, movementData) {
+    return this.request(`/stock-movements/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(movementData),
+    });
+  }
+
+  // حذف حركة مخزون
+  async deleteStockMovement(id) {
+    return this.request(`/stock-movements/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // جلب إحصائيات حركات المخزون
+  async getStockMovementStats(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/stock-movements/stats/summary${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // جلب المخازن
+  async getWarehouses(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/warehouses${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // ==================
   // Quotation Items APIs
   // ==================
   
