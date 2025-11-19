@@ -58,7 +58,11 @@ const PurchaseOrdersPage = () => {
       setPurchaseOrders(response.data?.purchaseOrders || []);
       setPagination(response.data?.pagination || {});
     } catch (error) {
-      addNotification('error', 'خطأ في جلب قائمة طلبات الشراء');
+      addNotification({
+        type: 'error',
+        message: 'خطأ في جلب قائمة طلبات الشراء'
+      });
+      console.error('Error fetching purchase orders:', error);
     } finally {
       setLoading(false);
     }
@@ -102,11 +106,19 @@ const PurchaseOrdersPage = () => {
 
     try {
       await purchaseOrderService.approvePurchaseOrder(order.id);
-      addNotification('success', 'تم الموافقة على طلب الشراء بنجاح');
+      addNotification({
+        type: 'success',
+        message: 'تم الموافقة على طلب الشراء بنجاح'
+      });
       fetchPurchaseOrders();
       fetchStats();
     } catch (error) {
-      addNotification('error', 'فشل في الموافقة على طلب الشراء');
+      const errorMessage = error?.message || 'فشل في الموافقة على طلب الشراء';
+      addNotification({
+        type: 'error',
+        message: errorMessage
+      });
+      console.error('Error approving purchase order:', error);
     }
   };
 
@@ -117,11 +129,19 @@ const PurchaseOrdersPage = () => {
 
     try {
       await purchaseOrderService.rejectPurchaseOrder(order.id);
-      addNotification('success', 'تم رفض طلب الشراء بنجاح');
+      addNotification({
+        type: 'success',
+        message: 'تم رفض طلب الشراء بنجاح'
+      });
       fetchPurchaseOrders();
       fetchStats();
     } catch (error) {
-      addNotification('error', 'فشل في رفض طلب الشراء');
+      const errorMessage = error?.message || 'فشل في رفض طلب الشراء';
+      addNotification({
+        type: 'error',
+        message: errorMessage
+      });
+      console.error('Error rejecting purchase order:', error);
     }
   };
 
@@ -132,11 +152,19 @@ const PurchaseOrdersPage = () => {
 
     try {
       await purchaseOrderService.deletePurchaseOrder(order.id);
-      addNotification('success', 'تم حذف طلب الشراء بنجاح');
+      addNotification({
+        type: 'success',
+        message: 'تم حذف طلب الشراء بنجاح'
+      });
       fetchPurchaseOrders();
       fetchStats();
     } catch (error) {
-      addNotification('error', 'فشل في حذف طلب الشراء');
+      const errorMessage = error?.message || 'فشل في حذف طلب الشراء';
+      addNotification({
+        type: 'error',
+        message: errorMessage
+      });
+      console.error('Error deleting purchase order:', error);
     }
   };
 
@@ -144,16 +172,27 @@ const PurchaseOrdersPage = () => {
     try {
       if (editingOrder) {
         await purchaseOrderService.updatePurchaseOrder(editingOrder.id, orderData);
-        addNotification('success', 'تم تحديث طلب الشراء بنجاح');
+        addNotification({
+          type: 'success',
+          message: 'تم تحديث طلب الشراء بنجاح'
+        });
       } else {
         await purchaseOrderService.createPurchaseOrder(orderData);
-        addNotification('success', 'تم إنشاء طلب الشراء بنجاح');
+        addNotification({
+          type: 'success',
+          message: 'تم إنشاء طلب الشراء بنجاح'
+        });
       }
       setIsModalOpen(false);
       fetchPurchaseOrders();
       fetchStats();
     } catch (error) {
-      addNotification('error', 'فشل في حفظ بيانات طلب الشراء');
+      const errorMessage = error?.message || 'فشل في حفظ بيانات طلب الشراء';
+      addNotification({
+        type: 'error',
+        message: errorMessage
+      });
+      console.error('Error saving purchase order:', error);
     }
   };
 

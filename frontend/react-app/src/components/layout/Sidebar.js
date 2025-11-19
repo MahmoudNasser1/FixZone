@@ -5,7 +5,7 @@ import {
   DollarSign, FileText, Package, UserCheck, Calendar, MessageSquare, 
   TrendingUp, PieChart, Activity, Shield, Database, HelpCircle,
   Smartphone, Printer, Monitor, Cpu, HardDrive, Battery, Wifi,
-  CreditCard, Receipt, Banknote, Calculator, Building2, MapPin
+  CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart
 } from 'lucide-react';
 import useUIStore from '../../stores/uiStore';
 import useAuthStore from '../../stores/authStore';
@@ -61,7 +61,6 @@ const navItems = [
       { href: '/inventory/reports', label: 'تقارير المخزون', icon: BarChart2 },
       { href: '/inventory/parts', label: 'قطع الغيار', icon: Package, badge: 'نقص' },
       { href: '/vendors', label: 'الموردين', icon: Building2 },
-      { href: '/purchase-orders', label: 'طلبات الشراء', icon: FileText },
     ]
   },
   {
@@ -70,6 +69,7 @@ const navItems = [
       { href: '/finance', label: 'النظام المالي', icon: DollarSign },
       { href: '/invoices', label: 'الفواتير', icon: Receipt, badge: '8' },
       { href: '/quotations', label: 'العروض السعرية', icon: FileText },
+      { href: '/purchase-orders', label: 'طلبات الشراء', icon: ShoppingCart },
       { href: '/payments', label: 'المدفوعات', icon: CreditCard },
       { href: '/expenses', label: 'المصروفات', icon: Banknote },
       { href: '/financial-reports', label: 'التقارير المالية', icon: Calculator },

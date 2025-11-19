@@ -229,7 +229,7 @@ const purchaseOrderController = {
 
     try {
       // التحقق من وجود المورد
-      const [vendor] = await db.query(
+      const [vendor] = await db.execute(
         'SELECT id FROM Vendor WHERE id = ? AND deletedAt IS NULL',
         [vendorId]
       );
@@ -241,45 +241,56 @@ const purchaseOrderController = {
         });
       }
 
-      // إنشاء طلب الشراء
-      const [result] = await db.query(
-        `INSERT INTO PurchaseOrder (
-          status, vendorId, orderNumber, orderDate, expectedDeliveryDate, notes, 
-          approvalStatus, createdBy, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [status, vendorId, orderNumber, orderDate, expectedDeliveryDate || null, notes, approvalStatus, req.user?.id]
-      );
+      // بدء المعاملة
+      await db.execute('START TRANSACTION');
 
-      const purchaseOrderId = result.insertId;
+      try {
+        // إنشاء طلب الشراء
+        const [result] = await db.execute(
+          `INSERT INTO PurchaseOrder (
+            status, vendorId, orderNumber, orderDate, expectedDeliveryDate, notes, 
+            approvalStatus, createdBy, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+          [status, vendorId, orderNumber, orderDate, expectedDeliveryDate || null, notes, approvalStatus, req.user?.id]
+        );
 
-      // إضافة عناصر طلب الشراء
-      for (const item of items) {
-        const { inventoryItemId, quantity, unitPrice } = item;
-        
-        if (!inventoryItemId || !quantity || !unitPrice) {
-          // حذف طلب الشراء إذا فشل إضافة العناصر
-          await db.query('DELETE FROM PurchaseOrder WHERE id = ?', [purchaseOrderId]);
-          return res.status(400).json({ 
-            success: false, 
-            message: 'جميع حقول العنصر مطلوبة (معرف الصنف، الكمية، السعر)' 
-          });
+        const purchaseOrderId = result.insertId;
+
+        // إضافة عناصر طلب الشراء
+        for (const item of items) {
+          const { inventoryItemId, quantity, unitPrice } = item;
+          
+          if (!inventoryItemId || !quantity || !unitPrice) {
+            // حذف طلب الشراء إذا فشل إضافة العناصر
+            await db.execute('DELETE FROM PurchaseOrder WHERE id = ?', [purchaseOrderId]);
+            await db.execute('ROLLBACK');
+            return res.status(400).json({ 
+              success: false, 
+              message: 'جميع حقول العنصر مطلوبة (معرف الصنف، الكمية، السعر)' 
+            });
+          }
+
+          const totalPrice = quantity * unitPrice;
+
+          await db.execute(
+            `INSERT INTO PurchaseOrderItem (
+              quantity, unitPrice, totalPrice, purchaseOrderId, inventoryItemId, createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
+            [quantity, unitPrice, totalPrice, purchaseOrderId, inventoryItemId]
+          );
         }
 
-        const totalPrice = quantity * unitPrice;
+        await db.execute('COMMIT');
 
-        await db.query(
-          `INSERT INTO PurchaseOrderItem (
-            quantity, unitPrice, totalPrice, purchaseOrderId, inventoryItemId, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
-          [quantity, unitPrice, totalPrice, purchaseOrderId, inventoryItemId]
-        );
+        res.status(201).json({
+          success: true,
+          message: 'تم إنشاء طلب الشراء بنجاح',
+          data: { id: purchaseOrderId }
+        });
+      } catch (transactionError) {
+        await db.execute('ROLLBACK');
+        throw transactionError;
       }
-
-      res.status(201).json({
-        success: true,
-        message: 'تم إنشاء طلب الشراء بنجاح',
-        data: { id: purchaseOrderId }
-      });
 
     } catch (error) {
       console.error('Create purchase order error:', error);
@@ -384,9 +395,26 @@ const purchaseOrderController = {
   // موافقة على طلب شراء
   async approvePurchaseOrder(req, res) {
     const { id } = req.params;
-    const { approvedById, approvalDate = new Date() } = req.body;
+    const { approvedById, approvalDate } = req.body;
 
     try {
+      // استخدام المستخدم الحالي إذا لم يتم إرسال approvedById
+      // req.user يأتي من authMiddleware ويحتوي على decoded JWT مع id
+      const userId = approvedById || req.user?.id;
+      const approvalDateTime = approvalDate ? new Date(approvalDate) : new Date();
+
+      if (!userId) {
+        console.error('Approve purchase order - No user ID found:', { 
+          approvedById, 
+          reqUser: req.user,
+          userId 
+        });
+        return res.status(400).json({ 
+          success: false, 
+          message: 'معرف المستخدم مطلوب' 
+        });
+      }
+
       const [result] = await db.execute(
         `UPDATE PurchaseOrder SET 
           approvalStatus = 'APPROVED',
@@ -394,7 +422,7 @@ const purchaseOrderController = {
           approvalDate = ?,
           updatedAt = NOW()
         WHERE id = ? AND deletedAt IS NULL`,
-        [approvedById, approvalDate, id]
+        [userId, approvalDateTime, id]
       );
 
       if (result.affectedRows === 0) {
@@ -422,9 +450,26 @@ const purchaseOrderController = {
   // رفض طلب شراء
   async rejectPurchaseOrder(req, res) {
     const { id } = req.params;
-    const { approvedById, approvalDate = new Date() } = req.body;
+    const { approvedById, approvalDate } = req.body;
 
     try {
+      // استخدام المستخدم الحالي إذا لم يتم إرسال approvedById
+      // req.user يأتي من authMiddleware ويحتوي على decoded JWT
+      const userId = approvedById || req.user?.id || req.user?.userId || req.user?.user?.id;
+      const approvalDateTime = approvalDate ? new Date(approvalDate) : new Date();
+
+      if (!userId) {
+        console.error('Reject purchase order - No user ID found:', { 
+          approvedById, 
+          reqUser: req.user,
+          userId 
+        });
+        return res.status(400).json({ 
+          success: false, 
+          message: 'معرف المستخدم مطلوب' 
+        });
+      }
+
       const [result] = await db.execute(
         `UPDATE PurchaseOrder SET 
           approvalStatus = 'REJECTED',
@@ -432,7 +477,7 @@ const purchaseOrderController = {
           approvalDate = ?,
           updatedAt = NOW()
         WHERE id = ? AND deletedAt IS NULL`,
-        [approvedById, approvalDate, id]
+        [userId, approvalDateTime, id]
       );
 
       if (result.affectedRows === 0) {

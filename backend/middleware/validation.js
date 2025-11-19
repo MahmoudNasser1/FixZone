@@ -1026,6 +1026,238 @@ const quotationItemSchemas = {
   })
 };
 
+/**
+ * Payment Validation Schemas (Invoice Payments)
+ */
+const paymentSchemas = {
+  // Create payment
+  createPayment: Joi.object({
+    amount: Joi.number().positive().precision(2).required()
+      .messages({
+        'number.positive': 'المبلغ يجب أن يكون أكبر من صفر',
+        'number.base': 'المبلغ يجب أن يكون رقم',
+        'any.required': 'المبلغ مطلوب'
+      }),
+    paymentMethod: Joi.string().valid('cash', 'card', 'bank_transfer', 'check', 'other').required()
+      .messages({
+        'any.only': 'طريقة الدفع يجب أن تكون واحدة من: cash, card, bank_transfer, check, other',
+        'any.required': 'طريقة الدفع مطلوبة'
+      }),
+    invoiceId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف الفاتورة غير صحيح',
+        'number.base': 'معرف الفاتورة يجب أن يكون رقم',
+        'any.required': 'معرف الفاتورة مطلوب'
+      }),
+    createdBy: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف المستخدم غير صحيح',
+        'number.base': 'معرف المستخدم يجب أن يكون رقم',
+        'any.required': 'معرف المستخدم مطلوب'
+      }),
+    currency: Joi.string().max(10).default('EGP').optional()
+      .messages({
+        'string.max': 'العملة يجب ألا تزيد عن 10 أحرف'
+      }),
+    paymentDate: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ الدفع غير صحيح',
+        'date.format': 'تاريخ الدفع غير صحيح'
+      }),
+    referenceNumber: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'رقم المرجع يجب ألا يزيد عن 100 حرف'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Update payment
+  updatePayment: Joi.object({
+    amount: Joi.number().positive().precision(2).optional()
+      .messages({
+        'number.positive': 'المبلغ يجب أن يكون أكبر من صفر',
+        'number.base': 'المبلغ يجب أن يكون رقم'
+      }),
+    paymentMethod: Joi.string().valid('cash', 'card', 'bank_transfer', 'check', 'other').optional()
+      .messages({
+        'any.only': 'طريقة الدفع يجب أن تكون واحدة من: cash, card, bank_transfer, check, other'
+      }),
+    paymentDate: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ الدفع غير صحيح',
+        'date.format': 'تاريخ الدفع غير صحيح'
+      }),
+    referenceNumber: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'رقم المرجع يجب ألا يزيد عن 100 حرف'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Get payments query
+  getPayments: Joi.object({
+    page: Joi.number().integer().min(1).default(1).optional()
+      .messages({
+        'number.min': 'رقم الصفحة يجب أن يكون على الأقل 1',
+        'number.base': 'رقم الصفحة يجب أن يكون رقم'
+      }),
+    limit: Joi.number().integer().min(1).max(100).default(10).optional()
+      .messages({
+        'number.min': 'عدد العناصر يجب أن يكون على الأقل 1',
+        'number.max': 'عدد العناصر يجب ألا يزيد عن 100',
+        'number.base': 'عدد العناصر يجب أن يكون رقم'
+      }),
+    dateFrom: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ البداية غير صحيح'
+      }),
+    dateTo: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ النهاية غير صحيح'
+      }),
+    paymentMethod: Joi.string().valid('cash', 'card', 'bank_transfer', 'check', 'other').allow('', null).optional()
+      .messages({
+        'any.only': 'طريقة الدفع يجب أن تكون واحدة من: cash, card, bank_transfer, check, other'
+      }),
+    customerId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف العميل غير صحيح',
+        'number.base': 'معرف العميل يجب أن يكون رقم'
+      }),
+    invoiceId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الفاتورة غير صحيح',
+        'number.base': 'معرف الفاتورة يجب أن يكون رقم'
+      })
+  }),
+
+  // Get payment stats query
+  getPaymentStats: Joi.object({
+    dateFrom: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ البداية غير صحيح'
+      }),
+    dateTo: Joi.date().iso().optional()
+      .messages({
+        'date.base': 'تاريخ النهاية غير صحيح'
+      })
+  }),
+
+  // Get payment by invoice ID
+  getPaymentsByInvoice: commonSchemas.id
+};
+
+/**
+ * Purchase Order Validation Schemas
+ */
+const purchaseOrderSchemas = {
+  // Get purchase orders query
+  getPurchaseOrders: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    search: Joi.string().max(100).allow('', null).optional(),
+    status: Joi.string().valid('draft', 'pending', 'sent', 'confirmed', 'received', 'cancelled', 'approved').allow('', null).optional(),
+    vendorId: Joi.number().integer().positive().allow('', null).optional(),
+    approvalStatus: Joi.string().valid('PENDING', 'APPROVED', 'REJECTED').allow('', null).optional(),
+    sortBy: Joi.string().valid('createdAt', 'updatedAt', 'approvalDate', 'totalAmount', 'vendorName').default('createdAt'),
+    sortOrder: Joi.string().valid('ASC', 'DESC').default('DESC')
+  }),
+
+  // Get purchase order by ID params
+  getPurchaseOrderById: Joi.object({
+    id: commonSchemas.id
+  }),
+
+  // Create purchase order
+  createPurchaseOrder: Joi.object({
+    status: Joi.string().valid('draft', 'pending', 'sent', 'confirmed', 'received', 'cancelled', 'approved').default('draft'),
+    vendorId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف المورد يجب أن يكون موجب',
+        'any.required': 'معرف المورد مطلوب'
+      }),
+    orderNumber: Joi.string().max(50).allow('', null).optional(),
+    orderDate: Joi.date().iso().required()
+      .messages({
+        'date.base': 'تاريخ الطلب غير صحيح',
+        'any.required': 'تاريخ الطلب مطلوب'
+      }),
+    expectedDeliveryDate: Joi.date().iso().allow(null).optional(),
+    notes: Joi.string().max(2000).allow('', null).optional(),
+    approvalStatus: Joi.string().valid('PENDING', 'APPROVED', 'REJECTED').default('PENDING'),
+    items: Joi.array().min(1).required()
+      .items(
+        Joi.object({
+          inventoryItemId: Joi.number().integer().positive().required()
+            .messages({
+              'number.positive': 'معرف الصنف يجب أن يكون موجب',
+              'any.required': 'معرف الصنف مطلوب'
+            }),
+          quantity: Joi.number().integer().min(1).required()
+            .messages({
+              'number.min': 'الكمية يجب أن تكون أكبر من صفر',
+              'any.required': 'الكمية مطلوبة'
+            }),
+          unitPrice: Joi.number().min(0).precision(2).required()
+            .messages({
+              'number.min': 'سعر الوحدة يجب أن يكون أكبر من أو يساوي صفر',
+              'any.required': 'سعر الوحدة مطلوب'
+            }),
+          notes: Joi.string().max(500).allow('', null).optional()
+        })
+      )
+      .messages({
+        'array.min': 'يجب إضافة عنصر واحد على الأقل',
+        'any.required': 'العناصر مطلوبة'
+      })
+  }),
+
+  // Update purchase order
+  updatePurchaseOrder: Joi.object({
+    status: Joi.string().valid('draft', 'pending', 'sent', 'confirmed', 'received', 'cancelled', 'approved').optional(),
+    vendorId: Joi.number().integer().positive().optional(),
+    orderNumber: Joi.string().max(50).allow('', null).optional(),
+    orderDate: Joi.date().iso().optional(),
+    expectedDeliveryDate: Joi.date().iso().allow(null).optional(),
+    notes: Joi.string().max(2000).allow('', null).optional(),
+    approvalStatus: Joi.string().valid('PENDING', 'APPROVED', 'REJECTED').optional(),
+    approvedById: Joi.number().integer().positive().allow(null).optional(),
+    approvalDate: Joi.date().iso().allow(null).optional(),
+    items: Joi.array().min(1).optional()
+      .items(
+        Joi.object({
+          inventoryItemId: Joi.number().integer().positive().required(),
+          quantity: Joi.number().integer().min(1).required(),
+          unitPrice: Joi.number().min(0).precision(2).required(),
+          notes: Joi.string().max(500).allow('', null).optional()
+        })
+      )
+  }),
+
+  // Approve purchase order
+  approvePurchaseOrder: Joi.object({
+    approvedById: Joi.number().integer().positive().optional(),
+    approvalDate: Joi.date().iso().optional()
+  }),
+
+  // Reject purchase order
+  rejectPurchaseOrder: Joi.object({
+    approvedById: Joi.number().integer().positive().optional(),
+    approvalDate: Joi.date().iso().optional()
+  }),
+
+  // Delete purchase order params
+  deletePurchaseOrder: Joi.object({
+    id: commonSchemas.id
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -1039,6 +1271,8 @@ module.exports = {
   expenseSchemas,
   expenseCategorySchemas,
   quotationSchemas,
-  quotationItemSchemas
+  quotationItemSchemas,
+  paymentSchemas,
+  purchaseOrderSchemas
 };
 
