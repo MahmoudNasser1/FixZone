@@ -156,3 +156,4 @@ echo -e "2. Setup SSL certificate: sudo certbot --nginx -d yourdomain.com"
 echo -e "3. Test the application: https://yourdomain.com"
 echo ""
 
+

@@ -47,7 +47,8 @@ const FinancialReportsPage = () => {
         { credentials: 'include' }
       );
       const data = await response.json();
-      setProfitLossData(data);
+      // Backend returns { success: true, ...data }
+      setProfitLossData(data.success ? data : data);
     } catch (error) {
       console.error('Error fetching profit-loss report:', error);
     }
@@ -59,15 +60,16 @@ const FinancialReportsPage = () => {
       const months = [];
       
       for (let month = 1; month <= 12; month++) {
-        const response = await fetch(
-          `http://localhost:3001/api/reports/monthly-revenue?year=${currentYear}&month=${month}`,
-          { credentials: 'include' }
-        );
-        const data = await response.json();
-        months.push({
-          month: month,
-          revenue: data.totalRevenue || 0
-        });
+      const response = await fetch(
+        `http://localhost:3001/api/reports/monthly-revenue?year=${currentYear}&month=${month}`,
+        { credentials: 'include' }
+      );
+      const data = await response.json();
+      // Backend returns { success: true, totalRevenue, ... }
+      months.push({
+        month: month,
+        revenue: data.totalRevenue || 0
+      });
       }
       
       setMonthlyRevenue(months);
@@ -91,6 +93,7 @@ const FinancialReportsPage = () => {
           { credentials: 'include' }
         );
         const data = await response.json();
+        // Backend returns { success: true, totalRevenue, ... }
         days.push({
           date: dateStr,
           revenue: data.totalRevenue || 0
@@ -110,6 +113,7 @@ const FinancialReportsPage = () => {
         { credentials: 'include' }
       );
       const data = await response.json();
+      // Backend returns { success: true, expenses: [...] }
       setExpenses(data.expenses || []);
     } catch (error) {
       console.error('Error fetching expenses:', error);

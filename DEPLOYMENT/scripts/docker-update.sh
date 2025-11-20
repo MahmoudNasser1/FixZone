@@ -97,3 +97,4 @@ echo -e "Status:"
 docker compose ps
 echo ""
 
+

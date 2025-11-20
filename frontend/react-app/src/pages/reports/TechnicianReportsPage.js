@@ -45,6 +45,7 @@ const TechnicianReportsPage = () => {
         { credentials: 'include' }
       );
       const data = await response.json();
+      // Backend returns { success: true, technicians: [...] }
       setTechnicianData(data.technicians || []);
     } catch (error) {
       console.error('Error fetching technician performance:', error);

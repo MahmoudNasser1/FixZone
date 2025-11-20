@@ -44,6 +44,7 @@ const DailyReportsPage = () => {
         { credentials: 'include' }
       );
       const data = await response.json();
+      // Backend returns { success: true, totalRevenue, paymentCount, ... }
       setDailyData(data);
     } catch (error) {
       console.error('Error fetching daily revenue:', error);
