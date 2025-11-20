@@ -1268,6 +1268,201 @@ const purchaseOrderSchemas = {
   })
 };
 
+/**
+ * Invoice Validation Schemas
+ */
+const invoiceSchemas = {
+  // Get invoices query
+  getInvoices: Joi.object({
+    page: Joi.number().integer().min(1).default(1).optional(),
+    limit: Joi.number().integer().min(1).max(100).default(20).optional(),
+    repairRequestId: Joi.number().integer().positive().optional(),
+    customerId: Joi.number().integer().positive().optional(),
+    vendorId: Joi.number().integer().positive().optional(),
+    invoiceType: Joi.string().valid('sale', 'purchase').optional(),
+    status: Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled').optional(),
+    search: Joi.string().max(100).allow('', null).optional()
+  }),
+
+  // Get invoice by ID params
+  getInvoiceById: commonSchemas.id,
+
+  // Create invoice
+  createInvoice: Joi.object({
+    repairRequestId: Joi.number().integer().positive().allow(null).optional(),
+    customerId: Joi.number().integer().positive().allow(null).optional(),
+    vendorId: Joi.number().integer().positive().allow(null).optional(),
+    invoiceType: Joi.string().valid('sale', 'purchase').default('sale').required()
+      .messages({
+        'any.only': 'نوع الفاتورة يجب أن يكون sale أو purchase',
+        'any.required': 'نوع الفاتورة مطلوب'
+      }),
+    totalAmount: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'المبلغ الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ الإجمالي يجب أن يكون رقم',
+        'any.required': 'المبلغ الإجمالي مطلوب'
+      }),
+    amountPaid: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'المبلغ المدفوع يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ المدفوع يجب أن يكون رقم'
+      }),
+    status: Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled').default('draft').optional(),
+    currency: Joi.string().max(10).default('EGP').optional(),
+    taxAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional(),
+    dueDate: Joi.date().iso().allow(null).optional()
+  }).custom((value, helpers) => {
+    // Validate: لفواتير البيع، يجب تحديد إما repairRequestId أو customerId
+    if (value.invoiceType === 'sale') {
+      if (!value.repairRequestId && !value.customerId) {
+        return helpers.error('custom.saleRequiresCustomer');
+      }
+    }
+    // Validate: لفواتير الشراء، يجب تحديد vendorId
+    if (value.invoiceType === 'purchase') {
+      if (!value.vendorId) {
+        return helpers.error('custom.purchaseRequiresVendor');
+      }
+    }
+    return value;
+  }).messages({
+    'custom.saleRequiresCustomer': 'لفواتير البيع: يجب تحديد إما طلب إصلاح (repairRequestId) أو عميل (customerId)',
+    'custom.purchaseRequiresVendor': 'لفواتير الشراء: يجب تحديد مورد (vendorId)'
+  }),
+
+  // Update invoice
+  updateInvoice: Joi.object({
+    repairRequestId: Joi.number().integer().positive().allow(null).optional(),
+    customerId: Joi.number().integer().positive().allow(null).optional(),
+    vendorId: Joi.number().integer().positive().allow(null).optional(),
+    invoiceType: Joi.string().valid('sale', 'purchase').optional(),
+    totalAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'المبلغ الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ الإجمالي يجب أن يكون رقم'
+      }),
+    amountPaid: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'المبلغ المدفوع يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'المبلغ المدفوع يجب أن يكون رقم'
+      }),
+    status: Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled').optional(),
+    currency: Joi.string().max(10).optional(),
+    taxAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional(),
+    dueDate: Joi.date().iso().allow(null).optional()
+  }),
+
+  // Delete invoice params
+  deleteInvoice: commonSchemas.id,
+
+  // Get invoice by repair ID params
+  getInvoiceByRepairId: Joi.object({
+    repairId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'any.required': 'معرف طلب الإصلاح مطلوب'
+      })
+  }),
+
+  // Create invoice from repair params
+  createInvoiceFromRepair: Joi.object({
+    repairId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'any.required': 'معرف طلب الإصلاح مطلوب'
+      })
+  }),
+
+  // Invoice Item schemas
+  addInvoiceItem: Joi.object({
+    // invoiceId comes from params, not body
+    itemType: Joi.string().valid('service', 'part', 'other').required()
+      .messages({
+        'any.only': 'نوع العنصر يجب أن يكون service أو part أو other',
+        'any.required': 'نوع العنصر مطلوب'
+      }),
+    serviceId: Joi.number().integer().positive().allow(null).optional(),
+    inventoryItemId: Joi.number().integer().positive().allow(null).optional(),
+    description: Joi.string().max(500).required()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 500 حرف',
+        'any.required': 'الوصف مطلوب'
+      }),
+    quantity: Joi.number().integer().min(1).required()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح',
+        'any.required': 'الكمية مطلوبة'
+      }),
+    unitPrice: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'سعر الوحدة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'سعر الوحدة يجب أن يكون رقم',
+        'any.required': 'سعر الوحدة مطلوب'
+      }),
+    totalPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'السعر الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'السعر الإجمالي يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(500).allow('', null).optional()
+  }).custom((value, helpers) => {
+    // Validate: إذا كان itemType = 'service'، يجب تحديد serviceId
+    if (value.itemType === 'service' && !value.serviceId) {
+      return helpers.error('custom.serviceRequiresServiceId');
+    }
+    // Validate: إذا كان itemType = 'part'، يجب تحديد inventoryItemId
+    if (value.itemType === 'part' && !value.inventoryItemId) {
+      return helpers.error('custom.partRequiresItemId');
+    }
+    return value;
+  }).messages({
+    'custom.serviceRequiresServiceId': 'لعناصر الخدمة: يجب تحديد معرف الخدمة (serviceId)',
+    'custom.partRequiresItemId': 'لعناصر القطع: يجب تحديد معرف الصنف (inventoryItemId)'
+  }),
+
+  // Update invoice item
+  updateInvoiceItem: Joi.object({
+    description: Joi.string().max(500).optional()
+      .messages({
+        'string.max': 'الوصف يجب ألا يزيد عن 500 حرف'
+      }),
+    quantity: Joi.number().integer().min(1).optional()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون على الأقل 1',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح'
+      }),
+    unitPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'سعر الوحدة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'سعر الوحدة يجب أن يكون رقم'
+      }),
+    totalPrice: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'السعر الإجمالي يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'السعر الإجمالي يجب أن يكون رقم'
+      }),
+    notes: Joi.string().max(500).allow('', null).optional()
+  }),
+
+  // Delete invoice item params
+  deleteInvoiceItem: Joi.object({
+    id: commonSchemas.id,
+    itemId: commonSchemas.id
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -1283,6 +1478,7 @@ module.exports = {
   quotationSchemas,
   quotationItemSchemas,
   paymentSchemas,
-  purchaseOrderSchemas
+  purchaseOrderSchemas,
+  invoiceSchemas
 };
 

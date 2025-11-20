@@ -44,7 +44,7 @@ class InvoicesControllerSimple {
         LIMIT 50
       `;
       
-      const [invoices] = await db.query(query, queryParams);
+      const [invoices] = await db.execute(query, queryParams);
       
       console.log('Query executed:', query);
       console.log('Query params:', queryParams);
@@ -53,7 +53,7 @@ class InvoicesControllerSimple {
       // Calculate actual amountPaid for each invoice from payments
       const invoicesWithCorrectAmounts = await Promise.all(
         invoices.map(async (invoice) => {
-          const [payments] = await db.query(`
+          const [payments] = await db.execute(`
             SELECT COALESCE(SUM(amount), 0) as totalPaid 
             FROM Payment 
             WHERE invoiceId = ?
@@ -111,7 +111,7 @@ class InvoicesControllerSimple {
         WHERE deletedAt IS NULL
       `;
       
-      const [stats] = await db.query(statsQuery);
+      const [stats] = await db.execute(statsQuery);
       
       res.json({
         success: true,
@@ -137,7 +137,10 @@ class InvoicesControllerSimple {
 
   // Create a new invoice - minimal required fields
   async createInvoice(req, res) {
+    const connection = await db.getConnection();
     try {
+      await connection.beginTransaction();
+
       const { 
         repairRequestId, 
         customerId,
@@ -150,40 +153,15 @@ class InvoicesControllerSimple {
         amountPaid = 0 
       } = req.body;
 
-      if (totalAmount === undefined || isNaN(Number(totalAmount))) {
-        return res.status(400).json({ success: false, message: 'totalAmount is required and must be a number' });
-      }
-
-      // Validate invoiceType
-      if (!['sale', 'purchase'].includes(invoiceType)) {
-        return res.status(400).json({
-          success: false,
-          error: 'نوع الفاتورة يجب أن يكون sale أو purchase'
-        });
-      }
-
-      // Validate: يجب تحديد إما repairRequestId أو customerId (لفواتير البيع) أو vendorId (لفواتير الشراء)
-      if (invoiceType === 'sale') {
-        if ((!repairRequestId || repairRequestId === '' || repairRequestId === null) && 
-            (!customerId || customerId === '' || customerId === null)) {
-          return res.status(400).json({
-            success: false,
-            error: 'لفواتير البيع: يجب تحديد إما طلب إصلاح (repairRequestId) أو عميل (customerId)'
-          });
-        }
-      } else if (invoiceType === 'purchase') {
-        if (!vendorId || vendorId === '' || vendorId === null) {
-          return res.status(400).json({
-            success: false,
-            error: 'لفواتير الشراء: يجب تحديد مورد (vendorId)'
-          });
-        }
+      // Validation is done by Joi middleware, but keeping basic checks for safety
+      if (invoiceType === 'purchase') {
         // التحقق من وجود المورد
-        const [vendor] = await db.query(
+        const [vendor] = await connection.execute(
           'SELECT id FROM Vendor WHERE id = ? AND deletedAt IS NULL',
           [vendorId]
         );
         if (vendor.length === 0) {
+          await connection.rollback();
           return res.status(400).json({
             success: false,
             error: 'المورد غير موجود'
@@ -194,7 +172,7 @@ class InvoicesControllerSimple {
       // التحقق من وجود العميل إذا تم تحديده
       let finalCustomerId = customerId;
       if (!finalCustomerId && repairRequestId) {
-        const [repair] = await db.query(
+        const [repair] = await connection.execute(
           'SELECT customerId FROM RepairRequest WHERE id = ?',
           [repairRequestId]
         );
@@ -202,11 +180,12 @@ class InvoicesControllerSimple {
           finalCustomerId = repair[0].customerId;
         }
       } else if (customerId) {
-        const [customer] = await db.query(
+        const [customer] = await connection.execute(
           'SELECT id FROM Customer WHERE id = ? AND deletedAt IS NULL',
           [customerId]
         );
         if (customer.length === 0) {
+          await connection.rollback();
           return res.status(400).json({
             success: false,
             error: 'العميل غير موجود'
@@ -214,11 +193,13 @@ class InvoicesControllerSimple {
         }
       }
 
-      const [result] = await db.query(
+      const [result] = await connection.execute(
         `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
       );
+
+      await connection.commit();
 
       // Send notification
       websocketService.broadcastToAll({
@@ -230,8 +211,11 @@ class InvoicesControllerSimple {
 
       return res.status(201).json({ success: true, id: result.insertId });
     } catch (error) {
+      await connection.rollback();
       console.error('Error in createInvoice:', error);
       return res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    } finally {
+      connection.release();
     }
   }
 
@@ -239,7 +223,7 @@ class InvoicesControllerSimple {
     try {
       const { id } = req.params;
       
-      const [rows] = await db.query(`
+      const [rows] = await db.execute(`
         SELECT 
           i.*,
           COALESCE(c_direct.name, c_via_repair.name) as customerName,
@@ -262,7 +246,7 @@ class InvoicesControllerSimple {
       const invoice = rows[0];
       
       // Calculate actual amountPaid from payments
-      const [payments] = await db.query(`
+      const [payments] = await db.execute(`
         SELECT COALESCE(SUM(amount), 0) as totalPaid 
         FROM Payment 
         WHERE invoiceId = ?
@@ -300,16 +284,20 @@ class InvoicesControllerSimple {
   }
 
   async updateInvoice(req, res) {
+    const connection = await db.getConnection();
     try {
+      await connection.beginTransaction();
+
       const { id } = req.params;
       const { totalAmount, amountPaid, status, currency, taxAmount, discountAmount, notes, dueDate } = req.body;
 
       // Check if invoice exists
-      const [existing] = await db.execute(`
+      const [existing] = await connection.execute(`
         SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL
       `, [id]);
 
       if (existing.length === 0) {
+        await connection.rollback();
         return res.status(404).json({ success: false, error: 'Invoice not found' });
       }
 
@@ -354,7 +342,9 @@ class InvoicesControllerSimple {
       params.push(id);
 
       const query = `UPDATE Invoice SET ${updates.join(', ')} WHERE id = ?`;
-      await db.execute(query, params);
+      await connection.execute(query, params);
+
+      await connection.commit();
 
       // Send notification
       websocketService.broadcastToAll({
@@ -366,8 +356,11 @@ class InvoicesControllerSimple {
 
       res.json({ success: true, message: 'Invoice updated successfully' });
     } catch (error) {
+      await connection.rollback();
       console.error('Error updating invoice:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    } finally {
+      connection.release();
     }
   }
 
@@ -462,7 +455,7 @@ class InvoicesControllerSimple {
       
       // Check for duplicates - prevent adding the same service or inventory item twice
       if (safeServiceId) {
-        const [existingService] = await db.query(`
+        const [existingService] = await db.execute(`
           SELECT id FROM InvoiceItem WHERE invoiceId = ? AND serviceId = ?
         `, [id, safeServiceId]);
         
@@ -477,7 +470,7 @@ class InvoicesControllerSimple {
       }
       
       if (safeInventoryItemId) {
-        const [existingItem] = await db.query(`
+        const [existingItem] = await db.execute(`
           SELECT id FROM InvoiceItem WHERE invoiceId = ? AND inventoryItemId = ?
         `, [id, safeInventoryItemId]);
         
@@ -497,7 +490,7 @@ class InvoicesControllerSimple {
       `, [id, safeDescription, safeQuantity, safeUnitPrice, safeQuantity * safeUnitPrice, safeItemType, safeServiceId, safeInventoryItemId]);
       
       // Recalculate and update invoice total
-      const [totalResult] = await db.query(`
+      const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
@@ -566,7 +559,7 @@ class InvoicesControllerSimple {
       await db.execute(query, params);
       
       // Recalculate and update invoice total
-      const [totalResult] = await db.query(`
+      const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
@@ -595,7 +588,7 @@ class InvoicesControllerSimple {
       `, [itemId, id]);
       
       // Recalculate and update invoice total
-      const [totalResult] = await db.query(`
+      const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
@@ -620,7 +613,7 @@ class InvoicesControllerSimple {
     try {
       const { repairId } = req.params;
 
-      const [invoices] = await db.query(`
+      const [invoices] = await db.execute(`
         SELECT 
           i.*,
           c.name as customerName,
@@ -642,7 +635,7 @@ class InvoicesControllerSimple {
       const invoice = invoices[0];
 
       // Get invoice items
-      const [items] = await db.query(`
+      const [items] = await db.execute(`
         SELECT 
           ii.*,
           COALESCE(inv.name, s.name, 'Unknown Item') as itemName,
@@ -671,7 +664,10 @@ class InvoicesControllerSimple {
 
   // Create invoice from repair request
   async createInvoiceFromRepair(req, res) {
+    const connection = await db.getConnection();
     try {
+      await connection.beginTransaction();
+
       const { repairId } = req.params;
       const {
         status = 'draft',
@@ -683,7 +679,7 @@ class InvoicesControllerSimple {
       const { notes, discountAmount, dueDate, ...otherFields } = req.body;
 
       // Check if repair request exists
-      const [repairRows] = await db.query(`
+      const [repairRows] = await connection.execute(`
         SELECT rr.*, c.name as customerName, rr.deviceModel as deviceModel, rr.deviceBrand as deviceBrand
         FROM RepairRequest rr
         LEFT JOIN Customer c ON rr.customerId = c.id
@@ -691,15 +687,19 @@ class InvoicesControllerSimple {
       `, [repairId]);
 
       if (repairRows.length === 0) {
+        await connection.rollback();
+        connection.release();
         return res.status(404).json({ success: false, error: 'Repair request not found' });
       }
 
       // Check if invoice already exists for this repair
-      const [existingInvoice] = await db.query(`
+      const [existingInvoice] = await connection.execute(`
         SELECT id FROM Invoice WHERE repairRequestId = ? AND deletedAt IS NULL
       `, [repairId]);
 
       if (existingInvoice.length > 0) {
+        await connection.rollback();
+        connection.release();
         return res.status(409).json({
           success: false,
           error: 'Invoice already exists for this repair request',
@@ -707,106 +707,99 @@ class InvoicesControllerSimple {
         });
       }
 
-      const connection = await db.getConnection();
-      await connection.beginTransaction();
+      // Create invoice
+      const [result] = await connection.execute(`
+        INSERT INTO Invoice (
+          repairRequestId, totalAmount, amountPaid, status, 
+          currency, taxAmount, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `, [
+        repairId,
+        0, // Will be calculated after adding items
+        0,
+        status,
+        currency,
+        taxAmount
+      ]);
 
-      try {
-        // Create invoice
-        const [result] = await connection.query(`
-          INSERT INTO Invoice (
-            repairRequestId, totalAmount, amountPaid, status, 
-            currency, taxAmount, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [
-          repairId,
-          0, // Will be calculated after adding items
-          0,
-          status,
-          currency,
-          taxAmount
-        ]);
+      const invoiceId = result.insertId;
 
-        const invoiceId = result.insertId;
+      // Add parts used in repair
+      const [partsUsed] = await connection.execute(`
+        SELECT pu.*, ii.name, ii.sellingPrice
+        FROM PartsUsed pu
+        LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+        WHERE pu.repairRequestId = ?
+      `, [repairId]);
 
-        // Add parts used in repair
-        const [partsUsed] = await connection.query(`
-          SELECT pu.*, ii.name, ii.sellingPrice
-          FROM PartsUsed pu
-          LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
-          WHERE pu.repairRequestId = ?
-        `, [repairId]);
+      for (const part of partsUsed) {
+        const unitPrice = part.sellingPrice || 0;
+        const quantity = part.quantity || 1;
+        const totalPrice = quantity * unitPrice;
 
-        for (const part of partsUsed) {
-          const unitPrice = part.sellingPrice || 0;
-          const quantity = part.quantity || 1;
-          const totalPrice = quantity * unitPrice;
-
-          await connection.query(`
-            INSERT INTO InvoiceItem (
-              invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
-            ) VALUES (?, ?, ?, ?, ?, 'part', ?)
-          `, [invoiceId, part.inventoryItemId, quantity, unitPrice, totalPrice, `قطعة غيار: ${part.name || 'غير محدد'}`]);
-        }
-
-        // Add services used in repair
-        const [services] = await connection.query(`
-          SELECT rrs.*, s.name, s.basePrice
-          FROM RepairRequestService rrs
-          LEFT JOIN Service s ON rrs.serviceId = s.id
-          WHERE rrs.repairRequestId = ?
-        `, [repairId]);
-
-        for (const service of services) {
-          const unitPrice = service.price || service.basePrice || 0;
-          await connection.query(`
-            INSERT INTO InvoiceItem (
-              invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
-            ) VALUES (?, ?, ?, ?, ?, 'service', ?)
-          `, [invoiceId, service.serviceId, 1, unitPrice, unitPrice, `خدمة: ${service.name || 'غير محدد'}`]);
-        }
-
-        // Calculate and update total amount
-        const [totalResult] = await connection.query(`
-          SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
-          FROM InvoiceItem WHERE invoiceId = ?
-        `, [invoiceId]);
-
-        const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount);
-
-        await connection.query(`
-          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
-        `, [finalTotal, invoiceId]);
-
-        await connection.commit();
-
-        // Fetch the created invoice with details
-        const [createdInvoice] = await connection.query(`
-          SELECT i.*, 
-            c.name as customerName,
-            c.phone as customerPhone,
-            c.email as customerEmail,
-            rr.deviceModel as deviceModel,
-            rr.deviceBrand as deviceBrand
-          FROM Invoice i
-          LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-          LEFT JOIN Customer c ON rr.customerId = c.id
-          WHERE i.id = ?
-        `, [invoiceId]);
-
-        res.status(201).json({
-          success: true,
-          data: createdInvoice[0],
-          message: 'Invoice created successfully from repair request'
-        });
-      } catch (error) {
-        await connection.rollback();
-        throw error;
-      } finally {
-        connection.release();
+        await connection.execute(`
+          INSERT INTO InvoiceItem (
+            invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description
+          ) VALUES (?, ?, ?, ?, ?, 'part', ?)
+        `, [invoiceId, part.inventoryItemId, quantity, unitPrice, totalPrice, `قطعة غيار: ${part.name || 'غير محدد'}`]);
       }
+
+      // Add services used in repair
+      const [services] = await connection.execute(`
+        SELECT rrs.*, s.name, s.basePrice
+        FROM RepairRequestService rrs
+        LEFT JOIN Service s ON rrs.serviceId = s.id
+        WHERE rrs.repairRequestId = ?
+      `, [repairId]);
+
+      for (const service of services) {
+        const unitPrice = service.price || service.basePrice || 0;
+        await connection.execute(`
+          INSERT INTO InvoiceItem (
+            invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
+          ) VALUES (?, ?, ?, ?, ?, 'service', ?)
+        `, [invoiceId, service.serviceId, 1, unitPrice, unitPrice, `خدمة: ${service.name || 'غير محدد'}`]);
+      }
+
+      // Calculate and update total amount
+      const [totalResult] = await connection.execute(`
+        SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+        FROM InvoiceItem WHERE invoiceId = ?
+      `, [invoiceId]);
+
+      const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount);
+
+      await connection.execute(`
+        UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+      `, [finalTotal, invoiceId]);
+
+      await connection.commit();
+
+      // Fetch the created invoice with details
+      const [createdInvoice] = await connection.execute(`
+        SELECT i.*, 
+          c.name as customerName,
+          c.phone as customerPhone,
+          c.email as customerEmail,
+          rr.deviceModel as deviceModel,
+          rr.deviceBrand as deviceBrand
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE i.id = ?
+      `, [invoiceId]);
+
+      res.status(201).json({
+        success: true,
+        data: createdInvoice[0],
+        message: 'Invoice created successfully from repair request'
+      });
     } catch (error) {
+      await connection.rollback();
       console.error('Error creating invoice from repair:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
+    } finally {
+      connection.release();
     }
   }
 }
