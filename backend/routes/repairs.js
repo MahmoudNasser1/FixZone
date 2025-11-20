@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validate, repairSchemas } = require('../middleware/validation');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -27,7 +28,9 @@ router.put('/print-settings', authMiddleware, async (req, res) => {
     const allowed = [
       'title','showLogo','logoUrl','showQr','qrSize','showDevicePassword',
       'showSerialBarcode','barcodeWidth','barcodeHeight','compactMode',
-      'branchName','branchAddress','branchPhone','margins','dateDisplay','terms'
+      'branchName','branchAddress','branchPhone','margins','dateDisplay','terms',
+      'companyName','address','phone','email','deliveryAcknowledgement',
+      'companyName','address','phone','email','deliveryAcknowledgement'
     ];
     const next = {};
     for (const k of allowed) {
@@ -103,7 +106,7 @@ function mapFrontendStatusToDb(frontStatus) {
 }
 
 // Get all repair requests with statistics
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), async (req, res) => {
   try {
     const { customerId, status, priority } = req.query;
     
@@ -141,7 +144,7 @@ router.get('/', async (req, res) => {
       ORDER BY rr.createdAt DESC
     `;
     
-    const [rows] = await db.query(query, queryParams);
+    const [rows] = await db.execute(query, queryParams);
     
     // تحويل البيانات لتتوافق مع Frontend
     const formattedData = rows.map(row => ({
@@ -281,7 +284,7 @@ router.get('/:id/track', async (req, res) => {
   try {
     const settings = loadPrintSettings();
     const dateMode = (req.query.date || settings.dateDisplay || 'both').toLowerCase();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT 
         rr.*,
         c.name as customerName,
@@ -367,7 +370,7 @@ router.get('/track/:token', async (req, res) => {
   try {
     const settings = loadPrintSettings();
     const dateMode = (req.query.date || settings.dateDisplay || 'both').toLowerCase();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT 
         rr.*,
         c.name as customerName,
@@ -463,11 +466,12 @@ function getStatusMapping(dbStatus) {
 }
 
 // Get repair request by ID
-router.get('/:id', async (req, res) => {
+// Note: Public tracking routes use /:id/track and /track/:token instead
+router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params'), async (req, res) => {
   const { id } = req.params;
   try {
     // جلب معلومات الطلب مع العميل والجهاز والماركة (Label)
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT 
         rr.*,
         c.name as customerName,
@@ -496,7 +500,7 @@ router.get('/:id', async (req, res) => {
     const repair = rows[0];
 
     // جلب الملحقات المرتبطة بالطلب
-    const [accRows] = await db.query(`
+    const [accRows] = await db.execute(`
       SELECT rra.accessoryOptionId as id, vo.label
       FROM RepairRequestAccessory rra
       LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
@@ -544,7 +548,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new repair request
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (req, res) => {
   const { 
     customerId, customerName, customerPhone, customerEmail,
     deviceType, deviceBrand, brandId, deviceModel, serialNumber,
@@ -565,19 +569,18 @@ router.post('/', async (req, res) => {
   });
   console.log('Accessories type:', typeof accessories, 'Is array:', Array.isArray(accessories), 'Value:', accessories);
   
-  // التحقق من البيانات المطلوبة
-  if (!customerName || !customerPhone || !deviceType || !problemDescription) {
-    return res.status(400).json({ 
-      error: 'Customer name, phone, device type, and problem description are required' 
-    });
-  }
+  // Get database connection for transaction
+  const connection = await db.getConnection();
   
   try {
+    // Start transaction
+    await connection.beginTransaction();
+    
     // أولاً: إنشاء أو العثور على العميل
     let actualCustomerId = customerId;
     if (!customerId) {
       // البحث عن العميل بالهاتف أولاً
-      const [existingCustomer] = await db.query(
+      const [existingCustomer] = await connection.execute(
         'SELECT id FROM Customer WHERE phone = ? AND deletedAt IS NULL', 
         [customerPhone]
       );
@@ -586,7 +589,7 @@ router.post('/', async (req, res) => {
         actualCustomerId = existingCustomer[0].id;
       } else {
         // إنشاء عميل جديد
-        const [customerResult] = await db.query(
+        const [customerResult] = await connection.execute(
           'INSERT INTO Customer (name, phone, email) VALUES (?, ?, ?)',
           [customerName, customerPhone, customerEmail || null]
         );
@@ -597,7 +600,7 @@ router.post('/', async (req, res) => {
     // ثانياً: إنشاء الجهاز إذا تم تقديم تفاصيله
     let deviceId = null;
     if (deviceType || deviceBrand || brandId || deviceModel || serialNumber || devicePassword || cpu || gpu || ram || storage) {
-      const [deviceResult] = await db.query(
+      const [deviceResult] = await connection.execute(
         'INSERT INTO Device (customerId, deviceType, brand, brandId, model, serialNumber, devicePassword, cpu, gpu, ram, storage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           actualCustomerId,
@@ -632,7 +635,7 @@ router.post('/', async (req, res) => {
       estimatedCost: estimatedCost || 0, expectedDeliveryDate: expectedDeliveryDate || null
     });
     
-    const [result] = await db.query(insertQuery, [
+    const [result] = await connection.execute(insertQuery, [
       deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 1, null, estimatedCost || 0, expectedDeliveryDate || null // branchId = 1 افتراضي
     ]);
 
@@ -640,15 +643,18 @@ router.post('/', async (req, res) => {
     if (Array.isArray(accessories) && accessories.length > 0) {
       // حفظ المتعلقات كـ JSON في حقل accessories
       const accessoriesJson = JSON.stringify(accessories);
-      await db.query(
+      await connection.execute(
         'UPDATE RepairRequest SET accessories = ? WHERE id = ?',
         [accessoriesJson, result.insertId]
       );
       console.log('Accessories saved:', accessories);
     }
     
+    // Commit transaction
+    await connection.commit();
+    
     // إرجاع البيانات المُنشأة مع تفاصيل كاملة
-    const [newRepairData] = await db.query(`
+    const [newRepairData] = await connection.execute(`
       SELECT 
         rr.*,
         rr.accessories as accessoriesJson,
@@ -667,6 +673,10 @@ router.post('/', async (req, res) => {
       LEFT JOIN VariableOption vo ON d.brandId = vo.id
       WHERE rr.id = ?
     `, [result.insertId]);
+    
+    // Commit transaction
+    await connection.commit();
+    connection.release();
     
     const newRepair = {
       id: result.insertId,
@@ -694,33 +704,39 @@ router.post('/', async (req, res) => {
     
     res.status(201).json(newRepair);
   } catch (err) {
+    // Rollback transaction on error
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
     console.error('Error creating repair request:', err);
-    res.status(500).json({ error: 'Server Error', details: err.message });
+    res.status(500).json({ 
+      success: false,
+      error: 'Server Error', 
+      details: err.message 
+    });
   }
 });
 
 // Update a repair request
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateRepair), async (req, res) => {
   const { id } = req.params;
   let { deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, attachments, customFields } = req.body;
-  if (!deviceId || !reportedProblem || !customerId || !branchId) {
-    return res.status(400).send('Device ID, reported problem, customer ID, and branch ID are required');
-  }
   try {
     status = mapFrontendStatusToDb(status);
-    const [result] = await db.query('UPDATE RepairRequest SET deviceId = ?, reportedProblem = ?, technicianReport = ?, status = ?, customerId = ?, branchId = ?, technicianId = ?, quotationId = ?, invoiceId = ?, deviceBatchId = ?, attachments = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, JSON.stringify(attachments), JSON.stringify(customFields), id]);
+    const [result] = await db.execute('UPDATE RepairRequest SET deviceId = ?, reportedProblem = ?, technicianReport = ?, status = ?, customerId = ?, branchId = ?, technicianId = ?, quotationId = ?, invoiceId = ?, deviceBatchId = ?, attachments = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, JSON.stringify(attachments), JSON.stringify(customFields), id]);
     if (result.affectedRows === 0) {
-      return res.status(404).send('Repair request not found or already deleted');
+      return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
-    res.json({ message: 'Repair request updated successfully' });
+    res.json({ success: true, message: 'Repair request updated successfully' });
   } catch (err) {
     console.error(`Error updating repair request with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
 // Soft delete a repair request
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, validate(repairSchemas.deleteRepair, 'params'), async (req, res) => {
   const { id } = req.params;
   try {
     // Soft delete instead of hard delete
@@ -736,30 +752,42 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // Update only status
-router.patch('/:id/status', authMiddleware, async (req, res) => {
+router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateStatus), async (req, res) => {
   const { id } = req.params;
-  let { status } = req.body || {};
-  const notes = (req.body && req.body.notes) ? String(req.body.notes) : null;
-  if (!status) {
-    return res.status(400).json({ error: 'Status is required' });
-  }
+  let { status, notes } = req.body || {};
+  
+  // Get database connection for transaction
+  const connection = await db.getConnection();
+  
   try {
+    // Start transaction
+    await connection.beginTransaction();
+    
     // دعم التحويل من صيغة الواجهة إلى صيغة قاعدة البيانات
     status = mapFrontendStatusToDb(status);
-    const [beforeRows] = await db.query('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [beforeRows] = await connection.execute('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!beforeRows || beforeRows.length === 0) {
-      return res.status(404).json({ error: 'Repair request not found or already deleted' });
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
     const fromStatus = beforeRows[0].status || null;
-    const [result] = await db.query('UPDATE RepairRequest SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [status, id]);
+    const [result] = await connection.execute('UPDATE RepairRequest SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [status, id]);
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Repair request not found or already deleted' });
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
     const changedById = (req.user && req.user.id) ? req.user.id : null;
-    await db.query(
+    await connection.execute(
       'INSERT INTO StatusUpdateLog (repairRequestId, fromStatus, toStatus, notes, changedById) VALUES (?, ?, ?, ?, ?)',
       [id, fromStatus, status, notes, changedById]
     );
+    
+    // Commit transaction
+    await connection.commit();
+    connection.release();
+    
     // أعِد الصيغة الأمريكية للواجهة للتوحيد
     const uiMap = {
       'RECEIVED': 'pending',
@@ -771,15 +799,20 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
       'REJECTED': 'cancelled',
       'WAITING_PARTS': 'on-hold'
     };
-    res.json({ message: 'Status updated successfully', status: uiMap[status] || 'pending' });
+    res.json({ success: true, message: 'Status updated successfully', status: uiMap[status] || 'pending' });
   } catch (err) {
+    // Rollback transaction on error
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
     console.error('Error updating status:', err);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
 // Update repair details (estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories)
-router.patch('/:id/details', authMiddleware, async (req, res) => {
+router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateDetails), async (req, res) => {
   const { id } = req.params;
   const { estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
   
@@ -847,7 +880,7 @@ router.patch('/:id/details', authMiddleware, async (req, res) => {
     
     const query = `UPDATE RepairRequest SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`;
     
-    const [result] = await db.query(query, values);
+    const [result] = await db.execute(query, values);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Repair request not found or already deleted' });
@@ -864,14 +897,14 @@ router.patch('/:id/details', authMiddleware, async (req, res) => {
 router.post('/:id/rotate-token', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
-    const [upd] = await db.query(
+    const [upd] = await db.execute(
       "UPDATE RepairRequest SET trackingToken = LOWER(REPLACE(UUID(), '-', '')) WHERE id = ?",
       [id]
     );
     if (upd.affectedRows === 0) {
       return res.status(404).json({ message: 'Repair request not found' });
     }
-    const [row] = await db.query('SELECT trackingToken FROM RepairRequest WHERE id = ?', [id]);
+    const [row] = await db.execute('SELECT trackingToken FROM RepairRequest WHERE id = ?', [id]);
     res.json({ message: 'Tracking token rotated', id, trackingToken: row[0]?.trackingToken || null });
   } catch (err) {
     console.error('Error rotating tracking token:', err);
@@ -882,7 +915,7 @@ router.post('/:id/rotate-token', authMiddleware, async (req, res) => {
 // Rotate tracking tokens for ALL repair requests
 router.post('/rotate-tokens', authMiddleware, async (_req, res) => {
   try {
-    const [upd] = await db.query("UPDATE RepairRequest SET trackingToken = LOWER(REPLACE(UUID(), '-', ''))");
+    const [upd] = await db.execute("UPDATE RepairRequest SET trackingToken = LOWER(REPLACE(UUID(), '-', ''))");
     res.json({ message: 'All tracking tokens rotated', affectedRows: upd.affectedRows || 0 });
   } catch (err) {
     console.error('Error rotating all tracking tokens:', err);
@@ -912,11 +945,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // List attachments
-router.get('/:id/attachments', async (req, res) => {
+router.get('/:id/attachments', authMiddleware, async (req, res) => {
   const repairId = req.params.id;
   try {
     // Get attachments from database
-    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    const [repairRows] = await db.execute('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
@@ -943,7 +976,7 @@ router.get('/:id/attachments', async (req, res) => {
     
     // If there are missing files, update the database
     if (validAttachments.length !== attachments.length) {
-      await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
         [JSON.stringify(validAttachments), repairId]);
     }
     
@@ -975,7 +1008,7 @@ router.post('/:id/attachments', authMiddleware, upload.single('file'), async (re
     };
     
     // Get current attachments from database
-    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    const [repairRows] = await db.execute('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
@@ -993,7 +1026,7 @@ router.post('/:id/attachments', authMiddleware, upload.single('file'), async (re
     existingAttachments.push(attachmentData);
     
     // Update database with new attachments array
-    await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [JSON.stringify(existingAttachments), repairId]);
     
     res.status(201).json(attachmentData);
@@ -1014,7 +1047,7 @@ router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res)
     await fs.promises.unlink(filePath);
     
     // Get current attachments from database
-    const [repairRows] = await db.query('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    const [repairRows] = await db.execute('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
@@ -1032,7 +1065,7 @@ router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res)
     const updatedAttachments = existingAttachments.filter(att => att.id !== attachmentId);
     
     // Update database with updated attachments array
-    await db.query('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [JSON.stringify(updatedAttachments), repairId]);
     
     res.json({ success: true });
@@ -1049,11 +1082,11 @@ router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res)
 router.get('/:id/logs', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
-    const [statusLogs] = await db.query(
+    const [statusLogs] = await db.execute(
       'SELECT id, fromStatus, toStatus, notes, changedById, createdAt FROM StatusUpdateLog WHERE repairRequestId = ? ORDER BY createdAt DESC',
       [id]
     );
-    const [auditLogs] = await db.query(
+    const [auditLogs] = await db.execute(
       "SELECT id, action, actionType, details, userId, createdAt FROM AuditLog WHERE entityType = 'RepairRequest' AND entityId = ? ORDER BY createdAt DESC",
       [id]
     );
@@ -1088,49 +1121,66 @@ router.get('/:id/logs', authMiddleware, async (req, res) => {
 // =========================
 // Assign technician to repair request
 // =========================
-router.post('/:id/assign', authMiddleware, async (req, res) => {
+router.post('/:id/assign', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.assignTechnician), async (req, res) => {
   const { id } = req.params;
   const { technicianId } = req.body || {};
   const techIdNum = Number(technicianId);
-  if (!techIdNum || Number.isNaN(techIdNum)) {
-    return res.status(400).json({ success: false, error: 'Valid technicianId is required' });
-  }
+  
+  // Get database connection for transaction
+  const connection = await db.getConnection();
+  
   try {
+    // Start transaction
+    await connection.beginTransaction();
+    
     // Ensure repair exists
-    const [repRows] = await db.execute('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [repRows] = await connection.execute('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!repRows || repRows.length === 0) {
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ success: false, error: 'Repair request not found' });
     }
 
     // Ensure technician exists (optionally check role)
-    const [userRows] = await db.execute('SELECT u.id, u.name, r.name AS roleName FROM User u LEFT JOIN Role r ON u.roleId = r.id WHERE u.id = ? AND u.deletedAt IS NULL', [techIdNum]);
+    const [userRows] = await connection.execute('SELECT u.id, u.name, r.name AS roleName FROM User u LEFT JOIN Role r ON u.roleId = r.id WHERE u.id = ? AND u.deletedAt IS NULL', [techIdNum]);
     if (!userRows || userRows.length === 0) {
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ success: false, error: 'Technician not found' });
     }
 
-    await db.execute('UPDATE RepairRequest SET technicianId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [techIdNum, id]);
+    await connection.execute('UPDATE RepairRequest SET technicianId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [techIdNum, id]);
 
     // Audit
     const changedById = (req.user && req.user.id) ? req.user.id : null;
-    await db.execute(
+    await connection.execute(
       'INSERT INTO AuditLog (action, actionType, details, entityType, entityId, userId) VALUES (?, ?, ?, ?, ?, ?)',
       ['assign_technician', 'UPDATE', JSON.stringify({ technicianId: techIdNum }), 'RepairRequest', id, changedById]
     );
 
+    // Commit transaction
+    await connection.commit();
+    connection.release();
+
     res.json({ success: true, message: 'Technician assigned successfully', technician: { id: userRows[0].id, name: userRows[0].name } });
   } catch (e) {
+    // Rollback transaction on error
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
     console.error('Error assigning technician:', e);
     res.status(500).json({ success: false, error: 'Server Error', details: e.message });
   }
 });
 
 // Print receipt (HTML) for a repair request including devicePassword
-router.get('/:id/print/receipt', async (req, res) => {
+router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
     const dateMode = (req.query.date || settings.dateDisplay || 'both').toLowerCase();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT 
         rr.*,
         c.name as customerName,
@@ -1154,7 +1204,7 @@ router.get('/:id/print/receipt', async (req, res) => {
     }
 
     const repair = rows[0];
-    const [accRows] = await db.query(`
+    const [accRows] = await db.execute(`
       SELECT vo.label
       FROM RepairRequestAccessory rra
       LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
@@ -1316,12 +1366,12 @@ router.get('/:id/print/receipt', async (req, res) => {
 });
 
 // Print inspection report
-router.get('/:id/print/inspection', async (req, res) => {
+router.get('/:id/print/inspection', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
     const dateMode = (req.query.date || settings.dateDisplay || 'both').toLowerCase();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT ir.*, it.name as inspectionTypeName,
              rr.id as repairId, rr.createdAt as repairCreatedAt,
              c.name as customerName, c.phone as customerPhone,
@@ -1343,7 +1393,7 @@ router.get('/:id/print/inspection', async (req, res) => {
     }
 
     const rep = rows[0];
-    const [components] = await db.query(`
+    const [components] = await db.execute(`
       SELECT name, status, notes, priority FROM InspectionComponent WHERE inspectionReportId = ?
     `, [rep.id]);
 
@@ -1473,11 +1523,11 @@ router.get('/:id/print/inspection', async (req, res) => {
 });
 
 // Print invoice for a repair request
-router.get('/:id/print/invoice', async (req, res) => {
+router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
-    const [repairRows] = await db.query(`
+    const [repairRows] = await db.execute(`
       SELECT rr.*, 
              c.name AS customerName, c.phone AS customerPhone, c.email AS customerEmail,
              c.address AS customerAddress, 
@@ -1500,13 +1550,23 @@ router.get('/:id/print/invoice', async (req, res) => {
     const repair = repairRows[0];
 
     // جلب عناصر الفاتورة متوافقة مع المخطط الحالي
-    // الربط يتم عبر PartsUsed -> InventoryItem (لا توجد أعمدة inventoryItemId/serviceId في InvoiceItem)
-    const [invoiceItems] = await db.query(`
-      SELECT ii.*, invItem.name AS itemName, invItem.sku
+    // InvoiceItem يحتوي على inventoryItemId (للقطع) و serviceId (للخدمات)
+    const [invoiceItems] = await db.execute(`
+      SELECT 
+        ii.*,
+        CASE 
+          WHEN ii.itemType = 'part' THEN invItem.name
+          WHEN ii.itemType = 'service' THEN s.name
+          ELSE ii.description
+        END AS itemName,
+        CASE 
+          WHEN ii.itemType = 'part' THEN invItem.sku
+          ELSE NULL
+        END AS sku
       FROM InvoiceItem ii
       LEFT JOIN Invoice inv ON ii.invoiceId = inv.id
-      LEFT JOIN PartsUsed pu ON ii.partsUsedId = pu.id
-      LEFT JOIN InventoryItem invItem ON pu.inventoryItemId = invItem.id
+      LEFT JOIN InventoryItem invItem ON ii.inventoryItemId = invItem.id AND ii.itemType = 'part'
+      LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
       WHERE inv.repairRequestId = ?
     `, [id]);
 
@@ -1532,6 +1592,10 @@ router.get('/:id/print/invoice', async (req, res) => {
       'WAITING_PARTS': 'في انتظار القطع'
     };
     const statusText = statusTextMap[repair.status] || repair.status;
+    
+    // حساب requestNumber بنفس طريقة print receipt
+    const reqDate = new Date(repair.createdAt);
+    const requestNumber = repair.requestNumber || `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
 
     const html = `
     <!DOCTYPE html>
@@ -1539,7 +1603,7 @@ router.get('/:id/print/invoice', async (req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>فاتورة - ${repair.requestNumber}</title>
+      <title>فاتورة - ${requestNumber}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; font-size:14px; line-height:1.4; color:#1f2937; background:#fff; }
@@ -1578,8 +1642,8 @@ router.get('/:id/print/invoice', async (req, res) => {
         <div class="invoice-info">
           <div class="invoice-details">
             <div class="section-title">تفاصيل الفاتورة</div>
-            <div class="info-row"><span class="label">رقم الفاتورة:</span> INV-${repair.requestNumber}</div>
-            <div class="info-row"><span class="label">رقم طلب الإصلاح:</span> ${repair.requestNumber}</div>
+            <div class="info-row"><span class="label">رقم الفاتورة:</span> INV-${requestNumber}</div>
+            <div class="info-row"><span class="label">رقم طلب الإصلاح:</span> ${requestNumber}</div>
             <div class="info-row"><span class="label">تاريخ الإصدار:</span> ${new Date().toLocaleDateString('ar-SA')}</div>
             <div class="info-row"><span class="label">حالة الطلب:</span> ${statusText}</div>
           </div>
@@ -1669,17 +1733,18 @@ router.get('/:id/print/invoice', async (req, res) => {
     return res.send(html);
   } catch (err) {
     console.error('Error printing invoice:', err);
-    res.status(500).send('Server Error');
+    console.error('Error stack:', err.stack);
+    res.status(500).send(`<html dir="rtl"><body><h1>خطأ في الخادم</h1><p>${err.message || 'حدث خطأ أثناء الطباعة'}</p></body></html>`);
   }
 });
 
 // Print delivery form
-router.get('/:id/print/delivery', async (req, res) => {
+router.get('/:id/print/delivery', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
     const dateMode = (req.query.date || settings.dateDisplay || 'both').toLowerCase();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT rr.*, c.name as customerName, c.phone as customerPhone,
              d.deviceType, COALESCE(vo.label, d.brand) as deviceBrand, d.model as deviceModel, d.serialNumber
       FROM RepairRequest rr
@@ -1772,11 +1837,11 @@ router.get('/:id/print/delivery', async (req, res) => {
 });
 
 // Print sticker with basic laptop details
-router.get('/:id/print/sticker', async (req, res) => {
+router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
-    const [rows] = await db.query(`
+    const [rows] = await db.execute(`
       SELECT 
         rr.*,
         c.name as customerName,

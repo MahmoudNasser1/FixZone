@@ -304,7 +304,7 @@ const DataView = ({
             onClick={() => onItemClick?.(item)}
           >
             {/* Checkbox للتحديد المتعدد */}
-            {enableBulkActions && (
+            {enableBulkActions && item?.id && (
               <input
                 type="checkbox"
                 checked={selectedItems.includes(item.id)}
@@ -312,7 +312,9 @@ const DataView = ({
                   e.stopPropagation();
                   handleItemSelect(item.id, e.target.checked);
                 }}
-                className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+                onClick={(e) => e.stopPropagation()}
+                className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+                title={selectedItems.includes(item.id) ? 'إلغاء التحديد' : 'تحديد'}
               />
             )}
             
@@ -406,8 +408,8 @@ const DataView = ({
             onClick={() => onItemClick?.(item)}
           >
             {/* Checkbox للتحديد المتعدد */}
-            {enableBulkActions && (
-              <div className="absolute top-2 left-2 z-20">
+            {enableBulkActions && item?.id && (
+              <div className="absolute top-2 left-2 z-20" onClick={(e) => e.stopPropagation()}>
                 <input
                   type="checkbox"
                   checked={selectedItems.includes(item.id)}
@@ -415,7 +417,9 @@ const DataView = ({
                     e.stopPropagation();
                     handleItemSelect(item.id, e.target.checked);
                   }}
-                  className="w-3.5 h-3.5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 transition-all"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-3.5 h-3.5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer hover:border-blue-400"
+                  title={selectedItems.includes(item.id) ? 'إلغاء التحديد' : 'تحديد'}
                 />
               </div>
             )}
@@ -533,19 +537,74 @@ const DataView = ({
 
   // عرض الجدول
   const renderTableView = () => {
+    // إضافة عمود checkbox إذا كانت Bulk Actions مفعلة
+    const tableColumns = enableBulkActions ? [
+      {
+        id: 'select',
+        header: () => (
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={selectedItems.length > 0 && selectedItems.length === data.length}
+              ref={(input) => {
+                if (input) {
+                  input.indeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
+                }
+              }}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  handleSelectAll();
+                } else {
+                  handleClearSelection();
+                }
+              }}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+            />
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={selectedItems.includes(row.original.id)}
+              onChange={(e) => {
+                e.stopPropagation();
+                handleItemSelect(row.original.id, e.target.checked);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+            />
+          </div>
+        ),
+        enableSorting: false,
+        size: 50
+      },
+      ...currentVisibleColumns.map(col => ({
+        id: col.id,
+        header: col.header || col.label,
+        accessorKey: col.accessorKey || col.key,
+        cell: col.cell || (({ row }) => row.getValue(col.accessorKey || col.key)),
+        enableSorting: col.enableSorting !== false
+      }))
+    ] : currentVisibleColumns.map(col => ({
+      id: col.id,
+      header: col.header || col.label,
+      accessorKey: col.accessorKey || col.key,
+      cell: col.cell || (({ row }) => row.getValue(col.accessorKey || col.key)),
+      enableSorting: col.enableSorting !== false
+    }));
+
     return (
-      <DataTable
-        columns={currentVisibleColumns.map(col => ({
-          id: col.id,
-          header: col.header || col.label,
-          accessorKey: col.accessorKey || col.key,
-          cell: col.cell || (({ row }) => row.getValue(col.accessorKey || col.key)),
-          enableSorting: col.enableSorting !== false
-        }))}
-        data={data}
-        onRowClick={onItemClick}
-        loading={loading}
-      />
+      <div className="relative">
+        <div className={`overflow-x-auto ${enableBulkActions && selectedItems.length > 0 ? 'ring-2 ring-blue-500 rounded-md' : ''}`}>
+          <DataTable
+            columns={tableColumns}
+            data={data}
+            onRowClick={onItemClick}
+            loading={loading}
+          />
+        </div>
+      </div>
     );
   };
 
@@ -556,8 +615,12 @@ const DataView = ({
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {data.map((item, index) => (
-            <div key={item.id || index} onClick={() => onItemClick && onItemClick(item)}>
-              {renderClassicItem(item, visibleKeys)}
+            <div 
+              key={item.id || index} 
+              onClick={() => onItemClick && onItemClick(item)}
+              className="cursor-pointer"
+            >
+              {renderClassicItem(item, visibleKeys, selectedItems, handleItemSelect)}
             </div>
           ))}
         </div>
@@ -712,7 +775,7 @@ const DataView = ({
       </div>
 
       {/* الإجراءات المجمعة */}
-      {enableBulkActions && selectedItems.length > 0 && (
+      {enableBulkActions && selectedItems.length > 0 && bulkActions && bulkActions.length > 0 && (
         <BulkActions
           selectedItems={selectedItems}
           totalItems={data.length}

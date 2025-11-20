@@ -1066,6 +1066,10 @@ const RepairDetailsPage = () => {
 
   const handlePrint = (type) => {
     console.log('Printing repair request:', id, 'with type:', type);
+    if (!id) {
+      console.error('Repair ID is missing');
+      return;
+    }
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
     const base = 'http://localhost:3001/api/repairs';
     let url = `${base}/${id}/print/receipt`;
@@ -1076,7 +1080,11 @@ const RepairDetailsPage = () => {
     if (type === 'delivery') url = `${base}/${id}/print/delivery`;
     if (type === 'invoice') url = `${base}/${id}/print/invoice`;
     console.log('Opening print URL:', url);
-    window.open(url, '_blank');
+    const printWindow = window.open(url, '_blank');
+    if (!printWindow) {
+      console.error('Failed to open print window. Please check popup blocker settings.');
+      alert('فشل فتح نافذة الطباعة. يرجى التحقق من إعدادات منع النوافذ المنبثقة.');
+    }
   };
 
   const handleDelete = async () => {

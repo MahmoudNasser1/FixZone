@@ -1559,6 +1559,396 @@ const stockLevelSchemas = {
   }).min(1) // At least one field must be present
 };
 
+/**
+ * Repair Request Validation Schemas
+ */
+const repairSchemas = {
+  // Get repairs query
+  getRepairs: Joi.object({
+    page: Joi.number().integer().min(1).default(1).optional(),
+    pageSize: Joi.number().integer().min(1).max(100).default(10).optional(),
+    limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+    q: Joi.string().max(200).allow('', null).optional()
+      .messages({
+        'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف'
+      }),
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow('', null).optional(),
+    customerId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف العميل غير صحيح',
+        'number.base': 'معرف العميل يجب أن يكون رقم'
+      }),
+    technicianId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الفني غير صحيح',
+        'number.base': 'معرف الفني يجب أن يكون رقم'
+      }),
+    sort: Joi.string().valid('id', 'createdAt', 'updatedAt', 'status', 'priority', 'estimatedCost').default('createdAt').optional(),
+    sortBy: Joi.string().valid('id', 'createdAt', 'updatedAt', 'status', 'priority', 'estimatedCost').default('createdAt').optional(),
+    order: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('DESC').optional(),
+    sortOrder: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('DESC').optional()
+  }),
+
+  // Get repair by ID params
+  getRepairById: Joi.object({
+    id: commonSchemas.id
+  }),
+
+  // Create repair request
+  createRepair: Joi.object({
+    customerId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف العميل غير صحيح',
+        'number.base': 'معرف العميل يجب أن يكون رقم'
+      }),
+    
+    customerName: Joi.string().min(2).max(100).trim().required()
+      .when('customerId', {
+        is: Joi.number().integer().positive(),
+        then: Joi.optional(),
+        otherwise: Joi.required()
+      })
+      .messages({
+        'string.empty': 'اسم العميل مطلوب',
+        'string.min': 'اسم العميل يجب أن يكون على الأقل حرفين',
+        'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف',
+        'any.required': 'اسم العميل مطلوب (إذا لم يتم تحديد customerId)'
+      }),
+    
+    customerPhone: Joi.string().min(5).max(30).trim().required()
+      .when('customerId', {
+        is: Joi.number().integer().positive(),
+        then: Joi.optional(),
+        otherwise: Joi.required()
+      })
+      .messages({
+        'string.empty': 'رقم الهاتف مطلوب',
+        'string.min': 'رقم الهاتف يجب أن يكون على الأقل 5 أحرف',
+        'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف',
+        'any.required': 'رقم الهاتف مطلوب (إذا لم يتم تحديد customerId)'
+      }),
+    
+    customerEmail: Joi.string().email().max(100).allow('', null).optional()
+      .messages({
+        'string.email': 'البريد الإلكتروني غير صحيح',
+        'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    deviceType: Joi.string().valid('LAPTOP', 'SMARTPHONE', 'TABLET', 'SMARTWATCH', 'EARPHONES', 'DESKTOP', 'MONITOR', 'OTHER').required()
+      .messages({
+        'any.only': 'نوع الجهاز يجب أن يكون: LAPTOP, SMARTPHONE, TABLET, SMARTWATCH, EARPHONES, DESKTOP, MONITOR, OTHER',
+        'any.required': 'نوع الجهاز مطلوب'
+      }),
+    
+    deviceBrand: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'الماركة يجب ألا تزيد عن 100 حرف'
+      }),
+    
+    brandId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الماركة غير صحيح',
+        'number.base': 'معرف الماركة يجب أن يكون رقم'
+      }),
+    
+    deviceModel: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'الموديل يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    serialNumber: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'الرقم التسلسلي يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    devicePassword: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'كلمة مرور الجهاز يجب ألا تزيد عن 100 حرف'
+      }),
+    
+    cpu: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'المعالج يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    gpu: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'كرت الشاشة يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    ram: Joi.string().max(50).allow('', null).optional()
+      .messages({
+        'string.max': 'الذاكرة يجب ألا تزيد عن 50 حرف'
+      }),
+    
+    storage: Joi.string().max(100).allow('', null).optional()
+      .messages({
+        'string.max': 'التخزين يجب ألا يزيد عن 100 حرف'
+      }),
+    
+    accessories: Joi.array().items(Joi.alternatives().try(
+      Joi.string(),
+      Joi.number().integer().positive()
+    )).allow(null).optional()
+      .messages({
+        'array.base': 'المتعلقات يجب أن تكون مصفوفة'
+      }),
+    
+    problemDescription: Joi.string().min(10).max(2000).trim().required()
+      .messages({
+        'string.empty': 'وصف المشكلة مطلوب',
+        'string.min': 'وصف المشكلة يجب أن يكون على الأقل 10 أحرف',
+        'string.max': 'وصف المشكلة يجب ألا يزيد عن 2000 حرف',
+        'any.required': 'وصف المشكلة مطلوب'
+      }),
+    
+    priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').default('MEDIUM').optional()
+      .messages({
+        'any.only': 'الأولوية يجب أن تكون: LOW, MEDIUM, HIGH, URGENT'
+      }),
+    
+    estimatedCost: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'التكلفة المتوقعة يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
+      }),
+    
+    actualCost: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة الفعلية يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة الفعلية يجب أن تكون رقم'
+      }),
+    
+    expectedDeliveryDate: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ التسليم المتوقع غير صحيح (يجب أن يكون بصيغة ISO)',
+        'date.format': 'تاريخ التسليم المتوقع غير صحيح'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow(null).optional(),
+    
+    customerNotes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'ملاحظات العميل يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Update repair request
+  updateRepair: Joi.object({
+    deviceId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الجهاز غير صحيح',
+        'number.base': 'معرف الجهاز يجب أن يكون رقم'
+      }),
+    
+    reportedProblem: Joi.string().min(10).max(2000).trim().optional()
+      .messages({
+        'string.min': 'وصف المشكلة يجب أن يكون على الأقل 10 أحرف',
+        'string.max': 'وصف المشكلة يجب ألا يزيد عن 2000 حرف'
+      }),
+    
+    technicianReport: Joi.string().max(5000).allow('', null).optional()
+      .messages({
+        'string.max': 'تقرير الفني يجب ألا يزيد عن 5000 حرف'
+      }),
+    
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').optional(),
+    
+    customerId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف العميل غير صحيح',
+        'number.base': 'معرف العميل يجب أن يكون رقم'
+      }),
+    
+    branchId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الفرع غير صحيح',
+        'number.base': 'معرف الفرع يجب أن يكون رقم'
+      }),
+    
+    technicianId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفني غير صحيح',
+        'number.base': 'معرف الفني يجب أن يكون رقم'
+      }),
+    
+    quotationId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف العرض السعري غير صحيح',
+        'number.base': 'معرف العرض السعري يجب أن يكون رقم'
+      }),
+    
+    invoiceId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الفاتورة غير صحيح',
+        'number.base': 'معرف الفاتورة يجب أن يكون رقم'
+      }),
+    
+    deviceBatchId: Joi.number().integer().positive().allow(null).optional(),
+    
+    attachments: Joi.array().allow(null).optional(),
+    
+    customFields: Joi.object().allow(null).optional()
+  }).min(1), // At least one field must be present
+
+  // Update repair status
+  updateStatus: Joi.object({
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').required()
+      .messages({
+        'any.only': 'الحالة غير صحيحة',
+        'any.required': 'الحالة مطلوبة'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Update repair details
+  updateDetails: Joi.object({
+    estimatedCost: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'التكلفة المتوقعة يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
+      }),
+    
+    actualCost: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة الفعلية يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة الفعلية يجب أن تكون رقم'
+      }),
+    
+    priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').optional()
+      .messages({
+        'any.only': 'الأولوية يجب أن تكون: LOW, MEDIUM, HIGH, URGENT'
+      }),
+    
+    expectedDeliveryDate: Joi.date().iso().allow(null).optional()
+      .messages({
+        'date.base': 'تاريخ التسليم المتوقع غير صحيح',
+        'date.format': 'تاريخ التسليم المتوقع غير صحيح'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }).min(1), // At least one field must be present
+
+  // Assign technician
+  assignTechnician: Joi.object({
+    technicianId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف الفني غير صحيح',
+        'number.base': 'معرف الفني يجب أن يكون رقم',
+        'any.required': 'معرف الفني مطلوب'
+      })
+  }),
+
+  // Delete repair params
+  deleteRepair: Joi.object({
+    id: commonSchemas.id
+  })
+};
+
+/**
+ * Repair Request Service Validation Schemas
+ */
+const repairRequestServiceSchemas = {
+  // Get repair request services query
+  getRepairRequestServices: Joi.object({
+    repairRequestId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
+      })
+  }),
+
+  // Get repair request service by ID params
+  getRepairRequestServiceById: Joi.object({
+    id: commonSchemas.id
+  }),
+
+  // Create repair request service
+  createRepairRequestService: Joi.object({
+    repairRequestId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم',
+        'any.required': 'معرف طلب الإصلاح مطلوب'
+      }),
+    
+    serviceId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف الخدمة غير صحيح',
+        'number.base': 'معرف الخدمة يجب أن يكون رقم',
+        'any.required': 'معرف الخدمة مطلوب'
+      }),
+    
+    technicianId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف الفني غير صحيح',
+        'number.base': 'معرف الفني يجب أن يكون رقم',
+        'any.required': 'معرف الفني مطلوب'
+      }),
+    
+    price: Joi.number().min(0).precision(2).required()
+      .messages({
+        'number.min': 'السعر يجب أن يكون أكبر من أو تساوي صفر',
+        'number.base': 'السعر يجب أن يكون رقم',
+        'any.required': 'السعر مطلوب'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }),
+
+  // Update repair request service
+  updateRepairRequestService: Joi.object({
+    repairRequestId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف طلب الإصلاح غير صحيح',
+        'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
+      }),
+    
+    serviceId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الخدمة غير صحيح',
+        'number.base': 'معرف الخدمة يجب أن يكون رقم'
+      }),
+    
+    technicianId: Joi.number().integer().positive().optional()
+      .messages({
+        'number.positive': 'معرف الفني غير صحيح',
+        'number.base': 'معرف الفني يجب أن يكون رقم'
+      }),
+    
+    price: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'السعر يجب أن يكون أكبر من أو تساوي صفر',
+        'number.base': 'السعر يجب أن يكون رقم'
+      }),
+    
+    notes: Joi.string().max(2000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      })
+  }).min(1), // At least one field must be present
+
+  // Delete repair request service params
+  deleteRepairRequestService: Joi.object({
+    id: commonSchemas.id
+  })
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -1576,6 +1966,8 @@ module.exports = {
   paymentSchemas,
   purchaseOrderSchemas,
   invoiceSchemas,
-  stockLevelSchemas
+  stockLevelSchemas,
+  repairSchemas,
+  repairRequestServiceSchemas
 };
 

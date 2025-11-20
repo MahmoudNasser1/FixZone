@@ -18,6 +18,31 @@ import QuickStatsCard from '../../components/ui/QuickStatsCard';
 import { Input } from '../../components/ui/Input';
 import DataView from '../../components/ui/DataView';
 
+// Helper function to open print pages with authentication
+const handlePrintRepair = (repairId, type = 'invoice') => {
+  if (!repairId) {
+    console.error('Repair ID is missing');
+    alert('خطأ: رقم الطلب غير موجود');
+    return;
+  }
+  
+  const API_BASE_URL = 'http://localhost:3001/api';
+  const printUrl = `${API_BASE_URL}/repairs/${repairId}/print/${type}`;
+  
+  // Open print page in new window
+  // Authentication will be handled via cookies from the main window
+  const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
+  
+  if (!printWindow) {
+    console.error('Failed to open print window. Popup blocked?');
+    alert('فشل فتح نافذة الطباعة. يرجى التحقق من إعدادات منع النوافذ المنبثقة.');
+    return;
+  }
+  
+  // Focus the print window
+  printWindow.focus();
+};
+
 const RepairsPage = () => {
   const navigate = useNavigate();
   const { formatMoney } = useSettings();
@@ -814,7 +839,7 @@ const RepairsPage = () => {
   };
 
   // عرض كلاسيكي (الأول سابقاً) كبطاقة تفصيلية
-  const renderClassicItem = (r, visibleKeys = []) => {
+  const renderClassicItem = (r, visibleKeys = [], selectedItems = [], onItemSelect = null) => {
     if (!r) return null;
     const isVisible = (key) => (visibleKeys?.length ? visibleKeys.includes(key) : true);
     const statusColor = getStatusColor(r.status);
@@ -825,11 +850,29 @@ const RepairsPage = () => {
     const updated = r.updatedAt ? new Date(r.updatedAt).toLocaleString('ar-EG') : '-';
     const onEditClick = (e) => { e.stopPropagation(); handleEditRepair(r.id); };
     const onViewClick = (e) => { e.stopPropagation(); handleViewRepair(r.id); };
+    const isSelected = selectedItems?.includes(r.id) || false;
 
     return (
-      <div className="relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition duration-200">
+      <div className={`relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition duration-200 ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+        {/* Checkbox للتحديد المتعدد */}
+        {onItemSelect && (
+          <div className="absolute top-3 left-3 z-20" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => {
+                e.stopPropagation();
+                onItemSelect?.(r.id, e.target.checked);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+              title={isSelected ? 'إلغاء التحديد' : 'تحديد'}
+            />
+          </div>
+        )}
+        
         {/* أزرار العرض/التعديل */}
-        <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-20">
           <button onClick={onEditClick} className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:scale-105 shadow">
             <Edit className="w-4 h-4" />
           </button>
@@ -837,7 +880,10 @@ const RepairsPage = () => {
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); window.open(`/api/repairs/${r.id}/print/invoice`, '_blank'); }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              handlePrintRepair(r.id, 'invoice');
+            }}
             title="طباعة الفاتورة"
             className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center hover:scale-105 shadow"
           >
