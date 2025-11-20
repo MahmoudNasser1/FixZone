@@ -1235,8 +1235,27 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     };
     const termsRendered = renderTemplate(settings.terms || '', termsVars)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const trackUrl = `${req.protocol}://${req.get('host')}/api/repairs/track/${repair.trackingToken}`;
-
+    // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
+    
+    // Generate QR Code server-side
+    let qrCodeDataUrl = '';
+    try {
+      const QRCode = require('qrcode');
+      qrCodeDataUrl = await QRCode.toDataURL(trackUrl, {
+        width: 60,
+        margin: 1,
+        color: {
+          dark: '#111827',
+          light: '#ffffff'
+        },
+        errorCorrectionLevel: 'M'
+      });
+    } catch (error) {
+      console.error('QR Code generation error:', error);
+    }
+    
     const html = `<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -1245,101 +1264,368 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
       <title>${settings.title || 'إيصال استلام'} - ${requestNumber}</title>
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
-        body { font-family: 'Tajawal','Cairo', Arial, sans-serif; direction: rtl; color:#111827; font-size: ${settings.compactMode ? '12px' : '14px'}; }
-        .container { max-width: 760px; margin: 0 auto; padding: ${padTop}px ${padRight}px ${padBottom}px ${padLeft}px; }
-        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
-        .title { font-size: 18px; font-weight: bold; display:flex; align-items:center; gap:8px; }
-        .muted { color:#6b7280; font-size:12px; }
-        .section { border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin:12px 0; }
-        .row { display:flex; gap:16px; flex-wrap:wrap; }
-        .col { flex:1 1 240px; }
-        .label { font-size:12px; color:#6b7280; }
-        .value { font-size:14px; font-weight:600; }
-        .accessories { list-style: disc; padding-inline-start: 18px; }
-        .prewrap { white-space: pre-wrap; line-height: 1.7; }
-        .footer { text-align:center; margin-top:16px; font-size:12px; color:#6b7280; }
-        .barcode { display:flex; align-items:center; gap:8px; }
-        .branch { font-size:12px; color:#374151; }
-        @media print { .no-print { display:none; } }
+        @page {
+          size: A4;
+          margin: 0;
+        }
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        html {
+          width: 210mm;
+          max-width: 210mm;
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          width: 210mm;
+          max-width: 210mm;
+          min-height: 297mm;
+          margin: 0 auto;
+          padding: 0;
+          overflow-x: hidden;
+        }
+        body { 
+          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
+          direction: rtl; 
+          color:#111827; 
+          font-size: ${settings.fontSize || 11}px;
+          background: #fff;
+          line-height: 1.4;
+        }
+        .container { 
+          width: 210mm;
+          min-height: 297mm;
+          margin: 0 auto;
+          padding: 5.5mm;
+          background: #fff;
+          box-sizing: border-box;
+        }
+        .header { 
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+          padding-bottom: 5px;
+          border-bottom: 1px solid #3b82f6;
+          position: relative;
+        }
+        .header-left {
+          flex: 1;
+          text-align: right;
+        }
+        .header-center {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .title { 
+          font-size: 18px; 
+          font-weight: 700; 
+          color: #111827;
+          margin-bottom: 0px;
+        }
+        .company-info {
+          font-size: 10px;
+          color: #6b7280;
+          line-height: 1.4;
+        }
+        .header-right {
+          text-align: left;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 6px;
+          min-width: 140px;
+          flex-shrink: 0;
+        }
+        .request-number-box {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: #fff;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: none;
+          box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3);
+          width: 100%;
+          text-align: center;
+        }
+        .request-number-label {
+          font-size: 8px;
+          color: rgba(255, 255, 255, 0.9);
+          margin-bottom: 2px;
+          font-weight: 500;
+        }
+        .request-number-value {
+          font-size: 14px;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.5px;
+        }
+        .qr-code-container {
+          text-align: center;
+        }
+        .qr-code-container img {
+          width: 60px !important;
+          height: 60px !important;
+        }
+        .qr-code-label {
+          font-size: 8px;
+          color: #6b7280;
+          margin-top: 4px;
+        }
+        .section { 
+          border: 1px solid #e5e7eb; 
+          border-radius: 3px; 
+          padding: 5px; 
+          margin-bottom: 5px;
+          background: #fafafa;
+        }
+        .section-title {
+          font-size: ${settings.sectionTitleFontSize || 12}px;
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 4px;
+          padding-bottom: 3px;
+          border-bottom: 1px solid #3b82f6;
+        }
+        .row { 
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          gap: 4px;
+          margin-bottom: 3px;
+        }
+        .row:last-child {
+          margin-bottom: 0;
+        }
+        .field {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .label { 
+          font-size: 9px; 
+          color: #6b7280;
+          font-weight: 600;
+        }
+        .value { 
+          font-size: 11px; 
+          font-weight: 600;
+          color: #111827;
+        }
+        .full-width {
+          grid-column: 1 / -1;
+        }
+        .problem-box {
+          background: #fff;
+          padding: 6px;
+          border-radius: 3px;
+          border-right: 2px solid #3b82f6;
+          min-height: 30px;
+          font-size: 10px;
+          line-height: 1.4;
+        }
+        .notes-box {
+          background: #fffbf0;
+          padding: 6px;
+          border-radius: 3px;
+          border-right: 2px solid #f59e0b;
+          min-height: 30px;
+          font-size: 10px;
+          line-height: 1.4;
+        }
+        .terms-box {
+          background: #fff;
+          padding: 6px;
+          border-radius: 3px;
+          border: 1px solid #e5e7eb;
+          line-height: 1.4;
+          font-size: 9px;
+        }
+        .signature-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 5px;
+          padding-top: 5px;
+          border-top: 1px dashed #9ca3af;
+        }
+        .signature-box {
+          text-align: center;
+        }
+        .signature-label {
+          font-size: 10px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 3px;
+        }
+        .signature-line {
+          height: 30px;
+          border-bottom: 1px solid #111827;
+          margin-bottom: 3px;
+        }
+        .signature-date {
+          font-size: 8px;
+          color: #6b7280;
+        }
+        .footer { 
+          text-align: center; 
+          margin-top: 4px; 
+          padding-top: 4px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 9px; 
+          color: #6b7280;
+          line-height: 1.3;
+        }
+        .accessories { 
+          list-style: disc; 
+          padding-inline-start: 24px;
+          margin-top: 8px;
+        }
+        .accessories li {
+          margin-bottom: 6px;
+        }
+        @media print { 
+          .no-print { display: none; }
+          html, body {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0;
+            padding: 0;
+          }
+          .container { 
+            padding: 10mm !important;
+            width: 210mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+          }
+          @page {
+            size: A4;
+            margin: 0;
+          }
+        }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <div>
-            <div class="title">
-              ${settings.showLogo && settings.logoUrl ? `<img src="${settings.logoUrl}" alt="logo" style="height:28px;"/>` : ''}
-              <span>${settings.title || 'إيصال استلام'}</span>
+          <div class="header-left">
+            <div class="title" style="text-align: right;">${settings.title || 'إيصال استلام الجهاز'}</div>
+            <div class="company-info" style="margin-top:4px;">
+              <strong>${settings.companyName || 'FixZone'}</strong><br>
+              ${settings.address || ''}<br>
+              ${settings.phone ? `هاتف: ${settings.phone}` : ''} ${settings.email ? `| بريد: ${settings.email}` : ''}
             </div>
-            ${(settings.branchName || settings.branchAddress || settings.branchPhone) ? `<div class="branch">${[settings.branchName, settings.branchAddress, settings.branchPhone].filter(Boolean).join(' — ')}</div>` : ''}
+            ${(settings.branchName || settings.branchAddress || settings.branchPhone) ? `<div class="company-info" style="margin-top:6px; padding-top:6px; border-top:1px solid #e5e7eb;">
+              <strong>الفرع:</strong> ${settings.branchName || ''}<br>
+              ${settings.branchAddress || ''}<br>
+              ${settings.branchPhone || ''}
+            </div>` : ''}
           </div>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div class="muted">${requestNumber}</div>
-            ${settings.showQr !== false ? `<canvas id="qrCanvas" width="80" height="80" style="border:1px solid #e5e7eb; border-radius:6px;"></canvas>` : ''}
+          ${settings.showLogo && settings.logoUrl ? `<div class="header-center" style="position: absolute; left: 50%; transform: translateX(-50%);">
+            <img src="${settings.logoUrl}" alt="logo" style="height:${settings.logoHeight || 40}px;"/>
+          </div>` : ''}
+          ${settings.showLogo && settings.logoUrl ? `<div class="header-center">
+            <img src="${settings.logoUrl}" alt="logo" style="height:45px;"/>
+          </div>` : ''}
+          <div class="header-right">
+            <div class="request-number-box">
+              <div class="request-number-label">رقم أمر الشغل</div>
+              <div class="request-number-value">${requestNumber}</div>
+            </div>
+            ${settings.showQr !== false && qrCodeDataUrl ? `
+            <div class="qr-code-container">
+              <div style="background: #fff; padding: 4px; border: 1.5px solid #3b82f6; border-radius: 6px; display: inline-block;">
+                <img src="${qrCodeDataUrl}" alt="QR Code" style="display: block; width: 60px; height: 60px;" />
+              </div>
+              <div class="qr-code-label" style="margin-top: 4px; font-weight: 700; color: #3b82f6; font-size: 8px;">📱 تتبع حالة الجهاز</div>
+              <div style="font-size: 7px; color: #6b7280; margin-top: 1px;">امسح الكود لمتابعة الطلب</div>
+            </div>
+            ` : ''}
           </div>
         </div>
 
         <div class="section">
+          <div class="section-title">بيانات العميل</div>
           <div class="row">
-            <div class="col"><div class="label">العميل</div><div class="value">${repair.customerName || '—'}</div></div>
-            <div class="col"><div class="label">رقم الهاتف</div><div class="value">${repair.customerPhone || '—'}</div></div>
-            <div class="col"><div class="label">التاريخ</div><div class="value">${dates.primary || '—'}${dates.secondary ? ` — ${dates.secondary}` : ''}</div></div>
+            <div class="field"><span class="label">الاسم</span><span class="value">${repair.customerName || '—'}</span></div>
+            <div class="field"><span class="label">رقم الهاتف</span><span class="value">${repair.customerPhone || '—'}</span></div>
+            <div class="field"><span class="label">البريد الإلكتروني</span><span class="value">${repair.customerEmail || '—'}</span></div>
+            <div class="field"><span class="label">تاريخ الاستلام</span><span class="value">${dates.primary || '—'}${dates.secondary ? ` — ${dates.secondary}` : ''}</span></div>
           </div>
         </div>
 
         <div class="section">
+          <div class="section-title">بيانات الجهاز</div>
           <div class="row">
-            <div class="col"><div class="label">نوع الجهاز</div><div class="value">${repair.deviceType || '—'}</div></div>
-            <div class="col"><div class="label">الماركة</div><div class="value">${repair.deviceBrand || '—'}</div></div>
-            <div class="col"><div class="label">الموديل</div><div class="value">${repair.deviceModel || '—'}</div></div>
-            <div class="col"><div class="label">الرقم التسلسلي</div><div class="value">${repair.serialNumber || '—'}</div></div>
-            ${(settings.showSerialBarcode !== false && repair.serialNumber) ? `<div class=\"col barcode\" style=\"flex:0 0 160px;\"><svg id=\"snBarcode\"></svg></div>` : ''}
-            ${repair.devicePassword ? (settings.showDevicePassword === true ? `<div class=\"col\"><div class=\"label\">كلمة مرور الجهاز</div><div class=\"value\">${repair.devicePassword}</div></div>` : `<div class=\"col\"><div class=\"label\">كلمة مرور الجهاز</div><div class=\"value\">تم إدخال كلمة سر على النظام (لا تُعرض لأسباب أمنية)</div></div>`) : ''}
+            <div class="field"><span class="label">نوع الجهاز</span><span class="value">${repair.deviceType || '—'}</span></div>
+            <div class="field"><span class="label">الماركة</span><span class="value">${repair.deviceBrand || '—'}</span></div>
+            <div class="field"><span class="label">الموديل</span><span class="value">${repair.deviceModel || '—'}</span></div>
+            <div class="field"><span class="label">الرقم التسلسلي</span><span class="value">${repair.serialNumber || '—'}</span></div>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <div class="field"><span class="label">المعالج (CPU)</span><span class="value">${repair.cpu || '—'}</span></div>
+            <div class="field"><span class="label">كرت الشاشة (GPU)</span><span class="value">${repair.gpu || '—'}</span></div>
+            <div class="field"><span class="label">الذاكرة (RAM)</span><span class="value">${repair.ram || '—'}</span></div>
+            <div class="field"><span class="label">التخزين (Storage)</span><span class="value">${repair.storage || '—'}</span></div>
+          </div>
+          ${repair.devicePassword ? `<div class="row" style="margin-top: 12px;">
+            <div class="field full-width">
+              <span class="label">كلمة مرور الجهاز</span>
+              <span class="value">${settings.showDevicePassword === true ? repair.devicePassword : 'تم إدخال كلمة سر على النظام (لا تُعرض لأسباب أمنية)'}</span>
+            </div>
+          </div>` : ''}
+        </div>
+
+        <div class="section">
+          <div class="section-title">وصف المشكلة</div>
+          <div class="problem-box">${(repair.reportedProblem || repair.problemDescription || '—').replace(/\n/g, '<br>')}</div>
+        </div>
+
+        ${repair.notes || repair.technicianReport ? `
+        <div class="section">
+          <div class="section-title">الملاحظات</div>
+          <div class="notes-box">${(repair.notes || repair.technicianReport || '').replace(/\n/g, '<br>')}</div>
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-title">المتعلقات المستلمة من العميل</div>
+          ${accessories.length ? `<ul class="accessories">${accessories.map(a => `<li>${a}</li>`).join('')}</ul>` : '<div style="color: #6b7280; font-size: 13px;">لا توجد متعلقات</div>'}
+        </div>
+
+        ${settings.terms ? `
+        <div class="section">
+          <div class="section-title">شروط الاستلام</div>
+          <div class="terms-box">${termsRendered.replace(/\n/g, '<br>')}</div>
+        </div>
+        ` : ''}
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <div class="signature-label">توقيع العميل</div>
+            <div class="signature-line"></div>
+            <div class="signature-date">التاريخ: ${dates.primary || ''}</div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-label">ختم/توقيع الفرع</div>
+            <div class="signature-line"></div>
+            <div class="signature-date">التاريخ: ${dates.primary || ''}</div>
           </div>
         </div>
 
-        <div class="section">
-          <div class="label">مواصفات الجهاز</div>
-          <div class="row">
-            <div class="col"><div class="label">المعالج (CPU)</div><div class="value">${repair.cpu || '—'}</div></div>
-            <div class="col"><div class="label">كرت الشاشة (GPU)</div><div class="value">${repair.gpu || '—'}</div></div>
-            <div class="col"><div class="label">الذاكرة (RAM)</div><div class="value">${repair.ram || '—'}</div></div>
-            <div class="col"><div class="label">التخزين (Storage)</div><div class="value">${repair.storage || '—'}</div></div>
-          </div>
+        <div class="footer">
+          <strong>يرجى الاحتفاظ بهذا الإيصال لمراجعة الطلب</strong><br>
+          يمكنك تتبع حالة الجهاز من خلال رمز QR أعلاه
         </div>
-
-        <div class="section">
-          <div class="label">وصف المشكلة</div>
-          <div class="value">${repair.reportedProblem || repair.problemDescription || '—'}</div>
-        </div>
-
-        <div class="section">
-          <div class="label">المتعلقات المستلمة من العميل</div>
-          ${accessories.length ? `<ul class="accessories">${accessories.map(a => `<li>${a}</li>`).join('')}</ul>` : '<div class="muted">لا توجد</div>'}
-        </div>
-
-        ${settings.terms ? `<div class="section"><div class="label">الشروط والأحكام</div><div class="prewrap">${termsRendered}</div></div>` : ''}
-
-
-
-        <div class="footer muted">يرجى الاحتفاظ بهذا الإيصال لمراجعة الطلب</div>
         <div class="no-print" style="text-align:center; margin-top:12px;">
           <button onclick="window.print()" style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px; background:#111827; color:#fff;">طباعة</button>
         </div>
       </div>
-      ${settings.showQr !== false ? `
-      <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-      <script>
-        (function(){
-          try {
-            var canvas = document.getElementById('qrCanvas');
-            if (canvas && window.QRCode) {
-              QRCode.toCanvas(canvas, '${trackUrl}', { width: 80, margin: 1 }, function (error) { if (error) console.error(error); });
-            }
-          } catch (e) { console.error(e); }
-        })();
-      </script>
-      ` : ''}
 
       ${(settings.showSerialBarcode !== false && repair.serialNumber) ? `
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -1596,6 +1882,10 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     // حساب requestNumber بنفس طريقة print receipt
     const reqDate = new Date(repair.createdAt);
     const requestNumber = repair.requestNumber || `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
+    
+    // إنشاء رابط التتبع للفاتورة
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
 
     const html = `
     <!DOCTYPE html>
@@ -1604,68 +1894,246 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>فاتورة - ${requestNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; font-size:14px; line-height:1.4; color:#1f2937; background:#fff; }
-        .container { max-width:800px; margin:0 auto; padding:20px; }
-        .header { text-align:center; margin-bottom:24px; border-bottom:2px solid #3b82f6; padding-bottom:16px; }
-        .logo { font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:8px; }
-        .company-info { font-size:12px; color:#6b7280; }
-        .invoice-info { display:flex; justify-content:space-between; margin-bottom:24px; }
-        .invoice-details, .customer-details { flex:1; }
-        .invoice-details { margin-left:20px; }
-        .section-title { font-weight:bold; color:#374151; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:4px; }
-        .info-row { margin-bottom:4px; }
-        .label { font-weight:500; color:#6b7280; }
-        .table { width:100%; border-collapse:collapse; margin:20px 0; }
-        .table th, .table td { padding:12px 8px; text-align:right; border-bottom:1px solid #e5e7eb; }
-        .table th { background:#f9fafb; font-weight:600; color:#374151; }
-        .table .number { text-align:center; font-family:monospace; }
-        .totals { margin-top:20px; }
-        .totals-table { width:300px; margin-right:auto; }
-        .totals-table td { padding:8px 12px; }
-        .total-row { font-weight:bold; font-size:16px; border-top:2px solid #374151; }
-        .footer { text-align:center; margin-top:32px; padding-top:16px; border-top:1px solid #e5e7eb; font-size:12px; color:#6b7280; }
-        @media print { .no-print { display:none; } }
+        body { 
+          font-family: 'Tajawal','Cairo', 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; 
+          font-size:14px; 
+          line-height:1.6; 
+          color:#1f2937; 
+          background:#fff; 
+        }
+        .container { 
+          max-width: 210mm;
+          min-height: 297mm;
+          margin: 0 auto;
+          padding: 20mm;
+          background: #fff;
+        }
+        .header { 
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 3px solid #3b82f6;
+        }
+        .header-left {
+          flex: 1;
+        }
+        .logo { 
+          font-size:28px; 
+          font-weight:700; 
+          color:#3b82f6; 
+          margin-bottom:10px; 
+        }
+        .company-info { 
+          font-size:13px; 
+          color:#6b7280;
+          line-height: 1.8;
+        }
+        .header-right {
+          text-align: left;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 15px;
+        }
+        .invoice-number-box {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: #fff;
+          padding: 15px 25px;
+          border-radius: 10px;
+          text-align: center;
+        }
+        .invoice-number-label {
+          font-size: 11px;
+          opacity: 0.9;
+          margin-bottom: 5px;
+        }
+        .invoice-number-value {
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+        .qr-code-container {
+          text-align: center;
+        }
+        .qr-code-label {
+          font-size: 10px;
+          color: #6b7280;
+          margin-top: 6px;
+        }
+        .invoice-info { 
+          display:grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 25px;
+          margin-bottom: 25px;
+        }
+        .invoice-details, .customer-details { 
+          background: #f9fafb;
+          padding: 18px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+        }
+        .section-title { 
+          font-size: 16px;
+          font-weight:700; 
+          color:#111827; 
+          margin-bottom:12px; 
+          padding-bottom:8px;
+          border-bottom: 2px solid #3b82f6;
+        }
+        .info-row { 
+          margin-bottom:10px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .info-row:last-child {
+          margin-bottom: 0;
+        }
+        .label { 
+          font-weight:600; 
+          color:#6b7280;
+          font-size: 12px;
+        }
+        .value {
+          font-weight: 600;
+          color: #111827;
+          font-size: 13px;
+        }
+        .table { 
+          width:100%; 
+          border-collapse:collapse; 
+          margin:25px 0;
+          background: #fff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .table th, .table td { 
+          padding:14px 12px; 
+          text-align:right; 
+          border-bottom:1px solid #e5e7eb;
+        }
+        .table th { 
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: #fff;
+          font-weight:600;
+          font-size: 13px;
+        }
+        .table tbody tr:hover {
+          background: #f9fafb;
+        }
+        .table .number { 
+          text-align:center; 
+          font-family:monospace;
+          font-weight: 600;
+        }
+        .totals { 
+          margin-top:25px;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .totals-table { 
+          width:350px;
+          border-collapse: collapse;
+        }
+        .totals-table td { 
+          padding:12px 18px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .totals-table td:first-child {
+          text-align: right;
+          color: #6b7280;
+          font-weight: 600;
+        }
+        .totals-table td:last-child {
+          text-align: left;
+          font-weight: 600;
+          color: #111827;
+        }
+        .total-row { 
+          font-weight:700; 
+          font-size:18px; 
+          border-top:3px solid #3b82f6;
+          background: #f9fafb;
+        }
+        .total-row td {
+          color: #111827;
+          font-size: 18px;
+        }
+        .footer { 
+          text-align:center; 
+          margin-top:40px; 
+          padding-top:20px;
+          border-top:1px solid #e5e7eb; 
+          font-size:12px; 
+          color:#6b7280;
+          line-height: 1.8;
+        }
+        @media print { 
+          .no-print { display:none; }
+          body { margin: 0; }
+          .container { padding: 15mm; }
+        }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">${settings.companyName || 'FixZone'}</div>
-          <div class="company-info">
-            ${settings.address || 'العنوان غير محدد'}<br>
-            هاتف: ${settings.phone || 'غير محدد'} | بريد إلكتروني: ${settings.email || 'غير محدد'}
+          <div class="header-left">
+            <div class="logo">${settings.companyName || 'FixZone'}</div>
+            <div class="company-info">
+              ${settings.address || 'العنوان غير محدد'}<br>
+              ${settings.phone ? `هاتف: ${settings.phone}` : ''} ${settings.email ? `| بريد إلكتروني: ${settings.email}` : ''}
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="invoice-number-box">
+              <div class="invoice-number-label">رقم الفاتورة</div>
+              <div class="invoice-number-value">INV-${requestNumber}</div>
+            </div>
+            ${settings.showQr !== false ? `
+            <div class="qr-code-container">
+              <canvas id="qrCanvas" width="100" height="100" style="border:1px solid #e5e7eb; border-radius:8px; padding:4px;"></canvas>
+              <div class="qr-code-label">تتبع حالة الجهاز</div>
+            </div>
+            ` : ''}
           </div>
         </div>
 
         <div class="invoice-info">
           <div class="invoice-details">
             <div class="section-title">تفاصيل الفاتورة</div>
-            <div class="info-row"><span class="label">رقم الفاتورة:</span> INV-${requestNumber}</div>
-            <div class="info-row"><span class="label">رقم طلب الإصلاح:</span> ${requestNumber}</div>
-            <div class="info-row"><span class="label">تاريخ الإصدار:</span> ${new Date().toLocaleDateString('ar-SA')}</div>
-            <div class="info-row"><span class="label">حالة الطلب:</span> ${statusText}</div>
+            <div class="info-row"><span class="label">رقم طلب الإصلاح:</span><span class="value">${requestNumber}</span></div>
+            <div class="info-row"><span class="label">تاريخ الإصدار:</span><span class="value">${new Date().toLocaleDateString('ar-SA')}</span></div>
+            <div class="info-row"><span class="label">حالة الطلب:</span><span class="value">${statusText}</span></div>
           </div>
           <div class="customer-details">
             <div class="section-title">بيانات العميل</div>
-            <div class="info-row"><span class="label">الاسم:</span> ${repair.customerName || 'غير محدد'}</div>
-            <div class="info-row"><span class="label">الهاتف:</span> ${repair.customerPhone || 'غير محدد'}</div>
-            ${repair.customerEmail ? `<div class="info-row"><span class="label">البريد:</span> ${repair.customerEmail}</div>` : ''}
-            ${repair.customerAddress ? `<div class="info-row"><span class="label">العنوان:</span> ${repair.customerAddress}</div>` : ''}
+            <div class="info-row"><span class="label">الاسم:</span><span class="value">${repair.customerName || 'غير محدد'}</span></div>
+            <div class="info-row"><span class="label">الهاتف:</span><span class="value">${repair.customerPhone || 'غير محدد'}</span></div>
+            ${repair.customerEmail ? `<div class="info-row"><span class="label">البريد:</span><span class="value">${repair.customerEmail}</span></div>` : ''}
+            ${repair.customerAddress ? `<div class="info-row"><span class="label">العنوان:</span><span class="value">${repair.customerAddress}</span></div>` : ''}
           </div>
         </div>
 
-        <div class="section-title">تفاصيل الجهاز</div>
-        <table class="table">
-          <tr>
-            <td><strong>نوع الجهاز:</strong> ${repair.deviceType || 'غير محدد'}</td>
-            <td><strong>الماركة:</strong> ${repair.deviceBrand || 'غير محدد'}</td>
-            <td><strong>الموديل:</strong> ${repair.deviceModel || 'غير محدد'}</td>
-          </tr>
-        </table>
+        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+          <div class="section-title" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #3b82f6;">تفاصيل الجهاز</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+            <div><span class="label">نوع الجهاز:</span> <strong>${repair.deviceType || 'غير محدد'}</strong></div>
+            <div><span class="label">الماركة:</span> <strong>${repair.deviceBrand || 'غير محدد'}</strong></div>
+            <div><span class="label">الموديل:</span> <strong>${repair.deviceModel || 'غير محدد'}</strong></div>
+          </div>
+        </div>
 
-        <div class="section-title">عناصر الفاتورة</div>
+        <div class="section-title" style="margin-top: 10px;">التكاليف والخدمات</div>
         <table class="table">
           <thead>
             <tr>
@@ -1715,16 +2183,37 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         ` : ''}
 
         <div class="footer">
-          شكراً لثقتكم بنا | ${settings.companyName || 'FixZone'}<br>
-          هذه فاتورة رسمية صادرة بتاريخ ${new Date().toLocaleDateString('ar-SA')}
+          <strong>شكراً لثقتكم بنا | ${settings.companyName || 'FixZone'}</strong><br>
+          هذه فاتورة رسمية صادرة بتاريخ ${new Date().toLocaleDateString('ar-SA')}<br>
+          يمكنك تتبع حالة الجهاز من خلال رمز QR أعلاه
         </div>
 
-        <div class="no-print" style="text-align:center; margin-top:20px;">
-          <button onclick="window.print()" style="padding:10px 20px; border:1px solid #e5e7eb; border-radius:6px; background:#3b82f6; color:#fff; cursor:pointer;">طباعة الفاتورة</button>
+        <div class="no-print" style="text-align:center; margin-top:30px;">
+          <button onclick="window.print()" style="padding:12px 30px; border:none; border-radius:8px; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 8px rgba(59,130,246,0.3);">🖨️ طباعة الفاتورة</button>
         </div>
       </div>
-
-      
+      ${settings.showQr !== false ? `
+      <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+      <script>
+        (function(){
+          try {
+            var canvas = document.getElementById('qrCanvas');
+            if (canvas && window.QRCode) {
+              QRCode.toCanvas(canvas, '${trackUrl}', { 
+                width: 100, 
+                margin: 2,
+                color: {
+                  dark: '#111827',
+                  light: '#ffffff'
+                }
+              }, function (error) { 
+                if (error) console.error(error); 
+              });
+            }
+          } catch (e) { console.error(e); }
+        })();
+      </script>
+      ` : ''}
     </body>
     </html>
     `;
@@ -1849,7 +2338,8 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
         d.deviceType,
         COALESCE(vo.label, d.brand) as deviceBrand,
         d.model as deviceModel,
-        d.serialNumber
+        d.serialNumber,
+        d.cpu, d.ram, d.storage
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id
       LEFT JOIN Device d ON rr.deviceId = d.id
@@ -1866,6 +2356,7 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
     const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
     const dates = formatDates(reqDate, 'both');
 
+    const problem = repair.reportedProblem || repair.problemDescription || '—';
     const html = `<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -1875,70 +2366,98 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
         @page { 
-          size: 10cm 5cm; 
-          margin: 5mm;
+          size: 40mm 58mm; 
+          margin: 0;
+        }
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
         body { 
           font-family: 'Tajawal','Cairo', Arial, sans-serif; 
           direction: rtl; 
           color: #111827; 
-          font-size: 11px;
+          font-size: 8px;
           margin: 0;
-          padding: 5mm;
+          padding: 0;
+          width: 40mm;
+          height: 58mm;
         }
         .sticker-container {
-          width: 100%;
-          height: 100%;
+          width: 40mm;
+          height: 58mm;
           border: 2px solid #111827;
-          padding: 8px;
-          box-sizing: border-box;
+          padding: 3mm;
+          display: flex;
+          flex-direction: column;
+          background: #fff;
         }
         .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 1px solid #e5e7eb;
-          padding-bottom: 4px;
-          margin-bottom: 6px;
-        }
-        .title {
-          font-size: 14px;
-          font-weight: bold;
+          border-bottom: 1.5px solid #111827;
+          padding-bottom: 2mm;
+          margin-bottom: 2mm;
         }
         .request-number {
-          font-size: 11px;
-          font-weight: 600;
-          color: #374151;
+          font-size: 9px;
+          font-weight: 700;
+          color: #111827;
+          text-align: center;
+          letter-spacing: 0.5px;
+        }
+        .company-name {
+          font-size: 7px;
+          color: #6b7280;
+          text-align: center;
+          margin-bottom: 1mm;
         }
         .content {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 6px;
-          margin-top: 4px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2mm;
+          font-size: 7px;
         }
-        .field {
-          font-size: 10px;
+        .row {
+          display: flex;
+          gap: 1.5mm;
+          align-items: flex-start;
         }
         .label {
           color: #6b7280;
-          font-size: 9px;
-          margin-bottom: 2px;
+          font-size: 6.5px;
+          font-weight: 600;
+          min-width: 18mm;
+          flex-shrink: 0;
         }
         .value {
           font-weight: 600;
-          font-size: 10px;
+          font-size: 7px;
           color: #111827;
+          flex: 1;
+          word-break: break-word;
         }
-        .full-width {
-          grid-column: 1 / -1;
-        }
-        .footer {
-          margin-top: 6px;
-          padding-top: 4px;
+        .problem-row {
+          margin-top: auto;
+          padding-top: 2mm;
           border-top: 1px solid #e5e7eb;
-          font-size: 9px;
+        }
+        .problem-label {
+          font-size: 6.5px;
           color: #6b7280;
-          text-align: center;
+          font-weight: 700;
+          margin-bottom: 1mm;
+        }
+        .problem-value {
+          font-size: 6.5px;
+          color: #111827;
+          line-height: 1.4;
+          max-height: 12mm;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
         }
         @media print { 
           .no-print { display: none; }
@@ -1949,41 +2468,42 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
     <body>
       <div class="sticker-container">
         <div class="header">
-          <div class="title">${settings.branchName || 'FixZone'}</div>
+          <div class="company-name">${settings.companyName || settings.branchName || 'FixZone'}</div>
           <div class="request-number">${requestNumber}</div>
         </div>
         <div class="content">
-          <div class="field">
-            <div class="label">العميل</div>
-            <div class="value">${repair.customerName || '—'}</div>
+          <div class="row">
+            <span class="label">العميل:</span>
+            <span class="value">${repair.customerName || '—'}</span>
           </div>
-          <div class="field">
-            <div class="label">الهاتف</div>
-            <div class="value">${repair.customerPhone || '—'}</div>
+          <div class="row">
+            <span class="label">رقم الموبايل:</span>
+            <span class="value">${repair.customerPhone || '—'}</span>
           </div>
-          <div class="field full-width">
-            <div class="label">الجهاز</div>
-            <div class="value">${repair.deviceBrand || '—'} ${repair.deviceModel || ''}</div>
+          <div class="row">
+            <span class="label">أمر الشغل:</span>
+            <span class="value">${requestNumber}</span>
           </div>
-          <div class="field">
-            <div class="label">نوع الجهاز</div>
-            <div class="value">${repair.deviceType || '—'}</div>
+          <div class="row">
+            <span class="label">المعالج:</span>
+            <span class="value">${repair.cpu || '—'}</span>
           </div>
-          <div class="field">
-            <div class="label">الرقم التسلسلي</div>
-            <div class="value">${repair.serialNumber || '—'}</div>
+          <div class="row">
+            <span class="label">الذاكرة (RAM):</span>
+            <span class="value">${repair.ram || '—'}</span>
           </div>
-          <div class="field full-width">
-            <div class="label">التاريخ</div>
-            <div class="value">${dates.primary || '—'}</div>
+          <div class="row">
+            <span class="label">التخزين (HARD):</span>
+            <span class="value">${repair.storage || '—'}</span>
+          </div>
+          <div class="problem-row">
+            <div class="problem-label">المشكلة:</div>
+            <div class="problem-value">${problem}</div>
           </div>
         </div>
-        <div class="footer">
-          ${settings.branchPhone ? `📞 ${settings.branchPhone}` : ''}
+        <div class="no-print" style="text-align:center; margin-top:2mm; padding-top:2mm; border-top:1px solid #e5e7eb;">
+          <button onclick="window.print()" style="padding:2px 4px; font-size:6px; border:1px solid #111827; border-radius:3px; background:#111827; color:#fff; cursor:pointer;">طباعة</button>
         </div>
-      </div>
-      <div class="no-print" style="text-align:center; margin-top:12px;">
-        <button onclick="window.print()" style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px; background:#111827; color:#fff;">طباعة الاستيكر</button>
       </div>
     </body>
     </html>`;
