@@ -2,9 +2,59 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validate, stockLevelSchemas } = require('../middleware/validation');
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
+
+// Helper function to update isLowStock and StockAlert
+async function updateStockAlert(connection, inventoryItemId, warehouseId, quantity, minLevel, userId) {
+  const isLowStock = quantity <= minLevel;
+  
+  // Update isLowStock
+  await connection.execute(
+    'UPDATE StockLevel SET isLowStock = ? WHERE inventoryItemId = ? AND warehouseId = ?',
+    [isLowStock ? 1 : 0, inventoryItemId, warehouseId]
+  );
+  
+  // Update or create StockAlert
+  if (quantity <= minLevel) {
+    const alertType = quantity <= 0 ? 'out_of_stock' : 'low_stock';
+    const severity = quantity <= 0 ? 'critical' : 'warning';
+    const message = quantity <= 0 
+      ? `الصنف منتهٍ تماماً (0 قطعة)`
+      : `المخزون منخفض: ${quantity} / ${minLevel}`;
+    
+    // Check if alert exists
+    const [existingAlert] = await connection.execute(
+      'SELECT id FROM StockAlert WHERE inventoryItemId = ? AND warehouseId = ? AND status = "active"',
+      [inventoryItemId, warehouseId]
+    );
+    
+    if (existingAlert.length > 0) {
+      // Update existing alert
+      await connection.execute(`
+        UPDATE StockAlert 
+        SET alertType = ?, currentQuantity = ?, threshold = ?, severity = ?, message = ?, createdAt = NOW()
+        WHERE id = ?
+      `, [alertType, quantity, minLevel, severity, message, existingAlert[0].id]);
+    } else {
+      // Create new alert
+      await connection.execute(`
+        INSERT INTO StockAlert 
+        (inventoryItemId, warehouseId, alertType, currentQuantity, threshold, severity, status, message, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, 'active', ?, NOW())
+      `, [inventoryItemId, warehouseId, alertType, quantity, minLevel, severity, message]);
+    }
+  } else {
+    // Resolve active alerts if stock is now above minLevel
+    await connection.execute(`
+      UPDATE StockAlert 
+      SET status = 'resolved', resolvedAt = NOW()
+      WHERE inventoryItemId = ? AND warehouseId = ? AND status = 'active'
+    `, [inventoryItemId, warehouseId]);
+  }
+}
 
 // GET /api/stock-levels - Get all stock levels
 router.get('/', async (req, res) => {
@@ -18,7 +68,7 @@ router.get('/', async (req, res) => {
       FROM StockLevel sl
       LEFT JOIN InventoryItem i ON sl.inventoryItemId = i.id
       LEFT JOIN Warehouse w ON sl.warehouseId = w.id
-      WHERE i.deletedAt IS NULL
+      WHERE i.deletedAt IS NULL AND sl.deletedAt IS NULL
       ORDER BY sl.updatedAt DESC
     `);
     
@@ -46,7 +96,7 @@ router.get('/item/:itemId', async (req, res) => {
         w.name as warehouseName
       FROM StockLevel sl
       LEFT JOIN Warehouse w ON sl.warehouseId = w.id
-      WHERE sl.inventoryItemId = ?
+      WHERE sl.inventoryItemId = ? AND sl.deletedAt IS NULL
       ORDER BY w.name
     `, [itemId]);
     
@@ -64,37 +114,36 @@ router.get('/item/:itemId', async (req, res) => {
 });
 
 // POST /api/stock-levels - Create or update stock level (MUST come before GET /:id)
-router.post('/', async (req, res) => {
+router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (req, res) => {
+  const connection = await db.getConnection();
+  
   try {
+    await connection.beginTransaction();
+    
     const { inventoryItemId, warehouseId, quantity, notes } = req.body;
     const userId = req.user?.id;
     
-    if (!inventoryItemId || !warehouseId || quantity === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'inventoryItemId, warehouseId, and quantity are required'
-      });
-    }
-    
     // التحقق من وجود الصنف والمخزن
-    const [itemResult] = await db.execute(
+    const [itemResult] = await connection.execute(
       'SELECT id, name FROM InventoryItem WHERE id = ? AND deletedAt IS NULL',
       [inventoryItemId]
     );
     
     if (itemResult.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'الصنف غير موجود'
       });
     }
     
-    const [warehouseResult] = await db.execute(
+    const [warehouseResult] = await connection.execute(
       'SELECT id, name FROM Warehouse WHERE id = ?',
       [warehouseId]
     );
     
     if (warehouseResult.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'المخزن غير موجود'
@@ -102,33 +151,37 @@ router.post('/', async (req, res) => {
     }
     
     // البحث عن StockLevel موجود
-    const [existing] = await db.execute(
-      'SELECT * FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ?',
+    const [existing] = await connection.execute(
+      'SELECT * FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ? AND deletedAt IS NULL',
       [inventoryItemId, warehouseId]
     );
     
     let stockLevel;
     const oldQuantity = existing.length > 0 ? existing[0].quantity : 0;
+    const minLevel = existing.length > 0 ? existing[0].minLevel : 0;
     const quantityDiff = quantity - oldQuantity;
     
     if (existing.length > 0) {
       // تحديث الكمية الموجودة
-      await db.execute(
-        'UPDATE StockLevel SET quantity = ?, updatedAt = NOW() WHERE id = ?',
-        [quantity, existing[0].id]
+      const isLowStock = quantity <= minLevel;
+      await connection.execute(
+        'UPDATE StockLevel SET quantity = ?, isLowStock = ?, updatedAt = NOW() WHERE id = ?',
+        [quantity, isLowStock ? 1 : 0, existing[0].id]
       );
       
       stockLevel = existing[0];
       stockLevel.quantity = quantity;
+      stockLevel.isLowStock = isLowStock ? 1 : 0;
     } else {
       // إنشاء StockLevel جديد
-      const [result] = await db.execute(
-        `INSERT INTO StockLevel (inventoryItemId, warehouseId, quantity, minLevel, createdAt, updatedAt)
-         VALUES (?, ?, ?, 0, NOW(), NOW())`,
-        [inventoryItemId, warehouseId, quantity]
+      const isLowStock = quantity <= 0;
+      const [result] = await connection.execute(
+        `INSERT INTO StockLevel (inventoryItemId, warehouseId, quantity, minLevel, isLowStock, createdAt, updatedAt)
+         VALUES (?, ?, ?, 0, ?, NOW(), NOW())`,
+        [inventoryItemId, warehouseId, quantity, isLowStock ? 1 : 0]
       );
       
-      const [newLevel] = await db.execute(
+      const [newLevel] = await connection.execute(
         'SELECT * FROM StockLevel WHERE id = ?',
         [result.insertId]
       );
@@ -142,7 +195,7 @@ router.post('/', async (req, res) => {
       const warehouseField = quantityDiff > 0 ? 'toWarehouseId' : 'fromWarehouseId';
       
       // تسجيل الحركة في StockMovement
-      await db.execute(
+      await connection.execute(
         `INSERT INTO StockMovement 
          (inventoryItemId, ${warehouseField}, type, quantity, userId, createdAt)
          VALUES (?, ?, ?, ?, ?, NOW())`,
@@ -150,35 +203,48 @@ router.post('/', async (req, res) => {
       );
     }
     
+    // تحديث StockAlert تلقائياً
+    await updateStockAlert(connection, inventoryItemId, warehouseId, quantity, minLevel, userId);
+    
+    await connection.commit();
+    
     res.json({
       success: true,
       data: stockLevel,
       message: existing.length > 0 ? 'تم تحديث مستوى المخزون بنجاح' : 'تم إنشاء مستوى المخزون بنجاح'
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Error managing stock level:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
       details: error.message
     });
+  } finally {
+    connection.release();
   }
 });
 
 // PUT /api/stock-levels/:id - Update stock level
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(stockLevelSchemas.updateStockLevel, 'body'), async (req, res) => {
+  const connection = await db.getConnection();
+  
   try {
+    await connection.beginTransaction();
+    
     const { id } = req.params;
     const { quantity, minLevel, notes } = req.body;
     const userId = req.user?.id;
     
     // جلب البيانات الحالية
-    const [current] = await db.execute(
-      'SELECT * FROM StockLevel WHERE id = ?',
+    const [current] = await connection.execute(
+      'SELECT * FROM StockLevel WHERE id = ? AND deletedAt IS NULL',
       [id]
     );
     
     if (current.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'مستوى المخزون غير موجود'
@@ -187,21 +253,38 @@ router.put('/:id', async (req, res) => {
     
     const currentLevel = current[0];
     const oldQuantity = currentLevel.quantity || 0;
+    const newMinLevel = minLevel !== undefined ? minLevel : currentLevel.minLevel;
+    const newQuantity = quantity !== undefined ? quantity : currentLevel.quantity;
     
     let updates = [];
     let params = [];
     
     if (quantity !== undefined) {
+      const isLowStock = quantity <= newMinLevel;
       updates.push('quantity = ?');
+      updates.push('isLowStock = ?');
       params.push(quantity);
+      params.push(isLowStock ? 1 : 0);
     }
     
     if (minLevel !== undefined) {
       updates.push('minLevel = ?');
       params.push(minLevel);
+      // Update isLowStock based on new minLevel if quantity wasn't updated
+      if (quantity === undefined) {
+        const isLowStock = currentLevel.quantity <= minLevel;
+        const existingIsLowIndex = updates.indexOf('isLowStock = ?');
+        if (existingIsLowIndex === -1) {
+          updates.push('isLowStock = ?');
+          params.push(isLowStock ? 1 : 0);
+        } else {
+          params[existingIsLowIndex] = isLowStock ? 1 : 0;
+        }
+      }
     }
     
     if (updates.length === 0) {
+      await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'لا توجد حقول للتحديث'
@@ -211,7 +294,7 @@ router.put('/:id', async (req, res) => {
     updates.push('updatedAt = NOW()');
     params.push(id);
     
-    const [result] = await db.execute(
+    const [result] = await connection.execute(
       `UPDATE StockLevel 
        SET ${updates.join(', ')}
        WHERE id = ?`,
@@ -219,6 +302,7 @@ router.put('/:id', async (req, res) => {
     );
     
     if (result.affectedRows === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'مستوى المخزون غير موجود'
@@ -231,24 +315,24 @@ router.put('/:id', async (req, res) => {
       const movementType = quantityDiff > 0 ? 'IN' : 'OUT';
       const warehouseField = quantityDiff > 0 ? 'toWarehouseId' : 'fromWarehouseId';
       
-      try {
-        await db.execute(
-          `INSERT INTO StockMovement 
-           (inventoryItemId, ${warehouseField}, type, quantity, userId, createdAt)
-           VALUES (?, ?, ?, ?, ?, NOW())`,
-          [currentLevel.inventoryItemId, currentLevel.warehouseId, movementType, Math.abs(quantityDiff), userId]
-        );
-      } catch (movementError) {
-        console.error('Error recording stock movement:', movementError);
-        // لا نوقف العملية إذا فشل تسجيل الحركة
-      }
+      await connection.execute(
+        `INSERT INTO StockMovement 
+         (inventoryItemId, ${warehouseField}, type, quantity, userId, createdAt)
+         VALUES (?, ?, ?, ?, ?, NOW())`,
+        [currentLevel.inventoryItemId, currentLevel.warehouseId, movementType, Math.abs(quantityDiff), userId]
+      );
     }
     
+    // تحديث StockAlert تلقائياً
+    await updateStockAlert(connection, currentLevel.inventoryItemId, currentLevel.warehouseId, newQuantity, newMinLevel, userId);
+    
     // جلب البيانات المحدثة
-    const [updated] = await db.execute(
+    const [updated] = await connection.execute(
       'SELECT * FROM StockLevel WHERE id = ?',
       [id]
     );
+    
+    await connection.commit();
     
     res.json({
       success: true,
@@ -256,22 +340,39 @@ router.put('/:id', async (req, res) => {
       message: 'تم تحديث مستوى المخزون بنجاح'
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Error updating stock level:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
       details: error.message
     });
+  } finally {
+    connection.release();
   }
 });
 
-// DELETE /api/stock-levels/:id - Delete stock level (soft delete not supported, hard delete)
+// DELETE /api/stock-levels/:id - Delete stock level (soft delete)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Check if StockLevel exists
+    const [current] = await db.execute(
+      'SELECT * FROM StockLevel WHERE id = ? AND deletedAt IS NULL',
+      [id]
+    );
+    
+    if (current.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'مستوى المخزون غير موجود'
+      });
+    }
+    
+    // Soft delete - update deletedAt
     const [result] = await db.execute(
-      'DELETE FROM StockLevel WHERE id = ?',
+      'UPDATE StockLevel SET deletedAt = NOW(), updatedAt = NOW() WHERE id = ?',
       [id]
     );
     
@@ -281,6 +382,14 @@ router.delete('/:id', async (req, res) => {
         message: 'مستوى المخزون غير موجود'
       });
     }
+    
+    // Resolve any active alerts for this stock level
+    await db.execute(
+      `UPDATE StockAlert 
+       SET status = 'resolved', resolvedAt = NOW()
+       WHERE inventoryItemId = ? AND warehouseId = ? AND status = 'active'`,
+      [current[0].inventoryItemId, current[0].warehouseId]
+    );
     
     res.json({
       success: true,

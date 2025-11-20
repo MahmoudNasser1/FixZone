@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const stockCountController = require('../controllers/stockCountController');
+const authMiddleware = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validation');
 const Joi = require('joi');
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // Validation schemas
 const createStockCountSchema = Joi.object({

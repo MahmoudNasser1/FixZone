@@ -356,6 +356,123 @@ class StockCountController {
           updateFields.push('adjustedBy = ?');
           updateValues.push(adjustedBy);
         }
+        
+        // تحديث StockLevel تلقائياً عند completion
+        const connection = await db.getConnection();
+        try {
+          await connection.beginTransaction();
+          
+          // جلب بيانات الجرد (warehouseId)
+          const [stockCountData] = await connection.execute(
+            'SELECT warehouseId FROM StockCount WHERE id = ?',
+            [id]
+          );
+          
+          if (stockCountData.length > 0) {
+            const warehouseId = stockCountData[0].warehouseId;
+            
+            // جلب جميع StockCountItems التي تم تسجيلها
+            const [items] = await connection.execute(
+              `SELECT 
+                sci.inventoryItemId,
+                sci.systemQuantity,
+                sci.countedQuantity,
+                sci.actualQuantity,
+                sci.variance,
+                sci.status
+              FROM StockCountItem sci
+              WHERE sci.stockCountId = ? AND sci.status = 'adjusted'`,
+              [id]
+            );
+            
+            // تحديث StockLevel لكل عنصر
+            for (const item of items) {
+              if (item.actualQuantity !== null && item.actualQuantity !== undefined) {
+                const actualQty = parseInt(item.actualQuantity);
+                const systemQty = parseInt(item.systemQuantity || 0);
+                const difference = actualQty - systemQty;
+                
+                if (difference !== 0) {
+                  // تحديث StockLevel
+                  const [existingStock] = await connection.execute(
+                    'SELECT id, quantity, minLevel FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ?',
+                    [item.inventoryItemId, warehouseId]
+                  );
+                  
+                  if (existingStock.length > 0) {
+                    const newQuantity = actualQty;
+                    const minLevel = existingStock[0].minLevel || 0;
+                    const isLowStock = newQuantity <= minLevel;
+                    
+                    await connection.execute(
+                      `UPDATE StockLevel 
+                       SET quantity = ?, isLowStock = ?, updatedAt = NOW() 
+                       WHERE id = ?`,
+                      [newQuantity, isLowStock ? 1 : 0, existingStock[0].id]
+                    );
+                    
+                    // إنشاء StockMovement (ADJUSTMENT)
+                    await connection.execute(`
+                      INSERT INTO StockMovement 
+                      (inventoryItemId, warehouseId, type, quantity, userId, referenceType, referenceId, createdAt)
+                      VALUES (?, ?, 'ADJUSTMENT', ?, ?, 'stock_count', ?, NOW())
+                    `, [
+                      item.inventoryItemId,
+                      warehouseId,
+                      Math.abs(difference),
+                      adjustedBy || req.user?.id,
+                      id
+                    ]);
+                    
+                    // تحديث StockAlert تلقائياً
+                    if (newQuantity <= minLevel) {
+                      const alertType = newQuantity <= 0 ? 'out_of_stock' : 'low_stock';
+                      const severity = newQuantity <= 0 ? 'critical' : 'warning';
+                      const message = newQuantity <= 0 
+                        ? `الصنف منتهٍ تماماً (0 قطعة)`
+                        : `المخزون منخفض: ${newQuantity} / ${minLevel}`;
+                      
+                      // Check if alert exists
+                      const [existingAlert] = await connection.execute(
+                        'SELECT id FROM StockAlert WHERE inventoryItemId = ? AND warehouseId = ? AND status = "active"',
+                        [item.inventoryItemId, warehouseId]
+                      );
+                      
+                      if (existingAlert.length > 0) {
+                        await connection.execute(`
+                          UPDATE StockAlert 
+                          SET alertType = ?, currentQuantity = ?, threshold = ?, severity = ?, message = ?, createdAt = NOW()
+                          WHERE id = ?
+                        `, [alertType, newQuantity, minLevel, severity, message, existingAlert[0].id]);
+                      } else {
+                        await connection.execute(`
+                          INSERT INTO StockAlert 
+                          (inventoryItemId, warehouseId, alertType, currentQuantity, threshold, severity, status, message, createdAt)
+                          VALUES (?, ?, ?, ?, ?, ?, 'active', ?, NOW())
+                        `, [item.inventoryItemId, warehouseId, alertType, newQuantity, minLevel, severity, message]);
+                      }
+                    } else {
+                      // حل التنبيه إذا كان موجوداً
+                      await connection.execute(`
+                        UPDATE StockAlert 
+                        SET status = 'resolved', resolvedAt = NOW()
+                        WHERE inventoryItemId = ? AND warehouseId = ? AND status = 'active'
+                      `, [item.inventoryItemId, warehouseId]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          await connection.commit();
+          connection.release();
+        } catch (error) {
+          await connection.rollback();
+          connection.release();
+          console.error('Error updating stock levels from stock count:', error);
+          // لا نوقف العملية إذا فشل تحديث StockLevel
+        }
       }
 
       await db.execute(
@@ -440,9 +557,9 @@ class StockCountController {
         });
       }
 
-      // حذف فعلي (أو يمكن استخدام status = 'cancelled')
+      // Soft delete - update status to cancelled and deletedAt
       await db.execute(
-        'UPDATE StockCount SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE StockCount SET status = ?, deletedAt = CURRENT_TIMESTAMP, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
         ['cancelled', id]
       );
 

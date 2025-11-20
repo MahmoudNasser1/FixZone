@@ -456,7 +456,49 @@ const vendorPaymentSchemas = {
 /**
  * Customer Validation Schemas
  */
+/**
+ * Customer Validation Schemas
+ */
 const customerSchemas = {
+  // Get customers query
+  getCustomers: Joi.object({
+    page: Joi.number().integer().min(0).default(0).optional()
+      .messages({
+        'number.min': 'رقم الصفحة يجب أن يكون أكبر من أو يساوي 0',
+        'number.base': 'رقم الصفحة يجب أن يكون رقم'
+      }),
+    pageSize: Joi.number().integer().min(1).max(100).default(20).optional()
+      .messages({
+        'number.min': 'عدد العناصر يجب أن يكون على الأقل 1',
+        'number.max': 'عدد العناصر يجب ألا يزيد عن 100',
+        'number.base': 'عدد العناصر يجب أن يكون رقم'
+      }),
+    q: Joi.string().max(200).allow('', null).optional()
+      .messages({
+        'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف'
+      }),
+    isActive: Joi.alternatives().try(
+      Joi.boolean(),
+      Joi.string().valid('true', 'false', '1', '0', 'yes', 'no')
+    ).optional(),
+    hasDebt: Joi.alternatives().try(
+      Joi.boolean(),
+      Joi.string().valid('true', 'false', '1', '0', 'yes', 'no')
+    ).optional(),
+    sort: Joi.string().valid('id', 'name', 'phone', 'email', 'createdAt', 'outstandingBalance', 'isActive').default('createdAt').optional(),
+    sortDir: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('DESC').optional()
+  }),
+
+  // Search customers query
+  searchCustomers: Joi.object({
+    q: Joi.string().max(200).required()
+      .messages({
+        'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف',
+        'any.required': 'نص البحث مطلوب'
+      }),
+    page: Joi.number().integer().min(1).default(1).optional(),
+    pageSize: Joi.number().integer().min(1).max(100).default(20).optional()
+  }),
   // Create customer
   createCustomer: Joi.object({
     name: Joi.string().min(2).max(100).trim().required()
@@ -1463,6 +1505,60 @@ const invoiceSchemas = {
   })
 };
 
+/**
+ * Stock Level Validation Schemas
+ */
+const stockLevelSchemas = {
+  // Create/Update stock level
+  createOrUpdateStockLevel: Joi.object({
+    inventoryItemId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف الصنف غير صحيح',
+        'number.base': 'معرف الصنف يجب أن يكون رقم',
+        'any.required': 'معرف الصنف مطلوب'
+      }),
+    
+    warehouseId: Joi.number().integer().positive().required()
+      .messages({
+        'number.positive': 'معرف المخزن غير صحيح',
+        'number.base': 'معرف المخزن يجب أن يكون رقم',
+        'any.required': 'معرف المخزن مطلوب'
+      }),
+    
+    quantity: Joi.number().integer().min(0).required()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون أكبر من أو تساوي 0',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح',
+        'any.required': 'الكمية مطلوبة'
+      }),
+    
+    notes: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 1000 حرف'
+      })
+  }),
+
+  // Update stock level
+  updateStockLevel: Joi.object({
+    quantity: Joi.number().integer().min(0).optional()
+      .messages({
+        'number.min': 'الكمية يجب أن تكون أكبر من أو تساوي 0',
+        'number.base': 'الكمية يجب أن تكون رقم صحيح'
+      }),
+    
+    minLevel: Joi.number().integer().min(0).optional()
+      .messages({
+        'number.min': 'مستوى المخزون الأدنى يجب أن يكون أكبر من أو يساوي 0',
+        'number.base': 'مستوى المخزون الأدنى يجب أن يكون رقم صحيح'
+      }),
+    
+    notes: Joi.string().max(1000).allow('', null).optional()
+      .messages({
+        'string.max': 'الملاحظات يجب ألا تزيد عن 1000 حرف'
+      })
+  }).min(1) // At least one field must be present
+};
+
 module.exports = {
   validate,
   commonSchemas,
@@ -1479,6 +1575,7 @@ module.exports = {
   quotationItemSchemas,
   paymentSchemas,
   purchaseOrderSchemas,
-  invoiceSchemas
+  invoiceSchemas,
+  stockLevelSchemas
 };
 

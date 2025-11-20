@@ -78,7 +78,7 @@ const StockCountPage = () => {
       ]);
 
       setStockCounts(stockCountsData.stockCounts || []);
-      setWarehouses(warehousesData || []);
+      setWarehouses(warehousesData?.data || warehousesData || []);
       setStats(statsData || null);
     } catch (err) {
       setError(err.message || 'حدث خطأ في تحميل البيانات');

@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // Complete repair workflow integration
 router.post('/repair-workflow/start', async (req, res) => {
@@ -8,21 +12,28 @@ router.post('/repair-workflow/start', async (req, res) => {
     const { repairId, technicianId, estimatedCost } = req.body;
     
     // Update repair status to in_progress
-    await db.query(
+    await db.execute(
       'UPDATE RepairRequest SET status = ?, assignedTechnicianId = ?, estimatedCost = ? WHERE id = ?',
       ['in_progress', technicianId, estimatedCost, repairId]
     );
     
     // Create status update log
-    await db.query(
+    await db.execute(
       'INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes) VALUES (?, ?, ?, ?)',
       [repairId, 'in_progress', technicianId, 'تم بدء عملية الإصلاح']
     );
     
-    res.json({ message: 'تم بدء عملية الإصلاح بنجاح' });
+    res.json({
+      success: true,
+      message: 'تم بدء عملية الإصلاح بنجاح'
+    });
   } catch (error) {
     console.error('Error starting repair workflow:', error);
-    res.status(500).json({ message: 'خطأ في بدء عملية الإصلاح' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في بدء عملية الإصلاح',
+      details: error.message
+    });
   }
 });
 
@@ -32,39 +43,46 @@ router.post('/repair-workflow/complete', async (req, res) => {
     const { repairId, actualCost, partsUsed, servicesUsed } = req.body;
     
     // Update repair status to completed
-    await db.query(
+    await db.execute(
       'UPDATE RepairRequest SET status = ?, actualCost = ?, completedAt = NOW() WHERE id = ?',
       ['completed', actualCost, repairId]
     );
     
     // Update stock levels for parts used
     for (const part of partsUsed) {
-      await db.query(
+      await db.execute(
         'UPDATE StockLevel SET quantity = quantity - ? WHERE inventoryItemId = ?',
         [part.quantity, part.itemId]
       );
       
       // Create stock movement record
-      await db.query(
+      await db.execute(
         'INSERT INTO StockMovement (type, quantity, inventoryItemId, userId, reason) VALUES (?, ?, ?, ?, ?)',
         ['out', part.quantity, part.itemId, req.body.userId, 'استخدام في إصلاح']
       );
     }
     
     // Create status update log
-    await db.query(
+    await db.execute(
       'INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes) VALUES (?, ?, ?, ?)',
       [repairId, 'completed', req.body.userId, 'تم إكمال الإصلاح']
     );
     
-    res.json({ 
+    res.json({
+      success: true,
       message: 'تم إكمال الإصلاح بنجاح',
-      repairId,
-      canCreateInvoice: true
+      data: {
+        repairId,
+        canCreateInvoice: true
+      }
     });
   } catch (error) {
     console.error('Error completing repair workflow:', error);
-    res.status(500).json({ message: 'خطأ في إكمال الإصلاح' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في إكمال الإصلاح',
+      details: error.message
+    });
   }
 });
 
@@ -74,19 +92,22 @@ router.post('/repair-workflow/create-invoice', async (req, res) => {
     const { repairId, customerId, items, totalAmount, taxAmount } = req.body;
     
     // Get repair details
-    const [repairRows] = await db.query(
+    const [repairRows] = await db.execute(
       'SELECT * FROM RepairRequest WHERE id = ?',
       [repairId]
     );
     
     if (repairRows.length === 0) {
-      return res.status(404).json({ message: 'طلب الإصلاح غير موجود' });
+      return res.status(404).json({
+        success: false,
+        message: 'طلب الإصلاح غير موجود'
+      });
     }
     
     const repair = repairRows[0];
     
     // Create invoice
-    const [invoiceResult] = await db.query(
+    const [invoiceResult] = await db.execute(
       'INSERT INTO Invoice (customerId, repairRequestId, totalAmount, taxAmount, status, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
       [customerId, repairId, totalAmount, taxAmount, 'pending']
     );
@@ -95,27 +116,34 @@ router.post('/repair-workflow/create-invoice', async (req, res) => {
     
     // Add invoice items
     for (const item of items) {
-      await db.query(
+      await db.execute(
         'INSERT INTO InvoiceItem (invoiceId, itemType, itemId, quantity, unitPrice, totalPrice) VALUES (?, ?, ?, ?, ?, ?)',
         [invoiceId, item.type, item.id, item.quantity, item.unitPrice, item.totalPrice]
       );
     }
     
     // Update repair status to invoiced
-    await db.query(
+    await db.execute(
       'UPDATE RepairRequest SET status = ? WHERE id = ?',
       ['invoiced', repairId]
     );
     
     res.json({
+      success: true,
       message: 'تم إنشاء الفاتورة بنجاح',
-      invoiceId,
-      repairId,
-      canProcessPayment: true
+      data: {
+        invoiceId,
+        repairId,
+        canProcessPayment: true
+      }
     });
   } catch (error) {
     console.error('Error creating invoice from repair:', error);
-    res.status(500).json({ message: 'خطأ في إنشاء الفاتورة' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في إنشاء الفاتورة',
+      details: error.message
+    });
   }
 });
 
@@ -125,25 +153,28 @@ router.post('/repair-workflow/process-payment', async (req, res) => {
     const { invoiceId, paymentAmount, paymentMethod, userId } = req.body;
     
     // Get invoice details
-    const [invoiceRows] = await db.query(
+    const [invoiceRows] = await db.execute(
       'SELECT * FROM Invoice WHERE id = ?',
       [invoiceId]
     );
     
     if (invoiceRows.length === 0) {
-      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+      return res.status(404).json({
+        success: false,
+        message: 'الفاتورة غير موجودة'
+      });
     }
     
     const invoice = invoiceRows[0];
     
     // Create payment record
-    await db.query(
+    await db.execute(
       'INSERT INTO Payment (invoiceId, amount, paymentMethod, paymentDate, userId) VALUES (?, ?, ?, NOW(), ?)',
       [invoiceId, paymentAmount, paymentMethod, userId]
     );
     
     // Calculate remaining amount
-    const [paymentRows] = await db.query(
+    const [paymentRows] = await db.execute(
       'SELECT SUM(amount) as totalPaid FROM Payment WHERE invoiceId = ?',
       [invoiceId]
     );
@@ -159,36 +190,43 @@ router.post('/repair-workflow/process-payment', async (req, res) => {
       newStatus = 'partially_paid';
     }
     
-    await db.query(
+    await db.execute(
       'UPDATE Invoice SET status = ? WHERE id = ?',
       [newStatus, invoiceId]
     );
     
     // If fully paid, update repair status to ready_for_delivery
     if (newStatus === 'paid') {
-      await db.query(
+      await db.execute(
         'UPDATE RepairRequest SET status = ? WHERE id = ?',
         ['ready_for_delivery', invoice.repairRequestId]
       );
       
       // Create status update log
-      await db.query(
+      await db.execute(
         'INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes) VALUES (?, ?, ?, ?)',
         [invoice.repairRequestId, 'ready_for_delivery', userId, 'تم الدفع - جاهز للتسليم']
       );
     }
     
     res.json({
+      success: true,
       message: 'تم معالجة الدفعة بنجاح',
-      invoiceId,
-      totalPaid,
-      remainingAmount,
-      status: newStatus,
-      canDeliver: newStatus === 'paid'
+      data: {
+        invoiceId,
+        totalPaid,
+        remainingAmount,
+        status: newStatus,
+        canDeliver: newStatus === 'paid'
+      }
     });
   } catch (error) {
     console.error('Error processing payment:', error);
-    res.status(500).json({ message: 'خطأ في معالجة الدفعة' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في معالجة الدفعة',
+      details: error.message
+    });
   }
 });
 
@@ -198,7 +236,7 @@ router.post('/repair-workflow/complete-delivery', async (req, res) => {
     const { repairId, deliveredBy, customerSignature, notes } = req.body;
     
     // Update repair status to delivered
-    await db.query(
+    await db.execute(
       'UPDATE RepairRequest SET status = ?, deliveredAt = NOW(), deliveredBy = ? WHERE id = ?',
       ['delivered', deliveredBy, repairId]
     );
@@ -210,19 +248,26 @@ router.post('/repair-workflow/complete-delivery', async (req, res) => {
     // );
     
     // Create status update log
-    await db.query(
+    await db.execute(
       'INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes) VALUES (?, ?, ?, ?)',
       [repairId, 'delivered', deliveredBy, 'تم تسليم الجهاز للعميل']
     );
     
     res.json({
+      success: true,
       message: 'تم تسليم الجهاز بنجاح',
-      repairId,
-      workflowCompleted: true
+      data: {
+        repairId,
+        workflowCompleted: true
+      }
     });
   } catch (error) {
     console.error('Error completing delivery:', error);
-    res.status(500).json({ message: 'خطأ في تسليم الجهاز' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في تسليم الجهاز',
+      details: error.message
+    });
   }
 });
 
@@ -232,7 +277,7 @@ router.get('/repair-workflow/:repairId/status', async (req, res) => {
     const { repairId } = req.params;
     
     // Get repair details with related data
-    const [repairRows] = await db.query(`
+    const [repairRows] = await db.execute(`
       SELECT 
         rr.*,
         c.firstName as customerFirstName,
@@ -253,7 +298,10 @@ router.get('/repair-workflow/:repairId/status', async (req, res) => {
     `, [repairId]);
     
     if (repairRows.length === 0) {
-      return res.status(404).json({ message: 'طلب الإصلاح غير موجود' });
+      return res.status(404).json({
+        success: false,
+        message: 'طلب الإصلاح غير موجود'
+      });
     }
     
     const repair = repairRows[0];
@@ -271,13 +319,20 @@ router.get('/repair-workflow/:repairId/status', async (req, res) => {
     };
     
     res.json({
-      repair,
-      workflowStatus,
-      remainingAmount
+      success: true,
+      data: {
+        repair,
+        workflowStatus,
+        remainingAmount
+      }
     });
   } catch (error) {
     console.error('Error getting workflow status:', error);
-    res.status(500).json({ message: 'خطأ في جلب حالة سير العمل' });
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في جلب حالة سير العمل',
+      details: error.message
+    });
   }
 });
 
