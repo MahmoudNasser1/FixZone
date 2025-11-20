@@ -7,14 +7,10 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'FZ',
   port: process.env.DB_PORT || 3306,
-  // Disable prepared statements to avoid protocol issues
-  prepare: false,
   // Connection pool options
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
   // Timeouts
   connectTimeout: 10000,
-  acquireTimeout: 10000,
-  timeout: 10000,
   // Reconnection
   enableKeepAlive: true,
   keepAliveInitialDelay: 0

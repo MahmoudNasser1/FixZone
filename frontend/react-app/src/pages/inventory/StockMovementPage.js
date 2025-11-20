@@ -50,6 +50,9 @@ const StockMovementPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   
+  // Multi-select state
+  const [selectedMovements, setSelectedMovements] = useState([]);
+  
   // Sorting state
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');

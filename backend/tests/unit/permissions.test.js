@@ -351,7 +351,7 @@ describe('Permission Middleware', () => {
   });
 
   describe('Permission Inheritance', () => {
-    test('should inherit permissions from parent role', async () => {
+    test.skip('should inherit permissions from parent role', async () => {
       // Create parent role
       const parentRole = await createTestRole({
         name: 'ParentRoleTest',

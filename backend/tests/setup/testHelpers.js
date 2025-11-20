@@ -24,7 +24,7 @@ async function createTestUser(userData) {
   } = userData;
 
   // Ensure unique email
-  const uniqueEmail = email.includes('@') 
+  const uniqueEmail = email.includes('@')
     ? email.replace('@', `_${Date.now()}${Math.random().toString(36).substr(2, 5)}@`)
     : `test${Date.now()}${Math.random().toString(36).substr(2, 9)}@example.com`;
 
@@ -180,7 +180,7 @@ async function cleanupTestData(userIds = [], roleIds = []) {
             'UPDATE Role SET parentRoleId = NULL WHERE parentRoleId = ?',
             [roleId]
           );
-          
+
           // Then delete the role
           await db.execute(
             'DELETE FROM Role WHERE id = ? AND isSystem = FALSE',

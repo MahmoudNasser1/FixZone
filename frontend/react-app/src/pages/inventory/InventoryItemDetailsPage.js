@@ -34,15 +34,18 @@ const InventoryItemDetailsPage = () => {
       setLoading(true);
       setError(null);
       
-      const data = await apiService.request(`/inventory/${id}`);
-      setItem(data);
+      const response = await apiService.request(`/inventory/${id}`);
+      const itemData = response.data || response;
+      setItem(itemData);
       
       // Fetch stock levels if available
       try {
-        const stockData = await apiService.request(`/inventory/${id}/stock-levels`);
-        setStockLevels(Array.isArray(stockData) ? stockData : stockData.data || []);
+        const stockResponse = await apiService.request(`/inventory/${id}/stock-levels`);
+        const stockData = stockResponse.data || stockResponse;
+        setStockLevels(Array.isArray(stockData) ? stockData : []);
       } catch (e) {
         console.log('Stock levels not available:', e);
+        setStockLevels([]);
       }
     } catch (err) {
       console.error('Error fetching item details:', err);
@@ -63,7 +66,12 @@ const InventoryItemDetailsPage = () => {
       navigate('/inventory');
     } catch (err) {
       console.error('Error deleting item:', err);
-      notifications.error('فشل في حذف الصنف');
+      const errorMessage = err.message || 'فشل في حذف الصنف';
+      if (errorMessage.includes('existing stock')) {
+        notifications.error('لا يمكن حذف الصنف لأنه يحتوي على مخزون. يرجى إفراغ المخزون أولاً.');
+      } else {
+        notifications.error(errorMessage);
+      }
     }
   };
 

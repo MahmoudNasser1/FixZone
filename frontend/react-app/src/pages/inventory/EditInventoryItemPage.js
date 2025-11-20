@@ -49,12 +49,13 @@ const EditInventoryItemPage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || result;
         setFormData({
           sku: data.sku || '',
           name: data.name || '',
           description: data.description || '',
-          category: data.category || '',
+          category: data.type || data.category || '',
           purchasePrice: data.purchasePrice || 0,
           sellingPrice: data.sellingPrice || 0,
           unit: data.unit || 'قطعة'

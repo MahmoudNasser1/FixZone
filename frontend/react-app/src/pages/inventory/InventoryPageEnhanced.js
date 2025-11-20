@@ -35,6 +35,11 @@ const InventoryPageEnhanced = () => {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   
+  // State للـ Multi-Select و Pagination
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   // State للإحصائيات
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -78,14 +83,24 @@ const InventoryPageEnhanced = () => {
       console.log('Items data loaded:', itemsData.length, 'items');
       
       let warehousesData = [];
-      if (Array.isArray(warehousesRes)) {
-        warehousesData = warehousesRes;
+      if (warehousesRes) {
+        if (Array.isArray(warehousesRes)) {
+          warehousesData = warehousesRes;
+        } else if (warehousesRes.data) {
+          warehousesData = Array.isArray(warehousesRes.data) ? warehousesRes.data : [];
+        }
       }
+      console.log('Warehouses loaded:', warehousesData.length, 'warehouses');
       
       let stockData = [];
-      if (Array.isArray(stockLevelsRes)) {
-        stockData = stockLevelsRes;
+      if (stockLevelsRes) {
+        if (Array.isArray(stockLevelsRes)) {
+          stockData = stockLevelsRes;
+        } else if (stockLevelsRes.data) {
+          stockData = Array.isArray(stockLevelsRes.data) ? stockLevelsRes.data : [];
+        }
       }
+      console.log('Stock levels loaded:', stockData.length, 'levels');
       
       setItems(itemsData);
       setWarehouses(warehousesData);
@@ -265,6 +280,56 @@ const InventoryPageEnhanced = () => {
     });
     
     return filtered;
+  };
+
+  // Multi-Select handlers
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const allIds = getCurrentPageItems().map(item => item.id);
+      setSelectedItems(allIds);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId, checked) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`هل أنت متأكد من حذف ${selectedItems.length} صنف؟`)) {
+      return;
+    }
+
+    try {
+      await Promise.all(selectedItems.map(id => 
+        apiService.request(`/inventory/${id}`, { method: 'DELETE' })
+      ));
+      
+      notifications.success(`تم حذف ${selectedItems.length} صنف بنجاح`);
+      setSelectedItems([]);
+      loadData();
+    } catch (err) {
+      console.error('Error bulk deleting:', err);
+      notifications.error('فشل في حذف بعض الأصناف');
+    }
+  };
+
+  // Pagination helpers
+  const getCurrentPageItems = () => {
+    const filtered = getFilteredAndSortedItems();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const filtered = getFilteredAndSortedItems();
+    return Math.ceil(filtered.length / itemsPerPage);
   };
 
   const handleSort = (field) => {
@@ -537,8 +602,37 @@ const InventoryPageEnhanced = () => {
       <SimpleCard>
         <SimpleCardHeader>
           <SimpleCardTitle className="flex items-center justify-between">
-            <span>قائمة الأصناف ({filteredItems.length})</span>
+            <div className="flex items-center gap-4">
+              <span>قائمة الأصناف ({getFilteredAndSortedItems().length})</span>
+              {selectedItems.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">({selectedItems.length} محدد)</span>
+                  <SimpleButton
+                    variant="danger"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف المحدد
+                  </SimpleButton>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="10">10 صفوف</option>
+                <option value="25">25 صف</option>
+                <option value="50">50 صف</option>
+                <option value="100">100 صف</option>
+              </select>
               <SimpleButton
                 variant="outline"
                 size="sm"
@@ -568,6 +662,14 @@ const InventoryPageEnhanced = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    <th className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.length === getCurrentPageItems().length && getCurrentPageItems().length > 0}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       #
                     </th>
@@ -625,15 +727,15 @@ const InventoryPageEnhanced = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredItems.length === 0 ? (
+                  {getCurrentPageItems().length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
                         <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                         <p>لا توجد أصناف</p>
                       </td>
                     </tr>
                   ) : (
-                    filteredItems.map((item) => {
+                    getCurrentPageItems().map((item, index) => {
                       const stock = getStockForItem(item.id);
                       const available = stock.quantity || 0;
                       const warehouses = stock.warehouses || [];
@@ -723,6 +825,52 @@ const InventoryPageEnhanced = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {getTotalPages() > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                عرض {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, getFilteredAndSortedItems().length)} من {getFilteredAndSortedItems().length}
+              </div>
+              <div className="flex items-center gap-2">
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  الأولى
+                </SimpleButton>
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  السابق
+                </SimpleButton>
+                <span className="px-3 py-1 text-sm text-gray-700">
+                  صفحة {currentPage} من {getTotalPages()}
+                </span>
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(getTotalPages(), prev + 1))}
+                  disabled={currentPage === getTotalPages()}
+                >
+                  التالي
+                </SimpleButton>
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(getTotalPages())}
+                  disabled={currentPage === getTotalPages()}
+                >
+                  الأخيرة
+                </SimpleButton>
+              </div>
             </div>
           )}
         </SimpleCardContent>

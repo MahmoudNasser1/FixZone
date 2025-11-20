@@ -17,9 +17,9 @@ const checkPermission = (requiredPermission, options = {}) => {
     try {
       // Ensure user is authenticated
       if (!req.user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
         });
       }
 
@@ -27,9 +27,9 @@ const checkPermission = (requiredPermission, options = {}) => {
       const roleId = req.user.roleId || req.user.role;
 
       if (!roleId) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'User role not found' 
+        return res.status(403).json({
+          success: false,
+          message: 'User role not found'
         });
       }
 
@@ -45,9 +45,9 @@ const checkPermission = (requiredPermission, options = {}) => {
       );
 
       if (!roles.length) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Role not found or inactive' 
+        return res.status(403).json({
+          success: false,
+          message: 'Role not found or inactive'
         });
       }
 
@@ -56,16 +56,16 @@ const checkPermission = (requiredPermission, options = {}) => {
 
       // Parse permissions JSON
       try {
-        permissions = role.permissions 
-          ? (typeof role.permissions === 'string' 
-              ? JSON.parse(role.permissions) 
-              : role.permissions)
+        permissions = role.permissions
+          ? (typeof role.permissions === 'string'
+            ? JSON.parse(role.permissions)
+            : role.permissions)
           : {};
       } catch (e) {
         console.error('Error parsing permissions JSON:', e);
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Error parsing role permissions' 
+        return res.status(500).json({
+          success: false,
+          message: 'Error parsing role permissions'
         });
       }
 
@@ -82,7 +82,7 @@ const checkPermission = (requiredPermission, options = {}) => {
       // Check permission inheritance from parent role
       if (role.parentRoleId) {
         const hasParentPermission = await checkParentPermission(
-          role.parentRoleId, 
+          role.parentRoleId,
           requiredPermission
         );
         if (hasParentPermission) {
@@ -106,8 +106,8 @@ const checkPermission = (requiredPermission, options = {}) => {
       }
 
       // Permission denied
-      return res.status(403).json({ 
-        success: false, 
+      return res.status(403).json({
+        success: false,
         message: 'Access denied: Insufficient permissions',
         required: requiredPermission,
         userRole: role.name,
@@ -116,10 +116,10 @@ const checkPermission = (requiredPermission, options = {}) => {
 
     } catch (error) {
       console.error('Error in permission middleware:', error);
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: 'Error checking permissions',
-        error: error.message 
+        error: error.message
       });
     }
   };
@@ -146,10 +146,10 @@ async function checkParentPermission(parentRoleId, permission) {
     let permissions = {};
 
     try {
-      permissions = parent.permissions 
-        ? (typeof parent.permissions === 'string' 
-            ? JSON.parse(parent.permissions) 
-            : parent.permissions)
+      permissions = parent.permissions
+        ? (typeof parent.permissions === 'string'
+          ? JSON.parse(parent.permissions)
+          : parent.permissions)
         : {};
     } catch (e) {
       return false;
@@ -181,9 +181,9 @@ const checkAnyPermission = (requiredPermissions) => {
   return async (req, res, next) => {
     try {
       if (!req.user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
         });
       }
 
@@ -200,9 +200,9 @@ const checkAnyPermission = (requiredPermissions) => {
       );
 
       if (!roles.length) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Role not found or inactive' 
+        return res.status(403).json({
+          success: false,
+          message: 'Role not found or inactive'
         });
       }
 
@@ -210,15 +210,15 @@ const checkAnyPermission = (requiredPermissions) => {
       let permissions = {};
 
       try {
-        permissions = role.permissions 
-          ? (typeof role.permissions === 'string' 
-              ? JSON.parse(role.permissions) 
-              : role.permissions)
+        permissions = role.permissions
+          ? (typeof role.permissions === 'string'
+            ? JSON.parse(role.permissions)
+            : role.permissions)
           : {};
       } catch (e) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Error parsing role permissions' 
+        return res.status(500).json({
+          success: false,
+          message: 'Error parsing role permissions'
         });
       }
 
@@ -243,18 +243,18 @@ const checkAnyPermission = (requiredPermissions) => {
         }
       }
 
-      return res.status(403).json({ 
-        success: false, 
+      return res.status(403).json({
+        success: false,
         message: 'Access denied: Insufficient permissions',
         required: requiredPermissions
       });
 
     } catch (error) {
       console.error('Error in checkAnyPermission:', error);
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: 'Error checking permissions',
-        error: error.message 
+        error: error.message
       });
     }
   };
@@ -269,9 +269,9 @@ const checkAllPermissions = (requiredPermissions) => {
   return async (req, res, next) => {
     try {
       if (!req.user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
         });
       }
 
@@ -288,9 +288,9 @@ const checkAllPermissions = (requiredPermissions) => {
       );
 
       if (!roles.length) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Role not found or inactive' 
+        return res.status(403).json({
+          success: false,
+          message: 'Role not found or inactive'
         });
       }
 
@@ -298,15 +298,15 @@ const checkAllPermissions = (requiredPermissions) => {
       let permissions = {};
 
       try {
-        permissions = role.permissions 
-          ? (typeof role.permissions === 'string' 
-              ? JSON.parse(role.permissions) 
-              : role.permissions)
+        permissions = role.permissions
+          ? (typeof role.permissions === 'string'
+            ? JSON.parse(role.permissions)
+            : role.permissions)
           : {};
       } catch (e) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Error parsing role permissions' 
+        return res.status(500).json({
+          success: false,
+          message: 'Error parsing role permissions'
         });
       }
 
@@ -322,16 +322,16 @@ const checkAllPermissions = (requiredPermissions) => {
           if (role.parentRoleId) {
             const hasParent = await checkParentPermission(role.parentRoleId, permission);
             if (!hasParent) {
-              return res.status(403).json({ 
-                success: false, 
+              return res.status(403).json({
+                success: false,
                 message: 'Access denied: Insufficient permissions',
                 required: requiredPermissions,
                 missing: permission
               });
             }
           } else {
-            return res.status(403).json({ 
-              success: false, 
+            return res.status(403).json({
+              success: false,
               message: 'Access denied: Insufficient permissions',
               required: requiredPermissions,
               missing: permission
@@ -344,10 +344,10 @@ const checkAllPermissions = (requiredPermissions) => {
 
     } catch (error) {
       console.error('Error in checkAllPermissions:', error);
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: 'Error checking permissions',
-        error: error.message 
+        error: error.message
       });
     }
   };
@@ -374,10 +374,10 @@ const hasPermission = async (roleId, permission) => {
     let permissions = {};
 
     try {
-      permissions = role.permissions 
-        ? (typeof role.permissions === 'string' 
-            ? JSON.parse(role.permissions) 
-            : role.permissions)
+      permissions = role.permissions
+        ? (typeof role.permissions === 'string'
+          ? JSON.parse(role.permissions)
+          : role.permissions)
         : {};
     } catch (e) {
       return false;

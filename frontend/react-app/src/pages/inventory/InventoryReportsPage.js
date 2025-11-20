@@ -36,32 +36,56 @@ const InventoryReportsPage = () => {
       setLoading(true);
       setError('');
       
-      const [warehousesRes, itemsRes, levelsRes, movementsRes] = await Promise.all([
+      const [warehousesData, itemsData, levelsData, movementsData] = await Promise.all([
         apiService.request('/warehouses'),
         apiService.request('/inventory'),
         apiService.request('/stocklevels'),
         apiService.request('/stockmovements')
       ]);
 
-      if (warehousesRes.ok) {
-        const warehousesData = await warehousesRes.json();
-        setWarehouses(warehousesData);
+      // Parse warehouses
+      let parsedWarehouses = [];
+      if (Array.isArray(warehousesData)) {
+        parsedWarehouses = warehousesData;
+      } else if (warehousesData?.data) {
+        parsedWarehouses = Array.isArray(warehousesData.data) ? warehousesData.data : [];
       }
+      setWarehouses(parsedWarehouses);
 
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setInventoryItems(Array.isArray(itemsData) ? itemsData : (itemsData.data?.items || []));
+      // Parse items
+      let parsedItems = [];
+      if (Array.isArray(itemsData)) {
+        parsedItems = itemsData;
+      } else if (itemsData?.data) {
+        parsedItems = Array.isArray(itemsData.data) ? itemsData.data : (itemsData.data.items || []);
       }
+      setInventoryItems(parsedItems);
 
-      if (levelsRes.ok) {
-        const levelsData = await levelsRes.json();
-        setStockLevels(levelsData);
+      // Parse stock levels
+      let parsedLevels = [];
+      if (Array.isArray(levelsData)) {
+        parsedLevels = levelsData;
+      } else if (levelsData?.data) {
+        parsedLevels = Array.isArray(levelsData.data) ? levelsData.data : [];
       }
+      setStockLevels(parsedLevels);
 
-      if (movementsRes.ok) {
-        const movementsData = await movementsRes.json();
-        setStockMovements(movementsData);
+      // Parse stock movements
+      let parsedMovements = [];
+      if (Array.isArray(movementsData)) {
+        parsedMovements = movementsData;
+      } else if (movementsData?.data) {
+        parsedMovements = Array.isArray(movementsData.data) ? movementsData.data : [];
       }
+      setStockMovements(parsedMovements);
+
+      console.log('Reports data loaded:', {
+        warehouses: parsedWarehouses.length,
+        items: parsedItems.length,
+        levels: parsedLevels.length,
+        movements: parsedMovements.length
+      });
+
     } catch (err) {
       setError('تعذر تحميل بيانات المخزون');
       console.error('Error loading inventory data:', err);

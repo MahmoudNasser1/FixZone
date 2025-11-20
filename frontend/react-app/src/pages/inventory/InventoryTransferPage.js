@@ -38,30 +38,46 @@ const InventoryTransferPage = () => {
       setLoading(true);
       setError('');
       
-      const [warehousesRes, itemsRes, levelsRes] = await Promise.all([
+      const [warehousesData, itemsData, levelsData] = await Promise.all([
         apiService.request('/warehouses'),
         apiService.request('/inventory'),
         apiService.request('/stocklevels')
       ]);
 
-      if (warehousesRes.ok) {
-        const warehousesData = await warehousesRes.json();
-        setWarehouses(warehousesData);
+      // Parse warehouses
+      let parsedWarehouses = [];
+      if (Array.isArray(warehousesData)) {
+        parsedWarehouses = warehousesData;
+      } else if (warehousesData?.data) {
+        parsedWarehouses = Array.isArray(warehousesData.data) ? warehousesData.data : [];
       }
+      console.log('Warehouses loaded:', parsedWarehouses.length, parsedWarehouses);
+      setWarehouses(parsedWarehouses);
 
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setInventoryItems(Array.isArray(itemsData) ? itemsData : (itemsData.data?.items || []));
+      // Parse items
+      let parsedItems = [];
+      if (Array.isArray(itemsData)) {
+        parsedItems = itemsData;
+      } else if (itemsData?.data) {
+        parsedItems = Array.isArray(itemsData.data) ? itemsData.data : (itemsData.data.items || []);
       }
+      console.log('Items loaded:', parsedItems.length);
+      setInventoryItems(parsedItems);
 
-      if (levelsRes.ok) {
-        const levelsData = await levelsRes.json();
-        console.log('Stock levels loaded:', levelsData);
-        setStockLevels(levelsData);
+      // Parse stock levels
+      let parsedLevels = [];
+      if (Array.isArray(levelsData)) {
+        parsedLevels = levelsData;
+      } else if (levelsData?.data) {
+        parsedLevels = Array.isArray(levelsData.data) ? levelsData.data : [];
       }
+      console.log('Stock levels loaded:', parsedLevels.length);
+      setStockLevels(parsedLevels);
+
     } catch (err) {
       setError('تعذر تحميل بيانات المخزون');
       console.error('Error loading inventory data:', err);
+      notifications.error('تعذر تحميل بيانات المخزون');
     } finally {
       setLoading(false);
     }

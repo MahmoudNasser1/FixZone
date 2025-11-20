@@ -339,6 +339,7 @@ function App() {
                       {/* Inventory, Settings, Payments */}
                       <Route path="inventory" element={<InventoryPageEnhanced />} />
                       <Route path="inventory/new" element={<NewInventoryItemPage />} />
+                      <Route path="inventory/parts" element={<Navigate to="/inventory" replace />} />
                       <Route path="inventory/transfer" element={<InventoryTransferPage />} />
                       <Route path="inventory/reports" element={<InventoryReportsPage />} />
                       <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />

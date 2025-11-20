@@ -1,0 +1,52 @@
+{
+  "tableName": "workorders",
+  "columns": [
+    "id",
+    "name",
+    "client_id",
+    "user_id",
+    "device_type",
+    "brand",
+    "device_model",
+    "device_sn",
+    "purchase_date",
+    "problem_description",
+    "note",
+    "entery_at",
+    "exit_at",
+    "branche_id",
+    "creator_id",
+    "order_id",
+    "created_at",
+    "updated_at",
+    "problem_type",
+    "ref_num",
+    "device_problems"
+  ],
+  "rowCount": 1,
+  "rows": [
+    {
+      "id": 1,
+      "name": "WK-1",
+      "client_id": 1,
+      "user_id": null,
+      "device_type": "بوردة غسالة",
+      "brand": "Dell",
+      "device_model": "Dell Latitude",
+      "device_sn": "4L2CGD3",
+      "purchase_date": null,
+      "problem_description": "الفانه صوتها عالي",
+      "note": "مشحون بايوس قبل كدا",
+      "entery_at": "2023-09-25 00:21:00",
+      "exit_at": null,
+      "branche_id": 1,
+      "creator_id": 4,
+      "order_id": 1,
+      "created_at": "2023-10-07 00:24:25",
+      "updated_at": "2023-10-07 00:27:55",
+      "problem_type": null,
+      "ref_num": 1,
+      "device_problems": "[\\\"Full Check | \\\\u0641\\\\u062d\\\\u0635 \\\\u0643\\\\u0627\\\\u0645\\\\u0644\\\"]"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "tableName": "branches",
+  "columns": [
+    "id",
+    "name",
+    "mobile",
+    "note",
+    "created_at",
+    "updated_at"
+  ],
+  "rowCount": 2,
+  "rows": [
+    {
+      "id": 1,
+      "name": "الفرع الرئيسى",
+      "mobile": "01270388043",
+      "note": null,
+      "created_at": "2023-10-05 20:33:01",
+      "updated_at": "2023-10-06 11:43:18"
+    },
+    {
+      "id": 2,
+      "name": "فرع مدينه نصر",
+      "mobile": "01270388043",
+      "note": null,
+      "created_at": "2024-02-15 16:42:29",
+      "updated_at": "2024-02-15 16:42:29"
+    }
+  ]
+}

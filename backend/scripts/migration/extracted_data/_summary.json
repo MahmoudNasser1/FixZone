@@ -1,0 +1,31 @@
+{
+  "extractionDate": "2025-11-21T00:54:32.942Z",
+  "sourceFile": "/opt/lampp/htdocs/FixZone/IN/FZ Data From Old System 2025-11-20_u539485933_maintain_dump.sql",
+  "tables": [
+    {
+      "name": "clients",
+      "columns": 14,
+      "rows": 965
+    },
+    {
+      "name": "workorders",
+      "columns": 21,
+      "rows": 1
+    },
+    {
+      "name": "lookups",
+      "columns": 8,
+      "rows": 49
+    },
+    {
+      "name": "branches",
+      "columns": 6,
+      "rows": 2
+    },
+    {
+      "name": "invoices",
+      "columns": 36,
+      "rows": 1268
+    }
+  ]
+}

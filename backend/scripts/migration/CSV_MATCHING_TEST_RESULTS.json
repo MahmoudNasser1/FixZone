@@ -1,0 +1,461 @@
+{
+  "success": 29,
+  "multipleMatches": 1,
+  "noMatch": 0,
+  "invalidFormat": 0,
+  "details": [
+    {
+      "index": 1,
+      "invoiceId": "1402",
+      "customerName": "ا احمد العمده",
+      "normalizedName": "ا احمد العمده",
+      "matches": 1,
+      "clientIds": [
+        189
+      ],
+      "clientNames": [
+        "ا احمد العمده"
+      ],
+      "status": "success",
+      "clientId": 189
+    },
+    {
+      "index": 2,
+      "invoiceId": "1401",
+      "customerName": "ا احمد العمده",
+      "normalizedName": "ا احمد العمده",
+      "matches": 1,
+      "clientIds": [
+        189
+      ],
+      "clientNames": [
+        "ا احمد العمده"
+      ],
+      "status": "success",
+      "clientId": 189
+    },
+    {
+      "index": 3,
+      "invoiceId": "1393",
+      "customerName": "Dr.Ali Farouk",
+      "normalizedName": "dr.ali farouk",
+      "matches": 1,
+      "clientIds": [
+        65
+      ],
+      "clientNames": [
+        "Dr.Ali Farouk"
+      ],
+      "status": "success",
+      "clientId": 65
+    },
+    {
+      "index": 4,
+      "invoiceId": "1392",
+      "customerName": "Dr.Ali Farouk",
+      "normalizedName": "dr.ali farouk",
+      "matches": 1,
+      "clientIds": [
+        65
+      ],
+      "clientNames": [
+        "Dr.Ali Farouk"
+      ],
+      "status": "success",
+      "clientId": 65
+    },
+    {
+      "index": 5,
+      "invoiceId": "1391",
+      "customerName": "Dr.Ali Farouk",
+      "normalizedName": "dr.ali farouk",
+      "matches": 1,
+      "clientIds": [
+        65
+      ],
+      "clientNames": [
+        "Dr.Ali Farouk"
+      ],
+      "status": "success",
+      "clientId": 65
+    },
+    {
+      "index": 6,
+      "invoiceId": "1390",
+      "customerName": "ا امير موريس",
+      "normalizedName": "ا امير موريس",
+      "matches": 1,
+      "clientIds": [
+        951
+      ],
+      "clientNames": [
+        "ا امير موريس"
+      ],
+      "status": "success",
+      "clientId": 951
+    },
+    {
+      "index": 7,
+      "invoiceId": "1388",
+      "customerName": "ادم تامر",
+      "normalizedName": "ادم تامر",
+      "matches": 1,
+      "clientIds": [
+        949
+      ],
+      "clientNames": [
+        "ادم تامر"
+      ],
+      "status": "success",
+      "clientId": 949
+    },
+    {
+      "index": 8,
+      "invoiceId": "1387",
+      "customerName": "ا عمرو عبدالقادر",
+      "normalizedName": "ا عمرو عبدالقادر",
+      "matches": 1,
+      "clientIds": [
+        948
+      ],
+      "clientNames": [
+        "ا عمرو عبدالقادر"
+      ],
+      "status": "success",
+      "clientId": 948
+    },
+    {
+      "index": 9,
+      "invoiceId": "1386",
+      "customerName": "محمد عطله",
+      "normalizedName": "محمد عطله",
+      "matches": 1,
+      "clientIds": [
+        947
+      ],
+      "clientNames": [
+        "محمد عطله"
+      ],
+      "status": "success",
+      "clientId": 947
+    },
+    {
+      "index": 10,
+      "invoiceId": "1382",
+      "customerName": "ا شهد محمد",
+      "normalizedName": "ا شهد محمد",
+      "matches": 1,
+      "clientIds": [
+        942
+      ],
+      "clientNames": [
+        "ا شهد محمد"
+      ],
+      "status": "success",
+      "clientId": 942
+    },
+    {
+      "index": 11,
+      "invoiceId": "1380",
+      "customerName": "ا بسمله رضا",
+      "normalizedName": "ا بسمله رضا",
+      "matches": 1,
+      "clientIds": [
+        940
+      ],
+      "clientNames": [
+        "ا بسمله رضا"
+      ],
+      "status": "success",
+      "clientId": 940
+    },
+    {
+      "index": 12,
+      "invoiceId": "1377",
+      "customerName": "Dr.Ali Farouk",
+      "normalizedName": "dr.ali farouk",
+      "matches": 1,
+      "clientIds": [
+        65
+      ],
+      "clientNames": [
+        "Dr.Ali Farouk"
+      ],
+      "status": "success",
+      "clientId": 65
+    },
+    {
+      "index": 13,
+      "invoiceId": "1364",
+      "customerName": "خالد كمال",
+      "normalizedName": "خالد كمال",
+      "matches": 1,
+      "clientIds": [
+        927
+      ],
+      "clientNames": [
+        "خالد كمال"
+      ],
+      "status": "success",
+      "clientId": 927
+    },
+    {
+      "index": 14,
+      "invoiceId": "1361",
+      "customerName": "ا عفاف",
+      "normalizedName": "ا عفاف",
+      "matches": 1,
+      "clientIds": [
+        924
+      ],
+      "clientNames": [
+        "ا عفاف"
+      ],
+      "status": "success",
+      "clientId": 924
+    },
+    {
+      "index": 15,
+      "invoiceId": "1359",
+      "customerName": "نزار عبدالقادر",
+      "normalizedName": "نزار عبدالقادر",
+      "matches": 1,
+      "clientIds": [
+        922
+      ],
+      "clientNames": [
+        "نزار عبدالقادر"
+      ],
+      "status": "success",
+      "clientId": 922
+    },
+    {
+      "index": 16,
+      "invoiceId": "1357",
+      "customerName": "عبدالعظيم نور",
+      "normalizedName": "عبدالعظيم نور",
+      "matches": 1,
+      "clientIds": [
+        823
+      ],
+      "clientNames": [
+        "عبدالعظيم نور"
+      ],
+      "status": "success",
+      "clientId": 823
+    },
+    {
+      "index": 17,
+      "invoiceId": "1355",
+      "customerName": "ا هشام محمد",
+      "normalizedName": "ا هشام محمد",
+      "matches": 1,
+      "clientIds": [
+        919
+      ],
+      "clientNames": [
+        "ا هشام محمد"
+      ],
+      "status": "success",
+      "clientId": 919
+    },
+    {
+      "index": 18,
+      "invoiceId": "1354",
+      "customerName": "Eng Mohamed Hassan",
+      "normalizedName": "eng mohamed hassan",
+      "matches": 1,
+      "clientIds": [
+        918
+      ],
+      "clientNames": [
+        "Eng Mohamed Hassan"
+      ],
+      "status": "success",
+      "clientId": 918
+    },
+    {
+      "index": 19,
+      "invoiceId": "1353",
+      "customerName": "Eng Alaa Saadany",
+      "normalizedName": "eng alaa saadany",
+      "matches": 1,
+      "clientIds": [
+        916
+      ],
+      "clientNames": [
+        "Eng Alaa Saadany"
+      ],
+      "status": "success",
+      "clientId": 916
+    },
+    {
+      "index": 20,
+      "invoiceId": "1352",
+      "customerName": "ا رفيق ابراهيم",
+      "normalizedName": "ا رفيق ابراهيم",
+      "matches": 1,
+      "clientIds": [
+        915
+      ],
+      "clientNames": [
+        "ا رفيق ابراهيم"
+      ],
+      "status": "success",
+      "clientId": 915
+    },
+    {
+      "index": 21,
+      "invoiceId": "1350",
+      "customerName": "اسماعيل",
+      "normalizedName": "اسماعيل",
+      "matches": 1,
+      "clientIds": [
+        913
+      ],
+      "clientNames": [
+        "اسماعيل"
+      ],
+      "status": "success",
+      "clientId": 913
+    },
+    {
+      "index": 22,
+      "invoiceId": "1349",
+      "customerName": "يوسف ناصر ابراهيم",
+      "normalizedName": "يوسف ناصر ابراهيم",
+      "matches": 1,
+      "clientIds": [
+        912
+      ],
+      "clientNames": [
+        "يوسف ناصر ابراهيم"
+      ],
+      "status": "success",
+      "clientId": 912
+    },
+    {
+      "index": 23,
+      "invoiceId": "1348",
+      "customerName": "Mr Mostafa",
+      "normalizedName": "mr mostafa",
+      "matches": 1,
+      "clientIds": [
+        865
+      ],
+      "clientNames": [
+        "Mr Mostafa"
+      ],
+      "status": "success",
+      "clientId": 865
+    },
+    {
+      "index": 24,
+      "invoiceId": "1347",
+      "customerName": "ا تيسير ابوبكر",
+      "normalizedName": "ا تيسير ابوبكر",
+      "matches": 1,
+      "clientIds": [
+        911
+      ],
+      "clientNames": [
+        "ا تيسير ابوبكر"
+      ],
+      "status": "success",
+      "clientId": 911
+    },
+    {
+      "index": 25,
+      "invoiceId": "1346",
+      "customerName": "يوسف اشرف",
+      "normalizedName": "يوسف اشرف",
+      "matches": 3,
+      "clientIds": [
+        77,
+        265,
+        910
+      ],
+      "clientNames": [
+        "يوسف اشرف",
+        "يوسف اشرف",
+        "يوسف اشرف"
+      ],
+      "status": "multiple"
+    },
+    {
+      "index": 26,
+      "invoiceId": "1343",
+      "customerName": "م علي عصام",
+      "normalizedName": "م علي عصام",
+      "matches": 1,
+      "clientIds": [
+        908
+      ],
+      "clientNames": [
+        "م علي عصام"
+      ],
+      "status": "success",
+      "clientId": 908
+    },
+    {
+      "index": 27,
+      "invoiceId": "1342",
+      "customerName": "عبدالعظيم نور",
+      "normalizedName": "عبدالعظيم نور",
+      "matches": 1,
+      "clientIds": [
+        823
+      ],
+      "clientNames": [
+        "عبدالعظيم نور"
+      ],
+      "status": "success",
+      "clientId": 823
+    },
+    {
+      "index": 28,
+      "invoiceId": "1341",
+      "customerName": "بلال حلمي",
+      "normalizedName": "بلال حلمي",
+      "matches": 1,
+      "clientIds": [
+        907
+      ],
+      "clientNames": [
+        "بلال حلمي"
+      ],
+      "status": "success",
+      "clientId": 907
+    },
+    {
+      "index": 29,
+      "invoiceId": "1340",
+      "customerName": "ا كريم احمد فراج",
+      "normalizedName": "ا كريم احمد فراج",
+      "matches": 1,
+      "clientIds": [
+        906
+      ],
+      "clientNames": [
+        "ا كريم احمد فراج"
+      ],
+      "status": "success",
+      "clientId": 906
+    },
+    {
+      "index": 30,
+      "invoiceId": "1338",
+      "customerName": "عبدالعظيم نور",
+      "normalizedName": "عبدالعظيم نور",
+      "matches": 1,
+      "clientIds": [
+        823
+      ],
+      "clientNames": [
+        "عبدالعظيم نور"
+      ],
+      "status": "success",
+      "clientId": 823
+    }
+  ]
+}

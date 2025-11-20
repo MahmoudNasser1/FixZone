@@ -105,6 +105,35 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get stock levels for a specific inventory item
+router.get('/:id/stock-levels', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [levels] = await db.execute(`
+      SELECT 
+        sl.*,
+        w.name as warehouseName,
+        w.location as warehouseLocation
+      FROM StockLevel sl
+      LEFT JOIN Warehouse w ON sl.warehouseId = w.id
+      WHERE sl.inventoryItemId = ? AND sl.deletedAt IS NULL
+      ORDER BY w.name
+    `, [id]);
+    
+    res.json({
+      success: true,
+      data: levels
+    });
+  } catch (err) {
+    console.error(`Error fetching stock levels for item ${id}:`, err);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      details: err.message
+    });
+  }
+});
+
 // Create a new inventory item
 router.post('/', validate(inventorySchemas.createItem), async (req, res) => {
   const { 
@@ -122,7 +151,13 @@ router.post('/', validate(inventorySchemas.createItem), async (req, res) => {
       `INSERT INTO InventoryItem (
         sku, name, type, purchasePrice, sellingPrice, createdAt, updatedAt
       ) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`, 
-      [sku || `AUTO-${Date.now()}`, name, category, purchasePrice, sellingPrice]
+      [
+        sku || `AUTO-${Date.now()}`, 
+        name || null, 
+        category || null, 
+        purchasePrice !== undefined ? purchasePrice : null, 
+        sellingPrice !== undefined ? sellingPrice : null
+      ]
     );
     
     const [item] = await db.execute('SELECT * FROM InventoryItem WHERE id = ?', [result.insertId]);

@@ -8,6 +8,9 @@ const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 // Get all users - requires authentication and Admin role (RoleID 1)
 router.get('/', authMiddleware, authorizeMiddleware([1]), userController.getAllUsers);
 
+// Create new user - requires authentication and Admin role
+router.post('/', authMiddleware, authorizeMiddleware([1]), userController.createUser);
+
 // Get user by ID - requires authentication and Admin role
 router.get('/:id', authMiddleware, authorizeMiddleware([1]), userController.getUserById);
 

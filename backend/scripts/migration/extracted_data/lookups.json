@@ -1,0 +1,506 @@
+{
+  "tableName": "lookups",
+  "columns": [
+    "id",
+    "name",
+    "type",
+    "_lft",
+    "_rgt",
+    "parent_id",
+    "created_at",
+    "updated_at"
+  ],
+  "rowCount": 49,
+  "rows": [
+    {
+      "id": 1,
+      "name": "Dell",
+      "type": "brand",
+      "_lft": 1,
+      "_rgt": 2,
+      "parent_id": null,
+      "created_at": "2023-10-05 20:33:01",
+      "updated_at": "2023-10-06 11:34:15"
+    },
+    {
+      "id": 3,
+      "name": "HP",
+      "type": "brand",
+      "_lft": 3,
+      "_rgt": 4,
+      "parent_id": null,
+      "created_at": "2023-10-05 20:33:01",
+      "updated_at": "2023-10-06 11:34:24"
+    },
+    {
+      "id": 4,
+      "name": "'Apple (Mac",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 5,
+      "name": "MSI",
+      "type": "brand",
+      "_lft": 7,
+      "_rgt": 8,
+      "parent_id": null,
+      "created_at": "2023-10-05 20:33:01",
+      "updated_at": "2023-10-06 11:35:16"
+    },
+    {
+      "id": 6,
+      "name": "ASUS",
+      "type": "brand",
+      "_lft": 9,
+      "_rgt": 10,
+      "parent_id": null,
+      "created_at": "2023-10-05 20:33:01",
+      "updated_at": "2023-10-06 11:35:36"
+    },
+    {
+      "id": 7,
+      "name": "Alianware",
+      "type": "brand",
+      "_lft": 11,
+      "_rgt": 12,
+      "parent_id": null,
+      "created_at": "2023-10-06 11:36:49",
+      "updated_at": "2023-10-06 11:36:49"
+    },
+    {
+      "id": 8,
+      "name": "'شنطه (Bag",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 9,
+      "name": "'شاحن (charger",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 10,
+      "name": "'فلاشه (Flash Disk",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 11,
+      "name": "'كيبورد (Keyboard",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 12,
+      "name": "'ماوس (Mous",
+      "type": null,
+      "_lft": null,
+      "_rgt": null,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 13,
+      "name": "اكسسوارات",
+      "type": "category",
+      "_lft": 23,
+      "_rgt": 24,
+      "parent_id": null,
+      "created_at": "2023-10-06 13:29:53",
+      "updated_at": "2023-10-06 13:29:53"
+    },
+    {
+      "id": 14,
+      "name": "قطع غيار",
+      "type": "category",
+      "_lft": 25,
+      "_rgt": 36,
+      "parent_id": null,
+      "created_at": "2023-10-06 13:30:11",
+      "updated_at": "2023-10-06 13:30:11"
+    },
+    {
+      "id": 15,
+      "name": "ICs",
+      "type": "category",
+      "_lft": 26,
+      "_rgt": 27,
+      "parent_id": 14,
+      "created_at": "2023-10-06 13:30:32",
+      "updated_at": "2023-10-06 13:30:32"
+    },
+    {
+      "id": 16,
+      "name": "Batterys",
+      "type": "category",
+      "_lft": 28,
+      "_rgt": 29,
+      "parent_id": 14,
+      "created_at": "2023-10-06 13:31:00",
+      "updated_at": "2023-10-06 13:31:00"
+    },
+    {
+      "id": 17,
+      "name": "Chargers",
+      "type": "category",
+      "_lft": 30,
+      "_rgt": 31,
+      "parent_id": 14,
+      "created_at": "2023-10-06 13:31:19",
+      "updated_at": "2023-10-06 13:31:19"
+    },
+    {
+      "id": 18,
+      "name": "Screen",
+      "type": "category",
+      "_lft": 32,
+      "_rgt": 33,
+      "parent_id": 14,
+      "created_at": "2023-10-06 13:31:33",
+      "updated_at": "2023-10-07 18:46:00"
+    },
+    {
+      "id": 19,
+      "name": "Laptop",
+      "type": "deviceType",
+      "_lft": 37,
+      "_rgt": 38,
+      "parent_id": null,
+      "created_at": "2023-10-06 21:58:05",
+      "updated_at": "2023-11-25 21:31:16"
+    },
+    {
+      "id": 37,
+      "name": "No Power | قاطع باور",
+      "type": "problem",
+      "_lft": 41,
+      "_rgt": 42,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:11:01",
+      "updated_at": "2023-10-07 00:12:35"
+    },
+    {
+      "id": 38,
+      "name": "Power No Data | قاطع داتا",
+      "type": "problem",
+      "_lft": 43,
+      "_rgt": 44,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:11:16",
+      "updated_at": "2023-10-07 00:12:48"
+    },
+    {
+      "id": 39,
+      "name": "Software | سوفت وير",
+      "type": "problem",
+      "_lft": 45,
+      "_rgt": 46,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:11:30",
+      "updated_at": "2023-10-07 00:12:59"
+    },
+    {
+      "id": 40,
+      "name": "Part installation | استبدال جزاء",
+      "type": "problem",
+      "_lft": 47,
+      "_rgt": 48,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:12:16",
+      "updated_at": "2023-10-07 00:13:26"
+    },
+    {
+      "id": 41,
+      "name": "Fix Hosing | اصلاح هاوسنج",
+      "type": "problem",
+      "_lft": 49,
+      "_rgt": 50,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:13:52",
+      "updated_at": "2023-10-07 00:13:52"
+    },
+    {
+      "id": 42,
+      "name": "Full Check | فحص كامل",
+      "type": "problem",
+      "_lft": 51,
+      "_rgt": 52,
+      "parent_id": null,
+      "created_at": "2023-10-07 00:15:47",
+      "updated_at": "2023-10-07 00:15:47"
+    },
+    {
+      "id": 43,
+      "name": "CPU",
+      "type": "specifcations",
+      "_lft": 0,
+      "_rgt": 0,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 44,
+      "name": "GPU",
+      "type": "specifcations",
+      "_lft": 0,
+      "_rgt": 0,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 45,
+      "name": "RAM",
+      "type": "specifcations",
+      "_lft": 0,
+      "_rgt": 0,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 46,
+      "name": "Storage",
+      "type": "specifcations",
+      "_lft": 0,
+      "_rgt": 0,
+      "parent_id": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": 47,
+      "name": "Power Socket",
+      "type": "category",
+      "_lft": 34,
+      "_rgt": 35,
+      "parent_id": 14,
+      "created_at": "2023-10-07 18:57:31",
+      "updated_at": "2023-10-07 18:57:31"
+    },
+    {
+      "id": 48,
+      "name": "استبدال قطعه",
+      "type": "problem",
+      "_lft": 53,
+      "_rgt": 54,
+      "parent_id": null,
+      "created_at": "2023-10-07 19:18:03",
+      "updated_at": "2023-10-07 19:18:03"
+    },
+    {
+      "id": 75,
+      "name": "Lenovo",
+      "type": "brand",
+      "_lft": 105,
+      "_rgt": 106,
+      "parent_id": null,
+      "created_at": "2023-10-08 09:39:47",
+      "updated_at": "2023-10-08 09:39:47"
+    },
+    {
+      "id": 76,
+      "name": "بطاريه | Battery",
+      "type": "accessories",
+      "_lft": 107,
+      "_rgt": 108,
+      "parent_id": null,
+      "created_at": "2023-10-08 11:19:58",
+      "updated_at": "2023-10-08 11:19:58"
+    },
+    {
+      "id": 77,
+      "name": "Toshiba",
+      "type": "brand",
+      "_lft": 109,
+      "_rgt": 110,
+      "parent_id": null,
+      "created_at": "2023-10-08 11:29:57",
+      "updated_at": "2023-10-08 11:29:57"
+    },
+    {
+      "id": 79,
+      "name": "PC",
+      "type": "deviceType",
+      "_lft": 113,
+      "_rgt": 114,
+      "parent_id": null,
+      "created_at": "2023-10-29 10:53:24",
+      "updated_at": "2023-10-29 10:53:24"
+    },
+    {
+      "id": 80,
+      "name": "Mobile",
+      "type": "deviceType",
+      "_lft": 115,
+      "_rgt": 116,
+      "parent_id": null,
+      "created_at": "2023-10-29 10:53:48",
+      "updated_at": "2023-10-29 10:53:48"
+    },
+    {
+      "id": 81,
+      "name": "الجهاز مفتوح مسبقا",
+      "type": "examination",
+      "_lft": 117,
+      "_rgt": 118,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:50:40",
+      "updated_at": "2023-11-11 13:50:40"
+    },
+    {
+      "id": 82,
+      "name": "الجهاز ناقص مسامسير",
+      "type": "examination",
+      "_lft": 119,
+      "_rgt": 120,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:51:00",
+      "updated_at": "2023-11-11 13:51:00"
+    },
+    {
+      "id": 83,
+      "name": "يوجد ازرار ناقصة",
+      "type": "examination",
+      "_lft": 121,
+      "_rgt": 122,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:51:30",
+      "updated_at": "2023-11-11 13:51:30"
+    },
+    {
+      "id": 84,
+      "name": "كسر فى الشاشة",
+      "type": "examination",
+      "_lft": 123,
+      "_rgt": 124,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:52:06",
+      "updated_at": "2023-11-11 13:52:06"
+    },
+    {
+      "id": 85,
+      "name": "يوجد خبطات فى الاركان",
+      "type": "examination",
+      "_lft": 125,
+      "_rgt": 126,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:52:36",
+      "updated_at": "2023-11-11 13:52:36"
+    },
+    {
+      "id": 86,
+      "name": "الجهاز به خدوش",
+      "type": "examination",
+      "_lft": 127,
+      "_rgt": 128,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:53:23",
+      "updated_at": "2023-11-11 13:53:23"
+    },
+    {
+      "id": 87,
+      "name": "كسر فى الهوستنج",
+      "type": "examination",
+      "_lft": 129,
+      "_rgt": 130,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:53:49",
+      "updated_at": "2023-11-11 13:53:49"
+    },
+    {
+      "id": 88,
+      "name": "فاصل باور بدون فحص على مسئولية العميل",
+      "type": "examination",
+      "_lft": 131,
+      "_rgt": 132,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:54:56",
+      "updated_at": "2023-11-11 13:54:56"
+    },
+    {
+      "id": 89,
+      "name": "تم الاستلام بدون فحص على مسئولية العميل",
+      "type": "examination",
+      "_lft": 133,
+      "_rgt": 134,
+      "parent_id": null,
+      "created_at": "2023-11-11 13:55:31",
+      "updated_at": "2023-11-26 14:27:56"
+    },
+    {
+      "id": 90,
+      "name": "Hard Disk",
+      "type": "category",
+      "_lft": 135,
+      "_rgt": 136,
+      "parent_id": null,
+      "created_at": "2023-11-28 22:26:54",
+      "updated_at": "2023-11-28 22:26:54"
+    },
+    {
+      "id": 91,
+      "name": "RAM",
+      "type": "category",
+      "_lft": 137,
+      "_rgt": 138,
+      "parent_id": null,
+      "created_at": "2023-11-28 22:27:03",
+      "updated_at": "2023-11-28 22:27:03"
+    },
+    {
+      "id": 92,
+      "name": "كابل باور",
+      "type": "accessories",
+      "_lft": 139,
+      "_rgt": 140,
+      "parent_id": null,
+      "created_at": "2023-12-16 20:15:10",
+      "updated_at": "2023-12-16 20:15:10"
+    },
+    {
+      "id": 93,
+      "name": "Sony",
+      "type": "brand",
+      "_lft": 141,
+      "_rgt": 142,
+      "parent_id": null,
+      "created_at": "2023-12-26 21:09:20",
+      "updated_at": "2023-12-26 21:09:20"
+    },
+    {
+      "id": 94,
+      "name": "Acer",
+      "type": "brand",
+      "_lft": 143,
+      "_rgt": 144,
+      "parent_id": null,
+      "created_at": "2024-10-22 15:42:04",
+      "updated_at": "2024-10-22 15:42:04"
+    }
+  ]
+}
