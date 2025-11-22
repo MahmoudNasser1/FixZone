@@ -56,9 +56,25 @@ async function updateStockAlert(connection, inventoryItemId, warehouseId, quanti
   }
 }
 
-// GET /api/stock-levels - Get all stock levels
+// GET /api/stock-levels - Get all stock levels (with optional filters)
 router.get('/', async (req, res) => {
   try {
+    const { warehouseId, inventoryItemId } = req.query;
+    
+    // Build WHERE clause based on query parameters
+    let whereClause = 'WHERE i.deletedAt IS NULL AND sl.deletedAt IS NULL';
+    const params = [];
+    
+    if (warehouseId) {
+      whereClause += ' AND sl.warehouseId = ?';
+      params.push(warehouseId);
+    }
+    
+    if (inventoryItemId) {
+      whereClause += ' AND sl.inventoryItemId = ?';
+      params.push(inventoryItemId);
+    }
+    
     const [levels] = await db.execute(`
       SELECT 
         sl.*,
@@ -68,9 +84,9 @@ router.get('/', async (req, res) => {
       FROM StockLevel sl
       LEFT JOIN InventoryItem i ON sl.inventoryItemId = i.id
       LEFT JOIN Warehouse w ON sl.warehouseId = w.id
-      WHERE i.deletedAt IS NULL AND sl.deletedAt IS NULL
+      ${whereClause}
       ORDER BY sl.updatedAt DESC
-    `);
+    `, params);
     
     res.json({
       success: true,

@@ -133,10 +133,21 @@ const RepairDetailsPage = () => {
   const [availableQty, setAvailableQty] = useState(null);
   const [minLevel, setMinLevel] = useState(null);
   const [isLowStock, setIsLowStock] = useState(null);
+  const [selectedItemInfo, setSelectedItemInfo] = useState(null); // For displaying item details
 
+  // 🔧 Fix #1: Enhanced handleIssueChange to update selected item info
   const handleIssueChange = (e) => {
     const { name, value } = e.target;
     setIssueForm((f) => ({ ...f, [name]: value }));
+    
+    // Update selected item info when item changes
+    if (name === 'inventoryItemId' && value) {
+      const selectedItem = items.find(item => item.id === Number(value));
+      setSelectedItemInfo(selectedItem || null);
+    } else if (name === 'warehouseId' && !value) {
+      // Reset when warehouse changes
+      setSelectedItemInfo(null);
+    }
   };
 
   const loadItemsMap = async () => {
@@ -170,6 +181,7 @@ const RepairDetailsPage = () => {
     }
   };
 
+  // 🔧 Fix #2 & #3: Enhanced handleIssueSubmit with approval, low stock warnings, and profit display
   const handleIssueSubmit = async () => {
     try {
       setIssueError('');
@@ -182,48 +194,94 @@ const RepairDetailsPage = () => {
         setIssueError('الكمية يجب أن تكون رقمًا أكبر من الصفر');
         return;
       }
+      
+      // Check available quantity before submitting
+      if (availableQty !== null && quantity > availableQty) {
+        setIssueError(`الكمية المطلوبة (${quantity}) أكبر من المخزون المتاح (${availableQty})`);
+        return;
+      }
+      
       setIssueLoading(true);
       console.log('Issuing part with data:', {
         repairRequestId: Number(id),
         inventoryItemId: Number(issueForm.inventoryItemId),
         warehouseId: Number(issueForm.warehouseId),
         quantity,
-        userId: Number(currentUserId || 1),
+        userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
       });
-      await inventoryService.issuePart({
+      
+      // 🔧 Fix #3: Get enhanced response from /api/inventory/issue
+      const response = await inventoryService.issuePart({
         repairRequestId: Number(id),
         inventoryItemId: Number(issueForm.inventoryItemId),
         warehouseId: Number(issueForm.warehouseId),
         quantity,
-        userId: Number(currentUserId || 1),
+        userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
       });
-      notifications.success('تم صرف القطعة وتحديث المخزون بنجاح');
-      // بعد الصرف نتأكد من حالة المخزون هل أصبح منخفضًا
-      try {
-        const levelsAfter = await inventoryService.listStockLevels({ warehouseId: Number(issueForm.warehouseId), inventoryItemId: Number(issueForm.inventoryItemId) });
-        const listAfter = Array.isArray(levelsAfter) ? levelsAfter : (levelsAfter.items || []);
-        const rowAfter = listAfter && listAfter[0] ? listAfter[0] : null;
-        if (rowAfter) {
-          const nowQty = Number(rowAfter.quantity || 0);
-          const nowMin = Number(rowAfter.minLevel || 0);
-          const nowLow = !!rowAfter.isLowStock || nowQty <= nowMin;
-          if (nowLow) {
-            notifications.warning('تنبيه: المخزون منخفض لهذا العنصر في هذا المخزن بعد عملية الصرف');
-          }
+      
+      // Handle response data
+      const responseData = response?.data || response;
+      
+      // 🔧 Fix #3: Display approval message if approval is required
+      if (responseData?.approval?.required) {
+        notifications.warning(
+          `⚠️ ${responseData.approval.message || 'هذه القطعة تحتاج موافقة. تم إنشاء طلب موافقة.'}`
+        );
+      } else {
+        notifications.success(responseData?.message || 'تم صرف القطعة وتحديث المخزون بنجاح');
+      }
+      
+      // 🔧 Fix #2: Display low stock warning from response
+      if (responseData?.lowStockWarning?.warning) {
+        notifications.warning(
+          `⚠️ ${responseData.lowStockWarning.message || 'تنبيه: المخزون منخفض لهذا العنصر'}`
+        );
+      }
+      
+      // 🔧 Fix #3: Display pricing information (profit, cost, etc.)
+      if (responseData?.pricing) {
+        const pricing = responseData.pricing;
+        console.log('Part pricing:', {
+          purchasePrice: pricing.unitPurchasePrice,
+          sellingPrice: pricing.unitSellingPrice,
+          totalCost: pricing.totalCost,
+          totalPrice: pricing.totalPrice,
+          profit: pricing.profit,
+          profitMargin: pricing.profitMargin
+        });
+        
+        // Show profit info if significant
+        if (pricing.profit && pricing.profit > 0) {
+          notifications.info(
+            `💰 الربح المتوقع: ${formatMoney(pricing.profit)} (هامش ربح: ${pricing.profitMargin || '0'}%)`
+          );
         }
-      } catch {}
+      }
+      
+      // 🔧 Fix #2: Display additional low stock warning from response
+      if (responseData?.stockLevel?.isLowStock) {
+        notifications.warning(
+          `⚠️ تنبيه: المخزون منخفض لهذا العنصر في هذا المخزن (المتبقي: ${responseData.stockLevel.quantity || 0})`
+        );
+      }
+      
       setIssueOpen(false);
       setIssueForm({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '' });
+      setAvailableQty(null);
+      setMinLevel(null);
+      setIsLowStock(null);
+      
       // refresh details if needed
       try {
         await fetchRepairDetails();
         await loadPartsUsed();
       } catch (_) {}
     } catch (e) {
+      console.error('Error issuing part:', e);
       setIssueError(e?.message || 'تعذر تنفيذ عملية الصرف');
-      notifications.error('تعذر تنفيذ عملية الصرف');
+      notifications.error(e?.message || 'تعذر تنفيذ عملية الصرف');
     } finally {
       setIssueLoading(false);
     }
@@ -309,15 +367,38 @@ const RepairDetailsPage = () => {
     }
   }, [activeTab]);
 
+  // 🔧 Fix #5: Enhanced loadPartsUsed to handle all data fields properly
   const loadPartsUsed = async () => {
     try {
       setPartsLoading(true);
       setPartsError('');
       console.log('Loading parts used for repair request:', id);
-      const data = await apiService.request(`/partsused?repairRequestId=${id}`);
-      console.log('Parts used response:', data);
+      const response = await apiService.request(`/partsused?repairRequestId=${id}`);
+      console.log('Parts used response:', response);
       
-      setPartsUsed(Array.isArray(data) ? data : []);
+      // Handle different response formats
+      let partsData = [];
+      if (Array.isArray(response)) {
+        partsData = response;
+      } else if (response && Array.isArray(response.data)) {
+        partsData = response.data;
+      } else if (response && response.success && Array.isArray(response.data)) {
+        partsData = response.data;
+      }
+      
+      // Ensure all numeric fields are properly parsed
+      const processedParts = partsData.map(part => ({
+        ...part,
+        quantity: Number(part.quantity || 0),
+        unitPurchasePrice: part.unitPurchasePrice != null ? Number(part.unitPurchasePrice) : null,
+        unitSellingPrice: part.unitSellingPrice != null ? Number(part.unitSellingPrice) : null,
+        totalCost: part.totalCost != null ? Number(part.totalCost) : null,
+        totalPrice: part.totalPrice != null ? Number(part.totalPrice) : null,
+        profit: part.profit != null ? Number(part.profit) : null,
+        profitMargin: part.profitMargin != null ? (typeof part.profitMargin === 'string' ? part.profitMargin : `${Number(part.profitMargin).toFixed(2)}%`) : null
+      }));
+      
+      setPartsUsed(processedParts);
     } catch (e) {
       console.error('Error loading parts used:', e);
       setPartsError('تعذر تحميل الأجزاء المصروفة');
@@ -688,19 +769,41 @@ const RepairDetailsPage = () => {
         
         // Handle new API response format (direct JSON)
         let servicesList = [];
-        if (svcResponse && svcResponse.items && Array.isArray(svcResponse.items)) {
-          servicesList = svcResponse.items;
-        } else if (Array.isArray(svcResponse)) {
-          servicesList = svcResponse;
-        } else if (svcResponse && svcResponse.ok) {
-          // Handle old API response format
-          const svcData = await svcResponse.json();
-          console.log('Services data:', svcData);
-          servicesList = Array.isArray(svcData) ? svcData : (svcData.items || []);
+        if (svcResponse) {
+          // Handle response format from /api/services endpoint
+          // Format: { items: [...], total: ..., limit: ..., offset: ..., ... }
+          if (svcResponse.items && Array.isArray(svcResponse.items)) {
+            // New format: { items: [...], total: ..., ... }
+            servicesList = svcResponse.items;
+          } else if (svcResponse.data && Array.isArray(svcResponse.data)) {
+            // Alternative format: { data: [...] }
+            servicesList = svcResponse.data;
+          } else if (Array.isArray(svcResponse)) {
+            // Direct array format
+            servicesList = svcResponse;
+          } else if (svcResponse.ok && typeof svcResponse.json === 'function') {
+            // Handle old API response format (Response object)
+            const svcData = await svcResponse.json();
+            console.log('Services data:', svcData);
+            if (svcData.items && Array.isArray(svcData.items)) {
+              servicesList = svcData.items;
+            } else if (Array.isArray(svcData)) {
+              servicesList = svcData;
+            }
+          }
         }
         
+        // Filter only active and non-deleted services
+        servicesList = servicesList.filter(s => {
+          // Check if service is active (default to true if not specified)
+          const isActive = s.isActive !== false && s.isActive !== 0 && s.isActive !== '0';
+          // Check if service is not deleted
+          const notDeleted = !s.deletedAt;
+          return isActive && notDeleted;
+        });
+        
         setAvailableServices(servicesList);
-        console.log('Available services set:', servicesList.length);
+        console.log('Available services set:', servicesList.length, 'services', servicesList);
         
         // تحميل الفنيين إن لم يكونوا محملين مسبقًا
         if (techOptions.length === 0) {
@@ -806,7 +909,7 @@ const RepairDetailsPage = () => {
     }
   };
 
-  // Lookup available quantity when both item and warehouse selected
+  // 🔧 Fix #1: Lookup available quantity when both item and warehouse selected
   useEffect(() => {
     const { warehouseId, inventoryItemId } = issueForm || {};
     const fetchAvailable = async () => {
@@ -815,21 +918,45 @@ const RepairDetailsPage = () => {
         setMinLevel(null);
         setIsLowStock(null);
         if (!warehouseId || !inventoryItemId) return;
-        const levelsResponse = await inventoryService.listStockLevels({ warehouseId, inventoryItemId });
+        
+        // Fix: inventoryService.listStockLevels returns data directly, not Response
+        const levelsData = await inventoryService.listStockLevels({ warehouseId, inventoryItemId });
         let list = [];
-        if (levelsResponse && levelsResponse.ok) {
-          const levels = await levelsResponse.json();
-          list = Array.isArray(levels) ? levels : (levels.items || []);
+        
+        // Handle different response formats
+        if (Array.isArray(levelsData)) {
+          list = levelsData;
+        } else if (levelsData && Array.isArray(levelsData.items)) {
+          list = levelsData.items;
+        } else if (levelsData && Array.isArray(levelsData.data)) {
+          list = levelsData.data;
+        } else if (levelsData && levelsData.items) {
+          list = Array.isArray(levelsData.items) ? levelsData.items : [];
         }
-        const row = list && list[0] ? list[0] : null;
-        const qty = row ? Number(row.quantity) : 0;
-        setAvailableQty(Number.isFinite(qty) ? qty : 0);
+        
+        // 🔧 Fix: Filter to ensure we get the correct warehouse and item combination
+        // Even if backend filters, double-check on frontend to avoid mismatches
+        const row = list.find(level => 
+          Number(level.warehouseId) === Number(warehouseId) && 
+          Number(level.inventoryItemId) === Number(inventoryItemId)
+        ) || (list && list[0] ? list[0] : null);
         if (row) {
+          const qty = row.quantity != null ? Number(row.quantity) : 0;
+          setAvailableQty(Number.isFinite(qty) ? qty : 0);
+          
           const ml = row.minLevel != null ? Number(row.minLevel) : null;
-          setMinLevel(Number.isFinite(ml) ? ml : null);
-          setIsLowStock(Boolean(row.isLowStock));
+          setMinLevel(Number.isFinite(ml) && ml >= 0 ? ml : null);
+          
+          const isLow = Boolean(row.isLowStock) || (qty <= (ml || 0));
+          setIsLowStock(isLow);
+        } else {
+          // No stock level found - set to 0
+          setAvailableQty(0);
+          setMinLevel(null);
+          setIsLowStock(false);
         }
-      } catch (_) {
+      } catch (err) {
+        console.error('Error fetching available stock:', err);
         setAvailableQty(null);
         setMinLevel(null);
         setIsLowStock(null);
@@ -1101,17 +1228,39 @@ const RepairDetailsPage = () => {
     }
   };
 
+  // 🔧 Fix #6: Enhanced handleStatusUpdate with invoice auto-creation notification
   const handleStatusUpdate = async () => {
     try {
       console.log('Updating repair status to:', newStatus, 'for repair request:', id);
       // تحديث عبر API ثم تحديث الواجهة
-      await apiService.updateRepairStatus(id, newStatus);
+      const response = await apiService.updateRepairStatus(id, newStatus);
+      console.log('Status update response:', response);
+      
       setRepair(prev => (prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : prev));
       setEditingStatus(false);
-      notifications.success('تم تحديث الحالة بنجاح', { title: 'نجاح', duration: 2500 });
+      
+      // 🔧 Fix #6: Display invoice auto-creation notification if invoice was created
+      if (response && response.invoiceCreated) {
+        notifications.success(
+          response.invoiceMessage || `تم تحديث الحالة وإنشاء فاتورة تلقائياً رقم #${response.invoiceId}`,
+          { title: 'نجاح', duration: 5000 }
+        );
+        // Refresh invoices list to show new invoice
+        try {
+          await loadInvoices();
+        } catch (_) {}
+      } else {
+        notifications.success('تم تحديث الحالة بنجاح', { title: 'نجاح', duration: 2500 });
+      }
+      
+      // Refresh repair details to get updated data
+      try {
+        await fetchRepairDetails();
+      } catch (_) {}
     } catch (err) {
       console.error('Error updating repair status:', err);
       setError('حدث خطأ في تحديث حالة الطلب');
+      notifications.error('حدث خطأ في تحديث حالة الطلب');
     }
   };
 
@@ -1731,20 +1880,85 @@ const RepairDetailsPage = () => {
                                   </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-gray-600">الكمية المستخدمة:</span>
+                                    <span className="text-gray-600">الكمية:</span>
                                     <span className="font-medium text-gray-900">{pu.quantity}</span>
                                   </div>
-                                  {itemMeta.sellingPrice && (
+                                  {/* 🔧 Fix #5: Display purchase price */}
+                                  {pu.unitPurchasePrice !== null && pu.unitPurchasePrice !== undefined && (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                      <span className="text-gray-600">سعر الشراء:</span>
+                                      <span className="font-medium text-gray-900">{formatMoney(pu.unitPurchasePrice)}</span>
+                                    </div>
+                                  )}
+                                  {/* 🔧 Fix #5: Display selling price */}
+                                  {pu.unitSellingPrice !== null && pu.unitSellingPrice !== undefined && (
                                     <div className="flex items-center gap-2">
                                       <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                      <span className="text-gray-600">السعر:</span>
-                                      <span className="font-medium text-gray-900">{itemMeta.sellingPrice} ج.م</span>
+                                      <span className="text-gray-600">سعر البيع:</span>
+                                      <span className="font-medium text-gray-900">{formatMoney(pu.unitSellingPrice)}</span>
+                                    </div>
+                                  )}
+                                  {/* 🔧 Fix #5: Display total cost */}
+                                  {pu.totalCost !== null && pu.totalCost !== undefined && (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                      <span className="text-gray-600">التكلفة الإجمالية:</span>
+                                      <span className="font-medium text-gray-900">{formatMoney(pu.totalCost)}</span>
+                                    </div>
+                                  )}
+                                  {/* 🔧 Fix #5: Display total price */}
+                                  {pu.totalPrice !== null && pu.totalPrice !== undefined && (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                      <span className="text-gray-600">السعر الإجمالي:</span>
+                                      <span className="font-medium text-gray-900">{formatMoney(pu.totalPrice)}</span>
+                                    </div>
+                                  )}
+                                  {/* 🔧 Fix #5: Display profit */}
+                                  {pu.profit !== null && pu.profit !== undefined && (
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-2 h-2 rounded-full ${Number(pu.profit) >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                      <span className="text-gray-600">الربح:</span>
+                                      <span className={`font-semibold ${Number(pu.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {formatMoney(pu.profit)}
+                                        {pu.profitMargin && ` (${pu.profitMargin}%)`}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {/* Status badge */}
+                                  {pu.status && (
+                                    <div className="flex items-center gap-2">
+                                      <SimpleBadge className={
+                                        pu.status === 'used' ? 'bg-green-100 text-green-800' :
+                                        pu.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                                        pu.status === 'requested' ? 'bg-amber-100 text-amber-800' :
+                                        pu.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }>
+                                        {pu.status === 'used' ? '✓ مستخدم' :
+                                         pu.status === 'approved' ? '✓ معتمد' :
+                                         pu.status === 'requested' ? '⏳ قيد الانتظار' :
+                                         pu.status === 'cancelled' ? '✗ ملغي' :
+                                         pu.status}
+                                      </SimpleBadge>
                                     </div>
                                   )}
                                 </div>
+                                {/* 🔧 Fix #5: Display profit margin summary */}
+                                {pu.profit !== null && pu.profit !== undefined && Number(pu.profit) > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-gray-600">الربحية:</span>
+                                      <span className={`font-semibold ${Number(pu.profitMargin || 0) >= 20 ? 'text-green-600' : Number(pu.profitMargin || 0) >= 10 ? 'text-amber-600' : 'text-gray-600'}`}>
+                                        {pu.profitMargin || '0'}% ({formatMoney(pu.totalPrice || 0)} - {formatMoney(pu.totalCost || 0)})
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="flex flex-col items-end gap-3">
@@ -3139,22 +3353,52 @@ const RepairDetailsPage = () => {
                 <input
                   type="number"
                   min="1"
+                  max={availableQty !== null ? availableQty : undefined}
                   name="quantity"
                   value={issueForm.quantity}
                   onChange={handleIssueChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className={`w-full p-2 border rounded-lg ${
+                    availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                 />
+                {/* 🔧 Fix #1: Enhanced stock availability display */}
                 {availableQty !== null && (
-                  <p className="mt-1 text-xs">
-                    <span className="text-gray-500">المتاح بالمخزن المحدد: </span>
-                    <span className={Number(issueForm.quantity) > Number(availableQty) ? 'text-red-600 font-semibold' : 'text-gray-900'}>
-                      {availableQty}
-                    </span>
-                  </p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs">
+                      <span className="text-gray-600">المخزون المتاح: </span>
+                      <span className={`font-semibold ${availableQty === 0 ? 'text-red-600' : availableQty <= (minLevel || 0) ? 'text-amber-600' : 'text-green-600'}`}>
+                        {availableQty} {availableQty === 0 ? '❌' : availableQty <= (minLevel || 0) ? '⚠️' : '✓'}
+                      </span>
+                    </p>
+                    {minLevel !== null && minLevel > 0 && (
+                      <p className="text-xs text-gray-500">
+                        الحد الأدنى: {minLevel}
+                      </p>
+                    )}
+                    {availableQty !== null && Number(issueForm.quantity) > Number(availableQty) && (
+                      <p className="text-xs text-red-600 font-semibold">
+                        ⚠️ الكمية المطلوبة أكبر من المخزون المتاح!
+                      </p>
+                    )}
+                  </div>
                 )}
-                {minLevel !== null && availableQty !== null && (
-                  <div className={`mt-2 text-xs p-2 rounded ${availableQty <= minLevel ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                    الحد الأدنى: {minLevel} — {availableQty <= minLevel ? 'المخزون منخفض' : 'تنبيه: قد يقترب المخزون من الحد الأدنى'}
+                {/* 🔧 Fix #2: Enhanced low stock warning display */}
+                {isLowStock && availableQty !== null && (
+                  <div className={`mt-2 text-xs p-2 rounded flex items-start gap-2 ${
+                    availableQty === 0 
+                      ? 'bg-red-50 text-red-700 border border-red-200' 
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    <span className="text-base">{availableQty === 0 ? '❌' : '⚠️'}</span>
+                    <span>
+                      {availableQty === 0 
+                        ? 'المخزون منتهٍ تماماً!' 
+                        : availableQty <= (minLevel || 0)
+                          ? `المخزون منخفض! المتبقي: ${availableQty} / الحد الأدنى: ${minLevel || 0}`
+                          : 'تحذير: المخزون قد يكون منخفضاً'}
+                    </span>
                   </div>
                 )}
               </div>

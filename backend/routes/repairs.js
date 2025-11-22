@@ -784,6 +784,198 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       [id, fromStatus, status, notes, changedById]
     );
     
+    // 🔧 Fix #2: Auto-create invoice when status changes to READY_FOR_DELIVERY or DELIVERED
+    let createdInvoiceId = null;
+    if ((status === 'READY_FOR_DELIVERY' || status === 'DELIVERED') && (fromStatus !== 'READY_FOR_DELIVERY' && fromStatus !== 'DELIVERED')) {
+      try {
+        // Check if invoice already exists for this repair
+        const [existingInvoice] = await connection.execute(
+          'SELECT id FROM Invoice WHERE repairRequestId = ? AND deletedAt IS NULL',
+          [id]
+        );
+
+        if (existingInvoice.length === 0) {
+          // Get repair details
+          const [repairRows] = await connection.execute(
+            'SELECT customerId, actualCost FROM RepairRequest WHERE id = ?',
+            [id]
+          );
+
+          if (repairRows.length > 0) {
+            const repair = repairRows[0];
+            const customerId = repair.customerId;
+
+            // Calculate total from parts and services
+            const [partsTotal] = await connection.execute(`
+              SELECT COALESCE(SUM(pu.totalPrice), 0) as total
+              FROM PartsUsed pu
+              WHERE pu.repairRequestId = ? AND pu.status IN ('used', 'approved', 'reserved')
+            `, [id]);
+
+            const [servicesTotal] = await connection.execute(`
+              SELECT COALESCE(SUM(rrs.finalPrice), 0) as total
+              FROM RepairRequestService rrs
+              WHERE rrs.repairRequestId = ? AND rrs.status = 'completed'
+            `, [id]);
+
+            const calculatedTotal = Number(partsTotal[0]?.total || 0) + Number(servicesTotal[0]?.total || 0);
+            const finalTotal = calculatedTotal > 0 ? calculatedTotal : (repair.actualCost || 0);
+
+            // Create invoice
+            const [invoiceResult] = await connection.execute(`
+              INSERT INTO Invoice (
+                repairRequestId, customerId, totalAmount, amountPaid, status, 
+                currency, taxAmount, discountAmount, createdAt, updatedAt
+              ) VALUES (?, ?, ?, 0, 'pending', 'EGP', 0, 0, NOW(), NOW())
+            `, [id, customerId, finalTotal]);
+
+            createdInvoiceId = invoiceResult.insertId;
+
+            // Add parts used to invoice items
+            const [partsUsed] = await connection.execute(`
+              SELECT pu.*, ii.name, ii.sellingPrice, pu.unitSellingPrice, pu.totalPrice
+              FROM PartsUsed pu
+              LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
+              WHERE pu.repairRequestId = ? AND pu.status IN ('used', 'approved', 'reserved')
+            `, [id]);
+
+            for (const part of partsUsed) {
+              const unitPrice = part.unitSellingPrice || part.sellingPrice || 0;
+              const quantity = part.quantity || 1;
+              const totalPrice = part.totalPrice || (quantity * unitPrice);
+
+              const [itemResult] = await connection.execute(`
+                INSERT INTO InvoiceItem (
+                  invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description, partsUsedId
+                ) VALUES (?, ?, ?, ?, ?, 'part', ?, ?)
+              `, [
+                createdInvoiceId, 
+                part.inventoryItemId, 
+                quantity, 
+                unitPrice, 
+                totalPrice,
+                `قطعة غيار: ${part.name || 'غير محدد'}`,
+                part.id
+              ]);
+
+              // Update PartsUsed to link to invoice item
+              await connection.execute(
+                'UPDATE PartsUsed SET invoiceItemId = ? WHERE id = ?',
+                [itemResult.insertId, part.id]
+              );
+            }
+
+            // Add services used to invoice items
+            const [services] = await connection.execute(`
+              SELECT rrs.*, s.name, s.basePrice
+              FROM RepairRequestService rrs
+              LEFT JOIN Service s ON rrs.serviceId = s.id
+              WHERE rrs.repairRequestId = ? AND rrs.status = 'completed'
+            `, [id]);
+
+            for (const service of services) {
+              const unitPrice = service.finalPrice || service.price || service.basePrice || 0;
+              await connection.execute(`
+                INSERT INTO InvoiceItem (
+                  invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
+                ) VALUES (?, ?, 1, ?, ?, 'service', ?)
+              `, [
+                createdInvoiceId, 
+                service.serviceId, 
+                unitPrice, 
+                unitPrice,
+                `خدمة: ${service.name || 'غير محدد'}`
+              ]);
+            }
+
+            // Recalculate and update total amount
+            const [totalResult] = await connection.execute(`
+              SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+              FROM InvoiceItem WHERE invoiceId = ?
+            `, [createdInvoiceId]);
+
+            const finalInvoiceTotal = Number(totalResult[0]?.calculatedTotal || 0);
+            await connection.execute(
+              'UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?',
+              [finalInvoiceTotal, createdInvoiceId]
+            );
+
+            // Update repair request with invoice ID
+            await connection.execute(
+              'UPDATE RepairRequest SET invoiceId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+              [createdInvoiceId, id]
+            );
+
+            console.log(`✅ Auto-created invoice ${createdInvoiceId} for repair request ${id}`);
+          }
+        } else {
+          // Invoice already exists, just link it
+          createdInvoiceId = existingInvoice[0].id;
+          await connection.execute(
+            'UPDATE RepairRequest SET invoiceId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+            [createdInvoiceId, id]
+          );
+        }
+      } catch (invoiceError) {
+        // Log error but don't fail the status update
+        console.error('Error auto-creating invoice:', invoiceError);
+        // Continue with status update even if invoice creation fails
+      }
+    }
+    
+    // 🔔 Fix #4: Send notifications when status changes
+    try {
+      // Get repair details for notifications
+      const [repairDetails] = await connection.execute(`
+        SELECT rr.*, c.name as customerName, c.phone as customerPhone, c.email as customerEmail
+        FROM RepairRequest rr
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE rr.id = ?
+      `, [id]);
+
+      if (repairDetails.length > 0) {
+        const repair = repairDetails[0];
+        
+        // Map status to notification type
+        const notificationTypes = {
+          'RECEIVED': 'repair_received',
+          'UNDER_REPAIR': 'repair_started',
+          'READY_FOR_DELIVERY': 'repair_completed',
+          'DELIVERED': 'ready_pickup'
+        };
+
+        const notificationType = notificationTypes[status];
+        
+        if (notificationType && fromStatus !== status) {
+          // Create notification log (RepairNotificationLog table should exist from migrations)
+          try {
+            await connection.execute(`
+              INSERT INTO RepairNotificationLog (
+                repairRequestId, customerId, notificationType, channel, status, 
+                title, message, recipient, sentBy, sentAt, createdAt
+              ) VALUES (?, ?, ?, 'system', 'pending', ?, ?, ?, ?, NOW(), NOW())
+            `, [
+              id,
+              repair.customerId,
+              notificationType,
+              `تحديث حالة الطلب #${id}`,
+              `تم تحديث حالة طلب الإصلاح #${id} إلى: ${status}`,
+              repair.customerPhone || repair.customerEmail,
+              changedById || 1
+            ]);
+            
+            console.log(`✅ Created notification log for repair ${id}, type: ${notificationType}`);
+          } catch (notifError) {
+            // If RepairNotificationLog table doesn't exist, skip silently
+            console.warn('Notification log table may not exist:', notifError.message);
+          }
+        }
+      }
+    } catch (notifError) {
+      // Don't fail the status update if notification fails
+      console.warn('Error creating notification:', notifError.message);
+    }
+    
     // Commit transaction
     await connection.commit();
     connection.release();
@@ -799,7 +991,29 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       'REJECTED': 'cancelled',
       'WAITING_PARTS': 'on-hold'
     };
-    res.json({ success: true, message: 'Status updated successfully', status: uiMap[status] || 'pending' });
+    
+    // 🔧 Fix #6: Include invoice information in response if auto-created
+    const response = { 
+      success: true, 
+      message: 'Status updated successfully', 
+      status: uiMap[status] || 'pending'
+    };
+    
+    // Add invoice information if one was auto-created
+    if (createdInvoiceId) {
+      response.invoiceCreated = true;
+      response.invoiceId = createdInvoiceId;
+      response.invoiceMessage = `تم إنشاء فاتورة تلقائياً رقم #${createdInvoiceId}`;
+    }
+
+    // Add invoice info if created
+    if (createdInvoiceId) {
+      response.invoiceCreated = true;
+      response.invoiceId = createdInvoiceId;
+      response.message += `. تم إنشاء الفاتورة تلقائياً (#${createdInvoiceId})`;
+    }
+
+    res.json(response);
   } catch (err) {
     // Rollback transaction on error
     if (connection) {

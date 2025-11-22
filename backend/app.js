@@ -43,6 +43,7 @@ const companyRoutes = require('./routes/companiesSimple');
 const deviceRoutes = require('./routes/devices');
 const repairRoutes = require('./routes/repairs');
 const repairSimpleRoutes = require('./routes/repairsSimple');
+const repairApprovalsRouter = require('./routes/repairsApprovals');
 const techniciansRouter = require('./routes/technicians');
 const technicianRoutes = require('./routes/technicianRoutes');
 const inventoryRoutes = require('./routes/inventory');
@@ -122,9 +123,10 @@ router.use('/companies', companyRoutes);
 router.use('/devices', deviceRoutes);
 router.use('/repairs', repairRoutes);
 router.use('/repairsSimple', repairSimpleRoutes);
+router.use('/repairs-approvals', repairApprovalsRouter);
 router.use('/technicians', techniciansRouter);
+router.use('/inventory', inventoryIssueRouter); // Must be before inventoryRoutes to avoid route conflicts
 router.use('/inventory', inventoryRoutes);
-router.use('/inventory', inventoryIssueRouter);
 router.use('/vendors', vendorRoutes);
 // Vendor payments routes must be after /vendors route to avoid conflicts
 router.use('/', vendorPaymentsRouter); // Vendor payments routes are under /api/vendors/:vendorId/payments
