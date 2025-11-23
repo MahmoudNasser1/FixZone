@@ -7,7 +7,7 @@ class WebSocketService {
     this.heartbeatInterval = 30000; // 30 seconds
     this.listeners = new Map();
     this.isConnecting = false;
-    this.url = process.env.REACT_APP_WS_URL || 'ws://localhost:3001/ws';
+    this.url = process.env.REACT_APP_WS_URL || 'ws://localhost:4000/ws';
   }
 
   // Connect to WebSocket server

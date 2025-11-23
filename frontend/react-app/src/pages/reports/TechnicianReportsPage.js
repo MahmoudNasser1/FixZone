@@ -41,7 +41,7 @@ const TechnicianReportsPage = () => {
   const fetchTechnicianPerformance = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/reports/technician-performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/technician-performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();

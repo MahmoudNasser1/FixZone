@@ -43,7 +43,7 @@ const FinancialReportsPage = () => {
   const fetchProfitLossReport = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/reports/profit-loss?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/profit-loss?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -61,7 +61,7 @@ const FinancialReportsPage = () => {
       
       for (let month = 1; month <= 12; month++) {
       const response = await fetch(
-        `http://localhost:3001/api/reports/monthly-revenue?year=${currentYear}&month=${month}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/monthly-revenue?year=${currentYear}&month=${month}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -89,7 +89,7 @@ const FinancialReportsPage = () => {
         const dateStr = date.toISOString().split('T')[0];
         
         const response = await fetch(
-          `http://localhost:3001/api/reports/daily-revenue?date=${dateStr}`,
+          `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/daily-revenue?date=${dateStr}`,
           { credentials: 'include' }
         );
         const data = await response.json();
@@ -109,7 +109,7 @@ const FinancialReportsPage = () => {
   const fetchExpenses = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/reports/expenses?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/expenses?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();

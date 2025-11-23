@@ -11,7 +11,7 @@ const websocketService = require('./services/websocketService');
 // const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 4000;
 
 // CORS Configuration
 const corsOrigins = process.env.CORS_ORIGIN 

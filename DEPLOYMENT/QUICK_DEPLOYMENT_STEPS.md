@@ -110,7 +110,7 @@ pm2 logs
 
 ```bash
 # Test backend
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # Test frontend
 curl http://localhost:3000
@@ -151,7 +151,7 @@ pm2 logs
 mysql -u root -p -e "USE FixZone; SHOW TABLES;"
 
 # Check ports
-sudo netstat -tulpn | grep :3001
+sudo netstat -tulpn | grep :4000
 sudo netstat -tulpn | grep :3000
 ```
 

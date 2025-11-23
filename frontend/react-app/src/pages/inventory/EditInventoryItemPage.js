@@ -44,7 +44,7 @@ const EditInventoryItemPage = () => {
   const loadItem = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/inventory/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory/${id}`, {
         credentials: 'include'
       });
 
@@ -93,7 +93,7 @@ const EditInventoryItemPage = () => {
 
     try {
       setSaving(true);
-      const response = await fetch(`http://localhost:3001/api/inventory/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

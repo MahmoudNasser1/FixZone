@@ -149,7 +149,7 @@ const InvoiceDetailsPage = () => {
 
   const handlePrintInvoice = () => {
     if (!id) return;
-    const base = 'http://localhost:3001/api/invoices';
+    const base = (process.env.REACT_APP_API_URL || 'http://localhost:4000/api') + '/invoices';
     const url = `${base}/${id}/print`;
     window.open(url, '_blank');
   };

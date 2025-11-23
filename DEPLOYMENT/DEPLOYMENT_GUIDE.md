@@ -93,7 +93,7 @@ DB_PORT=3306
 DB_CONNECTION_LIMIT=10
 
 # Server Configuration
-PORT=3001
+PORT=4000
 NODE_ENV=production
 
 # JWT Secret
@@ -108,8 +108,8 @@ EOF
 
 # Frontend .env template
 cat > frontend/react-app/.env.production.example << 'EOF'
-REACT_APP_API_URL=http://localhost:3001/api
-REACT_APP_WS_URL=ws://localhost:3001/ws
+REACT_APP_API_URL=http://localhost:4000/api
+REACT_APP_WS_URL=ws://localhost:4000/ws
 EOF
 ```
 
@@ -358,7 +358,7 @@ module.exports = {
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 4000
       },
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',

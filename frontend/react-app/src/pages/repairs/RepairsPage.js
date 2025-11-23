@@ -26,7 +26,7 @@ const handlePrintRepair = (repairId, type = 'invoice') => {
     return;
   }
   
-  const API_BASE_URL = 'http://localhost:3001/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
   const printUrl = `${API_BASE_URL}/repairs/${repairId}/print/${type}`;
   
   // Open print page in new window

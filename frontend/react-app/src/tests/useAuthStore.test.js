@@ -40,7 +40,7 @@ describe('useAuthStore', () => {
 
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.user).toEqual(userData);
-      expect(axios.post).toHaveBeenCalledWith('http://localhost:3001/api/auth/login', {
+      expect(axios.post).toHaveBeenCalledWith('http://localhost:4000/api/auth/login', {
         loginIdentifier: 'test@example.com',
         password: 'password',
       });
@@ -86,7 +86,7 @@ describe('useAuthStore', () => {
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.user).toBeNull();
       expect(result.current.token).toBeNull();
-      expect(axios.post).toHaveBeenCalledWith('http://localhost:3001/api/auth/logout');
+      expect(axios.post).toHaveBeenCalledWith('http://localhost:4000/api/auth/logout');
     });
   });
 
@@ -105,7 +105,7 @@ describe('useAuthStore', () => {
       expect(success).toBe(true);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.user).toEqual(userData);
-      expect(axios.get).toHaveBeenCalledWith('http://localhost:3001/api/auth/me');
+      expect(axios.get).toHaveBeenCalledWith('http://localhost:4000/api/auth/me');
     });
 
     it('should not restore session if /me endpoint fails', async () => {

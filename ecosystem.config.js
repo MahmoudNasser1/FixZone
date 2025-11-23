@@ -8,11 +8,11 @@ module.exports = {
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 4000
       },
       env_development: {
         NODE_ENV: 'development',
-        PORT: 3001
+        PORT: 4000
       },
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',

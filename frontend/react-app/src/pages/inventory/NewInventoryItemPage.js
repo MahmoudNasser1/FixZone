@@ -55,7 +55,7 @@ const NewInventoryItemPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/inventory', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

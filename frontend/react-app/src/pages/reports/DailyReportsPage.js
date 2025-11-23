@@ -40,7 +40,7 @@ const DailyReportsPage = () => {
   const fetchDailyRevenue = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/reports/daily-revenue?date=${selectedDate}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/daily-revenue?date=${selectedDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();

@@ -1306,7 +1306,7 @@ const RepairDetailsPage = () => {
       return;
     }
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
-    const base = 'http://localhost:3001/api/repairs';
+    const base = (process.env.REACT_APP_API_URL || 'http://localhost:4000/api') + '/repairs';
     let url = `${base}/${id}/print/receipt`;
     if (type === 'receipt') url = `${base}/${id}/print/receipt`;
     if (type === 'sticker') url = `${base}/${id}/print/sticker`;
