@@ -96,6 +96,9 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 // Technician Portal Pages
 import { TechnicianDashboard, JobsListPage, JobDetailsPage } from './pages/technician';
 
+// Debug Page
+import DebugPage from './pages/DebugPage';
+
 // Placeholder components removed; using real pages instead
 
 // This component protects routes that require authentication.
@@ -248,6 +251,9 @@ function App() {
                 </PublicRoute>
               }
             />
+
+            {/* Debug Page - للمطورين */}
+            <Route path="/debug" element={<DebugPage />} />
 
             {/* Customer Portal Routes - Login redirects to unified login */}
             <Route

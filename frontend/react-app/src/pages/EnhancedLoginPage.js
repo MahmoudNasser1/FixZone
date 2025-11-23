@@ -155,23 +155,41 @@ const EnhancedLoginPage = () => {
 
     // ===== Render =====
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Background Decoration */}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Decoration - ألوان البراند */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-                <div className="absolute top-40 left-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob" style={{ backgroundColor: '#053887' }}></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000" style={{ backgroundColor: '#0a4da3' }}></div>
+                <div className="absolute top-40 left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000" style={{ backgroundColor: '#1562bf' }}></div>
             </div>
 
             {/* Login Card */}
-            <Card className="w-full max-w-md shadow-2xl backdrop-blur-sm bg-white/95 relative z-10">
+            <Card className="w-full max-w-md shadow-2xl backdrop-blur-sm bg-white/95 relative z-10 border-t-4" style={{ borderTopColor: '#053887' }}>
                 <CardHeader className="text-center pb-2">
-                    {/* Logo */}
-                    <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <div className="text-white text-3xl font-bold">FZ</div>
+                    {/* Logo الحقيقي */}
+                    <div className="mx-auto mb-4 flex items-center justify-center">
+                        <img
+                            src="/logo.png"
+                            alt="FixZone Logo"
+                            className="h-20 w-auto object-contain"
+                            onError={(e) => {
+                                // Fallback لو الصورة مش موجودة
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                            }}
+                        />
+                        {/* Fallback Logo */}
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg hidden" style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}>
+                            <div className="text-white text-3xl font-bold">FZ</div>
+                        </div>
                     </div>
 
-                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-3xl font-bold" style={{
+                        background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                    }}>
                         أهلاً بيك
                     </CardTitle>
                     <CardDescription className="text-base mt-2">
@@ -183,11 +201,14 @@ const EnhancedLoginPage = () => {
                     <CardContent className="space-y-5 pt-6">
                         {/* Error Message */}
                         {error && (
-                            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3 animate-shake">
-                                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <div className="border-l-4 p-4 rounded-lg flex items-start gap-3 animate-shake" style={{
+                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                                borderColor: '#EF4444'
+                            }}>
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
                                 <div>
-                                    <p className="font-semibold text-red-800 text-sm">في مشكلة!</p>
-                                    <p className="text-red-700 text-sm mt-1">{error}</p>
+                                    <p className="font-semibold text-sm" style={{ color: '#DC2626' }}>في مشكلة!</p>
+                                    <p className="text-sm mt-1" style={{ color: '#EF4444' }}>{error}</p>
                                 </div>
                             </div>
                         )}
@@ -198,7 +219,7 @@ const EnhancedLoginPage = () => {
                                 الإيميل أو الموبايل
                             </Label>
                             <div className="relative">
-                                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#9CA3AF' }} />
                                 <Input
                                     id="loginIdentifier"
                                     name="loginIdentifier"
@@ -212,12 +233,16 @@ const EnhancedLoginPage = () => {
                                     dir="ltr"
                                     className={`pr-10 h-12 text-base ${touched.loginIdentifier && validationErrors.loginIdentifier
                                             ? 'border-red-500 focus:ring-red-500'
-                                            : 'focus:ring-blue-500'
+                                            : ''
                                         }`}
+                                    style={!validationErrors.loginIdentifier ? {
+                                        borderColor: '#E5E7EB',
+                                        focusRingColor: '#053887'
+                                    } : {}}
                                 />
                             </div>
                             {touched.loginIdentifier && validationErrors.loginIdentifier && (
-                                <p className="text-sm text-red-600 flex items-center gap-1 animate-fadeIn">
+                                <p className="text-sm flex items-center gap-1 animate-fadeIn" style={{ color: '#EF4444' }}>
                                     <AlertCircle className="w-4 h-4" />
                                     {validationErrors.loginIdentifier}
                                 </p>
@@ -230,7 +255,7 @@ const EnhancedLoginPage = () => {
                                 كلمة السر
                             </Label>
                             <div className="relative">
-                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#9CA3AF' }} />
                                 <Input
                                     id="password"
                                     name="password"
@@ -248,13 +273,19 @@ const EnhancedLoginPage = () => {
                                     placeholder="اكتب كلمة السر"
                                     className={`pr-10 pl-10 h-12 text-base ${touched.password && validationErrors.password
                                             ? 'border-red-500 focus:ring-red-500'
-                                            : 'focus:ring-blue-500'
+                                            : ''
                                         }`}
+                                    style={!validationErrors.password ? {
+                                        borderColor: '#E5E7EB'
+                                    } : {}}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors"
+                                    style={{ color: '#9CA3AF' }}
+                                    onMouseEnter={(e) => e.target.style.color = '#6B7280'}
+                                    onMouseLeave={(e) => e.target.style.color = '#9CA3AF'}
                                     tabIndex={-1}
                                 >
                                     {showPassword ? (
@@ -265,7 +296,7 @@ const EnhancedLoginPage = () => {
                                 </button>
                             </div>
                             {touched.password && validationErrors.password && (
-                                <p className="text-sm text-red-600 flex items-center gap-1 animate-fadeIn">
+                                <p className="text-sm flex items-center gap-1 animate-fadeIn" style={{ color: '#EF4444' }}>
                                     <AlertCircle className="w-4 h-4" />
                                     {validationErrors.password}
                                 </p>
@@ -277,14 +308,21 @@ const EnhancedLoginPage = () => {
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    className="w-4 h-4 rounded focus:ring-2"
+                                    style={{
+                                        color: '#053887',
+                                        borderColor: '#D1D5DB'
+                                    }}
                                     disabled={isLoading}
                                 />
                                 <span className="text-gray-700">فاكرني</span>
                             </label>
                             <a
                                 href="#"
-                                className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                                className="font-medium hover:underline"
+                                style={{ color: '#053887' }}
+                                onMouseEnter={(e) => e.target.style.color = '#042d6b'}
+                                onMouseLeave={(e) => e.target.style.color = '#053887'}
                                 onClick={(e) => {
                                     e.preventDefault();
                                     alert('اتصل بالإدارة علشان تعيد كلمة السر');
@@ -296,10 +334,15 @@ const EnhancedLoginPage = () => {
                     </CardContent>
 
                     <CardFooter className="flex flex-col gap-3">
-                        {/* Login Button */}
+                        {/* Login Button - ألوان البراند */}
                         <Button
                             type="submit"
-                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                            className="w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                            style={{
+                                background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #042d6b 0%, #053887 50%, #0a4da3 100%)'}
+                            onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'}
                             disabled={isLoading || Object.keys(validationErrors).length > 0}
                         >
                             {isLoading ? (
@@ -321,7 +364,13 @@ const EnhancedLoginPage = () => {
                         {/* Help Text */}
                         <p className="text-center text-sm text-gray-600">
                             محتاج مساعدة؟{' '}
-                            <a href="mailto:support@fixzone.com" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                            <a
+                                href="mailto:support@fixzone.com"
+                                className="font-medium hover:underline"
+                                style={{ color: '#053887' }}
+                                onMouseEnter={(e) => e.target.style.color = '#042d6b'}
+                                onMouseLeave={(e) => e.target.style.color = '#053887'}
+                            >
                                 اتصل بينا
                             </a>
                         </p>
