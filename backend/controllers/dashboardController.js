@@ -126,8 +126,8 @@ exports.getDashboardStats = async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Server Error: Failed to fetch dashboard statistics',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
@@ -161,15 +161,15 @@ exports.getRecentRepairs = async (req, res) => {
              LIMIT ?`,
             [limit]
         );
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             data: rows,
             count: rows.length
         });
     } catch (error) {
         console.error('Error fetching recent repairs:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Server Error: Failed to fetch recent repairs',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
@@ -194,7 +194,7 @@ exports.getAlerts = async (_req, res) => {
              AND status NOT IN ('DELIVERED', 'REJECTED', 'delivered', 'rejected', 'completed', 'COMPLETED')
              AND createdAt < DATE_SUB(NOW(), INTERVAL 7 DAY)`
         );
-        
+
         const [lowStockItems] = await db.execute(
             `SELECT 
                 ii.id AS itemId,
@@ -210,8 +210,8 @@ exports.getAlerts = async (_req, res) => {
              WHERE (sl.isLowStock = TRUE OR sl.quantity <= sl.minLevel)
              AND sl.quantity >= 0`
         );
-        
-        res.json({ 
+
+        res.json({
             success: true,
             data: {
                 delayedRequests: delayedRequests || [],
@@ -223,9 +223,90 @@ exports.getAlerts = async (_req, res) => {
         });
     } catch (error) {
         console.error('Error fetching alerts:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Server Error: Failed to fetch alerts',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// Get customer statistics for customer dashboard
+exports.getCustomerStats = async (req, res) => {
+    try {
+        // Get customerId from JWT token or query parameter
+        const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
+
+        if (!customerId) {
+            return res.status(400).json({
+                success: false,
+                message: 'معرف العميل مطلوب',
+                code: 'CUSTOMER_ID_REQUIRED'
+            });
+        }
+
+        // Get repair statistics
+        const [repairStats] = await db.execute(`
+            SELECT 
+                COUNT(*) as totalRepairs,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingRepairs,
+                COUNT(CASE WHEN status IN ('in_progress', 'DIAGNOSED', 'RECEIVED') THEN 1 END) as activeRepairs,
+                COUNT(CASE WHEN status IN ('completed', 'COMPLETED', 'delivered', 'DELIVERED') THEN 1 END) as completedRepairs,
+                COUNT(CASE WHEN status IN ('cancelled', 'CANCELLED', 'rejected', 'REJECTED') THEN 1 END) as cancelledRepairs
+            FROM RepairRequest
+            WHERE customerId = ? AND deletedAt IS NULL
+        `, [customerId]);
+
+        // Get invoice statistics
+        const [invoiceStats] = await db.execute(`
+            SELECT 
+                COUNT(*) as totalInvoices,
+                COUNT(CASE WHEN status = 'pending' OR status = 'unpaid' THEN 1 END) as pendingInvoices,
+                COUNT(CASE WHEN status = 'paid' THEN 1 END) as paidInvoices,
+                COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdueInvoices,
+                COALESCE(SUM(totalAmount), 0) as totalSpent,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN totalAmount ELSE 0 END), 0) as totalPaid,
+                COALESCE(SUM(totalAmount - COALESCE(amountPaid, 0)), 0) as remainingBalance
+            FROM Invoice
+            WHERE customerId = ? AND deletedAt IS NULL
+        `, [customerId]);
+
+        // Get unique devices count (based on deviceType and brand combinations)
+        const [deviceStats] = await db.execute(`
+            SELECT COUNT(DISTINCT CONCAT(COALESCE(deviceType, ''), '-', COALESCE(deviceBrand, ''))) as totalDevices
+            FROM RepairRequest
+            WHERE customerId = ? AND deletedAt IS NULL
+        `, [customerId]);
+
+        const stats = repairStats[0] || {};
+        const invoices = invoiceStats[0] || {};
+        const devices = deviceStats[0] || {};
+
+        res.json({
+            success: true,
+            data: {
+                totalRepairs: stats.totalRepairs || 0,
+                activeRepairs: stats.activeRepairs || 0,
+                completedRepairs: stats.completedRepairs || 0,
+                pendingRepairs: stats.pendingRepairs || 0,
+                cancelledRepairs: stats.cancelledRepairs || 0,
+                totalInvoices: invoices.totalInvoices || 0,
+                pendingInvoices: invoices.pendingInvoices || 0,
+                paidInvoices: invoices.paidInvoices || 0,
+                overdueInvoices: invoices.overdueInvoices || 0,
+                totalDevices: devices.totalDevices || 0,
+                totalSpent: parseFloat(invoices.totalSpent) || 0,
+                totalPaid: parseFloat(invoices.totalPaid) || 0,
+                remainingBalance: parseFloat(invoices.remainingBalance) || 0
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching customer stats:', error);
+        res.status(500).json({
+            success: false,
+            message: 'حصل خطأ في السيرفر',
+            code: 'SERVER_ERROR',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

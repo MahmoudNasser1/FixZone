@@ -56,6 +56,41 @@ async function updateStockAlert(connection, inventoryItemId, warehouseId, quanti
   }
 }
 
+// GET /api/stock-levels/low-stock - Get low stock items
+router.get('/low-stock', async (req, res) => {
+  try {
+    const [levels] = await db.execute(`
+      SELECT 
+        sl.*,
+        i.name as itemName,
+        i.sku,
+        i.type as category,
+        i.purchasePrice as unitPrice,
+        w.name as warehouseName,
+        CASE 
+          WHEN sl.quantity <= 0 THEN 'out_of_stock'
+          WHEN sl.quantity <= sl.minLevel THEN 'low_stock'
+          ELSE 'normal'
+        END as alertLevel
+      FROM StockLevel sl
+      LEFT JOIN InventoryItem i ON sl.inventoryItemId = i.id
+      LEFT JOIN Warehouse w ON sl.warehouseId = w.id
+      WHERE i.deletedAt IS NULL 
+        AND sl.deletedAt IS NULL
+        AND (sl.quantity <= sl.minLevel OR sl.isLowStock = 1)
+      ORDER BY alertLevel DESC, sl.quantity ASC
+    `);
+    
+    res.json(levels);
+  } catch (error) {
+    console.error('Error fetching low stock items:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // GET /api/stock-levels - Get all stock levels (with optional filters)
 router.get('/', async (req, res) => {
   try {

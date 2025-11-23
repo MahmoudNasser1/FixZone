@@ -26,11 +26,11 @@ router.put('/print-settings', authMiddleware, async (req, res) => {
   try {
     // تحقق مبسط من الحقول المسموحة فقط
     const allowed = [
-      'title','showLogo','logoUrl','showQr','qrSize','showDevicePassword',
-      'showSerialBarcode','barcodeWidth','barcodeHeight','compactMode',
-      'branchName','branchAddress','branchPhone','margins','dateDisplay','terms',
-      'companyName','address','phone','email','deliveryAcknowledgement',
-      'companyName','address','phone','email','deliveryAcknowledgement'
+      'title', 'showLogo', 'logoUrl', 'showQr', 'qrSize', 'showDevicePassword',
+      'showSerialBarcode', 'barcodeWidth', 'barcodeHeight', 'compactMode',
+      'branchName', 'branchAddress', 'branchPhone', 'margins', 'dateDisplay', 'terms',
+      'companyName', 'address', 'phone', 'email', 'deliveryAcknowledgement',
+      'companyName', 'address', 'phone', 'email', 'deliveryAcknowledgement'
     ];
     const next = {};
     for (const k of allowed) {
@@ -99,32 +99,67 @@ function mapFrontendStatusToDb(frontStatus) {
   };
   // إذا كانت القيمة بالفعل من قيم قاعدة البيانات، أعدها كما هي
   const dbValues = new Set([
-    'RECEIVED','INSPECTION','AWAITING_APPROVAL','UNDER_REPAIR','READY_FOR_DELIVERY','DELIVERED','REJECTED','WAITING_PARTS'
+    'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS'
   ]);
   if (dbValues.has(frontStatus)) return frontStatus;
   return map[s] || map[frontStatus] || 'RECEIVED';
 }
 
 // Get all repair requests with statistics
+// Get all repair requests with improved pagination and filters
 router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), async (req, res) => {
   try {
-    const { customerId, status, priority } = req.query;
-    
-    // بناء الاستعلام مع الفلاتر
+    const {
+      customerId,
+      status,
+      priority,
+      page = 1,
+      limit = 10,
+      search = ''
+    } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build WHERE conditions
     let whereConditions = ['rr.deletedAt IS NULL'];
     let queryParams = [];
-    
+
+    // Customer filter
     if (customerId) {
       whereConditions.push('rr.customerId = ?');
       queryParams.push(customerId);
     }
-    
+
+    // Status filter - support both frontend and database statuses
     if (status) {
+      const dbStatus = mapFrontendStatusToDb(status);
       whereConditions.push('rr.status = ?');
-      queryParams.push(status);
+      queryParams.push(dbStatus || status);
     }
-    
-    // جلب جميع طلبات الإصلاح مع بيانات العملاء والأجهزة
+
+    // Priority filter
+    if (priority) {
+      whereConditions.push('rr.priority = ?');
+      queryParams.push(priority.toUpperCase());
+    }
+
+    // Search filter (device type, brand, model, or problem description)
+    if (search && search.trim()) {
+      whereConditions.push(`(
+        rr.reportedProblem LIKE ? OR 
+        d.deviceType LIKE ? OR 
+        COALESCE(vo.label, d.brand) LIKE ? OR 
+        d.model LIKE ? OR
+        rr.id = ?
+      )`);
+      const searchPattern = `%${search.trim()}%`;
+      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, search.trim());
+    }
+
+    // Build main query with pagination
     const query = `
       SELECT 
         rr.*,
@@ -142,139 +177,73 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       LEFT JOIN VariableOption vo ON d.brandId = vo.id
       WHERE ${whereConditions.join(' AND ')}
       ORDER BY rr.createdAt DESC
+      LIMIT ? OFFSET ?
     `;
-    
+
+    queryParams.push(limitNum, offset);
+
     const [rows] = await db.execute(query, queryParams);
-    
-    // تحويل البيانات لتتوافق مع Frontend
+
+    //Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM RepairRequest rr
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      WHERE ${whereConditions.join(' AND ')}
+    `;
+
+    // Remove limit and offset params for count query
+    const countParams = queryParams.slice(0, -2);
+    const [countResult] = await db.execute(countQuery, countParams);
+    const total = countResult[0]?.total || 0;
+
+    // Format data for frontend
     const formattedData = rows.map(row => ({
       id: row.id,
       requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`,
+      customerId: row.customerId,
       customerName: row.customerName || 'غير محدد',
       customerPhone: row.customerPhone || 'غير محدد',
       customerEmail: row.customerEmail || 'غير محدد',
       deviceType: row.deviceType || 'غير محدد',
       deviceBrand: row.deviceBrand || 'غير محدد',
       deviceModel: row.deviceModel || 'غير محدد',
-      problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل محددة للمشكلة',
+      issueDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
       status: getStatusMapping(row.status),
       priority: row.priority || 'MEDIUM',
-      estimatedCost: row.estimatedCost || 0,
-      actualCost: row.actualCost || null,
+      estimatedCost: parseFloat(row.estimatedCost) || 0,
+      actualCost: row.actualCost ? parseFloat(row.actualCost) : null,
       expectedDeliveryDate: row.expectedDeliveryDate || null,
+      estimatedCompletionDate: row.expectedDeliveryDate || null,
+      assignedTechnician: row.technicianId || null,
       notes: row.notes || null,
       accessories: row.accessoriesJson ? JSON.parse(row.accessoriesJson).filter(a => a != null) : [],
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }));
-    
-    // إضافة بيانات تجريبية مصرية إذا لم توجد بيانات
-    if (formattedData.length === 0) {
-      const sampleData = [
-        {
-          id: 1,
-          requestNumber: 'REP-20241203-001',
-          customerName: 'أحمد محمد علي',
-          customerPhone: '01012345678',
-          customerEmail: 'ahmed.mohamed@gmail.com',
-          deviceType: 'لابتوب',
-          deviceBrand: 'Dell',
-          deviceModel: 'Inspiron 15 3000',
-          problemDescription: 'الشاشة لا تعمل والجهاز يصدر صوت تنبيه عند التشغيل',
-          status: 'pending',
-          priority: 'high',
-          estimatedCost: 450.00,
-          createdAt: new Date('2024-12-03T14:30:00'),
-          updatedAt: new Date('2024-12-03T14:30:00')
-        },
-        {
-          id: 2,
-          requestNumber: 'REP-20241203-002',
-          customerName: 'فاطمة أحمد حسن',
-          customerPhone: '01098765432',
-          customerEmail: 'fatima.ahmed@gmail.com',
-          deviceType: 'هاتف ذكي',
-          deviceBrand: 'Apple',
-          deviceModel: 'iPhone 13',
-          problemDescription: 'الشاشة مكسورة والهاتف لا يستجيب للمس في بعض المناطق',
-          status: 'in-progress',
-          priority: 'medium',
-          estimatedCost: 800.00,
-          createdAt: new Date('2024-12-03T10:15:00'),
-          updatedAt: new Date('2024-12-03T15:20:00')
-        },
-        {
-          id: 3,
-          requestNumber: 'REP-20241202-003',
-          customerName: 'محمد علي إبراهيم',
-          customerPhone: '01123456789',
-          customerEmail: 'mohamed.ali@gmail.com',
-          deviceType: 'تابلت',
-          deviceBrand: 'Samsung',
-          deviceModel: 'Galaxy Tab S8',
-          problemDescription: 'البطارية لا تشحن والجهاز يتوقف فجأة حتى مع الشاحن متصل',
-          status: 'completed',
-          priority: 'low',
-          estimatedCost: 320.00,
-          createdAt: new Date('2024-12-02T16:45:00'),
-          updatedAt: new Date('2024-12-03T09:30:00')
-        },
-        {
-          id: 4,
-          requestNumber: 'REP-20241202-004',
-          customerName: 'سارة خالد محمود',
-          customerPhone: '01234567890',
-          customerEmail: 'sara.khaled@gmail.com',
-          deviceType: 'كمبيوتر مكتبي',
-          deviceBrand: 'HP',
-          deviceModel: 'Pavilion Desktop',
-          problemDescription: 'الجهاز لا يبدأ التشغيل ولا توجد إشارة على الشاشة',
-          status: 'pending',
-          priority: 'high',
-          estimatedCost: 380.00,
-          createdAt: new Date('2024-12-02T11:20:00'),
-          updatedAt: new Date('2024-12-02T11:20:00')
-        },
-        {
-          id: 5,
-          requestNumber: 'REP-20241201-005',
-          customerName: 'عبدالله سعد أحمد',
-          customerPhone: '01156789012',
-          customerEmail: 'abdullah.saad@gmail.com',
-          deviceType: 'لابتوب',
-          deviceBrand: 'Lenovo',
-          deviceModel: 'ThinkPad X1',
-          problemDescription: 'لوحة المفاتيح لا تعمل وبعض الأزرار عالقة - في انتظار قطع الغيار',
-          status: 'on-hold',
-          priority: 'medium',
-          estimatedCost: 250.00,
-          createdAt: new Date('2024-12-01T09:30:00'),
-          updatedAt: new Date('2024-12-01T14:45:00')
-        },
-        {
-          id: 6,
-          requestNumber: 'REP-20241130-006',
-          customerName: 'نورا عثمان محمد',
-          customerPhone: '01165432198',
-          customerEmail: 'nora.othman@gmail.com',
-          deviceType: 'برنتر',
-          deviceBrand: 'Canon',
-          deviceModel: 'PIXMA MG3620',
-          problemDescription: 'عطل في رأس الطباعة والحبر لا يطبع بشكل واضح',
-          status: 'cancelled',
-          priority: 'low',
-          estimatedCost: 120.00,
-          createdAt: new Date('2024-11-30T13:15:00'),
-          updatedAt: new Date('2024-11-30T16:45:00')
+
+    // Return response with pagination metadata
+    res.json({
+      success: true,
+      data: {
+        repairs: formattedData,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          totalItems: total
         }
-      ];
-      return res.json(sampleData);
-    }
-    
-    res.json(formattedData);
+      }
+    });
   } catch (err) {
     console.error('Error fetching repair requests:', err);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({
+      success: false,
+      message: 'حصل خطأ في السيرفر',
+      code: 'SERVER_ERROR',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
@@ -549,7 +518,7 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
 
 // Create a new repair request
 router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (req, res) => {
-  const { 
+  const {
     customerId, customerName, customerPhone, customerEmail,
     deviceType, deviceBrand, brandId, deviceModel, serialNumber,
     devicePassword,
@@ -557,7 +526,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     accessories,
     problemDescription, priority, estimatedCost, notes, status, expectedDeliveryDate
   } = req.body;
-  
+
   // Debug logging
   console.log('Received repair data:', {
     estimatedCost,
@@ -568,23 +537,23 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     accessories
   });
   console.log('Accessories type:', typeof accessories, 'Is array:', Array.isArray(accessories), 'Value:', accessories);
-  
+
   // Get database connection for transaction
   const connection = await db.getConnection();
-  
+
   try {
     // Start transaction
     await connection.beginTransaction();
-    
+
     // أولاً: إنشاء أو العثور على العميل
     let actualCustomerId = customerId;
     if (!customerId) {
       // البحث عن العميل بالهاتف أولاً
       const [existingCustomer] = await connection.execute(
-        'SELECT id FROM Customer WHERE phone = ? AND deletedAt IS NULL', 
+        'SELECT id FROM Customer WHERE phone = ? AND deletedAt IS NULL',
         [customerPhone]
       );
-      
+
       if (existingCustomer.length > 0) {
         actualCustomerId = existingCustomer[0].id;
       } else {
@@ -596,7 +565,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         actualCustomerId = customerResult.insertId;
       }
     }
-    
+
     // ثانياً: إنشاء الجهاز إذا تم تقديم تفاصيله
     let deviceId = null;
     if (deviceType || deviceBrand || brandId || deviceModel || serialNumber || devicePassword || cpu || gpu || ram || storage) {
@@ -618,7 +587,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       );
       deviceId = deviceResult.insertId;
     }
-    
+
     // ثالثاً: إنشاء طلب الإصلاح
     const repairStatus = mapFrontendStatusToDb(status) || 'RECEIVED';
     // توليد توكن تتبع عام للعميل
@@ -629,12 +598,12 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         deviceId, reportedProblem, status, trackingToken, customerId, branchId, technicianId, estimatedCost, expectedDeliveryDate
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     console.log('Inserting repair with values:', {
-      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 
+      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId,
       estimatedCost: estimatedCost || 0, expectedDeliveryDate: expectedDeliveryDate || null
     });
-    
+
     const [result] = await connection.execute(insertQuery, [
       deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 1, null, estimatedCost || 0, expectedDeliveryDate || null // branchId = 1 افتراضي
     ]);
@@ -649,10 +618,10 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       );
       console.log('Accessories saved:', accessories);
     }
-    
+
     // Commit transaction
     await connection.commit();
-    
+
     // إرجاع البيانات المُنشأة مع تفاصيل كاملة
     const [newRepairData] = await connection.execute(`
       SELECT 
@@ -673,11 +642,11 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       LEFT JOIN VariableOption vo ON d.brandId = vo.id
       WHERE rr.id = ?
     `, [result.insertId]);
-    
+
     // Commit transaction
     await connection.commit();
     connection.release();
-    
+
     const newRepair = {
       id: result.insertId,
       requestNumber: `REP-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${String(result.insertId).padStart(3, '0')}`,
@@ -701,7 +670,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     res.status(201).json(newRepair);
   } catch (err) {
     // Rollback transaction on error
@@ -710,10 +679,10 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       connection.release();
     }
     console.error('Error creating repair request:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: 'Server Error', 
-      details: err.message 
+      error: 'Server Error',
+      details: err.message
     });
   }
 });
@@ -755,14 +724,14 @@ router.delete('/:id', authMiddleware, validate(repairSchemas.deleteRepair, 'para
 router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateStatus), async (req, res) => {
   const { id } = req.params;
   let { status, notes } = req.body || {};
-  
+
   // Get database connection for transaction
   const connection = await db.getConnection();
-  
+
   try {
     // Start transaction
     await connection.beginTransaction();
-    
+
     // دعم التحويل من صيغة الواجهة إلى صيغة قاعدة البيانات
     status = mapFrontendStatusToDb(status);
     const [beforeRows] = await connection.execute('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
@@ -783,7 +752,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       'INSERT INTO StatusUpdateLog (repairRequestId, fromStatus, toStatus, notes, changedById) VALUES (?, ?, ?, ?, ?)',
       [id, fromStatus, status, notes, changedById]
     );
-    
+
     // 🔧 Fix #2: Auto-create invoice when status changes to READY_FOR_DELIVERY or DELIVERED
     let createdInvoiceId = null;
     if ((status === 'READY_FOR_DELIVERY' || status === 'DELIVERED') && (fromStatus !== 'READY_FOR_DELIVERY' && fromStatus !== 'DELIVERED')) {
@@ -849,10 +818,10 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
                   invoiceId, inventoryItemId, quantity, unitPrice, totalPrice, itemType, description, partsUsedId
                 ) VALUES (?, ?, ?, ?, ?, 'part', ?, ?)
               `, [
-                createdInvoiceId, 
-                part.inventoryItemId, 
-                quantity, 
-                unitPrice, 
+                createdInvoiceId,
+                part.inventoryItemId,
+                quantity,
+                unitPrice,
                 totalPrice,
                 `قطعة غيار: ${part.name || 'غير محدد'}`,
                 part.id
@@ -880,9 +849,9 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
                   invoiceId, serviceId, quantity, unitPrice, totalPrice, itemType, description
                 ) VALUES (?, ?, 1, ?, ?, 'service', ?)
               `, [
-                createdInvoiceId, 
-                service.serviceId, 
-                unitPrice, 
+                createdInvoiceId,
+                service.serviceId,
+                unitPrice,
                 unitPrice,
                 `خدمة: ${service.name || 'غير محدد'}`
               ]);
@@ -922,7 +891,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
         // Continue with status update even if invoice creation fails
       }
     }
-    
+
     // 🔔 Fix #4: Send notifications when status changes
     try {
       // Get repair details for notifications
@@ -935,7 +904,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
 
       if (repairDetails.length > 0) {
         const repair = repairDetails[0];
-        
+
         // Map status to notification type
         const notificationTypes = {
           'RECEIVED': 'repair_received',
@@ -945,7 +914,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
         };
 
         const notificationType = notificationTypes[status];
-        
+
         if (notificationType && fromStatus !== status) {
           // Create notification log (RepairNotificationLog table should exist from migrations)
           try {
@@ -963,7 +932,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
               repair.customerPhone || repair.customerEmail,
               changedById || 1
             ]);
-            
+
             console.log(`✅ Created notification log for repair ${id}, type: ${notificationType}`);
           } catch (notifError) {
             // If RepairNotificationLog table doesn't exist, skip silently
@@ -975,11 +944,11 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       // Don't fail the status update if notification fails
       console.warn('Error creating notification:', notifError.message);
     }
-    
+
     // Commit transaction
     await connection.commit();
     connection.release();
-    
+
     // أعِد الصيغة الأمريكية للواجهة للتوحيد
     const uiMap = {
       'RECEIVED': 'pending',
@@ -991,14 +960,14 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       'REJECTED': 'cancelled',
       'WAITING_PARTS': 'on-hold'
     };
-    
+
     // 🔧 Fix #6: Include invoice information in response if auto-created
-    const response = { 
-      success: true, 
-      message: 'Status updated successfully', 
+    const response = {
+      success: true,
+      message: 'Status updated successfully',
       status: uiMap[status] || 'pending'
     };
-    
+
     // Add invoice information if one was auto-created
     if (createdInvoiceId) {
       response.invoiceCreated = true;
@@ -1029,7 +998,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
 router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateDetails), async (req, res) => {
   const { id } = req.params;
   const { estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
-  
+
   try {
     // Validate priority if provided
     const validPriorities = ['low', 'normal', 'high', 'urgent'];
@@ -1040,66 +1009,66 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
       'HIGH': 'high',
       'URGENT': 'urgent'
     };
-    
+
     let normalizedPriority = priority;
     if (priority) {
       // Convert to lowercase and map common values
       normalizedPriority = priorityMap[priority] || priority.toLowerCase();
-      
+
       if (!validPriorities.includes(normalizedPriority)) {
         return res.status(400).json({ error: 'Invalid priority. Must be one of: low, normal, high, urgent' });
       }
     }
-    
+
     // Build dynamic update query
     const updates = [];
     const values = [];
-    
+
     if (estimatedCost !== undefined) {
       updates.push('estimatedCost = ?');
       values.push(parseFloat(estimatedCost));
     }
-    
+
     if (actualCost !== undefined) {
       updates.push('actualCost = ?');
       values.push(actualCost ? parseFloat(actualCost) : null);
     }
-    
+
     if (priority !== undefined) {
       updates.push('priority = ?');
       values.push(normalizedPriority);
     }
-    
+
     if (expectedDeliveryDate !== undefined) {
       updates.push('expectedDeliveryDate = ?');
       values.push(expectedDeliveryDate ? new Date(expectedDeliveryDate) : null);
     }
-    
+
     if (notes !== undefined) {
       updates.push('notes = ?');
       values.push(notes);
     }
-    
+
     if (accessories !== undefined) {
       updates.push('accessories = ?');
       values.push(Array.isArray(accessories) ? JSON.stringify(accessories) : null);
     }
-    
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
-    
+
     updates.push('updatedAt = CURRENT_TIMESTAMP');
     values.push(id);
-    
+
     const query = `UPDATE RepairRequest SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`;
-    
+
     const [result] = await db.execute(query, values);
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Repair request not found or already deleted' });
     }
-    
+
     res.json({ message: 'Repair details updated successfully' });
   } catch (err) {
     console.error('Error updating repair details:', err);
@@ -1167,7 +1136,7 @@ router.get('/:id/attachments', authMiddleware, async (req, res) => {
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
-    
+
     // Parse attachments from JSON field
     let attachments = [];
     try {
@@ -1176,7 +1145,7 @@ router.get('/:id/attachments', authMiddleware, async (req, res) => {
       console.warn('Failed to parse attachments from database:', e);
       attachments = [];
     }
-    
+
     // Verify files still exist on filesystem and filter out missing ones
     const validAttachments = [];
     for (const attachment of attachments) {
@@ -1187,13 +1156,13 @@ router.get('/:id/attachments', authMiddleware, async (req, res) => {
         console.warn(`Attachment file not found: ${filePath}`);
       }
     }
-    
+
     // If there are missing files, update the database
     if (validAttachments.length !== attachments.length) {
-      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
+      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
         [JSON.stringify(validAttachments), repairId]);
     }
-    
+
     res.json(validAttachments);
   } catch (e) {
     console.error('List attachments error:', e);
@@ -1205,10 +1174,10 @@ router.get('/:id/attachments', authMiddleware, async (req, res) => {
 router.post('/:id/attachments', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    
+
     const repairId = req.params.id;
     const url = `${req.protocol}://${req.get('host')}/uploads/repairs/${repairId}/${encodeURIComponent(req.file.filename)}`;
-    
+
     // Create attachment object
     const attachmentData = {
       id: req.file.filename,
@@ -1220,13 +1189,13 @@ router.post('/:id/attachments', authMiddleware, upload.single('file'), async (re
       uploadedAt: new Date().toISOString(),
       uploadedBy: req.user?.name || 'Unknown User'
     };
-    
+
     // Get current attachments from database
     const [repairRows] = await db.execute('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
-    
+
     // Parse existing attachments or create empty array
     let existingAttachments = [];
     try {
@@ -1235,14 +1204,14 @@ router.post('/:id/attachments', authMiddleware, upload.single('file'), async (re
       console.warn('Failed to parse existing attachments, starting fresh:', e);
       existingAttachments = [];
     }
-    
+
     // Add new attachment to the array
     existingAttachments.push(attachmentData);
-    
+
     // Update database with new attachments array
-      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+    await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [JSON.stringify(existingAttachments), repairId]);
-    
+
     res.status(201).json(attachmentData);
   } catch (e) {
     console.error('Upload attachment error:', e);
@@ -1255,17 +1224,17 @@ router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res)
   const repairId = req.params.id;
   const attachmentId = req.params.attachmentId;
   const filePath = path.join(uploadRoot, String(repairId), attachmentId);
-  
+
   try {
     // Remove file from filesystem
     await fs.promises.unlink(filePath);
-    
+
     // Get current attachments from database
     const [repairRows] = await db.execute('SELECT attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
     if (!repairRows || repairRows.length === 0) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
-    
+
     // Parse existing attachments
     let existingAttachments = [];
     try {
@@ -1274,14 +1243,14 @@ router.delete('/:id/attachments/:attachmentId', authMiddleware, async (req, res)
       console.warn('Failed to parse existing attachments:', e);
       existingAttachments = [];
     }
-    
+
     // Remove attachment from array
     const updatedAttachments = existingAttachments.filter(att => att.id !== attachmentId);
-    
+
     // Update database with updated attachments array
-      await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+    await db.execute('UPDATE RepairRequest SET attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [JSON.stringify(updatedAttachments), repairId]);
-    
+
     res.json({ success: true });
   } catch (e) {
     console.error('Delete attachment error:', e);
@@ -1339,14 +1308,14 @@ router.post('/:id/assign', authMiddleware, validate(repairSchemas.getRepairById,
   const { id } = req.params;
   const { technicianId } = req.body || {};
   const techIdNum = Number(technicianId);
-  
+
   // Get database connection for transaction
   const connection = await db.getConnection();
-  
+
   try {
     // Start transaction
     await connection.beginTransaction();
-    
+
     // Ensure repair exists
     const [repRows] = await connection.execute('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!repRows || repRows.length === 0) {
@@ -1452,7 +1421,7 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
-    
+
     // Generate QR Code server-side
     let qrCodeDataUrl = '';
     try {
@@ -1469,7 +1438,7 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     } catch (error) {
       console.error('QR Code generation error:', error);
     }
-    
+
     const html = `<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -1994,7 +1963,7 @@ router.get('/:id/print/inspection', authMiddleware, async (req, res) => {
               <tr><th>المكون</th><th>الحالة</th><th>الأولوية</th><th>ملاحظات</th></tr>
             </thead>
             <tbody>
-            ${components.map(c => `<tr><td>${c.name||''}</td><td>${c.status||''}</td><td>${c.priority||''}</td><td>${c.notes||''}</td></tr>`).join('')}
+            ${components.map(c => `<tr><td>${c.name || ''}</td><td>${c.status || ''}</td><td>${c.priority || ''}</td><td>${c.notes || ''}</td></tr>`).join('')}
             </tbody>
           </table>
           ` : '<div class="muted">لا توجد تفاصيل</div>'}
@@ -2092,11 +2061,11 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       'WAITING_PARTS': 'في انتظار القطع'
     };
     const statusText = statusTextMap[repair.status] || repair.status;
-    
+
     // حساب requestNumber بنفس طريقة print receipt
     const reqDate = new Date(repair.createdAt);
     const requestNumber = repair.requestNumber || `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
-    
+
     // إنشاء رابط التتبع للفاتورة
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;

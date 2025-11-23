@@ -1,147 +1,111 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SimpleCard, SimpleCardContent } from '../ui/SimpleCard';
-import SimpleButton from '../ui/SimpleButton';
-import JobStatusBadge from './JobStatusBadge';
-import { 
-  Calendar, 
-  Clock, 
-  User, 
+import {
   Smartphone,
   Laptop,
-  Monitor,
   Tablet,
-  Printer,
-  Package,
+  Watch,
+  Clock,
+  Calendar,
+  User,
+  AlertCircle,
   ArrowRight
 } from 'lucide-react';
 
 /**
- * JobCard Component
- * بطاقة لعرض معلومات الجهاز بشكل مختصر
+ * 🛠️ Job Card Component for Technicians
+ * 
+ * بطاقة عرض المهمة للفني، تحتوي على:
+ * - نوع الجهاز والأيقونة
+ * - وصف المشكلة
+ * - اسم العميل
+ * - الحالة والأولوية
+ * - الوقت المتبقي/المنقضي
  */
 
-// Device type icons
-const deviceIcons = {
-  LAPTOP: Laptop,
-  DESKTOP: Monitor,
-  TABLET: Tablet,
-  SMARTPHONE: Smartphone,
-  PRINTER: Printer,
-  OTHER: Package
-};
+export default function JobCard({ job, onClick }) {
+  const getDeviceIcon = (type) => {
+    const lowerType = type?.toLowerCase() || '';
+    if (lowerType.includes('iphone') || lowerType.includes('phone')) return Smartphone;
+    if (lowerType.includes('mac') || lowerType.includes('laptop')) return Laptop;
+    if (lowerType.includes('ipad') || lowerType.includes('tablet')) return Tablet;
+    if (lowerType.includes('watch')) return Watch;
+    return Smartphone;
+  };
 
-export default function JobCard({ job, className = '' }) {
-  const navigate = useNavigate();
-
-  if (!job) return null;
-
-  const DeviceIcon = deviceIcons[job.deviceType] || deviceIcons.OTHER;
-
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'غير محدد';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ar-EG', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } catch (error) {
-      return dateString;
+  const getPriorityColor = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case 'high': return 'bg-red-100 text-red-700 border-red-200';
+      case 'medium': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
-  // Format relative time
-  const formatRelativeTime = (dateString) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diff = now - date;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const days = Math.floor(hours / 24);
-      
-      if (days > 0) return `منذ ${days} يوم`;
-      if (hours > 0) return `منذ ${hours} ساعة`;
-      return 'منذ قليل';
-    } catch (error) {
-      return '';
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return 'bg-green-100 text-green-700';
+      case 'in_progress': return 'bg-blue-100 text-blue-700';
+      case 'pending': return 'bg-yellow-100 text-yellow-700';
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
-  const handleOpenJob = () => {
-    navigate(`/tech/jobs/${job.id}`);
-  };
+  const Icon = getDeviceIcon(job.deviceType);
 
   return (
-    <SimpleCard 
-      className={`hover:shadow-md transition-all duration-200 cursor-pointer ${className}`}
-      onClick={handleOpenJob}
+    <div
+      onClick={onClick}
+      className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
     >
-      <SimpleCardContent className="p-4">
-        {/* Header: Device Icon + Request Number + Status */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-              <DeviceIcon className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">طلب #{job.requestNumber || job.id}</p>
-              <p className="text-sm text-gray-500">
-                {job.deviceBrand || 'غير محدد'} {job.deviceModel || ''}
-              </p>
-            </div>
-          </div>
-          <JobStatusBadge status={job.status} />
-        </div>
+      {/* Status Stripe */}
+      <div className={`absolute top-0 right-0 w-1 h-full ${job.status === 'completed' ? 'bg-green-500' :
+          job.status === 'in_progress' ? 'bg-blue-500' :
+            'bg-yellow-500'
+        }`} />
 
-        {/* Customer Info */}
-        <div className="flex items-center gap-2 mb-2 text-sm text-gray-600">
-          <User className="w-4 h-4" />
-          <span>{job.customerName || 'عميل غير معروف'}</span>
-        </div>
-
-        {/* Date Info */}
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span>استلام: {formatDate(job.createdAt)}</span>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors">
+            <Icon className="w-6 h-6 text-gray-600 group-hover:text-blue-600" />
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>{formatRelativeTime(job.createdAt)}</span>
+          <div>
+            <h3 className="font-bold text-gray-900">{job.deviceType}</h3>
+            <p className="text-xs text-gray-500">#{job.id}</p>
           </div>
         </div>
 
-        {/* Problem Description (if available) */}
-        {job.reportedProblem && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {job.reportedProblem}
-            </p>
-          </div>
-        )}
+        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getPriorityColor(job.priority)}`}>
+          {job.priority === 'high' ? 'عاجل' : job.priority === 'medium' ? 'متوسط' : 'عادي'}
+        </span>
+      </div>
 
-        {/* Action Button */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <SimpleButton 
-            variant="outline" 
-            size="sm" 
-            className="w-full justify-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenJob();
-            }}
-          >
-            فتح التفاصيل
-            <ArrowRight className="w-4 h-4 mr-2" />
-          </SimpleButton>
+      <div className="mb-4">
+        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+          {job.issueDescription}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+        <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <User className="w-3.5 h-3.5" />
+            <span>{job.customerName}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
+          </div>
         </div>
-      </SimpleCardContent>
-    </SimpleCard>
+
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${getStatusColor(job.status)}`}>
+          {job.status === 'in_progress' && <Clock className="w-3.5 h-3.5 animate-pulse" />}
+          <span>
+            {job.status === 'completed' ? 'مكتمل' :
+              job.status === 'in_progress' ? 'قيد العمل' : 'معلق'}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
-
-

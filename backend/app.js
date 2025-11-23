@@ -99,6 +99,8 @@ const itemVendorsRouter = require('./routes/itemVendors');
 const barcodeRouter = require('./routes/barcode');
 const analyticsRouter = require('./routes/analytics');
 const vendorPaymentsRouter = require('./routes/vendorPayments');
+const customerDevicesRouter = require('./routes/customerDevices');
+const customerNotificationsRouter = require('./routes/customerNotifications');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -161,6 +163,8 @@ router.use('/inventory-integration', inventoryIntegrationRouter);
 router.use('/financial-integration', financialIntegrationRouter);
 router.use('/notificationtemplates', notificationTemplatesRouter);
 router.use('/auth', authRouter); // Must be before vendorPaymentsRouter to avoid authMiddleware blocking login
+router.use('/customer', customerDevicesRouter); // Customer specific routes
+router.use('/customer/notifications', customerNotificationsRouter);
 router.use('/tech', technicianRoutes);
 router.use('/dashboard', dashboardRouter);
 router.use('/messaging', messagingRouter);

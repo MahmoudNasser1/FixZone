@@ -232,10 +232,29 @@ const WorkflowDashboardPage = () => {
 
   const fetchPendingInvoices = async () => {
     try {
-      const invoicesRes = await api.getInvoices().catch(() => ({ data: [] }));
-      const invoicesArray = Array.isArray(invoicesRes) ? invoicesRes : (invoicesRes.data || invoicesRes.invoices || invoicesRes || []);
+      const invoicesRes = await api.getInvoices().catch(() => ({ data: { invoices: [] } }));
+      
+      // Handle different response formats
+      let invoicesArray = [];
+      if (Array.isArray(invoicesRes)) {
+        invoicesArray = invoicesRes;
+      } else if (invoicesRes?.success && invoicesRes?.data?.invoices && Array.isArray(invoicesRes.data.invoices)) {
+        invoicesArray = invoicesRes.data.invoices;
+      } else if (invoicesRes?.data && Array.isArray(invoicesRes.data)) {
+        invoicesArray = invoicesRes.data;
+      } else if (invoicesRes?.invoices && Array.isArray(invoicesRes.invoices)) {
+        invoicesArray = invoicesRes.invoices;
+      } else if (Array.isArray(invoicesRes)) {
+        invoicesArray = invoicesRes;
+      }
+      
+      // Ensure invoicesArray is an array before filtering
+      if (!Array.isArray(invoicesArray)) {
+        invoicesArray = [];
+      }
+      
       const pending = invoicesArray.filter(inv => 
-        inv.status === 'unpaid' || inv.paymentStatus === 'unpaid' || inv.status === 'pending'
+        inv && (inv.status === 'unpaid' || inv.paymentStatus === 'unpaid' || inv.status === 'pending' || inv.paymentStatus === 'pending')
       );
       setPendingInvoices(pending.slice(0, 5));
     } catch (error) {

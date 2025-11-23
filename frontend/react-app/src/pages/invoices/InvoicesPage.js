@@ -63,15 +63,26 @@ const InvoicesPage = () => {
   };
 
   const getStatusBadge = (status) => {
+    // Normalize status - handle both paymentStatus and status
+    let normalizedStatus = status?.toLowerCase() || 'unpaid';
+    
+    // Map backend statuses to frontend statuses
+    if (normalizedStatus === 'partially_paid') {
+      normalizedStatus = 'partial';
+    } else if (normalizedStatus === 'sent' || normalizedStatus === 'draft') {
+      normalizedStatus = 'unpaid';
+    }
+    
     const statusConfig = {
       'paid': { variant: 'default', icon: CheckCircle, text: 'مدفوعة', color: 'text-green-600' },
       'unpaid': { variant: 'destructive', icon: XCircle, text: 'غير مدفوعة', color: 'text-red-600' },
       'partial': { variant: 'secondary', icon: Clock, text: 'مدفوعة جزئياً', color: 'text-yellow-600' },
+      'partially_paid': { variant: 'secondary', icon: Clock, text: 'مدفوعة جزئياً', color: 'text-yellow-600' },
       'overdue': { variant: 'destructive', icon: AlertCircle, text: 'متأخرة', color: 'text-red-600' },
       'cancelled': { variant: 'outline', icon: XCircle, text: 'ملغاة', color: 'text-gray-600' }
     };
 
-    const config = statusConfig[status] || statusConfig['unpaid'];
+    const config = statusConfig[normalizedStatus] || statusConfig['unpaid'];
     const Icon = config.icon;
 
     return (
@@ -300,7 +311,7 @@ const InvoicesPage = () => {
                         <h3 className="text-lg font-semibold text-gray-900">
                           فاتورة #{invoice.id}
                         </h3>
-                        {getStatusBadge(invoice.status)}
+                        {getStatusBadge(invoice.paymentStatus || invoice.status)}
               </div>
               
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">

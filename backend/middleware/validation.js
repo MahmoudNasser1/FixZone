@@ -1191,8 +1191,21 @@ const paymentSchemas = {
       })
   }),
 
-  // Get payment by invoice ID
-  getPaymentsByInvoice: commonSchemas.id,
+  // Get payment by invoice ID (from params - convert string to number)
+  getPaymentsByInvoice: Joi.object({
+    invoiceId: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).required()
+    ).required().custom((value, helpers) => {
+      // Convert string to number if needed
+      return typeof value === 'string' ? parseInt(value, 10) : value;
+    }).messages({
+      'number.base': 'المعرف يجب أن يكون رقم',
+      'number.positive': 'المعرف يجب أن يكون موجب',
+      'any.required': 'المعرف مطلوب',
+      'string.pattern.base': 'المعرف يجب أن يكون رقم'
+    })
+  }),
 
   // Get payment by ID params
   getPaymentById: Joi.object({
@@ -1322,7 +1335,18 @@ const invoiceSchemas = {
     customerId: Joi.number().integer().positive().optional(),
     vendorId: Joi.number().integer().positive().optional(),
     invoiceType: Joi.string().valid('sale', 'purchase').optional(),
-    status: Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled').optional(),
+    status: Joi.alternatives().try(
+      Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled'),
+      Joi.string().pattern(/^(draft|sent|paid|partially_paid|overdue|cancelled)(,(draft|sent|paid|partially_paid|overdue|cancelled))*$/)
+    ).optional().custom((value, helpers) => {
+      // If it's a comma-separated string, return as is (backend will handle splitting)
+      // For now, just return the first value or the whole string
+      if (typeof value === 'string' && value.includes(',')) {
+        // Backend doesn't support multiple statuses yet, so we'll ignore this or return first
+        return value.split(',')[0]; // Return first status for now
+      }
+      return value;
+    }),
     search: Joi.string().max(100).allow('', null).optional()
   }),
 

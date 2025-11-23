@@ -92,11 +92,24 @@ router.post('/', validate(repairRequestServiceSchemas.createRepairRequestService
 // Update a repair request service
 router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceById, 'params'), validate(repairRequestServiceSchemas.updateRepairRequestService), async (req, res) => {
   const { id } = req.params;
-  const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
+  const { repairRequestId, serviceId, technicianId, price, notes, finalPrice } = req.body;
   
   // Get existing service to use current values if not provided
   try {
-    const [existing] = await db.execute('SELECT * FROM RepairRequestService WHERE id = ? AND (deletedAt IS NULL OR deletedAt = "")', [id]);
+    // Check if deletedAt column exists before using it
+    let existingQuery = 'SELECT * FROM RepairRequestService WHERE id = ?';
+    try {
+      const [checkResult] = await db.execute(
+        "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'deletedAt'"
+      );
+      if (checkResult[0].count > 0) {
+        existingQuery += ' AND (deletedAt IS NULL OR deletedAt = "")';
+      }
+    } catch (e) {
+      // Column doesn't exist, use basic query
+    }
+    
+    const [existing] = await db.execute(existingQuery, [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, error: 'Repair request service not found or deleted' });
     }
@@ -106,19 +119,56 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     const updateServiceId = serviceId !== undefined ? serviceId : current.serviceId;
     const updateTechnicianId = technicianId !== undefined ? technicianId : current.technicianId;
     const updatePrice = price !== undefined ? price : current.price;
+    const updateFinalPrice = finalPrice !== undefined ? finalPrice : (current.finalPrice || current.price);
     const updateNotes = notes !== undefined ? notes : current.notes;
     
-    if (!updateRepairRequestId || !updateServiceId || !updateTechnicianId || updatePrice === undefined) {
+    if (!updateRepairRequestId || !updateServiceId || updatePrice === undefined) {
       return res.status(400).json({ 
         success: false,
-        error: 'repairRequestId, serviceId, technicianId, and price are required' 
+        error: 'repairRequestId, serviceId, and price are required' 
       });
     }
     
-    const [result] = await db.execute(
-      'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, technicianId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND (deletedAt IS NULL OR deletedAt = "")',
-      [updateRepairRequestId, updateServiceId, updateTechnicianId, updatePrice, updateNotes, id]
-    );
+    // Build UPDATE query - include finalPrice if it exists in table
+    let updateQuery = 'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP';
+    const updateParams = [updateRepairRequestId, updateServiceId, updatePrice, updateNotes];
+    
+    // Add optional fields if provided
+    if (technicianId !== undefined) {
+      updateQuery += ', technicianId = ?';
+      updateParams.push(updateTechnicianId);
+    }
+    
+    // Check if finalPrice column exists and add it if provided
+    try {
+      const [finalPriceCheck] = await db.execute(
+        "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'finalPrice'"
+      );
+      if (finalPriceCheck[0].count > 0 && updateFinalPrice !== undefined) {
+        updateQuery += ', finalPrice = ?';
+        updateParams.push(updateFinalPrice);
+      }
+    } catch (e) {
+      // Column doesn't exist, skip
+    }
+    
+    // Check if deletedAt exists for WHERE clause
+    let whereClause = ' WHERE id = ?';
+    try {
+      const [checkResult] = await db.execute(
+        "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'deletedAt'"
+      );
+      if (checkResult[0].count > 0) {
+        whereClause += ' AND (deletedAt IS NULL OR deletedAt = "")';
+      }
+    } catch (e) {
+      // Column doesn't exist, use basic WHERE
+    }
+    
+    updateQuery += whereClause;
+    updateParams.push(id);
+    
+    const [result] = await db.execute(updateQuery, updateParams);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, error: 'Repair request service not found or deleted' });
     }

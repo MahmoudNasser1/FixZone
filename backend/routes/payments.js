@@ -209,7 +209,8 @@ router.get('/stats', validate(paymentSchemas.getPaymentStats, 'query'), async (r
 
 // Get payments by invoice ID (must be before /:id route)
 router.get('/invoice/:invoiceId', validate(paymentSchemas.getPaymentsByInvoice, 'params'), async (req, res) => {
-  const { invoiceId } = req.params;
+  // invoiceId is already converted to number by validation
+  const invoiceId = req.params.invoiceId; // validation will convert string to number
   try {
     const [rows] = await db.execute(`
       SELECT 
@@ -329,28 +330,35 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
   } = req.body;
   
   // Use req.user.id as fallback for createdBy
-  const userId = createdBy || req.user?.id;
+  const userId = createdBy || req.user?.id || req.user?.userId;
   
   if (!userId) {
     return res.status(400).json({
       success: false,
-      error: 'User ID is required'
+      error: 'User ID is required',
+      message: 'خطأ في البيانات المدخلة - createdBy: معرف المستخدم مطلوب',
+      details: {
+        provided: { createdBy, 'req.user': req.user },
+        suggestion: 'يرجى إرسال createdBy في body أو التأكد من تسجيل الدخول'
+      }
     });
   }
   
+  const connection = await db.getConnection();
   try {
-    // Start transaction
-    await db.execute('START TRANSACTION');
+    // Start transaction using connection (not prepared statement)
+    await connection.beginTransaction();
     
     // Validate invoice exists and get its details with repairRequestId
-    const [invoiceRows] = await db.execute(`
+    const [invoiceRows] = await connection.execute(`
       SELECT i.repairRequestId, i.totalAmount as finalAmount, i.status 
       FROM Invoice i
       WHERE i.id = ? AND i.deletedAt IS NULL
     `, [invoiceId]);
     
     if (invoiceRows.length === 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ 
         success: false,
         error: 'Invoice not found' 
@@ -360,7 +368,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     const invoice = invoiceRows[0];
     
     // Check if payment amount exceeds remaining balance
-    const [paymentSum] = await db.execute(`
+    const [paymentSum] = await connection.execute(`
       SELECT COALESCE(SUM(amount), 0) as totalPaid 
       FROM Payment 
       WHERE invoiceId = ?
@@ -370,7 +378,8 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     const remainingAmount = invoice.finalAmount - totalPaid;
     
     if (remainingAmount <= 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(400).json({ 
         success: false,
         error: 'Invoice is already fully paid',
@@ -381,7 +390,8 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     }
     
     if (parseFloat(amount) > remainingAmount) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(400).json({ 
         success: false,
         error: `Payment amount (${amount}) exceeds remaining balance (${remainingAmount})`,
@@ -392,19 +402,18 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     }
     
     // Create payment
-    const [result] = await db.execute(`
+    // Note: Payment table doesn't have referenceNumber or notes columns
+    const [result] = await connection.execute(`
       INSERT INTO Payment (
-        invoiceId, amount, currency, paymentDate, paymentMethod, userId, referenceNumber, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        invoiceId, amount, currency, paymentDate, paymentMethod, userId
+      ) VALUES (?, ?, ?, ?, ?, ?)
     `, [
       invoiceId,
       amount,
       currency,
       paymentDate || new Date().toISOString().split('T')[0],
       paymentMethod,
-      userId,
-      referenceNumber || null,
-      notes || null
+      userId
     ]);
     
     const paymentId = result.insertId;
@@ -417,7 +426,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
       newStatus = 'paid';
     }
     
-    await db.execute(`
+    await connection.execute(`
       UPDATE Invoice 
       SET status = ?, amountPaid = ? 
       WHERE id = ?
@@ -425,7 +434,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     
     // If fully paid, update RepairRequest status to ready_for_delivery
     if (newStatus === 'paid' && invoice.repairRequestId) {
-      await db.execute(`
+      await connection.execute(`
         UPDATE RepairRequest 
         SET status = 'ready_for_delivery'
         WHERE id = ?
@@ -433,7 +442,7 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
       
       // Create status update log if StatusUpdateLog table exists
       try {
-        await db.execute(`
+        await connection.execute(`
           INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes, createdAt)
           VALUES (?, 'ready_for_delivery', ?, 'تم الدفع بالكامل - جاهز للتسليم', NOW())
         `, [invoice.repairRequestId, userId]);
@@ -444,9 +453,9 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     }
     
     // Commit transaction
-    await db.execute('COMMIT');
+    await connection.commit();
     
-    // Get the created payment with details
+    // Get the created payment with details (using a new connection for read)
     const [newPayment] = await db.execute(`
       SELECT 
         p.*,
@@ -463,8 +472,12 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
       WHERE p.id = ?
     `, [paymentId]);
     
+    connection.release();
+    
     res.status(201).json({
       success: true,
+      message: 'Payment created successfully',
+      messageAr: 'تم إضافة الدفعة بنجاح',
       payment: newPayment[0],
       invoiceStatus: newStatus,
       totalPaid: newTotalPaid,
@@ -472,17 +485,25 @@ router.post('/', validate(paymentSchemas.createPayment, 'body'), async (req, res
     });
   } catch (err) {
     // Rollback transaction on error
-    await db.execute('ROLLBACK').catch(rollbackErr => {
-      console.error('Rollback error:', rollbackErr);
-    });
+    try {
+      if (connection) {
+        await connection.rollback();
+        connection.release();
+      }
+    } catch (rollbackErr) {
+      console.error('Error rolling back transaction:', rollbackErr);
+    }
     
     console.error('Error creating payment:', err);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ 
       success: false,
-      error: 'Server Error', 
+      error: 'Server Error',
+      message: 'خطأ في إضافة الدفعة',
       details: err.message,
       code: err.code,
-      sqlMessage: err.sqlMessage
+      sqlMessage: err.sqlMessage,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 });
@@ -506,12 +527,13 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
     });
   }
   
+  const connection = await db.getConnection();
   try {
-    // Start transaction
-    await db.execute('START TRANSACTION');
+    // Start transaction using connection
+    await connection.beginTransaction();
     
     // Get current payment details with invoice info
-    const [currentPayment] = await db.execute(`
+    const [currentPayment] = await connection.execute(`
       SELECT p.invoiceId, p.amount as oldAmount, i.repairRequestId
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
@@ -519,7 +541,8 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
     `, [id]);
     
     if (currentPayment.length === 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -545,26 +568,30 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
       updateFields.push('paymentDate = ?');
       updateValues.push(paymentDate);
     }
-    if (referenceNumber !== undefined) {
-      updateFields.push('referenceNumber = ?');
-      updateValues.push(referenceNumber || null);
-    }
-    if (notes !== undefined) {
-      updateFields.push('notes = ?');
-      updateValues.push(notes || null);
+    // Note: Payment table doesn't have referenceNumber or notes columns
+    // Skip these fields if they're sent
+    
+    if (updateFields.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({ 
+        success: false,
+        error: 'No fields to update' 
+      });
     }
     
     updateFields.push('updatedAt = CURRENT_TIMESTAMP');
     updateValues.push(id);
     
-    const [result] = await db.execute(`
+    const [result] = await connection.execute(`
       UPDATE Payment 
       SET ${updateFields.join(', ')}
       WHERE id = ?
     `, updateValues);
     
     if (result.affectedRows === 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -576,14 +603,14 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
       const amountDifference = parseFloat(amount) - parseFloat(oldAmount);
       
       if (amountDifference !== 0) {
-        const [invoiceRows] = await db.execute(`
+        const [invoiceRows] = await connection.execute(`
           SELECT totalAmount as finalAmount 
           FROM Invoice 
           WHERE id = ?
         `, [payment.invoiceId]);
         
         if (invoiceRows.length > 0) {
-          const [paymentSum] = await db.execute(`
+          const [paymentSum] = await connection.execute(`
             SELECT COALESCE(SUM(amount), 0) as totalPaid 
             FROM Payment 
             WHERE invoiceId = ?
@@ -597,7 +624,7 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
             newStatus = 'paid';
           }
           
-          await db.execute(`
+          await connection.execute(`
             UPDATE Invoice 
             SET status = ?, amountPaid = ?
             WHERE id = ?
@@ -605,7 +632,7 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
           
           // If fully paid, update RepairRequest status to ready_for_delivery
           if (newStatus === 'paid' && payment.repairRequestId) {
-            await db.execute(`
+            await connection.execute(`
               UPDATE RepairRequest 
               SET status = 'ready_for_delivery'
               WHERE id = ?
@@ -613,7 +640,7 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
             
             // Create status update log if StatusUpdateLog table exists
             try {
-              await db.execute(`
+              await connection.execute(`
                 INSERT INTO StatusUpdateLog (repairRequestId, status, updatedBy, notes, createdAt)
                 VALUES (?, 'ready_for_delivery', ?, 'تم الدفع بالكامل - جاهز للتسليم', NOW())
               `, [payment.repairRequestId, req.user?.id || null]);
@@ -627,7 +654,8 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
     }
     
     // Commit transaction
-    await db.execute('COMMIT');
+    await connection.commit();
+    connection.release();
     
     res.json({ 
       success: true,
@@ -635,17 +663,24 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
     });
   } catch (err) {
     // Rollback transaction on error
-    await db.execute('ROLLBACK').catch(rollbackErr => {
+    try {
+      if (connection) {
+        await connection.rollback();
+        connection.release();
+      }
+    } catch (rollbackErr) {
       console.error('Rollback error:', rollbackErr);
-    });
+    }
     
     console.error(`Error updating payment with ID ${id}:`, err);
     res.status(500).json({ 
       success: false,
-      error: 'Server Error', 
+      error: 'Server Error',
+      message: 'خطأ في تحديث الدفعة',
       details: err.message,
       code: err.code,
-      sqlMessage: err.sqlMessage
+      sqlMessage: err.sqlMessage,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 });

@@ -7,7 +7,7 @@ import { Input } from '../../components/ui/Input';
 import {
   ArrowRight, Wrench, User, Phone, Mail, Search, Loader2,
   Smartphone, Laptop, Tablet, Save, X, AlertCircle, CheckCircle,
-  Building2, Calendar, DollarSign, FileText, Shield, Clock
+  Building2, Calendar, DollarSign, FileText, Shield, Clock, Plus
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import './NewRepairPageEnhanced.css';
@@ -23,6 +23,15 @@ const NewRepairPageEnhanced = () => {
   const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
+  
+  // Company state
+  const [companies, setCompanies] = useState([]);
+  const [companySearch, setCompanySearch] = useState('');
+  const [searchingCompanies, setSearchingCompanies] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [showCompanyResults, setShowCompanyResults] = useState(false);
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [newCompanyData, setNewCompanyData] = useState({ name: '', email: '', phone: '', address: '' });
   const [brandOptions, setBrandOptions] = useState([
     { id: 1, label: 'Apple', value: 'APPLE' },
     { id: 2, label: 'Samsung', value: 'SAMSUNG' },
@@ -69,7 +78,8 @@ const NewRepairPageEnhanced = () => {
     customerName: '',
     customerPhone: '',
     customerEmail: '',
-    deviceType: '',
+    companyId: null, // Company ID if customer belongs to a company
+    deviceType: 'LAPTOP', // Default to LAPTOP
     deviceBrand: '',
     brandId: '',
     deviceModel: '',
@@ -82,7 +92,8 @@ const NewRepairPageEnhanced = () => {
     accessories: [],
     problemDescription: '',
     priority: 'MEDIUM',
-    estimatedCost: '',
+    estimatedCostMin: '',
+    estimatedCostMax: '',
     actualCost: '',
     expectedDeliveryDate: '',
     notes: ''
@@ -131,8 +142,26 @@ const NewRepairPageEnhanced = () => {
         ];
       }
 
-      setAllBrandOptions(allBrands);
-      setBrandOptions(allBrands); // Initially show all brands
+      // Filter out accessories from brands - only keep actual brands
+      const filteredBrands = allBrands.filter(brand => {
+        const brandValue = (brand.value || '').toUpperCase();
+        const brandLabel = (brand.label || '').toUpperCase();
+        // Exclude accessories - check for common accessory keywords
+        const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') || 
+                           brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') || 
+                           brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
+                           brandValue.includes('BAG') || brandValue.includes('CHARGER') || 
+                           brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') || 
+                           brandValue.includes('MOUSE') || brandValue.includes('CABLE');
+        // Only include actual brand names
+        const actualBrands = ['APPLE', 'SAMSUNG', 'HUAWEI', 'DELL', 'HP', 'MICROSOFT', 'LENOVO', 
+                             'ACER', 'ASUS', 'XIAOMI', 'ONEPLUS', 'GOOGLE', 'FITBIT', 'GARMIN', 
+                             'SONY', 'BOSE', 'JBL', 'SENNHEISER', 'MSI', 'ALIENWARE', 'TOSHIBA'];
+        return !isAccessory && (actualBrands.includes(brandValue) || actualBrands.some(ab => brandLabel.includes(ab)));
+      });
+      
+      setAllBrandOptions(filteredBrands.length > 0 ? filteredBrands : allBrands);
+      setBrandOptions(filteredBrands.length > 0 ? filteredBrands : allBrands); // Initially show filtered brands
 
       const accessoriesResponse = await apiService.getVariables({ category: 'ACCESSORY', active: true });
       if (accessoriesResponse.ok) {
@@ -140,11 +169,11 @@ const NewRepairPageEnhanced = () => {
         setAccessoryOptions(Array.isArray(accessories) ? accessories : []);
       } else {
         setAccessoryOptions([
-          { id: 1, label: 'شاحن الجهاز', value: 'CHARGER' },
-          { id: 2, label: 'كابل USB', value: 'USB_CABLE' },
-          { id: 3, label: 'سماعات', value: 'EARPHONES' },
+          { id: 1, label: 'شاحن', value: 'CHARGER' },
+          { id: 2, label: 'كابل باور', value: 'POWER_CABLE' },
+          { id: 3, label: 'شنطة', value: 'BAG' },
           { id: 4, label: 'حافظة', value: 'CASE' },
-          { id: 5, label: 'حامي الشاشة', value: 'SCREEN_PROTECTOR' }
+          { id: 5, label: 'بطارية خارجية', value: 'EXTERNAL_BATTERY' }
         ]);
       }
 
@@ -156,9 +185,10 @@ const NewRepairPageEnhanced = () => {
         setDeviceTypeOptions([
           { id: 1, label: 'هاتف ذكي', value: 'SMARTPHONE' },
           { id: 2, label: 'لابتوب', value: 'LAPTOP' },
-          { id: 3, label: 'تابلت', value: 'TABLET' },
-          { id: 4, label: 'ساعة ذكية', value: 'SMARTWATCH' },
-          { id: 5, label: 'سماعات', value: 'EARPHONES' }
+          { id: 3, label: 'PC', value: 'PC' },
+          { id: 4, label: 'تابلت', value: 'TABLET' },
+          { id: 5, label: 'ساعة ذكية', value: 'SMARTWATCH' },
+          { id: 6, label: 'سماعات', value: 'EARPHONES' }
         ]);
       }
     } catch (err) {
@@ -207,15 +237,37 @@ const NewRepairPageEnhanced = () => {
       if (response.ok) {
         const customer = await response.json();
         setSelectedCustomer(customer);
+        const companyId = customer.companyId || null;
         setFormData(prev => ({
           ...prev,
           customerId: customer.id,
           customerName: `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
           customerPhone: customer.phone || '',
-          customerEmail: customer.email || ''
+          customerEmail: customer.email || '',
+          companyId: companyId // Set company ID if customer has one
         }));
         setCustomerSearch(`${customer.firstName || ''} ${customer.lastName || ''}`.trim());
         setShowCustomerResults(false);
+        
+        // If customer has a company, load it
+        if (companyId) {
+          try {
+            const company = await apiService.getCompany(companyId);
+            if (company) {
+              setSelectedCompany(company);
+              setCompanySearch(company.name || '');
+            }
+          } catch (err) {
+            console.error('Error loading company:', err);
+            // If company loading fails, clear company selection
+            setSelectedCompany(null);
+            setCompanySearch('');
+          }
+        } else {
+          // Clear company if customer doesn't have one
+          setSelectedCompany(null);
+          setCompanySearch('');
+        }
       }
     } catch (err) {
       console.error('Error fetching customer details:', err);
@@ -239,7 +291,8 @@ const NewRepairPageEnhanced = () => {
   // Filter brands based on device type
   const filterBrandsByDeviceType = (deviceType) => {
     const deviceBrandMap = {
-      'LAPTOP': ['DELL', 'HP', 'MICROSOFT', 'LENOVO', 'ACER', 'APPLE'],
+      'LAPTOP': ['DELL', 'HP', 'MICROSOFT', 'LENOVO', 'ACER', 'ASUS', 'APPLE'],
+      'PC': ['DELL', 'HP', 'MICROSOFT', 'LENOVO', 'ACER', 'ASUS', 'APPLE'],
       'SMARTPHONE': ['APPLE', 'SAMSUNG', 'HUAWEI', 'XIAOMI', 'ONEPLUS', 'GOOGLE'],
       'TABLET': ['APPLE', 'SAMSUNG', 'HUAWEI', 'MICROSOFT', 'LENOVO'],
       'SMARTWATCH': ['APPLE', 'SAMSUNG', 'HUAWEI', 'FITBIT', 'GARMIN'],
@@ -254,9 +307,18 @@ const NewRepairPageEnhanced = () => {
       return;
     }
 
-    const filteredBrands = allBrandOptions.filter(brand =>
-      allowedBrands.includes(brand.value)
-    );
+    const filteredBrands = allBrandOptions.filter(brand => {
+      const brandValue = (brand.value || '').toUpperCase();
+      const brandLabel = (brand.label || '').toUpperCase();
+      // Exclude accessories from brands
+      const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') || 
+                         brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') || 
+                         brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
+                         brandValue.includes('BAG') || brandValue.includes('CHARGER') || 
+                         brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') || 
+                         brandValue.includes('MOUSE') || brandValue.includes('CABLE');
+      return !isAccessory && allowedBrands.includes(brand.value);
+    });
 
     setBrandOptions(filteredBrands);
 
@@ -283,16 +345,39 @@ const NewRepairPageEnhanced = () => {
 
   const selectCustomer = (customer) => {
     setSelectedCustomer(customer);
+    const companyId = customer.companyId || null;
     setFormData(prev => ({
       ...prev,
       customerId: customer.id,
       customerName: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
       customerPhone: customer.phone || '',
-      customerEmail: customer.email || ''
+      customerEmail: customer.email || '',
+      companyId: companyId // Set company ID if customer has one
     }));
     setCustomerSearch(customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim());
     setShowCustomerResults(false);
     setCustomers([]);
+    
+    // If customer has a company, load it
+    if (companyId) {
+      apiService.getCompany(companyId)
+        .then(company => {
+          if (company) {
+            setSelectedCompany(company);
+            setCompanySearch(company.name || '');
+          }
+        })
+        .catch(err => {
+          console.error('Error loading company:', err);
+          // If company loading fails, clear company selection
+          setSelectedCompany(null);
+          setCompanySearch('');
+        });
+    } else {
+      // Clear company if customer doesn't have one
+      setSelectedCompany(null);
+      setCompanySearch('');
+    }
   };
 
   const clearCustomer = () => {
@@ -302,11 +387,91 @@ const NewRepairPageEnhanced = () => {
       customerId: '',
       customerName: '',
       customerPhone: '',
-      customerEmail: ''
+      customerEmail: '',
+      companyId: null // Clear company when clearing customer
     }));
     setCustomerSearch('');
     setShowCustomerResults(false);
     setCustomers([]);
+    setSelectedCompany(null); // Also clear selected company
+    setCompanySearch('');
+  };
+
+  // Company search and selection functions
+  const searchCompanies = async (value) => {
+    if (!value || value.trim().length < 2) {
+      setCompanies([]);
+      setShowCompanyResults(false);
+      return;
+    }
+
+    try {
+      setSearchingCompanies(true);
+      const data = await apiService.getCompanies({ search: value.trim(), pageSize: 20 });
+      const companiesArray = Array.isArray(data) ? data : (data?.data || []);
+      setCompanies(companiesArray);
+      setShowCompanyResults(true);
+    } catch (err) {
+      console.error('Error searching companies:', err);
+      setCompanies([]);
+      setShowCompanyResults(false);
+      notifications.error('حدث خطأ في البحث عن الشركات');
+    } finally {
+      setSearchingCompanies(false);
+    }
+  };
+
+  const handleCompanySearchChange = (e) => {
+    const value = e.target.value;
+    setCompanySearch(value);
+    if (value.trim().length >= 2) {
+      const timeoutId = setTimeout(() => {
+        searchCompanies(value);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setCompanies([]);
+      setShowCompanyResults(false);
+    }
+  };
+
+  const selectCompany = (company) => {
+    setSelectedCompany(company);
+    setFormData(prev => ({
+      ...prev,
+      companyId: company.id
+    }));
+    setCompanySearch(company.name);
+    setShowCompanyResults(false);
+    setCompanies([]);
+  };
+
+  const clearCompany = () => {
+    setSelectedCompany(null);
+    setFormData(prev => ({
+      ...prev,
+      companyId: null
+    }));
+    setCompanySearch('');
+    setShowCompanyResults(false);
+    setCompanies([]);
+  };
+
+  const handleCreateCompany = async () => {
+    try {
+      if (!newCompanyData.name.trim()) {
+        notifications.error('اسم الشركة مطلوب');
+        return;
+      }
+      const company = await apiService.createCompany(newCompanyData);
+      selectCompany(company);
+      setShowCompanyForm(false);
+      setNewCompanyData({ name: '', email: '', phone: '', address: '' });
+      notifications.success('تم إنشاء الشركة بنجاح');
+    } catch (err) {
+      console.error('Error creating company:', err);
+      notifications.error('حدث خطأ في إنشاء الشركة');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -314,6 +479,14 @@ const NewRepairPageEnhanced = () => {
 
     if (!selectedCustomer && !formData.customerName.trim()) {
       setError('يرجى اختيار عميل أو إدخال بيانات العميل');
+      notifications.error('يرجى اختيار عميل أو إدخال بيانات العميل');
+      return;
+    }
+
+    // Validate problemDescription length
+    if (!formData.problemDescription.trim() || formData.problemDescription.trim().length < 10) {
+      setError('وصف المشكلة يجب أن يكون على الأقل 10 أحرف');
+      notifications.error('وصف المشكلة يجب أن يكون على الأقل 10 أحرف');
       return;
     }
 
@@ -337,10 +510,13 @@ const NewRepairPageEnhanced = () => {
         ram: formData.ram.trim() || null,
         storage: formData.storage.trim() || null,
         accessories: formData.accessories.map(a => a.label || a.value || a.name || a),
-        problemDescription: formData.problemDescription.trim(), // Backend expects problemDescription
+        problemDescription: formData.problemDescription.trim(), // Backend expects problemDescription - must be at least 10 chars
         customerNotes: formData.notes.trim() || null,
-        priority: formData.priority === 'عالية' ? 'high' : formData.priority === 'متوسطة' ? 'medium' : formData.priority === 'منخفضة' ? 'low' : 'normal', // Convert Arabic to English
-        estimatedCost: formData.estimatedCost ? parseFloat(formData.estimatedCost) : null,
+        priority: formData.priority === 'عالية' ? 'HIGH' : formData.priority === 'متوسطة' ? 'MEDIUM' : formData.priority === 'منخفضة' ? 'LOW' : 'MEDIUM', // Convert Arabic to English, default MEDIUM
+        estimatedCost: formData.estimatedCostMin && formData.estimatedCostMax 
+          ? parseFloat((parseFloat(formData.estimatedCostMin) + parseFloat(formData.estimatedCostMax)) / 2) // Send average if range provided
+          : (formData.estimatedCostMin ? parseFloat(formData.estimatedCostMin) : null), // Send as number, not string
+        companyId: formData.companyId || selectedCompany?.id || null, // Include company ID
         expectedDeliveryDate: formData.expectedDeliveryDate || null
       };
 
@@ -521,6 +697,178 @@ const NewRepairPageEnhanced = () => {
             onChange={handleInputChange}
             placeholder="أدخل البريد الإلكتروني (اختياري)"
           />
+        </div>
+      </div>
+
+      {/* سيكشن الشركة */}
+      <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Building2 className="w-5 h-5 ml-2" />
+          الشركة (اختياري)
+        </h3>
+        
+        {/* عرض الشركة المختارة */}
+        {selectedCompany && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Building2 className="w-5 h-5 text-blue-500 ml-2" />
+                <div>
+                  <p className="font-medium text-blue-900">{selectedCompany.name}</p>
+                  {selectedCompany.phone && <p className="text-sm text-blue-700">{selectedCompany.phone}</p>}
+                </div>
+              </div>
+              <SimpleButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearCompany}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                <X className="w-4 h-4" />
+              </SimpleButton>
+            </div>
+          </div>
+        )}
+
+        {/* البحث عن الشركة - يظهر دائماً حتى لو كان هناك شركة مختارة (لإمكانية تغييرها) */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Building2 className="w-4 h-4 inline ml-1" />
+            البحث عن الشركة
+          </label>
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                value={companySearch}
+                onChange={handleCompanySearchChange}
+                placeholder="ابحث باسم الشركة..."
+                className="pr-10"
+              />
+              {searchingCompanies && (
+                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-5 h-5 animate-spin" />
+              )}
+            </div>
+
+            {/* نتائج البحث */}
+            {showCompanyResults && companies.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {companies.map((company) => (
+                  <div
+                    key={company.id}
+                    onClick={() => selectCompany(company)}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">{company.name}</p>
+                        {company.phone && <p className="text-sm text-gray-600">{company.phone}</p>}
+                      </div>
+                      <Building2 className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* رسالة عدم وجود نتائج */}
+            {showCompanyResults && companies.length === 0 && companySearch.length >= 2 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                <p className="text-center text-gray-500 mb-2">لم يتم العثور على شركات</p>
+                <SimpleButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowCompanyForm(true)}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 ml-2" />
+                  إضافة شركة جديدة
+                </SimpleButton>
+              </div>
+            )}
+
+            {/* زر إضافة شركة جديدة */}
+            {!showCompanyResults && (
+              <SimpleButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCompanyForm(true)}
+                className="mt-2"
+              >
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة شركة جديدة
+              </SimpleButton>
+            )}
+
+            {/* نموذج إضافة شركة جديدة */}
+            {showCompanyForm && (
+              <div className="mt-4 p-4 bg-white border border-gray-300 rounded-lg">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">إضافة شركة جديدة</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">اسم الشركة *</label>
+                    <Input
+                      type="text"
+                      value={newCompanyData.name}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="اسم الشركة"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+                    <Input
+                      type="tel"
+                      value={newCompanyData.phone}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="رقم الهاتف"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+                    <Input
+                      type="email"
+                      value={newCompanyData.email}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="البريد الإلكتروني"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                    <Input
+                      type="text"
+                      value={newCompanyData.address}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="العنوان"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <SimpleButton
+                    type="button"
+                    size="sm"
+                    onClick={handleCreateCompany}
+                  >
+                    <Save className="w-4 h-4 ml-2" />
+                    حفظ
+                  </SimpleButton>
+                  <SimpleButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowCompanyForm(false);
+                      setNewCompanyData({ name: '', email: '', phone: '', address: '' });
+                    }}
+                  >
+                    <X className="w-4 h-4 ml-2" />
+                    إلغاء
+                  </SimpleButton>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </div>
@@ -777,15 +1125,35 @@ const NewRepairPageEnhanced = () => {
             <DollarSign className="w-4 h-4 inline ml-1" />
             التكلفة المتوقعة
           </label>
-          <Input
-            type="number"
-            name="estimatedCost"
-            value={formData.estimatedCost}
-            onChange={handleInputChange}
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Input
+                type="number"
+                name="estimatedCostMin"
+                value={formData.estimatedCostMin}
+                onChange={handleInputChange}
+                placeholder="500"
+                step="0.01"
+                min="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">من</p>
+            </div>
+            <div>
+              <Input
+                type="number"
+                name="estimatedCostMax"
+                value={formData.estimatedCostMax}
+                onChange={handleInputChange}
+                placeholder="1500"
+                step="0.01"
+                min="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">إلى</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 bg-blue-50 p-2 rounded border border-blue-200">
+            <strong>ملاحظة:</strong> سيتم العمل ضمن الميزانية المحددة. في حالة زيادة التكلفة عن الحد الأقصى، سيتم الرجوع للعميل.
+          </p>
         </div>
       </div>
 
@@ -912,7 +1280,13 @@ const NewRepairPageEnhanced = () => {
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-500">التكلفة المتوقعة:</span>
-                <p className="text-gray-900">{formData.estimatedCost ? `${formData.estimatedCost} ج.م` : 'غير محدد'}</p>
+                <p className="text-gray-900">
+                  {formData.estimatedCostMin && formData.estimatedCostMax 
+                    ? `${formData.estimatedCostMin} - ${formData.estimatedCostMax} ج.م`
+                    : formData.estimatedCostMin 
+                      ? `من ${formData.estimatedCostMin} ج.م`
+                      : 'غير محدد'}
+                </p>
               </div>
             </div>
           </SimpleCardContent>

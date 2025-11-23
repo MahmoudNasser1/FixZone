@@ -23,7 +23,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       // Check if response is ok
       if (!response.ok) {
         // Try to get error message from response
@@ -41,7 +41,7 @@ class ApiService {
             errorDetails = errorData.errors;
             // Build detailed error message from validation errors
             if (errorData.errors.length > 0) {
-              const errorMessages = errorData.errors.map(e => 
+              const errorMessages = errorData.errors.map(e =>
                 typeof e === 'string' ? e : `${e.field || ''}: ${e.message || e}`
               ).join(', ');
               errorMessage = errorMessage + (errorMessages ? ` - ${errorMessages}` : '');
@@ -56,7 +56,7 @@ class ApiService {
         }
         throw error;
       }
-      
+
       // Parse JSON and return
       const data = await response.json();
       return data;
@@ -81,7 +81,7 @@ class ApiService {
   // ==================
   // Users APIs
   // ==================
-  
+
   // جلب جميع المستخدمين مع إمكانية التصفية (مثلاً بالدور)
   async listUsers(params = {}) {
     const qs = new URLSearchParams(params).toString();
@@ -116,7 +116,7 @@ class ApiService {
   // ==================
   // Customer APIs
   // ==================
-  
+
   // جلب جميع العملاء
   async getCustomers(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -127,7 +127,7 @@ class ApiService {
   async searchCustomers(q, page = 1, pageSize = 20) {
     const qs = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }).toString();
     const url = `${API_BASE_URL}/customers/search?${qs}`;
-    
+
     try {
       const response = await fetch(url, {
         headers: {
@@ -135,11 +135,11 @@ class ApiService {
         },
         credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { ok: true, json: () => Promise.resolve(data) };
     } catch (error) {
@@ -184,7 +184,7 @@ class ApiService {
   // ==================
   // Company APIs
   // ==================
-  
+
   // جلب جميع الشركات
   async getCompanies(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -228,7 +228,7 @@ class ApiService {
   // ==================
   // Repair Request APIs
   // ==================
-  
+
   // جلب جميع طلبات الإصلاح
   async getRepairRequests(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -356,7 +356,7 @@ class ApiService {
   // ==================
   // Invoice APIs
   // ==================
-  
+
   // جلب جميع الفواتير
   async getInvoices(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -531,7 +531,7 @@ class ApiService {
   // ==================
   // Dashboard APIs
   // ==================
-  
+
   // Get dashboard statistics
   async getDashboardStats() {
     return this.request('/dashboard/stats');
@@ -541,7 +541,7 @@ class ApiService {
   async getRecentRepairs(limit = 10) {
     return this.request(`/dashboard/recent-repairs?limit=${limit}`);
   }
-  
+
   // Get alerts (overdue repairs and low stock items)
   async getDashboardAlerts() {
     return this.request('/dashboard/alerts');
@@ -551,7 +551,7 @@ class ApiService {
   // ==================
   // Notifications APIs
   // ==================
-  
+
   // Get all notifications (with filters and pagination)
   async getNotifications(params = {}) {
     const queryParams = new URLSearchParams();
@@ -560,21 +560,21 @@ class ApiService {
     if (params.channel) queryParams.append('channel', params.channel);
     if (params.page) queryParams.append('page', params.page);
     if (params.limit) queryParams.append('limit', params.limit);
-    
+
     const query = queryParams.toString();
     return this.request(`/notifications${query ? `?${query}` : ''}`);
   }
-  
+
   // Get unread notifications count
   async getUnreadNotificationsCount() {
     return this.request('/notifications/unread/count');
   }
-  
+
   // Get notification by ID
   async getNotification(id) {
     return this.request(`/notifications/${id}`);
   }
-  
+
   // Create a new notification
   async createNotification(data) {
     return this.request('/notifications', {
@@ -582,7 +582,7 @@ class ApiService {
       body: JSON.stringify(data)
     });
   }
-  
+
   // Update a notification
   async updateNotification(id, data) {
     return this.request(`/notifications/${id}`, {
@@ -590,42 +590,42 @@ class ApiService {
       body: JSON.stringify(data)
     });
   }
-  
+
   // Mark notification as read
   async markNotificationAsRead(id) {
     return this.request(`/notifications/${id}/read`, {
       method: 'PATCH'
     });
   }
-  
+
   // Mark all notifications as read
   async markAllNotificationsAsRead() {
     return this.request('/notifications/read/all', {
       method: 'PATCH'
     });
   }
-  
+
   // Delete a notification
   async deleteNotification(id) {
     return this.request(`/notifications/${id}`, {
       method: 'DELETE'
     });
   }
-  
+
   // ==================
   // Notification Templates APIs (Admin only)
   // ==================
-  
+
   // Get all notification templates
   async getNotificationTemplates() {
     return this.request('/notificationtemplates');
   }
-  
+
   // Get notification template by ID
   async getNotificationTemplate(id) {
     return this.request(`/notificationtemplates/${id}`);
   }
-  
+
   // Create a new notification template
   async createNotificationTemplate(data) {
     return this.request('/notificationtemplates', {
@@ -633,7 +633,7 @@ class ApiService {
       body: JSON.stringify(data)
     });
   }
-  
+
   // Update a notification template
   async updateNotificationTemplate(id, data) {
     return this.request(`/notificationtemplates/${id}`, {
@@ -641,7 +641,7 @@ class ApiService {
       body: JSON.stringify(data)
     });
   }
-  
+
   // Delete a notification template
   async deleteNotificationTemplate(id) {
     return this.request(`/notificationtemplates/${id}`, {
@@ -652,7 +652,7 @@ class ApiService {
   // ==================
   // Service APIs
   // ==================
-  
+
   // جلب جميع الخدمات
   async getServices() {
     return this.request('/services');
@@ -694,7 +694,7 @@ class ApiService {
   // ==================
   // Service Categories APIs
   // ==================
-  
+
   // جلب جميع فئات الخدمات
   async getServiceCategories(isActive = null) {
     const params = isActive !== null ? `?isActive=${isActive}` : '';
@@ -737,7 +737,7 @@ class ApiService {
   // ==================
   // Service Pricing Rules APIs
   // ==================
-  
+
   // حساب سعر الخدمة بناءً على القواعد
   async calculateServicePrice(serviceId, deviceType = null, brandId = null, brand = null) {
     const params = new URLSearchParams();
@@ -785,7 +785,7 @@ class ApiService {
   // ==================
   // Inventory APIs
   // ==================
-  
+
   // جلب جميع عناصر المخزون
   async getInventoryItems() {
     return this.request('/inventory/items');
@@ -862,7 +862,7 @@ class ApiService {
   // ==================
   // Inventory APIs
   // ==================
-  
+
   // جلب جميع عناصر المخزون
   async getInventoryItems(params = {}) {
     const qs = new URLSearchParams(params).toString();
@@ -914,7 +914,7 @@ class ApiService {
   // ==================
   // Expenses APIs
   // ==================
-  
+
   // جلب جميع المصروفات
   async getExpenses(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -958,7 +958,7 @@ class ApiService {
   // ==================
   // Expense Categories APIs
   // ==================
-  
+
   // جلب جميع فئات المصروفات
   async getExpenseCategories() {
     const response = await this.request('/expensecategories');
@@ -1004,7 +1004,7 @@ class ApiService {
   // ==================
   // Quotations APIs
   // ==================
-  
+
   // جلب جميع العروض السعرية
   async getQuotations(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -1042,7 +1042,7 @@ class ApiService {
   // ==================
   // Stock Movements APIs
   // ==================
-  
+
   // جلب جميع حركات المخزون
   async getStockMovements(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -1097,7 +1097,7 @@ class ApiService {
   // ==================
   // Quotation Items APIs
   // ==================
-  
+
   // جلب عناصر عرض سعري
   async getQuotationItems(quotationId) {
     return this.request(`/quotationitems?quotationId=${quotationId}`);
@@ -1128,6 +1128,51 @@ class ApiService {
   async deleteQuotationItem(id) {
     return this.request(`/quotationitems/${id}`, {
       method: 'DELETE',
+    });
+  }
+  // ==================
+  // Customer Portal APIs
+  // ==================
+
+  // جلب إحصائيات لوحة تحكم العميل
+  async getCustomerDashboardStats() {
+    return this.request('/dashboard/customer/stats');
+  }
+
+  // جلب إصلاحات العميل مع الفلترة والتقسيم للصفحات
+  async getCustomerRepairs(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/repairs?${queryString}`);
+  }
+
+  // جلب فواتير العميل مع الفلترة والتقسيم للصفحات
+  async getCustomerInvoices(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/invoices?${queryString}`);
+  }
+
+  // جلب أجهزة العميل
+  async getCustomerDevices() {
+    return this.request('/customer/devices');
+  }
+
+  // جلب إشعارات العميل
+  async getCustomerNotifications(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/customer/notifications?${queryString}`);
+  }
+
+  // تحديد إشعار كمقروء
+  async markCustomerNotificationRead(id) {
+    return this.request(`/customer/notifications/${id}/read`, {
+      method: 'PUT'
+    });
+  }
+
+  // تحديد كل الإشعارات كمقروءة
+  async markAllCustomerNotificationsRead() {
+    return this.request('/customer/notifications/read-all', {
+      method: 'PUT'
     });
   }
 }

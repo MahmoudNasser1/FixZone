@@ -2,23 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
-import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
+import CustomerHeader from '../../components/customer/CustomerHeader';
+import EnhancedStatsCard from '../../components/customer/EnhancedStatsCard';
+import QuickActionCard from '../../components/customer/QuickActionCard';
 import {
-  User, LogOut, Phone, Mail, MapPin, Shield,
   Wrench, FileText, CreditCard, Package,
-  Clock, CheckCircle, XCircle, AlertCircle
+  Clock, CheckCircle, XCircle, AlertCircle,
+  Plus, Search, Phone
 } from 'lucide-react';
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-  
+
   const [profile, setProfile] = useState(null);
   const [repairs, setRepairs] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -33,20 +34,20 @@ export default function CustomerDashboard() {
     paidInvoices: 0,
     totalDevices: 0
   });
-  
+
   // Use ref to prevent multiple calls
   const loadingRef = useRef(false);
-  
+
   useEffect(() => {
     const roleId = user?.roleId || user?.role;
     const isCustomer = user && (user.type === 'customer' || roleId === 8 || roleId === '8');
-    
+
     if (!user || !isCustomer) {
       notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });
       navigate('/login');
       return;
     }
-    
+
     // Load dashboard data when user is available
     // Use ref to prevent multiple simultaneous calls
     if (!loadingRef.current) {
@@ -61,120 +62,67 @@ export default function CustomerDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Get customerId from user first
-      let customerId = user?.customerId || user?.id;
-      let loadedProfile = null;
-      
-      // Load profile - use user data from auth store if profile API fails
+
+      // 1. Load Stats
+      try {
+        const statsRes = await api.getCustomerDashboardStats();
+        if (statsRes.success) {
+          setStats(statsRes.data);
+        }
+      } catch (e) {
+        console.warn('Failed to load stats:', e);
+      }
+
+      // 2. Load Recent Repairs
+      try {
+        const repairsRes = await api.getCustomerRepairs({ limit: 5 });
+        if (repairsRes.success) {
+          setRepairs(repairsRes.data.repairs || []);
+        }
+      } catch (e) {
+        console.warn('Failed to load repairs:', e);
+      }
+
+      // 3. Load Recent Invoices
+      try {
+        const invoicesRes = await api.getCustomerInvoices({ limit: 5 });
+        if (invoicesRes.success) {
+          setInvoices(invoicesRes.data.invoices || []);
+        }
+      } catch (e) {
+        console.warn('Failed to load invoices:', e);
+      }
+
+      // 4. Load Profile
       try {
         const profileRes = await api.request('/auth/customer/profile');
         if (profileRes.success && profileRes.data) {
-          loadedProfile = profileRes.data;
-          setProfile(loadedProfile);
-          // Update customerId from profile if available
-          if (loadedProfile.id) {
-            customerId = loadedProfile.id;
-          }
-        } else {
-          // Fallback: use user data from auth store
-          if (user) {
-            loadedProfile = {
-              id: customerId,
-              name: user.name,
-              email: user.email,
-              phone: user.phone
-            };
-            setProfile(loadedProfile);
-          }
-        }
-      } catch (profileError) {
-        console.warn('Profile API failed, using user data from store:', profileError);
-        // Fallback: use user data from auth store
-        if (user) {
-          loadedProfile = {
-            id: customerId,
+          setProfile(profileRes.data);
+        } else if (user) {
+          setProfile({
+            id: user.customerId || user.id,
             name: user.name,
             email: user.email,
             phone: user.phone
-          };
-          setProfile(loadedProfile);
+          });
+        }
+      } catch (profileError) {
+        console.warn('Profile API failed, using user data from store:', profileError);
+        if (user) {
+          setProfile({
+            id: user.customerId || user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+          });
         }
       }
-
-      // Use customerId from loaded profile if available, otherwise from user
-      const finalCustomerId = loadedProfile?.id || customerId;
-      
-      // Load repairs (customer's own)
-      let repairsData = [];
-      let invoicesData = [];
-      let devicesData = [];
-
-      try {
-        const repairsRes = await api.request(`/repairs?customerId=${finalCustomerId}`);
-        repairsData = repairsRes.success 
-          ? (repairsRes.data?.repairs || repairsRes.data || [])
-          : (Array.isArray(repairsRes) ? repairsRes : []);
-      } catch (e) {
-        console.warn('Could not load repairs:', e);
-      }
-
-      try {
-        const invoicesRes = await api.request(`/invoices?customerId=${finalCustomerId}`);
-        invoicesData = invoicesRes.success
-          ? (invoicesRes.data?.invoices || invoicesRes.data || [])
-          : (Array.isArray(invoicesRes) ? invoicesRes : []);
-      } catch (e) {
-        console.warn('Could not load invoices:', e);
-      }
-
-      try {
-        const devicesRes = await api.request(`/devices?customerId=${finalCustomerId}`);
-        devicesData = devicesRes.success
-          ? (devicesRes.data?.devices || devicesRes.data || [])
-          : (Array.isArray(devicesRes) ? devicesRes : []);
-      } catch (e) {
-        console.warn('Could not load devices:', e);
-      }
-
-      setRepairs(repairsData);
-      setInvoices(invoicesData);
-      setDevices(devicesData);
-
-      // Calculate stats
-      const activeRepairs = repairsData.filter(r => r.status && !['completed', 'cancelled'].includes(r.status)).length;
-      const completedRepairs = repairsData.filter(r => r.status === 'completed').length;
-      const pendingInvoices = invoicesData.filter(i => i.status === 'pending' || i.paymentStatus === 'pending').length;
-      const paidInvoices = invoicesData.filter(i => i.paymentStatus === 'paid').length;
-
-      setStats({
-        totalRepairs: repairsData.length,
-        activeRepairs,
-        completedRepairs,
-        totalInvoices: invoicesData.length,
-        pendingInvoices,
-        paidInvoices,
-        totalDevices: devicesData.length
-      });
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       notifications.error('خطأ', { message: 'فشل تحميل البيانات' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await api.request('/auth/logout', { method: 'POST' });
-      logout();
-      navigate('/login');
-      notifications.success('نجاح', { message: 'تم تسجيل الخروج بنجاح' });
-    } catch (error) {
-      console.error('Logout error:', error);
-      logout();
-      navigate('/login');
     }
   };
 
@@ -208,228 +156,196 @@ export default function CustomerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">لوحة تحكم العميل</h1>
-                <p className="text-sm text-gray-600">{profile?.name || user?.name}</p>
-              </div>
-            </div>
-            <SimpleButton variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              تسجيل الخروج
-            </SimpleButton>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+      {/* Enhanced Header */}
+      <CustomerHeader user={user} notificationCount={3} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
+        {/* Stats Cards - Enhanced */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <SimpleCard>
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">إجمالي طلبات الإصلاح</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalRepairs}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {stats.activeRepairs} نشط
-                  </p>
-                </div>
-                <Wrench className="w-12 h-12 text-blue-500 opacity-20" />
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard>
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">إجمالي الفواتير</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalInvoices}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {stats.pendingInvoices} في الانتظار
-                  </p>
-                </div>
-                <FileText className="w-12 h-12 text-green-500 opacity-20" />
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard>
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">إجمالي الأجهزة</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalDevices}</p>
-                </div>
-                <Package className="w-12 h-12 text-purple-500 opacity-20" />
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard>
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">الفواتير المدفوعة</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.paidInvoices}</p>
-                </div>
-                <CreditCard className="w-12 h-12 text-indigo-500 opacity-20" />
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
+          <EnhancedStatsCard
+            title="طلبات الإصلاح"
+            value={stats.totalRepairs}
+            subtitle={`${stats.activeRepairs} نشط`}
+            icon={Wrench}
+            gradient="linear-gradient(135deg, #053887 0%, #0a4da3 100%)"
+            change="+${stats.activeRepairs} نشطة"
+            changeType="increase"
+            actionLabel="عرض الكل"
+            onClick={() => navigate('/customer/repairs')}
+          />
+          <EnhancedStatsCard
+            title="الفواتير"
+            value={stats.totalInvoices}
+            subtitle={`${stats.pendingInvoices} في الانتظار`}
+            icon={FileText}
+            gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
+            change={`${stats.paidInvoices} مدفوعة`}
+            changeType="neutral"
+            actionLabel="عرض الفواتير"
+            onClick={() => navigate('/customer/invoices')}
+          />
+          <EnhancedStatsCard
+            title="الأجهزة"
+            value={stats.totalDevices}
+            subtitle="إجمالي الأجهزة"
+            icon={Package}
+            gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+            actionLabel="عرض التفاصيل"
+            onClick={() => navigate('/customer/devices')}
+          />
+          <EnhancedStatsCard
+            title="الفواتير المدفوعة"
+            value={stats.paidInvoices}
+            subtitle={`من ${stats.totalInvoices}`}
+            icon={CreditCard}
+            gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+            actionLabel="عرض السجل"
+            onClick={() => navigate('/customer/invoices?status=paid')}
+          />
         </div>
 
-        {/* Profile Card */}
-        {profile && (
-          <SimpleCard className="mb-8">
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4" style={{ color: '#111827' }}>إجراءات سريعة</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <QuickActionCard
+              icon={Plus}
+              label="طلب إصلاح جديد"
+              gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
+              onClick={() => navigate('/repairs/new')}
+            />
+            <QuickActionCard
+              icon={Search}
+              label="تتبع طلب"
+              gradient="linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)"
+              onClick={() => navigate('/track')}
+            />
+            <QuickActionCard
+              icon={FileText}
+              label="فواتيري"
+              gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+              onClick={() => navigate('/customer/invoices')}
+              badge={stats.pendingInvoices > 0 ? stats.pendingInvoices : null}
+            />
+            <QuickActionCard
+              icon={Phone}
+              label="تواصل معنا"
+              gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+              onClick={() => window.open('tel:+201234567890')}
+            />
+          </div>
+        </div>
+
+        {/* Repairs & Invoices Lists */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Repairs */}
+          <SimpleCard>
             <SimpleCardHeader>
-              <SimpleCardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                معلوماتي الشخصية
+              <SimpleCardTitle className="flex items-center justify-between">
+                <span>آخر طلبات الإصلاح</span>
+                <Wrench className="w-5 h-5" style={{ color: '#053887' }} />
               </SimpleCardTitle>
             </SimpleCardHeader>
             <SimpleCardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">رقم الهاتف</p>
-                    <p className="font-medium">{profile.phone || 'غير متوفر'}</p>
-                  </div>
+              {repairs.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Wrench className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>لا توجد طلبات إصلاح حالياً</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">البريد الإلكتروني</p>
-                    <p className="font-medium">{profile.email || profile.userEmail || 'غير متوفر'}</p>
-                  </div>
-                </div>
-                {profile.address && (
-                  <div className="flex items-center gap-3 md:col-span-2">
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">العنوان</p>
-                      <p className="font-medium">{profile.address}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-        )}
-
-        {/* Recent Repairs */}
-        <SimpleCard className="mb-8">
-          <SimpleCardHeader>
-            <div className="flex items-center justify-between">
-              <SimpleCardTitle className="flex items-center gap-2">
-                <Wrench className="w-5 h-5" />
-                طلبات الإصلاح الأخيرة
-              </SimpleCardTitle>
-              <SimpleButton 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/customer/repairs')}
-              >
-                عرض الكل
-              </SimpleButton>
-            </div>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            {repairs.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                لا توجد طلبات إصلاح
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {repairs && repairs.length > 0 && repairs.slice(0, 5).map((repair) => (
-                  <div
-                    key={repair.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/customer/repairs/${repair.id}`)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium">طلب #{repair.id}</p>
+              ) : (
+                <div className="space-y-3">
+                  {repairs.slice(0, 5).map((repair) => (
+                    <div
+                      key={repair.id}
+                      className="p-4 rounded-lg border transition-all duration-200 cursor-pointer hover:shadow-md"
+                      style={{ borderColor: '#E5E7EB' }}
+                      onClick={() => navigate(`/repairs/${repair.id}`)}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#053887'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">#{repair.id}</p>
+                          <p className="text-sm text-gray-600">{repair.deviceType || 'جهاز'}</p>
+                        </div>
                         {getStatusBadge(repair.status)}
                       </div>
-                      <p className="text-sm text-gray-600">
-                        {repair.deviceType} - {repair.brand}
+                      <p className="text-xs text-gray-500">
+                        {repair.issueDescription?.substring(0, 60) || 'لا يوجد وصف'}...
                       </p>
-                      {repair.createdAt && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(repair.createdAt).toLocaleDateString('ar-EG')}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SimpleCardContent>
-        </SimpleCard>
+                  ))}
+                  {repairs.length > 5 && (
+                    <button
+                      onClick={() => navigate('/customer/repairs')}
+                      className="w-full py-2 text-sm font-medium rounded-lg transition-colors"
+                      style={{ color: '#053887' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      عرض الكل ({repairs.length})
+                    </button>
+                  )}
+                </div>
+              )}
+            </SimpleCardContent>
+          </SimpleCard>
 
-        {/* Recent Invoices */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <div className="flex items-center justify-between">
-              <SimpleCardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                الفواتير الأخيرة
+          {/* Recent Invoices */}
+          <SimpleCard>
+            <SimpleCardHeader>
+              <SimpleCardTitle className="flex items-center justify-between">
+                <span>آخر الفواتير</span>
+                <FileText className="w-5 h-5" style={{ color: '#10B981' }} />
               </SimpleCardTitle>
-              <SimpleButton 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/customer/invoices')}
-              >
-                عرض الكل
-              </SimpleButton>
-            </div>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            {invoices.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                لا توجد فواتير
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {invoices && invoices.length > 0 && invoices.slice(0, 5).map((invoice) => (
-                  <div
-                    key={invoice.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/customer/invoices/${invoice.id}`)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium">فاتورة #{invoice.id}</p>
-                        {getStatusBadge(invoice.paymentStatus || invoice.status)}
+            </SimpleCardHeader>
+            <SimpleCardContent>
+              {invoices.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>لا توجد فواتير حالياً</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {invoices.slice(0, 5).map((invoice) => (
+                    <div
+                      key={invoice.id}
+                      className="p-4 rounded-lg border transition-all duration-200 cursor-pointer hover:shadow-md"
+                      style={{ borderColor: '#E5E7EB' }}
+                      onClick={() => navigate(`/invoices/${invoice.id}`)}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#10B981'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">فاتورة #{invoice.id}</p>
+                          <p className="text-sm text-gray-600">{invoice.totalAmount || 0} جنيه</p>
+                        </div>
+                        {getStatusBadge(invoice.paymentStatus || 'pending')}
                       </div>
-                      <p className="text-sm text-gray-600">
-                        المبلغ: {invoice.totalAmount || 0} جنيه
+                      <p className="text-xs text-gray-500">
+                        {new Date(invoice.createdAt || Date.now()).toLocaleDateString('ar-EG')}
                       </p>
-                      {invoice.createdAt && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(invoice.createdAt).toLocaleDateString('ar-EG')}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SimpleCardContent>
-        </SimpleCard>
+                  ))}
+                  {invoices.length > 5 && (
+                    <button
+                      onClick={() => navigate('/customer/invoices')}
+                      className="w-full py-2 text-sm font-medium rounded-lg transition-colors"
+                      style={{ color: '#10B981' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      عرض الكل ({invoices.length})
+                    </button>
+                  )}
+                </div>
+              )}
+            </SimpleCardContent>
+          </SimpleCard>
+        </div>
       </div>
     </div>
   );
 }
-

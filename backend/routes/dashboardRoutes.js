@@ -14,4 +14,7 @@ router.get('/recent-repairs', authMiddleware, dashboardController.getRecentRepai
 // Get alerts (overdue repairs and low stock items) (requires authentication)
 router.get('/alerts', authMiddleware, dashboardController.getAlerts);
 
+// Get customer statistics (requires authentication, for customer role)
+router.get('/customer/stats', authMiddleware, dashboardController.getCustomerStats);
+
 module.exports = router;

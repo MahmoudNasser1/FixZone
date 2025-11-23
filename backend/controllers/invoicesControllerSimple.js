@@ -3,24 +3,46 @@ const websocketService = require('../services/websocketService');
 
 // Simplified Invoice Controller - Basic functionality only
 class InvoicesControllerSimple {
-  
-  // Get all invoices - simplified version
+
+  // Get all invoices with improved pagination and filters
   async getAllInvoices(req, res) {
     try {
-      const { repairRequestId } = req.query;
-      
-      console.log('getAllInvoices called with repairRequestId:', repairRequestId);
-      
-      let whereClause = 'WHERE i.deletedAt IS NULL';
+      const {
+        repairRequestId,
+        customerId,
+        paymentStatus,
+        page = 1,
+        limit = 10
+      } = req.query;
+
+      console.log('getAllInvoices called with:', { repairRequestId, customerId, paymentStatus, page, limit });
+
+      // Parse pagination parameters
+      const pageNum = Math.max(1, parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const offset = (pageNum - 1) * limitNum;
+
+      // Build WHERE conditions
+      let whereConditions = ['i.deletedAt IS NULL'];
       const queryParams = [];
-      
+
       // Filter by repair request ID if provided
       if (repairRequestId) {
-        whereClause += ' AND i.repairRequestId = ?';
+        whereConditions.push('i.repairRequestId = ?');
         queryParams.push(repairRequestId);
         console.log('Added repairRequestId filter:', repairRequestId);
       }
-      
+
+      // Filter by customerId - check both direct customer and via repair
+      if (customerId) {
+        whereConditions.push('(i.customerId = ? OR rr.customerId = ?)');
+        queryParams.push(customerId, customerId);
+        console.log('Added customerId filter:', customerId);
+      }
+
+      const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
+
+      // Main query with pagination
       const query = `
         SELECT 
           i.id,
@@ -30,27 +52,43 @@ class InvoicesControllerSimple {
           i.currency,
           i.taxAmount,
           i.repairRequestId,
+          i.customerId,
           i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
+          COALESCE(c_direct.name, c_via_repair.name) as customerName,
+          COALESCE(c_direct.phone, c_via_repair.phone) as customerPhone,
+          COALESCE(c_direct.email, c_via_repair.email) as customerEmail,
           rr.deviceBrand,
-          rr.deviceModel
+          rr.deviceModel,
+          rr.deviceType
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
+        LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
+        LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
         ${whereClause}
         ORDER BY i.createdAt DESC
-        LIMIT 50
+        LIMIT ? OFFSET ?
       `;
-      
+
+      queryParams.push(limitNum, offset);
+
       const [invoices] = await db.execute(query, queryParams);
-      
-      console.log('Query executed:', query);
-      console.log('Query params:', queryParams);
-      console.log('Found invoices:', invoices);
-      
-      // Calculate actual amountPaid for each invoice from payments
+
+      console.log('Query executed, found invoices:', invoices.length);
+
+      // Get total count for pagination
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        ${whereClause}
+      `;
+
+      // Remove limit and offset params for count query
+      const countParams = queryParams.slice(0, -2);
+      const [countResult] = await db.execute(countQuery, countParams);
+      const total = countResult[0]?.total || 0;
+
+      // Calculate actual amountPaid for each invoice from payments and determine correct status
       const invoicesWithCorrectAmounts = await Promise.all(
         invoices.map(async (invoice) => {
           const [payments] = await db.execute(`
@@ -58,40 +96,65 @@ class InvoicesControllerSimple {
             FROM Payment 
             WHERE invoiceId = ?
           `, [invoice.id]);
-          
+
           const actualAmountPaid = parseFloat(payments[0].totalPaid || 0);
           const totalAmount = parseFloat(invoice.totalAmount || 0);
-          
-          // Determine correct status based on actual payments
-          let correctStatus = invoice.status;
+          const remainingAmount = totalAmount - actualAmountPaid;
+
+          // Determine correct payment status based on actual payments
+          let paymentStatusValue = invoice.status || 'pending';
           if (actualAmountPaid >= totalAmount && totalAmount > 0) {
-            correctStatus = 'paid';
+            paymentStatusValue = 'paid';
           } else if (actualAmountPaid > 0) {
-            correctStatus = 'partially_paid';
+            paymentStatusValue = 'partially_paid';
           } else {
-            correctStatus = 'draft';
+            paymentStatusValue = 'pending';
           }
-          
+
           return {
-            ...invoice,
-            amountPaid: actualAmountPaid,
-            status: correctStatus
+            id: invoice.id,
+            repairId: invoice.repairRequestId,
+            customerId: invoice.customerId,
+            customerName: invoice.customerName || 'غير محدد',
+            customerPhone: invoice.customerPhone || 'غير محدد',
+            totalAmount: parseFloat(invoice.totalAmount) || 0,
+            paidAmount: actualAmountPaid,
+            remainingAmount: Math.max(0, remainingAmount),
+            paymentStatus: paymentStatusValue,
+            createdAt: invoice.createdAt,
+            items: [] // Will be populated if needed
           };
         })
       );
-      
+
+      // Filter by paymentStatus if provided (after calculation)
+      let filteredInvoices = invoicesWithCorrectAmounts;
+      if (paymentStatus) {
+        filteredInvoices = invoicesWithCorrectAmounts.filter(inv =>
+          inv.paymentStatus === paymentStatus
+        );
+      }
+
       res.json({
         success: true,
-        data: invoicesWithCorrectAmounts,
-        total: invoicesWithCorrectAmounts.length
+        data: {
+          invoices: filteredInvoices,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+            totalItems: total
+          }
+        }
       });
-      
+
     } catch (error) {
       console.error('Error in getAllInvoices:', error);
       res.status(500).json({
         success: false,
-        error: 'Server error',
-        details: error.message
+        message: 'حصل خطأ في السيرفر',
+        code: 'SERVER_ERROR',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -110,9 +173,9 @@ class InvoicesControllerSimple {
         FROM Invoice 
         WHERE deletedAt IS NULL
       `;
-      
+
       const [stats] = await db.execute(statsQuery);
-      
+
       res.json({
         success: true,
         data: stats[0] || {
@@ -124,7 +187,7 @@ class InvoicesControllerSimple {
           totalRevenue: 0
         }
       });
-      
+
     } catch (error) {
       console.error('Error in getInvoiceStats:', error);
       res.status(500).json({
@@ -141,16 +204,16 @@ class InvoicesControllerSimple {
     try {
       await connection.beginTransaction();
 
-      const { 
-        repairRequestId, 
+      const {
+        repairRequestId,
         customerId,
         vendorId,
         invoiceType = 'sale',
-        totalAmount, 
-        status = 'draft', 
-        currency = 'EGP', 
-        taxAmount = 0, 
-        amountPaid = 0 
+        totalAmount,
+        status = 'draft',
+        currency = 'EGP',
+        taxAmount = 0,
+        amountPaid = 0
       } = req.body;
 
       // Validation is done by Joi middleware, but keeping basic checks for safety
@@ -222,7 +285,7 @@ class InvoicesControllerSimple {
   async getInvoiceById(req, res) {
     try {
       const { id } = req.params;
-      
+
       const [rows] = await db.execute(`
         SELECT 
           i.*,
@@ -235,26 +298,26 @@ class InvoicesControllerSimple {
         LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
         WHERE i.id = ? AND i.deletedAt IS NULL
       `, [id]);
-      
+
       if (rows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Invoice not found' 
+        return res.status(404).json({
+          success: false,
+          message: 'Invoice not found'
         });
       }
-      
+
       const invoice = rows[0];
-      
+
       // Calculate actual amountPaid from payments
       const [payments] = await db.execute(`
         SELECT COALESCE(SUM(amount), 0) as totalPaid 
         FROM Payment 
         WHERE invoiceId = ?
       `, [id]);
-      
+
       const actualAmountPaid = parseFloat(payments[0].totalPaid || 0);
       const totalAmount = parseFloat(invoice.totalAmount || 0);
-      
+
       // Determine correct status based on actual payments
       let correctStatus = invoice.status;
       if (actualAmountPaid >= totalAmount && totalAmount > 0) {
@@ -264,9 +327,9 @@ class InvoicesControllerSimple {
       } else {
         correctStatus = 'draft';
       }
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         data: {
           ...invoice,
           amountPaid: actualAmountPaid,
@@ -275,10 +338,10 @@ class InvoicesControllerSimple {
       });
     } catch (error) {
       console.error('Error in getInvoiceById:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Server error', 
-        details: error.message 
+      return res.status(500).json({
+        success: false,
+        error: 'Server error',
+        details: error.message
       });
     }
   }
@@ -289,7 +352,7 @@ class InvoicesControllerSimple {
       await connection.beginTransaction();
 
       const { id } = req.params;
-      const { totalAmount, amountPaid, status, currency, taxAmount, discountAmount, notes, dueDate } = req.body;
+      const { totalAmount, amountPaid, status, currency, taxAmount, discountAmount, notes } = req.body;
 
       // Check if invoice exists
       const [existing] = await connection.execute(`
@@ -332,10 +395,6 @@ class InvoicesControllerSimple {
       if (notes !== undefined) {
         updates.push('notes = ?');
         params.push(notes);
-      }
-      if (dueDate !== undefined) {
-        updates.push('dueDate = ?');
-        params.push(dueDate);
       }
 
       updates.push('updatedAt = NOW()');
@@ -424,7 +483,7 @@ class InvoicesControllerSimple {
     try {
       const { id } = req.params;
       const { description, quantity, unitPrice, itemType, serviceId, inventoryItemId } = req.body;
-      
+
       console.log('addInvoiceItem called with:', {
         invoiceId: id,
         description,
@@ -434,7 +493,7 @@ class InvoicesControllerSimple {
         serviceId,
         inventoryItemId
       });
-      
+
       // Handle undefined parameters by setting them to null
       const safeDescription = description || null;
       const safeQuantity = quantity || 1;
@@ -442,7 +501,7 @@ class InvoicesControllerSimple {
       const safeItemType = itemType || null;
       const safeServiceId = serviceId || null;
       const safeInventoryItemId = inventoryItemId || null;
-      
+
       console.log('Safe parameters:', {
         invoiceId: id,
         description: safeDescription,
@@ -452,57 +511,57 @@ class InvoicesControllerSimple {
         serviceId: safeServiceId,
         inventoryItemId: safeInventoryItemId
       });
-      
+
       // Check for duplicates - prevent adding the same service or inventory item twice
       if (safeServiceId) {
         const [existingService] = await db.execute(`
           SELECT id FROM InvoiceItem WHERE invoiceId = ? AND serviceId = ?
         `, [id, safeServiceId]);
-        
+
         if (existingService.length > 0) {
           console.log('Service already exists in invoice:', safeServiceId);
-          return res.status(409).json({ 
-            success: false, 
+          return res.status(409).json({
+            success: false,
             error: 'Service already exists in this invoice',
-            duplicate: true 
+            duplicate: true
           });
         }
       }
-      
+
       if (safeInventoryItemId) {
         const [existingItem] = await db.execute(`
           SELECT id FROM InvoiceItem WHERE invoiceId = ? AND inventoryItemId = ?
         `, [id, safeInventoryItemId]);
-        
+
         if (existingItem.length > 0) {
           console.log('Inventory item already exists in invoice:', safeInventoryItemId);
-          return res.status(409).json({ 
-            success: false, 
+          return res.status(409).json({
+            success: false,
             error: 'Inventory item already exists in this invoice',
-            duplicate: true 
+            duplicate: true
           });
         }
       }
-      
+
       const [result] = await db.execute(`
         INSERT INTO InvoiceItem (invoiceId, description, quantity, unitPrice, totalPrice, itemType, serviceId, inventoryItemId, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `, [id, safeDescription, safeQuantity, safeUnitPrice, safeQuantity * safeUnitPrice, safeItemType, safeServiceId, safeInventoryItemId]);
-      
+
       // Recalculate and update invoice total
       const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
-      
+
       const newTotal = Number(totalResult[0].calculatedTotal);
-      
+
       await db.execute(`
         UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
       `, [newTotal, id]);
-      
+
       console.log('Updated invoice total to:', newTotal);
-      
+
       res.json({ success: true, data: { id: result.insertId, newTotal } });
     } catch (error) {
       console.error('Error adding invoice item:', error);
@@ -514,10 +573,10 @@ class InvoicesControllerSimple {
     try {
       const { id, itemId } = req.params;
       const { description, quantity, unitPrice, itemType, serviceId, inventoryItemId } = req.body;
-      
+
       const updates = [];
       const params = [];
-      
+
       if (description !== undefined) {
         updates.push('description = ?');
         params.push(description);
@@ -542,36 +601,36 @@ class InvoicesControllerSimple {
         updates.push('inventoryItemId = ?');
         params.push(inventoryItemId);
       }
-      
+
       if (quantity !== undefined || unitPrice !== undefined) {
         const finalQuantity = quantity !== undefined ? quantity : 1;
         const finalUnitPrice = unitPrice !== undefined ? unitPrice : 0;
         updates.push('totalPrice = ?');
         params.push(finalQuantity * finalUnitPrice);
       }
-      
+
       updates.push('updatedAt = NOW()');
       params.push(itemId);
-      
+
       const query = `UPDATE InvoiceItem SET ${updates.join(', ')} WHERE id = ? AND invoiceId = ?`;
       params.push(id);
-      
+
       await db.execute(query, params);
-      
+
       // Recalculate and update invoice total
       const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
-      
+
       const newTotal = Number(totalResult[0].calculatedTotal);
-      
+
       await db.execute(`
         UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
       `, [newTotal, id]);
-      
+
       console.log('Updated invoice total to:', newTotal);
-      
+
       res.json({ success: true, message: 'Invoice item updated successfully', newTotal });
     } catch (error) {
       console.error('Error updating invoice item:', error);
@@ -582,25 +641,25 @@ class InvoicesControllerSimple {
   async removeInvoiceItem(req, res) {
     try {
       const { id, itemId } = req.params;
-      
+
       await db.execute(`
         DELETE FROM InvoiceItem WHERE id = ? AND invoiceId = ?
       `, [itemId, id]);
-      
+
       // Recalculate and update invoice total
       const [totalResult] = await db.execute(`
         SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ?
       `, [id]);
-      
+
       const newTotal = Number(totalResult[0].calculatedTotal);
-      
+
       await db.execute(`
         UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
       `, [newTotal, id]);
-      
+
       console.log('Updated invoice total to:', newTotal);
-      
+
       res.json({ success: true, message: 'Invoice item removed successfully', newTotal });
     } catch (error) {
       console.error('Error removing invoice item:', error);
@@ -674,9 +733,9 @@ class InvoicesControllerSimple {
         currency = 'EGP',
         taxAmount = 0
       } = req.body;
-      
+
       // Extract fields that don't exist in Invoice table
-      const { notes, discountAmount, dueDate, ...otherFields } = req.body;
+      const { notes, discountAmount, ...otherFields } = req.body;
 
       // Check if repair request exists
       const [repairRows] = await connection.execute(`

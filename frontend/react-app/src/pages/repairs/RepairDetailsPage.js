@@ -858,44 +858,81 @@ const RepairDetailsPage = () => {
       }
       setAddSvcLoading(true);
       console.log('Adding service with data:', { serviceId, price, technicianId, notes, invoiceId });
-      // إنشاء خدمة طلب الإصلاح
-      await repairService.addRepairRequestService({
+      
+      // إنشاء خدمة طلب الإصلاح أولاً للحصول على ID
+      const serviceResponse = await repairService.addRepairRequestService({
         repairRequestId: Number(id),
         serviceId: Number(serviceId),
         technicianId: Number(technicianId),
         price: Number(price),
         notes: notes || ''
       });
-      // ربط اختياري بالفاتورة
+      const repairRequestServiceId = serviceResponse.id || serviceResponse.data?.id;
+      console.log('✅ Service created with ID:', repairRequestServiceId);
+      
+      // ربط الخدمة بالفاتورة (تلقائياً أو يدوياً)
       try {
         // Auto-select the invoice for this repair request if not manually selected
         let targetInvoiceId = invoiceId ? Number(invoiceId) : null;
         
         if (!targetInvoiceId) {
           // Get fresh invoices and auto-select the one for this repair
-          const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-          const freshInvoices = freshInvoicesData.data || [];
-          const repairInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
-          targetInvoiceId = repairInvoice?.id || repairInvoice?.invoiceId;
+          try {
+            const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+            const freshInvoices = Array.isArray(freshInvoicesData.data) ? freshInvoicesData.data : (Array.isArray(freshInvoicesData) ? freshInvoicesData : []);
+            const repairInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+            targetInvoiceId = repairInvoice?.id || repairInvoice?.invoiceId;
+          } catch (invoiceErr) {
+            console.log('Error fetching invoices:', invoiceErr);
+          }
+        }
+        
+        // If still no invoice, create one automatically
+        if (!targetInvoiceId) {
+          try {
+            console.log('No invoice found, creating one automatically...');
+            const createInvoiceResponse = await apiService.request('/invoices', {
+              method: 'POST',
+              body: JSON.stringify({
+                repairRequestId: parseInt(id),
+                status: 'draft',
+                currency: 'EGP',
+                totalAmount: 0
+              })
+            });
+            targetInvoiceId = createInvoiceResponse.id || createInvoiceResponse.invoiceId || createInvoiceResponse.data?.id;
+            console.log('✅ Created invoice automatically:', targetInvoiceId);
+          } catch (createErr) {
+            console.error('Error creating invoice:', createErr);
+          }
         }
         
         if (targetInvoiceId) {
           // Get service name for description
           const selectedService = availableServices.find(s => s.id === Number(serviceId));
-          const serviceName = selectedService?.name || 'خدمة غير محددة';
+          const serviceName = selectedService?.name || selectedService?.serviceName || 'خدمة غير محددة';
           
-          await apiService.addInvoiceItem(targetInvoiceId, {
-            serviceId: Number(serviceId) || null,
-            quantity: 1,
-            unitPrice: Number(price) || 0,
-            description: `${serviceName} - ${notes || ''}`.trim(),
-            itemType: 'service'
-          });
-          
-          console.log('Service automatically linked to invoice:', targetInvoiceId);
+          // Add service to invoice
+          try {
+            await apiService.addInvoiceItem(targetInvoiceId, {
+              serviceId: Number(serviceId),
+              repairRequestServiceId: repairRequestServiceId, // Link to RepairRequestService
+              quantity: 1,
+              unitPrice: Number(price) || 0,
+              totalPrice: Number(price) || 0,
+              description: `${serviceName}${notes ? ` - ${notes}` : ''}`.trim(),
+              itemType: 'service'
+            });
+            
+            console.log('✅ Service automatically linked to invoice:', targetInvoiceId);
+          } catch (itemErr) {
+            console.error('Error adding service to invoice:', itemErr);
+            // Don't fail the whole operation if invoice linking fails
+          }
         }
       } catch (e) {
         console.log('Service added but not linked to invoice:', e.message);
+        // Don't fail the whole operation if invoice linking fails
       }
       notifications.success('تمت إضافة الخدمة بنجاح');
       setAddServiceOpen(false);
@@ -988,9 +1025,13 @@ const RepairDetailsPage = () => {
           });
           
           // تحديد تفاصيل طلب الإصلاح من البيانات المحملة
+          // Load actual cost from invoice if exists
+          let actualCostFromInvoice = rep.actualCost || null;
+          // Will be updated when invoices load
+          
           setRepairDetails({
             estimatedCost: rep.estimatedCost || 0,
-            actualCost: rep.actualCost || null,
+            actualCost: actualCostFromInvoice,
             priority: rep.priority || 'MEDIUM',
             expectedDeliveryDate: rep.expectedDeliveryDate || null,
             notes: rep.notes || ''
@@ -1083,14 +1124,46 @@ const RepairDetailsPage = () => {
       
       console.log('Invoices response:', data);
       console.log('Invoices data:', data);
-      console.log('Invoices data.data:', data.data);
-      console.log('Invoices data.data type:', typeof data.data);
-      console.log('Invoices data.data length:', data.data?.length);
-      setInvoices(data.data || []);
+      
+      // Handle different response formats
+      let invoicesArray = [];
+      if (Array.isArray(data)) {
+        invoicesArray = data;
+      } else if (data?.success && data?.data?.invoices && Array.isArray(data.data.invoices)) {
+        // Backend returns: {success: true, data: {invoices: [...], pagination: {...}}}
+        invoicesArray = data.data.invoices;
+      } else if (data?.data && Array.isArray(data.data)) {
+        // Direct array in data.data
+        invoicesArray = data.data;
+      } else if (data?.invoices && Array.isArray(data.invoices)) {
+        // Direct array in data.invoices
+        invoicesArray = data.invoices;
+      } else {
+        invoicesArray = [];
+      }
+      
+      console.log('Invoices array:', invoicesArray);
+      console.log('Invoices array length:', invoicesArray.length);
+      setInvoices(invoicesArray);
+      
+      // Update actual cost from invoice totalAmount if exists
+      if (invoicesArray && invoicesArray.length > 0) {
+        const latestInvoice = invoicesArray[0]; // Get latest invoice
+        if (latestInvoice.totalAmount) {
+          const invoiceTotal = parseFloat(latestInvoice.totalAmount) || 0;
+          setRepairDetails(prev => ({
+            ...prev,
+            actualCost: invoiceTotal
+          }));
+          // Also update repair state
+          setRepair(prev => prev ? { ...prev, actualCost: invoiceTotal } : null);
+        }
+      }
     } catch (e) {
       console.error('Error loading invoices:', e);
       console.error('Error details:', e.message, e.stack);
       setInvoicesError('تعذر تحميل الفواتير');
+      setInvoices([]); // Set empty array on error
     } finally {
       setInvoicesLoading(false);
     }

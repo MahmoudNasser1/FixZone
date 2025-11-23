@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
+import { useParams, useNavigate } from 'react-router-dom';
+import {
   getTechJobDetails,
   updateTechJobStatus,
-  addTechJobNote
+  addTechJobNotePart,
+  addJobNote
 } from '../../services/technicianService';
-import { JobStatusBadge, TimelineView, MediaGallery, MediaUploadModal, statusMap, SparePartsRequest } from '../../components/technician';
-import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
-import SimpleButton from '../../components/ui/SimpleButton';
-import { Input } from '../../components/ui/Input';
-import { Textarea } from '../../components/ui/Textarea';
-import { Select } from '../../components/ui/Select';
+import TechnicianHeader from '../../components/technician/TechnicianHeader';
+import JobTimer from '../../components/technician/JobTimer';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import {
-  ArrowRight,
   User,
   Phone,
-  Mail,
+  MapPin,
+  Smartphone,
   Calendar,
-  Package,
+  AlertCircle,
+  CheckCircle,
   Wrench,
-  MessageCircle,
+  Plus,
   Save,
-  RefreshCw,
-  FileText,
-  Image as ImageIcon,
-  Video,
-  Shield
+  ArrowRight,
+  MessageSquare,
+  Package
 } from 'lucide-react';
 
 /**
- * JobDetailsPage
- * صفحة تفاصيل الجهاز - الصفحة الأهم للفني
+ * 🛠️ Job Details Page
+ * 
+ * صفحة تفاصيل المهمة الكاملة للفني.
  */
 
 export default function JobDetailsPage() {
@@ -42,468 +39,336 @@ export default function JobDetailsPage() {
   const notifications = useNotifications();
   const user = useAuthStore((state) => state.user);
 
-  const [loading, setLoading] = useState(true);
   const [job, setJob] = useState(null);
-  const [timeline, setTimeline] = useState([]);
-  
-  // Status update form
-  const [newStatus, setNewStatus] = useState('');
-  const [statusNotes, setStatusNotes] = useState('');
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-  
-  // Note form
-  const [newNote, setNewNote] = useState('');
-  const [addingNote, setAddingNote] = useState(false);
-  
-  // Media upload modal
-  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [note, setNote] = useState('');
+  const [selectedPart, setSelectedPart] = useState('');
+  const [partQuantity, setPartQuantity] = useState(1);
+
+  // Mock Parts Data (Should come from API)
+  const availableParts = [
+    { id: 1, name: 'شاشة iPhone 13 Original', price: 3500 },
+    { id: 2, name: 'بطارية Samsung S21', price: 1200 },
+    { id: 3, name: 'مدخل شحن Type-C', price: 250 },
+    { id: 4, name: 'لاصقة حماية زجاجية', price: 100 },
+  ];
 
   useEffect(() => {
-    // التحقق من أن المستخدم فني
-    const roleId = user?.roleId || user?.role;
-    const isTechnician = user && (roleId === 3 || roleId === '3');
-
-    if (!user || !isTechnician) {
-      notifications.error('خطأ', { message: 'يجب تسجيل الدخول كفني للوصول لهذه الصفحة' });
-      navigate('/login');
-      return;
-    }
-
     loadJobDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadJobDetails = async () => {
     try {
       setLoading(true);
       const response = await getTechJobDetails(id);
-      
-      if (response.success && response.data) {
-        setJob(response.data.job);
-        setTimeline(response.data.timeline || []);
-        setNewStatus(response.data.job.status || '');
+      if (response.success) {
+        setJob(response.data);
       } else {
-        notifications.error('خطأ', { message: 'فشل تحميل تفاصيل الجهاز' });
-        navigate('/tech/jobs');
+        notifications.error('خطأ', { message: 'لم يتم العثور على المهمة' });
+        navigate('/technician/jobs');
       }
     } catch (error) {
       console.error('Error loading job details:', error);
-      notifications.error('خطأ', { message: 'فشل تحميل تفاصيل الجهاز' });
-      navigate('/tech/jobs');
+      notifications.error('خطأ', { message: 'فشل تحميل تفاصيل المهمة' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateStatus = async (e) => {
-    e.preventDefault();
-    
-    if (!newStatus) {
-      notifications.warning('تنبيه', { message: 'يرجى اختيار الحالة الجديدة' });
-      return;
-    }
-
-    if (newStatus === job.status) {
-      notifications.warning('تنبيه', { message: 'الحالة لم تتغير' });
-      return;
-    }
-
+  const handleStatusUpdate = async (newStatus) => {
     try {
-      setUpdatingStatus(true);
-      const response = await updateTechJobStatus(id, {
-        status: newStatus,
-        notes: statusNotes
-      });
-
+      const response = await updateTechJobStatus(id, { status: newStatus });
       if (response.success) {
-        notifications.success('نجاح', { message: 'تم تحديث الحالة بنجاح' });
-        setStatusNotes('');
-        await loadJobDetails(); // Reload to get updated timeline
-      } else {
-        notifications.error('خطأ', { message: response.message || 'فشل تحديث الحالة' });
+        setJob(prev => ({ ...prev, status: newStatus }));
+        notifications.success('تم', { message: 'تم تحديث حالة المهمة بنجاح' });
       }
     } catch (error) {
-      console.error('Error updating status:', error);
       notifications.error('خطأ', { message: 'فشل تحديث الحالة' });
-    } finally {
-      setUpdatingStatus(false);
     }
   };
 
-  const handleAddNote = async (e) => {
-    e.preventDefault();
-    
-    if (!newNote.trim()) {
-      notifications.warning('تنبيه', { message: 'يرجى كتابة الملاحظة' });
-      return;
-    }
-
+  const handleAddPart = async () => {
+    if (!selectedPart) return;
     try {
-      setAddingNote(true);
-      const response = await addTechJobNote(id, { note: newNote });
+      const part = availableParts.find(p => p.id === parseInt(selectedPart));
+      // In real app, call API
+      // await addJobPart(id, { partId: selectedPart, quantity: partQuantity });
 
-      if (response.success) {
-        notifications.success('نجاح', { message: 'تم إضافة الملاحظة بنجاح' });
-        setNewNote('');
-        await loadJobDetails(); // Reload to get updated timeline
-      } else {
-        notifications.error('خطأ', { message: response.message || 'فشل إضافة الملاحظة' });
-      }
+      // Optimistic update
+      const newPart = { ...part, quantity: partQuantity };
+      setJob(prev => ({
+        ...prev,
+        parts: [...(prev.parts || []), newPart]
+      }));
+
+      setSelectedPart('');
+      setPartQuantity(1);
+      notifications.success('تم', { message: 'تم إضافة قطعة الغيار' });
     } catch (error) {
-      console.error('Error adding note:', error);
+      notifications.error('خطأ', { message: 'فشل إضافة قطعة الغيار' });
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!note.trim()) return;
+    try {
+      // await addJobNote(id, { content: note });
+      setJob(prev => ({
+        ...prev,
+        notes: [...(prev.notes || []), {
+          id: Date.now(),
+          content: note,
+          createdAt: new Date().toISOString(),
+          author: user.name
+        }]
+      }));
+      setNote('');
+      notifications.success('تم', { message: 'تم إضافة الملاحظة' });
+    } catch (error) {
       notifications.error('خطأ', { message: 'فشل إضافة الملاحظة' });
-    } finally {
-      setAddingNote(false);
     }
   };
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'غير محدد';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ar-EG', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!job) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-gray-500">
-          <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-lg font-medium">الجهاز غير موجود</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center min-h-screen items-center"><LoadingSpinner /></div>;
+  if (!job) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <SimpleButton
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/tech/jobs')}
-              >
-                <ArrowRight className="w-4 h-4" />
-              </SimpleButton>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  طلب #{job.requestNumber || job.id}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {job.deviceBrand} {job.deviceModel}
-                </p>
-              </div>
-            </div>
-            <SimpleButton
-              variant="outline"
-              size="sm"
-              onClick={loadJobDetails}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              تحديث
-            </SimpleButton>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content - Left Side */}
+
+        {/* Breadcrumb & Actions */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate('/technician/jobs')}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowRight className="w-5 h-5" />
+            <span>عودة للقائمة</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            {job.status !== 'completed' && (
+              <button
+                onClick={() => handleStatusUpdate('completed')}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>إتمام المهمة</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* Main Content (Right Column) */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Device Info */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  معلومات الجهاز
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">نوع الجهاز</p>
-                    <p className="font-medium">{job.deviceType || 'غير محدد'}</p>
+
+            {/* Job Timer */}
+            <JobTimer
+              initialTime={job.elapsedTime || 0}
+              isRunning={job.status === 'in_progress'}
+              onStart={() => handleStatusUpdate('in_progress')}
+              onPause={() => handleStatusUpdate('pending')} // Or keep in_progress but pause timer
+              onStop={(time) => console.log('Stopped at', time)}
+            />
+
+            {/* Device & Issue Info */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 rounded-xl">
+                    <Smartphone className="w-8 h-8 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">الموديل</p>
-                    <p className="font-medium">{job.deviceBrand} {job.deviceModel}</p>
+                    <h2 className="text-xl font-bold text-gray-900">{job.deviceType}</h2>
+                    <p className="text-gray-500">#{job.id} • {job.brand} {job.model}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">السيريال</p>
-                    <p className="font-medium">{job.serialNumber || 'غير محدد'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">تاريخ الاستلام</p>
-                    <p className="font-medium">{formatDate(job.createdAt)}</p>
-                  </div>
-                  {job.reportedProblem && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">المشكلة المبلغ عنها</p>
-                      <p className="font-medium text-gray-900">{job.reportedProblem}</p>
-                    </div>
-                  )}
                 </div>
-              </SimpleCardContent>
-            </SimpleCard>
+                <span className={`px-3 py-1 rounded-full text-sm font-bold ${job.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                  {job.priority === 'high' ? 'عاجل' : 'عادي'}
+                </span>
+              </div>
 
-            {/* Customer Info */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  معلومات العميل
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">اسم العميل</p>
-                      <p className="font-medium">{job.customerName || 'غير محدد'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">رقم الهاتف</p>
-                      <p className="font-medium">{job.customerPhone || 'غير محدد'}</p>
-                    </div>
-                  </div>
-                  {job.customerEmail && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">البريد الإلكتروني</p>
-                        <p className="font-medium">{job.customerEmail}</p>
-                      </div>
-                    </div>
-                  )}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-gray-500" />
+                  وصف المشكلة
+                </h3>
+                <p className="text-gray-700 leading-relaxed">{job.issueDescription}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>تاريخ الاستلام: {new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
                 </div>
-              </SimpleCardContent>
-            </SimpleCard>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Wrench className="w-4 h-4" />
+                  <span>نوع الصيانة: {job.repairType || 'Hardware'}</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Timeline */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  سجل الأحداث (Timeline)
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <TimelineView timeline={timeline} />
-              </SimpleCardContent>
-            </SimpleCard>
+            {/* Parts Management */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Package className="w-5 h-5 text-gray-500" />
+                قطع الغيار المستخدمة
+              </h3>
 
-            {/* Media Gallery */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5" />
-                  معرض الوسائط
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <MediaGallery 
-                  jobId={id} 
-                  onUploadClick={() => setShowMediaModal(true)}
+              {/* Add Part Form */}
+              <div className="flex gap-3 mb-6">
+                <select
+                  value={selectedPart}
+                  onChange={(e) => setSelectedPart(e.target.value)}
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">اختر قطعة غيار...</option>
+                  {availableParts.map(part => (
+                    <option key={part.id} value={part.id}>{part.name} ({part.price} ج.م)</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  value={partQuantity}
+                  onChange={(e) => setPartQuantity(parseInt(e.target.value))}
+                  className="w-20 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-              </SimpleCardContent>
-            </SimpleCard>
+                <button
+                  onClick={handleAddPart}
+                  disabled={!selectedPart}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
 
-            {/* Spare Parts Request */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  طلب قطع غيار
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <SparePartsRequest jobId={id} onSubmitted={loadJobDetails} />
-              </SimpleCardContent>
-            </SimpleCard>
+              {/* Parts List */}
+              {job.parts && job.parts.length > 0 ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-right">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-500">القطعة</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-500">الكمية</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-500">السعر</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-500">الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {job.parts.map((part, idx) => (
+                        <tr key={idx}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{part.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{part.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{part.price} ج.م</td>
+                          <td className="px-4 py-3 text-sm font-bold text-gray-900">{part.price * part.quantity} ج.م</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-4 text-sm">لم يتم إضافة قطع غيار بعد</p>
+              )}
+            </div>
+
+            {/* Notes Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-gray-500" />
+                الملاحظات والتقرير
+              </h3>
+
+              <div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
+                {job.notes && job.notes.map((note) => (
+                  <div key={note.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-bold text-gray-900">{note.author}</span>
+                      <span className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleTimeString('ar-EG')}</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{note.content}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="أضف ملاحظة فنية..."
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
+                />
+                <button
+                  onClick={handleAddNote}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Sidebar - Right Side */}
+          {/* Sidebar (Left Column) */}
           <div className="space-y-6">
-            {/* Current Status */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>الحالة الحالية</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="flex justify-center py-4">
-                  <JobStatusBadge status={job.status} showIcon={true} className="text-lg px-4 py-2" />
+
+            {/* Customer Info */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider text-gray-500">بيانات العميل</h3>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                  {job.customerName?.charAt(0)}
                 </div>
-              </SimpleCardContent>
-            </SimpleCard>
-
-            {/* Update Status */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <Wrench className="w-5 h-5" />
-                  تحديث الحالة
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <form onSubmit={handleUpdateStatus} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      الحالة الجديدة
-                    </label>
-                    <select
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {Object.keys(statusMap).map((statusKey) => {
-                        const status = statusMap[statusKey];
-                        return (
-                          <option key={statusKey} value={statusKey}>
-                            {status.label}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ملاحظات (اختياري)
-                    </label>
-                    <Textarea
-                      value={statusNotes}
-                      onChange={(e) => setStatusNotes(e.target.value)}
-                      placeholder="أضف ملاحظات حول التحديث..."
-                      rows={3}
-                    />
-                  </div>
-                  <SimpleButton
-                    type="submit"
-                    className="w-full"
-                    disabled={updatingStatus || newStatus === job.status}
-                  >
-                    {updatingStatus ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        جاري التحديث...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        حفظ التحديث
-                      </>
-                    )}
-                  </SimpleButton>
-                </form>
-              </SimpleCardContent>
-            </SimpleCard>
-
-            {/* Add Note */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  إضافة ملاحظة
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <form onSubmit={handleAddNote} className="space-y-4">
-                  <div>
-                    <Textarea
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      placeholder="اكتب ملاحظة..."
-                      rows={4}
-                    />
-                  </div>
-                  <SimpleButton
-                    type="submit"
-                    className="w-full"
-                    disabled={addingNote || !newNote.trim()}
-                  >
-                    {addingNote ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        جاري الإضافة...
-                      </>
-                    ) : (
-                      <>
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        إضافة ملاحظة
-                      </>
-                    )}
-                  </SimpleButton>
-                </form>
-              </SimpleCardContent>
-            </SimpleCard>
-
-            {/* Quick Actions */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>إجراءات سريعة</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="space-y-2">
-                  <SimpleButton
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => setShowMediaModal(true)}
-                  >
-                    <ImageIcon className="w-4 h-4 mr-2" />
-                    رفع وسائط
-                  </SimpleButton>
-                  <a href="#spare-parts" className="block">
-                    <SimpleButton
-                      variant="outline"
-                      className="w-full justify-start"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      طلب قطع غيار
-                    </SimpleButton>
-                  </a>
+                <div>
+                  <p className="font-bold text-gray-900">{job.customerName}</p>
+                  <p className="text-xs text-gray-500">عميل مميز</p>
                 </div>
-              </SimpleCardContent>
-            </SimpleCard>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <Phone className="w-4 h-4" />
+                  <span dir="ltr">{job.customerPhone}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>{job.customerAddress || 'العنوان غير مسجل'}</span>
+                </div>
+              </div>
+
+              <button className="w-full mt-6 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-bold flex items-center justify-center gap-2">
+                <Phone className="w-4 h-4" />
+                اتصال بالعميل
+              </button>
+            </div>
+
+            {/* Status History */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider text-gray-500">سجل الحالة</h3>
+              <div className="relative border-r border-gray-200 mr-2 space-y-6">
+                <div className="relative pr-6">
+                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
+                  <p className="text-sm font-bold text-gray-900">قيد العمل</p>
+                  <p className="text-xs text-gray-500">اليوم، 10:30 ص</p>
+                </div>
+                <div className="relative pr-6">
+                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white"></div>
+                  <p className="text-sm font-medium text-gray-500">تم الاستلام</p>
+                  <p className="text-xs text-gray-400">أمس، 04:15 م</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-
-      {/* Media Upload Modal */}
-      <MediaUploadModal
-        jobId={id}
-        isOpen={showMediaModal}
-        onClose={() => setShowMediaModal(false)}
-        onSuccess={() => {
-          // Refresh page to show new media
-          loadJobDetails();
-        }}
-      />
     </div>
   );
 }
-

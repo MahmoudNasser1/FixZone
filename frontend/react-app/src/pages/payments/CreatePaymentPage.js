@@ -28,14 +28,30 @@ export default function CreatePaymentPage() {
 
   const loadInvoices = async () => {
     try {
-      const response = await apiService.getInvoices({ status: 'sent,partially_paid,paid', limit: 100 });
-      if (response.invoices) {
-        setInvoices(response.invoices);
-      } else if (response.data) {
-        setInvoices(response.data);
+      // Load all invoices and filter on frontend, or load invoices without status filter
+      // The backend doesn't support comma-separated status values
+      const response = await apiService.getInvoices({ limit: 100 });
+      let invoicesArray = [];
+      
+      if (response && response.success && response.data && response.data.invoices) {
+        invoicesArray = response.data.invoices;
+      } else if (response && Array.isArray(response.data)) {
+        invoicesArray = response.data;
+      } else if (response && Array.isArray(response.invoices)) {
+        invoicesArray = response.invoices;
+      } else if (Array.isArray(response)) {
+        invoicesArray = response;
       }
+      
+      // Filter invoices on frontend for status: sent, partially_paid, or paid
+      const filteredInvoices = invoicesArray.filter(inv => 
+        inv.status === 'sent' || inv.status === 'partially_paid' || inv.status === 'paid'
+      );
+      
+      setInvoices(filteredInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
+      setInvoices([]);
     }
   };
 
@@ -83,10 +99,20 @@ export default function CreatePaymentPage() {
         createdBy: 2
       });
       
+      // Get current user ID from auth context or local storage
+      let currentUserId = null;
+      try {
+        const authUser = await apiService.request('/auth/me').catch(() => null);
+        currentUserId = authUser?.id || authUser?.userId || 2; // Fallback to user 2 if not available
+      } catch (e) {
+        console.warn('Could not get current user, using default:', e);
+        currentUserId = 2; // Default fallback
+      }
+      
       const response = await paymentService.createPayment({
         ...paymentData,
-        invoiceId: selectedInvoiceId || paymentData.invoiceId
-        // createdBy will be set automatically from req.user.id in backend
+        invoiceId: selectedInvoiceId || paymentData.invoiceId,
+        createdBy: currentUserId
       });
 
       if (response.success) {

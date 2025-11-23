@@ -326,6 +326,11 @@ const RepairsPage = () => {
         console.log('Setting repairs as array:', data.length, 'items');
         setRepairs(data);
         setServerTotal(null);
+      } else if (data && data.success && data.data && Array.isArray(data.data.repairs)) {
+        // Backend returns: {success: true, data: {repairs: [...], pagination: {...}}}
+        console.log('Setting repairs from data.data.repairs:', data.data.repairs.length, 'items');
+        setRepairs(data.data.repairs);
+        setServerTotal(data.data.pagination?.totalItems || data.data.pagination?.total || null);
       } else if (data && Array.isArray(data.items)) {
         console.log('Setting repairs from data.items:', data.items.length, 'items');
         setRepairs(data.items);
@@ -744,15 +749,17 @@ const RepairsPage = () => {
   // إذا كانت البيانات قادمة مُقسّمة من الخادم (serverTotal موجود) نعرض كما هي، وإلا نُقسّم Client-side
   const paginatedRepairs = Number.isFinite(serverTotal) && serverTotal != null ? repairs : sortedRepairs.slice(startIdx, endIdx);
   
-  // Debug logging
-  console.log('Render debug:', {
-    repairs: repairs.length,
-    sortedRepairs: sortedRepairs.length,
-    paginatedRepairs: paginatedRepairs.length,
-    serverTotal,
-    startIdx,
-    endIdx
-  });
+  // Debug logging - only in development mode
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Render debug:', {
+      repairs: repairs.length,
+      sortedRepairs: sortedRepairs.length,
+      paginatedRepairs: paginatedRepairs.length,
+      serverTotal,
+      startIdx,
+      endIdx
+    });
+  }
 
   // حساب أرقام العرض للصفحة الحالية (تراعي الترقيم الخادمي)
   const pageCount = Number.isFinite(serverTotal) && serverTotal != null ? repairs.length : (endIdx - startIdx);

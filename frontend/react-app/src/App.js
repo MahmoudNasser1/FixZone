@@ -64,6 +64,9 @@ import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import FinancialReportsPage from './pages/reports/FinancialReportsPage';
 import DailyReportsPage from './pages/reports/DailyReportsPage';
 import TechnicianReportsPage from './pages/reports/TechnicianReportsPage';
+import TechnicianDashboard from './pages/technician/TechnicianDashboard';
+import JobsListPage from './pages/technician/JobsListPage';
+import JobDetailsPage from './pages/technician/JobDetailsPage';
 
 // Integration Pages
 import WorkflowDashboardPage from './pages/integration/WorkflowDashboardPage';
@@ -92,9 +95,18 @@ import { QuotationsPage } from './pages/quotations';
 // Customer Portal Pages
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import CustomerRepairsPage from './pages/customer/CustomerRepairsPage';
+import CustomerInvoicesPage from './pages/customer/CustomerInvoicesPage';
+import CustomerDevicesPage from './pages/customer/CustomerDevicesPage';
+import CustomerProfilePage from './pages/customer/CustomerProfilePage';
+import CustomerRepairDetailsPage from './pages/customer/CustomerRepairDetailsPage';
+import CustomerInvoiceDetailsPage from './pages/customer/CustomerInvoiceDetailsPage';
+import CustomerSettingsPage from './pages/customer/CustomerSettingsPage';
+import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPage';
 
 // Technician Portal Pages
-import { TechnicianDashboard, JobsListPage, JobDetailsPage } from './pages/technician';
+import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
+// Already imported above individually
 
 // Debug Page
 import DebugPage from './pages/DebugPage';
@@ -266,11 +278,14 @@ function App() {
                 <CustomerRoute>
                   <Routes>
                     <Route path="dashboard" element={<CustomerDashboard />} />
-                    <Route path="repairs" element={<div>Customer Repairs Page (Coming Soon)</div>} />
-                    <Route path="repairs/:id" element={<div>Customer Repair Details (Coming Soon)</div>} />
-                    <Route path="invoices" element={<div>Customer Invoices Page (Coming Soon)</div>} />
-                    <Route path="invoices/:id" element={<div>Customer Invoice Details (Coming Soon)</div>} />
-                    <Route path="devices" element={<div>Customer Devices Page (Coming Soon)</div>} />
+                    <Route path="repairs" element={<CustomerRepairsPage />} />
+                    <Route path="repairs/:id" element={<CustomerRepairDetailsPage />} />
+                    <Route path="invoices" element={<CustomerInvoicesPage />} />
+                    <Route path="invoices/:id" element={<CustomerInvoiceDetailsPage />} />
+                    <Route path="devices" element={<CustomerDevicesPage />} />
+                    <Route path="profile" element={<CustomerProfilePage />} />
+                    <Route path="settings" element={<CustomerSettingsPage />} />
+                    <Route path="notifications" element={<CustomerNotificationsPage />} />
                     <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
                   </Routes>
                 </CustomerRoute>
@@ -278,20 +293,14 @@ function App() {
             />
 
             {/* Technician Portal Routes */}
-            <Route
-              path="/tech/*"
-              element={
-                <TechnicianRoute>
-                  <Routes>
-                    <Route path="dashboard" element={<TechnicianDashboard />} />
-                    <Route path="jobs" element={<JobsListPage />} />
-                    <Route path="jobs/:id" element={<JobDetailsPage />} />
-                    <Route path="profile" element={<div>Technician Profile (Coming Soon)</div>} />
-                    <Route path="*" element={<Navigate to="/tech/dashboard" replace />} />
-                  </Routes>
-                </TechnicianRoute>
-              }
-            />
+            <Route path="/technician" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
+            <Route path="/technician/dashboard" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
+            <Route path="/technician/jobs" element={<TechnicianRoute><JobsListPage /></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id" element={<TechnicianRoute><JobDetailsPage /></TechnicianRoute>} />
+            <Route path="/technician/profile" element={<TechnicianRoute><TechnicianProfilePage /></TechnicianRoute>} />
+            <Route path="/technician/settings" element={<TechnicianRoute><CustomerSettingsPage /></TechnicianRoute>} /> {/* Reusing Settings Page for now */}
+            <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
+
 
             {/* Staff/Admin Routes */}
             <Route
