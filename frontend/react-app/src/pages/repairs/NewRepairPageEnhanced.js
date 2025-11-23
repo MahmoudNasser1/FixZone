@@ -4,7 +4,7 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
-import { 
+import {
   ArrowRight, Wrench, User, Phone, Mail, Search, Loader2,
   Smartphone, Laptop, Tablet, Save, X, AlertCircle, CheckCircle,
   Building2, Calendar, DollarSign, FileText, Shield, Clock
@@ -63,7 +63,7 @@ const NewRepairPageEnhanced = () => {
   ]); // Store all brands for filtering
   const [accessoryOptions, setAccessoryOptions] = useState([]);
   const [deviceTypeOptions, setDeviceTypeOptions] = useState([]);
-  
+
   const [formData, setFormData] = useState({
     customerId: searchParams.get('customerId') || '',
     customerName: '',
@@ -94,7 +94,7 @@ const NewRepairPageEnhanced = () => {
   // تحميل البيانات الأساسية عند بدء الصفحة
   useEffect(() => {
     loadInitialData();
-    
+
     // إذا كان هناك customerId في الـ URL، جلب بيانات العميل
     const customerId = searchParams.get('customerId');
     if (customerId) {
@@ -130,10 +130,10 @@ const NewRepairPageEnhanced = () => {
           { id: 17, label: 'Sennheiser', value: 'SENNHEISER' }
         ];
       }
-      
+
       setAllBrandOptions(allBrands);
       setBrandOptions(allBrands); // Initially show all brands
-      
+
       const accessoriesResponse = await apiService.getVariables({ category: 'ACCESSORY', active: true });
       if (accessoriesResponse.ok) {
         const accessories = await accessoriesResponse.json();
@@ -173,14 +173,14 @@ const NewRepairPageEnhanced = () => {
       setShowCustomerResults(false);
       return;
     }
-    
+
     try {
       setSearchingCustomers(true);
       console.log('Searching for customers with query:', value);
-      
+
       const response = await apiService.searchCustomers(value.trim(), 1, 20);
       console.log('Search response:', response);
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('Search result:', result);
@@ -247,19 +247,19 @@ const NewRepairPageEnhanced = () => {
     };
 
     const allowedBrands = deviceBrandMap[deviceType] || [];
-    
+
     // If no device type selected or device type not in map, show all brands
     if (!deviceType || !deviceBrandMap[deviceType]) {
       setBrandOptions(allBrandOptions);
       return;
     }
-    
-    const filteredBrands = allBrandOptions.filter(brand => 
+
+    const filteredBrands = allBrandOptions.filter(brand =>
       allowedBrands.includes(brand.value)
     );
-    
+
     setBrandOptions(filteredBrands);
-    
+
     // Clear device brand if it's not available for the selected device type
     if (formData.deviceBrand && !allowedBrands.includes(formData.deviceBrand)) {
       setFormData(prev => ({
@@ -272,12 +272,12 @@ const NewRepairPageEnhanced = () => {
   const handleCustomerSearchChange = (e) => {
     const value = e.target.value;
     setCustomerSearch(value);
-    
+
     // البحث مع تأخير لتجنب البحث المستمر
     const timeoutId = setTimeout(() => {
       searchCustomers(value);
     }, 300);
-    
+
     return () => clearTimeout(timeoutId);
   };
 
@@ -311,7 +311,7 @@ const NewRepairPageEnhanced = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedCustomer && !formData.customerName.trim()) {
       setError('يرجى اختيار عميل أو إدخال بيانات العميل');
       return;
@@ -347,14 +347,14 @@ const NewRepairPageEnhanced = () => {
       console.log('Submitting repair request:', repairData);
 
       const result = await apiService.createRepairRequest(repairData);
-      
+
       if (result && result.id) {
         notifications.success('تم إنشاء طلب الإصلاح بنجاح');
         navigate(`/repairs/${result.id}`);
       } else {
         throw new Error('Failed to create repair request');
       }
-      
+
     } catch (err) {
       console.error('Error creating repair request:', err);
       setError('حدث خطأ في إنشاء طلب الإصلاح: ' + err.message);
@@ -380,13 +380,12 @@ const NewRepairPageEnhanced = () => {
     <div className="flex items-center justify-center mb-8">
       {Array.from({ length: totalSteps }, (_, index) => (
         <React.Fragment key={index}>
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-            currentStep > index + 1 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : currentStep === index + 1 
-                ? 'bg-blue-500 border-blue-500 text-white' 
+          <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep > index + 1
+              ? 'bg-green-500 border-green-500 text-white'
+              : currentStep === index + 1
+                ? 'bg-blue-500 border-blue-500 text-white'
                 : 'bg-gray-200 border-gray-300 text-gray-500'
-          }`}>
+            }`}>
             {currentStep > index + 1 ? (
               <CheckCircle className="w-5 h-5" />
             ) : (
@@ -394,9 +393,8 @@ const NewRepairPageEnhanced = () => {
             )}
           </div>
           {index < totalSteps - 1 && (
-            <div className={`w-16 h-1 mx-2 ${
-              currentStep > index + 1 ? 'bg-green-500' : 'bg-gray-200'
-            }`} />
+            <div className={`w-16 h-1 mx-2 ${currentStep > index + 1 ? 'bg-green-500' : 'bg-gray-200'
+              }`} />
           )}
         </React.Fragment>
       ))}
@@ -689,7 +687,7 @@ const NewRepairPageEnhanced = () => {
           المتعلقات المستلمة من العميل
         </h3>
         <p className="text-sm text-gray-600 mb-4">اختر المتعلقات التي استلمتها من العميل مع الجهاز</p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {accessoryOptions.map((option) => (
             <label key={option.id} className="flex items-center space-x-2 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer">
@@ -715,7 +713,7 @@ const NewRepairPageEnhanced = () => {
             </label>
           ))}
         </div>
-        
+
         {formData.accessories.length > 0 && (
           <div className="mt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">المتعلقات المختارة:</h4>
@@ -935,7 +933,7 @@ const NewRepairPageEnhanced = () => {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">طلب إصلاح جديد</h1>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to="/repairs">
             <SimpleButton variant="outline">

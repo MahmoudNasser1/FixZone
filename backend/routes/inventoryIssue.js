@@ -241,11 +241,13 @@ router.post('/issue', async (req, res) => {
     }
 
     // 6) Insert StockMovement (OUT)
+    // StockMovement table doesn't have referenceType/referenceId columns
+    // Use notes field to store repair request reference
     const [mvResult] = await conn.query(
       `INSERT INTO StockMovement 
-        (type, quantity, inventoryItemId, fromWarehouseId, toWarehouseId, userId, referenceType, referenceId, notes) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['OUT', quantity, inventoryItemId, warehouseId, null, userId, 'RepairRequest', repairRequestId, `صرف قطعة لطلب إصلاح #${repairRequestId}`]
+        (type, quantity, inventoryItemId, fromWarehouseId, toWarehouseId, userId, notes) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['OUT', quantity, inventoryItemId, warehouseId, null, userId, `صرف قطعة لطلب إصلاح #${repairRequestId}`]
     );
 
     // 7) Insert PartsUsed with available columns only

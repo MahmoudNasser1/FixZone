@@ -12,7 +12,7 @@ import './App.css';
 import MainLayout from './components/layout/MainLayout';
 
 // Pages and Components
-import LoginPage from './pages/LoginPage';
+import EnhancedLoginPage from './pages/EnhancedLoginPage';
 import DashboardPage from './pages/DashboardPage'; // Using the new DashboardPage
 
 // Customer Pages
@@ -103,16 +103,16 @@ import { TechnicianDashboard, JobsListPage, JobDetailsPage } from './pages/techn
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   // Check if user is customer
   const roleId = user?.roleId || user?.role;
   const isCustomer = roleId === 8 || roleId === '8' || user?.type === 'customer';
   const isTechnician = roleId === 3 || roleId === '3';
-  
+
   // If user is customer, redirect them to customer dashboard
   // Customers should ONLY access /customer/* routes
   if (isCustomer) {
@@ -128,7 +128,7 @@ const ProtectedRoute = ({ children }) => {
     // Redirect all other routes to customer dashboard
     return <Navigate to="/customer/dashboard" replace />;
   }
-  
+
   // If user is technician, redirect them to technician dashboard
   // Technicians should ONLY access /tech/* routes
   if (isTechnician) {
@@ -144,7 +144,7 @@ const ProtectedRoute = ({ children }) => {
     // Redirect all other routes to technician dashboard
     return <Navigate to="/tech/dashboard" replace />;
   }
-  
+
   return children;
 };
 
@@ -168,15 +168,15 @@ const TechnicianRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const roleId = user?.roleId || user?.role;
   const isTechnician = user && (roleId === 3 || roleId === '3');
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (!isTechnician) {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 };
 
@@ -186,7 +186,7 @@ const PublicCustomerRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
   const isCustomer = user && (user.type === 'customer' || roleId === 8 || roleId === '8');
-  
+
   // If logged in, redirect based on role
   if (isAuthenticated) {
     if (isCustomer) {
@@ -195,7 +195,7 @@ const PublicCustomerRoute = ({ children }) => {
       return <Navigate to="/" replace />;
     }
   }
-  
+
   // If not logged in, redirect to unified login page
   return <Navigate to="/login" replace />;
 };
@@ -205,23 +205,23 @@ const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const roleId = user?.roleId || user?.role;
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   // Check if user is customer - redirect to customer dashboard
   const isCustomer = roleId === 8 || user?.type === 'customer';
   if (isCustomer) {
     return <Navigate to="/customer/dashboard" replace />;
   }
-  
+
   // Check if user is admin
   const isAdmin = roleId === 1 || roleId === '1' || user?.role === 1 || user?.role === 'admin';
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 };
 
@@ -244,7 +244,7 @@ function App() {
               path="/login"
               element={
                 <PublicRoute>
-                  <LoginPage />
+                  <EnhancedLoginPage />
                 </PublicRoute>
               }
             />
@@ -295,7 +295,7 @@ function App() {
                   <Routes>
                     {/* Public routes outside layout */}
                     <Route path="track" element={<PublicRepairTrackingPage />} />
-                    
+
                     {/* Print routes outside layout to produce clean print pages */}
                     <Route path="repairs/:id/print" element={<RepairPrintPage />} />
                     <Route path="repairs/:id/print-qr" element={<RepairQRPrintPage />} />
@@ -361,34 +361,34 @@ function App() {
                       <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
                       <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
                       {/* Payments */}
-            <Route path="payments" element={<PaymentsPage />} />
-            <Route path="payments/new" element={<CreatePaymentPage />} />
-            <Route path="payments/:id" element={<PaymentDetailsPage />} />
-            <Route path="payments/:id/edit" element={<EditPaymentPage />} />
-            <Route path="payments/reports" element={<PaymentReportsPage />} />
-            <Route path="payments/overdue" element={<OverduePaymentsPage />} />
-                      
+                      <Route path="payments" element={<PaymentsPage />} />
+                      <Route path="payments/new" element={<CreatePaymentPage />} />
+                      <Route path="payments/:id" element={<PaymentDetailsPage />} />
+                      <Route path="payments/:id/edit" element={<EditPaymentPage />} />
+                      <Route path="payments/reports" element={<PaymentReportsPage />} />
+                      <Route path="payments/overdue" element={<OverduePaymentsPage />} />
+
                       {/* Reports */}
                       <Route path="reports/financial" element={<FinancialReportsPage />} />
                       <Route path="reports/daily" element={<DailyReportsPage />} />
                       <Route path="reports/technician" element={<TechnicianReportsPage />} />
-                      
+
                       {/* Integration */}
                       <Route path="integration/workflow" element={<WorkflowDashboardPage />} />
-                      
+
                       {/* Delivery - Temporarily disabled */}
                       {/* <Route path="delivery" element={<DeliveryPage />} /> */}
-                      
+
                       {/* Vendors & Purchase Orders */}
                       <Route path="vendors" element={<VendorsPage />} />
                       <Route path="vendors/:id" element={<VendorDetailsPage />} />
                       <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
-                      
+
                       <Route path="settings" element={<SystemSettingsPage />} />
-                       <Route path="users" element={<UsersPageEnhanced />} />
-                       <Route path="users-old" element={<UsersPage />} />
-                       <Route path="users/:id" element={<UserDetailsPage />} />
-                       <Route path="users/:id/edit" element={<EditUserPage />} />
+                      <Route path="users" element={<UsersPageEnhanced />} />
+                      <Route path="users-old" element={<UsersPage />} />
+                      <Route path="users/:id" element={<UserDetailsPage />} />
+                      <Route path="users/:id/edit" element={<EditUserPage />} />
                       {/* Admin / Roles & Permissions */}
                       <Route
                         path="admin/roles"
