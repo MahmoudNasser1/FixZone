@@ -52,7 +52,7 @@ share-modal.js:1 Uncaught TypeError: Cannot read properties of null (reading 'ad
 
 **المشكلة:**
 ```
-POST http://localhost:3001/api/companies 400 (Bad Request)
+POST http://localhost:4000/api/companies 400 (Bad Request)
 Error creating company: Error: HTTP error! status: 400
 ```
 

@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:4000';
 
 async function testUsersAPI() {
   try {

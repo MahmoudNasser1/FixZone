@@ -7,7 +7,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:4000/api';
 const colors = {
   reset: '\x1b[0m',
   green: '\x1b[32m',
@@ -215,7 +215,7 @@ runTests().catch(error => {
   log('\n❌ خطأ عام في الاختبار:', 'red');
   log(error.message, 'red');
   log('\nتحقق من:', 'yellow');
-  log('1. السيرفر يعمل على http://localhost:3001', 'yellow');
+  log('1. السيرفر يعمل على http://localhost:4000', 'yellow');
   log('2. قاعدة البيانات متصلة', 'yellow');
   log('3. البيانات التجريبية موجودة\n', 'yellow');
   process.exit(1);

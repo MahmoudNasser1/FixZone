@@ -249,7 +249,7 @@ export let options = {
 };
 
 export default function() {
-  const res = http.post('http://localhost:3001/api/repairs', 
+  const res = http.post('http://localhost:4000/api/repairs', 
     JSON.stringify({
       customerId: 1,
       deviceId: 1,

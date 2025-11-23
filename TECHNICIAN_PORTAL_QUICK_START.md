@@ -13,7 +13,7 @@ cd backend
 npm install
 node server.js
 ```
-**Port:** 3001
+**Port:** 4000
 
 ### Frontend
 ```bash

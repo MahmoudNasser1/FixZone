@@ -11,7 +11,7 @@
 
 ### Error:
 ```
-PUT http://localhost:3001/api/users/3 400 (Bad Request)
+PUT http://localhost:4000/api/users/3 400 (Bad Request)
 API request failed: Error: Validation error - isActive: "isActive" must be a boolean
 Error updating user: Error: Validation error - isActive: "isActive" must be a boolean
 ```

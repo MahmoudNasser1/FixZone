@@ -1,7 +1,7 @@
 const axios = require('axios');
 const fs = require('fs');
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:4000/api';
 let issues = [];
 let successCount = 0;
 let failCount = 0;

@@ -82,7 +82,7 @@ const {
 
 ### اختبار 1: curl مباشر
 ```bash
-curl -X POST http://localhost:3001/api/repairs \
+curl -X POST http://localhost:4000/api/repairs \
   -H "Content-Type: application/json" \
   -d '{"accessories":["شاحن","كابل","سماعات"],...}'
 ```
@@ -162,7 +162,7 @@ app.use((req, res, next) => {
 ### الحل 2: اختبار مباشر
 ```bash
 # اختبار مع Postman أو curl مباشر
-curl -X POST http://localhost:3001/api/repairs \
+curl -X POST http://localhost:4000/api/repairs \
   -H "Content-Type: application/json" \
   -d '{"accessories":["test1","test2"],"customerName":"test"}'
 ```

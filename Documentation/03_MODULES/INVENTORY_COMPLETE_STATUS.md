@@ -477,9 +477,9 @@ Indexes: موجودة
 ## **APIs:**
 ```bash
 # Test all
-curl http://localhost:3001/api/inventory-enhanced
-curl http://localhost:3001/api/analytics/summary
-curl http://localhost:3001/api/barcode/stats
+curl http://localhost:4000/api/inventory-enhanced
+curl http://localhost:4000/api/analytics/summary
+curl http://localhost:4000/api/barcode/stats
 ```
 
 ---

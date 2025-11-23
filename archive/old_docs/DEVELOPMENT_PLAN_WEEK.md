@@ -439,7 +439,7 @@
 5. **Advanced Reports:** رسوم بيانية وإحصائيات متقدمة (لليوم 5)
 
 ### 🔧 إصلاحات اليوم (2025-09-02):
-- ✅ إصلاح تضارب البورتات (Backend: 3001, Frontend: 3000)
+- ✅ إصلاح تضارب البورتات (Backend: 4000, Frontend: 3000)
 - ✅ تصحيح جميع ملفات API URLs في Frontend
 - ✅ إصلاح خطأ "Cannot POST /api/auth/login"
 - ✅ تحديث ملفات: authStore.js, repairService.js, ServicesCatalogPage.js, RepairDetailsPage.js, StockMovementHistory.js

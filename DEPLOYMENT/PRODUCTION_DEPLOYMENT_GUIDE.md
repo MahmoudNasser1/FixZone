@@ -33,7 +33,7 @@
 ```
 FixZone ERP
 ├── Backend (Node.js + Express)
-│   ├── Port: 3001 (internal)
+│   ├── Port: 4000 (internal)
 │   ├── Database: MySQL (FZ)
 │   └── WebSocket: ws://
 │
@@ -149,7 +149,7 @@ nano .env.production
 ```env
 # Server Configuration
 NODE_ENV=production
-PORT=3001
+PORT=4000
 
 # Database Configuration
 DB_HOST=localhost
@@ -299,7 +299,7 @@ sudo systemctl status nginx
 sudo systemctl status mysql
 
 # Backend Health
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 ```
 
 ### **9.2 فحص الموقع:**

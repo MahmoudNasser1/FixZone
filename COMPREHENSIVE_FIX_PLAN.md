@@ -8,7 +8,7 @@
 ## حالة النظام الحالية
 
 ### السيرفرات
-- ✅ Backend Server: يعمل على port 3001
+- ✅ Backend Server: يعمل على port 4000
 - ✅ Frontend Server: يعمل على port 3000
 - ✅ Database: FZ database متصلة
 
@@ -432,5 +432,5 @@
 - Frontend Pages: `frontend/react-app/src/pages/`
 - **الخطة التفصيلية:** `DETAILED_IMPLEMENTATION_PLAN.md` - خطة شاملة ومفصلة لجميع المهام المتبقية
 - Database Schema: `FZ` database
-- API Base URL: `http://localhost:3001/api`
+- API Base URL: `http://localhost:4000/api`
 

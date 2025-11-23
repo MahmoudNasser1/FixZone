@@ -23,7 +23,7 @@ cd /opt/lampp/htdocs/FixZone/backend
 node server.js &
 
 # 4. تأكد من الـ server شغال
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 # Expected: {"status":"OK","message":"Fix Zone Backend is running"}
 ```
 
@@ -38,7 +38,7 @@ curl http://localhost:3001/health
 ### الاختبار السريع (Manual):
 ```bash
 # Test 1: Login Success
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"password"}' \
   -c cookies.txt
@@ -47,7 +47,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 # ❌ Watch out for: 401 Unauthorized, missing token
 
 # Test 2: Login Failure
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"wrong"}'
 
@@ -55,10 +55,10 @@ curl -X POST http://localhost:3001/api/auth/login \
 # ❌ Watch out for: 200 OK (security issue!)
 
 # Test 3: Protected Route
-curl http://localhost:3001/api/customers
+curl http://localhost:4000/api/customers
 # ✅ Expected: 401 (no token)
 
-curl http://localhost:3001/api/customers -b cookies.txt
+curl http://localhost:4000/api/customers -b cookies.txt
 # ✅ Expected: 200 OK + data
 ```
 
@@ -81,27 +81,27 @@ cd /opt/lampp/htdocs/FixZone
 ### الاختبار السريع (Manual):
 ```bash
 # احصل على token أولاً
-TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"password"}' \
   -c - | grep token | awk '{print $7}')
 
 # Test 1: Get All Tickets
-curl -s "http://localhost:3001/api/repairs" \
+curl -s "http://localhost:4000/api/repairs" \
   -H "Authorization: Bearer $TOKEN" | jq '. | length'
 
 # ✅ Expected: عدد التذاكر (> 0)
 # ❌ Watch out for: 401, 404, empty array
 
 # Test 2: Get Single Ticket
-curl -s "http://localhost:3001/api/repairs/7" \
+curl -s "http://localhost:4000/api/repairs/7" \
   -H "Authorization: Bearer $TOKEN" | jq '.id'
 
 # ✅ Expected: 7
 # ❌ Watch out for: 404 (ticket not found)
 
 # Test 3: Create Ticket (Existing Customer)
-curl -X POST "http://localhost:3001/api/repairs" \
+curl -X POST "http://localhost:4000/api/repairs" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -116,7 +116,7 @@ curl -X POST "http://localhost:3001/api/repairs" \
 # ❌ Watch out for: 400 (validation), 404 (customer not found)
 
 # Test 4: Create Ticket (New Customer Inline)
-curl -X POST "http://localhost:3001/api/repairs" \
+curl -X POST "http://localhost:4000/api/repairs" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -156,21 +156,21 @@ node testing/test-module-tickets.js
 #### الاختبار السريع:
 ```bash
 # Test 1: Get All Invoices
-curl -s "http://localhost:3001/api/invoices" \
+curl -s "http://localhost:4000/api/invoices" \
   -H "Authorization: Bearer $TOKEN" | jq '.success'
 
 # ✅ Expected: true + data array
 # ❌ Watch out for: 401, empty data
 
 # Test 2: Get Invoice by ID
-curl -s "http://localhost:3001/api/invoices/8" \
+curl -s "http://localhost:4000/api/invoices/8" \
   -H "Authorization: Bearer $TOKEN" | jq '.data.id'
 
 # ✅ Expected: 8
 # ❌ Watch out for: 404 (تم إصلاحها!)
 
 # Test 3: Create Invoice
-curl -X POST "http://localhost:3001/api/invoices" \
+curl -X POST "http://localhost:4000/api/invoices" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -192,21 +192,21 @@ curl -X POST "http://localhost:3001/api/invoices" \
 #### الاختبار السريع:
 ```bash
 # Test 1: Get All Payments
-curl -s "http://localhost:3001/api/payments" \
+curl -s "http://localhost:4000/api/payments" \
   -H "Authorization: Bearer $TOKEN" | jq '.payments | length'
 
 # ✅ Expected: عدد المدفوعات
 # ❌ Watch out for: wrong response format
 
 # Test 2: Get Payment Stats
-curl -s "http://localhost:3001/api/payments/stats" \
+curl -s "http://localhost:4000/api/payments/stats" \
   -H "Authorization: Bearer $TOKEN" | jq '.totalPayments'
 
 # ✅ Expected: عدد صحيح (تم إصلاحها!)
 # ❌ Watch out for: 404 (تم حلها)
 
 # Test 3: Create Payment
-curl -X POST "http://localhost:3001/api/payments" \
+curl -X POST "http://localhost:4000/api/payments" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -244,14 +244,14 @@ node testing/test-module-payments-invoices.js
 ### الاختبار السريع:
 ```bash
 # Test 1: Get All Customers
-curl -s "http://localhost:3001/api/customers" \
+curl -s "http://localhost:4000/api/customers" \
   -H "Authorization: Bearer $TOKEN" | jq '. | length'
 
 # ✅ Expected: عدد العملاء
 # ❌ Watch out for: 401, empty array
 
 # Test 2: Create Customer
-curl -X POST "http://localhost:3001/api/customers" \
+curl -X POST "http://localhost:4000/api/customers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -267,7 +267,7 @@ curl -X POST "http://localhost:3001/api/customers" \
 #   - 400 (duplicate phone - تم إصلاحها!)
 
 # Test 3: Duplicate Phone Check (CRITICAL!)
-curl -X POST "http://localhost:3001/api/customers" \
+curl -X POST "http://localhost:4000/api/customers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -281,7 +281,7 @@ curl -X POST "http://localhost:3001/api/customers" \
 
 # Test 4: Update Customer
 CUSTOMER_ID=1
-curl -X PUT "http://localhost:3001/api/customers/$CUSTOMER_ID" \
+curl -X PUT "http://localhost:4000/api/customers/$CUSTOMER_ID" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -315,15 +315,15 @@ node testing/test-module-customers.js
 # Test: Customer deletion doesn't break tickets
 CUSTOMER_ID=1
 # 1. احصل على tickets للعميل
-curl -s "http://localhost:3001/api/repairs?customerId=$CUSTOMER_ID" \
+curl -s "http://localhost:4000/api/repairs?customerId=$CUSTOMER_ID" \
   -H "Authorization: Bearer $TOKEN" | jq '. | length'
 
 # 2. احذف العميل (soft delete)
-curl -X DELETE "http://localhost:3001/api/customers/$CUSTOMER_ID" \
+curl -X DELETE "http://localhost:4000/api/customers/$CUSTOMER_ID" \
   -H "Authorization: Bearer $TOKEN"
 
 # 3. تأكد أن الـ tickets لسه موجودة
-curl -s "http://localhost:3001/api/repairs?customerId=$CUSTOMER_ID" \
+curl -s "http://localhost:4000/api/repairs?customerId=$CUSTOMER_ID" \
   -H "Authorization: Bearer $TOKEN" | jq '. | length'
 
 # ✅ Expected: نفس العدد (tickets مش بتتحذف)
@@ -336,7 +336,7 @@ curl -s "http://localhost:3001/api/repairs?customerId=$CUSTOMER_ID" \
 # 1. Create repair → 2. Create invoice → 3. Add payment
 
 # Step 1: Create repair
-REPAIR_ID=$(curl -s -X POST "http://localhost:3001/api/repairs" \
+REPAIR_ID=$(curl -s -X POST "http://localhost:4000/api/repairs" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -349,7 +349,7 @@ REPAIR_ID=$(curl -s -X POST "http://localhost:3001/api/repairs" \
 echo "Created repair: $REPAIR_ID"
 
 # Step 2: Create invoice
-INVOICE_ID=$(curl -s -X POST "http://localhost:3001/api/invoices" \
+INVOICE_ID=$(curl -s -X POST "http://localhost:4000/api/invoices" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -361,7 +361,7 @@ INVOICE_ID=$(curl -s -X POST "http://localhost:3001/api/invoices" \
 echo "Created invoice: $INVOICE_ID"
 
 # Step 3: Add full payment
-curl -s -X POST "http://localhost:3001/api/payments" \
+curl -s -X POST "http://localhost:4000/api/payments" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -380,19 +380,19 @@ curl -s -X POST "http://localhost:3001/api/payments" \
 
 ```bash
 # Test 1: 404 Handling
-curl -s "http://localhost:3001/api/customers/99999" \
+curl -s "http://localhost:4000/api/customers/99999" \
   -H "Authorization: Bearer $TOKEN" | jq '.success'
 # ✅ Expected: false (404)
 
 # Test 2: 400 Validation
-curl -s -X POST "http://localhost:3001/api/customers" \
+curl -s -X POST "http://localhost:4000/api/customers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"firstName": "Test"}' | jq '.success'
 # ✅ Expected: false (missing phone)
 
 # Test 3: 401 Unauthorized
-curl -s "http://localhost:3001/api/customers"
+curl -s "http://localhost:4000/api/customers"
 # ✅ Expected: 401 (no token)
 ```
 
@@ -483,7 +483,7 @@ echo "✅ All regression tests passed!"
 ### خطوات التشخيص:
 1. **تأكد من الـ server:**
    ```bash
-   curl http://localhost:3001/health
+   curl http://localhost:4000/health
    ```
 
 2. **تأكد من الـ database:**

@@ -179,7 +179,7 @@ SELECT id, name, description, permissions FROM Role
 
 ### **1. اختبار API المصادقة**
 ```bash
-curl -X POST "http://localhost:3001/api/auth/login" \
+curl -X POST "http://localhost:4000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"password"}'
 ```
@@ -187,35 +187,35 @@ curl -X POST "http://localhost:3001/api/auth/login" \
 
 ### **2. اختبار API المستخدمين**
 ```bash
-curl -X GET "http://localhost:3001/api/users" \
+curl -X GET "http://localhost:4000/api/users" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: 4 مستخدمين مع بيانات كاملة ✅
 
 ### **3. اختبار API العملاء**
 ```bash
-curl -X GET "http://localhost:3001/api/customers" \
+curl -X GET "http://localhost:4000/api/customers" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: قائمة كاملة بالعملاء ✅
 
 ### **4. اختبار API الفواتير**
 ```bash
-curl -X GET "http://localhost:3001/api/invoices" \
+curl -X GET "http://localhost:4000/api/invoices" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: `{"success":true,"data":[],"total":0}` ✅
 
 ### **5. اختبار API المدفوعات**
 ```bash
-curl -X GET "http://localhost:3001/api/payments" \
+curl -X GET "http://localhost:4000/api/payments" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: `{"payments":[],"pagination":{...}}` ✅
 
 ### **6. اختبار API الأدوار**
 ```bash
-curl -X GET "http://localhost:3001/api/roles" \
+curl -X GET "http://localhost:4000/api/roles" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: 4 أدوار مع صلاحيات ✅

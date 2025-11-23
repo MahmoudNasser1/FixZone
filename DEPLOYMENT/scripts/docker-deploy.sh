@@ -84,7 +84,7 @@ sleep 10
 
 # Health check
 echo -e "${YELLOW}[4/4] Health check...${NC}"
-if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+if curl -f http://localhost:4000/health > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Backend is healthy${NC}"
 else
     echo -e "${YELLOW}⚠ Backend health check failed (may need more time)${NC}"

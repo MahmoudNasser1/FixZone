@@ -37,7 +37,7 @@ docker compose up -d
 ### **📦 النشر التقليدي:**
 ```
 Frontend:  http://localhost:3000
-Backend:   http://localhost:3001
+Backend:   http://localhost:4000
 ```
 
 ### **🔐 تسجيل الدخول:**

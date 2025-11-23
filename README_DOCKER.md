@@ -17,7 +17,7 @@ docker compose up -d
 
 **✅ تم! النظام يعمل الآن على:**
 - Frontend: http://localhost:3000
-- Backend: http://localhost:3001
+- Backend: http://localhost:4000
 - MySQL: localhost:3306
 
 ---

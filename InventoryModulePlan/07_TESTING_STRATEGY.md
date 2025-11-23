@@ -863,7 +863,7 @@ export const options = {
 };
 
 export default function () {
-  const BASE_URL = 'http://localhost:3001/api';
+  const BASE_URL = 'http://localhost:4000/api';
   const token = 'Bearer test_token';
   
   // Test: Get inventory items

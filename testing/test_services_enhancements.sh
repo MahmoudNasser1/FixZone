@@ -2,7 +2,7 @@
 # Test script for Services Catalog Enhancements
 # Date: 2025-11-17
 
-BASE_URL="http://localhost:3001/api"
+BASE_URL="http://localhost:4000/api"
 COOKIE_JAR="cookie_jar_services.txt"
 
 echo "========================================="

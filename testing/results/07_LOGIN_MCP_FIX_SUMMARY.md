@@ -95,7 +95,7 @@ if (user.customerId) {
 ### Test 1: Customer Login API ✅
 **Command:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"customer@test.com","password":"password123"}'
 ```
@@ -120,7 +120,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 ### Test 2: Customer Profile API ✅
 **Command:**
 ```bash
-curl -X GET http://localhost:3001/api/auth/customer/profile \
+curl -X GET http://localhost:4000/api/auth/customer/profile \
   -b cookies.txt \
   -H "Content-Type: application/json"
 ```

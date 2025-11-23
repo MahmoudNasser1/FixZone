@@ -3,7 +3,7 @@ const axios = require('axios');
 class SimpleRepairsFrontendTester {
   constructor() {
     this.baseUrl = 'http://localhost:3000';
-    this.apiUrl = 'http://localhost:3001/api';
+    this.apiUrl = 'http://localhost:4000/api';
     this.cookies = null;
     this.results = [];
   }

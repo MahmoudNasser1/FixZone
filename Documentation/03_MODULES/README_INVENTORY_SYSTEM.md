@@ -55,7 +55,7 @@ cd frontend/react-app && npm start
 
 ### **2. الوصول للنظام:**
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:3001/api
+- Backend API: http://localhost:4000/api
 
 ### **3. تسجيل الدخول:**
 - Email: `admin@fixzone.com`

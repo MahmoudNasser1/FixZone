@@ -4,7 +4,7 @@ const path = require('path');
 
 // إعدادات الاختبار
 const TEST_CONFIG = {
-  backendUrl: 'http://localhost:3001',
+  backendUrl: 'http://localhost:4000',
   frontendUrl: 'http://localhost:3000',
   database: 'FZ',
   timeout: 30000 // 30 ثانية
@@ -63,7 +63,7 @@ async function checkServerStatus() {
   console.log('🔍 التحقق من حالة الخوادم...');
   
   const servers = [
-    { name: 'Backend Server', url: TEST_CONFIG.backendUrl, port: 3001 },
+    { name: 'Backend Server', url: TEST_CONFIG.backendUrl, port: 4000 },
     { name: 'Frontend Server', url: TEST_CONFIG.frontendUrl, port: 3000 }
   ];
   

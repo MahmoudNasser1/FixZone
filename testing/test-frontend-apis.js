@@ -7,7 +7,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:4000/api';
 
 async function testFrontendAPIs() {
   console.log('\n🧪 اختبار Frontend APIs مع Enhanced Backend\n');

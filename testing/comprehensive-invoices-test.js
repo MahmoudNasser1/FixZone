@@ -4,7 +4,7 @@ const axios = require('axios');
 async function testInvoicesModule() {
   console.log('🧪 اختبار شامل لموديول الفواتير (Invoices/Financial)\n');
   
-  const baseURL = 'http://localhost:3001';
+  const baseURL = 'http://localhost:4000';
   const results = {
     backend: {
       health: null,

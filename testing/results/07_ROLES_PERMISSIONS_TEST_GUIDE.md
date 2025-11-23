@@ -220,7 +220,7 @@ WHERE email = 'customer@test.com';
 **Backend Testing:**
 ```bash
 # Test permission checking
-curl -X GET http://localhost:3001/api/repairs \
+curl -X GET http://localhost:4000/api/repairs \
   -H "Cookie: token=..." \
   -v
 

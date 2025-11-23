@@ -456,10 +456,10 @@ sudo systemctl restart nginx
 
 ```bash
 # Test health endpoint
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # Test login endpoint
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"password"}'
 ```
@@ -525,7 +525,7 @@ server {
     server_name api.yourdomain.com;
 
     location / {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:4000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -550,7 +550,7 @@ server {
     }
 
     location /api {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:4000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -595,11 +595,11 @@ mysql -u root -p -e "SHOW GRANTS FOR 'fixzone_user'@'localhost';"
 
 ```bash
 # Check if ports are in use
-sudo netstat -tulpn | grep :3001
+sudo netstat -tulpn | grep :4000
 sudo netstat -tulpn | grep :3000
 
 # Kill process on port
-sudo kill -9 $(sudo lsof -t -i:3001)
+sudo kill -9 $(sudo lsof -t -i:4000)
 ```
 
 ---

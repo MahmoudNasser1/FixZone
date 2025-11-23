@@ -101,13 +101,13 @@
 #### من API (cURL):
 ```bash
 # تسجيل الدخول
-curl -c cookies.txt -X POST http://localhost:3001/api/auth/login \
+curl -c cookies.txt -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"admin123"}'
 
 # جلب العملاء المدينين
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&hasDebt=true" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&hasDebt=true" \
   | jq '.'
 ```
 
@@ -137,12 +137,12 @@ curl -b cookies.txt \
 ```bash
 # ترتيب تنازلي (من الأكبر للأصغر)
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&sort=outstandingBalance&sortDir=DESC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&sort=outstandingBalance&sortDir=DESC" \
   | jq '.data.customers[] | {id, name, outstandingBalance}'
 
 # ترتيب تصاعدي (من الأصغر للأكبر)
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&sort=outstandingBalance&sortDir=ASC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&sort=outstandingBalance&sortDir=ASC" \
   | jq '.data.customers[] | {id, name, outstandingBalance}'
 ```
 
@@ -162,12 +162,12 @@ curl -b cookies.txt \
 ```bash
 # ترتيب تنازلي (نشط أولاً)
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&sort=isActive&sortDir=DESC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&sort=isActive&sortDir=DESC" \
   | jq '.data.customers[] | {id, name, isActive}'
 
 # ترتيب تصاعدي (غير نشط أولاً)
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&sort=isActive&sortDir=ASC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&sort=isActive&sortDir=ASC" \
   | jq '.data.customers[] | {id, name, isActive}'
 ```
 
@@ -182,21 +182,21 @@ curl -b cookies.txt \
 #### 1. عملاء مدينون + ترتيب حسب الرصيد (من الأكبر للأصغر):
 ```bash
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&hasDebt=true&sort=outstandingBalance&sortDir=DESC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&hasDebt=true&sort=outstandingBalance&sortDir=DESC" \
   | jq '.'
 ```
 
 #### 2. عملاء نشطين + عملاء مدينون:
 ```bash
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&isActive=true&hasDebt=true" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&isActive=true&hasDebt=true" \
   | jq '.'
 ```
 
 #### 3. عملاء غير نشطين + ترتيب حسب الرصيد:
 ```bash
 curl -b cookies.txt \
-  "http://localhost:3001/api/customers?page=1&pageSize=20&isActive=false&sort=outstandingBalance&sortDir=DESC" \
+  "http://localhost:4000/api/customers?page=1&pageSize=20&isActive=false&sort=outstandingBalance&sortDir=DESC" \
   | jq '.'
 ```
 

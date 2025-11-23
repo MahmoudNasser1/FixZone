@@ -4,7 +4,7 @@ const axios = require('axios');
 async function testOptimizations() {
   console.log('🧪 اختبار شامل للتحسينات المطبقة\n');
   
-  const baseURL = 'http://localhost:3001';
+  const baseURL = 'http://localhost:4000';
   
   try {
     // 1. اختبار Health Check

@@ -115,7 +115,7 @@ class TestRunner {
       const axios = require('axios');
       
       // اختبار API المدفوعات
-      const response = await axios.get('http://localhost:3001/api/payments', {
+      const response = await axios.get('http://localhost:4000/api/payments', {
         timeout: 5000
       });
 

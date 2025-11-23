@@ -151,7 +151,7 @@ UPDATE Customer SET userId = [USER_ID] WHERE id = 1;
 ```
 
 ### 2. التحقق من النظام
-- ✅ Backend server running على port 3001
+- ✅ Backend server running على port 4000
 - ✅ Frontend server running على port 3000
 - ✅ Database connected
 

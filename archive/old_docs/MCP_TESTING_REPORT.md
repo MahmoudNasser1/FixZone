@@ -4,7 +4,7 @@
 **Tester:** AI QA Automation Engineer  
 **Testing Method:** Manual Interactive Testing with Playwright MCP  
 **Browser:** Chrome (Headless)  
-**Environment:** localhost:3000 (Frontend) + localhost:3001 (Backend)
+**Environment:** localhost:3000 (Frontend) + localhost:4000 (Backend)
 
 ---
 
@@ -318,7 +318,7 @@ setTotalInvoices(total);
 **Module:** Inventory  
 **Priority:** P2 (Medium)  
 **Severity:** Medium  
-**Environment:** localhost:3000 + localhost:3001  
+**Environment:** localhost:3000 + localhost:4000  
 **Browser:** Chrome
 
 **Steps to Reproduce:**

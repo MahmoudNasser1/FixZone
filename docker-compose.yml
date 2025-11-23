@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3001
+      PORT: 4000
       DB_HOST: mysql
       DB_USER: ${MYSQL_USER:-fixzone_user}
       DB_PASSWORD: ${MYSQL_PASSWORD:-fixzone_password}
@@ -49,14 +49,14 @@ services:
       - ./backend/uploads:/app/uploads
       - ./backend/logs:/app/logs
     ports:
-      - "${BACKEND_PORT:-3001}:3001"
+      - "${BACKEND_PORT:-4000}:4000"
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - fixzone-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,8 +68,8 @@ services:
       context: ./frontend/react-app
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001/api}
-        REACT_APP_WS_URL: ${REACT_APP_WS_URL:-ws://localhost:3001/ws}
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:4000/api}
+        REACT_APP_WS_URL: ${REACT_APP_WS_URL:-ws://localhost:4000/ws}
         REACT_APP_ENV: production
     container_name: fixzone-frontend
     restart: unless-stopped

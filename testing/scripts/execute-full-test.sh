@@ -25,8 +25,8 @@ echo ""
 BACKEND_OK=false
 FRONTEND_OK=false
 
-if curl -s http://localhost:3001/health > /dev/null 2>&1; then
-    echo "   ✅ Backend يعمل (port 3001)"
+if curl -s http://localhost:4000/health > /dev/null 2>&1; then
+    echo "   ✅ Backend يعمل (port 4000)"
     BACKEND_OK=true
 else
     echo "   ❌ Backend متوقف!"
@@ -78,17 +78,17 @@ test_api() {
 }
 
 # اختبار جميع APIs
-test_api "GET /inventory-enhanced" "http://localhost:3001/api/inventory-enhanced" "success\|data\|\["
-test_api "GET /inventory-enhanced/stats" "http://localhost:3001/api/inventory-enhanced/stats" "success\|overview"
-test_api "GET /warehouses" "http://localhost:3001/api/warehouses" "success\|data\|\["
-test_api "GET /stock-movements" "http://localhost:3001/api/stock-movements" "success\|data\|\["
-test_api "GET /stock-levels" "http://localhost:3001/api/stock-levels" "success\|data\|\["
-test_api "GET /stock-alerts" "http://localhost:3001/api/stock-alerts" "\["
-test_api "GET /stock-alerts/low" "http://localhost:3001/api/stock-alerts/low" "alerts\|total"
-test_api "GET /stock-count" "http://localhost:3001/api/stock-count" "success\|data\|\["
-test_api "GET /stock-count/stats" "http://localhost:3001/api/stock-count/stats" "success\|total"
-test_api "GET /stock-transfer" "http://localhost:3001/api/stock-transfer" "success\|data\|\["
-test_api "GET /barcode/stats" "http://localhost:3001/api/barcode/stats" "success\|total"
+test_api "GET /inventory-enhanced" "http://localhost:4000/api/inventory-enhanced" "success\|data\|\["
+test_api "GET /inventory-enhanced/stats" "http://localhost:4000/api/inventory-enhanced/stats" "success\|overview"
+test_api "GET /warehouses" "http://localhost:4000/api/warehouses" "success\|data\|\["
+test_api "GET /stock-movements" "http://localhost:4000/api/stock-movements" "success\|data\|\["
+test_api "GET /stock-levels" "http://localhost:4000/api/stock-levels" "success\|data\|\["
+test_api "GET /stock-alerts" "http://localhost:4000/api/stock-alerts" "\["
+test_api "GET /stock-alerts/low" "http://localhost:4000/api/stock-alerts/low" "alerts\|total"
+test_api "GET /stock-count" "http://localhost:4000/api/stock-count" "success\|data\|\["
+test_api "GET /stock-count/stats" "http://localhost:4000/api/stock-count/stats" "success\|total"
+test_api "GET /stock-transfer" "http://localhost:4000/api/stock-transfer" "success\|data\|\["
+test_api "GET /barcode/stats" "http://localhost:4000/api/barcode/stats" "success\|total"
 
 PERCENTAGE=$((PASS * 100 / TOTAL))
 
@@ -112,15 +112,15 @@ echo "💾 المرحلة 3: فحص البيانات..."
 echo ""
 
 # التحقق من عدد الأصناف
-ITEMS_COUNT=$(curl -s http://localhost:3001/api/inventory-enhanced | grep -o "\"id\":" | wc -l)
+ITEMS_COUNT=$(curl -s http://localhost:4000/api/inventory-enhanced | grep -o "\"id\":" | wc -l)
 echo "   📦 الأصناف: $ITEMS_COUNT"
 
 # التحقق من عدد المخازن
-WAREHOUSES_COUNT=$(curl -s http://localhost:3001/api/warehouses | grep -o "\"id\":" | wc -l)
+WAREHOUSES_COUNT=$(curl -s http://localhost:4000/api/warehouses | grep -o "\"id\":" | wc -l)
 echo "   🏢 المخازن: $WAREHOUSES_COUNT"
 
 # التحقق من عدد الحركات
-MOVEMENTS_COUNT=$(curl -s http://localhost:3001/api/stock-movements | grep -o "\"id\":" | wc -l)
+MOVEMENTS_COUNT=$(curl -s http://localhost:4000/api/stock-movements | grep -o "\"id\":" | wc -l)
 echo "   📊 الحركات: $MOVEMENTS_COUNT"
 
 echo ""

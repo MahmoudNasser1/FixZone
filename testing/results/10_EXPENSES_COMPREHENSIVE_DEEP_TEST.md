@@ -25,7 +25,7 @@
 
 #### **Test Case 1.1: قائمة المصروفات (List)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?page=1&limit=10"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?page=1&limit=10"
 ```
 
 **Expected:**
@@ -39,7 +39,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?page=1&limit=
 
 #### **Test Case 1.2: Filter by Category**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?categoryId=1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?categoryId=1"
 ```
 
 **Expected:**
@@ -52,7 +52,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?categoryId=1"
 
 #### **Test Case 1.3: Filter by Vendor**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?vendorId=1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?vendorId=1"
 ```
 
 **Expected:**
@@ -65,7 +65,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?vendorId=1"
 
 #### **Test Case 1.4: Filter by Repair**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?repairId=1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?repairId=1"
 ```
 
 **Expected:**
@@ -78,7 +78,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?repairId=1"
 
 #### **Test Case 1.5: Filter by Branch**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?branchId=1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?branchId=1"
 ```
 
 **Expected:**
@@ -91,7 +91,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?branchId=1"
 
 #### **Test Case 1.6: Filter by Date Range**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?dateFrom=2025-01-01&dateTo=2025-12-31"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?dateFrom=2025-01-01&dateTo=2025-12-31"
 ```
 
 **Expected:**
@@ -104,7 +104,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?dateFrom=2025
 
 #### **Test Case 1.7: Search Query**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?q=كهرباء"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?q=كهرباء"
 ```
 
 **Expected:**
@@ -117,7 +117,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?q=كهربا�
 
 #### **Test Case 1.8: Combined Filters**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?categoryId=1&vendorId=1&dateFrom=2025-01-01&q=صيانة&page=1&limit=20"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?categoryId=1&vendorId=1&dateFrom=2025-01-01&q=صيانة&page=1&limit=20"
 ```
 
 **Expected:**
@@ -130,7 +130,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?categoryId=1&
 
 #### **Test Case 1.9: Pagination**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?page=1&limit=5"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses?page=1&limit=5"
 ```
 
 **Expected:**
@@ -144,7 +144,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses?page=1&limit=
 
 #### **Test Case 1.10: Without Authentication**
 ```bash
-curl -s "http://localhost:3001/api/expenses"
+curl -s "http://localhost:4000/api/expenses"
 ```
 
 **Expected:**
@@ -159,7 +159,7 @@ curl -s "http://localhost:3001/api/expenses"
 
 #### **Test Case 2.1: تفاصيل مصروف (Valid ID)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/1"
 ```
 
 **Expected:**
@@ -173,7 +173,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/1"
 
 #### **Test Case 2.2: تفاصيل مصروف (Invalid ID)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/99999"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/99999"
 ```
 
 **Expected:**
@@ -186,7 +186,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/99999"
 
 #### **Test Case 2.3: Without Authentication**
 ```bash
-curl -s "http://localhost:3001/api/expenses/1"
+curl -s "http://localhost:4000/api/expenses/1"
 ```
 
 **Expected:**
@@ -201,7 +201,7 @@ curl -s "http://localhost:3001/api/expenses/1"
 
 #### **Test Case 3.1: إنشاء مصروف جديد (Valid Data)**
 ```bash
-curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
+curl -s -b cookie_expenses.txt -X POST "http://localhost:4000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{
     "categoryId": 1,
@@ -225,7 +225,7 @@ curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
 
 #### **Test Case 3.2: Validation - Missing Required Fields**
 ```bash
-curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
+curl -s -b cookie_expenses.txt -X POST "http://localhost:4000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{"amount": 100}'
 ```
@@ -241,7 +241,7 @@ curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
 
 #### **Test Case 3.3: Validation - Invalid Amount (Negative)**
 ```bash
-curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
+curl -s -b cookie_expenses.txt -X POST "http://localhost:4000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{
     "categoryId": 1,
@@ -260,7 +260,7 @@ curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
 
 #### **Test Case 3.4: Validation - Invalid Date Format**
 ```bash
-curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
+curl -s -b cookie_expenses.txt -X POST "http://localhost:4000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{
     "categoryId": 1,
@@ -279,7 +279,7 @@ curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expenses" \
 
 #### **Test Case 3.5: Without Authentication**
 ```bash
-curl -s -X POST "http://localhost:3001/api/expenses" \
+curl -s -X POST "http://localhost:4000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{"categoryId": 1, "amount": 100, "expenseDate": "2025-11-18"}'
 ```
@@ -296,7 +296,7 @@ curl -s -X POST "http://localhost:3001/api/expenses" \
 
 #### **Test Case 4.1: تحديث مصروف (Valid Data)**
 ```bash
-curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/1" \
+curl -s -b cookie_expenses.txt -X PUT "http://localhost:4000/api/expenses/1" \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 200.50,
@@ -315,7 +315,7 @@ curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/1" \
 
 #### **Test Case 4.2: تحديث مصروف (Invalid ID)**
 ```bash
-curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/99999" \
+curl -s -b cookie_expenses.txt -X PUT "http://localhost:4000/api/expenses/99999" \
   -H "Content-Type: application/json" \
   -d '{"amount": 200}'
 ```
@@ -330,7 +330,7 @@ curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/99999"
 
 #### **Test Case 4.3: Validation - Invalid Data**
 ```bash
-curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/1" \
+curl -s -b cookie_expenses.txt -X PUT "http://localhost:4000/api/expenses/1" \
   -H "Content-Type: application/json" \
   -d '{"amount": -50}'
 ```
@@ -345,7 +345,7 @@ curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expenses/1" \
 
 #### **Test Case 4.4: Without Authentication**
 ```bash
-curl -s -X PUT "http://localhost:3001/api/expenses/1" \
+curl -s -X PUT "http://localhost:4000/api/expenses/1" \
   -H "Content-Type: application/json" \
   -d '{"amount": 200}'
 ```
@@ -362,7 +362,7 @@ curl -s -X PUT "http://localhost:3001/api/expenses/1" \
 
 #### **Test Case 5.1: حذف مصروف (Soft Delete)**
 ```bash
-curl -s -b cookie_expenses.txt -X DELETE "http://localhost:3001/api/expenses/1"
+curl -s -b cookie_expenses.txt -X DELETE "http://localhost:4000/api/expenses/1"
 ```
 
 **Expected:**
@@ -376,7 +376,7 @@ curl -s -b cookie_expenses.txt -X DELETE "http://localhost:3001/api/expenses/1"
 
 #### **Test Case 5.2: حذف مصروف (Invalid ID)**
 ```bash
-curl -s -b cookie_expenses.txt -X DELETE "http://localhost:3001/api/expenses/99999"
+curl -s -b cookie_expenses.txt -X DELETE "http://localhost:4000/api/expenses/99999"
 ```
 
 **Expected:**
@@ -389,7 +389,7 @@ curl -s -b cookie_expenses.txt -X DELETE "http://localhost:3001/api/expenses/999
 
 #### **Test Case 5.3: Without Authentication**
 ```bash
-curl -s -X DELETE "http://localhost:3001/api/expenses/1"
+curl -s -X DELETE "http://localhost:4000/api/expenses/1"
 ```
 
 **Expected:**
@@ -404,7 +404,7 @@ curl -s -X DELETE "http://localhost:3001/api/expenses/1"
 
 #### **Test Case 6.1: إحصائيات المصروفات (All)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/stats/summary"
 ```
 
 **Expected:**
@@ -418,7 +418,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary
 
 #### **Test Case 6.2: إحصائيات المصروفات (Filtered by Category)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary?categoryId=1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/stats/summary?categoryId=1"
 ```
 
 **Expected:**
@@ -431,7 +431,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary
 
 #### **Test Case 6.3: إحصائيات المصروفات (Filtered by Date Range)**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary?dateFrom=2025-01-01&dateTo=2025-12-31"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/stats/summary?dateFrom=2025-01-01&dateTo=2025-12-31"
 ```
 
 **Expected:**
@@ -444,7 +444,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/stats/summary
 
 #### **Test Case 6.4: Without Authentication**
 ```bash
-curl -s "http://localhost:3001/api/expenses/stats/summary"
+curl -s "http://localhost:4000/api/expenses/stats/summary"
 ```
 
 **Expected:**
@@ -459,7 +459,7 @@ curl -s "http://localhost:3001/api/expenses/stats/summary"
 
 #### **Test Case 7.1: مصروفات مرتبطة بطلب إصلاح**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/by-repair/1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/by-repair/1"
 ```
 
 **Expected:**
@@ -473,7 +473,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/by-repair/1"
 
 #### **Test Case 7.2: Pagination**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/by-repair/1?page=1&limit=10"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expenses/by-repair/1?page=1&limit=10"
 ```
 
 **Expected:**
@@ -486,7 +486,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expenses/by-repair/1?p
 
 #### **Test Case 7.3: Without Authentication**
 ```bash
-curl -s "http://localhost:3001/api/expenses/by-repair/1"
+curl -s "http://localhost:4000/api/expenses/by-repair/1"
 ```
 
 **Expected:**
@@ -501,7 +501,7 @@ curl -s "http://localhost:3001/api/expenses/by-repair/1"
 
 #### **Test Case 8.1: GET /api/expensecategories**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expensecategories"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expensecategories"
 ```
 
 **Expected:**
@@ -515,7 +515,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expensecategories"
 
 #### **Test Case 8.2: GET /api/expensecategories/:id**
 ```bash
-curl -s -b cookie_expenses.txt "http://localhost:3001/api/expensecategories/1"
+curl -s -b cookie_expenses.txt "http://localhost:4000/api/expensecategories/1"
 ```
 
 **Expected:**
@@ -529,7 +529,7 @@ curl -s -b cookie_expenses.txt "http://localhost:3001/api/expensecategories/1"
 
 #### **Test Case 8.3: POST /api/expensecategories**
 ```bash
-curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expensecategories" \
+curl -s -b cookie_expenses.txt -X POST "http://localhost:4000/api/expensecategories" \
   -H "Content-Type: application/json" \
   -d '{"name": "فئة اختبار", "description": "وصف الفئة"}'
 ```
@@ -545,7 +545,7 @@ curl -s -b cookie_expenses.txt -X POST "http://localhost:3001/api/expensecategor
 
 #### **Test Case 8.4: PUT /api/expensecategories/:id**
 ```bash
-curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expensecategories/1" \
+curl -s -b cookie_expenses.txt -X PUT "http://localhost:4000/api/expensecategories/1" \
   -H "Content-Type: application/json" \
   -d '{"name": "فئة محدثة"}'
 ```
@@ -561,7 +561,7 @@ curl -s -b cookie_expenses.txt -X PUT "http://localhost:3001/api/expensecategori
 
 #### **Test Case 8.5: DELETE /api/expensecategories/:id**
 ```bash
-curl -s -b cookie_expenses.txt -X DELETE "http://localhost:3001/api/expensecategories/1"
+curl -s -b cookie_expenses.txt -X DELETE "http://localhost:4000/api/expensecategories/1"
 ```
 
 **Expected:**

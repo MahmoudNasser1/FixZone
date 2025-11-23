@@ -81,7 +81,7 @@ const handleSubmit = async (e) => {
   }
 
   try {
-    const response = await fetch('http://localhost:3001/api/inventory', {
+    const response = await fetch('http://localhost:4000/api/inventory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -119,7 +119,7 @@ const handleSubmit = async (e) => {
 const loadItem = async () => {
   try {
     setLoading(true);
-    const response = await fetch(`http://localhost:3001/api/inventory/${id}`, {
+    const response = await fetch(`http://localhost:4000/api/inventory/${id}`, {
       credentials: 'include'
     });
 
@@ -195,7 +195,7 @@ ALTER TABLE InventoryItem
   - `NotificationSystem`
 
 ### Backend APIs
-- **Base URL**: `http://localhost:3001`
+- **Base URL**: `http://localhost:4000`
 - **Endpoints**:
   - `GET /api/inventory/:id` - الحصول على صنف
   - `POST /api/inventory` - إضافة صنف جديد

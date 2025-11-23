@@ -118,7 +118,7 @@ backend/config/print-settings.json
 
 ### الطريقة 3: عبر API
 ```bash
-PUT http://localhost:3001/api/repairs/print-settings
+PUT http://localhost:4000/api/repairs/print-settings
 Content-Type: application/json
 
 {

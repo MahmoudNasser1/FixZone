@@ -14,8 +14,8 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:3001/api',
-  BASE_URL: 'http://localhost:3001',
+  API_BASE_URL: 'http://localhost:4000/api',
+  BASE_URL: 'http://localhost:4000',
   BACKEND_DIR: path.join(__dirname, '../../backend'),
   FRONTEND_DIR: path.join(__dirname, '../../frontend/react-app')
 };
@@ -115,7 +115,7 @@ function fixEnvironmentVariables() {
   if (!fs.existsSync(envPath)) {
     const envContent = `# Fix Zone ERP Environment Variables
 NODE_ENV=development
-PORT=3001
+PORT=4000
 JWT_SECRET=your_jwt_secret_key_here
 DB_HOST=localhost
 DB_USER=root
@@ -172,7 +172,7 @@ function fixCORSConfiguration() {
   const appContent = fs.readFileSync(appPath, 'utf8');
   
   // Check if CORS is properly configured
-  if (appContent.includes('localhost:3000') && appContent.includes('localhost:3001')) {
+  if (appContent.includes('localhost:3000') && appContent.includes('localhost:4000')) {
     return false; // Already configured
   }
   
@@ -180,7 +180,7 @@ function fixCORSConfiguration() {
   if (appContent.includes('cors')) {
     const fixedContent = appContent.replace(
       /origin:\s*\[([^\]]*)\]/,
-      "origin: ['http://localhost:3001', 'http://localhost:3000']"
+      "origin: ['http://localhost:4000', 'http://localhost:3000']"
     );
     
     if (fixedContent !== appContent) {
@@ -264,14 +264,14 @@ function fixServerConfiguration() {
   const serverContent = fs.readFileSync(serverPath, 'utf8');
   
   // Check if port is properly configured
-  if (serverContent.includes('process.env.PORT || 3001')) {
+  if (serverContent.includes('process.env.PORT || 4000')) {
     return false; // Already configured correctly
   }
   
   // Try to fix port configuration
   const fixedContent = serverContent.replace(
     /const PORT = [^;]+;/,
-    "const PORT = process.env.PORT || 3001;"
+    "const PORT = process.env.PORT || 4000;"
   );
   
   if (fixedContent !== serverContent) {
@@ -293,12 +293,12 @@ function fixFrontendConfiguration() {
   const packageContent = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
   
   // Check if proxy is configured for API calls
-  if (packageContent.proxy && packageContent.proxy === 'http://localhost:3001') {
+  if (packageContent.proxy && packageContent.proxy === 'http://localhost:4000') {
     return false; // Already configured
   }
   
   // Add proxy configuration
-  packageContent.proxy = 'http://localhost:3001';
+  packageContent.proxy = 'http://localhost:4000';
   fs.writeFileSync(packagePath, JSON.stringify(packageContent, null, 2));
   return true;
 }

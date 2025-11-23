@@ -9,7 +9,7 @@ echo ""
 
 # 1. فحص الخوادم
 echo "📡 1. فحص الخوادم:"
-echo "   Backend (3001):" $(curl -s http://localhost:3001/health | jq -r '.status' 2>/dev/null || echo "❌")
+echo "   Backend (4000):" $(curl -s http://localhost:4000/health | jq -r '.status' 2>/dev/null || echo "❌")
 echo "   Frontend (3000):" $(curl -s http://localhost:3000 > /dev/null 2>&1 && echo "✅ OK" || echo "❌")
 echo ""
 

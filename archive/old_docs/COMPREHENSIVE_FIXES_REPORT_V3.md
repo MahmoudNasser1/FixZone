@@ -169,21 +169,21 @@ customerName.toLowerCase().includes(searchTerm.toLowerCase())
 
 ### **1. اختبار API طلبات الإصلاح**
 ```bash
-curl -X GET "http://localhost:3001/api/repairs" \
+curl -X GET "http://localhost:4000/api/repairs" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: قائمة كاملة بطلبات الإصلاح ✅
 
 ### **2. اختبار API الخدمات**
 ```bash
-curl -X GET "http://localhost:3001/api/services" \
+curl -X GET "http://localhost:4000/api/services" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: قائمة كاملة بالخدمات ✅
 
 ### **3. اختبار API الشركات**
 ```bash
-curl -X GET "http://localhost:3001/api/companies" \
+curl -X GET "http://localhost:4000/api/companies" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: قائمة كاملة بالشركات ✅

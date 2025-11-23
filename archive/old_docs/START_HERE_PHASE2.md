@@ -101,16 +101,16 @@ npm start
 ### **1. اختبار Backend APIs**
 ```bash
 # StockCount Stats
-curl http://localhost:3001/api/stock-count/stats | jq .
+curl http://localhost:4000/api/stock-count/stats | jq .
 
 # StockTransfer Stats  
-curl http://localhost:3001/api/stock-transfer/stats | jq .
+curl http://localhost:4000/api/stock-transfer/stats | jq .
 
 # StockCounts List
-curl http://localhost:3001/api/stock-count | jq .
+curl http://localhost:4000/api/stock-count | jq .
 
 # StockTransfers List
-curl http://localhost:3001/api/stock-transfer | jq .
+curl http://localhost:4000/api/stock-transfer | jq .
 ```
 
 ### **2. اختبار Frontend**

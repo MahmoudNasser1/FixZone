@@ -105,26 +105,26 @@
 ### Security Tests
 ```bash
 # Test 1: GET /customers (without auth)
-curl http://localhost:3001/api/customers
+curl http://localhost:4000/api/customers
 # Result: ✅ {"message":"No token, authorization denied"}
 
 # Test 2: POST /customers (without auth)
-curl -X POST http://localhost:3001/api/customers -H "Content-Type: application/json" -d '{"name":"Test"}'
+curl -X POST http://localhost:4000/api/customers -H "Content-Type: application/json" -d '{"name":"Test"}'
 # Result: ✅ {"message":"No token, authorization denied"}
 
 # Test 3: GET /customers/:id (without auth)
-curl http://localhost:3001/api/customers/78
+curl http://localhost:4000/api/customers/78
 # Result: ✅ {"message":"No token, authorization denied"}
 ```
 
 ### Functional Tests (with auth)
 ```bash
 # Test: GET /customers (with auth)
-curl -b cookie_jar.txt http://localhost:3001/api/customers?page=1&pageSize=5
+curl -b cookie_jar.txt http://localhost:4000/api/customers?page=1&pageSize=5
 # Result: ✅ {"success":true,"data":{"customers":[...],"total":56,"page":1,"pageSize":5}}
 
 # Test: POST /customers (with auth)
-curl -b cookie_jar.txt -X POST http://localhost:3001/api/customers \
+curl -b cookie_jar.txt -X POST http://localhost:4000/api/customers \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Customer","phone":"9999999999"}'
 # Result: ✅ {"success":true,"customer":{...}} (or 409 if duplicate)

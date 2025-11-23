@@ -11,7 +11,7 @@
 
 **الوصف:**
 - عندما يسجل Customer دخول من `/login`، يحدث infinite loop مع errors:
-  - `GET http://localhost:3001/api/auth/customer/profile 404 (Not Found)`
+  - `GET http://localhost:4000/api/auth/customer/profile 404 (Not Found)`
   - `Error: العميل غير موجود`
   - `CustomerDashboard.js:113 Error loading dashboard data`
 
@@ -235,7 +235,7 @@ navigate('/login');
 ### Test 3: API Response Check ✅
 **Command:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"customer@test.com","password":"password123"}' \
   -c /tmp/customer_cookies.txt

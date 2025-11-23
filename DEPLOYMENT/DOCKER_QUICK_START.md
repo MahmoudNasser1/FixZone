@@ -54,7 +54,7 @@ docker compose up -d
 
 ```bash
 # Backend
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # Frontend
 curl http://localhost:3000
@@ -65,7 +65,7 @@ curl http://localhost:3000
 ## 📝 ملاحظات
 
 - **ملف .env:** لا ترفعه للـ Git
-- **Ports:** Backend (3001), Frontend (3000), MySQL (3306)
+- **Ports:** Backend (4000), Frontend (3000), MySQL (3306)
 - **Volumes:** البيانات محفوظة في Docker volumes
 
 ---

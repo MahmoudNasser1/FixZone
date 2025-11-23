@@ -3,7 +3,7 @@
 
 const http = require('http');
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:4000/api';
 const TEST_REPAIR_ID = 77; // Using existing repair ID
 let authToken = '';
 
@@ -70,7 +70,7 @@ async function runTests() {
   // 1. Test Health Check
   console.log('\n📋 1. Health Check Tests:');
   try {
-    const health = await request('GET', 'http://localhost:3001/health');
+    const health = await request('GET', 'http://localhost:4000/health');
     logTest('Health Check', health.status === 200 ? 'PASS' : 'FAIL', `Status: ${health.status}`);
   } catch (e) {
     logTest('Health Check', 'FAIL', e.message);

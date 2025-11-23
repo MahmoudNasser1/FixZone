@@ -282,7 +282,7 @@ touch backend/routes/analytics.js
 # إضافة: app.use('/api/analytics', analyticsRouter);
 
 # 4. اختبار
-curl http://localhost:3001/api/analytics/inventory-value
+curl http://localhost:4000/api/analytics/inventory-value
 ```
 
 #### **2. Frontend (45 دقيقة):**

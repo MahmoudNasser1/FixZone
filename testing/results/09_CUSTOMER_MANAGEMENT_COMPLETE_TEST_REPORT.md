@@ -32,7 +32,7 @@
 
 ### ✅ Backend Server Status
 - ✅ تم إعادة تشغيل Backend server بنجاح
-- ✅ Health check: `http://localhost:3001/health` → **OK**
+- ✅ Health check: `http://localhost:4000/health` → **OK**
 - ✅ جميع API endpoints تعمل بشكل صحيح
 
 ### ✅ Frontend Server Status

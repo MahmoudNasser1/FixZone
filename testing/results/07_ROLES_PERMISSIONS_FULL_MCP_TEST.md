@@ -43,7 +43,7 @@
 
 **Direct curl Test (without cookies):**
 ```bash
-curl -X GET http://localhost:3001/api/roles
+curl -X GET http://localhost:4000/api/roles
 # Response: {"message":"No token, authorization denied"}
 ```
 - ⚠️ Requires authentication (expected behavior)

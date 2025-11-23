@@ -2,7 +2,7 @@
 # 🔧 سكريبت اختبار Company Management API
 # Company Management API Test Script
 
-BASE_URL="http://localhost:3001"
+BASE_URL="http://localhost:4000"
 TEST_COMPANY_ID=""
 
 # Colors

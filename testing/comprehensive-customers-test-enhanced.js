@@ -4,7 +4,7 @@ const axios = require('axios');
 async function testCustomersModule() {
   console.log('🧪 اختبار شامل لموديول العملاء (Customers)\n');
   
-  const baseURL = 'http://localhost:3001';
+  const baseURL = 'http://localhost:4000';
   const results = {
     backend: {
       health: null,

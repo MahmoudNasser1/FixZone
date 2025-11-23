@@ -168,7 +168,7 @@
 
 #### **1. API المصادقة**
 ```bash
-curl -X POST "http://localhost:3001/api/auth/login" \
+curl -X POST "http://localhost:4000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"password"}'
 ```
@@ -176,35 +176,35 @@ curl -X POST "http://localhost:3001/api/auth/login" \
 
 #### **2. API المستخدمين**
 ```bash
-curl -X GET "http://localhost:3001/api/users" \
+curl -X GET "http://localhost:4000/api/users" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: 4 مستخدمين مع بيانات كاملة ✅
 
 #### **3. API العملاء**
 ```bash
-curl -X GET "http://localhost:3001/api/customers" \
+curl -X GET "http://localhost:4000/api/customers" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: قائمة كاملة بالعملاء ✅
 
 #### **4. API الفواتير**
 ```bash
-curl -X GET "http://localhost:3001/api/invoices" \
+curl -X GET "http://localhost:4000/api/invoices" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: `{"success":true,"data":[],"total":0}` ✅
 
 #### **5. API المدفوعات**
 ```bash
-curl -X GET "http://localhost:3001/api/payments" \
+curl -X GET "http://localhost:4000/api/payments" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: نظام صفحات يعمل ✅
 
 #### **6. API الأدوار**
 ```bash
-curl -X GET "http://localhost:3001/api/roles" \
+curl -X GET "http://localhost:4000/api/roles" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: 4 أدوار مع صلاحيات ✅
@@ -213,7 +213,7 @@ curl -X GET "http://localhost:3001/api/roles" \
 
 #### **1. API طلبات الإصلاح**
 ```bash
-curl -X GET "http://localhost:3001/api/repairs" \
+curl -X GET "http://localhost:4000/api/repairs" \
   -H "Cookie: token=..."
 ```
 **النتيجة**: `{"error":"Server Error"}` ❌

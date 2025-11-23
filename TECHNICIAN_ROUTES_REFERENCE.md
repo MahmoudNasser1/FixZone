@@ -38,7 +38,7 @@
 
 ### Base URL
 ```
-http://localhost:3001/api/tech
+http://localhost:4000/api/tech
 ```
 
 ### Endpoints
@@ -289,7 +289,7 @@ Cookie: token=<JWT_TOKEN>
 
 1. Login first:
 ```http
-POST http://localhost:3001/api/auth/login
+POST http://localhost:4000/api/auth/login
 Content-Type: application/json
 
 {
@@ -302,7 +302,7 @@ Content-Type: application/json
 
 3. Test endpoints:
 ```http
-GET http://localhost:3001/api/tech/dashboard
+GET http://localhost:4000/api/tech/dashboard
 Cookie: token=<JWT_TOKEN>
 ```
 

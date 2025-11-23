@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 // Enable CORS for all routes
 router.use(cors({
   origin: [
-    'http://localhost:3001',
+    'http://localhost:4000',
     'http://localhost:3000'
   ],
   credentials: true

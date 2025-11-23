@@ -18,7 +18,7 @@ const axiosInstance = axios.create({
 });
 
 // إعدادات الاختبار
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:4000';
 const TEST_REPORT_FILE = 'COMPANIES_MODULE_TEST_REPORT.md';
 
 // بيانات الاختبار

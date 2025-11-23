@@ -10,7 +10,7 @@ services:
       # Override with production values
     # Remove port mapping if using nginx
     # ports:
-    #   - "3001:3001"
+    #   - "4000:4000"
     deploy:
       resources:
         limits:

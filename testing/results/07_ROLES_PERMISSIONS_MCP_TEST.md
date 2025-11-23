@@ -33,7 +33,7 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 ## ✅ Test 2: Servers Status
 
 ### Backend Server
-- **URL:** `http://localhost:3001`
+- **URL:** `http://localhost:4000`
 - **Health Check:** ✅ `{"status":"OK","message":"Fix Zone Backend is running"}`
 - **Status:** ✅ **RUNNING**
 

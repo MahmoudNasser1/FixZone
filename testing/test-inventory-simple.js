@@ -7,7 +7,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:4000/api';
 
 async function runSimpleTests() {
   console.log('\n🧪 اختبار Phase 1 - Inventory Module\n');

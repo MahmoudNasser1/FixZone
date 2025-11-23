@@ -194,7 +194,7 @@ cd /opt/lampp/htdocs/FixZone/backend
 node server.js
 
 # 2. في نافذة أخرى - اختبار API
-curl http://localhost:3001/api/inventory
+curl http://localhost:4000/api/inventory
 
 # 3. يجب أن ترى: 33 صنف في النتيجة ✅
 ```
@@ -409,12 +409,12 @@ cd /opt/lampp/htdocs/FixZone/backend
 node server.js
 
 # في نافذة أخرى - اختبر APIs
-curl http://localhost:3001/api/inventory
-curl http://localhost:3001/api/inventory/1
-curl http://localhost:3001/api/vendors
-curl http://localhost:3001/api/warehouses
-curl http://localhost:3001/api/stock-levels
-curl http://localhost:3001/api/stock-movements
+curl http://localhost:4000/api/inventory
+curl http://localhost:4000/api/inventory/1
+curl http://localhost:4000/api/vendors
+curl http://localhost:4000/api/warehouses
+curl http://localhost:4000/api/stock-levels
+curl http://localhost:4000/api/stock-movements
 ```
 
 **✅ النتيجة المتوقعة لكل API:**
@@ -448,7 +448,7 @@ curl http://localhost:3001/api/stock-movements
 
 ```bash
 # محاولة إضافة صنف بدون اسم
-curl -X POST http://localhost:3001/api/inventory \
+curl -X POST http://localhost:4000/api/inventory \
   -H "Content-Type: application/json" \
   -d '{"purchasePrice": 100}'
 ```

@@ -12,7 +12,7 @@
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/repairs/tracking 404 (Not Found)
+GET http://localhost:4000/api/repairs/tracking 404 (Not Found)
 ```
 
 **السبب:**
@@ -43,7 +43,7 @@ router.get('/tracking', async (req, res) => {
 
 **المشكلة:**
 ```
-POST http://localhost:3001/api/services 404 (Not Found)
+POST http://localhost:4000/api/services 404 (Not Found)
 ```
 
 **السبب:**
@@ -79,7 +79,7 @@ router.delete('/:id', async (req, res) => { ... });
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/warehouses 500 (Internal Server Error)
+GET http://localhost:4000/api/warehouses 500 (Internal Server Error)
 ```
 
 **السبب:**
@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/stocklevels/low-stock 500 (Internal Server Error)
+GET http://localhost:4000/api/stocklevels/low-stock 500 (Internal Server Error)
 ```
 
 **السبب:**
@@ -144,7 +144,7 @@ res.status(500).json({
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/reports/expenses?startDate=2025-09-30&endDate=2025...
+GET http://localhost:4000/api/reports/expenses?startDate=2025-09-30&endDate=2025...
 500 (Internal Server Error)
 
 Error fetching expenses: SyntaxError: Unexpected token 'S', "Server Error" is not valid JSON
@@ -168,7 +168,7 @@ sed -i "s/res\.status(500)\.send('Server Error')/res.status(500).json({ error: '
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/reports/technician-performance?startDate=2025-09...
+GET http://localhost:4000/api/reports/technician-performance?startDate=2025-09...
 500 (Internal Server Error)
 
 Error fetching technician performance: SyntaxError: Unexpected token 'S', "Server Error" is not valid JSON
@@ -188,7 +188,7 @@ Error fetching technician performance: SyntaxError: Unexpected token 'S', "Serve
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/variables?category=ACCESSORY&active=1
+GET http://localhost:4000/api/variables?category=ACCESSORY&active=1
 500 (Internal Server Error)
 ```
 
@@ -210,7 +210,7 @@ res.status(500).json({ error: 'Server Error' });
 
 **المشكلة:**
 ```
-GET http://localhost:3001/api/repairrequestservices?repairRequestId=tracking
+GET http://localhost:4000/api/repairrequestservices?repairRequestId=tracking
 500 (Internal Server Error)
 ```
 
@@ -287,21 +287,21 @@ node server.js
 ### 2. Test Fixed Endpoints:
 ```bash
 # Test tracking
-curl "http://localhost:3001/api/repairs/tracking?requestNumber=REP-202510001"
+curl "http://localhost:4000/api/repairs/tracking?requestNumber=REP-202510001"
 
 # Test services
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Service","basePrice":100}'
 
 # Test warehouses
-curl http://localhost:3001/api/warehouses
+curl http://localhost:4000/api/warehouses
 
 # Test stock levels
-curl http://localhost:3001/api/stocklevels/low-stock
+curl http://localhost:4000/api/stocklevels/low-stock
 
 # Test reports
-curl "http://localhost:3001/api/reports/expenses?startDate=2025-09-01&endDate=2025-10-01"
+curl "http://localhost:4000/api/reports/expenses?startDate=2025-09-01&endDate=2025-10-01"
 ```
 
 ---
@@ -322,7 +322,7 @@ curl "http://localhost:3001/api/reports/expenses?startDate=2025-09-01&endDate=20
 
 ## ✅ Server Status
 
-**Status:** ✅ Running on port 3001  
+**Status:** ✅ Running on port 4000  
 **All Backend Fixes:** ✅ Applied  
 **Error Responses:** ✅ Now JSON format  
 **New Routes:** ✅ Added

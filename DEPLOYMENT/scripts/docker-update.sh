@@ -79,7 +79,7 @@ echo -e "${GREEN}✓ Containers restarted${NC}"
 # Health check
 echo -e "${YELLOW}[5/5] Health check...${NC}"
 sleep 5
-if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+if curl -f http://localhost:4000/health > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Backend is healthy${NC}"
 else
     echo -e "${RED}✗ Backend health check failed!${NC}"

@@ -82,7 +82,7 @@
 ## 🎯 نتائج الاختبار بالتفصيل
 
 ### ✅ نجح: الاتصال بالخادم
-- **Endpoint:** `GET http://localhost:3001/health`
+- **Endpoint:** `GET http://localhost:4000/health`
 - **Status:** 200 OK
 - **Response:** `{"status":"OK","message":"Fix Zone Backend is running"}`
 

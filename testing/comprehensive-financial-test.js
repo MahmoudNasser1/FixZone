@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
   }
 });
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:4000';
 const TEST_REPORT_FILE = 'FINANCIAL_MODULE_TEST_REPORT.md';
 
 const testData = {

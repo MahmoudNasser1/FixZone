@@ -10,7 +10,7 @@ const { performance } = require('perf_hooks');
 
 // إعدادات الاختبار
 const PERFORMANCE_CONFIG = {
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://localhost:4000/api',
   timeout: 30000,
   testUser: {
     email: 'test@fixzone.com',

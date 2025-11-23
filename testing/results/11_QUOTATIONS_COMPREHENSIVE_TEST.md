@@ -40,12 +40,12 @@
 #### **Test Case 1.1: قائمة العروض السعرية (مع Authentication)**
 ```bash
 # Login first
-curl -s -c cookie_quotations.txt -X POST "http://localhost:3001/api/auth/login" \
+curl -s -c cookie_quotations.txt -X POST "http://localhost:4000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"admin123"}' > /dev/null
 
 # Get quotations
-curl -s -b cookie_quotations.txt "http://localhost:3001/api/quotations" | jq '.'
+curl -s -b cookie_quotations.txt "http://localhost:4000/api/quotations" | jq '.'
 ```
 
 **Expected:**
@@ -59,7 +59,7 @@ curl -s -b cookie_quotations.txt "http://localhost:3001/api/quotations" | jq '.'
 
 #### **Test Case 1.2: قائمة العروض السعرية (بدون Authentication)**
 ```bash
-curl -s "http://localhost:3001/api/quotations" | jq '.'
+curl -s "http://localhost:4000/api/quotations" | jq '.'
 ```
 
 **Expected:**
@@ -74,7 +74,7 @@ curl -s "http://localhost:3001/api/quotations" | jq '.'
 
 #### **Test Case 2.1: إنشاء عرض سعري جديد**
 ```bash
-curl -s -b cookie_quotations.txt -X POST "http://localhost:3001/api/quotations" \
+curl -s -b cookie_quotations.txt -X POST "http://localhost:4000/api/quotations" \
   -H "Content-Type: application/json" \
   -d '{
     "customerId": 1,
@@ -104,7 +104,7 @@ curl -s -b cookie_quotations.txt -X POST "http://localhost:3001/api/quotations" 
 
 #### **Test Case 3.1: عرض تفاصيل عرض سعري**
 ```bash
-curl -s -b cookie_quotations.txt "http://localhost:3001/api/quotations/1" | jq '.'
+curl -s -b cookie_quotations.txt "http://localhost:4000/api/quotations/1" | jq '.'
 ```
 
 **Expected:**
@@ -120,7 +120,7 @@ curl -s -b cookie_quotations.txt "http://localhost:3001/api/quotations/1" | jq '
 
 #### **Test Case 4.1: تحديث عرض سعري**
 ```bash
-curl -s -b cookie_quotations.txt -X PUT "http://localhost:3001/api/quotations/1" \
+curl -s -b cookie_quotations.txt -X PUT "http://localhost:4000/api/quotations/1" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "sent",
@@ -141,7 +141,7 @@ curl -s -b cookie_quotations.txt -X PUT "http://localhost:3001/api/quotations/1"
 
 #### **Test Case 5.1: حذف عرض سعري**
 ```bash
-curl -s -b cookie_quotations.txt -X DELETE "http://localhost:3001/api/quotations/1" | jq '.'
+curl -s -b cookie_quotations.txt -X DELETE "http://localhost:4000/api/quotations/1" | jq '.'
 ```
 
 **Expected:**

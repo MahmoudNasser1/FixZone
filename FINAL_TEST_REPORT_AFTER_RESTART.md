@@ -9,7 +9,7 @@
 
 - ✅ تم إيقاف الـ server القديم
 - ✅ تم إعادة تشغيل الـ backend server بنجاح
-- ✅ الـ server يعمل الآن على http://localhost:3001
+- ✅ الـ server يعمل الآن على http://localhost:4000
 - ✅ WebSocket service متصل (2 clients)
 
 ---

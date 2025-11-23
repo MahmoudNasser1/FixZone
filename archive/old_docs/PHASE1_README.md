@@ -54,7 +54,7 @@ node testing/test-enhanced-ui.js
 
 ## 🌐 **الوصول للنظام**
 
-- **Backend API:** http://localhost:3001/api
+- **Backend API:** http://localhost:4000/api
 - **Frontend:** http://localhost:3000
 - **صفحة المخزون:** http://localhost:3000/inventory
 

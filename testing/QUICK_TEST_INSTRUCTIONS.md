@@ -110,7 +110,7 @@ LIMIT 10;
 
 **1. اختبر API بسيط:**
 ```bash
-curl http://localhost:3001/api/inventory
+curl http://localhost:4000/api/inventory
 ```
 
 **✅ يجب أن ترى:**
@@ -125,7 +125,7 @@ curl http://localhost:3001/api/inventory
 
 **2. اختبر البحث:**
 ```bash
-curl "http://localhost:3001/api/inventory?search=lcd"
+curl "http://localhost:4000/api/inventory?search=lcd"
 ```
 
 **✅ يجب أن ترى:**
@@ -224,7 +224,7 @@ cd /opt/lampp/htdocs/FixZone/backend
 node server.js
 
 # يجب أن ترى:
-# Server running on port 3001 ✅
+# Server running on port 4000 ✅
 ```
 
 ---
@@ -262,7 +262,7 @@ mysql -u root -p FZ < inventory_sample_data.sql
 - [ ] البيانات التجريبية موجودة
 
 أثناء الاختبار:
-- [ ] السيرفر Backend يعمل (port 3001)
+- [ ] السيرفر Backend يعمل (port 4000)
 - [ ] السيرفر Frontend يعمل (port 3000)
 - [ ] لا توجد أخطاء في console
 

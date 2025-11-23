@@ -1,6 +1,6 @@
 # سيناريوهات اختبار End-to-End باستخدام Playwright MCP
 
-> هذه قائمة سيناريوهات قابلة للتنفيذ عبر MCP لتغطي التدفق الكامل للنظام على `http://localhost:3000`، مع Backend على `http://localhost:3001`.
+> هذه قائمة سيناريوهات قابلة للتنفيذ عبر MCP لتغطي التدفق الكامل للنظام على `http://localhost:3000`، مع Backend على `http://localhost:4000`.
 
 ## إعداد أساسي
 - افتح `http://localhost:3000/login`

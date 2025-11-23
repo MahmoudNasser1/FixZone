@@ -44,7 +44,7 @@
 
 ### من curl test:
 ```bash
-curl -X POST http://localhost:3001/api/repairs \
+curl -X POST http://localhost:4000/api/repairs \
   -H "Content-Type: application/json" \
   -d '{"accessories":["شاحن","كابل","سماعات"],...}'
 ```

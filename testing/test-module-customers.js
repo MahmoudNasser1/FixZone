@@ -5,7 +5,7 @@
  */
 
 const fetch = globalThis.fetch;
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:4000/api';
 
 // Test Results
 const results = {

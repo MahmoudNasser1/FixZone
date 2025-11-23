@@ -138,7 +138,7 @@ pm2 status
 echo ""
 
 # Check if backend is running
-if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+if curl -f http://localhost:4000/health > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Backend is running${NC}"
 else
     echo -e "${RED}✗ Backend is not responding${NC}"

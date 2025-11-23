@@ -249,7 +249,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose ps
 
 # Backend Health
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # Frontend
 curl http://localhost:3000
@@ -364,7 +364,7 @@ docker exec -i fixzone-mysql mysql -u fixzone_user -pfixzone_password FZ < migra
 
 # 6. التحقق
 docker compose ps
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 ```
 
 ---

@@ -44,7 +44,7 @@
 ### ✅ Test 1: GET /customers (Basic)
 **الحالة:** ✅ **PASSED**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=3"
+curl -b cookies.txt "http://localhost:4000/api/customers?page=1&pageSize=3"
 ```
 **النتيجة:**
 - ✅ `success: true`
@@ -57,7 +57,7 @@ curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=3"
 ### ✅ Test 2: Filter hasDebt=true
 **الحالة:** ✅ **PASSED**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&hasDebt=true"
+curl -b cookies.txt "http://localhost:4000/api/customers?page=1&pageSize=5&hasDebt=true"
 ```
 **النتيجة:**
 - ✅ `success: true`
@@ -70,7 +70,7 @@ curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&hasDe
 ### ✅ Test 3: Sort by outstandingBalance DESC
 **الحالة:** ✅ **PASSED**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&sort=outstandingBalance&sortDir=DESC"
+curl -b cookies.txt "http://localhost:4000/api/customers?page=1&pageSize=5&sort=outstandingBalance&sortDir=DESC"
 ```
 **النتيجة:**
 - ✅ `success: true`
@@ -93,7 +93,7 @@ curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&sort=
 ### ✅ Test 4: Sort by outstandingBalance ASC
 **الحالة:** ✅ **PASSED**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&sort=outstandingBalance&sortDir=ASC"
+curl -b cookies.txt "http://localhost:4000/api/customers?page=1&pageSize=5&sort=outstandingBalance&sortDir=ASC"
 ```
 **النتيجة:**
 - ✅ `success: true`
@@ -105,7 +105,7 @@ curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&sort=
 ### ✅ Test 5: Combined Filter (isActive + hasDebt)
 **الحالة:** ✅ **PASSED**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/customers?page=1&pageSize=5&isActive=true&hasDebt=true"
+curl -b cookies.txt "http://localhost:4000/api/customers?page=1&pageSize=5&isActive=true&hasDebt=true"
 ```
 **النتيجة:**
 - ✅ `success: true`

@@ -44,19 +44,19 @@
 ## **✅ APIs تعمل بنجاح:**
 ```bash
 # العملاء
-curl http://localhost:3001/api/customers
+curl http://localhost:4000/api/customers
 Response: [] (قائمة فارغة - صحيح)
 
 # الشركات  
-curl http://localhost:3001/api/companies
+curl http://localhost:4000/api/companies
 Response: [] (قائمة فارغة - صحيح)
 
 # المخزون
-curl http://localhost:3001/api/inventory-enhanced
+curl http://localhost:4000/api/inventory-enhanced
 Response: {"success":true,"data":{"items":[...]}} (بيانات كاملة)
 
 # المستودعات
-curl http://localhost:3001/api/warehouses
+curl http://localhost:4000/api/warehouses
 Response: {"success":true,"data":[...]} (بيانات كاملة)
 ```
 

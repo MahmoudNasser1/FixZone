@@ -7,9 +7,9 @@
 ## ✅ حالة السيرفرات
 
 ### Backend Server
-- 🟢 **Port:** 3001
+- 🟢 **Port:** 4000
 - ✅ **الحالة:** يعمل بنجاح
-- 🔗 **URL:** http://localhost:3001/api
+- 🔗 **URL:** http://localhost:4000/api
 - ✅ **Database:** متصل بنجاح
 
 ### Frontend Server
@@ -309,4 +309,4 @@
 **الحالة:** ✅ **جاهز للإنتاج** (97%)  
 **التقييم النهائي:** ⭐⭐⭐⭐⭐ (4.8/5)  
 **Tested by:** AI Assistant + Browser DevTools  
-**Environment:** Development (localhost:3000/3001)
+**Environment:** Development (localhost:3000/4000)

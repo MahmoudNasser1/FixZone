@@ -252,27 +252,27 @@ INSERT INTO StockMovement (...) VALUES ...
 cd /opt/lampp/htdocs/FixZone
 
 # Test customers (names should show)
-curl http://localhost:3001/api/customers | jq '.[0].name'
+curl http://localhost:4000/api/customers | jq '.[0].name'
 # Expected: "محمد أحمد" or similar
 
 # Test services (should return 11 items)
-curl http://localhost:3001/api/services | jq '.items | length'
+curl http://localhost:4000/api/services | jq '.items | length'
 # Expected: 11
 
 # Test warehouses (should return JSON, not crash)
-curl http://localhost:3001/api/warehouses | jq '. | length'
+curl http://localhost:4000/api/warehouses | jq '. | length'
 # Expected: 2
 
 # Test stock movements (with JOINs)
-curl http://localhost:3001/api/stock-movements | jq '.[0] | keys'
+curl http://localhost:4000/api/stock-movements | jq '.[0] | keys'
 # Expected: includes "itemName", "warehouseName", "userName"
 
 # Test repair tracking
-curl "http://localhost:3001/api/repairs/tracking?requestNumber=REP-202510001"
+curl "http://localhost:4000/api/repairs/tracking?requestNumber=REP-202510001"
 # Expected: 200 or 404 with JSON
 
 # Test repair request services
-curl "http://localhost:3001/api/repairrequestservices?repairRequestId=1"
+curl "http://localhost:4000/api/repairrequestservices?repairRequestId=1"
 # Expected: Array with serviceName field
 ```
 
@@ -291,7 +291,7 @@ curl "http://localhost:3001/api/repairrequestservices?repairRequestId=1"
 ## ✅ حالة النظام
 
 ### Backend:
-- ✅ Server running on port 3001
+- ✅ Server running on port 4000
 - ✅ Health check: OK
 - ✅ All routes working
 - ✅ All errors return JSON

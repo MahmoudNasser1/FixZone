@@ -4,7 +4,7 @@
 
 هذا الدليل يوفر معلومات تفصيلية عن جميع الـ APIs المتاحة في Phase 1.
 
-**Base URL:** `http://localhost:3001/api`
+**Base URL:** `http://localhost:4000/api`
 
 ---
 
@@ -65,7 +65,7 @@ GET /api/inventory-enhanced/items
 
 **مثال - cURL:**
 ```bash
-curl http://localhost:3001/api/inventory-enhanced/items?page=1&limit=5
+curl http://localhost:4000/api/inventory-enhanced/items?page=1&limit=5
 ```
 
 **مثال - JavaScript:**
@@ -489,7 +489,7 @@ GET /api/warehouses
 ### **مثال 1: البحث عن أصناف تحتوي على "iPad"**
 
 ```bash
-curl "http://localhost:3001/api/inventory-enhanced/items?search=iPad"
+curl "http://localhost:4000/api/inventory-enhanced/items?search=iPad"
 ```
 
 **النتيجة:**
@@ -516,7 +516,7 @@ curl "http://localhost:3001/api/inventory-enhanced/items?search=iPad"
 ### **مثال 2: إضافة حركة دخول**
 
 ```bash
-curl -X POST http://localhost:3001/api/inventory-enhanced/movements \
+curl -X POST http://localhost:4000/api/inventory-enhanced/movements \
   -H "Content-Type: application/json" \
   -d '{
     "inventoryItemId": 1,
@@ -533,7 +533,7 @@ curl -X POST http://localhost:3001/api/inventory-enhanced/movements \
 ### **مثال 3: الحصول على إحصائيات المخزون**
 
 ```bash
-curl http://localhost:3001/api/inventory-enhanced/stats
+curl http://localhost:4000/api/inventory-enhanced/stats
 ```
 
 **النتيجة:**
@@ -614,7 +614,7 @@ curl http://localhost:3001/api/inventory-enhanced/stats
 
 ### **Variables:**
 ```
-baseUrl = http://localhost:3001/api
+baseUrl = http://localhost:4000/api
 ```
 
 ---

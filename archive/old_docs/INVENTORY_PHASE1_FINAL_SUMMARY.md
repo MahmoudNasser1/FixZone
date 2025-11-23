@@ -417,7 +417,7 @@ LIMIT 5;
 
 ### في APIs:
 
-**Test:** `curl http://localhost:3001/api/inventory`
+**Test:** `curl http://localhost:4000/api/inventory`
 
 **النتيجة المتوقعة:**
 ```json
@@ -461,7 +461,7 @@ LIMIT 5;
 
 ---
 
-**Test:** `curl http://localhost:3001/api/inventory/1`
+**Test:** `curl http://localhost:4000/api/inventory/1`
 
 **النتيجة المتوقعة:**
 ```json
@@ -548,9 +548,9 @@ node testing/test-inventory-phase1.js
 **أو اختبر يدوياً:**
 ```bash
 # جرب أي API
-curl http://localhost:3001/api/inventory
-curl http://localhost:3001/api/vendors
-curl http://localhost:3001/api/warehouses
+curl http://localhost:4000/api/inventory
+curl http://localhost:4000/api/vendors
+curl http://localhost:4000/api/warehouses
 ```
 
 ---

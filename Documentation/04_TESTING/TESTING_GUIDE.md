@@ -274,7 +274,7 @@ await tester.runAllSecurityTests();
 ### **1. اختبارات الوظائف فشلت:**
 ```bash
 # تحقق من الخادم
-curl http://localhost:3001/api/payments
+curl http://localhost:4000/api/payments
 
 # تحقق من قاعدة البيانات
 mysql -u root -p -e "SELECT * FROM Payment LIMIT 5;"
@@ -291,14 +291,14 @@ grep -r "escape" backend/
 ```bash
 # تحقق من استخدام الموارد
 top -p $(pgrep node)
-netstat -an | grep 3001
+netstat -an | grep 4000
 ```
 
 ### **4. اختبارات التكامل فشلت:**
 ```bash
 # تحقق من الاتصال
 ping localhost
-telnet localhost 3001
+telnet localhost 4000
 ```
 
 ---

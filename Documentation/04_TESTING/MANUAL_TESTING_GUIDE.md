@@ -7,8 +7,8 @@
 cd /opt/lampp/htdocs/FixZone/backend
 node server.js
 ```
-**المنفذ:** http://localhost:3001  
-**Health Check:** http://localhost:3001/health
+**المنفذ:** http://localhost:4000  
+**Health Check:** http://localhost:4000/health
 
 ### **2. Frontend Server**
 ```bash
@@ -265,7 +265,7 @@ PORT=3000 npm start
 **الاختبارات:**
 1. ✅ **API Test:**
    ```bash
-   curl http://localhost:3001/api/inventory-enhanced/categories
+   curl http://localhost:4000/api/inventory-enhanced/categories
    ```
    - تحقق من عودة 6 فئات
 
@@ -390,66 +390,66 @@ PORT=3000 npm start
 ### **1. Inventory APIs**
 ```bash
 # Stats
-curl http://localhost:3001/api/inventory-enhanced/stats | jq '.'
+curl http://localhost:4000/api/inventory-enhanced/stats | jq '.'
 
 # List Items
-curl http://localhost:3001/api/inventory-enhanced/items | jq '.data.items | length'
+curl http://localhost:4000/api/inventory-enhanced/items | jq '.data.items | length'
 
 # Categories
-curl http://localhost:3001/api/inventory-enhanced/categories | jq '.'
+curl http://localhost:4000/api/inventory-enhanced/categories | jq '.'
 ```
 
 ### **2. Stock Count APIs**
 ```bash
 # Stats
-curl http://localhost:3001/api/stock-count/stats | jq '.'
+curl http://localhost:4000/api/stock-count/stats | jq '.'
 
 # List
-curl http://localhost:3001/api/stock-count | jq '.data.stockCounts | length'
+curl http://localhost:4000/api/stock-count | jq '.data.stockCounts | length'
 ```
 
 ### **3. Stock Transfer APIs**
 ```bash
 # Stats
-curl http://localhost:3001/api/stock-transfer/stats | jq '.'
+curl http://localhost:4000/api/stock-transfer/stats | jq '.'
 
 # List
-curl http://localhost:3001/api/stock-transfer | jq '.data.transfers | length'
+curl http://localhost:4000/api/stock-transfer | jq '.data.transfers | length'
 ```
 
 ### **4. Stock Alerts APIs**
 ```bash
 # All Alerts
-curl http://localhost:3001/api/stock-alerts | jq '. | length'
+curl http://localhost:4000/api/stock-alerts | jq '. | length'
 
 # Low Stock
-curl http://localhost:3001/api/stock-alerts/low | jq '.totalAlerts'
+curl http://localhost:4000/api/stock-alerts/low | jq '.totalAlerts'
 
 # Reorder Suggestions
-curl http://localhost:3001/api/stock-alerts/reorder-suggestions | jq '.totalItems'
+curl http://localhost:4000/api/stock-alerts/reorder-suggestions | jq '.totalItems'
 ```
 
 ### **5. Barcode APIs** 🆕
 ```bash
 # Stats
-curl http://localhost:3001/api/barcode/stats | jq '.'
+curl http://localhost:4000/api/barcode/stats | jq '.'
 
 # Scan (استخدم SKU موجود)
-curl -X POST http://localhost:3001/api/barcode/scan \
+curl -X POST http://localhost:4000/api/barcode/scan \
   -H "Content-Type: application/json" \
   -d '{"barcode":"ITEM001","scanType":"lookup"}' | jq '.'
 
 # History
-curl http://localhost:3001/api/barcode/history | jq '.data.scans | length'
+curl http://localhost:4000/api/barcode/history | jq '.data.scans | length'
 ```
 
 ### **6. Parts Used APIs**
 ```bash
 # List
-curl http://localhost:3001/api/partsused | jq '. | length'
+curl http://localhost:4000/api/partsused | jq '. | length'
 
 # Consumption Report
-curl http://localhost:3001/api/partsused/reports/consumption | jq '.'
+curl http://localhost:4000/api/partsused/reports/consumption | jq '.'
 ```
 
 ---

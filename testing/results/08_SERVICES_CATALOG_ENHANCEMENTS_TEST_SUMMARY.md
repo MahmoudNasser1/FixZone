@@ -133,13 +133,13 @@
 ### 1. اختبار Backend APIs
 ```bash
 # Test validation
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"ab","basePrice":100}'
 # Expected: 400 Bad Request
 
 # Test duplicate name
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"خدمة موجودة","basePrice":100}'
 # Expected: 409 Conflict (if service exists)
@@ -148,10 +148,10 @@ curl -X POST http://localhost:3001/api/services \
 ### 2. اختبار Service Categories
 ```bash
 # Get categories
-curl http://localhost:3001/api/servicecategories
+curl http://localhost:4000/api/servicecategories
 
 # Create category (Admin only)
-curl -X POST http://localhost:3001/api/servicecategories \
+curl -X POST http://localhost:4000/api/servicecategories \
   -H "Content-Type: application/json" \
   -d '{"name":"فئة اختبار","color":"#FF0000"}'
 ```
@@ -159,10 +159,10 @@ curl -X POST http://localhost:3001/api/servicecategories \
 ### 3. اختبار Service Pricing Rules
 ```bash
 # Calculate price
-curl http://localhost:3001/api/servicepricingrules/1/calculate?deviceType=phone
+curl http://localhost:4000/api/servicepricingrules/1/calculate?deviceType=phone
 
 # Create pricing rule (Admin only)
-curl -X POST http://localhost:3001/api/servicepricingrules \
+curl -X POST http://localhost:4000/api/servicepricingrules \
   -H "Content-Type: application/json" \
   -d '{"serviceId":1,"deviceType":"phone","pricingType":"multiplier","value":1.5}'
 ```
@@ -328,13 +328,13 @@ curl -X POST http://localhost:3001/api/servicepricingrules \
 ### 1. اختبار Backend APIs
 ```bash
 # Test validation
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"ab","basePrice":100}'
 # Expected: 400 Bad Request
 
 # Test duplicate name
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"خدمة موجودة","basePrice":100}'
 # Expected: 409 Conflict (if service exists)
@@ -343,10 +343,10 @@ curl -X POST http://localhost:3001/api/services \
 ### 2. اختبار Service Categories
 ```bash
 # Get categories
-curl http://localhost:3001/api/servicecategories
+curl http://localhost:4000/api/servicecategories
 
 # Create category (Admin only)
-curl -X POST http://localhost:3001/api/servicecategories \
+curl -X POST http://localhost:4000/api/servicecategories \
   -H "Content-Type: application/json" \
   -d '{"name":"فئة اختبار","color":"#FF0000"}'
 ```
@@ -354,10 +354,10 @@ curl -X POST http://localhost:3001/api/servicecategories \
 ### 3. اختبار Service Pricing Rules
 ```bash
 # Calculate price
-curl http://localhost:3001/api/servicepricingrules/1/calculate?deviceType=phone
+curl http://localhost:4000/api/servicepricingrules/1/calculate?deviceType=phone
 
 # Create pricing rule (Admin only)
-curl -X POST http://localhost:3001/api/servicepricingrules \
+curl -X POST http://localhost:4000/api/servicepricingrules \
   -H "Content-Type: application/json" \
   -d '{"serviceId":1,"deviceType":"phone","pricingType":"multiplier","value":1.5}'
 ```
@@ -523,13 +523,13 @@ curl -X POST http://localhost:3001/api/servicepricingrules \
 ### 1. اختبار Backend APIs
 ```bash
 # Test validation
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"ab","basePrice":100}'
 # Expected: 400 Bad Request
 
 # Test duplicate name
-curl -X POST http://localhost:3001/api/services \
+curl -X POST http://localhost:4000/api/services \
   -H "Content-Type: application/json" \
   -d '{"name":"خدمة موجودة","basePrice":100}'
 # Expected: 409 Conflict (if service exists)
@@ -538,10 +538,10 @@ curl -X POST http://localhost:3001/api/services \
 ### 2. اختبار Service Categories
 ```bash
 # Get categories
-curl http://localhost:3001/api/servicecategories
+curl http://localhost:4000/api/servicecategories
 
 # Create category (Admin only)
-curl -X POST http://localhost:3001/api/servicecategories \
+curl -X POST http://localhost:4000/api/servicecategories \
   -H "Content-Type: application/json" \
   -d '{"name":"فئة اختبار","color":"#FF0000"}'
 ```
@@ -549,10 +549,10 @@ curl -X POST http://localhost:3001/api/servicecategories \
 ### 3. اختبار Service Pricing Rules
 ```bash
 # Calculate price
-curl http://localhost:3001/api/servicepricingrules/1/calculate?deviceType=phone
+curl http://localhost:4000/api/servicepricingrules/1/calculate?deviceType=phone
 
 # Create pricing rule (Admin only)
-curl -X POST http://localhost:3001/api/servicepricingrules \
+curl -X POST http://localhost:4000/api/servicepricingrules \
   -H "Content-Type: application/json" \
   -d '{"serviceId":1,"deviceType":"phone","pricingType":"multiplier","value":1.5}'
 ```

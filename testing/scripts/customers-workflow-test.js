@@ -16,8 +16,8 @@ const path = require('path');
 
 // Test configuration
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:3001/api',
-  BASE_URL: 'http://localhost:3001',
+  API_BASE_URL: 'http://localhost:4000/api',
+  BASE_URL: 'http://localhost:4000',
   FRONTEND_URL: 'http://localhost:3000',
   TEST_TIMEOUT: 30000
 };

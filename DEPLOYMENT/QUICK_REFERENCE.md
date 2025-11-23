@@ -73,7 +73,7 @@ htop                    # استخدام الموارد
 
 ```bash
 # Backend
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # Frontend
 curl https://yourdomain.com
@@ -116,7 +116,7 @@ mysql -u fixzone_user -p FZ -e "SHOW PROCESSLIST;"
 
 ## 🔐 معلومات مهمة
 
-- **Backend Port:** 3001 (internal)
+- **Backend Port:** 4000 (internal)
 - **Frontend:** Served by Nginx
 - **Database:** MySQL (FZ)
 - **Process Manager:** PM2

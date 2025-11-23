@@ -135,7 +135,7 @@
 ## 🔌 **Backend APIs Status**
 
 ### **مُختبر:**
-- ✅ Health Check: http://localhost:3001/health
+- ✅ Health Check: http://localhost:4000/health
 - ✅ Inventory Stats (يظهر في UI)
 - ✅ Navigation System (يعمل)
 

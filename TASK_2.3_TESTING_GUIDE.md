@@ -107,7 +107,7 @@
 
 ### 1. تسجيل الدخول والحصول على Token:
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"identifier":"admin@fixzone.com","password":"admin123"}' \
   | jq -r '.token // .data.token // empty')
@@ -119,10 +119,10 @@ echo "Token: $TOKEN"
 ```bash
 # جلب جميع مستويات المخزون
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3001/api/stock-levels | jq '.'
+  http://localhost:4000/api/stock-levels | jq '.'
 
 # إنشاء/تحديث مستوى مخزون
-curl -X POST http://localhost:3001/api/stock-levels \
+curl -X POST http://localhost:4000/api/stock-levels \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -137,10 +137,10 @@ curl -X POST http://localhost:3001/api/stock-levels \
 ```bash
 # جلب جميع الحركات
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:3001/api/stock-movements?type=IN&page=1&limit=10" | jq '.'
+  "http://localhost:4000/api/stock-movements?type=IN&page=1&limit=10" | jq '.'
 
 # إنشاء حركة دخول
-curl -X POST http://localhost:3001/api/stock-movements \
+curl -X POST http://localhost:4000/api/stock-movements \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -155,10 +155,10 @@ curl -X POST http://localhost:3001/api/stock-movements \
 ```bash
 # جلب جميع النقلات
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3001/api/stock-transfer | jq '.'
+  http://localhost:4000/api/stock-transfer | jq '.'
 
 # إنشاء نقل جديد
-curl -X POST http://localhost:3001/api/stock-transfer \
+curl -X POST http://localhost:4000/api/stock-transfer \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

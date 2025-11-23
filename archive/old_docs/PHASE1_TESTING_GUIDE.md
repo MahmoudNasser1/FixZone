@@ -148,7 +148,7 @@ npm start
 
 **✅ ما يجب أن تراه:**
 ```
-Server running on port 3001
+Server running on port 4000
 Database connected successfully
 ```
 
@@ -160,12 +160,12 @@ Database connected successfully
 
 **استخدام curl:**
 ```bash
-curl http://localhost:3001/api/inventory
+curl http://localhost:4000/api/inventory
 ```
 
 **استخدام Postman:**
 - Method: GET
-- URL: `http://localhost:3001/api/inventory`
+- URL: `http://localhost:4000/api/inventory`
 
 **✅ النتيجة المتوقعة:**
 ```json
@@ -209,7 +209,7 @@ curl http://localhost:3001/api/inventory
 #### ب) GET /api/inventory/:id (جلب صنف واحد)
 
 ```bash
-curl http://localhost:3001/api/inventory/1
+curl http://localhost:4000/api/inventory/1
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -243,7 +243,7 @@ curl http://localhost:3001/api/inventory/1
 #### ج) GET /api/inventory?search=lcd (بحث)
 
 ```bash
-curl "http://localhost:3001/api/inventory?search=lcd"
+curl "http://localhost:4000/api/inventory?search=lcd"
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -254,7 +254,7 @@ curl "http://localhost:3001/api/inventory?search=lcd"
 #### د) GET /api/inventory?category=1 (فلتر حسب فئة)
 
 ```bash
-curl "http://localhost:3001/api/inventory?category=1"
+curl "http://localhost:4000/api/inventory?category=1"
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -265,7 +265,7 @@ curl "http://localhost:3001/api/inventory?category=1"
 #### هـ) GET /api/inventory?lowStock=true (أصناف منخفضة)
 
 ```bash
-curl "http://localhost:3001/api/inventory?lowStock=true"
+curl "http://localhost:4000/api/inventory?lowStock=true"
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -276,7 +276,7 @@ curl "http://localhost:3001/api/inventory?lowStock=true"
 #### و) POST /api/inventory (إضافة صنف جديد)
 
 ```bash
-curl -X POST http://localhost:3001/api/inventory \
+curl -X POST http://localhost:4000/api/inventory \
   -H "Content-Type: application/json" \
   -d '{
     "name": "اختبار صنف جديد",
@@ -304,7 +304,7 @@ curl -X POST http://localhost:3001/api/inventory \
 #### ز) POST مع بيانات خاطئة (اختبار Validation)
 
 ```bash
-curl -X POST http://localhost:3001/api/inventory \
+curl -X POST http://localhost:4000/api/inventory \
   -H "Content-Type: application/json" \
   -d '{
     "name": "",
@@ -341,7 +341,7 @@ curl -X POST http://localhost:3001/api/inventory \
 
 ```bash
 # جلب مستويات المخزون
-curl http://localhost:3001/api/stock-levels
+curl http://localhost:4000/api/stock-levels
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -369,7 +369,7 @@ curl http://localhost:3001/api/stock-levels
 
 ```bash
 # جلب الحركات المخزنية
-curl http://localhost:3001/api/stock-movements
+curl http://localhost:4000/api/stock-movements
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -403,7 +403,7 @@ curl http://localhost:3001/api/stock-movements
 
 ```bash
 # جلب الموردين
-curl http://localhost:3001/api/vendors
+curl http://localhost:4000/api/vendors
 ```
 
 **✅ النتيجة المتوقعة:**
@@ -432,7 +432,7 @@ curl http://localhost:3001/api/vendors
 
 ```bash
 # جلب المخازن
-curl http://localhost:3001/api/warehouses
+curl http://localhost:4000/api/warehouses
 ```
 
 **✅ النتيجة المتوقعة:**

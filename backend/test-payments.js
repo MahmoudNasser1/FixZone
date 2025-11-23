@@ -10,7 +10,7 @@ const mysql = require('mysql2/promise');
 
 // إعدادات الاختبار
 const TEST_CONFIG = {
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://localhost:4000/api',
   timeout: 10000,
   testUser: {
     email: 'test@fixzone.com',

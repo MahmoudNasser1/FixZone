@@ -3,7 +3,7 @@
 > هذا المستند يعرّف خطة اختبار عملية ومقسمة حسب الموديول لتغطية: الواجهة الخلفية (APIs)، الواجهة الأمامية (React)، تجربة المستخدم UI/UX، والترابط بين الموديولز. يعتمد على الوثائق: `UI_UX_Plan.md`, `erp_fix_zone_project_details.md`, `DEVELOPMENT_PLAN_WEEK.md`, `AUTH_DOCUMENTATION.md`, `PROJECT_STRUCTURE.md`, `COMPLETE_DEVELOPMENT_PLAN.md`، بالإضافة إلى الفحص العملي للنظام.
 
 ## 1) بيئة الاختبار
-- Backend: Node.js + Express على `http://localhost:3001`
+- Backend: Node.js + Express على `http://localhost:4000`
 - Frontend: React على `http://localhost:3000`
 - Database: MySQL (اسم القاعدة `FZ`)
 - حساب اختبار: admin@fixzone.com / password
@@ -113,7 +113,7 @@
 ### 4.11 الإعدادات المتقدمة (Advanced Settings)
 - Backend: get/batch-update/reset/export/import
 - Frontend: تبويبات حسب الفئات مع حفظ/استرجاع
-- قبول: استخدام `http://localhost:3001/api/...` و`credentials: 'include'`
+- قبول: استخدام `http://localhost:4000/api/...` و`credentials: 'include'`
 
 ### 4.12 إدارة المستخدمين والأدوار (Users & Roles)
 - Backend: `/api/users`, `/api/roles`
@@ -142,11 +142,11 @@
 
 ## 5) بيانات اختبار نموذجية (Examples)
 - تسجيل الدخول:
-  - curl -X POST `http://localhost:3001/api/auth/login`
+  - curl -X POST `http://localhost:4000/api/auth/login`
 - استعلام إصلاحات:
-  - GET `http://localhost:3001/api/repairs?q=iphone&page=1&pageSize=10`
+  - GET `http://localhost:4000/api/repairs?q=iphone&page=1&pageSize=10`
 - إنشاء دفعة:
-  - POST `http://localhost:3001/api/payments`
+  - POST `http://localhost:4000/api/payments`
 
 ## 6) معايير القبول العامة
 - لا توجد استجابة HTML لطلب API (منع `<!DOCTYPE`)

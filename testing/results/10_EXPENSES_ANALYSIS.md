@@ -69,7 +69,7 @@
 **الاختبار:**
 ```bash
 # بدون auth - يعمل! (يجب أن يعطي 401)
-curl "http://localhost:3001/api/expensecategories"
+curl "http://localhost:4000/api/expensecategories"
 # Result: ✅ 200 OK - يعرض 19 فئة (مشكلة أمان!)
 ```
 

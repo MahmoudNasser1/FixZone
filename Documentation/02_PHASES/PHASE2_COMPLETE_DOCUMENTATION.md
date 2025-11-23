@@ -277,10 +277,10 @@ http://localhost:3000/stock-transfer     # نقل بين المخازن
 ### **الاختبار اليدوي:**
 ```bash
 # 1. اختبار StockCount APIs
-curl http://localhost:3001/api/stock-count/stats
+curl http://localhost:4000/api/stock-count/stats
 
 # 2. اختبار StockTransfer APIs
-curl http://localhost:3001/api/stock-transfer/stats
+curl http://localhost:4000/api/stock-transfer/stats
 
 # 3. اختبار Frontend
 # افتح المتصفح على http://localhost:3000

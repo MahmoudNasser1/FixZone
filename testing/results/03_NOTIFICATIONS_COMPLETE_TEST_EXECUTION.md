@@ -64,7 +64,7 @@ if (authStorage) {
 
 #### من Terminal (curl):
 ```bash
-TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"ahmed","password":"ahmed"}' \
   | jq -r '.token')
@@ -78,7 +78,7 @@ echo "Token: $TOKEN"
 #### Test 1: GET /api/notifications/unread/count
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications/unread/count', {
+fetch('http://localhost:4000/api/notifications/unread/count', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -93,7 +93,7 @@ fetch('http://localhost:3001/api/notifications/unread/count', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications/unread/count" \
+curl -X GET "http://localhost:4000/api/notifications/unread/count" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -107,7 +107,7 @@ curl -X GET "http://localhost:3001/api/notifications/unread/count" \
 ```javascript
 // Browser Console (استخدم ID من Test 5 أو من قاعدة البيانات)
 const notificationId = 1; // استبدل بـ ID حقيقي
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications/1" \
+curl -X GET "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -136,7 +136,7 @@ curl -X GET "http://localhost:3001/api/notifications/1" \
 ```javascript
 // Browser Console
 const notificationId = 1; // استبدل بـ ID حقيقي
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   method: 'PUT',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -156,7 +156,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 
 ```bash
 # Terminal
-curl -X PUT "http://localhost:3001/api/notifications/1" \
+curl -X PUT "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -174,7 +174,7 @@ curl -X PUT "http://localhost:3001/api/notifications/1" \
 ```javascript
 // Browser Console
 const notificationId = 1; // استبدل بـ ID حقيقي
-fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}/read`, {
   method: 'PATCH',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -190,7 +190,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
 
 ```bash
 # Terminal
-curl -X PATCH "http://localhost:3001/api/notifications/1/read" \
+curl -X PATCH "http://localhost:4000/api/notifications/1/read" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -203,7 +203,7 @@ curl -X PATCH "http://localhost:3001/api/notifications/1/read" \
 #### Test 5: PATCH /api/notifications/read/all
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications/read/all', {
+fetch('http://localhost:4000/api/notifications/read/all', {
   method: 'PATCH',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -219,7 +219,7 @@ fetch('http://localhost:3001/api/notifications/read/all', {
 
 ```bash
 # Terminal
-curl -X PATCH "http://localhost:3001/api/notifications/read/all" \
+curl -X PATCH "http://localhost:4000/api/notifications/read/all" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -233,7 +233,7 @@ curl -X PATCH "http://localhost:3001/api/notifications/read/all" \
 ```javascript
 // Browser Console (احذر: سيحذف الإشعار!)
 const notificationId = 1; // استبدل بـ ID حقيقي
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   method: 'DELETE',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -249,7 +249,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 
 ```bash
 # Terminal
-curl -X DELETE "http://localhost:3001/api/notifications/1" \
+curl -X DELETE "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -262,7 +262,7 @@ curl -X DELETE "http://localhost:3001/api/notifications/1" \
 #### Test 7: GET /api/notifications (filter: isRead=false)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications?isRead=false&page=1&limit=10', {
+fetch('http://localhost:4000/api/notifications?isRead=false&page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -278,7 +278,7 @@ fetch('http://localhost:3001/api/notifications?isRead=false&page=1&limit=10', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications?isRead=false&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?isRead=false&page=1&limit=10" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -292,7 +292,7 @@ curl -X GET "http://localhost:3001/api/notifications?isRead=false&page=1&limit=1
 #### Test 8: GET /api/notifications (filter: type=info)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications?type=info&page=1&limit=10', {
+fetch('http://localhost:4000/api/notifications?type=info&page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -308,7 +308,7 @@ fetch('http://localhost:3001/api/notifications?type=info&page=1&limit=10', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications?type=info&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?type=info&page=1&limit=10" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -322,7 +322,7 @@ curl -X GET "http://localhost:3001/api/notifications?type=info&page=1&limit=10" 
 #### Test 9: GET /api/notifications (filter: channel=IN_APP)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit=10', {
+fetch('http://localhost:4000/api/notifications?channel=IN_APP&page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -338,7 +338,7 @@ fetch('http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit=10', 
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?channel=IN_APP&page=1&limit=10" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -353,7 +353,7 @@ curl -X GET "http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit
 ```javascript
 // Browser Console
 // Test Page 1
-fetch('http://localhost:3001/api/notifications?page=1&limit=5', {
+fetch('http://localhost:4000/api/notifications?page=1&limit=5', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -366,7 +366,7 @@ fetch('http://localhost:3001/api/notifications?page=1&limit=5', {
 });
 
 // Test Page 2
-fetch('http://localhost:3001/api/notifications?page=2&limit=5', {
+fetch('http://localhost:4000/api/notifications?page=2&limit=5', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -380,11 +380,11 @@ fetch('http://localhost:3001/api/notifications?page=2&limit=5', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications?page=1&limit=5" \
+curl -X GET "http://localhost:4000/api/notifications?page=1&limit=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 
-curl -X GET "http://localhost:3001/api/notifications?page=2&limit=5" \
+curl -X GET "http://localhost:4000/api/notifications?page=2&limit=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -400,7 +400,7 @@ curl -X GET "http://localhost:3001/api/notifications?page=2&limit=5" \
 #### Test 11: GET /api/notifications/99999 (404 - non-existent)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/notifications/99999', {
+fetch('http://localhost:4000/api/notifications/99999', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -418,7 +418,7 @@ fetch('http://localhost:3001/api/notifications/99999', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/notifications/99999" \
+curl -X GET "http://localhost:4000/api/notifications/99999" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```

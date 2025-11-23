@@ -20,7 +20,7 @@
 ┌──────▼──────┐  ┌───────▼────────┐
 │   Frontend  │  │    Backend     │
 │  (React)    │  │  (Node.js)     │
-│  Static     │  │  Port: 3001    │
+│  Static     │  │  Port: 4000    │
 │  Files      │  │  PM2 Cluster   │
 └─────────────┘  └───────┬────────┘
                          │

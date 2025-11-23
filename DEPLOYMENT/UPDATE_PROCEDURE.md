@@ -124,7 +124,7 @@ mysql -u fixzone_user -p FZ < backup_before_migration.sql
 ### **1. فحص Backend:**
 ```bash
 # Health Check
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 
 # PM2 Status
 pm2 status

@@ -8,7 +8,7 @@
 
 ```bash
 # 1. تأكد من الـ server شغال
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 # Expected: {"status":"OK"...}
 
 # 2. شغّل جميع الاختبارات
@@ -60,7 +60,7 @@ node testing/test-module-customers.js 2>&1 | grep "Success Rate"
 cd /opt/lampp/htdocs/FixZone/backend
 node server.js &
 sleep 3
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 ```
 
 ### مشكلة 2: 401 Unauthorized
@@ -96,11 +96,11 @@ curl http://localhost:3001/health
 
 2. **✅ Payment Stats Route:**
    - تم إضافته: `GET /api/payments/stats`
-   - Test: `curl http://localhost:3001/api/payments/stats -H "Auth..."`
+   - Test: `curl http://localhost:4000/api/payments/stats -H "Auth..."`
 
 3. **✅ Invoice by ID:**
    - تم إضافته: `GET /api/invoices/:id`
-   - Test: `curl http://localhost:3001/api/invoices/8 -H "Auth..."`
+   - Test: `curl http://localhost:4000/api/invoices/8 -H "Auth..."`
 
 ---
 

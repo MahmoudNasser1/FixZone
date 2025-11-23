@@ -258,13 +258,13 @@ http://localhost:3000/inventory/analytics
 ## **Backend APIs:**
 ```bash
 # Analytics
-curl http://localhost:3001/api/analytics/summary
-curl http://localhost:3001/api/analytics/abc-analysis
-curl http://localhost:3001/api/analytics/profit-margin
-curl http://localhost:3001/api/analytics/slow-moving
+curl http://localhost:4000/api/analytics/summary
+curl http://localhost:4000/api/analytics/abc-analysis
+curl http://localhost:4000/api/analytics/profit-margin
+curl http://localhost:4000/api/analytics/slow-moving
 
 # Barcode
-curl http://localhost:3001/api/barcode/stats
+curl http://localhost:4000/api/barcode/stats
 ```
 
 ---

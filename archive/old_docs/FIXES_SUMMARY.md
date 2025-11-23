@@ -207,19 +207,19 @@ node server.js
 ### 2. اختبار الـ APIs:
 ```bash
 # Test Customers (should return names)
-curl http://localhost:3001/api/customers | jq '.[0].name'
+curl http://localhost:4000/api/customers | jq '.[0].name'
 
 # Test Services (should return 5 services)
-curl http://localhost:3001/api/services | jq '.items | length'
+curl http://localhost:4000/api/services | jq '.items | length'
 
 # Test Stock Movements (should return data with joins)
-curl http://localhost:3001/api/stock-movements | jq '.[0] | keys'
+curl http://localhost:4000/api/stock-movements | jq '.[0] | keys'
 
 # Test Users (should return names)
-curl http://localhost:3001/api/users -H "Cookie: token=YOUR_TOKEN" | jq '.[0].name'
+curl http://localhost:4000/api/users -H "Cookie: token=YOUR_TOKEN" | jq '.[0].name'
 
 # Test Invoices (should work in Frontend)
-curl http://localhost:3001/api/invoices | jq '.data | length'
+curl http://localhost:4000/api/invoices | jq '.data | length'
 ```
 
 ### 3. اختبار Frontend:

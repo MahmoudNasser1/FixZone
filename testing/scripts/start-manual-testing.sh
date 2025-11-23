@@ -15,7 +15,7 @@ cat << 'EOF'
 
 🎯 المعلومات الأساسية:
    Frontend: http://localhost:3000
-   Backend:  http://localhost:3001/api
+   Backend:  http://localhost:4000/api
    
    Email:    admin@fixzone.com
    Password: password
@@ -26,8 +26,8 @@ echo "🔍 فحص حالة الخوادم..."
 echo ""
 
 # فحص Backend
-if curl -s http://localhost:3001/health > /dev/null 2>&1; then
-    echo "✅ Backend يعمل (port 3001)"
+if curl -s http://localhost:4000/health > /dev/null 2>&1; then
+    echo "✅ Backend يعمل (port 4000)"
 else
     echo "❌ Backend متوقف!"
     echo "   تشغيل Backend: cd backend && npm start"
@@ -61,7 +61,7 @@ FAIL=0
 
 # 1. Inventory Enhanced
 echo "1️⃣  Inventory Enhanced APIs:"
-if curl -s http://localhost:3001/api/inventory-enhanced | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/inventory-enhanced | grep -q "success\|data\|\["; then
     echo "   ✅ GET /inventory-enhanced"
     ((PASS++))
 else
@@ -69,7 +69,7 @@ else
     ((FAIL++))
 fi
 
-if curl -s http://localhost:3001/api/inventory-enhanced/stats | grep -q "success\|overview\|data"; then
+if curl -s http://localhost:4000/api/inventory-enhanced/stats | grep -q "success\|overview\|data"; then
     echo "   ✅ GET /inventory-enhanced/stats"
     ((PASS++))
 else
@@ -80,7 +80,7 @@ fi
 # 2. Warehouses
 echo ""
 echo "2️⃣  Warehouses APIs:"
-if curl -s http://localhost:3001/api/warehouses | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/warehouses | grep -q "success\|data\|\["; then
     echo "   ✅ GET /warehouses"
     ((PASS++))
 else
@@ -91,7 +91,7 @@ fi
 # 3. Stock Movements
 echo ""
 echo "3️⃣  Stock Movements APIs:"
-if curl -s http://localhost:3001/api/stock-movements | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/stock-movements | grep -q "success\|data\|\["; then
     echo "   ✅ GET /stock-movements"
     ((PASS++))
 else
@@ -102,7 +102,7 @@ fi
 # 4. Stock Levels
 echo ""
 echo "4️⃣  Stock Levels APIs:"
-if curl -s http://localhost:3001/api/stock-levels | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/stock-levels | grep -q "success\|data\|\["; then
     echo "   ✅ GET /stock-levels"
     ((PASS++))
 else
@@ -113,7 +113,7 @@ fi
 # 5. Stock Alerts
 echo ""
 echo "5️⃣  Stock Alerts APIs:"
-if curl -s http://localhost:3001/api/stock-alerts | grep -q "\["; then
+if curl -s http://localhost:4000/api/stock-alerts | grep -q "\["; then
     echo "   ✅ GET /stock-alerts"
     ((PASS++))
 else
@@ -121,7 +121,7 @@ else
     ((FAIL++))
 fi
 
-if curl -s http://localhost:3001/api/stock-alerts/low | grep -q "alerts\|total"; then
+if curl -s http://localhost:4000/api/stock-alerts/low | grep -q "alerts\|total"; then
     echo "   ✅ GET /stock-alerts/low"
     ((PASS++))
 else
@@ -132,7 +132,7 @@ fi
 # 6. Stock Count
 echo ""
 echo "6️⃣  Stock Count APIs:"
-if curl -s http://localhost:3001/api/stock-count | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/stock-count | grep -q "success\|data\|\["; then
     echo "   ✅ GET /stock-count"
     ((PASS++))
 else
@@ -140,7 +140,7 @@ else
     ((FAIL++))
 fi
 
-if curl -s http://localhost:3001/api/stock-count/stats | grep -q "success\|total"; then
+if curl -s http://localhost:4000/api/stock-count/stats | grep -q "success\|total"; then
     echo "   ✅ GET /stock-count/stats"
     ((PASS++))
 else
@@ -151,7 +151,7 @@ fi
 # 7. Stock Transfer
 echo ""
 echo "7️⃣  Stock Transfer APIs:"
-if curl -s http://localhost:3001/api/stock-transfer | grep -q "success\|data\|\["; then
+if curl -s http://localhost:4000/api/stock-transfer | grep -q "success\|data\|\["; then
     echo "   ✅ GET /stock-transfer"
     ((PASS++))
 else
@@ -162,7 +162,7 @@ fi
 # 8. Barcode
 echo ""
 echo "8️⃣  Barcode APIs:"
-if curl -s http://localhost:3001/api/barcode/stats | grep -q "success\|total"; then
+if curl -s http://localhost:4000/api/barcode/stats | grep -q "success\|total"; then
     echo "   ✅ GET /barcode/stats"
     ((PASS++))
 else

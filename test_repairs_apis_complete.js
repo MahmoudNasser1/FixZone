@@ -1,7 +1,7 @@
 // QA Testing Script - Repair Module APIs (Fixed with /api prefix)
 const http = require('http');
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:4000/api';
 const TEST_REPAIR_ID = 77;
 
 function request(method, path, data = null) {

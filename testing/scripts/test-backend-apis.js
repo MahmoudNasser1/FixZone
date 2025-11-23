@@ -1,8 +1,8 @@
 const fetch = globalThis.fetch;
 
 // إعدادات الاختبار
-const API_BASE_URL = 'http://localhost:3001/api';
-const BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'http://localhost:4000/api';
+const BASE_URL = 'http://localhost:4000';
 const TEST_TIMEOUT = 10000; // 10 ثواني
 
 let AUTH_TOKEN = null;

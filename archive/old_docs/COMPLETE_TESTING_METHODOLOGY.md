@@ -27,7 +27,7 @@
 # Environment Setup
 NODE_ENV=staging
 DATABASE_URL=mysql://root@localhost:3306/fixzone_staging
-PORT=3001
+PORT=4000
 JWT_SECRET=staging_secret_key_2025
 
 # External Integrations (Mocked/Sandbox)
@@ -41,7 +41,7 @@ UPLOAD_DIR=./uploads_staging
 MAX_FILE_SIZE=10485760
 
 # Frontend
-REACT_APP_API_URL=http://localhost:3001/api
+REACT_APP_API_URL=http://localhost:4000/api
 REACT_APP_ENV=staging
 ```
 
@@ -407,7 +407,7 @@ export let options = {
 };
 
 export default function() {
-  const url = 'http://localhost:3001/api/repairs';
+  const url = 'http://localhost:4000/api/repairs';
   const payload = JSON.stringify({
     customerId: 1,
     deviceId: 1,
@@ -1526,7 +1526,7 @@ npm install -g newman
 {
   "name": "Staging",
   "values": [
-    { "key": "base_url", "value": "http://localhost:3001/api" },
+    { "key": "base_url", "value": "http://localhost:4000/api" },
     { "key": "admin_token", "value": "" }
   ]
 }
@@ -1614,7 +1614,7 @@ npm install -g artillery
 
 # Create config (load-test.yml)
 config:
-  target: 'http://localhost:3001'
+  target: 'http://localhost:4000'
   phases:
     - duration: 60
       arrivalRate: 10

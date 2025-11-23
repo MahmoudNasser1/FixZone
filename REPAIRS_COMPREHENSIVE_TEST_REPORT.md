@@ -64,41 +64,41 @@
 ### اختبار APIs الإصلاحات
 ```bash
 # جلب جميع طلبات الإصلاح
-curl -s -b cookies.txt "http://localhost:3001/api/repairs"
+curl -s -b cookies.txt "http://localhost:4000/api/repairs"
 # النتيجة: 8 طلبات إصلاح
 
 # جلب طلب إصلاح محدد
-curl -s -b cookies.txt "http://localhost:3001/api/repairs/13"
+curl -s -b cookies.txt "http://localhost:4000/api/repairs/13"
 # النتيجة: بيانات العميل "علي محمود"
 
 # تحديث حالة طلب إصلاح
 curl -s -X PUT -b cookies.txt -H "Content-Type: application/json" \
   -d '{"status":"UNDER_REPAIR","reportedProblem":"مشكلة في الشاشة - تم فحص الجهاز"}' \
-  "http://localhost:3001/api/repairs/13"
+  "http://localhost:4000/api/repairs/13"
 # النتيجة: تم التحديث بنجاح
 ```
 
 ### اختبار التكامل
 ```bash
 # التكامل مع العملاء
-curl -s -b cookies.txt "http://localhost:3001/api/customers/55"
+curl -s -b cookies.txt "http://localhost:4000/api/customers/55"
 # النتيجة: بيانات العميل
 
 # التكامل مع النظام المالي
-curl -s -b cookies.txt "http://localhost:3001/api/invoices"
+curl -s -b cookies.txt "http://localhost:4000/api/invoices"
 # النتيجة: 5 فواتير
 
 # إنشاء فاتورة جديدة
 curl -s -X POST -b cookies.txt -H "Content-Type: application/json" \
   -d '{"totalAmount":800,"amountPaid":0,"status":"draft","currency":"EGP","taxAmount":0}' \
-  "http://localhost:3001/api/invoices"
+  "http://localhost:4000/api/invoices"
 # النتيجة: تم الإنشاء بنجاح
 ```
 
 ### اختبار التقارير
 ```bash
 # تقرير الإيرادات اليومية
-curl -s -b cookies.txt "http://localhost:3001/api/reports/daily-revenue"
+curl -s -b cookies.txt "http://localhost:4000/api/reports/daily-revenue"
 # النتيجة: إجمالي الإيرادات: 1800.00 ج.م
 ```
 

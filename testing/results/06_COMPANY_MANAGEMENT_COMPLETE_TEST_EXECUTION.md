@@ -61,7 +61,7 @@ if (authStorage) {
 
 #### من Terminal:
 ```bash
-TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"ahmed","password":"ahmed"}' \
   | jq -r '.token')
@@ -76,7 +76,7 @@ echo "Token: $TOKEN"
 ```javascript
 // Browser Console
 const companyId = 1; // استخدم ID حقيقي من قاعدة البيانات
-fetch(`http://localhost:3001/api/companies/${companyId}`, {
+fetch(`http://localhost:4000/api/companies/${companyId}`, {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -91,7 +91,7 @@ fetch(`http://localhost:3001/api/companies/${companyId}`, {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies/1" \
+curl -X GET "http://localhost:4000/api/companies/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -104,7 +104,7 @@ curl -X GET "http://localhost:3001/api/companies/1" \
 #### Test 2: POST /api/companies - Create New Company
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/companies', {
+fetch('http://localhost:4000/api/companies', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -130,7 +130,7 @@ fetch('http://localhost:3001/api/companies', {
 
 ```bash
 # Terminal
-curl -X POST "http://localhost:3001/api/companies" \
+curl -X POST "http://localhost:4000/api/companies" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -157,7 +157,7 @@ curl -X POST "http://localhost:3001/api/companies" \
 ```javascript
 // Browser Console (استخدم ID من Test 2)
 const companyId = window.TEST_COMPANY_ID || 1;
-fetch(`http://localhost:3001/api/companies/${companyId}`, {
+fetch(`http://localhost:4000/api/companies/${companyId}`, {
   method: 'PUT',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -181,7 +181,7 @@ fetch(`http://localhost:3001/api/companies/${companyId}`, {
 
 ```bash
 # Terminal
-curl -X PUT "http://localhost:3001/api/companies/1" \
+curl -X PUT "http://localhost:4000/api/companies/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -207,7 +207,7 @@ curl -X PUT "http://localhost:3001/api/companies/1" \
 ```javascript
 // Browser Console (استخدم ID من Test 2)
 const companyId = window.TEST_COMPANY_ID || 1;
-fetch(`http://localhost:3001/api/companies/${companyId}`, {
+fetch(`http://localhost:4000/api/companies/${companyId}`, {
   method: 'DELETE',
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
@@ -221,7 +221,7 @@ fetch(`http://localhost:3001/api/companies/${companyId}`, {
 });
 
 // تحقق من Soft Delete (يجب أن لا تظهر في GET /companies)
-fetch('http://localhost:3001/api/companies', {
+fetch('http://localhost:4000/api/companies', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -236,12 +236,12 @@ fetch('http://localhost:3001/api/companies', {
 
 ```bash
 # Terminal
-curl -X DELETE "http://localhost:3001/api/companies/1" \
+curl -X DELETE "http://localhost:4000/api/companies/1" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 
 # تحقق من Soft Delete
-curl -X GET "http://localhost:3001/api/companies" \
+curl -X GET "http://localhost:4000/api/companies" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -262,7 +262,7 @@ curl -X GET "http://localhost:3001/api/companies" \
 ```javascript
 // Browser Console
 const companyId = 1; // استخدم ID شركة لديها عملاء
-fetch(`http://localhost:3001/api/companies/${companyId}/customers`, {
+fetch(`http://localhost:4000/api/companies/${companyId}/customers`, {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -278,7 +278,7 @@ fetch(`http://localhost:3001/api/companies/${companyId}/customers`, {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies/1/customers" \
+curl -X GET "http://localhost:4000/api/companies/1/customers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -296,7 +296,7 @@ curl -X GET "http://localhost:3001/api/companies/1/customers" \
 ```javascript
 // Browser Console
 const searchTerm = 'شركة'; // استخدم مصطلح بحث
-fetch(`http://localhost:3001/api/companies?search=${encodeURIComponent(searchTerm)}`, {
+fetch(`http://localhost:4000/api/companies?search=${encodeURIComponent(searchTerm)}`, {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -312,7 +312,7 @@ fetch(`http://localhost:3001/api/companies?search=${encodeURIComponent(searchTer
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies?search=شركة" \
+curl -X GET "http://localhost:4000/api/companies?search=شركة" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -331,7 +331,7 @@ curl -X GET "http://localhost:3001/api/companies?search=شركة" \
 ```javascript
 // Browser Console
 // Test Page 1
-fetch('http://localhost:3001/api/companies?page=1&pageSize=5', {
+fetch('http://localhost:4000/api/companies?page=1&pageSize=5', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -344,7 +344,7 @@ fetch('http://localhost:3001/api/companies?page=1&pageSize=5', {
 });
 
 // Test Page 2
-fetch('http://localhost:3001/api/companies?page=2&pageSize=5', {
+fetch('http://localhost:4000/api/companies?page=2&pageSize=5', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -359,11 +359,11 @@ fetch('http://localhost:3001/api/companies?page=2&pageSize=5', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies?page=1&pageSize=5" \
+curl -X GET "http://localhost:4000/api/companies?page=1&pageSize=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 
-curl -X GET "http://localhost:3001/api/companies?page=2&pageSize=5" \
+curl -X GET "http://localhost:4000/api/companies?page=2&pageSize=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -384,7 +384,7 @@ curl -X GET "http://localhost:3001/api/companies?page=2&pageSize=5" \
 #### Test 8: GET /api/companies (بدون token - 401)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/companies', {
+fetch('http://localhost:4000/api/companies', {
   headers: {
     'Content-Type': 'application/json'
     // بدون Authorization header
@@ -402,7 +402,7 @@ fetch('http://localhost:3001/api/companies', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies" \
+curl -X GET "http://localhost:4000/api/companies" \
   -H "Content-Type: application/json"
   # بدون Authorization header
 ```
@@ -415,7 +415,7 @@ curl -X GET "http://localhost:3001/api/companies" \
 #### Test 9: GET /api/companies/99999 (404 - non-existent)
 ```javascript
 // Browser Console
-fetch('http://localhost:3001/api/companies/99999', {
+fetch('http://localhost:4000/api/companies/99999', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -433,7 +433,7 @@ fetch('http://localhost:3001/api/companies/99999', {
 
 ```bash
 # Terminal
-curl -X GET "http://localhost:3001/api/companies/99999" \
+curl -X GET "http://localhost:4000/api/companies/99999" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```

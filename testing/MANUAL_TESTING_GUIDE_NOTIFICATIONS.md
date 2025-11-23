@@ -8,7 +8,7 @@
 
 ## 📋 متطلبات الاختبار
 
-1. ✅ Backend server يعمل على `http://localhost:3001`
+1. ✅ Backend server يعمل على `http://localhost:4000`
 2. ✅ Frontend server يعمل على `http://localhost:3000`
 3. ✅ قاعدة البيانات متصلة
 4. ✅ مستخدم مسجل دخول (للوصول إلى المسارات المحمية)
@@ -39,7 +39,7 @@ if (authStorage) {
 ### الطريقة 2: من API مباشرة
 ```bash
 # تسجيل الدخول والحصول على token
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"ahmed","password":"ahmed"}' \
   | jq -r '.token'
@@ -55,7 +55,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 
 **الطريقة:**
 ```bash
-curl -X GET "http://localhost:3001/api/notifications/unread/count" \
+curl -X GET "http://localhost:4000/api/notifications/unread/count" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -70,7 +70,7 @@ curl -X GET "http://localhost:3001/api/notifications/unread/count" \
 
 **من المتصفح (Console):**
 ```javascript
-fetch('http://localhost:3001/api/notifications/unread/count', {
+fetch('http://localhost:4000/api/notifications/unread/count', {
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
     'Content-Type': 'application/json'
@@ -89,22 +89,22 @@ fetch('http://localhost:3001/api/notifications/unread/count', {
 **الطريقة:**
 ```bash
 # بدون filters
-curl -X GET "http://localhost:3001/api/notifications?page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?page=1&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 
 # مع filter: unread only
-curl -X GET "http://localhost:3001/api/notifications?isRead=false&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?isRead=false&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 
 # مع filter: by type
-curl -X GET "http://localhost:3001/api/notifications?type=info&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?type=info&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 
 # مع filter: by channel
-curl -X GET "http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit=10" \
+curl -X GET "http://localhost:4000/api/notifications?channel=IN_APP&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -112,7 +112,7 @@ curl -X GET "http://localhost:3001/api/notifications?channel=IN_APP&page=1&limit
 **من المتصفح (Console):**
 ```javascript
 // بدون filters
-fetch('http://localhost:3001/api/notifications?page=1&limit=10', {
+fetch('http://localhost:4000/api/notifications?page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
     'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ fetch('http://localhost:3001/api/notifications?page=1&limit=10', {
 .then(console.log);
 
 // مع filters
-fetch('http://localhost:3001/api/notifications?isRead=false&type=info&page=1&limit=10', {
+fetch('http://localhost:4000/api/notifications?isRead=false&type=info&page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
     'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ fetch('http://localhost:3001/api/notifications?isRead=false&type=info&page=1&lim
 
 **الطريقة:**
 ```bash
-curl -X POST "http://localhost:3001/api/notifications" \
+curl -X POST "http://localhost:4000/api/notifications" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -152,7 +152,7 @@ curl -X POST "http://localhost:3001/api/notifications" \
 
 **من المتصفح (Console):**
 ```javascript
-fetch('http://localhost:3001/api/notifications', {
+fetch('http://localhost:4000/api/notifications', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -195,7 +195,7 @@ fetch('http://localhost:3001/api/notifications', {
 
 **الطريقة:**
 ```bash
-curl -X GET "http://localhost:3001/api/notifications/1" \
+curl -X GET "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -203,7 +203,7 @@ curl -X GET "http://localhost:3001/api/notifications/1" \
 **من المتصفح (Console):**
 ```javascript
 const notificationId = 1; // استخدم ID من الاختبار السابق
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
     'Content-Type': 'application/json'
@@ -221,7 +221,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 
 **الطريقة:**
 ```bash
-curl -X PUT "http://localhost:3001/api/notifications/1" \
+curl -X PUT "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -233,7 +233,7 @@ curl -X PUT "http://localhost:3001/api/notifications/1" \
 **من المتصفح (Console):**
 ```javascript
 const notificationId = 1;
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   method: 'PUT',
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -256,7 +256,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 
 **الطريقة:**
 ```bash
-curl -X PATCH "http://localhost:3001/api/notifications/1/read" \
+curl -X PATCH "http://localhost:4000/api/notifications/1/read" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -264,7 +264,7 @@ curl -X PATCH "http://localhost:3001/api/notifications/1/read" \
 **من المتصفح (Console):**
 ```javascript
 const notificationId = 1;
-fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}/read`, {
   method: 'PATCH',
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -283,14 +283,14 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
 
 **الطريقة:**
 ```bash
-curl -X PATCH "http://localhost:3001/api/notifications/read/all" \
+curl -X PATCH "http://localhost:4000/api/notifications/read/all" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
 
 **من المتصفح (Console):**
 ```javascript
-fetch('http://localhost:3001/api/notifications/read/all', {
+fetch('http://localhost:4000/api/notifications/read/all', {
   method: 'PATCH',
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -318,7 +318,7 @@ fetch('http://localhost:3001/api/notifications/read/all', {
 
 **الطريقة:**
 ```bash
-curl -X DELETE "http://localhost:3001/api/notifications/1" \
+curl -X DELETE "http://localhost:4000/api/notifications/1" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -326,7 +326,7 @@ curl -X DELETE "http://localhost:3001/api/notifications/1" \
 **من المتصفح (Console):**
 ```javascript
 const notificationId = 1;
-fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+fetch(`http://localhost:4000/api/notifications/${notificationId}`, {
   method: 'DELETE',
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -344,7 +344,7 @@ fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
 ### 1. Unauthorized Access (بدون token)
 
 ```bash
-curl -X GET "http://localhost:3001/api/notifications" \
+curl -X GET "http://localhost:4000/api/notifications" \
   -H "Content-Type: application/json"
 ```
 
@@ -359,7 +359,7 @@ curl -X GET "http://localhost:3001/api/notifications" \
 ### 2. Access Non-existent Notification
 
 ```bash
-curl -X GET "http://localhost:3001/api/notifications/99999" \
+curl -X GET "http://localhost:4000/api/notifications/99999" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -402,7 +402,7 @@ curl -X GET "http://localhost:3001/api/notifications/99999" \
 ### 2. إضافة Environment
 - اسم: "FixZone Local"
 - Variables:
-  - `base_url`: `http://localhost:3001`
+  - `base_url`: `http://localhost:4000`
   - `token`: (سيتم تعيينه بعد تسجيل الدخول)
 
 ### 3. تسجيل الدخول أولاً

@@ -11,7 +11,7 @@
 
 **الوصف:**
 - Customer Dashboard يدخل في infinite loop عند تحميل البيانات
-- `GET http://localhost:3001/api/auth/customer/profile 404 (Not Found)`
+- `GET http://localhost:4000/api/auth/customer/profile 404 (Not Found)`
 - Error: "العميل غير موجود"
 - يتكرر نفس الـ error مرات عديدة
 

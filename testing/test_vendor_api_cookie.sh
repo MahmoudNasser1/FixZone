@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-BASE_URL="http://localhost:3001"
+BASE_URL="http://localhost:4000"
 COOKIE_JAR="/tmp/fixzone_vendor_cookie.jar"
 RESULTS_FILE="RESULTS/07_VENDOR_MANAGEMENT_API_RUN_COOKIE.log"
 

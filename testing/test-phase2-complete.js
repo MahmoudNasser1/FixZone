@@ -1,7 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:4000/api';
 
 console.log('\n🧪 اختبار شامل - Phase 2 + التحسينات\n');
 console.log('━'.repeat(80));

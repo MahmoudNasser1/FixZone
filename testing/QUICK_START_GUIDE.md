@@ -109,7 +109,7 @@ const token = JSON.parse(authStorage)?.state?.token;
 window.TEST_TOKEN = token;
 
 // مثال: اختبار API
-fetch('http://localhost:3001/api/notifications', {
+fetch('http://localhost:4000/api/notifications', {
   headers: {
     'Authorization': `Bearer ${window.TEST_TOKEN}`,
     'Content-Type': 'application/json'
@@ -122,13 +122,13 @@ fetch('http://localhost:3001/api/notifications', {
 ### 2. curl (Terminal)
 ```bash
 # الحصول على Token
-TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"ahmed","password":"ahmed"}' \
   | jq -r '.token')
 
 # اختبار API
-curl -X GET "http://localhost:3001/api/notifications" \
+curl -X GET "http://localhost:4000/api/notifications" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```

@@ -113,7 +113,7 @@ node testing/test-module-payments-invoices.js
    cd backend && npm start
 
 2. تحقق من البورت:
-   curl http://localhost:3001/health
+   curl http://localhost:4000/health
 ```
 
 ### **❌ مشكلة: "Authentication failed"**
@@ -152,7 +152,7 @@ node testing/test-module-payments-invoices.js
 
 ### **قبل التشغيل:**
 - [ ] MySQL يعمل
-- [ ] Backend يعمل على البورت 3001
+- [ ] Backend يعمل على البورت 4000
 - [ ] Frontend يعمل على البورت 3000
 - [ ] البيانات موجودة في قاعدة البيانات
 

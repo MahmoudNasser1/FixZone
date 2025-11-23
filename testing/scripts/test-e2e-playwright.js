@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 
 // إعدادات الاختبار
 const BASE_URL = 'http://localhost:3000';
-const API_URL = 'http://localhost:3001';
+const API_URL = 'http://localhost:4000';
 
 // نتائج الاختبار
 const testResults = {

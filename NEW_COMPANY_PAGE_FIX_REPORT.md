@@ -15,7 +15,7 @@
 ### تفاصيل الخطأ:
 ```
 NewCompanyPage.js:76 Error creating company: TypeError: response.json is not a function
-api.js:25 POST http://localhost:3001/api/companies 400 (Bad Request)
+api.js:25 POST http://localhost:4000/api/companies 400 (Bad Request)
 api.js:46 API request failed: Error: HTTP error! status: 400
 ```
 

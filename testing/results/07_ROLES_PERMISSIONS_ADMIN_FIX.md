@@ -71,7 +71,7 @@ set({ isAuthenticated: true, user: userData, token: null });
 ### Test 1: API Response Check ✅
 **Command:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"loginIdentifier":"admin@fixzone.com","password":"admin123"}'
 ```

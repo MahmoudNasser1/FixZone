@@ -42,10 +42,10 @@
 **الاختبار:**
 ```bash
 # بدون auth - يعمل! (يجب أن يعطي 401)
-curl "http://localhost:3001/api/expensecategories"
+curl "http://localhost:4000/api/expensecategories"
 # Result: ✅ 200 OK - يعرض 19 فئة (مشكلة أمان!)
 
-curl -X POST "http://localhost:3001/api/expensecategories" \
+curl -X POST "http://localhost:4000/api/expensecategories" \
   -H "Content-Type: application/json" \
   -d '{"name":"اختبار فئة"}'
 # Result: ✅ 201 Created - تم إنشاء فئة (مشكلة أمان!)
@@ -70,7 +70,7 @@ curl -X POST "http://localhost:3001/api/expensecategories" \
 
 **الاختبار:**
 ```bash
-curl -b cookies.txt "http://localhost:3001/api/expenses?page=1&limit=10"
+curl -b cookies.txt "http://localhost:4000/api/expenses?page=1&limit=10"
 # Result: {"success":false,"total":null,"count":0,"sample":null}
 ```
 

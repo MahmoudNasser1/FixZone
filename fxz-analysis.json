@@ -1199,17 +1199,17 @@
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/StockAlertsPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/stock-alerts/low"
+      "url": "http://localhost:4000/api/stock-alerts/low"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/StockAlertsPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/stock-alerts/settings"
+      "url": "http://localhost:4000/api/stock-alerts/settings"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/StockAlertsPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/stock-alerts/reorder-suggestions"
+      "url": "http://localhost:4000/api/stock-alerts/reorder-suggestions"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/StockAlertsPage.js",
@@ -1219,7 +1219,7 @@
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/NewInventoryItemPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/inventory"
+      "url": "http://localhost:4000/api/inventory"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/inventory/EditInventoryItemPage.js",
@@ -1234,22 +1234,22 @@
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/repairs"
+      "url": "http://localhost:4000/api/repairs"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/customers"
+      "url": "http://localhost:4000/api/customers"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/inventory"
+      "url": "http://localhost:4000/api/inventory"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/repairs?limit=5"
+      "url": "http://localhost:4000/api/repairs?limit=5"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
@@ -1259,17 +1259,17 @@
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/stocklevels/low-stock"
+      "url": "http://localhost:4000/api/stocklevels/low-stock"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/invoices"
+      "url": "http://localhost:4000/api/invoices"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/pages/integration/WorkflowDashboardPage.js",
       "type": "fetch",
-      "url": "http://localhost:3001/api/payments"
+      "url": "http://localhost:4000/api/payments"
     },
     {
       "file": "/opt/lampp/htdocs/FixZone/frontend/react-app/src/components/ui/StockMovementHistory.js",

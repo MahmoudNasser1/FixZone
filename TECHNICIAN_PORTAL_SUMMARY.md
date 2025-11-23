@@ -169,7 +169,7 @@
 
 ### للمطورين:
 ```bash
-# Backend already running on port 3001
+# Backend already running on port 4000
 # Frontend
 cd frontend/react-app
 npm install

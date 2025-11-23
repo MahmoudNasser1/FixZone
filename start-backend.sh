@@ -4,7 +4,7 @@
 
 echo "🔧 Starting Backend Server..."
 
-# Kill any existing Node processes on port 3001
+# Kill any existing Node processes on port 4000
 cd /opt/lampp/htdocs/FixZone
 ps aux | grep -E "node.*server.js|node.*app.js" | grep -v grep | awk '{print $2}' | xargs -r kill -9 2>/dev/null
 sleep 2
@@ -21,10 +21,10 @@ echo "🔍 Checking server status..."
 sleep 8
 
 # Check if server is running
-if curl -s "http://localhost:3001/health" > /dev/null 2>&1; then
-    echo "✅ Backend Server is running on port 3001"
-    echo "📊 API Base URL: http://localhost:3001/api"
-    echo "🏥 Health Check: http://localhost:3001/health"
+if curl -s "http://localhost:4000/health" > /dev/null 2>&1; then
+    echo "✅ Backend Server is running on port 4000"
+    echo "📊 API Base URL: http://localhost:4000/api"
+    echo "🏥 Health Check: http://localhost:4000/health"
 else
     echo "⚠️ Backend Server may not be responding"
     echo "📋 Check logs: tail -f /tmp/backend_server.log"

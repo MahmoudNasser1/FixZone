@@ -83,7 +83,7 @@
    console.log('Token:', token);
    
    # أو من Terminal (إذا كان المستخدم متاح):
-   TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
+   TOKEN=$(curl -X POST http://localhost:4000/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"loginIdentifier":"username","password":"password"}' \
      | jq -r '.token')
@@ -92,12 +92,12 @@
 2. **شغّل الاختبارات:**
    ```bash
    # Test 1: GET /api/companies/:id
-   curl -X GET "http://localhost:3001/api/companies/1" \
+   curl -X GET "http://localhost:4000/api/companies/1" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 2: POST /api/companies
-   curl -X POST "http://localhost:3001/api/companies" \
+   curl -X POST "http://localhost:4000/api/companies" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" \
      -d '{
@@ -110,7 +110,7 @@
      }' | jq '.'
    
    # Test 3: PUT /api/companies/:id
-   curl -X PUT "http://localhost:3001/api/companies/1" \
+   curl -X PUT "http://localhost:4000/api/companies/1" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" \
      -d '{
@@ -123,31 +123,31 @@
      }' | jq '.'
    
    # Test 4: DELETE /api/companies/:id
-   curl -X DELETE "http://localhost:3001/api/companies/1" \
+   curl -X DELETE "http://localhost:4000/api/companies/1" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 5: GET /api/companies/:id/customers
-   curl -X GET "http://localhost:3001/api/companies/1/customers" \
+   curl -X GET "http://localhost:4000/api/companies/1/customers" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 6: GET /api/companies (search)
-   curl -X GET "http://localhost:3001/api/companies?search=شركة" \
+   curl -X GET "http://localhost:4000/api/companies?search=شركة" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 7: GET /api/companies (pagination)
-   curl -X GET "http://localhost:3001/api/companies?page=1&pageSize=5" \
+   curl -X GET "http://localhost:4000/api/companies?page=1&pageSize=5" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 8: GET /api/companies (unauthorized - 401)
-   curl -X GET "http://localhost:3001/api/companies" \
+   curl -X GET "http://localhost:4000/api/companies" \
      -H "Content-Type: application/json" | jq '.'
    
    # Test 9: GET /api/companies/99999 (404)
-   curl -X GET "http://localhost:3001/api/companies/99999" \
+   curl -X GET "http://localhost:4000/api/companies/99999" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" | jq '.'
    ```
@@ -207,7 +207,7 @@
 **الحل:** تأكد من استخدام ID صحيح
 
 ### المشكلة 4: Backend غير متاح
-**الحل:** تحقق من أن Backend يعمل على `http://localhost:3001`
+**الحل:** تحقق من أن Backend يعمل على `http://localhost:4000`
 
 ---
 

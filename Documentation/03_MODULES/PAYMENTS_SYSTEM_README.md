@@ -127,7 +127,7 @@ cd frontend/react-app && npm start
 
 ### 4. **الوصول للنظام:**
 - الواجهة الأمامية: `http://localhost:3000`
-- API الخادم: `http://localhost:3001`
+- API الخادم: `http://localhost:4000`
 
 ---
 
