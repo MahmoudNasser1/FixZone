@@ -524,19 +524,25 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     devicePassword,
     cpu, gpu, ram, storage,
     accessories,
-    problemDescription, priority, estimatedCost, notes, status, expectedDeliveryDate
+    problemDescription, priority, estimatedCost, notes, status, expectedDeliveryDate,
+    companyId // Include companyId from request body
   } = req.body;
 
   // Debug logging
   console.log('Received repair data:', {
+    customerId,
+    customerName,
+    customerPhone,
+    customerEmail,
+    companyId, // Log companyId to debug
     estimatedCost,
     expectedDeliveryDate,
-    customerName,
     deviceType,
     problemDescription,
     accessories
   });
   console.log('Accessories type:', typeof accessories, 'Is array:', Array.isArray(accessories), 'Value:', accessories);
+  console.log('CompanyId received:', companyId, 'Type:', typeof companyId);
 
   // Get database connection for transaction
   const connection = await db.getConnection();
@@ -556,13 +562,63 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
       if (existingCustomer.length > 0) {
         actualCustomerId = existingCustomer[0].id;
+        // Update customer's company if companyId is provided
+        if (companyId) {
+          const finalCompanyId = parseInt(companyId);
+          console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
+          await connection.execute(
+            'UPDATE Customer SET companyId = ? WHERE id = ?',
+            [finalCompanyId, actualCustomerId]
+          );
+          console.log('✅ Successfully linked company to existing customer');
+          
+          // Verify the update
+          const [verifyCustomer] = await connection.execute(
+            'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+            [actualCustomerId]
+          );
+          if (verifyCustomer.length > 0) {
+            console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+          }
+        }
       } else {
-        // إنشاء عميل جديد
+        // إنشاء عميل جديد مع companyId إذا كان موجوداً
+        console.log('🔵 Creating new customer with companyId:', companyId, 'Type:', typeof companyId);
+        const finalCompanyId = companyId ? parseInt(companyId) : null;
+        console.log('🔵 Final companyId for INSERT:', finalCompanyId);
         const [customerResult] = await connection.execute(
-          'INSERT INTO Customer (name, phone, email) VALUES (?, ?, ?)',
-          [customerName, customerPhone, customerEmail || null]
+          'INSERT INTO Customer (name, phone, email, companyId) VALUES (?, ?, ?, ?)',
+          [customerName, customerPhone, customerEmail || null, finalCompanyId]
         );
         actualCustomerId = customerResult.insertId;
+        console.log('✅ Created new customer:', actualCustomerId, 'with companyId:', finalCompanyId);
+        
+        // Verify the companyId was saved correctly
+        const [verifyCustomer] = await connection.execute(
+          'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+          [actualCustomerId]
+        );
+        if (verifyCustomer.length > 0) {
+          console.log('✅ Verification - Customer saved with companyId:', verifyCustomer[0].companyId);
+        }
+      }
+    } else if (companyId) {
+      // If customer exists and companyId is provided, update customer's company
+      const finalCompanyId = parseInt(companyId);
+      console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
+      await connection.execute(
+        'UPDATE Customer SET companyId = ? WHERE id = ?',
+        [finalCompanyId, actualCustomerId]
+      );
+      console.log('✅ Successfully linked company to existing customer');
+      
+      // Verify the update
+      const [verifyCustomer] = await connection.execute(
+        'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+        [actualCustomerId]
+      );
+      if (verifyCustomer.length > 0) {
+        console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
       }
     }
 

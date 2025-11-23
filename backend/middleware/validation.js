@@ -1626,6 +1626,12 @@ const repairSchemas = {
         'number.base': 'معرف العميل يجب أن يكون رقم'
       }),
     
+    companyId: Joi.number().integer().positive().allow(null).optional()
+      .messages({
+        'number.positive': 'معرف الشركة غير صحيح',
+        'number.base': 'معرف الشركة يجب أن يكون رقم'
+      }),
+    
     customerName: Joi.string().min(2).max(100).trim().required()
       .when('customerId', {
         is: Joi.number().integer().positive(),
@@ -1862,6 +1868,14 @@ const repairSchemas = {
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
+      }),
+    
+    accessories: Joi.array().items(Joi.alternatives().try(
+      Joi.string(),
+      Joi.object().unknown()
+    )).optional()
+      .messages({
+        'array.base': 'المتعلقات يجب أن تكون مصفوفة'
       })
   }).min(1), // At least one field must be present
 

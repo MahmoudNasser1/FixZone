@@ -512,7 +512,23 @@ const RepairDetailsPage = () => {
       // First, we need to get the invoice for this repair request
       // Get fresh invoices from the API directly to avoid state timing issues
       const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-      const freshInvoices = freshInvoicesData.data || [];
+      
+      // Handle different response formats
+      let freshInvoices = [];
+      if (Array.isArray(freshInvoicesData)) {
+        freshInvoices = freshInvoicesData;
+      } else if (freshInvoicesData?.data && Array.isArray(freshInvoicesData.data)) {
+        freshInvoices = freshInvoicesData.data;
+      } else if (freshInvoicesData?.success && freshInvoicesData?.data?.invoices && Array.isArray(freshInvoicesData.data.invoices)) {
+        freshInvoices = freshInvoicesData.data.invoices;
+      } else if (freshInvoicesData?.invoices && Array.isArray(freshInvoicesData.invoices)) {
+        freshInvoices = freshInvoicesData.invoices;
+      }
+      
+      if (!Array.isArray(freshInvoices)) {
+        throw new Error('Invalid invoices response format');
+      }
+      
       const invoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
       if (!invoice) {
         notifications.error('لا توجد فاتورة لهذا الطلب. يرجى إنشاء فاتورة أولاً');
@@ -585,10 +601,29 @@ const RepairDetailsPage = () => {
   const handleUpdateRepairDetails = async () => {
     try {
       console.log('Updating repair details with data:', repairDetails);
+      
+      // Convert priority from Arabic/display value to backend format
+      const priorityMap = {
+        'منخفضة': 'LOW',
+        'متوسطة': 'MEDIUM',
+        'عالية': 'HIGH',
+        'عاجلة': 'URGENT',
+        'low': 'LOW',
+        'medium': 'MEDIUM',
+        'high': 'HIGH',
+        'urgent': 'URGENT',
+        'LOW': 'LOW',
+        'MEDIUM': 'MEDIUM',
+        'HIGH': 'HIGH',
+        'URGENT': 'URGENT'
+      };
+      
+      const normalizedPriority = priorityMap[repairDetails.priority] || repairDetails.priority || 'MEDIUM';
+      
       await apiService.updateRepairRequest(id, {
         estimatedCost: repairDetails.estimatedCost,
         actualCost: repairDetails.actualCost,
-        priority: repairDetails.priority,
+        priority: normalizedPriority,
         expectedDeliveryDate: repairDetails.expectedDeliveryDate,
         notes: repairDetails.notes
       });
@@ -2056,9 +2091,24 @@ const RepairDetailsPage = () => {
                                           
                                           // Get fresh invoices from the API directly to avoid state timing issues
                                           const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-                                          const freshInvoices = freshInvoicesData.data || [];
+                                          
+                                          // Handle different response formats
+                                          let freshInvoices = [];
+                                          if (Array.isArray(freshInvoicesData)) {
+                                            freshInvoices = freshInvoicesData;
+                                          } else if (freshInvoicesData?.data && Array.isArray(freshInvoicesData.data)) {
+                                            freshInvoices = freshInvoicesData.data;
+                                          } else if (freshInvoicesData?.success && freshInvoicesData?.data?.invoices && Array.isArray(freshInvoicesData.data.invoices)) {
+                                            freshInvoices = freshInvoicesData.data.invoices;
+                                          } else if (freshInvoicesData?.invoices && Array.isArray(freshInvoicesData.invoices)) {
+                                            freshInvoices = freshInvoicesData.invoices;
+                                          }
                                           
                                           console.log('Debug - Fresh invoices (parts):', freshInvoices);
+                                          if (!Array.isArray(freshInvoices)) {
+                                            throw new Error('Invalid invoices response format');
+                                          }
+                                          
                                           const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
                                           const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                           if (!targetInvoiceId) {

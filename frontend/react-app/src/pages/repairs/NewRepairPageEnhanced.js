@@ -255,13 +255,13 @@ const NewRepairPageEnhanced = () => {
             const company = await apiService.getCompany(companyId);
             if (company) {
               setSelectedCompany(company);
-              setCompanySearch(company.name || '');
+              setCompanySearch(String(company.name || '').trim());
             }
           } catch (err) {
             console.error('Error loading company:', err);
             // If company loading fails, clear company selection
             setSelectedCompany(null);
-            setCompanySearch('');
+            setCompanySearch(''); // Always string, never undefined
           }
         } else {
           // Clear company if customer doesn't have one
@@ -345,39 +345,40 @@ const NewRepairPageEnhanced = () => {
 
   const selectCustomer = (customer) => {
     setSelectedCustomer(customer);
-    const companyId = customer.companyId || null;
+    const customerCompanyId = customer.companyId || null;
+    
+    // Preserve existing company selection if customer doesn't have a company
+    // Only override if customer has a company
+    const finalCompanyId = customerCompanyId || formData.companyId || null;
+    
     setFormData(prev => ({
       ...prev,
       customerId: customer.id,
       customerName: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
       customerPhone: customer.phone || '',
       customerEmail: customer.email || '',
-      companyId: companyId // Set company ID if customer has one
+      companyId: finalCompanyId // Use customer's company or preserve existing selection
     }));
     setCustomerSearch(customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim());
     setShowCustomerResults(false);
     setCustomers([]);
     
-    // If customer has a company, load it
-    if (companyId) {
-      apiService.getCompany(companyId)
+    // If customer has a company, load it and override selection
+    if (customerCompanyId) {
+      apiService.getCompany(customerCompanyId)
         .then(company => {
           if (company) {
             setSelectedCompany(company);
-            setCompanySearch(company.name || '');
+            setCompanySearch(String(company.name || '').trim());
           }
         })
         .catch(err => {
           console.error('Error loading company:', err);
-          // If company loading fails, clear company selection
-          setSelectedCompany(null);
-          setCompanySearch('');
+          // If company loading fails, keep existing company selection if any
         });
-    } else {
-      // Clear company if customer doesn't have one
-      setSelectedCompany(null);
-      setCompanySearch('');
     }
+    // If customer doesn't have a company, preserve existing company selection
+    // Don't clear it automatically - user might have selected a company separately
   };
 
   const clearCustomer = () => {
@@ -388,7 +389,8 @@ const NewRepairPageEnhanced = () => {
       customerName: '',
       customerPhone: '',
       customerEmail: '',
-      companyId: null // Clear company when clearing customer
+      // Don't clear companyId when clearing customer - user might have selected a company separately
+      // companyId: null
     }));
     setCustomerSearch('');
     setShowCustomerResults(false);
@@ -422,7 +424,7 @@ const NewRepairPageEnhanced = () => {
   };
 
   const handleCompanySearchChange = (e) => {
-    const value = e.target.value;
+    const value = String(e.target.value || '');
     setCompanySearch(value);
     if (value.trim().length >= 2) {
       const timeoutId = setTimeout(() => {
@@ -436,12 +438,15 @@ const NewRepairPageEnhanced = () => {
   };
 
   const selectCompany = (company) => {
+    if (!company || !company.id) return;
+    
     setSelectedCompany(company);
     setFormData(prev => ({
       ...prev,
       companyId: company.id
     }));
-    setCompanySearch(company.name);
+    // Always ensure companySearch is a string, never undefined/null
+    setCompanySearch(String(company.name || '').trim());
     setShowCompanyResults(false);
     setCompanies([]);
   };
@@ -452,7 +457,7 @@ const NewRepairPageEnhanced = () => {
       ...prev,
       companyId: null
     }));
-    setCompanySearch('');
+    setCompanySearch(''); // Always set to empty string, never undefined
     setShowCompanyResults(false);
     setCompanies([]);
   };
@@ -463,14 +468,86 @@ const NewRepairPageEnhanced = () => {
         notifications.error('اسم الشركة مطلوب');
         return;
       }
-      const company = await apiService.createCompany(newCompanyData);
-      selectCompany(company);
+      
+      const response = await apiService.createCompany(newCompanyData);
+      
+      // Handle different response formats
+      let company;
+      if (response && response.id) {
+        // Direct company object
+        company = response;
+      } else if (response && response.data && response.data.company) {
+        // Nested in data.company
+        company = response.data.company;
+      } else if (response && response.success && response.data) {
+        // Nested in success.data
+        company = response.data;
+      } else {
+        throw new Error('Invalid company response format');
+      }
+      
+      // Ensure company has required fields
+      if (!company || !company.id) {
+        throw new Error('Company data is invalid');
+      }
+      
+      // Get company name - use response name or fallback to input name
+      const companyName = String(company.name || newCompanyData.name || '').trim();
+      
+      // Select the company FIRST - this ensures state is updated
+      setSelectedCompany(company);
+      
+      // Update formData with companyId - CRITICAL: use functional update to ensure we get the latest state
+      setFormData(prev => {
+        console.log('🔄 Updating formData with companyId:', company.id, 'Current formData.companyId:', prev.companyId);
+        return {
+          ...prev,
+          companyId: company.id // Always set companyId when company is created/selected
+        };
+      });
+      
+      // Update companySearch with company name - ALWAYS use string, never undefined/null
+      // This fixes the "controlled to uncontrolled" error
+      setCompanySearch(companyName);
+      
+      // Close forms and clear data
+      setShowCompanyResults(false);
+      setCompanies([]);
       setShowCompanyForm(false);
       setNewCompanyData({ name: '', email: '', phone: '', address: '' });
-      notifications.success('تم إنشاء الشركة بنجاح');
+      
+      // Link company to customer if customer is selected
+      if (selectedCustomer && selectedCustomer.id) {
+        try {
+          console.log('🔗 Linking company to existing customer:', selectedCustomer.id, 'companyId:', company.id);
+          await apiService.updateCustomer(selectedCustomer.id, {
+            companyId: company.id
+          });
+          // Update local customer state
+          setSelectedCustomer(prev => ({
+            ...prev,
+            companyId: company.id
+          }));
+          console.log('✅ Successfully linked company to existing customer');
+        } catch (err) {
+          console.error('❌ Error linking company to customer:', err);
+          // Don't show error to user - company is still created
+        }
+      } else {
+        console.log('ℹ️ No customer selected yet - companyId will be linked when repair is created');
+      }
+      
+      // Show success notification - this should always appear
+      notifications.success('تم إنشاء الشركة بنجاح' + (selectedCustomer ? ' وربطها بالعميل' : ''));
+      
+      // Force a small delay to ensure state updates are reflected in UI
+      setTimeout(() => {
+        // Double-check that companySearch is set correctly (always string)
+        setCompanySearch(String(companyName || '').trim());
+      }, 100);
     } catch (err) {
       console.error('Error creating company:', err);
-      notifications.error('حدث خطأ في إنشاء الشركة');
+      notifications.error('حدث خطأ في إنشاء الشركة: ' + (err.message || 'خطأ غير معروف'));
     }
   };
 
@@ -516,11 +593,28 @@ const NewRepairPageEnhanced = () => {
         estimatedCost: formData.estimatedCostMin && formData.estimatedCostMax 
           ? parseFloat((parseFloat(formData.estimatedCostMin) + parseFloat(formData.estimatedCostMax)) / 2) // Send average if range provided
           : (formData.estimatedCostMin ? parseFloat(formData.estimatedCostMin) : null), // Send as number, not string
-        companyId: formData.companyId || selectedCompany?.id || null, // Include company ID
+        // CRITICAL: Get companyId from multiple sources to ensure it's not lost
+        companyId: (() => {
+          const fromFormData = formData.companyId;
+          const fromSelectedCompany = selectedCompany?.id;
+          const finalCompanyId = fromFormData || fromSelectedCompany || null;
+          console.log('🔍 CompanyId sources:', {
+            formData: fromFormData,
+            selectedCompany: fromSelectedCompany,
+            final: finalCompanyId
+          });
+          if (finalCompanyId) {
+            console.log('✅ CompanyId will be sent:', finalCompanyId);
+          } else {
+            console.warn('⚠️ WARNING: No companyId found! formData.companyId:', fromFormData, 'selectedCompany?.id:', fromSelectedCompany);
+          }
+          return finalCompanyId;
+        })(),
         expectedDeliveryDate: formData.expectedDeliveryDate || null
       };
 
-      console.log('Submitting repair request:', repairData);
+      console.log('📤 Submitting repair request:', repairData);
+      console.log('🔍 CompanyId in repairData:', repairData.companyId, 'formData.companyId:', formData.companyId, 'selectedCompany?.id:', selectedCompany?.id);
 
       const result = await apiService.createRepairRequest(repairData);
 
@@ -741,7 +835,7 @@ const NewRepairPageEnhanced = () => {
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="text"
-                value={companySearch}
+                value={String(companySearch ?? '')}
                 onChange={handleCompanySearchChange}
                 placeholder="ابحث باسم الشركة..."
                 className="pr-10"

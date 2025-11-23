@@ -1,188 +1,105 @@
-# 🚀 Fix Zone ERP - Production Deployment
+# 🚀 FixZone ERP - Deployment Files
 
-## 📋 نظرة عامة
+This directory contains all deployment-related files and scripts.
 
-هذا المجلد يحتوي على جميع الملفات والإعدادات اللازمة لنشر نظام Fix Zone ERP على VPS مع نظام تحديثات متكامل.
+## 📁 Files
 
----
+- **DEPLOYMENT_GUIDE.md** - Complete step-by-step deployment guide
+- **export-database.sh** - Script to export database for deployment
+- **deploy-to-server.sh** - Script to deploy code on production server
+- **backend.env.example** - Backend environment variables template
+- **frontend.env.production.example** - Frontend environment variables template
 
-## 📁 محتويات المجلد
+## 🚀 Quick Start
 
-```
-DEPLOYMENT/
-├── PRODUCTION_DEPLOYMENT_GUIDE.md    # الدليل الشامل للنشر
-├── UPDATE_PROCEDURE.md               # إجراءات التحديث
-├── ecosystem.config.js               # إعدادات PM2
-├── nginx.conf                        # إعدادات Nginx
-├── backend.env.example                # مثال لملف بيئة Backend
-├── frontend.env.production.example    # مثال لملف بيئة Frontend
-├── scripts/
-│   ├── deploy.sh                     # سكريبت النشر الأولي
-│   ├── update.sh                     # سكريبت التحديث
-│   └── backup.sh                     # سكريبت النسخ الاحتياطي
-└── README.md                         # هذا الملف
-```
+### 1. Export Database
 
----
-
-## 🚀 البداية السريعة
-
-### **1. اقرأ الدليل الشامل:**
 ```bash
-cat DEPLOYMENT/PRODUCTION_DEPLOYMENT_GUIDE.md
+cd DEPLOYMENT
+./export-database.sh
 ```
 
-### **2. اتبع الخطوات بالترتيب:**
-- إعداد الخادم
-- إعداد ملفات البيئة
-- إعداد قاعدة البيانات
-- بناء التطبيق
-- إعداد PM2
-- إعداد Nginx
-- إعداد SSL
+### 2. Push to GitHub
 
----
-
-## 📝 خطوات سريعة
-
-### **النشر الأولي:**
 ```bash
-# 1. نسخ ملفات البيئة
+# From project root
+git add .
+git commit -m "Ready for deployment"
+git push origin main
+```
+
+### 3. Deploy on Server
+
+```bash
+# On your production server
+cd DEPLOYMENT
+./deploy-to-server.sh
+```
+
+## 📝 Environment Variables
+
+### Backend (.env)
+
+Copy `backend.env.example` to `backend/.env` and fill in your values:
+
+```bash
 cp DEPLOYMENT/backend.env.example backend/.env
-cp DEPLOYMENT/frontend.env.production.example frontend/react-app/.env.production
-
-# 2. تعديل الملفات بالقيم الصحيحة
 nano backend/.env
+```
+
+### Frontend (.env.production)
+
+Copy `frontend.env.production.example` to `frontend/react-app/.env.production`:
+
+```bash
+cp DEPLOYMENT/frontend.env.production.example frontend/react-app/.env.production
 nano frontend/react-app/.env.production
-
-# 3. تشغيل سكريبت النشر
-./DEPLOYMENT/scripts/deploy.sh
 ```
 
-### **التحديث:**
+## 🔧 PM2 Commands
+
 ```bash
-./DEPLOYMENT/scripts/update.sh
-```
+# Start applications
+pm2 start ecosystem.config.js
 
-### **النسخ الاحتياطي:**
-```bash
-./DEPLOYMENT/scripts/backup.sh
-```
+# Stop applications
+pm2 stop all
 
----
+# Restart applications
+pm2 restart all
 
-## ⚙️ الإعدادات المطلوبة
-
-### **1. Backend Environment (.env):**
-- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-- `JWT_SECRET` (32+ حرف)
-- `CORS_ORIGIN` (رابط الدومين)
-- `PORT` (افتراضي: 3001)
-
-### **2. Frontend Environment (.env.production):**
-- `REACT_APP_API_URL` (رابط API)
-- `REACT_APP_WS_URL` (رابط WebSocket)
-
-### **3. Nginx Configuration:**
-- تحديث `server_name` بالدومين
-- تحديث مسارات SSL certificates
-
-### **4. PM2 Ecosystem:**
-- تحديث `cwd` إذا كان المسار مختلف
-- تعديل عدد الـ instances حسب الـ CPU
-
----
-
-## 🔒 الأمان
-
-### **قبل النشر:**
-- ✅ استخدام كلمات مرور قوية
-- ✅ تحديث جميع التبعيات
-- ✅ إعداد Firewall
-- ✅ إعداد SSL Certificate
-- ✅ تعطيل الوصول المباشر للـ Backend
-
-### **بعد النشر:**
-- ✅ مراقبة Logs بانتظام
-- ✅ عمل نسخ احتياطية دورية
-- ✅ تحديثات أمنية منتظمة
-- ✅ مراجعة الصلاحيات
-
----
-
-## 📊 المراقبة
-
-### **PM2:**
-```bash
-pm2 status
-pm2 monit
+# View logs
 pm2 logs
+
+# Monitor
+pm2 monit
+
+# Save configuration
+pm2 save
+
+# Setup startup script
+pm2 startup
 ```
 
-### **Nginx:**
+## 📊 Monitoring
+
+- **PM2 Dashboard**: `pm2 monit`
+- **Logs**: `pm2 logs`
+- **Status**: `pm2 status`
+
+## 🔄 Updates
+
+To update the deployment:
+
 ```bash
-sudo tail -f /var/log/nginx/fixzone-access.log
-sudo tail -f /var/log/nginx/fixzone-error.log
+cd /var/www/fixzone
+git pull origin main
+cd backend && npm install --production
+cd ../frontend/react-app && npm install --production && npm run build
+cd /var/www/fixzone
+pm2 restart ecosystem.config.js
 ```
 
-### **System:**
-```bash
-htop
-df -h
-free -m
-```
+## 🛠️ Troubleshooting
 
----
-
-## 🆘 استكشاف الأخطاء
-
-### **Backend لا يعمل:**
-```bash
-pm2 logs fixzone-backend
-pm2 restart fixzone-backend
-```
-
-### **Frontend لا يظهر:**
-```bash
-sudo nginx -t
-sudo systemctl status nginx
-```
-
-### **مشاكل قاعدة البيانات:**
-```bash
-mysql -u fixzone_user -p FZ -e "SHOW PROCESSLIST;"
-```
-
----
-
-## 📚 الوثائق الكاملة
-
-- **دليل النشر:** `PRODUCTION_DEPLOYMENT_GUIDE.md`
-- **إجراءات التحديث:** `UPDATE_PROCEDURE.md`
-- **الدليل الرئيسي:** `../README.md`
-
----
-
-## ✅ Checklist النشر
-
-- [ ] قراءة الدليل الشامل
-- [ ] إعداد الخادم (Node.js, MySQL, Nginx, PM2)
-- [ ] إنشاء ملفات البيئة
-- [ ] إعداد قاعدة البيانات
-- [ ] بناء Frontend
-- [ ] إعداد PM2
-- [ ] إعداد Nginx
-- [ ] إعداد SSL
-- [ ] اختبار النظام
-- [ ] إعداد النسخ الاحتياطي
-- [ ] إعداد المراقبة
-
----
-
-**📅 آخر تحديث:** 2025-11-19  
-**✅ جاهز للنشر**
-
-
-
-
-
+See the main DEPLOYMENT_GUIDE.md for detailed troubleshooting steps.
