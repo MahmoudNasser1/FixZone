@@ -43,10 +43,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Auth-Token'],
   exposedHeaders: ['Set-Cookie']
 }));
-// Ensure cookies are parsed before routes
-app.use(cookieParser());
 
+// Parse JSON bodies
 app.use(express.json());
+
+// Parse cookies
 app.use(cookieParser());
 
 // Apply rate limiting middleware
@@ -56,6 +57,29 @@ app.use(cookieParser());
 // Import the main router
 const apiRouter = require('./app');
 
+// Health check endpoint (before API routes)
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Fix Zone Backend is running' });
+});
+
+// API root endpoint (must be before app.use('/api', apiRouter))
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Fix Zone API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      dashboard: '/api/dashboard',
+      repairs: '/api/repairs',
+      customers: '/api/customers',
+      inventory: '/api/inventory',
+      invoices: '/api/invoices',
+      payments: '/api/payments'
+    }
+  });
+});
+
 // Use the API router
 app.use('/api', apiRouter);
 
@@ -64,11 +88,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve public files statically (for logos, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Fix Zone Backend is running' });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
