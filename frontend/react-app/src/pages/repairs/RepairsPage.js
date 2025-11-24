@@ -312,9 +312,9 @@ const RepairsPage = () => {
       const params = {};
       if (customerFilter) params.customerId = customerFilter;
       if (status && status !== 'all') params.status = status;
-      if (search) params.q = search;
+      if (search) params.search = search; // Backend expects 'search', not 'q'
       if (page && page > 1) params.page = page;
-      if (pageSize && pageSize !== 10) params.pageSize = pageSize;
+      if (pageSize && pageSize !== 10) params.limit = pageSize; // Backend expects 'limit', not 'pageSize'
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
 

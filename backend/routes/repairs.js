@@ -114,14 +114,22 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       status,
       priority,
       page = 1,
-      limit = 10,
-      search = ''
+      limit,
+      pageSize, // Support both 'limit' and 'pageSize' for backward compatibility
+      search = '',
+      q = '' // Support both 'search' and 'q' for backward compatibility
     } = req.query;
+    
+    // Use 'search' if provided, otherwise fall back to 'q'
+    const searchTerm = search || q;
+    
+    // Use 'limit' if provided, otherwise fall back to 'pageSize', default to 10
+    const limitNum = limit || pageSize || 10;
 
     // Parse pagination parameters
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
-    const offset = Math.max(0, (pageNum - 1) * limitNum);
+    const parsedLimit = Math.min(100, Math.max(1, parseInt(limitNum) || 10));
+    const offset = Math.max(0, (pageNum - 1) * parsedLimit);
 
     // Build WHERE conditions
     let whereConditions = ['rr.deletedAt IS NULL'];
@@ -147,7 +155,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     }
 
     // Search filter (device type, brand, model, or problem description)
-    if (search && search.trim()) {
+    if (searchTerm && searchTerm.trim()) {
       whereConditions.push(`(
         rr.reportedProblem LIKE ? OR 
         d.deviceType LIKE ? OR 
@@ -155,15 +163,14 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         d.model LIKE ? OR
         rr.id = ?
       )`);
-      const searchPattern = `%${search.trim()}%`;
-      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, search.trim());
+      const searchPattern = `%${searchTerm.trim()}%`;
+      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchTerm.trim());
     }
 
     // Build main query with pagination
     const query = `
       SELECT 
         rr.*,
-        rr.accessories as accessoriesJson,
         c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
@@ -181,7 +188,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     `;
 
     // Ensure limit and offset are integers (safeguard against NaN)
-    const finalLimit = Math.floor(Number(limitNum)) || 10;
+    const finalLimit = Math.floor(Number(parsedLimit)) || 10;
     const finalOffset = Math.floor(Number(offset)) || 0;
     queryParams.push(finalLimit, finalOffset);
 
@@ -213,6 +220,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       deviceBrand: row.deviceBrand || 'غير محدد',
       deviceModel: row.deviceModel || 'غير محدد',
       issueDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
+      problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
       status: getStatusMapping(row.status),
       priority: row.priority || 'MEDIUM',
       estimatedCost: parseFloat(row.estimatedCost) || 0,
@@ -220,8 +228,8 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       expectedDeliveryDate: row.expectedDeliveryDate || null,
       estimatedCompletionDate: row.expectedDeliveryDate || null,
       assignedTechnician: row.technicianId || null,
-      notes: row.notes || null,
-      accessories: row.accessoriesJson ? JSON.parse(row.accessoriesJson).filter(a => a != null) : [],
+      notes: row.customerNotes || row.technicianReport || null,
+      accessories: [], // Accessories are stored in RepairRequestAccessory table, fetch separately if needed
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }));
@@ -233,8 +241,8 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         repairs: formattedData,
         pagination: {
           page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil(total / limitNum),
+          limit: parsedLimit,
+          totalPages: Math.ceil(total / parsedLimit),
           totalItems: total
         }
       }
