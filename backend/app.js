@@ -4,12 +4,33 @@ const router = express.Router();
 const cookieParser = require('cookie-parser');
 
 // Enable CORS for all routes
+// Note: CORS is also configured in server.js, but we keep this for route-level control
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : (process.env.NODE_ENV === 'production' 
+      ? ['https://system.fixzzone.com', 'https://fixzzone.com', 'https://www.fixzzone.com']
+      : ['http://localhost:4000', 'http://localhost:3000', 'https://system.fixzzone.com']);
+
 router.use(cors({
-  origin: [
-    'http://localhost:4000',
-    'http://localhost:3000'
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (corsOrigins.includes(origin) || corsOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      // In development, allow localhost
+      if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Auth-Token']
 }));
 
 const db = require('./db');
