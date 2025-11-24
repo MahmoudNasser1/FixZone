@@ -180,7 +180,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       LIMIT ? OFFSET ?
     `;
 
-    queryParams.push(limitNum, offset);
+    // Ensure limit and offset are numbers
+    const finalLimit = parseInt(limitNum) || 10;
+    const finalOffset = parseInt(offset) || 0;
+    queryParams.push(finalLimit, finalOffset);
 
     const [rows] = await db.execute(query, queryParams);
 

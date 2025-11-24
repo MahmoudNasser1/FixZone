@@ -138,6 +138,7 @@ exports.getDashboardStats = async (req, res) => {
 exports.getRecentRepairs = async (req, res) => {
     try {
         const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 10));
+        const finalLimit = parseInt(limit) || 10;
         const [rows] = await db.execute(
             `SELECT 
                 rr.id, 
@@ -159,7 +160,7 @@ exports.getRecentRepairs = async (req, res) => {
              WHERE rr.deletedAt IS NULL
              ORDER BY rr.createdAt DESC
              LIMIT ?`,
-            [limit]
+            [finalLimit]
         );
         res.json({
             success: true,

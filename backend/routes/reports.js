@@ -54,7 +54,7 @@ router.get('/daily-revenue', validate(reportSchemas.dailyRevenue, 'query'), asyn
         AVG(p.amount) as averagePayment
       FROM Payment p
       WHERE DATE(p.createdAt) = ?
-      GROUP BY DATE(p.createdAt)
+      GROUP BY DATE_FORMAT(p.createdAt, '%Y-%m-%d')
     `, [targetDate]);
     
     res.json({
