@@ -157,7 +157,19 @@ exports.login = async (req, res) => {
 
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error stack:', error.stack);
+        console.error('Request body:', req.body);
+        console.error('Request headers:', req.headers);
+        
+        // Return more detailed error in development
+        const errorMessage = process.env.NODE_ENV === 'production' 
+            ? 'Server error' 
+            : error.message || 'Server error';
+            
+        res.status(500).json({ 
+            message: errorMessage,
+            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

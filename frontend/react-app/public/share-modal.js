@@ -98,13 +98,17 @@
   }
   
   // Wait for DOM to be ready before initializing
+  // Use DOMContentLoaded to ensure DOM is fully loaded
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', safeInit);
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit more for React to render
+      setTimeout(safeInit, 500);
+    });
   } else {
     // DOM is already ready, but wait a bit to ensure React has rendered
-    setTimeout(safeInit, 100);
+    setTimeout(safeInit, 500);
   }
   
   // Also try after a longer delay in case React is still loading
-  setTimeout(safeInit, 1000);
+  setTimeout(safeInit, 2000);
 })();
