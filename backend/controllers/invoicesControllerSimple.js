@@ -18,9 +18,9 @@ class InvoicesControllerSimple {
       console.log('getAllInvoices called with:', { repairRequestId, customerId, paymentStatus, page, limit });
 
       // Parse pagination parameters
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
-      const offset = (pageNum - 1) * limitNum;
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+      const offset = Math.max(0, (pageNum - 1) * limitNum);
 
       // Build WHERE conditions
       let whereConditions = ['i.deletedAt IS NULL'];
@@ -69,9 +69,9 @@ class InvoicesControllerSimple {
         LIMIT ? OFFSET ?
       `;
 
-      // Ensure limit and offset are numbers
-      const finalLimit = parseInt(limitNum) || 10;
-      const finalOffset = parseInt(offset) || 0;
+      // Ensure limit and offset are integers (safeguard against NaN)
+      const finalLimit = Math.floor(Number(limitNum)) || 10;
+      const finalOffset = Math.floor(Number(offset)) || 0;
       queryParams.push(finalLimit, finalOffset);
 
       const [invoices] = await db.execute(query, queryParams);

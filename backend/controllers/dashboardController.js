@@ -137,8 +137,8 @@ exports.getDashboardStats = async (req, res) => {
 // Recent repairs for dashboard
 exports.getRecentRepairs = async (req, res) => {
     try {
-        const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 10));
-        const finalLimit = parseInt(limit) || 10;
+        const limitValue = parseInt(req.query.limit) || 10;
+        const finalLimit = Math.floor(Math.max(1, Math.min(100, limitValue))) || 10;
         const [rows] = await db.execute(
             `SELECT 
                 rr.id, 
@@ -160,7 +160,7 @@ exports.getRecentRepairs = async (req, res) => {
              WHERE rr.deletedAt IS NULL
              ORDER BY rr.createdAt DESC
              LIMIT ?`,
-            [finalLimit]
+            [Number(finalLimit)]
         );
         res.json({
             success: true,
