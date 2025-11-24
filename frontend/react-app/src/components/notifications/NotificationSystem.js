@@ -186,7 +186,7 @@ const NotificationContainer = ({ notifications, onRemove, onAction, position = '
 
   return (
     <>
-      <style jsx="true">{`
+      <style>{`
         @keyframes shrink {
           from { width: 100%; }
           to { width: 0%; }

@@ -2,8 +2,15 @@
 (function() {
   'use strict';
   
+  let initialized = false;
+  
   // Only initialize if elements exist
   function safeInit() {
+    // Prevent multiple initializations
+    if (initialized) {
+      return;
+    }
+    
     try {
       const shareButton = document.querySelector('#share-button');
       const shareModal = document.querySelector('#share-modal');
@@ -40,6 +47,9 @@
               shareModal.style.display = 'none';
             }
           });
+          
+          // Mark as initialized to prevent duplicate listeners
+          initialized = true;
         } catch (err) {
           // Silent fail - elements might not be ready yet
           return;
@@ -55,7 +65,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', safeInit);
   } else {
-    // DOM already loaded, check after a short delay
-    setTimeout(safeInit, 200);
+    // DOM is already ready, but wait a bit to ensure React has rendered
+    setTimeout(safeInit, 100);
   }
+  
+  // Also try after a longer delay in case React is still loading
+  setTimeout(safeInit, 1000);
 })();

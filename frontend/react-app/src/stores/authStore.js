@@ -12,11 +12,12 @@ const useAuthStore = create(
 
       login: async (loginIdentifier, password) => {
         try {
-          const API_URL = process.env.REACT_APP_API_URL?.replace('/api', '') + '/api/auth' || 'http://localhost:4000/api/auth';
+          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+          const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
           // Configure axios to send credentials (cookies) with every request
           axios.defaults.withCredentials = true;
 
-          const response = await axios.post(`${API_URL}/login`, {
+          const response = await axios.post(`${AUTH_URL}/login`, {
             loginIdentifier,
             password,
           });
@@ -41,10 +42,11 @@ const useAuthStore = create(
 
       // Restore session using /auth/me
       restoreSession: async () => {
-        const API_URL = process.env.REACT_APP_API_URL?.replace('/api', '') + '/api/auth' || 'http://localhost:4000/api/auth';
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
         try {
           axios.defaults.withCredentials = true;
-          const response = await axios.get(`${API_URL}/me`);
+          const response = await axios.get(`${AUTH_URL}/me`);
           const userData = response.data;
           
           // Ensure roleId is set for frontend (check both role and roleId)
@@ -64,9 +66,10 @@ const useAuthStore = create(
 
       logout: async () => {
         try {
-          const API_URL = process.env.REACT_APP_API_URL?.replace('/api', '') + '/api/auth' || 'http://localhost:4000/api/auth';
+          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+          const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
           axios.defaults.withCredentials = true;
-          await axios.post(`${API_URL}/logout`);
+          await axios.post(`${AUTH_URL}/logout`);
         } catch (_e) {}
         set({ isAuthenticated: false, user: null, token: null });
       },
