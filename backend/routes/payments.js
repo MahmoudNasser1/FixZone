@@ -127,7 +127,10 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
     // DEBUG: Log query params
     console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
     
-    const [rows] = await db.execute(query, queryParams);
+    // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+    // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+    // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+    const [rows] = await db.query(query, queryParams);
     
     // Get total count for pagination
     const countQuery = `

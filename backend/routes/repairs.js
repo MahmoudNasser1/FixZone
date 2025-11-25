@@ -239,7 +239,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         queryParams.slice(-2).map((p, i) => `${i === 0 ? 'LIMIT' : 'OFFSET'}: ${p} (type: ${typeof p})`));
     }
 
-    const [rows] = await db.execute(query, queryParams);
+    // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+    // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+    // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+    const [rows] = await db.query(query, queryParams);
 
     //Get total count for pagination
     const countQuery = `

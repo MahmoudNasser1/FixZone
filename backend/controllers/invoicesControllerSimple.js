@@ -113,7 +113,10 @@ class InvoicesControllerSimple {
       // DEBUG: Log query params before execution
       console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
 
-      const [invoices] = await db.execute(query, queryParams);
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+      // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+      const [invoices] = await db.query(query, queryParams);
 
       console.log('Query executed, found invoices:', invoices.length);
 
