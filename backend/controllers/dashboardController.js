@@ -137,8 +137,27 @@ exports.getDashboardStats = async (req, res) => {
 // Recent repairs for dashboard
 exports.getRecentRepairs = async (req, res) => {
     try {
+        // DEBUG: Log request info
+        console.log('🔍 [DEBUG] getRecentRepairs called');
+        console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
+        console.log('🔍 [DEBUG] req.query:', req.query);
+        
         const limitValue = parseInt(req.query.limit) || 10;
         const finalLimit = Math.floor(Math.max(1, Math.min(100, limitValue))) || 10;
+        
+        // Fail-safe: Ensure finalLimit is valid
+        if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
+            console.error('❌ [ERROR] Invalid finalLimit:', finalLimit);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid limit parameter',
+                error: 'INVALID_PARAMETER'
+            });
+        }
+        
+        const safeLimit = Number(finalLimit);
+        console.log('🔍 [DEBUG] Executing query with limit:', safeLimit);
+        
         const [rows] = await db.execute(
             `SELECT 
                 rr.id, 
@@ -160,7 +179,7 @@ exports.getRecentRepairs = async (req, res) => {
              WHERE rr.deletedAt IS NULL
              ORDER BY rr.createdAt DESC
              LIMIT ?`,
-            [Number(finalLimit)]
+            [safeLimit]
         );
         res.json({
             success: true,
@@ -168,11 +187,17 @@ exports.getRecentRepairs = async (req, res) => {
             count: rows.length
         });
     } catch (error) {
-        console.error('Error fetching recent repairs:', error);
+        console.error('❌ [ERROR] Error fetching recent repairs:', error);
+        console.error('❌ [ERROR] Error stack:', error.stack);
+        console.error('❌ [ERROR] Error code:', error.code);
+        console.error('❌ [ERROR] SQL Message:', error.sqlMessage);
+        console.error('❌ [ERROR] req.user:', req.user);
+        
         res.status(500).json({
             success: false,
             message: 'Server Error: Failed to fetch recent repairs',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            sqlError: process.env.NODE_ENV === 'development' ? error.sqlMessage : undefined
         });
     }
 };
@@ -235,16 +260,37 @@ exports.getAlerts = async (_req, res) => {
 // Get customer statistics for customer dashboard
 exports.getCustomerStats = async (req, res) => {
     try {
+        // DEBUG: Log request info
+        console.log('🔍 [DEBUG] getCustomerStats called');
+        console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role, customerId: req.user.customerId } : 'undefined');
+        console.log('🔍 [DEBUG] req.query:', req.query);
+        
         // Get customerId from JWT token or query parameter
         const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
 
+        // Fail-safe: Validate customerId
         if (!customerId) {
+            console.error('❌ [ERROR] Customer ID is required but not found');
+            console.error('❌ [ERROR] req.user:', req.user);
             return res.status(400).json({
                 success: false,
                 message: 'معرف العميل مطلوب',
                 code: 'CUSTOMER_ID_REQUIRED'
             });
         }
+        
+        // Ensure customerId is a valid number
+        const safeCustomerId = parseInt(customerId);
+        if (isNaN(safeCustomerId) || safeCustomerId <= 0) {
+            console.error('❌ [ERROR] Invalid customerId:', customerId);
+            return res.status(400).json({
+                success: false,
+                message: 'معرف العميل غير صحيح',
+                code: 'INVALID_CUSTOMER_ID'
+            });
+        }
+        
+        console.log('🔍 [DEBUG] Using customerId:', safeCustomerId);
 
         // Get repair statistics
         const [repairStats] = await db.execute(`
@@ -256,7 +302,7 @@ exports.getCustomerStats = async (req, res) => {
                 COUNT(CASE WHEN status IN ('cancelled', 'CANCELLED', 'rejected', 'REJECTED') THEN 1 END) as cancelledRepairs
             FROM RepairRequest
             WHERE customerId = ? AND deletedAt IS NULL
-        `, [customerId]);
+        `, [safeCustomerId]);
 
         // Get invoice statistics
         const [invoiceStats] = await db.execute(`
@@ -270,14 +316,14 @@ exports.getCustomerStats = async (req, res) => {
                 COALESCE(SUM(totalAmount - COALESCE(amountPaid, 0)), 0) as remainingBalance
             FROM Invoice
             WHERE customerId = ? AND deletedAt IS NULL
-        `, [customerId]);
+        `, [safeCustomerId]);
 
         // Get unique devices count (based on deviceType and brand combinations)
         const [deviceStats] = await db.execute(`
             SELECT COUNT(DISTINCT CONCAT(COALESCE(deviceType, ''), '-', COALESCE(deviceBrand, ''))) as totalDevices
             FROM RepairRequest
             WHERE customerId = ? AND deletedAt IS NULL
-        `, [customerId]);
+        `, [safeCustomerId]);
 
         const stats = repairStats[0] || {};
         const invoices = invoiceStats[0] || {};
@@ -303,12 +349,18 @@ exports.getCustomerStats = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching customer stats:', error);
+        console.error('❌ [ERROR] Error fetching customer stats:', error);
+        console.error('❌ [ERROR] Error stack:', error.stack);
+        console.error('❌ [ERROR] Error code:', error.code);
+        console.error('❌ [ERROR] SQL Message:', error.sqlMessage);
+        console.error('❌ [ERROR] req.user:', req.user);
+        
         res.status(500).json({
             success: false,
             message: 'حصل خطأ في السيرفر',
             code: 'SERVER_ERROR',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            sqlError: process.env.NODE_ENV === 'development' ? error.sqlMessage : undefined
         });
     }
 };

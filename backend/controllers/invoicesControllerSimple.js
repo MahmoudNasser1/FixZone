@@ -7,6 +7,11 @@ class InvoicesControllerSimple {
   // Get all invoices with improved pagination and filters
   async getAllInvoices(req, res) {
     try {
+      // DEBUG: Log request info
+      console.log('🔍 [DEBUG] getAllInvoices called');
+      console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
+      console.log('🔍 [DEBUG] req.query:', req.query);
+
       const {
         repairRequestId,
         customerId,
@@ -28,16 +33,26 @@ class InvoicesControllerSimple {
 
       // Filter by repair request ID if provided
       if (repairRequestId) {
-        whereConditions.push('i.repairRequestId = ?');
-        queryParams.push(repairRequestId);
-        console.log('Added repairRequestId filter:', repairRequestId);
+        const safeRepairRequestId = parseInt(repairRequestId);
+        if (!isNaN(safeRepairRequestId) && safeRepairRequestId > 0) {
+          whereConditions.push('i.repairRequestId = ?');
+          queryParams.push(safeRepairRequestId);
+          console.log('Added repairRequestId filter:', safeRepairRequestId);
+        } else {
+          console.warn('⚠️ Invalid repairRequestId:', repairRequestId);
+        }
       }
 
       // Filter by customerId - check both direct customer and via repair
       if (customerId) {
-        whereConditions.push('(i.customerId = ? OR rr.customerId = ?)');
-        queryParams.push(customerId, customerId);
-        console.log('Added customerId filter:', customerId);
+        const safeCustomerId = parseInt(customerId);
+        if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
+          whereConditions.push('(i.customerId = ? OR rr.customerId = ?)');
+          queryParams.push(safeCustomerId, safeCustomerId);
+          console.log('Added customerId filter:', safeCustomerId);
+        } else {
+          console.warn('⚠️ Invalid customerId:', customerId);
+        }
       }
 
       const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
@@ -72,7 +87,29 @@ class InvoicesControllerSimple {
       // Ensure limit and offset are integers (safeguard against NaN)
       const finalLimit = Math.floor(Number(limitNum)) || 10;
       const finalOffset = Math.floor(Number(offset)) || 0;
+      
+      // Final validation - ensure we have valid numbers
+      if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
+        console.error('❌ [ERROR] Invalid finalLimit:', finalLimit);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid pagination parameters',
+          error: 'PAGINATION_ERROR'
+        });
+      }
+      if (isNaN(finalOffset) || finalOffset < 0) {
+        console.error('❌ [ERROR] Invalid finalOffset:', finalOffset);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid pagination parameters',
+          error: 'PAGINATION_ERROR'
+        });
+      }
+      
       queryParams.push(finalLimit, finalOffset);
+      
+      // DEBUG: Log query params before execution
+      console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
 
       const [invoices] = await db.execute(query, queryParams);
 
@@ -94,6 +131,12 @@ class InvoicesControllerSimple {
       // Calculate actual amountPaid for each invoice from payments and determine correct status
       const invoicesWithCorrectAmounts = await Promise.all(
         invoices.map(async (invoice) => {
+          // Fail-safe: Ensure invoice.id is valid
+          if (!invoice || !invoice.id || isNaN(invoice.id)) {
+            console.warn('⚠️ Invalid invoice object:', invoice);
+            return null;
+          }
+          
           const [payments] = await db.execute(`
             SELECT COALESCE(SUM(amount), 0) as totalPaid 
             FROM Payment 
@@ -129,12 +172,15 @@ class InvoicesControllerSimple {
           };
         })
       );
+      
+      // Filter out null values (invalid invoices)
+      const validInvoices = invoicesWithCorrectAmounts.filter(inv => inv !== null);
 
       // Filter by paymentStatus if provided (after calculation)
-      let filteredInvoices = invoicesWithCorrectAmounts;
+      let filteredInvoices = validInvoices;
       if (paymentStatus) {
-        filteredInvoices = invoicesWithCorrectAmounts.filter(inv =>
-          inv.paymentStatus === paymentStatus
+        filteredInvoices = validInvoices.filter(inv =>
+          inv && inv.paymentStatus === paymentStatus
         );
       }
 
@@ -152,12 +198,18 @@ class InvoicesControllerSimple {
       });
 
     } catch (error) {
-      console.error('Error in getAllInvoices:', error);
+      console.error('❌ [ERROR] Error in getAllInvoices:', error);
+      console.error('❌ [ERROR] Error stack:', error.stack);
+      console.error('❌ [ERROR] Error code:', error.code);
+      console.error('❌ [ERROR] SQL Message:', error.sqlMessage);
+      console.error('❌ [ERROR] req.user:', req.user);
+      
       res.status(500).json({
         success: false,
         message: 'حصل خطأ في السيرفر',
         code: 'SERVER_ERROR',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        sqlError: process.env.NODE_ENV === 'development' ? error.sqlMessage : undefined
       });
     }
   }

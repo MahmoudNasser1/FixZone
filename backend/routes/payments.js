@@ -10,10 +10,25 @@ router.use(authMiddleware);
 // Get all payments with detailed information (must be before /stats/summary and /:id)
 router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) => {
   try {
+    // DEBUG: Log request info
+    console.log('🔍 [DEBUG] GET /payments called');
+    console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
+    console.log('🔍 [DEBUG] req.query:', req.query);
+    
     const { page = 1, limit = 10, dateFrom, dateTo, paymentMethod, customerId, invoiceId } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const offset = Math.max(0, (pageNum - 1) * limitNum);
+    
+    // Fail-safe: Validate pagination
+    if (isNaN(pageNum) || isNaN(limitNum) || isNaN(offset)) {
+      console.error('❌ [ERROR] Invalid pagination values:', { pageNum, limitNum, offset });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid pagination parameters',
+        error: 'PAGINATION_ERROR'
+      });
+    }
     
     let whereConditions = [];
     let queryParams = [];
@@ -35,8 +50,13 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
     // ملاحظة: عمود customerId غير موجود مباشرة في Invoice وفق المخطط الحالي
     // يمكن لاحقاً ربطه عبر RepairRequest -> customerId
     if (invoiceId) {
-      whereConditions.push('p.invoiceId = ?');
-      queryParams.push(invoiceId);
+      const safeInvoiceId = parseInt(invoiceId);
+      if (!isNaN(safeInvoiceId) && safeInvoiceId > 0) {
+        whereConditions.push('p.invoiceId = ?');
+        queryParams.push(safeInvoiceId);
+      } else {
+        console.warn('⚠️ Invalid invoiceId:', invoiceId);
+      }
     }
     
     const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
@@ -81,7 +101,30 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
     // Ensure limit and offset are integers (safeguard against NaN)
     const finalLimit = Math.floor(Number(limitNum)) || 10;
     const finalOffset = Math.floor(Number(offset)) || 0;
+    
+    // Final validation
+    if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
+      console.error('❌ [ERROR] Invalid finalLimit:', finalLimit);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid pagination parameters',
+        error: 'PAGINATION_ERROR'
+      });
+    }
+    if (isNaN(finalOffset) || finalOffset < 0) {
+      console.error('❌ [ERROR] Invalid finalOffset:', finalOffset);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid pagination parameters',
+        error: 'PAGINATION_ERROR'
+      });
+    }
+    
     queryParams.push(finalLimit, finalOffset);
+    
+    // DEBUG: Log query params
+    console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
+    
     const [rows] = await db.execute(query, queryParams);
     
     // Get total count for pagination
@@ -107,8 +150,12 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
       }
     });
   } catch (err) {
-    console.error('Error fetching payments:', err);
-    console.error('Error stack:', err.stack);
+    console.error('❌ [ERROR] Error fetching payments:', err);
+    console.error('❌ [ERROR] Error stack:', err.stack);
+    console.error('❌ [ERROR] Error code:', err.code);
+    console.error('❌ [ERROR] SQL Message:', err.sqlMessage);
+    console.error('❌ [ERROR] req.user:', req.user);
+    
     res.status(500).json({ 
       success: false,
       error: 'Server Error', 

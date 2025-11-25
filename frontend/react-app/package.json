@@ -49,8 +49,21 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:prod": "NODE_ENV=production react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test:watch": "react-scripts test --watch",
+    "test:coverage": "react-scripts test --coverage",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "lint:quiet": "eslint src --ext .js,.jsx,.ts,.tsx --quiet",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "type-check": "tsc --noEmit",
+    "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
+    "clean": "rm -rf build node_modules/.cache",
+    "prebuild": "npm run lint:quiet",
+    "precommit": "npm run lint:fix && npm run format"
   },
   "eslintConfig": {
     "extends": [

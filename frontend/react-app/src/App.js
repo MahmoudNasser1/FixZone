@@ -123,7 +123,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user is customer
+  // Check if user is customer (Role 8)
   const roleId = user?.roleId || user?.role;
   const isCustomer = roleId === 8 || roleId === '8' || user?.type === 'customer';
   const isTechnician = roleId === 3 || roleId === '3';

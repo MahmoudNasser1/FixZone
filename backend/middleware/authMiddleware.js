@@ -25,14 +25,21 @@ const authMiddleware = (req, res, next) => {
     }
 
     if (!token) {
+        console.warn('⚠️ [AUTH] No token found in request');
+        console.warn('⚠️ [AUTH] URL:', req.originalUrl);
+        console.warn('⚠️ [AUTH] Method:', req.method);
         return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
+        console.log('✅ [AUTH] Token verified successfully for user:', { id: decoded.id, role: decoded.role });
         next();
     } catch (error) {
+        console.error('❌ [AUTH] Token verification failed:', error.message);
+        console.error('❌ [AUTH] URL:', req.originalUrl);
+        console.error('❌ [AUTH] Method:', req.method);
         return res.status(401).json({ message: 'Token is not valid' });
     }
 };

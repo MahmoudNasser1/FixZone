@@ -17,8 +17,6 @@ const navItems = [
     section: 'الرئيسية',
     items: [
       { href: '/', label: 'لوحة التحكم', icon: Home, badge: null },
-      { href: '/integration/workflow', label: 'لوحة التحكم المتكاملة', icon: Activity, badge: 'جديد' },
-      { href: '/quick-actions', label: 'الإجراءات السريعة', icon: Activity, badge: 'جديد' },
     ]
   },
   {

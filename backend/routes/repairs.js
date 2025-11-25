@@ -109,27 +109,51 @@ function mapFrontendStatusToDb(frontStatus) {
 // Get all repair requests with improved pagination and filters
 router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), async (req, res) => {
   try {
+    // DEBUG: Log request info
+    console.log('🔍 [DEBUG] GET /repairs called');
+    console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
+    console.log('🔍 [DEBUG] req.query:', req.query);
+    
+    // Log incoming query for debugging (especially on production)
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[REPAIRS API] Incoming query params:', JSON.stringify(req.query));
+    }
+    
     const {
       customerId,
       status,
       priority,
-      page = 1,
+      page,
       limit,
       pageSize, // Support both 'limit' and 'pageSize' for backward compatibility
-      search = '',
-      q = '' // Support both 'search' and 'q' for backward compatibility
+      search,
+      q // Support both 'search' and 'q' for backward compatibility
     } = req.query;
     
     // Use 'search' if provided, otherwise fall back to 'q'
-    const searchTerm = search || q;
+    const searchTerm = (search || q || '').trim();
     
-    // Use 'limit' if provided, otherwise fall back to 'pageSize', default to 10
-    const limitNum = limit || pageSize || 10;
-
-    // Parse pagination parameters
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const parsedLimit = Math.min(100, Math.max(1, parseInt(limitNum) || 10));
+    // Parse pagination with STRONG fallbacks - handle undefined, null, NaN, empty strings
+    // This ensures it works in both dev and production environments
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitValue = limit || pageSize || 10; // Support both parameter names
+    const parsedLimit = Math.min(100, Math.max(1, Number(limitValue) || 10));
     const offset = Math.max(0, (pageNum - 1) * parsedLimit);
+    
+    // Final validation - ensure we have valid numbers (not NaN)
+    if (isNaN(pageNum) || isNaN(parsedLimit) || isNaN(offset)) {
+      console.error('[REPAIRS API] Invalid pagination values:', { pageNum, parsedLimit, offset, query: req.query });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid pagination parameters',
+        error: 'PAGINATION_ERROR'
+      });
+    }
+    
+    // Log parsed values in production for debugging
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[REPAIRS API] Parsed pagination:', { pageNum, parsedLimit, offset });
+    }
 
     // Build WHERE conditions
     let whereConditions = ['rr.deletedAt IS NULL'];
@@ -137,8 +161,13 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
 
     // Customer filter
     if (customerId) {
-      whereConditions.push('rr.customerId = ?');
-      queryParams.push(customerId);
+      const safeCustomerId = parseInt(customerId);
+      if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
+        whereConditions.push('rr.customerId = ?');
+        queryParams.push(safeCustomerId);
+      } else {
+        console.warn('⚠️ Invalid customerId:', customerId);
+      }
     }
 
     // Status filter - support both frontend and database statuses
@@ -187,10 +216,26 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       LIMIT ? OFFSET ?
     `;
 
-    // Ensure limit and offset are integers (safeguard against NaN)
-    const finalLimit = Math.floor(Number(parsedLimit)) || 10;
-    const finalOffset = Math.floor(Number(offset)) || 0;
-    queryParams.push(finalLimit, finalOffset);
+    // Final validation - ensure limit and offset are valid integers (double-check before SQL)
+    const finalLimit = Math.floor(parsedLimit);
+    const finalOffset = Math.floor(offset);
+    
+    // Extra safety check - if somehow we still have invalid values, use defaults
+    if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
+      console.error('[REPAIRS API] Invalid finalLimit:', finalLimit);
+      queryParams.push(10, 0);
+    } else if (isNaN(finalOffset) || finalOffset < 0) {
+      console.error('[REPAIRS API] Invalid finalOffset:', finalOffset);
+      queryParams.push(finalLimit, 0);
+    } else {
+      queryParams.push(finalLimit, finalOffset);
+    }
+    
+    // Log final query params in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[REPAIRS API] Final SQL params (last 2 are limit/offset):', 
+        queryParams.slice(-2).map((p, i) => `${i === 0 ? 'LIMIT' : 'OFFSET'}: ${p} (type: ${typeof p})`));
+    }
 
     const [rows] = await db.execute(query, queryParams);
 
@@ -205,6 +250,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
 
     // Remove limit and offset params for count query
     const countParams = queryParams.slice(0, -2);
+    
+    // Log count query params in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[REPAIRS API] Count query params:', countParams.length, 'params');
+    }
+    
     const [countResult] = await db.execute(countQuery, countParams);
     const total = countResult[0]?.total || 0;
 
@@ -248,12 +299,18 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       }
     });
   } catch (err) {
-    console.error('Error fetching repair requests:', err);
+    console.error('❌ [ERROR] Error fetching repair requests:', err);
+    console.error('❌ [ERROR] Error stack:', err.stack);
+    console.error('❌ [ERROR] Error code:', err.code);
+    console.error('❌ [ERROR] SQL Message:', err.sqlMessage);
+    console.error('❌ [ERROR] req.user:', req.user);
+    
     res.status(500).json({
       success: false,
       message: 'حصل خطأ في السيرفر',
       code: 'SERVER_ERROR',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      sqlError: process.env.NODE_ENV === 'development' ? err.sqlMessage : undefined
     });
   }
 });

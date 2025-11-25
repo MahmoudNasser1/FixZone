@@ -232,8 +232,8 @@ const EnhancedLoginPage = () => {
                                     disabled={isLoading}
                                     dir="ltr"
                                     className={`pr-10 h-12 text-base ${touched.loginIdentifier && validationErrors.loginIdentifier
-                                            ? 'border-red-500 focus:ring-red-500'
-                                            : ''
+                                        ? 'border-red-500 focus:ring-red-500'
+                                        : ''
                                         }`}
                                     style={!validationErrors.loginIdentifier ? {
                                         borderColor: '#E5E7EB',
@@ -272,8 +272,8 @@ const EnhancedLoginPage = () => {
                                     disabled={isLoading}
                                     placeholder="اكتب كلمة السر"
                                     className={`pr-10 pl-10 h-12 text-base ${touched.password && validationErrors.password
-                                            ? 'border-red-500 focus:ring-red-500'
-                                            : ''
+                                        ? 'border-red-500 focus:ring-red-500'
+                                        : ''
                                         }`}
                                     style={!validationErrors.password ? {
                                         borderColor: '#E5E7EB'
