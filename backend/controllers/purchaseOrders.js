@@ -73,7 +73,10 @@ const purchaseOrderController = {
       query += ` LIMIT ? OFFSET ?`;
       params.push(parseInt(limit), parseInt(offset));
 
-      const [purchaseOrders] = await db.execute(query, params);
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+      // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+      const [purchaseOrders] = await db.query(query, params);
 
       // عد الإجمالي
       let countQuery = `

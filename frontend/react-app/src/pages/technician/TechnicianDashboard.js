@@ -10,6 +10,7 @@ import QuickActionCard from '../../components/customer/QuickActionCard'; // Reus
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
+import { ROLE_TECHNICIAN } from '../../constants/roles';
 import {
   Wrench,
   CheckCircle,
@@ -43,7 +44,7 @@ export default function TechnicianDashboard() {
 
   useEffect(() => {
     const roleId = user?.roleId || user?.role;
-    const isTechnician = user && (roleId === 3 || roleId === '3');
+    const isTechnician = user && roleId === ROLE_TECHNICIAN;
 
     if (!user || !isTechnician) {
       notifications.error('خطأ', { message: 'يجب تسجيل الدخول كفني للوصول لهذه الصفحة' });

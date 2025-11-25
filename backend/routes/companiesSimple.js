@@ -338,21 +338,21 @@ router.delete('/:id', async (req, res) => {
     
     // التحقق من وجود عملاء نشطين مرتبطين بالشركة
     const [activeCustomersRows] = await db.query(
-      'SELECT id, firstName, lastName FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
+      'SELECT id, name FROM Customer WHERE companyId = ? AND deletedAt IS NULL',
       [id]
     );
     
     // إذا كان هناك عملاء نشطون وليس force delete
     if (activeCustomersRows.length > 0 && force !== 'true') {
       console.log(`Company ${id} has ${activeCustomersRows.length} active customers:`, 
-        activeCustomersRows.map(c => `${c.firstName} ${c.lastName} (ID: ${c.id})`).join(', '));
+        activeCustomersRows.map(c => `${c.name} (ID: ${c.id})`).join(', '));
       
       return res.status(400).json({ 
         error: 'لا يمكن حذف الشركة لأنها مرتبطة بعملاء نشطين',
         customersCount: activeCustomersRows.length,
         customers: activeCustomersRows.map(c => ({
           id: c.id,
-          name: `${c.firstName} ${c.lastName}`
+          name: c.name
         })),
         message: `يوجد ${activeCustomersRows.length} عميل نشط مرتبط بهذه الشركة. يمكنك:\n1. حذف العملاء أولاً\n2. نقل العملاء لشركة أخرى\n3. إلغاء ربط العملاء بالشركة`
       });
@@ -404,7 +404,7 @@ router.get('/:id/customers', async (req, res) => {
     // جلب العملاء المرتبطين بالشركة
     const [customersRows] = await db.query(
       `SELECT 
-        id, firstName, lastName, email, phone, address, 
+        id, name, email, phone, address, 
         createdAt, updatedAt
        FROM Customer 
        WHERE companyId = ? AND deletedAt IS NULL 

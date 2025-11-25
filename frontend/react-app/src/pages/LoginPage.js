@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
+import { isCustomerRole, isTechnicianRole } from '../constants/roles';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -102,12 +103,13 @@ const LoginPage = () => {
       // Get user data after login to determine redirect
       const user = useAuthStore.getState().user;
       const roleId = user?.roleId || user?.role;
-      
+      const numericRoleId = Number(roleId);
+
       // Redirect based on user role
-      if (roleId === 3 || roleId === '3') {
+      if (isTechnicianRole(numericRoleId)) {
         // Technician → Technician Dashboard
         navigate('/tech/dashboard');
-      } else if (roleId === 8 || user?.type === 'customer') {
+      } else if (isCustomerRole(numericRoleId) || user?.type === 'customer') {
         // Customer → Customer Dashboard
         navigate('/customer/dashboard');
       } else {

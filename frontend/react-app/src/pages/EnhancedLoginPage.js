@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
+import { ROLE_TECHNICIAN, isCustomerRole, isTechnicianRole } from '../constants/roles';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -115,12 +116,13 @@ const EnhancedLoginPage = () => {
             // جيب بيانات اليوزر بعد الـ login علشان تعرف توجهه فين
             const user = useAuthStore.getState().user;
             const roleId = user?.roleId || user?.role;
+            const numericRoleId = Number(roleId);
 
             // وجّه حسب نوع المستخدم
-            if (roleId === 3 || roleId === '3') {
+            if (isTechnicianRole(numericRoleId)) {
                 // فني → لوحة الفني
                 navigate('/tech/dashboard');
-            } else if (roleId === 8 || user?.type === 'customer') {
+            } else if (isCustomerRole(numericRoleId) || user?.type === 'customer') {
                 // عميل → لوحة العميل
                 navigate('/customer/dashboard');
             } else {

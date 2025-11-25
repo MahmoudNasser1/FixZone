@@ -88,6 +88,13 @@ class ApiService {
     return this.request(`/users${qs ? `?${qs}` : ''}`);
   }
 
+  async createUser(payload) {
+    return this.request('/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   // جلب مستخدم واحد
   async getUserById(id) {
     return this.request(`/users/${id}`);

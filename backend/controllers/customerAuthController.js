@@ -149,8 +149,8 @@ exports.getCustomerProfile = async (req, res) => {
     const userId = req.user.id;
     const roleId = req.user.roleId || req.user.role;
     
-    // Only allow customers (roleId === 8) to access this endpoint
-    if (roleId !== 8 && roleId !== '8') {
+    // Only allow customers (roleId === 6) to access this endpoint
+    if (roleId !== 6 && roleId !== '6') {
       return res.status(403).json({ 
         success: false,
         message: 'غير مصرح بالوصول - هذا المسار مخصص للعملاء فقط' 

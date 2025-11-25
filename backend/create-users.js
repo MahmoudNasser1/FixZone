@@ -14,14 +14,14 @@ const USERS = [
     name: 'Regular User',
     email: 'user@fixzone.com',
     password: 'user1234',  // 8 characters
-    roleId: 7, // User
+    roleId: 5, // Receptionist
     phone: '01222222222'
   },
   {
     name: 'Technician User',
     email: 'technician@fixzone.com',
     password: 'tech1234',  // 8 characters
-    roleId: 6, // Technician
+    roleId: 4, // Technician
     phone: '01333333333'
   }
 ];

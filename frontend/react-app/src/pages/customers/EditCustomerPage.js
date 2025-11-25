@@ -219,13 +219,13 @@ const EditCustomerPage = () => {
         phone: formData.phone.trim(),
         email: formData.email.trim() || null,
         address: formData.address.trim() || null,
-        companyId: formData.companyId || null,
+        companyId: formData.companyId ? Number(formData.companyId) : null,
         status: formData.status || 'active',
-        customFields: JSON.stringify({
+        customFields: {
           isVip: formData.isVip,
           preferredContact: formData.preferredContact,
           notes: formData.notes.trim()
-        })
+        }
       };
       
       console.log('Sending customer data:', customerData);

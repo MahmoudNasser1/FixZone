@@ -129,7 +129,10 @@ exports.getAllUsers = async (req, res) => {
             const [countRows] = await db.execute(`SELECT COUNT(*) AS cnt FROM User ${whereClause}`, params);
             const total = countRows[0]?.cnt || 0;
 
-            const [rows] = await db.execute(
+            // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+            // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+            // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+            const [rows] = await db.query(
                 `SELECT 
               id, 
               name,

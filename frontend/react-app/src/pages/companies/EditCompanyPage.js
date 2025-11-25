@@ -37,30 +37,31 @@ const EditCompanyPage = () => {
   }, [id]);
 
   const fetchCompanyData = async () => {
+    if (!id) {
+      setError('رقم الشركة غير متوفر');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getCompany(id);
-      if (response.ok) {
-        const company = await response.json();
-        setFormData({
-          name: company.name || '',
-          phone: company.phone || '',
-          email: company.email || '',
-          address: company.address || '',
-          website: company.website || '',
-          industry: company.industry || '',
-          description: company.description || '',
-          status: company.status || 'active',
-          taxNumber: company.taxNumber || '',
-          customFields: company.customFields || {}
-        });
-      } else {
-        throw new Error('Company not found');
-      }
+      const company = await apiService.getCompany(id);
+      setFormData({
+        name: company.name || '',
+        phone: company.phone || '',
+        email: company.email || '',
+        address: company.address || '',
+        website: company.website || '',
+        industry: company.industry || '',
+        description: company.description || '',
+        status: company.status || 'active',
+        taxNumber: company.taxNumber || '',
+        customFields: company.customFields || {}
+      });
     } catch (err) {
       console.error('Error fetching company:', err);
-      setError('تعذر تحميل بيانات الشركة');
+      setError(err.message || 'تعذر تحميل بيانات الشركة');
     } finally {
       setLoading(false);
     }
@@ -92,14 +93,12 @@ const EditCompanyPage = () => {
         isActive: formData.status === 'active'
       };
       
-      const response = await apiService.updateCompany(id, companyData);
-      if (response.ok) {
-        notifications.success('تم تحديث الشركة بنجاح');
-        navigate(`/companies/${id}`);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update company');
+      const result = await apiService.updateCompany(id, companyData);
+      if (result?.success === false) {
+        throw new Error(result?.message || result?.error || 'فشل تحديث الشركة');
       }
+      notifications.success('تم تحديث الشركة بنجاح');
+      navigate(`/companies/${id}`);
     } catch (err) {
       console.error('Error updating company:', err);
       setError(err.message || 'حدث خطأ في تحديث الشركة');

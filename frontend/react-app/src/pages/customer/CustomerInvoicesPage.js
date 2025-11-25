@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
+import { ROLE_CUSTOMER } from '../../constants/roles';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import InvoiceCard from '../../components/customer/InvoiceCard';
 import { FileText, Receipt, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
@@ -36,7 +37,8 @@ export default function CustomerInvoicesPage() {
 
     useEffect(() => {
         const roleId = user?.roleId || user?.role;
-        const isCustomer = user && (user.type === 'customer' || roleId === 8 || roleId === '8');
+        const numericRoleId = Number(roleId);
+        const isCustomer = user && (user.type === 'customer' || numericRoleId === ROLE_CUSTOMER);
 
         if (!user || !isCustomer) {
             notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });

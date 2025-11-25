@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { LoadingSpinner, TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
+import { isTechnicianRole } from '../../constants/roles';
+import { ROLE_TECHNICIAN } from '../../constants/roles';
 
 const UsersPageEnhanced = () => {
   const navigate = useNavigate();
@@ -105,7 +107,7 @@ const UsersPageEnhanced = () => {
         active: activeUsers.length,
         inactive: inactiveUsers.length,
         admins: usersData.filter(u => u?.roleId === 1).length,
-        technicians: usersData.filter(u => u?.roleId === 3 || u?.roleId === 6).length,
+        technicians: usersData.filter(u => u && isTechnicianRole(u.roleId)).length,
         managers: usersData.filter(u => u?.roleId === 2).length
       });
       

@@ -29,37 +29,36 @@ const CompanyDetailsPage = () => {
   }, [id]);
 
   const fetchCompanyDetails = async () => {
+    if (!id) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getCompany(id);
-      if (response.ok) {
-        const data = await response.json();
-        setCompany(data);
-      } else {
-        throw new Error('Company not found');
-      }
+      const companyData = await apiService.getCompany(id);
+      setCompany(companyData);
     } catch (err) {
       console.error('Error fetching company:', err);
-      setError('تعذر تحميل بيانات الشركة');
+      setCompany(null);
+      setError(err.message || 'تعذر تحميل بيانات الشركة');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchCompanyCustomers = async () => {
+    if (!id) {
+      setCustomers([]);
+      return;
+    }
+
     try {
-      const response = await apiService.getCompanyCustomers(id);
-      if (response.ok) {
-        const data = await response.json();
-        setCustomers(Array.isArray(data) ? data : []);
-      } else if (response.status === 404) {
-        // الشركة غير موجودة أو لا يوجد عملاء مرتبطين
-        setCustomers([]);
-      }
+      const data = await apiService.getCompanyCustomers(id);
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching company customers:', err);
-      setCustomers([]); // في حالة الخطأ، اجعل القائمة فارغة
+      setCustomers([]);
     }
   };
 

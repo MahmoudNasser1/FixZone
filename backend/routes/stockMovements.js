@@ -97,7 +97,10 @@ router.get('/', validate(stockMovementSchemas.getMovements, 'query'), async (req
     query += ` ORDER BY ${sortField} ${sortDirection} LIMIT ? OFFSET ?`;
     params.push(parseInt(limit), offset);
     
-    const [rows] = await db.execute(query, params);
+    // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+    // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+    // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+    const [rows] = await db.query(query, params);
     
     // Get total count for pagination
     let countQuery = `

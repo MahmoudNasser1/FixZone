@@ -106,6 +106,8 @@ const RepairDetailsPage = () => {
   const [addSvcError, setAddSvcError] = useState('');
   const [availableServices, setAvailableServices] = useState([]);
   const [svcForm, setSvcForm] = useState({ serviceId: '', price: '', technicianId: '', notes: '', invoiceId: '' });
+  const [isManualService, setIsManualService] = useState(false);
+  const [manualServiceForm, setManualServiceForm] = useState({ name: '', unitPrice: '', quantity: 1 });
   // Map of inventory items for display: id -> { name, sku }
   const [itemsMap, setItemsMap] = useState({});
   const [itemsMapLoading, setItemsMapLoading] = useState(false);
@@ -883,9 +885,127 @@ const RepairDetailsPage = () => {
     setSvcForm((f) => ({ ...f, [name]: value }));
   };
 
+  const handleManualServiceChange = (e) => {
+    const { name, value } = e.target;
+    setManualServiceForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const normalizeInvoicesResponse = (payload) => {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    if (payload?.success && Array.isArray(payload.data?.invoices)) {
+      return payload.data.invoices;
+    }
+    if (payload?.data && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+    if (payload?.invoices && Array.isArray(payload.invoices)) {
+      return payload.invoices;
+    }
+    return [];
+  };
+
+  const ensureInvoiceForRepair = async (preferredInvoiceId) => {
+    if (preferredInvoiceId) {
+      return Number(preferredInvoiceId);
+    }
+
+    const existing = invoices.find(inv => Number(inv.repairRequestId) === Number(id));
+    if (existing?.id) {
+      return existing.id;
+    }
+
+    try {
+      const response = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+      const fetched = normalizeInvoicesResponse(response);
+      const match = fetched.find(inv => Number(inv.repairRequestId) === Number(id));
+      if (match?.id) {
+        return match.id;
+      }
+    } catch (e) {
+      console.error('Error resolving invoice for manual service:', e);
+    }
+
+    try {
+      const created = await apiService.createInvoiceFromRepair(id, {
+        totalAmount: 0,
+        amountPaid: 0,
+        status: 'draft',
+        currency: 'EGP',
+        taxAmount: 0
+      });
+      return created?.data?.id || created?.id || created?.invoiceId || null;
+    } catch (creationError) {
+      console.error('Error creating invoice for manual service:', creationError);
+      throw creationError;
+    }
+  };
+
+  const handleAddManualService = async () => {
+    try {
+      setAddSvcError('');
+      if (!isManualService) return;
+      if (!svcForm.technicianId) {
+        setAddSvcError('يرجى اختيار الفني قبل إضافة الخدمة اليدوية');
+        return;
+      }
+
+      const { name, unitPrice, quantity } = manualServiceForm;
+      if (!name?.trim()) {
+        setAddSvcError('اسم الخدمة اليدوية مطلوب');
+        return;
+      }
+      if (!unitPrice || Number(unitPrice) <= 0) {
+        setAddSvcError('السعر يجب أن يكون رقمًا أكبر من صفر');
+        return;
+      }
+      if (!quantity || Number(quantity) <= 0) {
+        setAddSvcError('الكمية يجب أن تكون رقمًا أكبر من صفر');
+        return;
+      }
+
+      setAddSvcLoading(true);
+      const targetInvoiceId = await ensureInvoiceForRepair(svcForm.invoiceId);
+      if (!targetInvoiceId) {
+        throw new Error('لم يتم إنشاء فاتورة لهذا الطلب');
+      }
+
+      const description = `${manualServiceForm.name.trim()}${svcForm.notes ? ` - ${svcForm.notes}` : ''}`.trim();
+      const qty = Number(manualServiceForm.quantity);
+      const price = Number(manualServiceForm.unitPrice);
+
+      await apiService.addInvoiceItem(targetInvoiceId, {
+        itemType: 'service',
+        description,
+        quantity: qty,
+        unitPrice: price,
+        totalPrice: qty * price
+      });
+
+      notifications.success('تمت إضافة الخدمة اليدوية إلى الفاتورة');
+      await loadInvoices();
+      await loadServices();
+
+      setAddServiceOpen(false);
+      setManualServiceForm({ name: '', unitPrice: '', quantity: 1 });
+      setIsManualService(false);
+      setSvcForm({ serviceId: '', price: '', technicianId: '', notes: '', invoiceId: '' });
+    } catch (error) {
+      console.error('Error adding manual service:', error);
+      setAddSvcError(error?.message || 'تعذر إضافة الخدمة اليدوية');
+    } finally {
+      setAddSvcLoading(false);
+    }
+  };
+
   const handleAddServiceSubmit = async () => {
     try {
       setAddSvcError('');
+      if (isManualService) {
+        await handleAddManualService();
+        return;
+      }
       const { serviceId, price, technicianId, notes, invoiceId } = svcForm;
       if (!serviceId || !technicianId || !price) {
         setAddSvcError('يرجى اختيار الخدمة والفني وتحديد السعر');
@@ -1156,27 +1276,8 @@ const RepairDetailsPage = () => {
       
       // Use the new invoices service with repair request filter
       const data = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-      
       console.log('Invoices response:', data);
-      console.log('Invoices data:', data);
-      
-      // Handle different response formats
-      let invoicesArray = [];
-      if (Array.isArray(data)) {
-        invoicesArray = data;
-      } else if (data?.success && data?.data?.invoices && Array.isArray(data.data.invoices)) {
-        // Backend returns: {success: true, data: {invoices: [...], pagination: {...}}}
-        invoicesArray = data.data.invoices;
-      } else if (data?.data && Array.isArray(data.data)) {
-        // Direct array in data.data
-        invoicesArray = data.data;
-      } else if (data?.invoices && Array.isArray(data.invoices)) {
-        // Direct array in data.invoices
-        invoicesArray = data.invoices;
-      } else {
-        invoicesArray = [];
-      }
-      
+      const invoicesArray = normalizeInvoicesResponse(data);
       console.log('Invoices array:', invoicesArray);
       console.log('Invoices array length:', invoicesArray.length);
       setInvoices(invoicesArray);
@@ -1667,7 +1768,7 @@ const RepairDetailsPage = () => {
                     setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
                   }}
                   className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                  disabled={availableServices.length === 0}
+                  disabled={isManualService || availableServices.length === 0}
                 >
                   <option value="">
                     {availableServices.length === 0 ? 'جاري التحميل...' : 'اختر الخدمة...'}
@@ -1685,7 +1786,7 @@ const RepairDetailsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
-                  <input type="number" name="price" value={svcForm.price} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg" />
+                  <input type="number" name="price" value={svcForm.price} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg" disabled={isManualService} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1727,11 +1828,80 @@ const RepairDetailsPage = () => {
                   ))}
                 </select>
               </div>
+              <div className="border border-yellow-300 bg-yellow-50 rounded-lg p-3 space-y-3">
+                <label className="flex items-center gap-2 text-sm font-medium text-yellow-800">
+                  <input
+                    type="checkbox"
+                    checked={isManualService}
+                    onChange={() => {
+                      setIsManualService(prev => !prev);
+                      setAddSvcError('');
+                    }}
+                  />
+                  إضافة خدمة يدوية (لن تُحفظ في كتالوج الخدمات)
+                </label>
+                {isManualService && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">اسم الخدمة اليدوية</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={manualServiceForm.name}
+                        onChange={handleManualServiceChange}
+                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
+                        placeholder="مثلاً: تثبيت نظام + برامج"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">الكمية</label>
+                      <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        value={manualServiceForm.quantity}
+                        onChange={handleManualServiceChange}
+                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">سعر الوحدة</label>
+                      <input
+                        type="number"
+                        name="unitPrice"
+                        min="0"
+                        step="0.01"
+                        value={manualServiceForm.unitPrice}
+                        onChange={handleManualServiceChange}
+                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
+                      />
+                    </div>
+                    <p className="text-xs text-yellow-700 md:col-span-3">
+                      سيتم حفظ الخدمة كعنصر فاتورة نصي يحمل الوصف والتكلفة والكمية المحددة.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
               <SimpleButton variant="ghost" onClick={() => setAddServiceOpen(false)} disabled={addSvcLoading}>إلغاء</SimpleButton>
-              <SimpleButton onClick={handleAddServiceSubmit} disabled={addSvcLoading || !svcForm.serviceId || !svcForm.technicianId || !svcForm.price} className="bg-blue-600 hover:bg-blue-700">
-                {addSvcLoading ? 'جاري الإضافة...' : 'إضافة'}
+              <SimpleButton
+                onClick={handleAddServiceSubmit}
+                disabled={
+                  addSvcLoading ||
+                  (isManualService
+                    ? !manualServiceForm.name?.trim() ||
+                      Number(manualServiceForm.unitPrice) <= 0 ||
+                      Number(manualServiceForm.quantity) <= 0
+                    : !svcForm.serviceId || !svcForm.technicianId || !svcForm.price)
+                }
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {addSvcLoading
+                  ? 'جاري الإضافة...'
+                  : isManualService
+                  ? 'إضافة خدمة مخصصة'
+                  : 'إضافة'}
               </SimpleButton>
             </div>
           </div>

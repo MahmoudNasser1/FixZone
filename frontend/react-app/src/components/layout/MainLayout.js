@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Breadcrumb from './Breadcrumb';
 import useAuthStore from '../../stores/authStore';
+import { ROLE_CUSTOMER } from '../../constants/roles';
 
 const MainLayout = ({ 
   showBreadcrumb = true, 
@@ -14,7 +15,7 @@ const MainLayout = ({
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
-  const isCustomer = roleId === 8 || user?.type === 'customer';
+  const isCustomer = roleId === ROLE_CUSTOMER || user?.type === 'customer';
   const isCustomerRoute = location.pathname.startsWith('/customer');
   
   // Hide Sidebar for customer routes

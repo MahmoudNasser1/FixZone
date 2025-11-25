@@ -74,7 +74,7 @@ exports.login = async (req, res) => {
             } catch (error) {
                 console.error('Error fetching customer data by customerId:', error);
             }
-        } else if (user.roleId === 8 || user.role === 8) {
+        } else if (user.roleId === 6 || user.role === 6) {
             // If customerId not in User table, find by userId
             try {
                 const [customers] = await db.execute(

@@ -96,7 +96,10 @@ exports.getAllItems = asyncHandler(async (req, res) => {
   query += ` LIMIT ? OFFSET ?`;
   params.push(parseInt(limit), parseInt(offset));
 
-  const [items] = await db.execute(query, params);
+  // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+  // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+  // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+  const [items] = await db.query(query, params);
 
   // Count total items
   let countQuery = `
@@ -490,7 +493,10 @@ exports.getMovements = asyncHandler(async (req, res) => {
   const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
 
   // Get movements
-  const [movements] = await db.execute(`
+  // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+  // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+  // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+  const [movements] = await db.query(`
     SELECT 
       sm.*,
       i.name as itemName,

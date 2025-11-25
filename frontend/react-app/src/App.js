@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './stores/authStore';
+import { ROLE_ADMIN, ROLE_TECHNICIAN, ROLE_CUSTOMER, isCustomerRole, isTechnicianRole } from './constants/roles';
 
 // Core App Utilities
 import { ThemeProvider } from './components/ThemeProvider';
@@ -40,6 +41,7 @@ import UsersPage from './pages/users/UsersPage';
 import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
 import UserDetailsPage from './pages/users/UserDetailsPage';
 import EditUserPage from './pages/users/EditUserPage';
+import NewUserPage from './pages/users/NewUserPage';
 
 // Layout Demo Page
 import LayoutDemo from './pages/LayoutDemo';
@@ -125,8 +127,9 @@ const ProtectedRoute = ({ children }) => {
 
   // Check if user is customer (Role 8)
   const roleId = user?.roleId || user?.role;
-  const isCustomer = roleId === 8 || roleId === '8' || user?.type === 'customer';
-  const isTechnician = roleId === 3 || roleId === '3';
+  const numericRoleId = Number(roleId);
+  const isCustomer = isCustomerRole(numericRoleId) || user?.type === 'customer';
+  const isTechnician = isTechnicianRole(numericRoleId);
 
   // If user is customer, redirect them to customer dashboard
   // Customers should ONLY access /customer/* routes
@@ -173,7 +176,9 @@ const PublicRoute = ({ children }) => {
 const CustomerRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isCustomer = user && (user.type === 'customer' || user.roleId === 8 || user.role === 8);
+  const roleId = user?.roleId || user?.role;
+  const numericRoleId = Number(roleId);
+  const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
   return isAuthenticated && isCustomer ? children : <Navigate to="/customer/login" replace />;
 };
 
@@ -182,7 +187,8 @@ const TechnicianRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const roleId = user?.roleId || user?.role;
-  const isTechnician = user && (roleId === 3 || roleId === '3');
+  const numericRoleId = Number(roleId);
+  const isTechnician = user && numericRoleId === ROLE_TECHNICIAN;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -200,7 +206,8 @@ const PublicCustomerRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
-  const isCustomer = user && (user.type === 'customer' || roleId === 8 || roleId === '8');
+  const numericRoleId = Number(roleId);
+  const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
 
   // If logged in, redirect based on role
   if (isAuthenticated) {
@@ -220,19 +227,20 @@ const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const roleId = user?.roleId || user?.role;
+  const numericRoleId = Number(roleId);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
   // Check if user is customer - redirect to customer dashboard
-  const isCustomer = roleId === 8 || user?.type === 'customer';
+  const isCustomer = numericRoleId === ROLE_CUSTOMER || user?.type === 'customer';
   if (isCustomer) {
     return <Navigate to="/customer/dashboard" replace />;
   }
 
   // Check if user is admin
-  const isAdmin = roleId === 1 || roleId === '1' || user?.role === 1 || user?.role === 'admin';
+  const isAdmin = numericRoleId === ROLE_ADMIN || roleId === '1' || user?.role === ROLE_ADMIN || user?.role === 'admin';
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -402,6 +410,7 @@ function App() {
                       <Route path="settings" element={<SystemSettingsPage />} />
                       <Route path="users" element={<UsersPageEnhanced />} />
                       <Route path="users-old" element={<UsersPage />} />
+                      <Route path="users/new" element={<NewUserPage />} />
                       <Route path="users/:id" element={<UserDetailsPage />} />
                       <Route path="users/:id/edit" element={<EditUserPage />} />
                       {/* Admin / Roles & Permissions */}
