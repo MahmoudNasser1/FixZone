@@ -39,7 +39,10 @@ router.get('/', async (req, res) => {
         query += ' LIMIT ? OFFSET ?';
         params.push(parseInt(limit), parseInt(offset));
 
-        const [notifications] = await db.execute(query, params);
+        // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+        // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+        // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+        const [notifications] = await db.query(query, params);
 
         // Get total count
         let countQuery = 'SELECT COUNT(*) as total FROM Notification WHERE userId = ?';

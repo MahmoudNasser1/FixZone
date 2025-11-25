@@ -272,7 +272,10 @@ exports.getScanHistory = async (req, res) => {
       params.push(endDate);
     }
 
-    const [scans] = await db.execute(
+    // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+    // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
+    // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+    const [scans] = await db.query(
       `SELECT 
         bs.*,
         ii.name as itemName,
