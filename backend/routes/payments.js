@@ -98,9 +98,10 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
       LIMIT ? OFFSET ?
     `;
     
-    // Ensure limit and offset are integers (safeguard against NaN)
-    const finalLimit = Math.floor(Number(limitNum)) || 10;
-    const finalOffset = Math.floor(Number(offset)) || 0;
+    // CRITICAL: Ensure limit and offset are integers (not strings!) for MariaDB strict mode
+    // Use parseInt() explicitly to convert to integer
+    const finalLimit = parseInt(limitNum, 10) || 10;
+    const finalOffset = parseInt(offset, 10) || 0;
     
     // Final validation
     if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
@@ -120,6 +121,7 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
       });
     }
     
+    // CRITICAL: Ensure these are integers before pushing to queryParams
     queryParams.push(finalLimit, finalOffset);
     
     // DEBUG: Log query params

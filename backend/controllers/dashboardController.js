@@ -142,8 +142,9 @@ exports.getRecentRepairs = async (req, res) => {
         console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
         console.log('🔍 [DEBUG] req.query:', req.query);
         
-        const limitValue = parseInt(req.query.limit) || 10;
-        const finalLimit = Math.floor(Math.max(1, Math.min(100, limitValue))) || 10;
+        const limitValue = parseInt(req.query.limit, 10) || 10;
+        // CRITICAL: Use parseInt() explicitly to ensure integer for MariaDB strict mode
+        const finalLimit = parseInt(Math.max(1, Math.min(100, limitValue)), 10) || 10;
         
         // Fail-safe: Ensure finalLimit is valid
         if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
@@ -155,8 +156,9 @@ exports.getRecentRepairs = async (req, res) => {
             });
         }
         
-        const safeLimit = Number(finalLimit);
-        console.log('🔍 [DEBUG] Executing query with limit:', safeLimit);
+        // CRITICAL: Ensure safeLimit is an integer, not a string or float
+        const safeLimit = parseInt(finalLimit, 10);
+        console.log('🔍 [DEBUG] Executing query with limit:', safeLimit, 'type:', typeof safeLimit);
         
         const [rows] = await db.execute(
             `SELECT 

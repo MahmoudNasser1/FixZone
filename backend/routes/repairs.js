@@ -216,18 +216,20 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       LIMIT ? OFFSET ?
     `;
 
-    // Final validation - ensure limit and offset are valid integers (double-check before SQL)
-    const finalLimit = Math.floor(parsedLimit);
-    const finalOffset = Math.floor(offset);
+    // Final validation - ensure limit and offset are valid integers (CRITICAL: Must be integers, not strings!)
+    // Use parseInt() to explicitly convert to integer for MariaDB strict mode
+    const finalLimit = parseInt(parsedLimit, 10);
+    const finalOffset = parseInt(offset, 10);
     
     // Extra safety check - if somehow we still have invalid values, use defaults
     if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
       console.error('[REPAIRS API] Invalid finalLimit:', finalLimit);
-      queryParams.push(10, 0);
+      queryParams.push(parseInt(10, 10), parseInt(0, 10));
     } else if (isNaN(finalOffset) || finalOffset < 0) {
       console.error('[REPAIRS API] Invalid finalOffset:', finalOffset);
-      queryParams.push(finalLimit, 0);
+      queryParams.push(finalLimit, parseInt(0, 10));
     } else {
+      // CRITICAL: Ensure these are integers, not strings or floats
       queryParams.push(finalLimit, finalOffset);
     }
     
