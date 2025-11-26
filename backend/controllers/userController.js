@@ -84,6 +84,29 @@ exports.createUser = async (req, res) => {
     }
 };
 
+exports.getNewUserTemplate = async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            data: {
+                name: '',
+                email: '',
+                password: '',
+                roleId: null,
+                phone: '',
+                isActive: true
+            }
+        });
+    } catch (error) {
+        console.error('Error returning new user template:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error: Failed to prepare new user template',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
 // Get all users with optional filtering, sorting, and pagination
 exports.getAllUsers = async (req, res) => {
     try {

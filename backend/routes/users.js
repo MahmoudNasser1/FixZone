@@ -14,6 +14,9 @@ router.post('/', authMiddleware, authorizeMiddleware([1]), userController.create
 // Legacy endpoint for compatibility with older clients
 router.post('/new', authMiddleware, authorizeMiddleware([1]), userController.createUser);
 
+// Provide simple template/empty object for "users/new" page
+router.get('/new', authMiddleware, authorizeMiddleware([1]), userController.getNewUserTemplate);
+
 // Get user by ID - requires authentication and Admin role
 router.get('/:id', authMiddleware, authorizeMiddleware([1]), userController.getUserById);
 
