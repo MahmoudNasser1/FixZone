@@ -7,6 +7,9 @@ import {
   BellIcon,
   ShoppingCartIcon
 } from '@heroicons/react/24/outline';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const StockAlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
@@ -17,7 +20,7 @@ const StockAlertsPage = () => {
 
   const fetchStockAlerts = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/stock-alerts/low`, {
+      const response = await fetch(`${API_BASE_URL}/stock-alerts/low`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -59,7 +62,7 @@ const StockAlertsPage = () => {
 
   const fetchAlertSettings = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/stock-alerts/settings`, {
+      const response = await fetch(`${API_BASE_URL}/stock-alerts/settings`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -71,7 +74,7 @@ const StockAlertsPage = () => {
 
   const fetchReorderSuggestions = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/stock-alerts/reorder-suggestions`, {
+      const response = await fetch(`${API_BASE_URL}/stock-alerts/reorder-suggestions`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -97,7 +100,7 @@ const StockAlertsPage = () => {
 
   const updateAlertSettings = async (itemId, newSettings) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/stock-alerts/settings/${itemId}`, {
+      const response = await fetch(`${API_BASE_URL}/stock-alerts/settings/${itemId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

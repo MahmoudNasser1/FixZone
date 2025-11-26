@@ -6,6 +6,9 @@ import { Input } from '../../components/ui/Input';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import inventoryService from '../../services/inventoryService';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const NewInventoryItemPage = () => {
   const navigate = useNavigate();
@@ -55,7 +58,7 @@ const NewInventoryItemPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory`, {
+      const response = await fetch(`${API_BASE_URL}/inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

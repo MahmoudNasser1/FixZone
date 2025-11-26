@@ -3,6 +3,9 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleBadge from './SimpleBadge';
 import SimpleButton from './SimpleButton';
 import { ArrowUpDown, Package, TrendingUp, TrendingDown, RotateCcw } from 'lucide-react';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const StockMovementHistory = ({ inventoryItemId, onClose }) => {
   const [movements, setMovements] = useState([]);
@@ -20,7 +23,7 @@ const StockMovementHistory = ({ inventoryItemId, onClose }) => {
       setLoading(true);
       setError(null);
       // استدعاء API لجلب حركات المخزون
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/stockmovements?inventoryItemId=${inventoryItemId}`);
+      const response = await fetch(`${API_BASE_URL}/stockmovements?inventoryItemId=${inventoryItemId}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }

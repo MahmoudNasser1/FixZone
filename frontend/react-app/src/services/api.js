@@ -1,6 +1,8 @@
 import { loadSettings } from '../config/settings';
+import { getDefaultApiBaseUrl } from '../lib/apiConfig';
+
 // API Service للتعامل مع Backend APIs
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 class ApiService {
   // Helper method للطلبات
@@ -660,11 +662,6 @@ class ApiService {
   // Service APIs
   // ==================
 
-  // جلب جميع الخدمات
-  async getServices() {
-    return this.request('/services');
-  }
-
   // جلب خدمة واحدة
   async getService(id) {
     return this.request(`/services/${id}`);
@@ -792,16 +789,6 @@ class ApiService {
   // ==================
   // Inventory APIs
   // ==================
-
-  // جلب جميع عناصر المخزون
-  async getInventoryItems() {
-    return this.request('/inventory/items');
-  }
-
-  // جلب عنصر مخزون واحد
-  async getInventoryItem(id) {
-    return this.request(`/inventory/items/${id}`);
-  }
 
   // إنشاء عنصر مخزون جديد
   async createInventoryItem(itemData) {

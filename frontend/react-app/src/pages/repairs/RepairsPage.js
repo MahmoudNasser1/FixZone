@@ -17,6 +17,7 @@ import Breadcrumb from '../../components/layout/Breadcrumb';
 import QuickStatsCard from '../../components/ui/QuickStatsCard';
 import { Input } from '../../components/ui/Input';
 import DataView from '../../components/ui/DataView';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
 // Helper function to open print pages with authentication
 const handlePrintRepair = (repairId, type = 'invoice') => {
@@ -26,7 +27,7 @@ const handlePrintRepair = (repairId, type = 'invoice') => {
     return;
   }
   
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+  const API_BASE_URL = getDefaultApiBaseUrl();
   const printUrl = `${API_BASE_URL}/repairs/${repairId}/print/${type}`;
   
   // Open print page in new window

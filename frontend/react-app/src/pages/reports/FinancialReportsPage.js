@@ -17,6 +17,9 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 ChartJS.register(
   CategoryScale,
@@ -43,7 +46,7 @@ const FinancialReportsPage = () => {
   const fetchProfitLossReport = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/profit-loss?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${API_BASE_URL}/reports/profit-loss?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -60,8 +63,8 @@ const FinancialReportsPage = () => {
       const months = [];
       
       for (let month = 1; month <= 12; month++) {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/monthly-revenue?year=${currentYear}&month=${month}`,
+        const response = await fetch(
+        `${API_BASE_URL}/reports/monthly-revenue?year=${currentYear}&month=${month}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -89,7 +92,7 @@ const FinancialReportsPage = () => {
         const dateStr = date.toISOString().split('T')[0];
         
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/daily-revenue?date=${dateStr}`,
+          `${API_BASE_URL}/reports/daily-revenue?date=${dateStr}`,
           { credentials: 'include' }
         );
         const data = await response.json();
@@ -109,7 +112,7 @@ const FinancialReportsPage = () => {
   const fetchExpenses = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/expenses?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${API_BASE_URL}/reports/expenses?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();

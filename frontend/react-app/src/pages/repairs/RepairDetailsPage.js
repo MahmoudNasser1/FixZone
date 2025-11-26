@@ -18,6 +18,9 @@ import {
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
   UserPlus, Trash2, Eye
 } from 'lucide-react';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const RepairDetailsPage = () => {
   const { id } = useParams();
@@ -1407,7 +1410,7 @@ const RepairDetailsPage = () => {
       return;
     }
     // فتح صفحات الطباعة من الـ Backend مباشرةً لتفادي مشاكل CORS/Assets
-    const base = (process.env.REACT_APP_API_URL || 'http://localhost:4000/api') + '/repairs';
+    const base = `${API_BASE_URL}/repairs`;
     let url = `${base}/${id}/print/receipt`;
     if (type === 'receipt') url = `${base}/${id}/print/receipt`;
     if (type === 'sticker') url = `${base}/${id}/print/sticker`;

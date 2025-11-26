@@ -29,6 +29,9 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import SimpleButton from '../../components/ui/SimpleButton';
 import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const PublicRepairTrackingPage = () => {
   const notifications = useNotifications();
@@ -134,7 +137,7 @@ const PublicRepairTrackingPage = () => {
         params.append('requestNumber', requestNumber);
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/repairs/tracking?${params.toString()}`);
+      const response = await fetch(`${API_BASE_URL}/repairs/tracking?${params.toString()}`);
       
       if (response.ok) {
         const data = await response.json();

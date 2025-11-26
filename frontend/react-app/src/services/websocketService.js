@@ -1,3 +1,5 @@
+import { getDefaultWsUrl } from '../lib/apiConfig';
+
 class WebSocketService {
   constructor() {
     this.ws = null;
@@ -7,7 +9,7 @@ class WebSocketService {
     this.heartbeatInterval = 30000; // 30 seconds
     this.listeners = new Map();
     this.isConnecting = false;
-    this.url = process.env.REACT_APP_WS_URL || 'ws://localhost:4000/ws';
+    this.url = getDefaultWsUrl();
   }
 
   // Connect to WebSocket server

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import apiService from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
@@ -10,6 +10,9 @@ import {
   CheckCircle, XCircle, Clock, AlertCircle, Download, Edit, 
   Plus, Eye, Printer, Send, CreditCard, Receipt
 } from 'lucide-react';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const InvoiceDetailsPage = () => {
   const { id } = useParams();
@@ -149,7 +152,7 @@ const InvoiceDetailsPage = () => {
 
   const handlePrintInvoice = () => {
     if (!id) return;
-    const base = (process.env.REACT_APP_API_URL || 'http://localhost:4000/api') + '/invoices';
+    const base = `${API_BASE_URL}/invoices`;
     const url = `${base}/${id}/print`;
     window.open(url, '_blank');
   };

@@ -31,6 +31,10 @@ ChartJS.register(
   ArcElement
 );
 
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
+
 const DailyReportsPage = () => {
   const [dailyData, setDailyData] = useState(null);
   const [repairStats, setRepairStats] = useState(null);
@@ -40,7 +44,7 @@ const DailyReportsPage = () => {
   const fetchDailyRevenue = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/reports/daily-revenue?date=${selectedDate}`,
+        `${API_BASE_URL}/reports/daily-revenue?date=${selectedDate}`,
         { credentials: 'include' }
       );
       const data = await response.json();

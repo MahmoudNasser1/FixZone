@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // Correct import for jwt-decode
+import { getAuthBaseUrl } from '../lib/apiConfig';
 
 const useAuthStore = create(
   persist(
@@ -12,8 +12,7 @@ const useAuthStore = create(
 
       login: async (loginIdentifier, password) => {
         try {
-          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-          const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
+          const AUTH_URL = getAuthBaseUrl();
           // Configure axios to send credentials (cookies) with every request
           axios.defaults.withCredentials = true;
 
@@ -42,8 +41,7 @@ const useAuthStore = create(
 
       // Restore session using /auth/me
       restoreSession: async () => {
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
+        const AUTH_URL = getAuthBaseUrl();
         try {
           axios.defaults.withCredentials = true;
           const response = await axios.get(`${AUTH_URL}/me`);
@@ -66,8 +64,7 @@ const useAuthStore = create(
 
       logout: async () => {
         try {
-          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-          const AUTH_URL = API_URL.replace('/api', '') + '/api/auth';
+          const AUTH_URL = getAuthBaseUrl();
           axios.defaults.withCredentials = true;
           await axios.post(`${AUTH_URL}/logout`);
         } catch (_e) {}

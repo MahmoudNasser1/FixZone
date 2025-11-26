@@ -6,6 +6,9 @@ import { Input } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { ArrowLeft, Save, X } from 'lucide-react';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const EditInventoryItemPage = () => {
   const navigate = useNavigate();
@@ -44,7 +47,7 @@ const EditInventoryItemPage = () => {
   const loadItem = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
         credentials: 'include'
       });
 
@@ -93,7 +96,7 @@ const EditInventoryItemPage = () => {
 
     try {
       setSaving(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/inventory/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
