@@ -146,6 +146,7 @@ const UserDetailsPage = () => {
               <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">خطأ في تحميل البيانات</h3>
               <p className="text-gray-500 mb-4">{error || 'المستخدم غير موجود'}</p>
+              {/* NOTE: هذا العرض لا يزال يستخدم صفحة التفاصيل كتحقق ثانٍ قبل إعادة التوجيه في الأماكن الأخرى */}
               <SimpleButton onClick={() => navigate('/users')} variant="outline">
                 <ArrowRight className="w-4 h-4 ml-2" />
                 العودة لقائمة المستخدمين
@@ -315,6 +316,5 @@ const UserDetailsPage = () => {
     </div>
   );
 };
-
 export default UserDetailsPage;
 

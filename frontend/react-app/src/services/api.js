@@ -272,6 +272,14 @@ class ApiService {
     });
   }
 
+  // تحديث حالة مجموعة من الطلبات
+  async updateBulkRepairStatus(repairIds, status) {
+    return this.request('/repairs/bulk-status', {
+      method: 'PATCH',
+      body: JSON.stringify({ repairIds, status }),
+    });
+  }
+
   // حذف طلب إصلاح
   async deleteRepairRequest(id) {
     return this.request(`/repairs/${id}`, {

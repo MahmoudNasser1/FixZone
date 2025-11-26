@@ -113,12 +113,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     console.log('🔍 [DEBUG] GET /repairs called');
     console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
     console.log('🔍 [DEBUG] req.query:', req.query);
-    
+
     // Log incoming query for debugging (especially on production)
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Incoming query params:', JSON.stringify(req.query));
     }
-    
+
     const {
       customerId,
       status,
@@ -129,17 +129,17 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       search,
       q // Support both 'search' and 'q' for backward compatibility
     } = req.query;
-    
+
     // Use 'search' if provided, otherwise fall back to 'q'
     const searchTerm = (search || q || '').trim();
-    
+
     // Parse pagination with STRONG fallbacks - handle undefined, null, NaN, empty strings
     // This ensures it works in both dev and production environments
     const pageNum = Math.max(1, Number(page) || 1);
     const limitValue = limit || pageSize || 10; // Support both parameter names
     const parsedLimit = Math.min(100, Math.max(1, Number(limitValue) || 10));
     const offset = Math.max(0, (pageNum - 1) * parsedLimit);
-    
+
     // Final validation - ensure we have valid numbers (not NaN)
     if (isNaN(pageNum) || isNaN(parsedLimit) || isNaN(offset)) {
       console.error('[REPAIRS API] Invalid pagination values:', { pageNum, parsedLimit, offset, query: req.query });
@@ -149,7 +149,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         error: 'PAGINATION_ERROR'
       });
     }
-    
+
     // Log parsed values in production for debugging
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Parsed pagination:', { pageNum, parsedLimit, offset });
@@ -220,7 +220,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // Use parseInt() to explicitly convert to integer for MariaDB strict mode
     const finalLimit = parseInt(parsedLimit, 10);
     const finalOffset = parseInt(offset, 10);
-    
+
     // Extra safety check - if somehow we still have invalid values, use defaults
     if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
       console.error('[REPAIRS API] Invalid finalLimit:', finalLimit);
@@ -232,10 +232,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       // CRITICAL: Ensure these are integers, not strings or floats
       queryParams.push(finalLimit, finalOffset);
     }
-    
+
     // Log final query params in production
     if (process.env.NODE_ENV === 'production') {
-      console.log('[REPAIRS API] Final SQL params (last 2 are limit/offset):', 
+      console.log('[REPAIRS API] Final SQL params (last 2 are limit/offset):',
         queryParams.slice(-2).map((p, i) => `${i === 0 ? 'LIMIT' : 'OFFSET'}: ${p} (type: ${typeof p})`));
     }
 
@@ -255,12 +255,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
 
     // Remove limit and offset params for count query
     const countParams = queryParams.slice(0, -2);
-    
+
     // Log count query params in production
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Count query params:', countParams.length, 'params');
     }
-    
+
     const [countResult] = await db.execute(countQuery, countParams);
     const total = countResult[0]?.total || 0;
 
@@ -309,7 +309,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     console.error('❌ [ERROR] Error code:', err.code);
     console.error('❌ [ERROR] SQL Message:', err.sqlMessage);
     console.error('❌ [ERROR] req.user:', req.user);
-    
+
     res.status(500).json({
       success: false,
       message: 'حصل خطأ في السيرفر',
@@ -507,6 +507,51 @@ function getStatusMapping(dbStatus) {
   return statusMap[dbStatus] || 'pending';
 }
 
+// Bulk update repair status
+router.patch('/bulk-status', authMiddleware, async (req, res) => {
+  const { repairIds, status } = req.body;
+
+  if (!Array.isArray(repairIds) || repairIds.length === 0) {
+    return res.status(400).json({ error: 'Repair IDs array is required' });
+  }
+
+  if (!status) {
+    return res.status(400).json({ error: 'Status is required' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const dbStatus = mapFrontendStatusToDb(status);
+
+    // Create placeholders for the IN clause
+    const placeholders = repairIds.map(() => '?').join(',');
+    const query = `
+      UPDATE RepairRequest 
+      SET status = ?, updatedAt = NOW() 
+      WHERE id IN (${placeholders}) AND deletedAt IS NULL
+    `;
+
+    const [result] = await connection.execute(query, [dbStatus, ...repairIds]);
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: 'Repairs updated successfully',
+      updatedCount: result.affectedRows
+    });
+
+  } catch (err) {
+    await connection.rollback();
+    console.error('Error in bulk status update:', err);
+    res.status(500).json({ error: 'Server Error during bulk update' });
+  } finally {
+    connection.release();
+  }
+});
+
 // Get repair request by ID
 // Note: Public tracking routes use /:id/track and /track/:token instead
 router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params'), async (req, res) => {
@@ -644,7 +689,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
             [finalCompanyId, actualCustomerId]
           );
           console.log('✅ Successfully linked company to existing customer');
-          
+
           // Verify the update
           const [verifyCustomer] = await connection.execute(
             'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
@@ -665,7 +710,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         );
         actualCustomerId = customerResult.insertId;
         console.log('✅ Created new customer:', actualCustomerId, 'with companyId:', finalCompanyId);
-        
+
         // Verify the companyId was saved correctly
         const [verifyCustomer] = await connection.execute(
           'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
@@ -684,7 +729,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         [finalCompanyId, actualCustomerId]
       );
       console.log('✅ Successfully linked company to existing customer');
-      
+
       // Verify the update
       const [verifyCustomer] = await connection.execute(
         'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',

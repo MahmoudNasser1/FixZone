@@ -6,10 +6,10 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { useRepairUpdates, useWebSocketStatus } from '../../hooks/useWebSocket';
-import { 
+import {
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
   Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter,
-  ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Check, AlertTriangle, Printer,
+  ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, AlertTriangle, Printer,
   Wifi, WifiOff
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
@@ -26,20 +26,20 @@ const handlePrintRepair = (repairId, type = 'invoice') => {
     alert('خطأ: رقم الطلب غير موجود');
     return;
   }
-  
+
   const API_BASE_URL = getDefaultApiBaseUrl();
   const printUrl = `${API_BASE_URL}/repairs/${repairId}/print/${type}`;
-  
+
   // Open print page in new window
   // Authentication will be handled via cookies from the main window
   const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
-  
+
   if (!printWindow) {
     console.error('Failed to open print window. Popup blocked?');
     alert('فشل فتح نافذة الطباعة. يرجى التحقق من إعدادات منع النوافذ المنبثقة.');
     return;
   }
-  
+
   // Focus the print window
   printWindow.focus();
 };
@@ -50,29 +50,29 @@ const RepairsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const notifications = useNotifications();
-  
+
   // WebSocket status
   const { status: wsStatus } = useWebSocketStatus();
-  
+
   // Real-time repair updates
   useRepairUpdates((message) => {
     console.log('Real-time repair update received:', message);
-    
+
     switch (message.updateType) {
       case 'created':
         // إضافة طلب إصلاح جديد إلى القائمة
         setRepairs(prev => [message.data, ...prev]);
         notifications.success(`تم إنشاء طلب إصلاح جديد: ${message.data.requestNumber}`);
         break;
-        
+
       case 'updated':
         // تحديث طلب إصلاح موجود
-        setRepairs(prev => prev.map(repair => 
+        setRepairs(prev => prev.map(repair =>
           repair.id === message.data.id ? { ...repair, ...message.data } : repair
         ));
         notifications.info(`تم تحديث طلب الإصلاح: ${message.data.requestNumber}`);
         break;
-        
+
       case 'deleted':
         // حذف طلب إصلاح من القائمة
         setRepairs(prev => prev.filter(repair => repair.id !== message.data.id));
@@ -80,24 +80,96 @@ const RepairsPage = () => {
         break;
     }
   });
-  
+
   // State للبيانات والتحميل
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State للبحث والفلترة
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
-  
+
   // State للترقيم والفرز
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [pageSize, setPageSize] = useState(Number(searchParams.get('limit')) || 10);
   const [totalItems, setTotalItems] = useState(0);
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
   const [sortOrder, setSortOrder] = useState((searchParams.get('sortOrder') || 'desc').toLowerCase());
-  
+
+  // Advanced Filters State
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState(searchParams.get('dateFrom') || '');
+  const [dateTo, setDateTo] = useState(searchParams.get('dateTo') || '');
+  const [technicianId, setTechnicianId] = useState(searchParams.get('technicianId') || '');
+  const [priority, setPriority] = useState(searchParams.get('priority') || '');
+  const [technicians, setTechnicians] = useState([]);
+
+  // Fetch technicians for filter
+  useEffect(() => {
+    const loadTechnicians = async () => {
+      try {
+        const res = await apiService.getAllTechnicians();
+        if (res.success) setTechnicians(res.data);
+      } catch (e) {
+        console.error('Failed to load technicians', e);
+      }
+    };
+    loadTechnicians();
+  }, []);
+
   // State للواجهة
+  const [globalStats, setGlobalStats] = useState({
+    totalRequests: 0,
+    pendingRequests: 0,
+    inProgressRequests: 0,
+    completedRequests: 0,
+    onHoldRequests: 0,
+    cancelledRequests: 0
+  });
+
+  useEffect(() => {
+    const fetchGlobalStats = async () => {
+      try {
+        const response = await apiService.getDashboardStats();
+        if (response.success && response.data) {
+          const { requestsByStatus, totalRequests } = response.data;
+
+          // Helper to safely get count by status (case-insensitive)
+          const getCount = (statusKey) => {
+            const found = requestsByStatus.find(item =>
+              item.status.toLowerCase() === statusKey.toLowerCase()
+            );
+            return found ? found.count : 0;
+          };
+
+          setGlobalStats({
+            totalRequests: totalRequests,
+            pendingRequests: getCount('pending'),
+            inProgressRequests: getCount('in_progress') + getCount('diagnosed') + getCount('received'), // Group active statuses
+            completedRequests: getCount('completed') + getCount('delivered'),
+            onHoldRequests: getCount('on_hold') + getCount('waiting_parts'),
+            cancelledRequests: getCount('cancelled') + getCount('rejected')
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching global stats:', error);
+      }
+    };
+
+    fetchGlobalStats();
+  }, [repairs]);
+
+  // Reset filters
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    setDateFrom('');
+    setDateTo('');
+    setTechnicianId('');
+    setPriority('');
+    setPage(1);
+  };
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortMenuRef = useRef(null);
@@ -130,15 +202,15 @@ const RepairsPage = () => {
     const p = parseInt(searchParams.get('page') || '1', 10);
     const ps = parseInt(searchParams.get('limit') || '10', 10);
     setPage(Number.isFinite(p) && p > 0 ? p : 1);
-    setPageSize([5,10,20,50,100].includes(ps) ? ps : 10);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPageSize([5, 10, 20, 50, 100].includes(ps) ? ps : 10);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // تهيئة البحث من URL (?q=)
   useEffect(() => {
     const q = searchParams.get('q');
     if (q != null) setSearch(q);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // تهيئة الفرز من URL (?sort=&order=)
@@ -147,7 +219,7 @@ const RepairsPage = () => {
     const o = searchParams.get('order');
     if (s && sortFields.some(f => f.key === s)) setSortBy(s);
     if (o && (o === 'asc' || o === 'desc')) setSortOrder(o);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // مزامنة page/pageSize مع URL
@@ -156,7 +228,7 @@ const RepairsPage = () => {
     if (page && page !== 1) next.set('page', String(page)); else next.delete('page');
     if (pageSize && pageSize !== 10) next.set('pageSize', String(pageSize)); else next.delete('pageSize');
     setSearchParams(next, { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
 
   // تهيئة فلتر الحالة من URL أو localStorage
@@ -166,7 +238,7 @@ const RepairsPage = () => {
     const initial = urlStatus || lsStatus || 'all';
     const valid = statusOptions.some(o => o.key === initial) ? initial : 'all';
     setStatus(valid);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // مزامنة فلتر الحالة مع URL و localStorage
@@ -178,7 +250,7 @@ const RepairsPage = () => {
       setSearchParams(next, { replace: true });
     }
     localStorage.setItem('repairs_status_filter', status);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   // مزامنة البحث مع URL (debounced)
@@ -192,7 +264,7 @@ const RepairsPage = () => {
       }
     }, 300);
     return () => clearTimeout(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   // مزامنة الفرز مع URL
@@ -207,7 +279,7 @@ const RepairsPage = () => {
       if (!sortOrder || sortOrder === 'desc') next.delete('order'); else next.set('order', sortOrder);
     }
     setSearchParams(next, { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, sortOrder]);
 
   // إغلاق قائمة الحالة عند النقر خارجها أو الضغط على Escape
@@ -250,7 +322,7 @@ const RepairsPage = () => {
   useEffect(() => {
     setShowStatusFilter(false);
   }, [location.pathname, location.search]);
-  
+
   const [customerFilter, setCustomerFilter] = useState(null);
   const [customerName, setCustomerName] = useState('');
   const [serverTotal, setServerTotal] = useState(null); // يدعم total القادم من الخادم
@@ -308,7 +380,7 @@ const RepairsPage = () => {
       console.log('fetchRepairs called');
       setLoading(true);
       setError(null);
-      
+
       // بناء معاملات الفلترة والصفحات لإرسالها للخادم (اختياريًا)
       const params = {};
       if (customerFilter) params.customerId = customerFilter;
@@ -318,30 +390,49 @@ const RepairsPage = () => {
       if (pageSize && pageSize !== 10) params.limit = pageSize; // Backend expects 'limit', not 'pageSize'
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      if (technicianId) params.technicianId = technicianId;
+      if (priority) params.priority = priority;
 
-      const data = await apiService.getRepairRequests(params);
-      console.log('Repairs response:', data);
-      console.log('Repairs data:', data, 'with params:', params);
-      
-      if (Array.isArray(data)) {
-        console.log('Setting repairs as array:', data.length, 'items');
-        setRepairs(data);
+      // Update URL params
+      const urlParams = new URLSearchParams(searchParams);
+      if (page && page !== 1) urlParams.set('page', String(page)); else urlParams.delete('page');
+      if (pageSize && pageSize !== 10) urlParams.set('limit', String(pageSize)); else urlParams.delete('limit');
+      if (search) urlParams.set('q', search); else urlParams.delete('q');
+      if (status && status !== 'all') urlParams.set('status', status); else urlParams.delete('status');
+      if (sortBy && sortBy !== 'createdAt') urlParams.set('sort', sortBy); else urlParams.delete('sort');
+      if (sortOrder && sortOrder !== 'desc') urlParams.set('order', sortOrder); else urlParams.delete('order');
+      if (dateFrom) urlParams.set('dateFrom', dateFrom); else urlParams.delete('dateFrom');
+      if (dateTo) urlParams.set('dateTo', dateTo); else urlParams.delete('dateTo');
+      if (technicianId) urlParams.set('technicianId', technicianId); else urlParams.delete('technicianId');
+      if (priority) urlParams.set('priority', priority); else urlParams.delete('priority');
+
+      setSearchParams(urlParams, { replace: true });
+
+      const response = await apiService.getRepairRequests(params);
+      console.log('Repairs response:', response);
+      console.log('Repairs data:', response, 'with params:', params);
+
+      if (Array.isArray(response)) {
+        console.log('Setting repairs as array:', response.length, 'items');
+        setRepairs(response);
         setServerTotal(null);
-      } else if (data && data.success && data.data && Array.isArray(data.data.repairs)) {
+      } else if (response && response.success && response.data && Array.isArray(response.data.repairs)) {
         // Backend returns: {success: true, data: {repairs: [...], pagination: {...}}}
-        console.log('Setting repairs from data.data.repairs:', data.data.repairs.length, 'items');
-        setRepairs(data.data.repairs);
-        setServerTotal(data.data.pagination?.totalItems || data.data.pagination?.total || null);
-      } else if (data && Array.isArray(data.items)) {
-        console.log('Setting repairs from data.items:', data.items.length, 'items');
-        setRepairs(data.items);
-        setServerTotal(Number.isFinite(data.total) ? data.total : null);
-      } else if (data && Array.isArray(data.data)) {
-        console.log('Setting repairs from data.data:', data.data.length, 'items');
-        setRepairs(data.data);
-        setServerTotal(Number.isFinite(data.total) ? data.total : null);
+        console.log('Setting repairs from data.data.repairs:', response.data.repairs.length, 'items');
+        setRepairs(response.data.repairs);
+        setServerTotal(response.data.pagination?.totalItems || response.data.pagination?.total || null);
+      } else if (response && Array.isArray(response.items)) {
+        console.log('Setting repairs from data.items:', response.items.length, 'items');
+        setRepairs(response.items);
+        setServerTotal(Number.isFinite(response.total) ? response.total : null);
+      } else if (response && Array.isArray(response.data)) {
+        console.log('Setting repairs from data.data:', response.data.length, 'items');
+        setRepairs(response.data);
+        setServerTotal(Number.isFinite(response.total) ? response.total : null);
       } else {
-        console.warn('Unexpected data format:', data);
+        console.warn('Unexpected data format:', response);
         setRepairs([]);
         setServerTotal(null);
       }
@@ -436,7 +527,7 @@ const RepairsPage = () => {
         notify('warning', 'لا توجد بيانات لتصديرها');
         return;
       }
-      downloadFile(csv, `repairs_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+      downloadFile(csv, `repairs_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
       // لا إشعار نجاح لتقليل الضوضاء
     } catch (e) {
       console.error(e);
@@ -511,7 +602,7 @@ const RepairsPage = () => {
           dedupeKey: 'repairs-import'
         });
         notifications?.info?.(`تم الاستيراد: ناجحة ${success} / فاشلة ${failed}`, { dedupeKey: 'repairs-import-summary' });
-      } catch {}
+      } catch { }
     } else {
       try {
         const { success, failed } = await run();
@@ -540,7 +631,7 @@ const RepairsPage = () => {
   const exportToCSV = (rows) => {
     if (!rows || rows.length === 0) return '';
     const headers = [
-      'id','requestNumber','status','priority','customerName','customerPhone','deviceType','deviceBrand','deviceModel','estimatedCost','createdAt','updatedAt'
+      'id', 'requestNumber', 'status', 'priority', 'customerName', 'customerPhone', 'deviceType', 'deviceBrand', 'deviceModel', 'estimatedCost', 'createdAt', 'updatedAt'
     ];
     const escape = (v) => {
       if (v == null) return '';
@@ -576,7 +667,7 @@ const RepairsPage = () => {
           return;
         }
         const run = async () => {
-          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'in_progress')));
+          await apiService.updateBulkRepairStatus(selectedIds, 'in_progress');
           await fetchRepairs();
         };
         const withN = notifications?.withNotification;
@@ -607,14 +698,14 @@ const RepairsPage = () => {
           return;
         }
         const run = async () => {
-          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'completed')));
+          await apiService.updateBulkRepairStatus(selectedIds, 'completed');
           await fetchRepairs();
         };
         const withN = notifications?.withNotification;
         if (typeof withN === 'function') {
           await withN(run, {
             loadingMessage: 'تحديث الحالات...',
-            successMessage: `تم إنهاء ${selectedIds.length} طلب` ,
+            successMessage: `تم إنهاء ${selectedIds.length} طلب`,
             errorMessage: 'فشل تحديث الحالات',
             dedupeKey: 'repairs-bulk-status'
           });
@@ -634,7 +725,7 @@ const RepairsPage = () => {
           return;
         }
         const run = async () => {
-          await Promise.all(selectedIds.map(id => apiService.updateRepairStatus(id, 'cancelled')));
+          await apiService.updateBulkRepairStatus(selectedIds, 'cancelled');
           await fetchRepairs();
         };
         const withN = notifications?.withNotification;
@@ -652,6 +743,43 @@ const RepairsPage = () => {
       }
     },
     {
+      key: 'print_invoices',
+      type: 'print',
+      label: 'طباعة الفواتير',
+      handler: (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) return;
+        selectedIds.forEach(id => handlePrintRepair(id, 'invoice'));
+        notify('info', `جاري فتح ${selectedIds.length} فاتورة للطباعة...`);
+      }
+    },
+    {
+      key: 'delete_bulk',
+      type: 'delete',
+      label: 'حذف المحدد',
+      requiresConfirmation: true,
+      confirmLabel: 'حذف نهائي',
+      confirmMessage: 'هل أنت متأكد من حذف الطلبات المحددة؟ لا يمكن التراجع عن هذا الإجراء.',
+      handler: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) return;
+
+        const run = async () => {
+          // Note: Ideally backend should support bulk delete too, but for now loop is safer for delete
+          // or implement bulk delete endpoint if needed. For now let's use loop as delete is less frequent.
+          // Actually, let's stick to loop for delete as it's critical/destructive
+          await Promise.all(selectedIds.map(id => apiService.deleteRepairRequest(id)));
+          await fetchRepairs();
+        };
+
+        try {
+          await run();
+          notify('success', `تم حذف ${selectedIds.length} طلب بنجاح`);
+        } catch (err) {
+          console.error(err);
+          notify('error', 'فشل حذف بعض الطلبات');
+        }
+      }
+    },
+    {
       key: 'export',
       type: 'export',
       label: 'تصدير المحدد (CSV)',
@@ -663,7 +791,7 @@ const RepairsPage = () => {
           }
           const rows = repairs.filter(r => selectedIds.includes(r.id));
           const csv = exportToCSV(rows);
-          downloadFile(csv, `repairs_selected_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+          downloadFile(csv, `repairs_selected_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
           // بدون إشعار نجاح لتقليل الضوضاء
         } catch (e) {
           console.error(e);
@@ -706,16 +834,24 @@ const RepairsPage = () => {
   // فلترة الطلبات
   const filteredRepairs = repairs.filter(repair => {
     const searchLower = search.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       (repair.requestNumber || '').toLowerCase().includes(searchLower) ||
       (repair.customerName || '').toLowerCase().includes(searchLower) ||
       (repair.customerPhone || '').includes(search) ||
       (repair.deviceType || '').toLowerCase().includes(searchLower) ||
       (repair.deviceBrand || '').toLowerCase().includes(searchLower) ||
       (repair.problemDescription || '').toLowerCase().includes(searchLower);
-    
-    if (status === 'all') return matchesSearch;
-    return matchesSearch && repair.status === status;
+
+    const matchesStatus = (status === 'all' || repair.status === status);
+    const matchesTechnician = (!technicianId || repair.technicianId === technicianId);
+    const matchesPriority = (!priority || repair.priority.toLowerCase() === priority.toLowerCase());
+
+    const repairDate = repair.createdAt ? new Date(repair.createdAt).getTime() : 0;
+    const fromDate = dateFrom ? new Date(dateFrom).getTime() : 0;
+    const toDate = dateTo ? new Date(dateTo).getTime() : Infinity;
+    const matchesDate = repairDate >= fromDate && repairDate <= toDate;
+
+    return matchesSearch && matchesStatus && matchesTechnician && matchesPriority && matchesDate;
   });
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
@@ -749,7 +885,7 @@ const RepairsPage = () => {
   const endIdx = Math.min(startIdx + pageSize, clientTotal);
   // إذا كانت البيانات قادمة مُقسّمة من الخادم (serverTotal موجود) نعرض كما هي، وإلا نُقسّم Client-side
   const paginatedRepairs = Number.isFinite(serverTotal) && serverTotal != null ? repairs : sortedRepairs.slice(startIdx, endIdx);
-  
+
   // Debug logging - only in development mode
   if (process.env.NODE_ENV === 'development') {
     console.log('Render debug:', {
@@ -770,7 +906,7 @@ const RepairsPage = () => {
   // إعادة تعيين الصفحة للأولى عند تغيّر عوامل الفلترة/البحث لتجنّب صفحات فارغة
   useEffect(() => {
     setPage(1);
-  }, [search, status, customerFilter, sortBy, sortOrder]);
+  }, [search, status, customerFilter, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
 
   // حساب الإحصائيات
   const stats = {
@@ -786,22 +922,22 @@ const RepairsPage = () => {
   const getStatusColor = (status) => {
     let color;
     switch (status) {
-      case 'pending': 
+      case 'pending':
         color = 'warning'; // أصفر للانتظار
         break;
-      case 'in-progress': 
+      case 'in-progress':
         color = 'info'; // أزرق للإصلاح
         break;
-      case 'on-hold': 
+      case 'on-hold':
         color = 'secondary'; // رمادي للمعلق
         break;
-      case 'completed': 
+      case 'completed':
         color = 'success'; // أخضر للمكتمل
         break;
-      case 'cancelled': 
+      case 'cancelled':
         color = 'danger'; // أحمر للملغي
         break;
-      default: 
+      default:
         color = 'secondary';
     }
     return color;
@@ -810,15 +946,15 @@ const RepairsPage = () => {
   // دالة لتحديد نص الحالة
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': 
+      case 'pending':
         return 'في الانتظار';
-      case 'in-progress': 
+      case 'in-progress':
         return 'قيد الإصلاح';
-      case 'on-hold': 
+      case 'on-hold':
         return 'معلق';
-      case 'completed': 
+      case 'completed':
         return 'مكتمل';
-      case 'cancelled': 
+      case 'cancelled':
         return 'ملغي';
       default: return status;
     }
@@ -845,6 +981,8 @@ const RepairsPage = () => {
       default: return priority;
     }
   };
+
+
 
   // عرض كلاسيكي (الأول سابقاً) كبطاقة تفصيلية
   const renderClassicItem = (r, visibleKeys = [], selectedItems = [], onItemSelect = null) => {
@@ -878,7 +1016,7 @@ const RepairsPage = () => {
             />
           </div>
         )}
-        
+
         {/* أزرار العرض/التعديل */}
         <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-20">
           <button onClick={onEditClick} className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:scale-105 shadow">
@@ -888,8 +1026,8 @@ const RepairsPage = () => {
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={(e) => { 
-              e.stopPropagation(); 
+            onClick={(e) => {
+              e.stopPropagation();
               handlePrintRepair(r.id, 'invoice');
             }}
             title="طباعة الفاتورة"
@@ -991,7 +1129,7 @@ const RepairsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">طلبات الإصلاح</h1>
@@ -1007,9 +1145,9 @@ const RepairsPage = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center justify-between">
           <span>{error}</span>
-          <SimpleButton 
-            variant="ghost" 
-            size="sm" 
+          <SimpleButton
+            variant="ghost"
+            size="sm"
             onClick={handleRefresh}
             className="mr-2"
           >
@@ -1018,51 +1156,105 @@ const RepairsPage = () => {
         </div>
       )}
 
-      {/* الإحصائيات السريعة */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <QuickStatsCard
-          title="إجمالي الطلبات"
-          value={repairs.length}
-          previousValue={Math.floor(repairs.length * 0.85)} // تقدير للفترة السابقة
-          icon={Wrench}
-          color="blue"
-        />
-        <QuickStatsCard
-          title="قيد الإصلاح"
-          value={repairs.filter(r => r.status === 'in-progress').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'in-progress').length * 0.9)}
-          icon={Play}
-          color="blue"
-        />
-        <QuickStatsCard
-          title="مكتملة"
-          value={repairs.filter(r => r.status === 'completed').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'completed').length * 0.8)}
-          icon={CheckCircle}
-          color="green"
-        />
-        <QuickStatsCard
-          title="في الانتظار"
-          value={repairs.filter(r => r.status === 'pending').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'pending').length * 1.2)}
-          icon={Clock}
-          color="yellow"
-        />
-        <QuickStatsCard
-          title="معلق"
-          value={repairs.filter(r => r.status === 'on-hold').length}
-          previousValue={Math.floor(repairs.filter(r => r.status === 'on-hold').length * 1.1)}
-          icon={AlertTriangle}
-          color="gray"
-        />
-        <QuickStatsCard
-          title="إجمالي الإيرادات"
-          value={repairs.reduce((sum, r) => sum + (parseFloat(r.estimatedCost) || 0), 0)}
-          previousValue={repairs.reduce((sum, r) => sum + (parseFloat(r.estimatedCost) || 0), 0) * 0.85}
-          icon={DollarSign}
-          color="purple"
-          format="currency"
-        />
+
+
+      {/* بطاقات الفلترة - QuickStatsCard كأزرار */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* الكل */}
+        <button
+          onClick={() => setStatus('all')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'all' ? 'ring-2 ring-gray-600 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="إجمالي الطلبات"
+            value={globalStats.totalRequests}
+            icon={Wrench}
+            color="blue"
+          />
+        </button>
+
+        {/* في الانتظار */}
+        <button
+          onClick={() => setStatus('pending')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'pending' ? 'ring-2 ring-yellow-500 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="في الانتظار"
+            value={globalStats.pendingRequests}
+            icon={Clock}
+            color="yellow"
+          />
+        </button>
+
+        {/* قيد الإصلاح */}
+        <button
+          onClick={() => setStatus('in-progress')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'in-progress' ? 'ring-2 ring-blue-600 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="قيد الإصلاح"
+            value={globalStats.inProgressRequests}
+            icon={Play}
+            color="blue"
+          />
+        </button>
+
+        {/* مكتملة */}
+        <button
+          onClick={() => setStatus('completed')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'completed' ? 'ring-2 ring-green-600 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="مكتملة"
+            value={globalStats.completedRequests}
+            icon={CheckCircle}
+            color="green"
+          />
+        </button>
+
+        {/* معلق */}
+        <button
+          onClick={() => setStatus('on-hold')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'on-hold' ? 'ring-2 ring-orange-500 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="معلق"
+            value={globalStats.onHoldRequests}
+            icon={AlertTriangle}
+            color="gray"
+          />
+        </button>
+
+        {/* ملغي */}
+        <button
+          onClick={() => setStatus('cancelled')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'cancelled' ? 'ring-2 ring-red-600 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="ملغي"
+            value={globalStats.cancelledRequests}
+            icon={XCircle}
+            color="danger"
+          />
+        </button>
       </div>
 
       {/* عرض فلتر العميل */}
@@ -1104,91 +1296,26 @@ const RepairsPage = () => {
             />
           </div>
           {/* WebSocket Status Indicator */}
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-            wsStatus === 'connected' 
-              ? 'bg-green-100 text-green-800' 
-              : wsStatus === 'connecting'
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${wsStatus === 'connected'
+            ? 'bg-green-100 text-green-800'
+            : wsStatus === 'connecting'
               ? 'bg-yellow-100 text-yellow-800'
               : 'bg-red-100 text-red-800'
-          }`}>
+            }`}>
             {wsStatus === 'connected' ? (
               <Wifi className="w-3 h-3" />
             ) : (
               <WifiOff className="w-3 h-3" />
             )}
             <span className="hidden sm:inline">
-              {wsStatus === 'connected' ? 'متصل' : 
-               wsStatus === 'connecting' ? 'جاري الاتصال' : 'غير متصل'}
+              {wsStatus === 'connected' ? 'متصل' :
+                wsStatus === 'connecting' ? 'جاري الاتصال' : 'غير متصل'}
             </span>
           </div>
-          
+
           <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="whitespace-nowrap">
             <RefreshCw className="w-3.5 h-3.5 ml-2" /> تحديث
           </SimpleButton>
-          {/* فلتر الحالة داخل قائمة */}
-          <div className="relative" ref={statusMenuRef}>
-            <SimpleButton
-              variant="outline"
-              size="sm"
-              onClick={() => setShowStatusFilter(v => !v)}
-              aria-haspopup="menu"
-              aria-expanded={showStatusFilter}
-              aria-controls="status-filter-menu"
-              className="flex items-center gap-1"
-              title="تصفية حسب الحالة"
-            >
-              <Filter className="w-3.5 h-3.5 ml-1" />
-              <span className="truncate max-w-[8rem]">
-                {`الحالة: ${statusOptions.find(o => o.key === status)?.label || ''}`}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </SimpleButton>
-            {showStatusFilter && (
-              <div
-                id="status-filter-menu"
-                role="menu"
-                className="absolute right-0 mt-2 w-48 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 transform origin-top transition ease-out duration-100 scale-95 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 focus:outline-none"
-                data-open="true"
-                ref={statusMenuPanelRef}
-                tabIndex={-1}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setHighlightedStatusIndex((i) => (i + 1) % statusOptions.length);
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setHighlightedStatusIndex((i) => (i - 1 + statusOptions.length) % statusOptions.length);
-                  } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const opt = statusOptions[highlightedStatusIndex];
-                    if (opt) { setStatus(opt.key); setShowStatusFilter(false); }
-                  } else if (e.key === 'Home') {
-                    e.preventDefault();
-                    setHighlightedStatusIndex(0);
-                  } else if (e.key === 'End') {
-                    e.preventDefault();
-                    setHighlightedStatusIndex(statusOptions.length - 1);
-                  }
-                }}
-              >
-                {statusOptions.map((opt, idx) => {
-                  const selected = status === opt.key;
-                  const highlighted = highlightedStatusIndex === idx;
-                  return (
-                    <button
-                      key={opt.key}
-                      role="menuitem"
-                        className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'} ${highlighted ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
-                      onClick={() => { setStatus(opt.key); setShowStatusFilter(false); }}
-                    >
-                      <span>{opt.label}</span>
-                      {selected && <Check className="w-4 h-4" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
           {/* قائمة الفرز */}
           <div className="relative" ref={sortMenuRef}>
             <SimpleButton
@@ -1246,9 +1373,86 @@ const RepairsPage = () => {
             <Download className="w-3.5 h-3.5 ml-2" /> تصدير النتائج
           </SimpleButton>
           <SimpleButton variant="outline" size="sm" onClick={handleImportClick}>استيراد</SimpleButton>
+          <SimpleButton
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAdvancedFilters(v => !v)}
+            className="flex items-center gap-1"
+          >
+            <Filter className="w-3.5 h-3.5 ml-1" />
+            <span>فلاتر متقدمة</span>
+            {showAdvancedFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </SimpleButton>
         </div>
       </div>
-      
+
+      {/* Advanced Filters Section */}
+      {showAdvancedFilters && (
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4 animate-in slide-in-from-top-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Date Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">من تاريخ</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">إلى تاريخ</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Technician Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الفني المسؤول</label>
+              <select
+                value={technicianId}
+                onChange={(e) => setTechnicianId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">الكل</option>
+                {technicians.map(tech => (
+                  <option key={tech.id} value={tech.id}>{tech.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأولوية</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">الكل</option>
+                <option value="low">منخفضة</option>
+                <option value="medium">متوسطة</option>
+                <option value="high">عالية</option>
+                <option value="urgent">طارئة</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-4 gap-2">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              إعادة تعيين
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {/* Skeleton أثناء التحميل */}
       {loading ? (
@@ -1312,7 +1516,7 @@ const RepairsPage = () => {
             value={pageSize}
             onChange={(e) => setPageSize(parseInt(e.target.value, 10) || 10)}
           >
-            {[10,20,50,100].map(sz => (
+            {[10, 20, 50, 100].map(sz => (
               <option key={sz} value={sz}>{sz}</option>
             ))}
           </select>
