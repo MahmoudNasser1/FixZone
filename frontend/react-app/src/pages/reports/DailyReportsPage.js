@@ -19,6 +19,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
 ChartJS.register(
   CategoryScale,
@@ -30,8 +31,6 @@ ChartJS.register(
   DoughnutController,
   ArcElement
 );
-
-import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 

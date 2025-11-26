@@ -31,9 +31,13 @@ const EditUserPage = () => {
   const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
+    if (id === 'new') {
+      navigate('/users/new', { replace: true });
+      return;
+    }
     fetchUserDetails();
     fetchRoles();
-  }, [id]);
+  }, [id, navigate]);
 
   const fetchUserDetails = async () => {
     try {

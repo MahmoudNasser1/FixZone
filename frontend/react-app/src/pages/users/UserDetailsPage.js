@@ -22,10 +22,14 @@ const UserDetailsPage = () => {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    if (id === 'new') {
+      navigate('/users/new', { replace: true });
+      return;
+    }
     if (id) {
       fetchUserDetails();
     }
-  }, [id]);
+  }, [id, navigate]);
 
   const fetchUserDetails = async () => {
     try {
