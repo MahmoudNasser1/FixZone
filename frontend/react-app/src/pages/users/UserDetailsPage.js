@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
 import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
@@ -23,13 +23,16 @@ const UserDetailsPage = () => {
 
   useEffect(() => {
     if (id === 'new') {
-      navigate('/users/new', { replace: true });
       return;
     }
     if (id) {
       fetchUserDetails();
     }
-  }, [id, navigate]);
+  }, [id]);
+
+  if (id === 'new') {
+    return <Navigate to="/users/new" replace />;
+  }
 
   const fetchUserDetails = async () => {
     try {
