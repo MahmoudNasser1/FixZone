@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, Eye, Edit, Trash2, FileText, Download, Search, Filter, 
+import {
+  Plus, Eye, Edit, Trash2, FileText, Download, Search, Filter,
   Calendar, DollarSign, Send, CheckCircle, AlertCircle, Clock,
   MoreHorizontal, Printer, Mail, Archive, RefreshCw
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import SimpleCard from '../../components/SimpleCard';
 import SimpleButton from '../../components/SimpleButton';
 import SimpleBadge from '../../components/SimpleBadge';
 import DataTable from '../../components/DataTable';
+import { ConfirmModal } from '../../components/ui/Modal';
 import { useNotifications } from '../../hooks/useNotifications';
 import { apiService } from '../../services/api';
 
@@ -29,6 +30,8 @@ function InvoicesPage() {
   });
   const [selectedInvoices, setSelectedInvoices] = useState([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+  const [invoiceDeleteLoading, setInvoiceDeleteLoading] = useState(false);
 
   // Load invoices with filters
   useEffect(() => {
@@ -44,7 +47,7 @@ function InvoicesPage() {
         limit: '10',
         ...filters
       });
-      
+
       const response = await apiService.request(`/invoices?${params}`);
       if (response.success) {
         setInvoices(response.data.invoices || []);
@@ -71,10 +74,10 @@ function InvoicesPage() {
       overdue: { color: 'danger', text: 'متأخرة', icon: AlertCircle },
       cancelled: { color: 'secondary', text: 'ملغية', icon: Archive }
     };
-    
+
     const config = statusConfig[status] || statusConfig.draft;
     const IconComponent = config.icon;
-    
+
     return (
       <SimpleBadge color={config.color} className="inline-flex items-center gap-1">
         <IconComponent className="w-3 h-3" />
@@ -117,25 +120,37 @@ function InvoicesPage() {
   }
 
   // Handle single invoice actions
-  async function handleDeleteInvoice(invoiceId) {
-    if (!confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) return;
+  const openDeleteModal = (invoiceId) => {
+    setInvoiceToDelete(invoiceId);
+  };
 
+  const closeDeleteModal = () => {
+    setInvoiceToDelete(null);
+  };
+
+  const confirmDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+
+    setInvoiceDeleteLoading(true);
     try {
-      const response = await apiService.request(`/invoices/${invoiceId}`, {
+      const response = await apiService.request(`/invoices/${invoiceToDelete}`, {
         method: 'DELETE'
       });
 
       if (response.success) {
         notifications.success('تم حذف الفاتورة بنجاح');
         loadInvoices();
+        closeDeleteModal();
       } else {
         throw new Error(response.error || 'فشل في حذف الفاتورة');
       }
     } catch (error) {
       console.error('Error deleting invoice:', error);
       notifications.error('فشل في حذف الفاتورة');
+    } finally {
+      setInvoiceDeleteLoading(false);
     }
-  }
+  };
 
   async function handlePrintInvoice(invoiceId) {
     try {
@@ -225,14 +240,14 @@ function InvoicesPage() {
           >
             <Printer className="w-4 h-4" />
           </SimpleButton>
-          <SimpleButton
-            variant="outline"
-            size="sm"
-            onClick={() => handleDeleteInvoice(invoice.id)}
-            className="text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="w-4 h-4" />
-          </SimpleButton>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => openDeleteModal(invoice.id)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+            </SimpleButton>
         </div>
       )
     }
@@ -290,6 +305,12 @@ function InvoicesPage() {
       </div>
     );
   }
+
+  const handleDeleteModalOpenChange = (open) => {
+    if (!open) {
+      closeDeleteModal();
+    }
+  };
 
   return (
     <div className="p-6">
@@ -434,6 +455,18 @@ function InvoicesPage() {
           }}
         />
       </SimpleCard>
+      <ConfirmModal
+        open={!!invoiceToDelete}
+        onOpenChange={handleDeleteModalOpenChange}
+        title="تأكيد حذف الفاتورة"
+        description="سيتم حذف الفاتورة نهائياً، ولا يمكن التراجع عن هذه الخطوة."
+        onConfirm={confirmDeleteInvoice}
+        onCancel={closeDeleteModal}
+        variant="destructive"
+        loading={invoiceDeleteLoading}
+        confirmText="حذف"
+        cancelText="إلغاء"
+      />
     </div>
   );
 }

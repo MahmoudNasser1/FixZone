@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import CustomersPage from '../pages/customers/CustomersPage';
 import axios from 'axios';
@@ -20,7 +20,7 @@ describe('CustomersPage', () => {
   });
 
   it('should display a loading state initially', () => {
-    axios.get.mockReturnValue(new Promise(() => {})); // Pending promise
+    axios.get.mockReturnValue(new Promise(() => { })); // Pending promise
     render(
       <MemoryRouter>
         <CustomersPage />
@@ -37,11 +37,10 @@ describe('CustomersPage', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Ahmed Ali')).toBeInTheDocument();
-      expect(screen.getByText('fatima@example.com')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /add new customer/i })).toBeInTheDocument();
-    });
+    const ahmedRow = await screen.findByText('Ahmed Ali');
+    expect(ahmedRow).toBeInTheDocument();
+    expect(screen.getByText('fatima@example.com')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /add new customer/i })).toBeInTheDocument();
   });
 
   it('should display an error message on API failure', async () => {
@@ -52,9 +51,7 @@ describe('CustomersPage', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText(/error fetching customers/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/error fetching customers/i)).toBeInTheDocument();
   });
 
   it('should navigate to the new customer page when "Add New Customer" is clicked', async () => {
@@ -68,17 +65,11 @@ describe('CustomersPage', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      const addButton = screen.getByRole('link', { name: /add new customer/i });
-      expect(addButton).toBeInTheDocument();
-      // Simulate click
-      // In a real app, userEvent.click(addButton) would be better
-      // For this test, we'll just check navigation logic
-    });
-    
+    const addButton = await screen.findByRole('link', { name: /add new customer/i });
+    expect(addButton).toBeInTheDocument();
+
     // This is a simplified way to test navigation. A full userEvent test would be more robust.
     // For now, we confirm the link is correct.
-    const addButton = screen.getByRole('link', { name: /add new customer/i });
     expect(addButton).toHaveAttribute('href', '/customers/new');
   });
 });

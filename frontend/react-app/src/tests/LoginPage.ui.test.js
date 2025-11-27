@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
@@ -39,11 +39,11 @@ describe('LoginPage - UI Component Tests', () => {
       // Check for main elements
       expect(screen.getByText('Login')).toBeInTheDocument();
       expect(screen.getByText(/enter your credentials/i)).toBeInTheDocument();
-      
+
       // Check for form inputs
       expect(screen.getByLabelText(/email or phone/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-      
+
       // Check for buttons and links
       expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
       expect(screen.getByText(/remember me/i)).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('LoginPage - UI Component Tests', () => {
   describe('User Interaction Tests', () => {
     it('should update input values when user types', async () => {
       const user = userEvent.setup();
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -93,7 +93,7 @@ describe('LoginPage - UI Component Tests', () => {
 
     it('should clear previous input when user types new value', async () => {
       const user = userEvent.setup();
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -101,10 +101,10 @@ describe('LoginPage - UI Component Tests', () => {
       );
 
       const emailInput = screen.getByLabelText(/email or phone/i);
-      
+
       await user.type(emailInput, 'old@example.com');
       expect(emailInput).toHaveValue('old@example.com');
-      
+
       await user.clear(emailInput);
       await user.type(emailInput, 'new@example.com');
       expect(emailInput).toHaveValue('new@example.com');
@@ -112,7 +112,7 @@ describe('LoginPage - UI Component Tests', () => {
 
     it('should toggle remember me checkbox', async () => {
       const user = userEvent.setup();
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -120,7 +120,7 @@ describe('LoginPage - UI Component Tests', () => {
       );
 
       const rememberCheckbox = screen.getByRole('checkbox', { name: /remember me/i });
-      
+
       expect(rememberCheckbox).not.toBeChecked();
       await user.click(rememberCheckbox);
       expect(rememberCheckbox).toBeChecked();
@@ -133,7 +133,7 @@ describe('LoginPage - UI Component Tests', () => {
     it('should call login function with correct credentials on form submit', async () => {
       const user = userEvent.setup();
       mockLogin.mockResolvedValue(true);
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -148,14 +148,13 @@ describe('LoginPage - UI Component Tests', () => {
       await user.type(passwordInput, 'securePassword123');
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(mockLogin).toHaveBeenCalledWith('admin@fixzone.com', 'securePassword123');
-      });
+      await screen.findByRole('button', { name: /signing in/i });
+      expect(mockLogin).toHaveBeenCalledWith('admin@fixzone.com', 'securePassword123');
     });
 
     it('should prevent submission if required fields are empty', async () => {
       const user = userEvent.setup();
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -163,7 +162,7 @@ describe('LoginPage - UI Component Tests', () => {
       );
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
-      
+
       // Try to submit without filling fields
       await user.click(submitButton);
 
@@ -180,7 +179,7 @@ describe('LoginPage - UI Component Tests', () => {
         resolveLogin = resolve;
       });
       mockLogin.mockReturnValue(loginPromise);
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -196,16 +195,12 @@ describe('LoginPage - UI Component Tests', () => {
       await user.click(submitButton);
 
       // Check for loading state
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /signing in/i })).toBeInTheDocument();
-        expect(submitButton).toBeDisabled();
-      });
+      await screen.findByRole('button', { name: /signing in/i });
+      expect(submitButton).toBeDisabled();
 
       // Resolve the login promise
       resolveLogin(true);
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
   });
 
@@ -214,7 +209,7 @@ describe('LoginPage - UI Component Tests', () => {
       const user = userEvent.setup();
       const errorMessage = 'Invalid credentials';
       mockLogin.mockRejectedValue(new Error(errorMessage));
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -229,16 +224,14 @@ describe('LoginPage - UI Component Tests', () => {
       await user.type(passwordInput, 'wrongpassword');
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/error:/i)).toBeInTheDocument();
-        expect(screen.getByText(errorMessage)).toBeInTheDocument();
-      });
+      expect(await screen.findByText(/error:/i)).toBeInTheDocument();
+      expect(await screen.findByText(errorMessage)).toBeInTheDocument();
     });
 
     it('should clear error message when user starts typing again', async () => {
       const user = userEvent.setup();
       mockLogin.mockRejectedValue(new Error('Login failed'));
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -254,16 +247,12 @@ describe('LoginPage - UI Component Tests', () => {
       await user.type(passwordInput, 'password');
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/error:/i)).toBeInTheDocument();
-      });
+      expect(await screen.findByText(/error:/i)).toBeInTheDocument();
 
       // Start typing again - error should clear
       await user.type(emailInput, 'x');
-      
-      await waitFor(() => {
-        expect(screen.queryByText(/error:/i)).not.toBeInTheDocument();
-      });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/error:/i));
     });
   });
 
@@ -290,7 +279,7 @@ describe('LoginPage - UI Component Tests', () => {
         resolveLogin = resolve;
       });
       mockLogin.mockReturnValue(loginPromise);
-      
+
       render(
         <MemoryRouter>
           <LoginPage />
@@ -305,11 +294,10 @@ describe('LoginPage - UI Component Tests', () => {
       await user.type(passwordInput, 'password');
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(emailInput).toBeDisabled();
-        expect(passwordInput).toBeDisabled();
-        expect(submitButton).toBeDisabled();
-      });
+      await screen.findByRole('button', { name: /signing in/i });
+      expect(emailInput).toBeDisabled();
+      expect(passwordInput).toBeDisabled();
+      expect(submitButton).toBeDisabled();
 
       resolveLogin(true);
     });

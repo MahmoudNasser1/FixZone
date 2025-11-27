@@ -10,18 +10,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-
-// Mock axios
-jest.mock('axios');
-const mockedAxios = axios;
-
-// Mock components
 import PaymentsPage from '../pages/payments/PaymentsPage';
 import CreatePaymentPage from '../pages/payments/CreatePaymentPage';
 import PaymentDetailsPage from '../pages/payments/PaymentDetailsPage';
 import PaymentForm from '../components/payments/PaymentForm';
 import PaymentCard from '../components/payments/PaymentCard';
 import PaymentStats from '../components/payments/PaymentStats';
+
+// Mock axios
+jest.mock('axios');
+const mockedAxios = axios;
 
 // Mock data
 const mockPayments = [
@@ -78,14 +76,14 @@ const renderWithRouter = (component) => {
 };
 
 describe('🧪 اختبارات موديول المدفوعات', () => {
-  
+
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks();
   });
 
   describe('📄 اختبارات الصفحة الرئيسية للمدفوعات', () => {
-    
+
     test('يجب أن تعرض الصفحة الرئيسية للمدفوعات', async () => {
       mockedAxios.get.mockResolvedValueOnce({
         data: {
@@ -102,9 +100,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
       renderWithRouter(<PaymentsPage />);
 
       // انتظار تحميل البيانات
-      await waitFor(() => {
-        expect(screen.getByText('إدارة المدفوعات')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('إدارة المدفوعات')).toBeInTheDocument();
 
       // التحقق من وجود عناصر الصفحة
       expect(screen.getByText('إضافة مدفوعة جديدة')).toBeInTheDocument();
@@ -126,10 +122,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('أحمد محمد')).toBeInTheDocument();
-        expect(screen.getByText('فاطمة علي')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('أحمد محمد')).toBeInTheDocument();
+      expect(await screen.findByText('فاطمة علي')).toBeInTheDocument();
     });
 
     test('يجب أن تعرض رسالة عند عدم وجود مدفوعات', async () => {
@@ -147,14 +141,12 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('لا توجد مدفوعات')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('لا توجد مدفوعات')).toBeInTheDocument();
     });
   });
 
   describe('➕ اختبارات إنشاء مدفوعة جديدة', () => {
-    
+
     test('يجب أن تعرض نموذج إنشاء مدفوعة', () => {
       renderWithRouter(<CreatePaymentPage />);
 
@@ -174,9 +166,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
       fireEvent.change(amountInput, { target: { value: '-100' } });
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText('المبلغ يجب أن يكون أكبر من صفر')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('المبلغ يجب أن يكون أكبر من صفر')).toBeInTheDocument();
     });
 
     test('يجب أن تنشئ مدفوعة جديدة عند إدخال بيانات صحيحة', async () => {
@@ -190,14 +180,14 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
       renderWithRouter(<CreatePaymentPage />);
 
       // ملء النموذج
-      fireEvent.change(screen.getByLabelText('رقم الفاتورة'), { 
-        target: { value: '1' } 
+      fireEvent.change(screen.getByLabelText('رقم الفاتورة'), {
+        target: { value: '1' }
       });
-      fireEvent.change(screen.getByLabelText('المبلغ'), { 
-        target: { value: '1000' } 
+      fireEvent.change(screen.getByLabelText('المبلغ'), {
+        target: { value: '1000' }
       });
-      fireEvent.change(screen.getByLabelText('طريقة الدفع'), { 
-        target: { value: 'cash' } 
+      fireEvent.change(screen.getByLabelText('طريقة الدفع'), {
+        target: { value: 'cash' }
       });
 
       // إرسال النموذج
@@ -215,7 +205,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('📋 اختبارات تفاصيل المدفوعة', () => {
-    
+
     test('يجب أن تعرض تفاصيل المدفوعة', async () => {
       mockedAxios.get.mockResolvedValueOnce({
         data: {
@@ -226,11 +216,9 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentDetailsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('تفاصيل المدفوعة')).toBeInTheDocument();
-        expect(screen.getByText('أحمد محمد')).toBeInTheDocument();
-        expect(screen.getByText('1000 جنيه')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('تفاصيل المدفوعة')).toBeInTheDocument();
+      expect(await screen.findByText('أحمد محمد')).toBeInTheDocument();
+      expect(await screen.findByText('1000 جنيه')).toBeInTheDocument();
     });
 
     test('يجب أن تعرض أزرار الإجراءات', async () => {
@@ -243,22 +231,20 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentDetailsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('تعديل')).toBeInTheDocument();
-        expect(screen.getByText('حذف')).toBeInTheDocument();
-        expect(screen.getByText('طباعة')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('تعديل')).toBeInTheDocument();
+      expect(await screen.findByText('حذف')).toBeInTheDocument();
+      expect(await screen.findByText('طباعة')).toBeInTheDocument();
     });
   });
 
   describe('🎨 اختبارات مكونات المدفوعات', () => {
-    
+
     test('يجب أن يعرض PaymentCard بيانات المدفوعة', () => {
       renderWithRouter(
-        <PaymentCard 
-          payment={mockPayments[0]} 
-          onEdit={() => {}} 
-          onDelete={() => {}} 
+        <PaymentCard
+          payment={mockPayments[0]}
+          onEdit={() => { }}
+          onDelete={() => { }}
         />
       );
 
@@ -284,9 +270,9 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
     test('يجب أن يعرض PaymentForm حقول النموذج', () => {
       renderWithRouter(
-        <PaymentForm 
-          onSubmit={() => {}} 
-          onCancel={() => {}} 
+        <PaymentForm
+          onSubmit={() => { }}
+          onCancel={() => { }}
         />
       );
 
@@ -298,7 +284,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('🔍 اختبارات البحث والفلترة', () => {
-    
+
     test('يجب أن تعمل فلترة المدفوعات حسب التاريخ', async () => {
       mockedAxios.get.mockResolvedValueOnce({
         data: {
@@ -309,10 +295,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        const dateFromInput = screen.getByLabelText('من تاريخ');
-        fireEvent.change(dateFromInput, { target: { value: '2024-12-20' } });
-      });
+      const dateFromInput = screen.getByLabelText('من تاريخ');
+      fireEvent.change(dateFromInput, { target: { value: '2024-12-20' } });
 
       await waitFor(() => {
         expect(mockedAxios.get).toHaveBeenCalledWith('/api/payments', {
@@ -333,10 +317,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        const paymentMethodSelect = screen.getByLabelText('طريقة الدفع');
-        fireEvent.change(paymentMethodSelect, { target: { value: 'cash' } });
-      });
+      const paymentMethodSelect = screen.getByLabelText('طريقة الدفع');
+      fireEvent.change(paymentMethodSelect, { target: { value: 'cash' } });
 
       await waitFor(() => {
         expect(mockedAxios.get).toHaveBeenCalledWith('/api/payments', {
@@ -357,10 +339,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText('البحث في المدفوعات...');
-        fireEvent.change(searchInput, { target: { value: 'أحمد' } });
-      });
+      const searchInput = screen.getByPlaceholderText('البحث في المدفوعات...');
+      fireEvent.change(searchInput, { target: { value: 'أحمد' } });
 
       await waitFor(() => {
         expect(mockedAxios.get).toHaveBeenCalledWith('/api/payments', {
@@ -373,7 +353,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('📊 اختبارات التقارير والإحصائيات', () => {
-    
+
     test('يجب أن تعرض الرسوم البيانية', async () => {
       const mockChartData = {
         paymentMethods: {
@@ -393,10 +373,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('توزيع طرق الدفع')).toBeInTheDocument();
-        expect(screen.getByText('الاتجاهات الشهرية')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('توزيع طرق الدفع')).toBeInTheDocument();
+      expect(await screen.findByText('الاتجاهات الشهرية')).toBeInTheDocument();
     });
 
     test('يجب أن تعرض إحصائيات المدفوعات المتأخرة', async () => {
@@ -412,19 +390,17 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByText('المدفوعات المتأخرة')).toBeInTheDocument();
-        expect(screen.getByText('5')).toBeInTheDocument();
-        expect(screen.getByText('25,000 جنيه')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('المدفوعات المتأخرة')).toBeInTheDocument();
+      expect(await screen.findByText('5')).toBeInTheDocument();
+      expect(await screen.findByText('25,000 جنيه')).toBeInTheDocument();
     });
   });
 
   describe('⚡ اختبارات الأداء', () => {
-    
+
     test('يجب أن تحمل الصفحة بسرعة', async () => {
       const startTime = performance.now();
-      
+
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           payments: mockPayments,
@@ -464,15 +440,13 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
       fireEvent.click(checkboxes[0]);
       fireEvent.click(checkboxes[1]);
 
-      await waitFor(() => {
-        expect(screen.getByText('حذف المحدد')).toBeInTheDocument();
-        expect(screen.getByText('تصدير المحدد')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('حذف المحدد')).toBeInTheDocument();
+      expect(await screen.findByText('تصدير المحدد')).toBeInTheDocument();
     });
   });
 
   describe('🔒 اختبارات الأمان', () => {
-    
+
     test('يجب أن تتحقق من الصلاحيات قبل عرض البيانات', async () => {
       mockedAxios.get.mockRejectedValueOnce({
         response: { status: 401, data: { error: 'غير مصرح' } }
@@ -499,7 +473,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('📱 اختبارات التصميم المتجاوب', () => {
-    
+
     test('يجب أن تعمل على الشاشات الصغيرة', () => {
       // محاكاة شاشة صغيرة
       Object.defineProperty(window, 'innerWidth', {
@@ -545,7 +519,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('🚨 اختبارات التعامل مع الأخطاء', () => {
-    
+
     test('يجب أن تعرض رسالة خطأ عند فشل تحميل البيانات', async () => {
       mockedAxios.get.mockRejectedValueOnce({
         response: { status: 500, data: { error: 'خطأ في الخادم' } }
@@ -566,8 +540,8 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
       renderWithRouter(<CreatePaymentPage />);
 
       // ملء النموذج وإرساله
-      fireEvent.change(screen.getByLabelText('المبلغ'), { 
-        target: { value: '1000' } 
+      fireEvent.change(screen.getByLabelText('المبلغ'), {
+        target: { value: '1000' }
       });
       fireEvent.click(screen.getByText('حفظ المدفوعة'));
 
@@ -592,7 +566,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
   });
 
   describe('📤 اختبارات التصدير', () => {
-    
+
     test('يجب أن تعمل تصدير PDF', async () => {
       // Mock PDF generation
       const mockPDF = new Blob(['PDF content'], { type: 'application/pdf' });
@@ -605,9 +579,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        fireEvent.click(screen.getByText('تصدير PDF'));
-      });
+      fireEvent.click(await screen.findByText('تصدير PDF'));
 
       // التحقق من أن التصدير تم
       expect(global.URL.createObjectURL).toHaveBeenCalled();
@@ -625,9 +597,7 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
       renderWithRouter(<PaymentsPage />);
 
-      await waitFor(() => {
-        fireEvent.click(screen.getByText('تصدير Excel'));
-      });
+      fireEvent.click(await screen.findByText('تصدير Excel'));
 
       // التحقق من أن التصدير تم
       expect(global.URL.createObjectURL).toHaveBeenCalled();
@@ -637,10 +607,10 @@ describe('🧪 اختبارات موديول المدفوعات', () => {
 
 // اختبارات الأداء المتقدمة
 describe('⚡ اختبارات الأداء المتقدمة', () => {
-  
+
   test('يجب أن تعمل العمليات المجمعة بكفاءة', async () => {
     const startTime = performance.now();
-    
+
     // محاكاة 100 مدفوعة
     const largeMockPayments = Array.from({ length: 100 }, (_, i) => ({
       ...mockPayments[0],
@@ -679,10 +649,8 @@ describe('⚡ اختبارات الأداء المتقدمة', () => {
 
     const startTime = performance.now();
 
-    await waitFor(() => {
-      const searchInput = screen.getByPlaceholderText('البحث في المدفوعات...');
-      fireEvent.change(searchInput, { target: { value: 'أحمد' } });
-    });
+    const searchInput = screen.getByPlaceholderText('البحث في المدفوعات...');
+    fireEvent.change(searchInput, { target: { value: 'أحمد' } });
 
     const endTime = performance.now();
     const searchTime = endTime - startTime;
@@ -693,7 +661,7 @@ describe('⚡ اختبارات الأداء المتقدمة', () => {
 
 // اختبارات التكامل
 describe('🔗 اختبارات التكامل', () => {
-  
+
   test('يجب أن تتكامل مع نظام الفواتير', async () => {
     mockedAxios.get.mockResolvedValueOnce({
       data: { invoices: mockInvoices }
@@ -701,27 +669,24 @@ describe('🔗 اختبارات التكامل', () => {
 
     renderWithRouter(<CreatePaymentPage />);
 
-    await waitFor(() => {
-      const invoiceSelect = screen.getByLabelText('رقم الفاتورة');
-      expect(invoiceSelect).toBeInTheDocument();
-    });
+    expect(await screen.findByLabelText('رقم الفاتورة')).toBeInTheDocument();
   });
 
   test('يجب أن تتكامل مع نظام العملاء', async () => {
     mockedAxios.get.mockResolvedValueOnce({
-      data: { customers: mockPayments.map(p => ({
-        id: p.id,
-        firstName: p.customerFirstName,
-        lastName: p.customerLastName
-      })) }
+      data: {
+        customers: mockPayments.map(p => ({
+          id: p.id,
+          firstName: p.customerFirstName,
+          lastName: p.customerLastName
+        }))
+      }
     });
 
     renderWithRouter(<PaymentsPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText('أحمد محمد')).toBeInTheDocument();
-      expect(screen.getByText('فاطمة علي')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('أحمد محمد')).toBeInTheDocument();
+    expect(await screen.findByText('فاطمة علي')).toBeInTheDocument();
   });
 });
 

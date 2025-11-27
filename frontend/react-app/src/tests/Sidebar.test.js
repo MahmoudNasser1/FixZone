@@ -33,27 +33,24 @@ describe('Sidebar Component', () => {
     expect(screen.getByRole('link', { name: /customers/i })).toBeInTheDocument();
   });
 
-  it('should be visible when isSidebarOpen is true', () => {
+  it('should show expanded branding when open', () => {
     useUIStore.mockReturnValue({ isSidebarOpen: true, toggleSidebar: vi.fn() });
-    const { container } = render(
+    render(
       <MemoryRouter>
         <Sidebar />
       </MemoryRouter>
     );
-    // This test is implementation-specific. We assume visibility is controlled
-    // by a class or data attribute. Let's check for a common pattern.
-    expect(container.firstChild).not.toHaveClass('-translate-x-full');
+    expect(screen.getByText('FixZone')).toBeInTheDocument();
   });
 
-  it('should be hidden when isSidebarOpen is false', () => {
+  it('should hide extended labels when collapsed', () => {
     useUIStore.mockReturnValue({ isSidebarOpen: false, toggleSidebar: vi.fn() });
-    const { container } = render(
+    render(
       <MemoryRouter>
         <Sidebar />
       </MemoryRouter>
     );
-    // Check for a class that would hide the element off-screen
-    expect(container.firstChild).toHaveClass('-translate-x-full');
+    expect(screen.queryByText('FixZone')).not.toBeInTheDocument();
   });
 
   // This test assumes there's a button inside the Sidebar to close it.
@@ -61,7 +58,7 @@ describe('Sidebar Component', () => {
   it('should call toggleSidebar when the close button is clicked', async () => {
     const toggleSidebarMock = vi.fn();
     useUIStore.mockReturnValue({ isSidebarOpen: true, toggleSidebar: toggleSidebarMock });
-    
+
     render(
       <MemoryRouter>
         <Sidebar />

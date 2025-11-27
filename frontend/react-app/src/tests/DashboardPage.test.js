@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DashboardPage from '../pages/DashboardPage';
 import axios from 'axios';
@@ -32,8 +32,8 @@ describe('DashboardPage', () => {
 
   it('should display loading state initially', () => {
     // Mock a pending promise
-    axios.get.mockReturnValue(new Promise(() => {}));
-    
+    axios.get.mockReturnValue(new Promise(() => { }));
+
     render(
       <MemoryRouter>
         <DashboardPage />
@@ -53,20 +53,14 @@ describe('DashboardPage', () => {
       </MemoryRouter>
     );
 
-    // Wait for the API call to resolve and the component to re-render
-    await waitFor(() => {
-      // Check for stats cards
-      expect(screen.getByText(/total revenue/i)).toBeInTheDocument();
-      expect(screen.getByText('EGP 15,000')).toBeInTheDocument();
-
-      expect(screen.getByText(/new repairs/i)).toBeInTheDocument();
-      expect(screen.getByText('12')).toBeInTheDocument();
-
-      // Check for recent activity
-      expect(screen.getByText(/recent activity/i)).toBeInTheDocument();
-      expect(screen.getByText('New repair for iPhone 12 screen')).toBeInTheDocument();
-      expect(screen.getByText('Invoice #1024 paid')).toBeInTheDocument();
-    });
+    const totalRevenueHeading = await screen.findByText(/total revenue/i);
+    expect(totalRevenueHeading).toBeInTheDocument();
+    expect(await screen.findByText('EGP 15,000')).toBeInTheDocument();
+    expect(await screen.findByText(/new repairs/i)).toBeInTheDocument();
+    expect(await screen.findByText('12')).toBeInTheDocument();
+    expect(await screen.findByText(/recent activity/i)).toBeInTheDocument();
+    expect(await screen.findByText('New repair for iPhone 12 screen')).toBeInTheDocument();
+    expect(await screen.findByText('Invoice #1024 paid')).toBeInTheDocument();
   });
 
   it('should display an error message on API failure', async () => {
@@ -79,10 +73,8 @@ describe('DashboardPage', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument();
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/error/i)).toBeInTheDocument();
+    expect(await screen.findByText(errorMessage)).toBeInTheDocument();
   });
 });
 

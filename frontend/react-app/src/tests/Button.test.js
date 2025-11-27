@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Button } from '../components/ui/Button'; // Assuming Button is a named export
 
 describe('Button Component', () => {
@@ -9,27 +10,29 @@ describe('Button Component', () => {
     expect(buttonElement).toBeInTheDocument();
   });
 
-  it('should handle click events', () => {
+  it('should handle click events', async () => {
     const handleClick = vi.fn();
+    const user = userEvent.setup();
     render(<Button onClick={handleClick}>Clickable</Button>);
     const buttonElement = screen.getByText(/clickable/i);
-    fireEvent.click(buttonElement);
+    await user.click(buttonElement);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should be disabled when the disabled prop is true', () => {
+  it('should be disabled when the disabled prop is true', async () => {
     const handleClick = vi.fn();
+    const user = userEvent.setup();
     render(<Button onClick={handleClick} disabled>Disabled</Button>);
     const buttonElement = screen.getByText(/disabled/i);
     expect(buttonElement).toBeDisabled();
-    fireEvent.click(buttonElement);
+    await user.click(buttonElement);
     expect(handleClick).not.toHaveBeenCalled();
   });
 
   it('should apply the correct variant classes', () => {
-    const { container } = render(<Button variant="destructive">Destructive</Button>);
-    // This is a snapshot-like test for className, assuming cva creates predictable classes
-    expect(container.firstChild.className).toContain('destructive');
+    render(<Button variant="destructive">Destructive</Button>);
+    const buttonElement = screen.getByRole('button', { name: /destructive/i });
+    expect(buttonElement).toHaveClass('destructive');
   });
 
   it('should render as a different element when "asChild" is true', () => {
