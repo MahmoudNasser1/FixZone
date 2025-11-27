@@ -40,7 +40,8 @@ export default function CustomerLoginPage() {
         useAuthStore.setState({
           isAuthenticated: true,
           user: userData,
-          token: null
+          token: null,
+          forcePasswordReset: Boolean(userData.forcePasswordReset)
         });
         notifications.success('نجاح', { message: 'تم تسجيل الدخول بنجاح' });
         navigate('/customer/dashboard');

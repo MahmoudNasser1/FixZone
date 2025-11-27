@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
+import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
 import { ROLE_CUSTOMER } from '../../constants/roles';
 import CustomerHeader from '../../components/customer/CustomerHeader';
+import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 import EnhancedStatsCard from '../../components/customer/EnhancedStatsCard';
 import QuickActionCard from '../../components/customer/QuickActionCard';
 import {
@@ -20,11 +22,11 @@ export default function CustomerDashboard() {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const user = useAuthStore((state) => state.user);
+  const forcePasswordReset = useAuthStore((state) => state.forcePasswordReset);
 
   const [profile, setProfile] = useState(null);
   const [repairs, setRepairs] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalRepairs: 0,
@@ -35,6 +37,7 @@ export default function CustomerDashboard() {
     paidInvoices: 0,
     totalDevices: 0
   });
+  const [showPasswordReminder, setShowPasswordReminder] = useState(false);
 
   // Use ref to prevent multiple calls
   const loadingRef = useRef(false);
@@ -61,6 +64,10 @@ export default function CustomerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only depend on user.id to prevent loops
 
+  useEffect(() => {
+    setShowPasswordReminder(forcePasswordReset);
+  }, [forcePasswordReset]);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -75,9 +82,51 @@ export default function CustomerDashboard() {
         console.warn('Failed to load stats:', e);
       }
 
+      // 2. Load Profile first so we can scope future requests to this customer
+      let resolvedCustomerId = profile?.id || user?.customerId || user?.id;
+      try {
+        const profileRes = await api.request('/auth/customer/profile');
+        if (profileRes.success && profileRes.data) {
+          setProfile(profileRes.data);
+          if (profileRes.data.id) {
+            resolvedCustomerId = profileRes.data.id;
+          }
+        } else if (user) {
+          const fallbackCustomerId = user.customerId || user.id;
+          setProfile({
+            id: fallbackCustomerId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+          });
+          if (fallbackCustomerId) {
+            resolvedCustomerId = fallbackCustomerId;
+          }
+        }
+      } catch (profileError) {
+        console.warn('Profile API failed, using user data from store:', profileError);
+        if (user) {
+          const fallbackCustomerId = user.customerId || user.id;
+          setProfile({
+            id: fallbackCustomerId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+          });
+          if (fallbackCustomerId) {
+            resolvedCustomerId = fallbackCustomerId;
+          }
+        }
+      }
+
+      const scopedParams = {};
+      if (resolvedCustomerId) {
+        scopedParams.customerId = resolvedCustomerId;
+      }
+
       // 2. Load Recent Repairs
       try {
-        const repairsRes = await api.getCustomerRepairs({ limit: 5 });
+        const repairsRes = await api.getCustomerRepairs({ limit: 5, ...scopedParams });
         if (repairsRes.success) {
           setRepairs(repairsRes.data.repairs || []);
         }
@@ -87,39 +136,13 @@ export default function CustomerDashboard() {
 
       // 3. Load Recent Invoices
       try {
-        const invoicesRes = await api.getCustomerInvoices({ limit: 5 });
+        const invoicesRes = await api.getCustomerInvoices({ limit: 5, ...scopedParams });
         if (invoicesRes.success) {
           setInvoices(invoicesRes.data.invoices || []);
         }
       } catch (e) {
         console.warn('Failed to load invoices:', e);
       }
-
-      // 4. Load Profile
-      try {
-        const profileRes = await api.request('/auth/customer/profile');
-        if (profileRes.success && profileRes.data) {
-          setProfile(profileRes.data);
-        } else if (user) {
-          setProfile({
-            id: user.customerId || user.id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone
-          });
-        }
-      } catch (profileError) {
-        console.warn('Profile API failed, using user data from store:', profileError);
-        if (user) {
-          setProfile({
-            id: user.customerId || user.id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone
-          });
-        }
-      }
-
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       notifications.error('خطأ', { message: 'فشل تحميل البيانات' });
@@ -158,7 +181,44 @@ export default function CustomerDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+    <>
+      <Modal open={showPasswordReminder} onOpenChange={setShowPasswordReminder}>
+        <ModalContent size="md">
+          <ModalHeader>
+            <ModalTitle>أهلًا بك في Fix Zone</ModalTitle>
+            <ModalDescription>
+              سعيدين بانضمامك! لتأمين حسابك، نقترح تغيير كلمة المرور المؤقتة الآن من الإعدادات.
+            </ModalDescription>
+          </ModalHeader>
+          <div className="text-sm text-gray-700 space-y-2 py-2">
+            <p>
+              الكلمة الحالية مُنشأة تلقائيًا ومربوطة ببياناتك لتسهيل الدخول الأول. اضغط على "تغيير كلمة المرور الآن" وهنوديك مباشرة للإعدادات.
+            </p>
+            <p className="text-xs text-gray-500">
+              لو حبيت تأجل، اضغط "أذكرني لاحقاً"؛ التنبيه هيظهر مرة ثانية في الزيارة القادمة لغاية ما تغيرها.
+            </p>
+          </div>
+          <ModalFooter>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordReminder(false)}
+            >
+              أذكرني لاحقاً
+            </SimpleButton>
+            <SimpleButton
+              size="sm"
+              onClick={() => {
+                setShowPasswordReminder(false);
+                navigate('/customer/settings');
+              }}
+            >
+              خُذني للـ إعدادات
+            </SimpleButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
       {/* Enhanced Header */}
       <CustomerHeader user={user} notificationCount={3} />
 
@@ -171,7 +231,7 @@ export default function CustomerDashboard() {
             subtitle={`${stats.activeRepairs} نشط`}
             icon={Wrench}
             gradient="linear-gradient(135deg, #053887 0%, #0a4da3 100%)"
-            change="+${stats.activeRepairs} نشطة"
+            change={`+${stats.activeRepairs} نشطة`}
             changeType="increase"
             actionLabel="عرض الكل"
             onClick={() => navigate('/customer/repairs')}
@@ -349,5 +409,6 @@ export default function CustomerDashboard() {
         </div>
       </div>
     </div>
+  </>
   );
 }

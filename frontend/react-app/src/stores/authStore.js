@@ -9,6 +9,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       user: null,
       token: null,
+      forcePasswordReset: false,
 
       login: async (loginIdentifier, password) => {
         try {
@@ -31,7 +32,8 @@ const useAuthStore = create(
             userData.role = userData.roleId;
           }
 
-          set({ isAuthenticated: true, user: userData, token: null }); // Token is in httpOnly cookie
+          const resetRequired = Boolean(userData.forcePasswordReset);
+          set({ isAuthenticated: true, user: userData, token: null, forcePasswordReset: resetRequired }); // Token is in httpOnly cookie
         } catch (error) {
           console.error('Login failed:', error.response ? error.response.data : error.message);
           // Optionally, you can throw the error to be caught in the component
@@ -54,7 +56,8 @@ const useAuthStore = create(
             userData.role = userData.roleId;
           }
           
-          set({ isAuthenticated: true, user: userData, token: null });
+          const resetRequired = Boolean(userData.forcePasswordReset);
+          set({ isAuthenticated: true, user: userData, token: null, forcePasswordReset: resetRequired });
           return true;
         } catch (_e) {
           set({ isAuthenticated: false, user: null, token: null });
@@ -68,7 +71,10 @@ const useAuthStore = create(
           axios.defaults.withCredentials = true;
           await axios.post(`${AUTH_URL}/logout`);
         } catch (_e) {}
-        set({ isAuthenticated: false, user: null, token: null });
+        set({ isAuthenticated: false, user: null, token: null, forcePasswordReset: false });
+      },
+      markPasswordResetComplete: () => {
+        set({ forcePasswordReset: false });
       },
     }),
     {

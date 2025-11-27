@@ -31,7 +31,8 @@ exports.customerLogin = async (req, res) => {
     // Find customer by phone or email
     const [customers] = await db.execute(
       `SELECT c.*, u.id as userId, u.name as userName, u.email as userEmail, 
-              u.password as userPassword, u.roleId, u.isActive as userActive
+              u.password as userPassword, u.roleId, u.isActive as userActive,
+              u.forcePasswordReset as userForcePasswordReset
        FROM Customer c
        LEFT JOIN User u ON c.userId = u.id
        WHERE (c.phone = ? OR c.email = ?) AND c.deletedAt IS NULL`,
@@ -87,13 +88,15 @@ exports.customerLogin = async (req, res) => {
     }
 
     // Generate JWT
+    const forcePasswordReset = Boolean(customer.userForcePasswordReset);
     const payload = {
       id: customer.userId,
       customerId: customer.id,
       role: customer.roleId,
       roleId: customer.roleId,
       name: customer.name || customer.userName,
-      type: 'customer' // Mark as customer login
+      type: 'customer', // Mark as customer login
+      forcePasswordReset
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' }); // 24 hours for customers
 
@@ -127,7 +130,8 @@ exports.customerLogin = async (req, res) => {
         email: customer.email || customer.userEmail,
         role: customer.roleId,
         roleId: customer.roleId,  // Add roleId explicitly for frontend
-        type: 'customer'
+        type: 'customer',
+        forcePasswordReset
       }
     });
 
@@ -199,7 +203,7 @@ exports.getCustomerProfile = async (req, res) => {
     }
 
     const [customers] = await db.execute(
-      `SELECT c.*, u.email as userEmail, u.phone as userPhone, u.isActive as userActive
+      `SELECT c.*, u.email as userEmail, u.phone as userPhone, u.isActive as userActive, u.forcePasswordReset as forcePasswordReset
        FROM Customer c
        LEFT JOIN User u ON c.userId = u.id
        WHERE c.id = ? AND c.deletedAt IS NULL`,
@@ -220,7 +224,10 @@ exports.getCustomerProfile = async (req, res) => {
 
     res.json({
       success: true,
-      data: customer
+      data: {
+        ...customer,
+        forcePasswordReset: Boolean(customer.forcePasswordReset)
+      }
     });
 
   } catch (error) {
@@ -371,7 +378,7 @@ exports.changeCustomerPassword = async (req, res) => {
 
     // Update password
     await db.execute(
-      'UPDATE User SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE User SET password = ?, forcePasswordReset = 0, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [hashedPassword, userId]
     );
 

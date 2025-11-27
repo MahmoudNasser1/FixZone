@@ -107,7 +107,8 @@ exports.login = async (req, res) => {
             id: user.id,
             role: user.roleId,
             roleId: user.roleId,
-            name: user.name
+            name: user.name,
+            forcePasswordReset: Boolean(user.forcePasswordReset)
         };
         
         // Add customerId to JWT if user is Customer
@@ -137,7 +138,8 @@ exports.login = async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.roleId,
-            roleId: user.roleId  // Add roleId explicitly for frontend
+            roleId: user.roleId,  // Add roleId explicitly for frontend
+            forcePasswordReset: Boolean(user.forcePasswordReset)
         };
         
         // Add customerId and customer data if user is Customer
@@ -251,7 +253,7 @@ exports.changePassword = async (req, res) => {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update password - use db.execute
-        await db.execute('UPDATE User SET password = ? WHERE id = ?', [hashedPassword, userId]);
+        await db.execute('UPDATE User SET password = ?, forcePasswordReset = 0 WHERE id = ?', [hashedPassword, userId]);
 
         res.json({ message: 'Password changed successfully' });
 
@@ -336,7 +338,7 @@ exports.getProfile = async (req, res) => {
 
     try {
         const [rows] = await db.execute(
-            'SELECT id, name, email, phone, roleId, createdAt, updatedAt FROM User WHERE id = ? AND deletedAt IS NULL',
+            'SELECT id, name, email, phone, roleId, forcePasswordReset, createdAt, updatedAt FROM User WHERE id = ? AND deletedAt IS NULL',
             [userId]
         );
         const user = rows[0];
@@ -352,7 +354,8 @@ exports.getProfile = async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.roleId,
-            roleId: user.roleId  // Add roleId explicitly for frontend
+            roleId: user.roleId,  // Add roleId explicitly for frontend
+            forcePasswordReset: Boolean(user.forcePasswordReset)
         });
 
     } catch (error) {

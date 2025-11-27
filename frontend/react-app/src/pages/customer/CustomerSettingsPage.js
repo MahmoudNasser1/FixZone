@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import CustomerHeader from '../../components/customer/CustomerHeader';
+import api from '../../services/api';
+import { useTheme } from '../../components/ThemeProvider';
 import { Settings as SettingsIcon, Lock, Bell, Globe, Trash2, Save } from 'lucide-react';
 
 /**
@@ -13,6 +15,7 @@ export default function CustomerSettingsPage() {
     const navigate = useNavigate();
     const notifications = useNotifications();
     const user = useAuthStore((state) => state.user);
+    const markPasswordResetComplete = useAuthStore((state) => state.markPasswordResetComplete);
 
     const [activeTab, setActiveTab] = useState('security');
     const [passwordData, setPasswordData] = useState({
@@ -20,6 +23,7 @@ export default function CustomerSettingsPage() {
         newPassword: '',
         confirmPassword: ''
     });
+    const [passwordLoading, setPasswordLoading] = useState(false);
     const [notificationSettings, setNotificationSettings] = useState({
         emailNotifications: true,
         smsNotifications: false,
@@ -27,8 +31,15 @@ export default function CustomerSettingsPage() {
         invoiceReminders: true,
         promotions: false
     });
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const { theme, setTheme } = useTheme();
+    const [nightMode, setNightMode] = useState(theme === 'dark');
 
-    const handlePasswordChange = (e) => {
+    useEffect(() => {
+        setNightMode(theme === 'dark');
+    }, [theme]);
+
+    const handlePasswordChange = async (e) => {
         e.preventDefault();
 
         if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -38,16 +49,38 @@ export default function CustomerSettingsPage() {
 
         if (passwordData.newPassword.length < 6) {
             notifications.error('خطأ', { message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
-            return;
+        return;
         }
 
+      setPasswordLoading(true);
+
         // TODO: API call
-        notifications.success('نجاح', { message: 'تم تغيير كلمة المرور بنجاح' });
-        setPasswordData({
+      try {
+        const response = await api.request('/auth/customer/change-password', {
+          method: 'POST',
+          body: JSON.stringify({
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword
+          })
+        });
+
+        if (response.success) {
+          notifications.success('نجاح', { message: 'تم تغيير كلمة المرور بنجاح' });
+          setPasswordData({
             currentPassword: '',
             newPassword: '',
             confirmPassword: ''
-        });
+          });
+          markPasswordResetComplete();
+        } else {
+          throw new Error(response.message || 'فشل تغيير كلمة المرور');
+        }
+      } catch (apiError) {
+        console.error('Change customer password error:', apiError);
+        notifications.error('خطأ', { message: apiError.message || 'خطأ في تغيير كلمة المرور' });
+      } finally {
+        setPasswordLoading(false);
+      }
     };
 
     const handleSaveNotifications = () => {
@@ -154,12 +187,16 @@ export default function CustomerSettingsPage() {
 
                                 <button
                                     type="submit"
-                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all"
+                                    disabled={passwordLoading}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}
                                 >
                                     <Save className="w-4 h-4" />
-                                    حفظ التغييرات
+                                    {passwordLoading ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                                 </button>
+                                <p className="text-xs text-gray-500 mt-3">
+                                    في حالة نسيان كلمة المرور، يرجى التواصل مع مركز Fix Zone مباشرةً ولا يتم إعادة التعيين تلقائياً.
+                                </p>
                             </form>
                         </div>
                     )}
@@ -183,6 +220,7 @@ export default function CustomerSettingsPage() {
                                                 emailNotifications: e.target.checked
                                             })}
                                             className="sr-only peer"
+                                            disabled={!notificationsEnabled}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
@@ -202,6 +240,7 @@ export default function CustomerSettingsPage() {
                                                 smsNotifications: e.target.checked
                                             })}
                                             className="sr-only peer"
+                                            disabled={!notificationsEnabled}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
@@ -221,6 +260,7 @@ export default function CustomerSettingsPage() {
                                                 repairUpdates: e.target.checked
                                             })}
                                             className="sr-only peer"
+                                            disabled={!notificationsEnabled}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
@@ -240,6 +280,7 @@ export default function CustomerSettingsPage() {
                                                 invoiceReminders: e.target.checked
                                             })}
                                             className="sr-only peer"
+                                            disabled={!notificationsEnabled}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
@@ -262,6 +303,36 @@ export default function CustomerSettingsPage() {
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 mb-4">التفضيلات العامة</h2>
                             <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-gray-900">الوضع الليلي</p>
+                                        <p className="text-sm text-gray-600">فعّل الثيم الداكن في الواجهة</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={nightMode}
+                                            onChange={() => setTheme(nightMode ? 'light' : 'dark')}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-gray-900">الإشعارات</p>
+                                        <p className="text-sm text-gray-600">أوقف أو شغّل كل الإشعارات دفعة واحدة</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={notificationsEnabled}
+                                            onChange={() => setNotificationsEnabled(prev => !prev)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         اللغة

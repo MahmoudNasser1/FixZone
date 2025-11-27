@@ -13,7 +13,7 @@ import {
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX, History,
-  Upload, File, ArrowUpDown, ArrowUp, ArrowDown, DollarSign
+  Upload, File, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, UserPlus
 } from 'lucide-react';
 
 const CustomersPage = () => {
@@ -54,6 +54,7 @@ const CustomersPage = () => {
   // Multi-select state
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [creatingAccountFor, setCreatingAccountFor] = useState(null);
 
   // جلب البيانات من Backend - re-fetch when filters change
   useEffect(() => {
@@ -251,6 +252,41 @@ const CustomersPage = () => {
   // تعديل عميل
   const handleEditCustomer = (customer) => {
     navigate(`/customers/${customer.id}/edit`);
+  };
+
+  const handleCreateCustomerAccount = async (customer) => {
+    if (customer.hasUserAccount) {
+      notify('info', 'هذا العميل لديه حساب بالفعل');
+      return;
+    }
+
+    setCreatingAccountFor(customer.id);
+    try {
+      const response = await apiService.createCustomerAccount(customer.id);
+
+      if (response && response.success) {
+        setCustomers(prev => prev.map(c => {
+          if (c.id === customer.id) {
+            return {
+              ...c,
+              hasUserAccount: true,
+              userId: response.data?.userId || c.userId
+            };
+          }
+          return c;
+        }));
+
+        const tempPassword = response.data?.temporaryPassword;
+        notify('success', `تم إنشاء الحساب بنجاح${tempPassword ? `. كلمة المرور المؤقتة: ${tempPassword}` : ''}`);
+      } else {
+        throw new Error(response?.message || 'فشل إنشاء حساب العميل');
+      }
+    } catch (error) {
+      console.error('Create customer account error:', error);
+      notify('error', error.message || 'خطأ في إنشاء الحساب');
+    } finally {
+      setCreatingAccountFor(null);
+    }
   };
 
   // Helper function to get filtered customers
@@ -791,6 +827,19 @@ const CustomersPage = () => {
               className="h-8 w-8 p-0"
             >
               <Edit className="w-4 h-4" />
+            </SimpleButton>
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCreateCustomerAccount(customer);
+              }}
+              className={`h-8 w-8 p-0 ${customer.hasUserAccount ? 'text-gray-400 cursor-not-allowed' : 'text-green-600 hover:text-green-800'}`}
+              disabled={creatingAccountFor === customer.id || customer.hasUserAccount}
+              title={customer.hasUserAccount ? 'الحساب موجود بالفعل' : 'إنشاء حساب للعميل'}
+            >
+              <UserPlus className="w-4 h-4" />
             </SimpleButton>
             <SimpleButton
               variant="ghost"

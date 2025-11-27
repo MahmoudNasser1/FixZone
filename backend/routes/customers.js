@@ -1,8 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const bcrypt = require('bcryptjs');
 const authMiddleware = require('../middleware/authMiddleware');
+const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 const { validate, customerSchemas } = require('../middleware/validation');
+
+const CUSTOMER_ROLE_ID = Number(process.env.CUSTOMER_ROLE_ID || 6);
+
+const generateTemporaryPassword = (customer) => {
+  const phoneSegment = (customer.phone || '').replace(/\D/g, '');
+  const identifier = phoneSegment || String(customer.id || '');
+  return `${identifier}123`;
+};
 
 // Apply authMiddleware to all routes
 router.use(authMiddleware);
@@ -45,7 +55,10 @@ router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res
              WHERE i.customerId = c.id 
                AND i.deletedAt IS NULL
                AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
-          ) as outstandingBalance
+          ) as outstandingBalance,
+          EXISTS(
+            SELECT 1 FROM User u WHERE u.customerId = c.id AND u.deletedAt IS NULL
+          ) as hasUserAccount
         FROM Customer c
         LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
         WHERE c.deletedAt IS NULL 
@@ -57,7 +70,8 @@ router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res
       const formattedRows = rows.map(row => ({
         ...row,
         isActive: row.isActive !== null && row.isActive !== undefined ? Boolean(row.isActive) : false,
-        outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0
+        outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0,
+        hasUserAccount: Boolean(row.hasUserAccount)
       }));
       
       return res.json(formattedRows);
@@ -119,9 +133,11 @@ router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res
            WHERE i.customerId = c.id 
              AND i.deletedAt IS NULL
              AND (i.totalAmount - COALESCE(i.amountPaid, 0)) > 0), 0
-        ) as outstandingBalance
+        ) as outstandingBalance,
+        MAX(u.id) as userId
        FROM Customer c
        LEFT JOIN RepairRequest rr ON c.id = rr.customerId AND rr.deletedAt IS NULL
+       LEFT JOIN User u ON u.customerId = c.id AND u.deletedAt IS NULL
        ${baseWhereSql}
        GROUP BY c.id
     `;
@@ -190,7 +206,9 @@ router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res
     const formattedRows = rows.map(row => ({
       ...row,
       isActive: row.isActive !== null && row.isActive !== undefined ? Boolean(row.isActive) : false,
-      outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0
+      outstandingBalance: row.outstandingBalance !== null && row.outstandingBalance !== undefined ? parseFloat(row.outstandingBalance) || 0 : 0,
+      hasUserAccount: Boolean(row.userId),
+      userId: row.userId || null
     }));
     
     // Count query - use subquery to match the main query structure
@@ -323,6 +341,83 @@ router.get('/:id', async (req, res) => {
       success: false, 
       message: 'Server Error' 
     });
+  }
+});
+
+router.post('/:id/create-account', authMiddleware, authorizeMiddleware([1, 2, 'admin', 'manager']), async (req, res) => {
+  const customerId = parseInt(req.params.id, 10);
+  if (isNaN(customerId) || customerId <= 0) {
+    return res.status(400).json({ success: false, message: 'معرف العميل غير صالح' });
+  }
+
+  try {
+    const [customers] = await db.execute(
+      'SELECT id, name, phone, email FROM Customer WHERE id = ? AND deletedAt IS NULL',
+      [customerId]
+    );
+
+    if (!customers.length) {
+      return res.status(404).json({ success: false, message: 'العميل غير موجود' });
+    }
+
+    const customer = customers[0];
+
+    const [existingUsers] = await db.execute(
+      'SELECT id FROM User WHERE customerId = ? AND deletedAt IS NULL',
+      [customerId]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'هذا العميل لديه حساب مستخدم بالفعل', 
+        data: { userId: existingUsers[0].id } 
+      });
+    }
+
+    const temporaryPassword = generateTemporaryPassword(customer);
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+    const generatedEmail = customer.email && customer.email.trim()
+      ? customer.email.trim()
+      : `${customerId}@fixzzone.com`;
+
+    const [result] = await db.execute(
+      `INSERT INTO User 
+        (name, email, phone, password, roleId, isActive, customerId, forcePasswordReset, createdAt, updatedAt) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        customer.name || 'عميل',
+        generatedEmail,
+        customer.phone || null,
+        hashedPassword,
+        CUSTOMER_ROLE_ID,
+        1,
+        customerId,
+        1
+      ]
+    );
+
+    return res.json({
+      success: true,
+      message: 'تم إنشاء حساب العميل بنجاح',
+      data: {
+        userId: result.insertId,
+        temporaryPassword
+      }
+    });
+  } catch (error) {
+    console.error('Error creating customer account:', error);
+    if (error?.code === 'ER_DUP_ENTRY') {
+      const conflictField = (error.sqlMessage && error.sqlMessage.includes('email')) 
+        ? 'البريد الإلكتروني' 
+        : (error.sqlMessage && error.sqlMessage.includes('phone')) 
+          ? 'رقم الهاتف' 
+          : 'معلومات الحساب';
+      return res.status(409).json({ success: false, message: `يوجد مستخدم بنفس ${conflictField}` });
+    }
+
+    res.status(500).json({ success: false, message: 'حدث خطأ أثناء إنشاء حساب العميل' });
   }
 });
 
