@@ -2696,6 +2696,7 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
         COALESCE(vo.label, d.brand) as deviceBrand,
         d.model as deviceModel,
         d.serialNumber,
+        d.devicePassword,
         d.cpu, d.ram, d.storage
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id
@@ -2720,6 +2721,7 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
     const deviceType = repair.deviceType || '—';
     const deviceModel = repair.deviceModel || '—';
     const serialNumber = repair.serialNumber || '—';
+    const devicePassword = String(repair.devicePassword || '').trim();
     const specs = {
       cpu: repair.cpu || '—',
       ram: repair.ram || '—',
@@ -2753,14 +2755,14 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           font-family: 'Tajawal','Cairo', Arial, sans-serif;
           direction: rtl;
           color: #111827;
-          font-size: 8px;
+          font-size: 9px;
           background: #fff;
         }
         .sticker-container {
           width: 100%;
           height: 100%;
           border: 2px solid #111827;
-          padding: 1.5mm 1.2mm;
+          padding: 1mm 1mm 1.2mm;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -2769,39 +2771,53 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
         .sticker-header {
           text-align: center;
           border-bottom: 1px solid #111827;
-          padding-bottom: 0.8mm;
-          margin-bottom: 0.8mm;
+          padding-bottom: 0.6mm;
+          margin-bottom: 0.6mm;
         }
         .request-number {
-          font-size: 10px;
+          font-size: 14px;
           font-weight: 700;
-          letter-spacing: 0.6px;
+          letter-spacing: 1px;
         }
-        .request-id {
-          font-size: 6.5px;
+        .meta-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 7.5px;
+          color: #111827;
+          padding: 0.2mm 0;
+          margin-bottom: 0.4mm;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .meta-item {
+          display: flex;
+          flex-direction: column;
+        }
+        .meta-label {
+          font-weight: 600;
           color: #6b7280;
-          margin-top: 0.4mm;
           letter-spacing: 0.2px;
+          font-size: 6.5px;
         }
-        .date {
-          font-size: 6px;
-          color: #6b7280;
-          margin-top: 0.4mm;
+        .meta-value {
+          font-weight: 700;
+          letter-spacing: 0.4px;
+          font-size: 8px;
         }
         .info-list {
           display: flex;
           flex-direction: column;
-          gap: 0.4mm;
+          gap: 0.6mm;
           flex: 1;
         }
         .info-row {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           gap: 1mm;
+          padding: 0.2mm 0;
         }
         .info-row .label {
-          font-size: 6px;
+          font-size: 6.5px;
           color: #6b7280;
           font-weight: 600;
           text-align: right;
@@ -2809,24 +2825,39 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           letter-spacing: 0.3px;
         }
         .info-row .value {
-          font-size: 7.5px;
+          font-size: 9.5px;
           font-weight: 700;
           color: #111827;
           text-align: left;
           flex: 1;
           word-break: break-word;
         }
-        .spec-line {
-          font-size: 6.2px;
+        .caps-line {
+          font-size: 8px;
           color: #111827;
           font-weight: 700;
-          margin-top: 1mm;
-          letter-spacing: 0.5px;
+          margin-top: 1.4mm;
+          letter-spacing: 0.4px;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2mm;
+        }
+        .caps-label {
+          font-size: 6px;
+          color: #6b7280;
+          font-weight: 600;
+          letter-spacing: 0.2px;
+          text-transform: uppercase;
+        }
+        .caps-value {
+          font-size: 8.3px;
+          color: #111827;
+          letter-spacing: 0.2px;
         }
         .problem-card {
           border-top: 1px solid #111827;
-          padding-top: 1mm;
-          margin-top: 1mm;
+          padding-top: 1.2mm;
+          margin-top: 1.4mm;
         }
         .problem-label {
           font-size: 6px;
@@ -2836,10 +2867,10 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           letter-spacing: 0.4px;
         }
         .problem-value {
-          font-size: 6.5px;
+          font-size: 7.5px;
           color: #111827;
           line-height: 1.4;
-          max-height: 14mm;
+          max-height: 16mm;
           overflow: hidden;
           text-overflow: ellipsis;
           display: -webkit-box;
@@ -2857,8 +2888,16 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
       <div class="sticker-container">
         <div class="sticker-header">
           <div class="request-number">${requestNumber}</div>
-          <div class="request-id">رقم الطلب: ${simpleRequestId}</div>
-          <div class="date">${dateText}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item">
+            <span class="meta-label">رقم الطلب</span>
+            <span class="meta-value">${simpleRequestId}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">التاريخ</span>
+            <span class="meta-value">${dateText}</span>
+          </div>
         </div>
         <div class="info-list">
           <div class="info-row">
@@ -2881,8 +2920,16 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
             <span class="label">السيريال</span>
             <span class="value">${serialNumber}</span>
           </div>
+          ${devicePassword ? `
+          <div class="info-row">
+            <span class="label">كلمة المرور</span>
+            <span class="value">${devicePassword}</span>
+          </div>` : ''}
         </div>
-        <div class="spec-line">CPU: ${specs.cpu} , RAM: ${specs.ram} , Storige: ${specs.storage}</div>
+        <div class="caps-line">
+          <span class="caps-label">الإمكانيات</span>
+          <span class="caps-value">CPU: ${specs.cpu} , RAM: ${specs.ram} , Storige: ${specs.storage}</span>
+        </div>
         <div class="problem-card">
           <div class="problem-label">المشكلة</div>
           <div class="problem-value">${problem}</div>
