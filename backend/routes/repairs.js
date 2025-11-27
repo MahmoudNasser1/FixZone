@@ -2721,7 +2721,6 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
     const deviceType = repair.deviceType || '—';
     const deviceModel = repair.deviceModel || '—';
     const serialNumber = repair.serialNumber || '—';
-    const devicePassword = String(repair.devicePassword || '').trim();
     const specs = {
       cpu: repair.cpu || '—',
       ram: repair.ram || '—',
@@ -2736,7 +2735,7 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
       <title>استيكر - ${requestNumber}</title>
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
-        @page {
+        @page { 
           size: 40mm 58mm portrait;
           margin: 0;
         }
@@ -2751,10 +2750,10 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           padding: 0;
           box-sizing: border-box;
         }
-        body {
-          font-family: 'Tajawal','Cairo', Arial, sans-serif;
-          direction: rtl;
-          color: #111827;
+        body { 
+          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
+          direction: rtl; 
+          color: #111827; 
           font-size: 9px;
           background: #fff;
         }
@@ -2833,26 +2832,26 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           word-break: break-word;
         }
         .caps-line {
-          font-size: 8px;
+          font-size: 9.2px;
           color: #111827;
           font-weight: 700;
           margin-top: 1.4mm;
-          letter-spacing: 0.4px;
+          letter-spacing: 0.3px;
           display: flex;
           flex-direction: column;
           gap: 0.2mm;
         }
         .caps-label {
-          font-size: 6px;
+          font-size: 6.3px;
           color: #6b7280;
-          font-weight: 600;
-          letter-spacing: 0.2px;
+          font-weight: 700;
+          letter-spacing: 0.3px;
           text-transform: uppercase;
         }
         .caps-value {
-          font-size: 8.3px;
+          font-size: 9.6px;
           color: #111827;
-          letter-spacing: 0.2px;
+          letter-spacing: 0.3px;
         }
         .problem-card {
           border-top: 1px solid #111827;
@@ -2867,17 +2866,17 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
           letter-spacing: 0.4px;
         }
         .problem-value {
-          font-size: 7.5px;
+          font-size: 8.6px;
           color: #111827;
-          line-height: 1.4;
-          max-height: 16mm;
+          line-height: 1.5;
+          max-height: 24mm;
           overflow: hidden;
           text-overflow: ellipsis;
           display: -webkit-box;
-          -webkit-line-clamp: 6;
+          -webkit-line-clamp: 8;
           -webkit-box-orient: vertical;
         }
-        @media print {
+        @media print { 
           .no-print {
             display: none;
           }
@@ -2898,7 +2897,7 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
             <span class="meta-label">التاريخ</span>
             <span class="meta-value">${dateText}</span>
           </div>
-        </div>
+          </div>
         <div class="info-list">
           <div class="info-row">
             <span class="label">العميل</span>
@@ -2920,11 +2919,6 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
             <span class="label">السيريال</span>
             <span class="value">${serialNumber}</span>
           </div>
-          ${devicePassword ? `
-          <div class="info-row">
-            <span class="label">كلمة المرور</span>
-            <span class="value">${devicePassword}</span>
-          </div>` : ''}
         </div>
         <div class="caps-line">
           <span class="caps-label">الإمكانيات</span>
