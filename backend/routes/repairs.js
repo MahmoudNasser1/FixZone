@@ -2714,6 +2714,18 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
     const dates = formatDates(reqDate, 'both');
 
     const problem = repair.reportedProblem || repair.problemDescription || '—';
+    const dateText = dates.primary || '—';
+    const customerName = repair.customerName || '—';
+    const customerPhone = repair.customerPhone || '—';
+    const deviceType = repair.deviceType || '—';
+    const deviceModel = repair.deviceModel || '—';
+    const serialNumber = repair.serialNumber || '—';
+    const specs = {
+      cpu: repair.cpu || '—',
+      ram: repair.ram || '—',
+      storage: repair.storage || '—'
+    };
+    const simpleRequestId = String(repair.id || '').padStart(4, '0');
     const html = `<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -2722,144 +2734,161 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
       <title>استيكر - ${requestNumber}</title>
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
-        @page { 
-          size: 40mm 58mm; 
+        @page {
+          size: 40mm 58mm portrait;
           margin: 0;
+        }
+        html, body {
+          width: 40mm;
+          height: 58mm;
+          margin: 0;
+          padding: 0;
         }
         * {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
         }
-        body { 
-          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
-          direction: rtl; 
-          color: #111827; 
+        body {
+          font-family: 'Tajawal','Cairo', Arial, sans-serif;
+          direction: rtl;
+          color: #111827;
           font-size: 8px;
-          margin: 0;
-          padding: 0;
-          width: 40mm;
-          height: 58mm;
-        }
-        .sticker-container {
-          width: 40mm;
-          height: 58mm;
-          border: 2px solid #111827;
-          padding: 3mm;
-          display: flex;
-          flex-direction: column;
           background: #fff;
         }
-        .header {
-          border-bottom: 1.5px solid #111827;
-          padding-bottom: 2mm;
-          margin-bottom: 2mm;
-        }
-        .request-number {
-          font-size: 9px;
-          font-weight: 700;
-          color: #111827;
-          text-align: center;
-          letter-spacing: 0.5px;
-        }
-        .company-name {
-          font-size: 7px;
-          color: #6b7280;
-          text-align: center;
-          margin-bottom: 1mm;
-        }
-        .content {
-          flex: 1;
+        .sticker-container {
+          width: 100%;
+          height: 100%;
+          border: 2px solid #111827;
+          padding: 1.5mm 1.2mm;
           display: flex;
           flex-direction: column;
-          gap: 2mm;
-          font-size: 7px;
+          justify-content: space-between;
+          background: #fff;
         }
-        .row {
-          display: flex;
-          gap: 1.5mm;
-          align-items: flex-start;
+        .sticker-header {
+          text-align: center;
+          border-bottom: 1px solid #111827;
+          padding-bottom: 0.8mm;
+          margin-bottom: 0.8mm;
         }
-        .label {
-          color: #6b7280;
+        .request-number {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.6px;
+        }
+        .request-id {
           font-size: 6.5px;
-          font-weight: 600;
-          min-width: 18mm;
-          flex-shrink: 0;
+          color: #6b7280;
+          margin-top: 0.4mm;
+          letter-spacing: 0.2px;
         }
-        .value {
+        .date {
+          font-size: 6px;
+          color: #6b7280;
+          margin-top: 0.4mm;
+        }
+        .info-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4mm;
+          flex: 1;
+        }
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1mm;
+        }
+        .info-row .label {
+          font-size: 6px;
+          color: #6b7280;
           font-weight: 600;
-          font-size: 7px;
+          text-align: right;
+          flex: 0 0 44%;
+          letter-spacing: 0.3px;
+        }
+        .info-row .value {
+          font-size: 7.5px;
+          font-weight: 700;
           color: #111827;
+          text-align: left;
           flex: 1;
           word-break: break-word;
         }
-        .problem-row {
-          margin-top: auto;
-          padding-top: 2mm;
-          border-top: 1px solid #e5e7eb;
+        .spec-line {
+          font-size: 6.2px;
+          color: #111827;
+          font-weight: 700;
+          margin-top: 1mm;
+          letter-spacing: 0.5px;
+        }
+        .problem-card {
+          border-top: 1px solid #111827;
+          padding-top: 1mm;
+          margin-top: 1mm;
         }
         .problem-label {
-          font-size: 6.5px;
+          font-size: 6px;
           color: #6b7280;
           font-weight: 700;
-          margin-bottom: 1mm;
+          margin-bottom: 0.6mm;
+          letter-spacing: 0.4px;
         }
         .problem-value {
           font-size: 6.5px;
           color: #111827;
           line-height: 1.4;
-          max-height: 12mm;
+          max-height: 14mm;
           overflow: hidden;
           text-overflow: ellipsis;
           display: -webkit-box;
-          -webkit-line-clamp: 4;
+          -webkit-line-clamp: 6;
           -webkit-box-orient: vertical;
         }
-        @media print { 
-          .no-print { display: none; }
-          body { margin: 0; padding: 5mm; }
+        @media print {
+          .no-print {
+            display: none;
+          }
         }
       </style>
     </head>
     <body>
       <div class="sticker-container">
-        <div class="header">
-          <div class="company-name">${settings.companyName || settings.branchName || 'FixZone'}</div>
+        <div class="sticker-header">
           <div class="request-number">${requestNumber}</div>
+          <div class="request-id">رقم الطلب: ${simpleRequestId}</div>
+          <div class="date">${dateText}</div>
         </div>
-        <div class="content">
-          <div class="row">
-            <span class="label">العميل:</span>
-            <span class="value">${repair.customerName || '—'}</span>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="label">العميل</span>
+            <span class="value">${customerName}</span>
           </div>
-          <div class="row">
-            <span class="label">رقم الموبايل:</span>
-            <span class="value">${repair.customerPhone || '—'}</span>
+          <div class="info-row">
+            <span class="label">رقم الموبايل</span>
+            <span class="value">${customerPhone}</span>
           </div>
-          <div class="row">
-            <span class="label">أمر الشغل:</span>
-            <span class="value">${requestNumber}</span>
+          <div class="info-row">
+            <span class="label">النوع</span>
+            <span class="value">${deviceType}</span>
           </div>
-          <div class="row">
-            <span class="label">المعالج:</span>
-            <span class="value">${repair.cpu || '—'}</span>
+          <div class="info-row">
+            <span class="label">الموديل</span>
+            <span class="value">${deviceModel}</span>
           </div>
-          <div class="row">
-            <span class="label">الذاكرة (RAM):</span>
-            <span class="value">${repair.ram || '—'}</span>
-          </div>
-          <div class="row">
-            <span class="label">التخزين (HARD):</span>
-            <span class="value">${repair.storage || '—'}</span>
-          </div>
-          <div class="problem-row">
-            <div class="problem-label">المشكلة:</div>
-            <div class="problem-value">${problem}</div>
+          <div class="info-row">
+            <span class="label">السيريال</span>
+            <span class="value">${serialNumber}</span>
           </div>
         </div>
-        <div class="no-print" style="text-align:center; margin-top:2mm; padding-top:2mm; border-top:1px solid #e5e7eb;">
-          <button onclick="window.print()" style="padding:2px 4px; font-size:6px; border:1px solid #111827; border-radius:3px; background:#111827; color:#fff; cursor:pointer;">طباعة</button>
+        <div class="spec-line">CPU: ${specs.cpu} , RAM: ${specs.ram} , Storige: ${specs.storage}</div>
+        <div class="problem-card">
+          <div class="problem-label">المشكلة</div>
+          <div class="problem-value">${problem}</div>
+        </div>
+        <div class="no-print" style="text-align:center; margin-top:1.5mm;">
+          <button onclick="window.print()" style="padding:2px 5px; font-size:6px; border:1px solid #111827; border-radius:3px; background:#111827; color:#fff; cursor:pointer;">طباعة</button>
         </div>
       </div>
     </body>
