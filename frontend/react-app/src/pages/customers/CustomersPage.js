@@ -38,7 +38,11 @@ const CustomersPage = () => {
   const [customers, setCustomers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  // Search states - مثل RepairsPage.js
+  const [search, setSearch] = useState(''); // للبحث المحلي الفوري
+  const [debouncedSearch, setDebouncedSearch] = useState(''); // للبحث في السيرفر بعد debounce
+  const searchTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [error, setError] = useState(null);
   
@@ -56,8 +60,54 @@ const CustomersPage = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [creatingAccountFor, setCreatingAccountFor] = useState(null);
 
-  // جلب البيانات من Backend - re-fetch when filters change
+  // handleSearchChange - مثل RepairsPage.js (debounce 800ms)
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value); // تحديث البحث محلياً فوراً
+
+    // إلغاء timeout السابق
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+
+    const trimmedValue = (value || '').trim();
+
+    // إذا كان البحث فارغاً، تحديث debouncedSearch فوراً بدون debounce
+    if (!trimmedValue) {
+      isTypingRef.current = false;
+      setDebouncedSearch('');
+      return;
+    }
+
+    // تحديد أننا في حالة كتابة - يمنع fetchCustomers أثناء الكتابة
+    isTypingRef.current = true;
+
+    // تحديث debouncedSearch بعد debounce (800ms)
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(trimmedValue);
+      // انهاء حالة الكتابة بعد تحديث debouncedSearch
+      isTypingRef.current = false;
+      searchTimeoutRef.current = null;
+    }, 800);
+  };
+
+  // تنظيف timeout عند unmount
   useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // جلب البيانات من Backend - re-fetch when filters change
+  // استخدام debouncedSearch بدلاً من searchTerm لتجنب reload أثناء الكتابة
+  useEffect(() => {
+    // لا نستدعي fetchCustomers أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
     const loadData = async () => {
       try {
         await Promise.all([fetchCustomers(), fetchCompanies()]);
@@ -67,7 +117,18 @@ const CustomersPage = () => {
     };
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, itemsPerPage, selectedFilter, searchTerm, sortField, sortDirection]);
+  }, [currentPage, itemsPerPage, selectedFilter, debouncedSearch, sortField, sortDirection]);
+
+  // جلب البيانات عند تغيير debouncedSearch (مباشرة)
+  useEffect(() => {
+    // عندما يتغير debouncedSearch، نستدعي fetchCustomers مباشرة
+    if (isTypingRef.current) {
+      return;
+    }
+    console.log('useEffect debouncedSearch changed:', debouncedSearch);
+    fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const fetchCustomers = async () => {
     try {
@@ -89,9 +150,9 @@ const CustomersPage = () => {
         params.hasDebt = true;
       }
       
-      // Add search term if provided
-      if (searchTerm) {
-        params.q = searchTerm;
+      // Add search term if provided - استخدام debouncedSearch
+      if (debouncedSearch) {
+        params.q = debouncedSearch;
       }
       
       // Add sort parameters if provided
@@ -293,9 +354,11 @@ const CustomersPage = () => {
   const getFilteredCustomers = () => {
     let filtered = Array.isArray(customers) ? customers.filter(customer => {
       const customerName = customer.name || (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : '');
-      const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (customer.phone && customer.phone.includes(searchTerm)) ||
-                           (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      // استخدام search للبحث المحلي الفوري (بدلاً من searchTerm)
+      const searchLower = (search || '').toLowerCase();
+      const matchesSearch = customerName.toLowerCase().includes(searchLower) ||
+                           (customer.phone && customer.phone.includes(search)) ||
+                           (customer.email && customer.email.toLowerCase().includes(searchLower));
       
       if (selectedFilter === 'all') return matchesSearch;
       if (selectedFilter === 'vip') {
@@ -366,9 +429,14 @@ const CustomersPage = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // إعادة تعيين الصفحة عند تغيير البحث أو الفلتر
+  // استخدام debouncedSearch بدلاً من searchTerm لتجنب reload أثناء الكتابة
   useEffect(() => {
+    // لا نحدث page أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
     setCurrentPage(1);
-  }, [searchTerm, selectedFilter]);
+  }, [debouncedSearch, selectedFilter]);
 
   // Sorting handler
   const handleSort = (field) => {
@@ -423,7 +491,7 @@ const CustomersPage = () => {
     } else {
       setSelectAll(false);
     }
-  }, [selectedCustomers, customers, searchTerm, selectedFilter]);
+  }, [selectedCustomers, customers, search, selectedFilter]);
 
   // Bulk delete customers
   const handleBulkDelete = async () => {
@@ -1279,8 +1347,8 @@ const CustomersPage = () => {
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="البحث في العملاء... (الاسم، الهاتف، البريد الإلكتروني)"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={search}
+                  onChange={handleSearchChange}
                   className="pr-10 w-64"
                 />
               </div>
