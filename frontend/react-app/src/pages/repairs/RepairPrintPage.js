@@ -15,6 +15,8 @@ export default function RepairPrintPage() {
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
   const { settings, formatMoney } = useSettings();
   const copyType = (query.get('copy') || settings.printing?.defaultCopy || 'customer'); // customer | archive
+  // Use defaultCopy from settings if available
+  const effectiveCopyType = settings.printing?.defaultCopy || copyType;
   const BRAND = useMemo(() => ({
     name: settings.company?.name || 'FixZone',
     subtitle: 'نظام إدارة الإصلاحات',
@@ -61,6 +63,7 @@ export default function RepairPrintPage() {
   const paperSize = settings.printing?.paperSize || 'A4';
   const showWatermark = settings.printing?.showWatermark !== false;
   const showSerialBarcode = !!(settings.printing?.showSerialBarcode);
+  const defaultCopy = settings.printing?.defaultCopy || 'customer';
 
   return (
     <div className="print-page" dir="rtl">

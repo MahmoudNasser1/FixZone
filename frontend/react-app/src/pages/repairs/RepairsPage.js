@@ -89,6 +89,12 @@ const RepairsPage = () => {
   // State للبحث والفلترة
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || 'pending');
+  
+  // State لفلتر نوع البحث - الافتراضي: الاسم أو رقم الموبايل
+  const [searchField, setSearchField] = useState(() => {
+    const saved = localStorage.getItem('repairs_search_field');
+    return saved || 'nameOrPhone'; // الافتراضي: الاسم أو رقم الموبايل
+  });
 
   // State للترقيم والفرز
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
@@ -109,8 +115,8 @@ const RepairsPage = () => {
   useEffect(() => {
     const loadTechnicians = async () => {
       try {
-        const res = await apiService.getAllTechnicians();
-        if (res.success) setTechnicians(res.data);
+        const res = await apiService.listTechnicians();
+        if (res.success) setTechnicians(res.data || []);
       } catch (e) {
         console.error('Failed to load technicians', e);
       }
@@ -169,7 +175,13 @@ const RepairsPage = () => {
     setTechnicianId('');
     setPriority('');
     setPage(1);
+    // لا نعيد تعيين searchField - يبقى كما اختاره المستخدم
   };
+  
+  // حفظ searchField في localStorage عند التغيير
+  useEffect(() => {
+    localStorage.setItem('repairs_search_field', searchField);
+  }, [searchField]);
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortMenuRef = useRef(null);
@@ -178,6 +190,8 @@ const RepairsPage = () => {
   const statusMenuRef = useRef(null);
   const statusMenuPanelRef = useRef(null);
   const [highlightedStatusIndex, setHighlightedStatusIndex] = useState(0);
+  // Ref لتخزين timeout البحث
+  const searchTimeoutRef = useRef(null);
 
   const statusOptions = [
     { key: 'all', label: 'الكل' },
@@ -186,6 +200,19 @@ const RepairsPage = () => {
     { key: 'on-hold', label: 'معلق' },
     { key: 'completed', label: 'مكتمل' },
     { key: 'cancelled', label: 'ملغي' },
+  ];
+
+  // خيارات نوع البحث (فلتر البحث)
+  const searchFieldOptions = [
+    { key: 'nameOrPhone', label: 'الاسم أو رقم الموبايل', fields: ['customerName', 'customerPhone'] },
+    { key: 'customerName', label: ' اسم العميل', fields: ['customerName'] },
+    { key: 'customerPhone', label: 'رقم الموبايل', fields: ['customerPhone'] },
+    { key: 'requestNumber', label: 'رقم طلب الإصلاح', fields: ['requestNumber'] },
+    { key: 'problemDescription', label: 'وصف المشكلة', fields: ['problemDescription'] },
+    { key: 'deviceType', label: 'نوع الجهاز', fields: ['deviceType'] },
+    { key: 'deviceBrand', label: 'الماركة', fields: ['deviceBrand'] },
+    { key: 'deviceModel', label: 'الموديل', fields: ['deviceModel'] },
+    { key: 'all', label: 'جميع الحقول', fields: ['customerName', 'customerPhone', 'requestNumber', 'problemDescription', 'deviceType', 'deviceBrand', 'deviceModel'] },
   ];
 
   const sortFields = [
@@ -224,6 +251,10 @@ const RepairsPage = () => {
 
   // مزامنة page/pageSize مع URL
   useEffect(() => {
+    // لا نحدث URL أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     if (page && page !== 1) next.set('page', String(page)); else next.delete('page');
     if (pageSize && pageSize !== 10) next.set('pageSize', String(pageSize)); else next.delete('pageSize');
@@ -253,26 +284,50 @@ const RepairsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // مزامنة البحث مع URL (debounced) - بدون إعادة تحميل الصفحة
+  // handleSearchChange - مثل NewRepairPageEnhanced (بحث محلي تماماً - بدون reload)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('q') || '');
+  const isTypingRef = useRef(false);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value); // تحديث البحث محلياً فوراً
+
+    // إلغاء timeout السابق
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+
+    const trimmedValue = (value || '').trim();
+
+    // إذا كان البحث فارغاً، تحديث debouncedSearch فوراً بدون debounce
+    // هذا يسمح بجلب جميع الطلبات فوراً عند مسح البحث
+    if (!trimmedValue) {
+      isTypingRef.current = false;
+      setDebouncedSearch('');
+      return;
+    }
+
+    // تحديد أننا في حالة كتابة - يمنع fetchRepairs أثناء الكتابة
+    isTypingRef.current = true;
+
+    // تحديث debouncedSearch بعد debounce - زيادة الوقت إلى 1000 لإعطاء المستخدم وقت كافي لإكمال الكتابة
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(trimmedValue);
+      // انهاء حالة الكتابة بعد تحديث debouncedSearch مباشرة
+      isTypingRef.current = false;
+      searchTimeoutRef.current = null;
+    }, 1000);
+  };
+
+  // تنظيف timeout عند unmount
   useEffect(() => {
-    const id = setTimeout(() => {
-      const current = searchParams.get('q') || '';
-      const searchValue = (search || '').trim();
-      // تحديث URL فقط إذا تغيرت القيمة فعلياً
-      if (searchValue !== current) {
-        const next = new URLSearchParams(searchParams);
-        if (!searchValue) {
-          next.delete('q');
-        } else {
-          next.set('q', searchValue);
-        }
-        // استخدام replace: true لتجنب إضافة entries جديدة في history
-        setSearchParams(next, { replace: true });
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    }, 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+    };
+  }, []);
 
   // مزامنة الفرز مع URL
   useEffect(() => {
@@ -377,19 +432,37 @@ const RepairsPage = () => {
       setLoading(true);
       setError(null);
 
-      // بناء معاملات الفلترة والصفحات لإرسالها للخادم (اختياريًا)
+      // بناء معاملات الفلترة والصفحات لإرسالها للخادم
       const params = {};
-      if (customerFilter) params.customerId = customerFilter;
-      if (status && status !== 'all') params.status = status;
-      if (search) params.search = search; // Backend expects 'search', not 'q'
-      if (page && page > 1) params.page = page;
-      if (pageSize && pageSize !== 10) params.limit = pageSize; // Backend expects 'limit', not 'pageSize'
+      const hasSearch = debouncedSearch && debouncedSearch.trim();
+      
+      // عند البحث، نبحث في جميع الطلبات بدون فلاتر (إلا إذا كان هناك فلتر محدد)
+      if (hasSearch) {
+        params.search = debouncedSearch.trim();
+        params.searchField = searchField; // إرسال نوع البحث إلى Backend
+        // عند البحث، نستخدم limit كبير لجلب جميع النتائج
+        params.limit = 5000; // جلب حتى 5000 نتيجة للبحث في جميع الطلبات
+        params.page = 1; // دائماً نبدأ من الصفحة الأولى عند البحث
+        console.log('🔍 [FRONTEND SEARCH] Searching with:', { search: params.search, searchField: params.searchField, limit: params.limit });
+      } else {
+        // بدون بحث، نطبق الفلاتر العادية
+        if (customerFilter) params.customerId = customerFilter;
+        if (status && status !== 'all') params.status = status;
+        if (page && page > 1) params.page = page;
+        if (pageSize && pageSize !== 10) params.limit = pageSize;
+      }
+      
+      // هذه المعاملات تعمل دائماً (مع أو بدون بحث)
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
-      if (technicianId) params.technicianId = technicianId;
-      if (priority) params.priority = priority;
+      
+      // الفلاتر التالية تطبق فقط بدون بحث
+      if (!hasSearch) {
+        if (technicianId) params.technicianId = technicianId;
+        if (priority) params.priority = priority;
+      }
 
       // لا نحدث URL هنا - يتم التعامل معه في useEffect منفصلة
       // هذا يمنع reload الصفحة عند البحث
@@ -474,13 +547,29 @@ const RepairsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [customerFilter, page, pageSize, status, search, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
+  }, [customerFilter, page, pageSize, status, debouncedSearch, searchField, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
 
-  // جلب البيانات من Backend
+  // جلب البيانات عند تغيير debouncedSearch (مباشرة)
   useEffect(() => {
-    console.log('useEffect triggered with dependencies:', { customerFilter, page, pageSize, status, search });
+    // عندما يتغير debouncedSearch، نستدعي fetchRepairs مباشرة
+    // بغض النظر عن isTypingRef لأن debouncedSearch يتم تحديثه بعد انتهاء الكتابة
+    console.log('useEffect debouncedSearch changed:', debouncedSearch);
     fetchRepairs();
-  }, [fetchRepairs]);
+  }, [debouncedSearch, fetchRepairs]);
+
+  // جلب البيانات من Backend عند تغيير الفلاتر الأخرى
+  useEffect(() => {
+    // لا نستدعي fetchRepairs أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
+    // لا نستدعي إذا كان debouncedSearch موجود - لأن useEffect السابق سيستدعي
+    if (debouncedSearch && debouncedSearch.trim()) {
+      return;
+    }
+    console.log('useEffect triggered with dependencies:', { customerFilter, page, pageSize, status });
+    fetchRepairs();
+  }, [customerFilter, page, pageSize, status, technicianId, priority, dateFrom, dateTo, sortBy, sortOrder, fetchRepairs, debouncedSearch]);
 
   // جلب البيانات عند بدء الصفحة
   useEffect(() => {
@@ -829,27 +918,61 @@ const RepairsPage = () => {
   ];
 
   // فلترة الطلبات
-  const filteredRepairs = repairs.filter(repair => {
-    const searchLower = search.toLowerCase();
-    const matchesSearch =
-      (repair.requestNumber || '').toLowerCase().includes(searchLower) ||
-      (repair.customerName || '').toLowerCase().includes(searchLower) ||
-      (repair.customerPhone || '').includes(search) ||
-      (repair.deviceType || '').toLowerCase().includes(searchLower) ||
-      (repair.deviceBrand || '').toLowerCase().includes(searchLower) ||
-      (repair.problemDescription || '').toLowerCase().includes(searchLower);
+  // عند وجود debouncedSearch، السيرفر قام بالبحث بالفعل في جميع الطلبات - نعرض نتائج السيرفر مباشرة
+  // عند عدم وجود بحث، نستخدم search للبحث الفوري في البيانات المحلية
+  const filteredRepairs = useMemo(() => {
+    const hasDebouncedSearch = debouncedSearch && debouncedSearch.trim();
+    
+    // عند وجود debouncedSearch، السيرفر قام بالبحث في جميع الطلبات بالفعل
+    // نعرض نتائج السيرفر مباشرة بدون أي فلترة محلية - السيرفر قام بالبحث بالفعل
+    if (hasDebouncedSearch) {
+      // نتائج السيرفر - تم البحث فيها بالفعل في جميع الطلبات
+      // نعرضها مباشرة بدون فلترة محلية - البحث تم في السيرفر
+      return repairs;
+    }
+    
+    // بدون debouncedSearch - البحث الفوري في البيانات المحلية فقط
+    const searchLower = (search || '').toLowerCase();
+    const hasSearch = search && search.trim();
+    
+    // الحصول على الحقول التي يجب البحث فيها حسب searchField
+    const currentSearchField = searchFieldOptions.find(opt => opt.key === searchField) || searchFieldOptions[0];
+    const fieldsToSearch = currentSearchField.fields;
+    
+    return repairs.filter(repair => {
+      // البحث الفوري - يعمل على الحقول المحددة في searchField
+      let matchesSearch = !hasSearch;
+      
+      if (hasSearch) {
+        matchesSearch = fieldsToSearch.some(field => {
+          const value = repair[field] || '';
+          // للأرقام (customerPhone)، نبحث بدون lowercase
+          if (field === 'customerPhone') {
+            return value.includes(search);
+          }
+          // لباقي الحقول، نبحث مع lowercase
+          return value.toLowerCase().includes(searchLower);
+        });
+      }
 
-    const matchesStatus = (status === 'all' || repair.status === status);
-    const matchesTechnician = (!technicianId || repair.technicianId === technicianId);
-    const matchesPriority = (!priority || repair.priority.toLowerCase() === priority.toLowerCase());
+      // عند وجود بحث محلي، نبحث في جميع الطلبات بغض النظر عن الفلاتر
+      if (hasSearch) {
+        return matchesSearch;
+      }
 
-    const repairDate = repair.createdAt ? new Date(repair.createdAt).getTime() : 0;
-    const fromDate = dateFrom ? new Date(dateFrom).getTime() : 0;
-    const toDate = dateTo ? new Date(dateTo).getTime() : Infinity;
-    const matchesDate = repairDate >= fromDate && repairDate <= toDate;
+      // بدون بحث، نطبق الفلاتر العادية
+      const matchesStatus = (status === 'all' || repair.status === status);
+      const matchesTechnician = (!technicianId || repair.technicianId === technicianId);
+      const matchesPriority = (!priority || repair.priority.toLowerCase() === priority.toLowerCase());
 
-    return matchesSearch && matchesStatus && matchesTechnician && matchesPriority && matchesDate;
-  });
+      const repairDate = repair.createdAt ? new Date(repair.createdAt).getTime() : 0;
+      const fromDate = dateFrom ? new Date(dateFrom).getTime() : 0;
+      const toDate = dateTo ? new Date(dateTo).getTime() : Infinity;
+      const matchesDate = repairDate >= fromDate && repairDate <= toDate;
+
+      return matchesStatus && matchesTechnician && matchesPriority && matchesDate;
+    });
+  }, [repairs, search, debouncedSearch, searchField, status, technicianId, priority, dateFrom, dateTo]);
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
   const priorityRank = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
@@ -874,14 +997,16 @@ const RepairsPage = () => {
   });
 
   // حساب ترقيم الصفحات
-  const clientTotal = sortedRepairs.length;
+  // عندما يكون serverTotal موجود، البيانات قادمة من السيرفر ومقسمة بالفعل
+  // عندما لا يكون موجود، نستخدم clientTotal من filteredRepairs
+  const clientTotal = filteredRepairs.length;
   const effectiveTotal = Number.isFinite(serverTotal) && serverTotal != null ? serverTotal : clientTotal;
   const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
-  const startIdx = (currentPage - 1) * pageSize;
-  const endIdx = Math.min(startIdx + pageSize, clientTotal);
-  // إذا كانت البيانات قادمة مُقسّمة من الخادم (serverTotal موجود) نعرض كما هي، وإلا نُقسّم Client-side
-  const paginatedRepairs = Number.isFinite(serverTotal) && serverTotal != null ? repairs : sortedRepairs.slice(startIdx, endIdx);
+  
+  // تقسيم النتائج إلى صفحات - دائماً نستخدم sortedRepairs (التي تحتوي على filteredRepairs المفروزة)
+  // البحث الفوري يعمل على filteredRepairs باستخدام search مباشرة
+  const paginatedRepairs = sortedRepairs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // Debug logging - only in development mode
   if (process.env.NODE_ENV === 'development') {
@@ -890,20 +1015,25 @@ const RepairsPage = () => {
       sortedRepairs: sortedRepairs.length,
       paginatedRepairs: paginatedRepairs.length,
       serverTotal,
-      startIdx,
-      endIdx
+      currentPage,
+      pageSize
     });
   }
 
   // حساب أرقام العرض للصفحة الحالية (تراعي الترقيم الخادمي)
-  const pageCount = Number.isFinite(serverTotal) && serverTotal != null ? repairs.length : (endIdx - startIdx);
-  const displayedStart = effectiveTotal === 0 ? 0 : startIdx + 1;
-  const displayedEnd = effectiveTotal === 0 ? 0 : Math.min(startIdx + pageCount, effectiveTotal);
+  const pageCount = Number.isFinite(serverTotal) && serverTotal != null ? repairs.length : sortedRepairs.slice((currentPage - 1) * pageSize, currentPage * pageSize).length;
+  const displayedStart = effectiveTotal === 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+  const displayedEnd = effectiveTotal === 0 ? 0 : Math.min((currentPage - 1) * pageSize + pageCount, effectiveTotal);
 
   // إعادة تعيين الصفحة للأولى عند تغيّر عوامل الفلترة/البحث لتجنّب صفحات فارغة
+  // استخدام debouncedSearch بدلاً من search - وهذا يمنع reload أثناء الكتابة
   useEffect(() => {
+    // لا نحدث page أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
     setPage(1);
-  }, [search, status, customerFilter, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
+  }, [debouncedSearch, status, customerFilter, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
 
   // حساب الإحصائيات
   const stats = {
@@ -1282,14 +1412,59 @@ const RepairsPage = () => {
       {/* شريط الأدوات */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div className="flex items-center gap-2 w-full md:w-auto">
+          {/* فلتر نوع البحث */}
+          <div className="relative">
+            <select
+              value={searchField}
+              onChange={(e) => setSearchField(e.target.value)}
+              className="h-8 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 pr-8 appearance-none cursor-pointer hover:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              title="اختر نوع البحث"
+            >
+              {searchFieldOptions.map(option => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+          
           <div className="relative flex-1 md:w-64">
             <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="ابحث..."
+              placeholder={(() => {
+                const current = searchFieldOptions.find(opt => opt.key === searchField);
+                if (current?.key === 'nameOrPhone') return 'ابحث بالاسم أو رقم الموبايل...';
+                if (current?.key === 'all') return 'ابحث في جميع الحقول...';
+                return `ابحث في ${current?.label || '...'}`;
+              })()}
               className="pr-8 h-8 text-sm"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => {
+                // عند الضغط Enter، تحديث البحث فوراً
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current);
+                  }
+                  const current = searchParams.get('q') || '';
+                  const searchValue = (search || '').trim();
+                  if (searchValue !== current) {
+                    const next = new URLSearchParams(searchParams);
+                    if (!searchValue) {
+                      next.delete('q');
+                    } else {
+                      next.set('q', searchValue);
+                    }
+                    // لا نحدث URL أثناء الكتابة - البحث محلي تماماً
+                  // setSearchParams(next, { replace: true });
+                  }
+                  // تحديث debouncedSearch فوراً - هذا يمنع reload
+                  const trimmedSearch = search.trim();
+                  isTypingRef.current = false;
+                  setDebouncedSearch(trimmedSearch);
+                }
+              }}
             />
           </div>
           {/* WebSocket Status Indicator */}

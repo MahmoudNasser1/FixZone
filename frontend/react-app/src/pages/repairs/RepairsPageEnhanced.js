@@ -13,7 +13,7 @@ import {
 
 const RepairsPageEnhanced = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const notifications = useNotifications();
 
   // State للبيانات والتحميل
@@ -23,8 +23,9 @@ const RepairsPageEnhanced = () => {
   const [stats, setStats] = useState(null);
 
   // State للبحث والفلترة
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  // تهيئة search من URL فقط عند أول تحميل
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [customerId, setCustomerId] = useState(searchParams.get('customerId') || '');
   const [technicianId, setTechnicianId] = useState(searchParams.get('technicianId') || '');
@@ -44,7 +45,11 @@ const RepairsPageEnhanced = () => {
   const [technicians, setTechnicians] = useState([]);
   
   // Ref لتتبع آخر URL parameters لتجنب تحديثات غير ضرورية
-  const lastParamsRef = useRef('');
+  const lastParamsRef = useRef(searchParams.toString());
+  // Ref لتخزين timeout البحث
+  const searchTimeoutRef = useRef(null);
+  // Ref لتتبع إذا كنا في حالة كتابة لتجنب تحديث URL و loadRepairs
+  const isTypingRef = useRef(false);
 
   // خيارات الحالة
   const statusOptions = [
@@ -143,11 +148,34 @@ const RepairsPageEnhanced = () => {
     },
   ];
 
-  // Debounce البحث
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 400);
-    return () => clearTimeout(timer);
-  }, [search]);
+  // handleSearchChange - مثل NewRepairPageEnhanced (بحث محلي تماماً - بدون أي reload)
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    
+    // تحديث البحث محلياً فقط - لا يسبب reload
+    setSearch(value);
+    
+    // إلغاء timeout السابق
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+
+    // تحديد أننا في حالة كتابة - يمنع loadRepairs و URL updates
+    isTypingRef.current = true;
+
+    // البحث مع debounce - تماماً مثل NewRepairPageEnhanced
+    searchTimeoutRef.current = setTimeout(() => {
+      const trimmedValue = value.trim();
+      // تحديث state فقط - بدون setPage
+      setDebouncedSearch(trimmedValue);
+      // انهاء حالة الكتابة بعد تأخير صغير
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 100);
+      searchTimeoutRef.current = null;
+    }, 400);
+  };
 
   // loadRepairs مع useCallback لتجنب re-render غير ضروري
   const loadRepairs = useCallback(async () => {
@@ -187,18 +215,52 @@ const RepairsPageEnhanced = () => {
     }
   }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder, notifications]);
 
+  // تحديث page عند تغيير debouncedSearch - فقط بعد debounce
+  // نزيل هذا useEffect تماماً - لا نحدث page للبحث
+  // useEffect(() => {
+  //   // لا نحدث page أثناء الكتابة
+  //   if (isTypingRef.current) {
+  //     return;
+  //   }
+  //   
+  //   // تحديث page فقط عند تغيير debouncedSearch
+  //   if (debouncedSearch !== searchParams.get('search')) {
+  //     setPage(1);
+  //   }
+  // }, [debouncedSearch, searchParams]);
+
   // تحميل البيانات عند تغيير الفلاتر
+  // لا نستدعي loadRepairs أثناء الكتابة
   useEffect(() => {
-    loadRepairs();
+    // لا نستدعي loadRepairs أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
+    
+    // تأخير loadRepairs أكثر لتجنب reload
+    const timeoutId = setTimeout(() => {
+      if (!isTypingRef.current) {
+        loadRepairs();
+      }
+    }, 200);
+    
+    return () => clearTimeout(timeoutId);
   }, [loadRepairs]);
 
-  // مزامنة URL مع الحالة (بدون إعادة تحميل الصفحة)
+  // تحديث URL فقط عند تغيير الفلاتر (ليس البحث) - البحث محلي تماماً
+  // نزيل debouncedSearch من dependencies - البحث لا يحدث URL
   useEffect(() => {
-    // بناء URL parameters الجديدة
+    // لا تحدث URL أثناء الكتابة
+    if (isTypingRef.current) {
+      return;
+    }
+
+    // تحديث URL فقط عند تغيير فلاتر أخرى - البحث محلي تماماً
     const newParams = new URLSearchParams();
     if (page > 1) newParams.set('page', String(page));
     if (limit !== 10) newParams.set('limit', String(limit));
-    if (debouncedSearch) newParams.set('search', debouncedSearch);
+    // البحث لا يحدث URL - محلي تماماً مثل NewRepairPageEnhanced
+    // if (debouncedSearch) newParams.set('search', debouncedSearch);
     if (status) newParams.set('status', status);
     if (customerId) newParams.set('customerId', customerId);
     if (technicianId) newParams.set('technicianId', technicianId);
@@ -209,17 +271,25 @@ const RepairsPageEnhanced = () => {
 
     const newParamsString = newParams.toString();
     
-    // تحديث URL فقط إذا تغيرت القيم فعلياً (مقارنة مع آخر قيمة)
+    // تحديث URL فقط إذا تغيرت القيم فعلياً
     if (lastParamsRef.current !== newParamsString) {
       lastParamsRef.current = newParamsString;
-      // استخدام setSearchParams مع replace: true لتجنب re-render
-      setSearchParams(newParams, { replace: true });
+      // لا نحدث URL أثناء الكتابة - هذا يمنع reload
     }
-  }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder, setSearchParams]);
+  }, [page, limit, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder]);
 
   // تحميل العملاء والفنيين للفلاتر
   useEffect(() => {
     loadFiltersData();
+  }, []);
+
+  // تنظيف timeout عند unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   const loadFiltersData = async () => {
@@ -360,14 +430,20 @@ const RepairsPageEnhanced = () => {
                 type="text"
                 placeholder="بحث في الإصلاحات..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={handleSearchChange}
                 onKeyDown={(e) => {
-                  // منع submit إذا تم الضغط على Enter (في حالة وجود form)
+                  // عند الضغط Enter، تحديث البحث فوراً
                   if (e.key === 'Enter') {
                     e.preventDefault();
+                    // إلغاء timeout السابق
+                    if (searchTimeoutRef.current) {
+                      clearTimeout(searchTimeoutRef.current);
+                      searchTimeoutRef.current = null;
+                    }
+                    // تحديث البحث فوراً - بدون setPage
+                    const trimmedSearch = search.trim();
+                    isTypingRef.current = false;
+                    setDebouncedSearch(trimmedSearch);
                   }
                 }}
                 className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

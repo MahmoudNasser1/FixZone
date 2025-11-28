@@ -10,11 +10,26 @@ async function runMigration() {
       user: process.env.DB_USER || 'root'
     });
 
-    await db.query(
-      `ALTER TABLE User 
-       ADD COLUMN IF NOT EXISTS forcePasswordReset TINYINT(1) NOT NULL DEFAULT 0 
-       AFTER deletedAt`
+    // Check if column exists first
+    const [columns] = await db.query(
+      `SELECT COUNT(*) as count 
+       FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = ? 
+         AND TABLE_NAME = 'User' 
+         AND COLUMN_NAME = 'forcePasswordReset'`,
+      [process.env.DB_NAME || 'FZ']
     );
+
+    if (columns[0].count === 0) {
+      await db.query(
+        `ALTER TABLE User 
+         ADD COLUMN forcePasswordReset TINYINT(1) NOT NULL DEFAULT 0 
+         AFTER deletedAt`
+      );
+      console.log('✅ Column added successfully!');
+    } else {
+      console.log('ℹ️  Column already exists, skipping...');
+    }
 
     console.log('✅ Migration applied successfully!');
     process.exit(0);

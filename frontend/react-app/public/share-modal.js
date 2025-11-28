@@ -61,14 +61,16 @@
       try {
         event.preventDefault();
         event.stopPropagation();
-        if (shareModal.style) {
+        if (shareModal && shareModal.style) {
           shareModal.style.display = 'block';
         }
       } catch (error) {
         console.debug('Share modal: Error opening modal', error);
       }
     };
-    shareButton.addEventListener('click', shareButtonListener);
+    if (shareButton) {
+      shareButton.addEventListener('click', shareButtonListener);
+    }
 
     closeButton = shareModal.querySelector('.close, [data-close-modal]');
     if (closeButton && typeof closeButton.addEventListener === 'function') {
@@ -88,14 +90,16 @@
 
     modalListener = function(event) {
       try {
-        if (event.target === shareModal && shareModal.style) {
+        if (shareModal && event.target === shareModal && shareModal.style) {
           shareModal.style.display = 'none';
         }
       } catch (error) {
         console.debug('Share modal: Error in backdrop handler', error);
       }
     };
-    shareModal.addEventListener('click', modalListener);
+    if (shareModal) {
+      shareModal.addEventListener('click', modalListener);
+    }
 
     initialized = true;
     console.debug('Share modal: listeners attached safely');

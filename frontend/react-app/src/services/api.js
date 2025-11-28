@@ -920,6 +920,198 @@ class ApiService {
   }
 
   // ==================
+  // Company Settings APIs
+  // ==================
+  async getCompanySettings() {
+    return this.request('/settings/company');
+  }
+
+  async updateCompanySettings(settings) {
+    return this.request('/settings/company', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  // ==================
+  // Currency Settings APIs
+  // ==================
+  async getCurrencySettings() {
+    return this.request('/settings/currency');
+  }
+
+  async updateCurrencySettings(settings) {
+    return this.request('/settings/currency', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  // ==================
+  // Printing Settings APIs
+  // ==================
+  async getPrintingSettings() {
+    return this.request('/settings/printing');
+  }
+
+  async updatePrintingSettings(settings) {
+    return this.request('/settings/printing', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  // ==================
+  // Locale Settings APIs
+  // ==================
+  async getLocaleSettings() {
+    return this.request('/settings/locale');
+  }
+
+  async updateLocaleSettings(settings) {
+    return this.request('/settings/locale', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  // ==================
+  // Enhanced Settings APIs (New)
+  // ==================
+  
+  // Get all settings with filters
+  async getSettings(filters = {}) {
+    const qs = new URLSearchParams(filters).toString();
+    return this.request(`/settings${qs ? `?${qs}` : ''}`);
+  }
+
+  // Get setting by key
+  async getSetting(key) {
+    return this.request(`/settings/${encodeURIComponent(key)}`);
+  }
+
+  // Get settings by category
+  async getSettingsByCategory(category) {
+    return this.request(`/settings/category/${encodeURIComponent(category)}`);
+  }
+
+  // Search settings
+  async searchSettings(query, filters = {}) {
+    const params = { q: query, ...filters };
+    const qs = new URLSearchParams(params).toString();
+    return this.request(`/settings/search?${qs}`);
+  }
+
+  // Create setting
+  async createSetting(setting) {
+    return this.request('/settings', {
+      method: 'POST',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  // Update setting
+  async updateSetting(key, setting) {
+    return this.request(`/settings/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify(setting),
+    });
+  }
+
+  // Delete setting
+  async deleteSetting(key) {
+    return this.request(`/settings/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Batch update settings
+  async batchUpdateSettings(settings, reason = null) {
+    return this.request('/settings/batch', {
+      method: 'POST',
+      body: JSON.stringify({ settings, reason }),
+    });
+  }
+
+  // Get setting history
+  async getSettingHistory(key, pagination = {}) {
+    const qs = new URLSearchParams(pagination).toString();
+    return this.request(`/settings/${encodeURIComponent(key)}/history${qs ? `?${qs}` : ''}`);
+  }
+
+  // Rollback setting
+  async rollbackSetting(key, historyId) {
+    return this.request(`/settings/${encodeURIComponent(key)}/rollback`, {
+      method: 'POST',
+      body: JSON.stringify({ historyId }),
+    });
+  }
+
+  // Backup/Restore APIs
+  async listBackups(pagination = {}) {
+    const qs = new URLSearchParams(pagination).toString();
+    return this.request(`/settings/backups${qs ? `?${qs}` : ''}`);
+  }
+
+  async getBackup(id) {
+    return this.request(`/settings/backups/${id}`);
+  }
+
+  async createBackup(name, description = null) {
+    return this.request('/settings/backups', {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    });
+  }
+
+  async restoreBackup(id, options = {}) {
+    return this.request(`/settings/backups/${id}/restore`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async deleteBackup(id) {
+    return this.request(`/settings/backups/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Import/Export APIs
+  async exportSettings(format = 'json', filters = {}) {
+    const params = { format, ...filters };
+    const qs = new URLSearchParams(params).toString();
+    return this.request(`/settings/export?${qs}`);
+  }
+
+  async getExportTemplate() {
+    return this.request('/settings/export/template');
+  }
+
+  async importSettings(file, options = {}) {
+    const formData = new FormData();
+    formData.append('file', file);
+    Object.keys(options).forEach(key => {
+      formData.append(key, options[key]);
+    });
+    
+    return this.request('/settings/import', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async validateImportFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.request('/settings/import/validate', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  // ==================
   // Expenses APIs
   // ==================
 

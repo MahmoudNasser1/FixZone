@@ -142,7 +142,8 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       limit,
       pageSize, // Support both 'limit' and 'pageSize' for backward compatibility
       search,
-      q // Support both 'search' and 'q' for backward compatibility
+      q, // Support both 'search' and 'q' for backward compatibility
+      searchField // نوع البحث المحدد (nameOrPhone, customerName, customerPhone, requestNumber, etc.)
     } = req.query;
 
     // Use 'search' if provided, otherwise fall back to 'q'
@@ -174,7 +175,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     let whereConditions = ['rr.deletedAt IS NULL'];
     let queryParams = [];
 
-    // Customer filter
+    // Search filter - دعم البحث في جميع الحقول مع إمكانية تحديد نوع البحث
+    // عند وجود بحث، نتجاهل فلاتر customerId و status و priority لأن البحث شامل
+    const hasSearch = searchTerm && searchTerm.trim();
+    
+    if (!hasSearch) {
+      // Customer filter - فقط بدون بحث
     if (customerId) {
       const safeCustomerId = parseInt(customerId);
       if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
@@ -185,30 +191,152 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       }
     }
 
-    // Status filter - support both frontend and database statuses
+      // Status filter - support both frontend and database statuses - فقط بدون بحث
     if (status) {
       const dbStatus = mapFrontendStatusToDb(status);
       whereConditions.push('rr.status = ?');
       queryParams.push(dbStatus || status);
     }
 
-    // Priority filter
+      // Priority filter - فقط بدون بحث
     if (priority) {
       whereConditions.push('rr.priority = ?');
       queryParams.push(priority.toUpperCase());
     }
+    } else {
+      console.log('🔍 [SEARCH DEBUG] Search active - ignoring customerId, status, priority filters');
+    }
 
-    // Search filter (device type, brand, model, or problem description)
-    if (searchTerm && searchTerm.trim()) {
+    // Search filter - دعم البحث في جميع الحقول مع إمكانية تحديد نوع البحث
+    if (hasSearch) {
+      const searchPattern = `%${searchTerm.trim()}%`;
+      const searchValue = searchTerm.trim();
+      
+      // Log للتصحيح
+      console.log('🔍 [SEARCH DEBUG] Search term:', searchTerm, '| searchField:', searchField);
+      
+      // تحديد الحقول التي يجب البحث فيها حسب searchField
+      if (searchField) {
+        // البحث في حقل محدد
+        switch (searchField) {
+          case 'customerName':
+            whereConditions.push('c.name LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'customerPhone':
+            whereConditions.push('c.phone LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'nameOrPhone':
+            whereConditions.push('(c.name LIKE ? OR c.phone LIKE ?)');
+            queryParams.push(searchPattern, searchPattern);
+            break;
+          case 'requestNumber':
+            // البحث في رقم الطلب - دعم البحث بالـ ID مباشرة أو بالرقم الكامل
+            // إذا كان الرقم عبارة عن أرقام فقط، نبحث في ID مباشرة
+            const isNumericSearch = /^\d+$/.test(searchValue);
+            console.log('🔍 [SEARCH DEBUG] requestNumber search - isNumeric:', isNumericSearch, 'searchValue:', searchValue);
+            if (isNumericSearch) {
+              const numericId = parseInt(searchValue, 10);
+              console.log('🔍 [SEARCH DEBUG] Searching for ID:', numericId);
+              
+              // البحث في ID مباشرة فقط - هذا هو الأكثر دقة
+              // مثلاً: البحث عن "88" يجد فقط ID = 88 (وليس 188 أو 880)
+              // مثلاً: البحث عن "1460" يجد فقط ID = 1460 (وليس 11460 أو 14600)
+              whereConditions.push('rr.id = ?');
+              queryParams.push(numericId);
+              
+              console.log('🔍 [SEARCH DEBUG] Added exact ID search condition:', numericId);
+            } else {
+              // إذا كان الرقم يحتوي على حروف (مثلاً: "REP-20241120-850")، نبحث في التنسيق الكامل
+              whereConditions.push('CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?');
+              queryParams.push(searchPattern);
+              console.log('🔍 [SEARCH DEBUG] Added search condition for full format pattern:', searchPattern);
+            }
+            break;
+          case 'problemDescription':
+            // البحث في reportedProblem فقط (العمود الفعلي في قاعدة البيانات)
+            whereConditions.push('rr.reportedProblem LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'deviceType':
+            whereConditions.push('d.deviceType LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'deviceBrand':
+            whereConditions.push('COALESCE(vo.label, d.brand) LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'deviceModel':
+            whereConditions.push('d.model LIKE ?');
+            queryParams.push(searchPattern);
+            break;
+          case 'all':
+          default:
+            // البحث في جميع الحقول - بما في ذلك البحث في رقم الطلب
+            const isNumericAll = /^\d+$/.test(searchValue);
+            if (isNumericAll) {
+              const numericIdAll = parseInt(searchValue, 10);
+              // إذا كان البحث أرقام فقط، نبحث أيضاً في ID ورقم الطلب الكامل
       whereConditions.push(`(
+                c.name LIKE ? OR 
+                c.phone LIKE ? OR
         rr.reportedProblem LIKE ? OR 
         d.deviceType LIKE ? OR 
         COALESCE(vo.label, d.brand) LIKE ? OR 
         d.model LIKE ? OR
-        rr.id = ?
-      )`);
-      const searchPattern = `%${searchTerm.trim()}%`;
-      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchTerm.trim());
+                rr.id = ? OR
+                CAST(rr.id AS CHAR) LIKE ? OR
+                CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?
+              )`);
+              queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, numericIdAll, searchPattern, searchPattern);
+            } else {
+              // إذا كان البحث يحتوي على حروف، نبحث في جميع الحقول بدون ID
+              whereConditions.push(`(
+                c.name LIKE ? OR 
+                c.phone LIKE ? OR
+                rr.reportedProblem LIKE ? OR 
+                d.deviceType LIKE ? OR 
+                COALESCE(vo.label, d.brand) LIKE ? OR 
+                d.model LIKE ? OR
+                CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?
+              )`);
+              queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+            }
+            break;
+        }
+      } else {
+        // بدون تحديد searchField، نبحث في جميع الحقول (سلوك افتراضي)
+        const isNumericDefault = /^\d+$/.test(searchValue);
+        if (isNumericDefault) {
+          const numericIdDefault = parseInt(searchValue, 10);
+          // إذا كان البحث أرقام فقط، نبحث أيضاً في ID ورقم الطلب الكامل
+          whereConditions.push(`(
+            c.name LIKE ? OR 
+            c.phone LIKE ? OR
+            rr.reportedProblem LIKE ? OR 
+            d.deviceType LIKE ? OR 
+            COALESCE(vo.label, d.brand) LIKE ? OR 
+            d.model LIKE ? OR
+            rr.id = ? OR
+            CAST(rr.id AS CHAR) LIKE ? OR
+            CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?
+          )`);
+          queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, numericIdDefault, searchPattern, searchPattern);
+        } else {
+          // إذا كان البحث يحتوي على حروف، نبحث في جميع الحقول بدون ID
+          whereConditions.push(`(
+            c.name LIKE ? OR 
+            c.phone LIKE ? OR
+            rr.reportedProblem LIKE ? OR 
+            d.deviceType LIKE ? OR 
+            COALESCE(vo.label, d.brand) LIKE ? OR 
+            d.model LIKE ? OR
+            CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?
+          )`);
+          queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+        }
+      }
     }
 
     // Build main query with pagination
@@ -237,9 +365,13 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     const finalOffset = parseInt(offset, 10);
 
     // Extra safety check - if somehow we still have invalid values, use defaults
-    if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
-      console.error('[REPAIRS API] Invalid finalLimit:', finalLimit);
-      queryParams.push(parseInt(10, 10), parseInt(0, 10));
+    // عند البحث، نسمح بـ limit أكبر (حتى 5000) للبحث في جميع الطلبات
+    const maxLimit = searchTerm && searchTerm.trim() ? 5000 : 100;
+    if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > maxLimit) {
+      console.error('[REPAIRS API] Invalid finalLimit:', finalLimit, '(max allowed:', maxLimit + ')');
+      // إذا كان البحث، نستخدم limit كبير، وإلا نستخدم 10
+      const defaultLimit = searchTerm && searchTerm.trim() ? Math.min(5000, maxLimit) : 10;
+      queryParams.push(parseInt(defaultLimit, 10), parseInt(0, 10));
     } else if (isNaN(finalOffset) || finalOffset < 0) {
       console.error('[REPAIRS API] Invalid finalOffset:', finalOffset);
       queryParams.push(finalLimit, parseInt(0, 10));
@@ -257,12 +389,36 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
     // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
     // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
+    
+    // Log للتصحيح
+    if (searchTerm && searchTerm.trim()) {
+      console.log('🔍 [SEARCH DEBUG] Final query WHERE:', whereConditions.join(' AND '));
+      console.log('🔍 [SEARCH DEBUG] Query params (without limit/offset):', JSON.stringify(queryParams.slice(0, -2)));
+      console.log('🔍 [SEARCH DEBUG] Final limit:', finalLimit, 'offset:', finalOffset);
+      console.log('🔍 [SEARCH DEBUG] Full query:', query.replace(/\s+/g, ' ').trim());
+    }
+    
     const [rows] = await db.query(query, queryParams);
+    
+    // Log للتصحيح
+    if (searchTerm && searchTerm.trim()) {
+      console.log('🔍 [SEARCH DEBUG] Found', rows.length, 'results for search term:', searchTerm, 'with searchField:', searchField);
+      if (rows.length > 0) {
+        console.log('🔍 [SEARCH DEBUG] Sample results (first 3):');
+        rows.slice(0, 3).forEach((row, idx) => {
+          const reqNum = `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`;
+          console.log(`  [${idx + 1}] ID: ${row.id}, RequestNumber: ${reqNum}, Customer: ${row.customerName || 'N/A'}`);
+        });
+      } else {
+        console.log('🔍 [SEARCH DEBUG] No results found - check if the ID exists in database');
+      }
+    }
 
     //Get total count for pagination
     const countQuery = `
       SELECT COUNT(*) as total
       FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
       LEFT JOIN Device d ON rr.deviceId = d.id
       LEFT JOIN VariableOption vo ON d.brandId = vo.id
       WHERE ${whereConditions.join(' AND ')}
@@ -696,7 +852,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
   // Get database connection for transaction
   let connection;
-  
+
   try {
     connection = await db.getConnection();
     
@@ -718,20 +874,20 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         if (companyId != null && companyId !== '' && !isNaN(parseInt(companyId))) {
           const finalCompanyId = parseInt(companyId);
           if (finalCompanyId > 0) {
-            console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
-            await connection.execute(
-              'UPDATE Customer SET companyId = ? WHERE id = ?',
-              [finalCompanyId, actualCustomerId]
-            );
-            console.log('✅ Successfully linked company to existing customer');
+          console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
+          await connection.execute(
+            'UPDATE Customer SET companyId = ? WHERE id = ?',
+            [finalCompanyId, actualCustomerId]
+          );
+          console.log('✅ Successfully linked company to existing customer');
 
-            // Verify the update
-            const [verifyCustomer] = await connection.execute(
-              'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-              [actualCustomerId]
-            );
-            if (verifyCustomer.length > 0) {
-              console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+          // Verify the update
+          const [verifyCustomer] = await connection.execute(
+            'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+            [actualCustomerId]
+          );
+          if (verifyCustomer.length > 0) {
+            console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
             }
           }
         }
@@ -766,20 +922,20 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       // If customer exists and companyId is provided and valid, update customer's company
       const finalCompanyId = parseInt(companyId);
       if (finalCompanyId > 0) {
-        console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
-        await connection.execute(
-          'UPDATE Customer SET companyId = ? WHERE id = ?',
-          [finalCompanyId, actualCustomerId]
-        );
-        console.log('✅ Successfully linked company to existing customer');
+      console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
+      await connection.execute(
+        'UPDATE Customer SET companyId = ? WHERE id = ?',
+        [finalCompanyId, actualCustomerId]
+      );
+      console.log('✅ Successfully linked company to existing customer');
 
-        // Verify the update
-        const [verifyCustomer] = await connection.execute(
-          'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-          [actualCustomerId]
-        );
-        if (verifyCustomer.length > 0) {
-          console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+      // Verify the update
+      const [verifyCustomer] = await connection.execute(
+        'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+        [actualCustomerId]
+      );
+      if (verifyCustomer.length > 0) {
+        console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
         }
       }
     }
@@ -938,12 +1094,12 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     // Rollback transaction on error
     if (connection && connection.beginTransaction) {
       try {
-        await connection.rollback();
+      await connection.rollback();
       } catch (rollbackErr) {
         console.error('❌ Error during rollback:', rollbackErr);
       }
       try {
-        connection.release();
+      connection.release();
       } catch (releaseErr) {
         console.error('❌ Error releasing connection:', releaseErr);
       }
@@ -2764,7 +2920,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           <div style="margin-bottom:${getSetting('spacing', {}).item || 10}px; display:flex; justify-content:space-between;">
             <span style="font-weight:600; color:${getSetting('colors', {}).secondary || '#6b7280'};">طريقة الدفع:</span>
             <span style="font-weight:600; color:${getSetting('colors', {}).primary || '#111827'};">نقد</span>
-          </div>
+            </div>
           ` : ''}
           ${getSetting('showPaymentStatus', false) ? `
           <div style="display:flex; justify-content:space-between;">
@@ -2772,7 +2928,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             <span style="font-weight:600; color:${getSetting('colors', {}).primary || '#111827'};">مدفوع</span>
           </div>
           ` : ''}
-        </div>
+          </div>
         ` : ''}
 
         ${getSetting('showNotes', false) && getSetting('notesLabel', '') ? `

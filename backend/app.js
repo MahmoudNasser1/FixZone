@@ -97,6 +97,7 @@ const inspectionComponentsRouter = require('./routes/inspectionComponents');
 const notificationsRouter = require('./routes/notifications');
 const notificationTemplatesRouter = require('./routes/notificationTemplates');
 const systemSettingsRouter = require('./routes/systemSettings');
+const settingsRouter = require('./routes/settings'); // New enhanced settings router
 const auditLogsRouter = require('./routes/auditLogs');
 const invoiceTemplatesRouter = require('./routes/invoiceTemplates');
 const deviceBatchesRouter = require('./routes/deviceBatches');
@@ -170,7 +171,8 @@ router.use('/inspectionreports', inspectionReportsRouter);
 router.use('/inspectioncomponents', inspectionComponentsRouter);
 router.use('/notifications', notificationsRouter);
 
-router.use('/systemsettings', systemSettingsRouter);
+router.use('/systemsettings', systemSettingsRouter); // Legacy route (keep for backward compatibility)
+router.use('/settings', settingsRouter); // New enhanced settings route
 router.use('/auditlogs', auditLogsRouter);
 router.use('/invoicetemplates', invoiceTemplatesRouter);
 router.use('/reports', reportRoutes);

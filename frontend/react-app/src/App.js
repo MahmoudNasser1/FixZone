@@ -36,7 +36,7 @@ import PublicRepairTrackingPage from './pages/repairs/PublicRepairTrackingPage';
 import RepairPrintPage from './pages/repairs/RepairPrintPage';
 import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
 import { SettingsProvider } from './context/SettingsContext';
-import SystemSettingsPage from './pages/settings/SystemSettingsPage';
+import SettingsDashboard from './pages/settings/SettingsDashboard';
 import UsersPage from './pages/users/UsersPage';
 import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
 import UserDetailsPage from './pages/users/UserDetailsPage';
@@ -407,7 +407,7 @@ function App() {
                       <Route path="vendors/:id" element={<VendorDetailsPage />} />
                       <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
 
-                      <Route path="settings" element={<SystemSettingsPage />} />
+                      <Route path="settings" element={<SettingsDashboard />} />
                       <Route path="users" element={<UsersPageEnhanced />} />
                       <Route path="users-old" element={<UsersPage />} />
                       <Route path="users/new" element={<NewUserPage />} />

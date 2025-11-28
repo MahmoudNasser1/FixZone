@@ -123,11 +123,10 @@ backend/middleware/
 
 #### Authentication & Authorization
 - تسجيل دخول آمن (Phone/Email + Password)
-- استعادة كلمة المرور
+- استعادة كلمة المرور (مؤجلة حالياً، في حال نسيان كلمة المرور يرجى التواصل مع الدعم الفني أو زيارة المركز للمساعدة)
 - تغيير كلمة المرور
 - تسجيل خروج آمن
 - Session Management
-- 2FA (اختياري)
 
 #### Dashboard
 - عرض إحصائيات سريعة
@@ -175,6 +174,7 @@ backend/middleware/
 - تغيير كلمة المرور
 - إدارة العنوان
 - إدارة معلومات الاتصال
+- بيانات الشركه لو موجوده
 
 ### 5.2 المتطلبات غير الوظيفية
 
@@ -244,7 +244,7 @@ backend/middleware/
 ## 7. المعايير والقيود
 
 ### 7.1 المعايير التقنية
-- **Frontend**: React 18+, React Router 6+
+- **Frontend**: PWA + React 18+, React Router 6+
 - **Backend**: Node.js, Express.js
 - **Database**: MySQL/MariaDB
 - **Authentication**: JWT

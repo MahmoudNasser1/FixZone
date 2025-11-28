@@ -68,10 +68,47 @@ export function saveSettings(next) {
 export function formatMoney(amount, settings) {
   const cfg = (settings && settings.currency) || defaultSettings.currency;
   try {
-    return new Intl.NumberFormat(cfg.locale || 'ar-EG', {
-      style: 'currency', currency: cfg.code || 'EGP', minimumFractionDigits: cfg.minimumFractionDigits ?? 2,
+    const formatted = new Intl.NumberFormat(cfg.locale || 'ar-EG', {
+      style: 'currency',
+      currency: cfg.code || 'EGP',
+      minimumFractionDigits: cfg.minimumFractionDigits ?? 2,
     }).format(Number(amount || 0));
+    
+    // Apply position if specified (before/after)
+    if (cfg.position === 'before' && cfg.symbol) {
+      return `${cfg.symbol} ${Number(amount || 0).toFixed(cfg.minimumFractionDigits ?? 2)}`;
+    }
+    
+    return formatted;
   } catch {
     return `${amount} ${cfg.code || 'EGP'}`;
+  }
+}
+
+/**
+ * Format date according to locale settings
+ */
+export function formatDate(date, settings) {
+  const cfg = (settings && settings.locale) || defaultSettings.locale;
+  const dateFormat = cfg.dateFormat || 'yyyy/MM/dd';
+  
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) {
+      return date || '';
+    }
+    
+    // Simple date formatting (can be enhanced with date-fns or moment.js)
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    
+    return dateFormat
+      .replace('yyyy', year)
+      .replace('MM', month)
+      .replace('dd', day)
+      .replace('yy', String(year).slice(-2));
+  } catch {
+    return date || '';
   }
 }

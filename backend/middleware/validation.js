@@ -1591,11 +1591,18 @@ const repairSchemas = {
   getRepairs: Joi.object({
     page: Joi.number().integer().min(1).default(1).optional(),
     pageSize: Joi.number().integer().min(1).max(100).default(10).optional(),
-    limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+    // السماح بـ limit حتى 5000 (للبحث الشامل في جميع الطلبات)
+    // Backend route handler سيتعامل مع الحد الأقصى بناءً على وجود بحث أم لا
+    limit: Joi.number().integer().min(1).max(5000).default(10).optional(),
     q: Joi.string().max(200).allow('', null).optional()
       .messages({
         'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف'
       }),
+    search: Joi.string().max(200).allow('', null).optional()
+      .messages({
+        'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف'
+      }),
+    searchField: Joi.string().valid('nameOrPhone', 'customerName', 'customerPhone', 'requestNumber', 'problemDescription', 'deviceType', 'deviceBrand', 'deviceModel', 'all').optional(),
     status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow('', null).optional(),
     customerId: Joi.number().integer().positive().optional()
       .messages({
@@ -1607,6 +1614,9 @@ const repairSchemas = {
         'number.positive': 'معرف الفني غير صحيح',
         'number.base': 'معرف الفني يجب أن يكون رقم'
       }),
+    priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').optional(),
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().optional(),
     sort: Joi.string().valid('id', 'createdAt', 'updatedAt', 'status', 'priority', 'estimatedCost').default('createdAt').optional(),
     sortBy: Joi.string().valid('id', 'createdAt', 'updatedAt', 'status', 'priority', 'estimatedCost').default('createdAt').optional(),
     order: Joi.string().valid('asc', 'desc', 'ASC', 'DESC').default('DESC').optional(),
