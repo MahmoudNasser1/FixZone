@@ -22,23 +22,38 @@ router.get('/print-settings', async (req, res) => {
   }
 });
 
+// دالة merge عميقة للكائنات المتداخلة
+function deepMerge(target, source) {
+  const output = { ...target };
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key]) && !Array.isArray(source[key])) {
+        if (!(key in target)) {
+          Object.assign(output, { [key]: source[key] });
+        } else {
+          output[key] = deepMerge(target[key], source[key]);
+        }
+      } else {
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+  return output;
+}
+
+function isObject(item) {
+  return item && typeof item === 'object' && !Array.isArray(item);
+}
+
 router.put('/print-settings', authMiddleware, async (req, res) => {
   try {
-    // تحقق مبسط من الحقول المسموحة فقط
-    const allowed = [
-      'title', 'showLogo', 'logoUrl', 'showQr', 'qrSize', 'showDevicePassword',
-      'showSerialBarcode', 'barcodeWidth', 'barcodeHeight', 'compactMode',
-      'branchName', 'branchAddress', 'branchPhone', 'margins', 'dateDisplay', 'terms',
-      'companyName', 'address', 'phone', 'email', 'deliveryAcknowledgement',
-      'companyName', 'address', 'phone', 'email', 'deliveryAcknowledgement'
-    ];
-    const next = {};
-    for (const k of allowed) {
-      if (req.body[k] !== undefined) next[k] = req.body[k];
-    }
-    // حافظ على القيم غير المرسلة كما هي
+    // قراءة الإعدادات الحالية
     const current = JSON.parse(await fs.promises.readFile(PRINT_SETTINGS_PATH, 'utf-8'));
-    const merged = { ...current, ...next };
+    
+    // دمج الإعدادات الجديدة مع الحالية (merge عميق)
+    const merged = deepMerge(current, req.body);
+    
+    // حفظ الإعدادات المحدثة
     await fs.promises.writeFile(PRINT_SETTINGS_PATH, JSON.stringify(merged, null, 2), 'utf-8');
     res.json({ message: 'تم حفظ إعدادات الطباعة', settings: merged });
   } catch (e) {
@@ -642,9 +657,26 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     devicePassword,
     cpu, gpu, ram, storage,
     accessories,
-    problemDescription, priority, estimatedCost, notes, status, expectedDeliveryDate,
+    problemDescription, reportedProblem, priority, estimatedCost, notes, status, expectedDeliveryDate,
     companyId // Include companyId from request body
   } = req.body;
+  
+  // Use problemDescription or reportedProblem (support both for backwards compatibility)
+  const finalProblemDescription = String(problemDescription || reportedProblem || '').trim();
+  
+  // Validate that we have a problem description (at least one of problemDescription or reportedProblem must be provided)
+  if (!finalProblemDescription || finalProblemDescription.length < 10) {
+    return res.status(400).json({
+      success: false,
+      message: 'خطأ في البيانات المدخلة',
+      errors: [{
+        field: problemDescription ? 'problemDescription' : 'reportedProblem',
+        message: 'وصف المشكلة مطلوب ويجب أن يكون على الأقل 10 أحرف'
+      }]
+    });
+  }
+  
+  console.log('✅ Final problem description length:', finalProblemDescription.length);
 
   // Debug logging
   console.log('Received repair data:', {
@@ -656,16 +688,18 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     estimatedCost,
     expectedDeliveryDate,
     deviceType,
-    problemDescription,
+    problemDescription: finalProblemDescription,
     accessories
   });
   console.log('Accessories type:', typeof accessories, 'Is array:', Array.isArray(accessories), 'Value:', accessories);
   console.log('CompanyId received:', companyId, 'Type:', typeof companyId);
 
   // Get database connection for transaction
-  const connection = await db.getConnection();
-
+  let connection;
+  
   try {
+    connection = await db.getConnection();
+    
     // Start transaction
     await connection.beginTransaction();
 
@@ -680,29 +714,37 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
       if (existingCustomer.length > 0) {
         actualCustomerId = existingCustomer[0].id;
-        // Update customer's company if companyId is provided
-        if (companyId) {
+        // Update customer's company if companyId is provided and valid
+        if (companyId != null && companyId !== '' && !isNaN(parseInt(companyId))) {
           const finalCompanyId = parseInt(companyId);
-          console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
-          await connection.execute(
-            'UPDATE Customer SET companyId = ? WHERE id = ?',
-            [finalCompanyId, actualCustomerId]
-          );
-          console.log('✅ Successfully linked company to existing customer');
+          if (finalCompanyId > 0) {
+            console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
+            await connection.execute(
+              'UPDATE Customer SET companyId = ? WHERE id = ?',
+              [finalCompanyId, actualCustomerId]
+            );
+            console.log('✅ Successfully linked company to existing customer');
 
-          // Verify the update
-          const [verifyCustomer] = await connection.execute(
-            'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-            [actualCustomerId]
-          );
-          if (verifyCustomer.length > 0) {
-            console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+            // Verify the update
+            const [verifyCustomer] = await connection.execute(
+              'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+              [actualCustomerId]
+            );
+            if (verifyCustomer.length > 0) {
+              console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+            }
           }
         }
       } else {
         // إنشاء عميل جديد مع companyId إذا كان موجوداً
         console.log('🔵 Creating new customer with companyId:', companyId, 'Type:', typeof companyId);
-        const finalCompanyId = companyId ? parseInt(companyId) : null;
+        let finalCompanyId = null;
+        if (companyId != null && companyId !== '' && !isNaN(parseInt(companyId))) {
+          const parsedCompanyId = parseInt(companyId);
+          if (parsedCompanyId > 0) {
+            finalCompanyId = parsedCompanyId;
+          }
+        }
         console.log('🔵 Final companyId for INSERT:', finalCompanyId);
         const [customerResult] = await connection.execute(
           'INSERT INTO Customer (name, phone, email, companyId) VALUES (?, ?, ?, ?)',
@@ -720,23 +762,25 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
           console.log('✅ Verification - Customer saved with companyId:', verifyCustomer[0].companyId);
         }
       }
-    } else if (companyId) {
-      // If customer exists and companyId is provided, update customer's company
+    } else if (companyId != null && companyId !== '' && !isNaN(parseInt(companyId))) {
+      // If customer exists and companyId is provided and valid, update customer's company
       const finalCompanyId = parseInt(companyId);
-      console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
-      await connection.execute(
-        'UPDATE Customer SET companyId = ? WHERE id = ?',
-        [finalCompanyId, actualCustomerId]
-      );
-      console.log('✅ Successfully linked company to existing customer');
+      if (finalCompanyId > 0) {
+        console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
+        await connection.execute(
+          'UPDATE Customer SET companyId = ? WHERE id = ?',
+          [finalCompanyId, actualCustomerId]
+        );
+        console.log('✅ Successfully linked company to existing customer');
 
-      // Verify the update
-      const [verifyCustomer] = await connection.execute(
-        'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-        [actualCustomerId]
-      );
-      if (verifyCustomer.length > 0) {
-        console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+        // Verify the update
+        const [verifyCustomer] = await connection.execute(
+          'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+          [actualCustomerId]
+        );
+        if (verifyCustomer.length > 0) {
+          console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+        }
       }
     }
 
@@ -764,23 +808,70 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
     // ثالثاً: إنشاء طلب الإصلاح
     const repairStatus = mapFrontendStatusToDb(status) || 'RECEIVED';
+    
+    // التحقق من أن actualCustomerId موجود
+    if (!actualCustomerId) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({
+        success: false,
+        error: 'Customer ID is required'
+      });
+    }
+    
     // توليد توكن تتبع عام للعميل
     const crypto = require('crypto');
     const trackingToken = crypto.randomBytes(24).toString('hex');
+    
+    // التحقق من وجود branchId = 1
+    let branchIdToUse = 1;
+    try {
+      const [branchCheck] = await connection.execute(
+        'SELECT id FROM Branch WHERE id = ? AND deletedAt IS NULL',
+        [branchIdToUse]
+      );
+      if (branchCheck.length === 0) {
+        console.warn('⚠️ Branch 1 does not exist, using NULL for branchId');
+        branchIdToUse = null;
+      }
+    } catch (branchError) {
+      console.warn('⚠️ Error checking branch, using NULL:', branchError.message);
+      branchIdToUse = null;
+    }
+    
     const insertQuery = `
       INSERT INTO RepairRequest (
         deviceId, reportedProblem, status, trackingToken, customerId, branchId, technicianId, estimatedCost, expectedDeliveryDate
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    console.log('Inserting repair with values:', {
-      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId,
-      estimatedCost: estimatedCost || 0, expectedDeliveryDate: expectedDeliveryDate || null
+    // إعداد القيم للإدخال
+    const insertValues = [
+      deviceId || null,
+      finalProblemDescription || null,
+      repairStatus || 'RECEIVED',
+      trackingToken || null,
+      actualCustomerId,
+      branchIdToUse,
+      null, // technicianId
+      estimatedCost || 0,
+      expectedDeliveryDate || null
+    ];
+
+    console.log('🔍 Inserting repair with values:', {
+      deviceId: deviceId || null,
+      problemDescription: finalProblemDescription ? `${finalProblemDescription.substring(0, 50)}...` : null,
+      problemDescriptionLength: finalProblemDescription?.length || 0,
+      repairStatus,
+      trackingToken,
+      actualCustomerId,
+      branchId: branchIdToUse,
+      estimatedCost: estimatedCost || 0,
+      expectedDeliveryDate: expectedDeliveryDate || null,
+      insertValuesCount: insertValues.length
     });
 
-    const [result] = await connection.execute(insertQuery, [
-      deviceId, problemDescription, repairStatus, trackingToken, actualCustomerId, 1, null, estimatedCost || 0, expectedDeliveryDate || null // branchId = 1 افتراضي
-    ]);
+    const [result] = await connection.execute(insertQuery, insertValues);
 
     // رابعاً: حفظ الملحقات إن وجدت
     if (Array.isArray(accessories) && accessories.length > 0) {
@@ -795,9 +886,10 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
     // Commit transaction
     await connection.commit();
+    connection.release();
 
-    // إرجاع البيانات المُنشأة مع تفاصيل كاملة
-    const [newRepairData] = await connection.execute(`
+    // إرجاع البيانات المُنشأة مع تفاصيل كاملة (استخدام db.execute بعد إغلاق connection)
+    const [newRepairData] = await db.execute(`
       SELECT 
         rr.*,
         rr.accessories as accessoriesJson,
@@ -817,10 +909,6 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       WHERE rr.id = ?
     `, [result.insertId]);
 
-    // Commit transaction
-    await connection.commit();
-    connection.release();
-
     const newRepair = {
       id: result.insertId,
       requestNumber: `REP-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${String(result.insertId).padStart(3, '0')}`,
@@ -830,7 +918,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       deviceType: newRepairData[0]?.deviceType || deviceType,
       deviceBrand: newRepairData[0]?.deviceBrand || deviceBrand,
       deviceModel: newRepairData[0]?.deviceModel || deviceModel,
-      problemDescription: problemDescription,
+      problemDescription: finalProblemDescription,
       status: getStatusMapping(repairStatus),
       priority: priority || 'medium',
       estimatedCost: estimatedCost || 0,
@@ -848,16 +936,51 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     res.status(201).json(newRepair);
   } catch (err) {
     // Rollback transaction on error
-    if (connection) {
-      await connection.rollback();
-      connection.release();
+    if (connection && connection.beginTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackErr) {
+        console.error('❌ Error during rollback:', rollbackErr);
+      }
+      try {
+        connection.release();
+      } catch (releaseErr) {
+        console.error('❌ Error releasing connection:', releaseErr);
+      }
     }
-    console.error('Error creating repair request:', err);
-    res.status(500).json({
+    
+    // Log error details comprehensively
+    console.error('❌ ========== ERROR CREATING REPAIR REQUEST ==========');
+    console.error('❌ Error message:', err.message);
+    console.error('❌ Error code:', err.code);
+    console.error('❌ SQL State:', err.sqlState);
+    console.error('❌ SQL Message:', err.sqlMessage);
+    console.error('❌ Error stack:', err.stack);
+    if (err.errno) {
+      console.error('❌ Error number:', err.errno);
+    }
+    if (err.sql) {
+      console.error('❌ SQL Query:', err.sql);
+    }
+    console.error('❌ ====================================================');
+    
+    // Return detailed error in development, generic in production
+    const errorResponse = {
       success: false,
       error: 'Server Error',
-      details: err.message
-    });
+      message: err.message || 'An error occurred while creating the repair request'
+    };
+    
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.details = {
+        code: err.code,
+        sqlState: err.sqlState,
+        sqlMessage: err.sqlMessage,
+        stack: err.stack
+      };
+    }
+    
+    res.status(500).json(errorResponse);
   }
 });
 
@@ -2170,6 +2293,43 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const settings = loadPrintSettings();
+    const invoiceSettings = settings.invoice || {};
+    
+    // استخدام إعدادات الفاتورة أو الإعدادات العامة كبديل
+    const getSetting = (key, defaultValue) => {
+      // للقيم المتداخلة مثل colors.primary
+      if (key.includes('.')) {
+        const [parent, child] = key.split('.');
+        if (invoiceSettings[parent] && invoiceSettings[parent][child] !== undefined) {
+          return invoiceSettings[parent][child];
+        }
+        if (settings[parent] && settings[parent][child] !== undefined) {
+          return settings[parent][child];
+        }
+        return defaultValue;
+      }
+      // للقيم العادية
+      if (invoiceSettings[key] !== undefined) {
+        // للقيم boolean، نتحقق من false أيضاً
+        if (typeof invoiceSettings[key] === 'boolean') {
+          return invoiceSettings[key];
+        }
+        // للقيم الأخرى، نتحقق من null و ''
+        if (invoiceSettings[key] !== null && invoiceSettings[key] !== '') {
+          return invoiceSettings[key];
+        }
+      }
+      if (settings[key] !== undefined) {
+        if (typeof settings[key] === 'boolean') {
+          return settings[key];
+        }
+        if (settings[key] !== null && settings[key] !== '') {
+          return settings[key];
+        }
+      }
+      return defaultValue;
+    };
+    
     const [repairRows] = await db.execute(`
       SELECT rr.*, 
              c.name AS customerName, c.phone AS customerPhone, c.email AS customerEmail,
@@ -2243,6 +2403,14 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     // إنشاء رابط التتبع للفاتورة
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
+    
+    // تنسيق التاريخ حسب الإعدادات
+    const dateDisplayMode = getSetting('dateDisplay', 'both');
+    const invoiceDate = new Date();
+    const dates = formatDates(invoiceDate, dateDisplayMode);
+    const formattedDate = dateDisplayMode === 'both' && dates.secondary 
+      ? `${dates.primary}<br><small style="color:#6b7280;">${dates.secondary}</small>`
+      : dates.primary;
 
     const html = `
     <!DOCTYPE html>
@@ -2254,44 +2422,44 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
       <style>
         @page {
-          size: A4;
-          margin: 15mm;
+          size: ${getSetting('paperSize', 'A4')};
+          margin: ${getSetting('margins', {}).top || 20}mm ${getSetting('margins', {}).right || 20}mm ${getSetting('margins', {}).bottom || 20}mm ${getSetting('margins', {}).left || 20}mm;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { 
           font-family: 'Tajawal','Cairo', 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; 
-          font-size:14px; 
-          line-height:1.6; 
-          color:#1f2937; 
+          font-size:${getSetting('fontSize', 14)}px; 
+          line-height:${getSetting('lineHeight', 1.6)}; 
+          color:${getSetting('colors', {}).primary || '#1f2937'}; 
           background:#fff; 
         }
         .container { 
-          max-width: 210mm;
-          min-height: 297mm;
+          max-width: ${getSetting('paperSize', 'A4') === 'A4' ? '210mm' : getSetting('paperSize', 'A4') === 'A5' ? '148mm' : '216mm'};
+          min-height: ${getSetting('paperSize', 'A4') === 'A4' ? '297mm' : getSetting('paperSize', 'A4') === 'A5' ? '210mm' : '279mm'};
           margin: 0 auto;
-          padding: 20mm;
+          padding: ${getSetting('margins', {}).top || 20}mm ${getSetting('margins', {}).right || 20}mm ${getSetting('margins', {}).bottom || 20}mm ${getSetting('margins', {}).left || 20}mm;
           background: #fff;
         }
         .header { 
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 3px solid #3b82f6;
+          margin-bottom: ${getSetting('spacing', {}).section || 25}px;
+          padding-bottom: ${getSetting('spacing', {}).section || 25}px;
+          border-bottom: 3px solid ${getSetting('colors', {}).primary || '#3b82f6'};
         }
         .header-left {
           flex: 1;
         }
         .logo { 
-          font-size:28px; 
+          font-size:${getSetting('titleFontSize', 28)}px; 
           font-weight:700; 
-          color:#3b82f6; 
+          color:${getSetting('colors', {}).primary || '#3b82f6'}; 
           margin-bottom:10px; 
         }
         .company-info { 
-          font-size:13px; 
-          color:#6b7280;
+          font-size:${getSetting('fontSize', 14) - 1}px; 
+          color:${getSetting('colors', {}).secondary || '#6b7280'};
           line-height: 1.8;
         }
         .header-right {
@@ -2299,10 +2467,10 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 15px;
+          gap: ${getSetting('spacing', {}).item || 15}px;
         }
         .invoice-number-box {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          background: linear-gradient(135deg, ${getSetting('colors', {}).primary || '#3b82f6'} 0%, ${getSetting('colors', {}).primary || '#3b82f6'}dd 100%);
           color: #fff;
           padding: 15px 25px;
           border-radius: 10px;
@@ -2314,17 +2482,21 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           margin-bottom: 5px;
         }
         .invoice-number-value {
-          font-size: 20px;
+          font-size: ${getSetting('titleFontSize', 20)}px;
           font-weight: 700;
           letter-spacing: 1px;
         }
         .qr-code-container {
           text-align: center;
+          width: ${Math.min(getSetting('qrCodeSize', 80), 100)}px;
+          height: auto;
+          flex-shrink: 0;
         }
         .qr-code-label {
-          font-size: 10px;
-          color: #6b7280;
-          margin-top: 6px;
+          font-size: 9px;
+          color: ${getSetting('colors', {}).secondary || '#6b7280'};
+          margin-top: 4px;
+          line-height: 1.2;
         }
         .invoice-info { 
           display:grid;
@@ -2339,12 +2511,12 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           border: 1px solid #e5e7eb;
         }
         .section-title { 
-          font-size: 16px;
+          font-size: ${getSetting('sectionTitleFontSize', 16)}px;
           font-weight:700; 
-          color:#111827; 
-          margin-bottom:12px; 
+          color:${getSetting('colors', {}).primary || '#111827'}; 
+          margin-bottom:${getSetting('spacing', {}).item || 12}px; 
           padding-bottom:8px;
-          border-bottom: 2px solid #3b82f6;
+          border-bottom: 2px solid ${getSetting('colors', {}).primary || '#3b82f6'};
         }
         .info-row { 
           margin-bottom:10px;
@@ -2379,13 +2551,18 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           border-bottom:1px solid #e5e7eb;
         }
         .table th { 
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: #fff;
+          background: ${getSetting('tableStyle', 'bordered') === 'bordered' 
+            ? `linear-gradient(135deg, ${getSetting('colors', {}).primary || '#3b82f6'} 0%, ${getSetting('colors', {}).primary || '#3b82f6'}dd 100%)`
+            : getSetting('colors', {}).headerBg || '#f9fafb'};
+          color: ${getSetting('tableStyle', 'bordered') === 'bordered' ? '#fff' : getSetting('colors', {}).primary || '#111827'};
           font-weight:600;
-          font-size: 13px;
+          font-size: ${getSetting('tableFontSize', 13)}px;
         }
         .table tbody tr:hover {
-          background: #f9fafb;
+          background: ${getSetting('colors', {}).alternateRow || '#f9fafb'};
+        }
+        .table tbody tr:nth-child(even) {
+          background: ${getSetting('tableStyle', 'bordered') === 'striped' ? (getSetting('colors', {}).alternateRow || '#fafafa') : 'transparent'};
         }
         .table .number { 
           text-align:center; 
@@ -2417,13 +2594,13 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         }
         .total-row { 
           font-weight:700; 
-          font-size:18px; 
-          border-top:3px solid #3b82f6;
-          background: #f9fafb;
+          font-size:${getSetting('sectionTitleFontSize', 18)}px; 
+          border-top:3px solid ${getSetting('colors', {}).primary || '#3b82f6'};
+          background: ${getSetting('colors', {}).alternateRow || '#f9fafb'};
         }
         .total-row td {
-          color: #111827;
-          font-size: 18px;
+          color: ${getSetting('colors', {}).primary || '#111827'};
+          font-size: ${getSetting('sectionTitleFontSize', 18)}px;
         }
         .footer { 
           text-align:center; 
@@ -2443,35 +2620,61 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     </head>
     <body>
       <div class="container">
+        ${getSetting('watermark', {}).enabled ? `
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-45deg); font-size:48px; color:${getSetting('colors', {}).primary || '#000'}; opacity:${getSetting('watermark', {}).opacity || 0.1}; pointer-events:none; white-space:nowrap; z-index:1;">
+          ${getSetting('watermark', {}).text || 'مسودة'}
+        </div>
+        ` : ''}
         <div class="header">
           <div class="header-left">
-            <div class="logo">${settings.companyName || 'FixZone'}</div>
-            <div class="company-info">
-              ${settings.address || 'العنوان غير محدد'}<br>
-              ${settings.phone ? `هاتف: ${settings.phone}` : ''} ${settings.email ? `| بريد إلكتروني: ${settings.email}` : ''}
+            ${getSetting('showLogo', false) && getSetting('logoUrl', '') ? `
+            <div style="text-align:${getSetting('logoPosition', 'left') === 'center' ? 'center' : getSetting('logoPosition', 'left') === 'right' ? 'right' : 'left'}; margin-bottom:10px;">
+              <img src="${getSetting('logoUrl', '')}" alt="Logo" style="height:${getSetting('logoHeight', 50)}px; max-width:100%; object-fit:contain;" />
             </div>
+            ` : ''}
+            ${!getSetting('showLogo', false) || !getSetting('logoUrl', '') ? `
+            <div class="logo">${getSetting('showCompanyInfo', true) ? (settings.companyName || 'FixZone') : getSetting('title', 'فاتورة')}</div>
+            ` : ''}
+            ${getSetting('showCompanyInfo', true) ? `
+            <div class="company-info">
+              ${settings.address || invoiceSettings.address || 'العنوان غير محدد'}<br>
+              ${settings.phone || invoiceSettings.phone ? `هاتف: ${settings.phone || invoiceSettings.phone}` : ''} ${settings.email || invoiceSettings.email ? `| بريد إلكتروني: ${settings.email || invoiceSettings.email}` : ''}
+            </div>
+            ` : ''}
           </div>
           <div class="header-right">
+            ${getSetting('showInvoiceNumber', true) ? `
             <div class="invoice-number-box">
               <div class="invoice-number-label">رقم الفاتورة</div>
               <div class="invoice-number-value">INV-${requestNumber}</div>
             </div>
-            ${settings.showQr !== false ? `
-            <div class="qr-code-container">
-              <canvas id="qrCanvas" width="100" height="100" style="border:1px solid #e5e7eb; border-radius:8px; padding:4px;"></canvas>
-              <div class="qr-code-label">تتبع حالة الجهاز</div>
+            ` : ''}
+            ${getSetting('showQrCode', false) ? `
+            <div class="qr-code-container" style="position:relative; width:${Math.min(getSetting('qrCodeSize', 80), 100)}px; height:${Math.min(getSetting('qrCodeSize', 80), 100)}px;">
+              <canvas id="qrCanvas" width="${Math.min(getSetting('qrCodeSize', 80), 100)}" height="${Math.min(getSetting('qrCodeSize', 80), 100)}" style="border:1px solid ${getSetting('colors', {}).border || '#e5e7eb'}; border-radius:8px; padding:4px; max-width:100%; height:auto;"></canvas>
+              <div class="qr-code-label" style="font-size:9px;">تتبع</div>
             </div>
             ` : ''}
           </div>
         </div>
+        
+        ${getSetting('showHeader', true) && getSetting('headerText', '') ? `
+        <div style="text-align:center; margin-bottom:${getSetting('spacing', {}).section || 25}px; font-size:${getSetting('headerFontSize', 24)}px; font-weight:700; color:${getSetting('colors', {}).primary || '#111827'};">
+          ${getSetting('headerText', 'فاتورة')}
+        </div>
+        ` : ''}
 
         <div class="invoice-info">
+          ${getSetting('showInvoiceNumber', true) || getSetting('showInvoiceDate', true) ? `
           <div class="invoice-details">
-            <div class="section-title">تفاصيل الفاتورة</div>
-            <div class="info-row"><span class="label">رقم طلب الإصلاح:</span><span class="value">${requestNumber}</span></div>
-            <div class="info-row"><span class="label">تاريخ الإصدار:</span><span class="value">${new Date().toLocaleDateString('ar-SA')}</span></div>
+            ${getSetting('showHeader', true) ? `<div class="section-title">تفاصيل الفاتورة</div>` : ''}
+            ${getSetting('showInvoiceNumber', true) ? `<div class="info-row"><span class="label">رقم طلب الإصلاح:</span><span class="value">${requestNumber}</span></div>` : ''}
+            ${getSetting('showInvoiceDate', true) ? `<div class="info-row"><span class="label">تاريخ الإصدار:</span><span class="value">${formattedDate}</span></div>` : ''}
+            ${getSetting('showDueDate', true) ? `<div class="info-row"><span class="label">تاريخ الاستحقاق:</span><span class="value">${formatDates(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), dateDisplayMode).primary}</span></div>` : ''}
             <div class="info-row"><span class="label">حالة الطلب:</span><span class="value">${statusText}</span></div>
           </div>
+          ` : ''}
+          ${getSetting('showCustomerInfo', true) ? `
           <div class="customer-details">
             <div class="section-title">بيانات العميل</div>
             <div class="info-row"><span class="label">الاسم:</span><span class="value">${repair.customerName || 'غير محدد'}</span></div>
@@ -2479,10 +2682,11 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             ${repair.customerEmail ? `<div class="info-row"><span class="label">البريد:</span><span class="value">${repair.customerEmail}</span></div>` : ''}
             ${repair.customerAddress ? `<div class="info-row"><span class="label">العنوان:</span><span class="value">${repair.customerAddress}</span></div>` : ''}
           </div>
+          ` : ''}
         </div>
 
-        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
-          <div class="section-title" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #3b82f6;">تفاصيل الجهاز</div>
+        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: ${getSetting('spacing', {}).section || 20}px; border: 1px solid ${getSetting('colors', {}).border || '#e5e7eb'};">
+          <div class="section-title" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid ${getSetting('colors', {}).primary || '#3b82f6'};">تفاصيل الجهاز</div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
             <div><span class="label">نوع الجهاز:</span> <strong>${repair.deviceType || 'غير محدد'}</strong></div>
             <div><span class="label">الماركة:</span> <strong>${repair.deviceBrand || 'غير محدد'}</strong></div>
@@ -2490,77 +2694,130 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           </div>
         </div>
 
+        ${getSetting('showItemsTable', true) ? `
         <div class="section-title" style="margin-top: 10px;">التكاليف والخدمات</div>
         <table class="table">
           <thead>
             <tr>
-              <th>الوصف</th>
-              <th class="number">الكمية</th>
-              <th class="number">سعر الوحدة</th>
-              <th class="number">الإجمالي</th>
+              ${getSetting('showItemDescription', true) ? '<th>الوصف</th>' : ''}
+              ${getSetting('showItemQuantity', true) ? '<th class="number">الكمية</th>' : ''}
+              ${getSetting('showItemPrice', true) ? '<th class="number">سعر الوحدة</th>' : ''}
+              ${getSetting('showItemDiscount', true) ? '<th class="number">الخصم</th>' : ''}
+              ${getSetting('showItemTax', true) ? '<th class="number">الضريبة</th>' : ''}
+              ${getSetting('showItemTotal', true) ? '<th class="number">الإجمالي</th>' : ''}
             </tr>
           </thead>
           <tbody>
             ${invoiceItems.map(item => `
               <tr>
-                <td>${item.itemName || item.serviceName || item.description || 'عنصر غير محدد'}</td>
-                <td class="number">${Number(item.quantity) || 1}</td>
-                <td class="number">${(Number(item.unitPrice) || 0).toFixed(2)} جنيه</td>
-                <td class="number">${(((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0))).toFixed(2)} جنيه</td>
+                ${getSetting('showItemDescription', true) ? `<td>${item.itemName || item.serviceName || item.description || 'عنصر غير محدد'}</td>` : ''}
+                ${getSetting('showItemQuantity', true) ? `<td class="number">${Number(item.quantity) || 1}</td>` : ''}
+                ${getSetting('showItemPrice', true) ? `<td class="number">${(Number(item.unitPrice) || 0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
+                ${getSetting('showItemDiscount', true) ? `<td class="number">${item.discountAmount ? (Number(item.discountAmount) || 0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2) : '-'}</td>` : ''}
+                ${getSetting('showItemTax', true) ? `<td class="number">${((Number(item.unitPrice) || 0) * 0.15).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
+                ${getSetting('showItemTotal', true) ? `<td class="number">${(((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0))).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
               </tr>
             `).join('')}
-            ${invoiceItems.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:#6b7280;">لا توجد عناصر في الفاتورة</td></tr>' : ''}
+            ${invoiceItems.length === 0 ? `<tr><td colspan="${[getSetting('showItemDescription', true), getSetting('showItemQuantity', true), getSetting('showItemPrice', true), getSetting('showItemDiscount', true), getSetting('showItemTax', true), getSetting('showItemTotal', true)].filter(Boolean).length}" style="text-align:center; color:#6b7280;">لا توجد عناصر في الفاتورة</td></tr>` : ''}
           </tbody>
         </table>
+        ` : ''}
 
         <div class="totals">
           <table class="totals-table">
+            ${getSetting('showSubtotal', true) ? `
             <tr>
               <td>المجموع الفرعي:</td>
-              <td class="number">${subtotal.toFixed(2)} جنيه</td>
+              <td class="number">${subtotal.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
+            ` : ''}
+            ${getSetting('showDiscount', true) ? `
+            <tr>
+              <td>الخصم:</td>
+              <td class="number">-${(0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
+            </tr>
+            ` : ''}
+            ${getSetting('showTax', true) ? `
             <tr>
               <td>الضريبة (15%):</td>
-              <td class="number">${taxAmount.toFixed(2)} جنيه</td>
+              <td class="number">${taxAmount.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
+            ` : ''}
+            ${getSetting('showShipping', true) ? `
+            <tr>
+              <td>الشحن:</td>
+              <td class="number">${(0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
+            </tr>
+            ` : ''}
+            ${getSetting('showTotal', true) ? `
             <tr class="total-row">
               <td>الإجمالي:</td>
-              <td class="number">${total.toFixed(2)} جنيه</td>
+              <td class="number">${total.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
+            ` : ''}
           </table>
         </div>
 
-        ${repair.problemDescription ? `
-          <div style="margin-top:20px;">
-            <div class="section-title">وصف المشكلة</div>
-            <div style="background:#f9fafb; padding:12px; border-radius:6px; margin-top:8px;">
-              ${repair.problemDescription}
-            </div>
+        ${getSetting('showPaymentMethod', false) || getSetting('showPaymentStatus', false) ? `
+        <div style="margin-top:${getSetting('spacing', {}).section || 20}px; margin-bottom:${getSetting('spacing', {}).section || 20}px; padding:15px; background:#f9fafb; border-radius:8px; border:1px solid ${getSetting('colors', {}).border || '#e5e7eb'};">
+          ${getSetting('showPaymentMethod', false) ? `
+          <div style="margin-bottom:${getSetting('spacing', {}).item || 10}px; display:flex; justify-content:space-between;">
+            <span style="font-weight:600; color:${getSetting('colors', {}).secondary || '#6b7280'};">طريقة الدفع:</span>
+            <span style="font-weight:600; color:${getSetting('colors', {}).primary || '#111827'};">نقد</span>
           </div>
+          ` : ''}
+          ${getSetting('showPaymentStatus', false) ? `
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-weight:600; color:${getSetting('colors', {}).secondary || '#6b7280'};">حالة الدفع:</span>
+            <span style="font-weight:600; color:${getSetting('colors', {}).primary || '#111827'};">مدفوع</span>
+          </div>
+          ` : ''}
+        </div>
         ` : ''}
 
-        <div class="footer">
-          <strong>شكراً لثقتكم بنا | ${settings.companyName || 'FixZone'}</strong><br>
-          هذه فاتورة رسمية صادرة بتاريخ ${new Date().toLocaleDateString('ar-SA')}<br>
-          يمكنك تتبع حالة الجهاز من خلال رمز QR أعلاه
+        ${getSetting('showNotes', false) && getSetting('notesLabel', '') ? `
+        <div style="margin-top:${getSetting('spacing', {}).section || 20}px; margin-bottom:${getSetting('spacing', {}).section || 20}px;">
+          <div class="section-title">${getSetting('notesLabel', 'ملاحظات')}</div>
+          <div style="background:#f9fafb; padding:12px; border-radius:6px; color:${getSetting('colors', {}).secondary || '#6b7280'};">
+            شكراً لتعاملكم معنا. يرجى مراجعة الفاتورة والتأكد من صحة جميع البيانات.
+          </div>
         </div>
+        ` : ''}
+
+        ${getSetting('showTerms', false) && getSetting('termsText', '') ? `
+        <div style="margin-top:${getSetting('spacing', {}).section || 20}px; margin-bottom:${getSetting('spacing', {}).section || 20}px;">
+          <div class="section-title">${getSetting('termsLabel', 'الشروط والأحكام')}</div>
+          <div style="background:#f9fafb; padding:12px; border-radius:6px; color:${getSetting('colors', {}).secondary || '#6b7280'}; font-size:${getSetting('fontSize', 14) - 1}px; line-height:1.6;">
+            ${getSetting('termsText', '')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${getSetting('showFooter', true) ? `
+        <div class="footer">
+          <strong>شكراً لثقتكم بنا | ${settings.companyName || 'FixZone'}</strong>
+          ${getSetting('footerText', '') ? `<br>${getSetting('footerText', '')}` : ''}
+          ${getSetting('showQrCode', false) ? `<br>يمكنك تتبع حالة الجهاز من خلال رمز QR أعلاه` : ''}
+        </div>
+        ` : ''}
 
         <div class="no-print" style="text-align:center; margin-top:30px;">
           <button onclick="window.print()" style="padding:12px 30px; border:none; border-radius:8px; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 8px rgba(59,130,246,0.3);">🖨️ طباعة الفاتورة</button>
         </div>
       </div>
-      ${settings.showQr !== false ? `
+      ${getSetting('showQrCode', false) ? `
       <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
       <script>
         (function(){
           try {
             var canvas = document.getElementById('qrCanvas');
             if (canvas && window.QRCode) {
+              var qrSize = Math.min(${getSetting('qrCodeSize', 80)}, 100);
               QRCode.toCanvas(canvas, '${trackUrl}', { 
-                width: 100, 
-                margin: 2,
+                width: qrSize, 
+                margin: 1,
                 color: {
-                  dark: '#111827',
+                  dark: '${getSetting('colors', {}).primary || '#111827'}',
                   light: '#ffffff'
                 }
               }, function (error) { 

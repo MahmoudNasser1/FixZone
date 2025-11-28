@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -88,7 +88,7 @@ const RepairsPage = () => {
 
   // State للبحث والفلترة
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || 'pending');
 
   // State للترقيم والفرز
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
@@ -235,8 +235,8 @@ const RepairsPage = () => {
   useEffect(() => {
     const urlStatus = searchParams.get('status');
     const lsStatus = localStorage.getItem('repairs_status_filter');
-    const initial = urlStatus || lsStatus || 'all';
-    const valid = statusOptions.some(o => o.key === initial) ? initial : 'all';
+    const initial = urlStatus || lsStatus || 'pending';
+    const valid = statusOptions.some(o => o.key === initial) ? initial : 'pending';
     setStatus(valid);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -253,13 +253,20 @@ const RepairsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // مزامنة البحث مع URL (debounced)
+  // مزامنة البحث مع URL (debounced) - بدون إعادة تحميل الصفحة
   useEffect(() => {
     const id = setTimeout(() => {
       const current = searchParams.get('q') || '';
-      if ((search || '') !== current) {
+      const searchValue = (search || '').trim();
+      // تحديث URL فقط إذا تغيرت القيمة فعلياً
+      if (searchValue !== current) {
         const next = new URLSearchParams(searchParams);
-        if (!search) next.delete('q'); else next.set('q', search);
+        if (!searchValue) {
+          next.delete('q');
+        } else {
+          next.set('q', searchValue);
+        }
+        // استخدام replace: true لتجنب إضافة entries جديدة في history
         setSearchParams(next, { replace: true });
       }
     }, 300);
@@ -353,18 +360,6 @@ const RepairsPage = () => {
     }
   }, [searchParams]);
 
-  // جلب البيانات من Backend
-  useEffect(() => {
-    console.log('useEffect triggered with dependencies:', { customerFilter, page, pageSize, status, search });
-    fetchRepairs();
-  }, [customerFilter, page, pageSize, status, search]);
-
-  // جلب البيانات عند بدء الصفحة
-  useEffect(() => {
-    console.log('Initial useEffect triggered - fetching repairs on page load');
-    fetchRepairs();
-  }, []);
-
   const fetchCustomerName = async (customerId) => {
     try {
       const customer = await apiService.getCustomer(customerId);
@@ -375,7 +370,8 @@ const RepairsPage = () => {
     }
   };
 
-  const fetchRepairs = async () => {
+  // fetchRepairs مع useCallback لتجنب re-render غير ضروري
+  const fetchRepairs = useCallback(async () => {
     try {
       console.log('fetchRepairs called');
       setLoading(true);
@@ -395,20 +391,8 @@ const RepairsPage = () => {
       if (technicianId) params.technicianId = technicianId;
       if (priority) params.priority = priority;
 
-      // Update URL params
-      const urlParams = new URLSearchParams(searchParams);
-      if (page && page !== 1) urlParams.set('page', String(page)); else urlParams.delete('page');
-      if (pageSize && pageSize !== 10) urlParams.set('limit', String(pageSize)); else urlParams.delete('limit');
-      if (search) urlParams.set('q', search); else urlParams.delete('q');
-      if (status && status !== 'all') urlParams.set('status', status); else urlParams.delete('status');
-      if (sortBy && sortBy !== 'createdAt') urlParams.set('sort', sortBy); else urlParams.delete('sort');
-      if (sortOrder && sortOrder !== 'desc') urlParams.set('order', sortOrder); else urlParams.delete('order');
-      if (dateFrom) urlParams.set('dateFrom', dateFrom); else urlParams.delete('dateFrom');
-      if (dateTo) urlParams.set('dateTo', dateTo); else urlParams.delete('dateTo');
-      if (technicianId) urlParams.set('technicianId', technicianId); else urlParams.delete('technicianId');
-      if (priority) urlParams.set('priority', priority); else urlParams.delete('priority');
-
-      setSearchParams(urlParams, { replace: true });
+      // لا نحدث URL هنا - يتم التعامل معه في useEffect منفصلة
+      // هذا يمنع reload الصفحة عند البحث
 
       const response = await apiService.getRepairRequests(params);
       console.log('Repairs response:', response);
@@ -490,7 +474,20 @@ const RepairsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerFilter, page, pageSize, status, search, sortBy, sortOrder, dateFrom, dateTo, technicianId, priority]);
+
+  // جلب البيانات من Backend
+  useEffect(() => {
+    console.log('useEffect triggered with dependencies:', { customerFilter, page, pageSize, status, search });
+    fetchRepairs();
+  }, [fetchRepairs]);
+
+  // جلب البيانات عند بدء الصفحة
+  useEffect(() => {
+    console.log('Initial useEffect triggered - fetching repairs on page load');
+    fetchRepairs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDeleteRepair = async (repairId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الطلب؟')) {

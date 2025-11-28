@@ -22,7 +22,7 @@ exports.getAllRepairs = async (req, res) => {
     } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // بناء شروط البحث
     const conditions = ['rr.deletedAt IS NULL'];
     const params = [];

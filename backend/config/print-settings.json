@@ -34,5 +34,100 @@
   },
   "dateDisplay": "both",
   "terms": "- يُرجى الاحتفاظ بهذا الإيصال لمراجعة الطلب رقم {{requestNumber}} للعميل {{customerName}}.\n- الأجهزة تترك للفحص لمدة 48 ساعة قبل تقدير التكلفة النهائية.\n\n{{branchName}}\n{{branchAddress}}\nهاتف: {{branchPhone}}\n\nسياسة الضمان:\n- الضمان يشمل العطل المُصلّح فقط ولا يشمل الأعطال الأخرى.\n- إلغاء الضمان في حال وجود كسر أو سوائل أو عبث بعد التسليم.",
-  "deliveryAcknowledgement": "أقر أنا العميل باستلام الجهاز بحالة سليمة بعد الإصلاح وأتعهد بمراجعة الجهاز خلال 48 ساعة من الاستلام."
+  "deliveryAcknowledgement": "أقر أنا العميل باستلام الجهاز بحالة سليمة بعد الإصلاح وأتعهد بمراجعة الجهاز خلال 48 ساعة من الاستلام.",
+  "invoice": {
+    "title": "فاتورة",
+    "showLogo": true,
+    "logoUrl": "",
+    "logoHeight": 50,
+    "logoPosition": "center",
+    "showHeader": false,
+    "headerText": "فاتورة ضريبية",
+    "headerFontSize": 24,
+    "showInvoiceNumber": true,
+    "showInvoiceDate": true,
+    "showDueDate": true,
+    "showCustomerInfo": true,
+    "customerInfoLayout": "vertical",
+    "showCompanyInfo": true,
+    "companyInfoLayout": "vertical",
+    "showItemsTable": true,
+    "tableStyle": "bordered",
+    "showItemDescription": true,
+    "showItemQuantity": true,
+    "showItemPrice": true,
+    "showItemDiscount": true,
+    "showItemTax": true,
+    "showItemTotal": true,
+    "showSubtotal": true,
+    "showDiscount": true,
+    "showTax": true,
+    "showShipping": true,
+    "showTotal": true,
+    "showPaymentMethod": true,
+    "showPaymentStatus": true,
+    "showNotes": true,
+    "notesLabel": "ملاحظات",
+    "showTerms": true,
+    "termsLabel": "الشروط والأحكام",
+    "termsText": "شكراً لتعاملكم معنا",
+    "showSignature": true,
+    "signatureLabel": "التوقيع",
+    "showFooter": true,
+    "footerText": "",
+    "paperSize": "A4",
+    "orientation": "portrait",
+    "fontSize": 12,
+    "titleFontSize": 20,
+    "sectionTitleFontSize": 14,
+    "tableFontSize": 11,
+    "margins": {
+      "top": 20,
+      "right": 20,
+      "bottom": 20,
+      "left": 20
+    },
+    "lineHeight": 1.5,
+    "spacing": {
+      "section": 15,
+      "item": 8,
+      "paragraph": 10
+    },
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#666666",
+      "border": "#cccccc",
+      "headerBg": "#f5f5f5",
+      "alternateRow": "#fafafa"
+    },
+    "showBarcode": true,
+    "barcodePosition": "bottom",
+    "barcodeWidth": 2,
+    "barcodeHeight": 40,
+    "showQrCode": false,
+    "qrCodePosition": "top-right",
+    "qrCodeSize": 80,
+    "watermark": {
+      "enabled": false,
+      "text": "مسودة",
+      "opacity": 0.1,
+      "position": "center"
+    },
+    "pageBreak": {
+      "avoidItems": true,
+      "avoidCustomerInfo": true
+    },
+    "currency": {
+      "showSymbol": true,
+      "symbolPosition": "before",
+      "showCode": false
+    },
+    "dateFormat": "yyyy/MM/dd",
+    "numberFormat": {
+      "decimalPlaces": 2,
+      "thousandSeparator": ",",
+      "decimalSeparator": "."
+    },
+    "dateDisplay": "both"
+  }
 }

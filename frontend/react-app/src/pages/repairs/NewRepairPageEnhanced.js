@@ -594,21 +594,35 @@ const NewRepairPageEnhanced = () => {
           ? parseFloat((parseFloat(formData.estimatedCostMin) + parseFloat(formData.estimatedCostMax)) / 2) // Send average if range provided
           : (formData.estimatedCostMin ? parseFloat(formData.estimatedCostMin) : null), // Send as number, not string
         // CRITICAL: Get companyId from multiple sources to ensure it's not lost
+        // Check selectedCompany first (most up-to-date), then formData, then selectedCustomer
         companyId: (() => {
-          const fromFormData = formData.companyId;
-          const fromSelectedCompany = selectedCompany?.id;
-          const finalCompanyId = fromFormData || fromSelectedCompany || null;
-          console.log('🔍 CompanyId sources:', {
-            formData: fromFormData,
-            selectedCompany: fromSelectedCompany,
-            final: finalCompanyId
-          });
-          if (finalCompanyId) {
-            console.log('✅ CompanyId will be sent:', finalCompanyId);
-          } else {
-            console.warn('⚠️ WARNING: No companyId found! formData.companyId:', fromFormData, 'selectedCompany?.id:', fromSelectedCompany);
+          // Priority 1: selectedCompany (most current selection)
+          if (selectedCompany && selectedCompany.id) {
+            const companyIdValue = parseInt(selectedCompany.id);
+            if (companyIdValue && companyIdValue > 0) {
+              console.log('✅ Using companyId from selectedCompany:', companyIdValue);
+              return companyIdValue;
+            }
           }
-          return finalCompanyId;
+          // Priority 2: formData.companyId (may have been set earlier)
+          if (formData.companyId) {
+            const companyIdValue = parseInt(formData.companyId);
+            if (companyIdValue && companyIdValue > 0) {
+              console.log('✅ Using companyId from formData:', companyIdValue);
+              return companyIdValue;
+            }
+          }
+          // Priority 3: selectedCustomer.companyId (if customer has a company)
+          if (selectedCustomer && selectedCustomer.companyId) {
+            const companyIdValue = parseInt(selectedCustomer.companyId);
+            if (companyIdValue && companyIdValue > 0) {
+              console.log('✅ Using companyId from selectedCustomer:', companyIdValue);
+              return companyIdValue;
+            }
+          }
+          // No company found - this is OK, return null (don't send undefined)
+          console.log('ℹ️ No companyId found - this is OK for individual customers');
+          return null; // Explicitly return null (not undefined)
         })(),
         expectedDeliveryDate: formData.expectedDeliveryDate || null
       };

@@ -76,29 +76,29 @@ const inventorySchemas = {
         'string.empty': 'اسم الصنف مطلوب',
         'string.max': 'اسم الصنف يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     sku: Joi.string().max(50).optional()
       .messages({
         'string.max': 'رمز الصنف يجب ألا يزيد عن 50 حرف'
       }),
-    
+
     barcode: Joi.string().max(100).optional(),
     partNumber: Joi.string().max(100).optional(),
-    
+
     brand: Joi.string().max(100).optional(),
     model: Joi.string().max(100).optional(),
-    
+
     categoryId: Joi.number().integer().positive().optional(),
-    
+
     condition: Joi.string().valid('new', 'used', 'refurbished', 'damaged').default('new'),
-    
+
     purchasePrice: Joi.number().min(0).precision(2).required()
       .messages({
         'number.base': 'سعر الشراء يجب أن يكون رقم',
         'number.min': 'سعر الشراء يجب أن يكون موجب',
         'any.required': 'سعر الشراء مطلوب'
       }),
-    
+
     sellingPrice: Joi.number().min(0).precision(2).required()
       .when('purchasePrice', {
         is: Joi.exist(),
@@ -112,28 +112,28 @@ const inventorySchemas = {
         'number.min': 'سعر البيع يجب أن يكون موجب',
         'any.required': 'سعر البيع مطلوب'
       }),
-    
+
     unit: Joi.string().max(20).default('قطعة'),
-    
+
     minStockLevel: Joi.number().integer().min(0).default(0),
     maxStockLevel: Joi.number().integer().min(0).default(1000),
     reorderPoint: Joi.number().integer().min(0).default(10),
     reorderQuantity: Joi.number().integer().min(0).default(50),
-    
+
     leadTimeDays: Joi.number().integer().min(0).default(7),
     warrantyPeriodDays: Joi.number().integer().min(0).default(90),
-    
+
     preferredVendorId: Joi.number().integer().positive().optional(),
-    
+
     description: Joi.string().max(1000).optional(),
     weight: Joi.number().min(0).precision(2).optional(),
     dimensions: Joi.string().max(100).optional(),
     location: Joi.string().max(100).optional(),
     image: Joi.string().max(255).optional(),
     notes: Joi.string().max(1000).optional(),
-    
+
     customFields: Joi.object().optional(),
-    
+
     isActive: Joi.boolean().default(true)
   }),
 
@@ -193,21 +193,21 @@ const stockMovementSchemas = {
         'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER',
         'any.required': 'نوع الحركة مطلوب'
       }),
-    
+
     inventoryItemId: Joi.number().integer().positive().required()
       .messages({
         'number.positive': 'معرف الصنف غير صحيح',
         'number.base': 'معرف الصنف يجب أن يكون رقم',
         'any.required': 'معرف الصنف مطلوب'
       }),
-    
+
     quantity: Joi.number().integer().min(1).required()
       .messages({
         'number.min': 'الكمية يجب أن تكون على الأقل 1',
         'number.base': 'الكمية يجب أن تكون رقم صحيح',
         'any.required': 'الكمية مطلوبة'
       }),
-    
+
     fromWarehouseId: Joi.number().integer().positive().allow(null).optional()
       .when('type', {
         is: Joi.string().valid('OUT', 'TRANSFER'),
@@ -220,7 +220,7 @@ const stockMovementSchemas = {
         'number.positive': 'معرف المخزن المصدر غير صحيح',
         'number.base': 'معرف المخزن المصدر يجب أن يكون رقم'
       }),
-    
+
     toWarehouseId: Joi.number().integer().positive().allow(null).optional()
       .when('type', {
         is: Joi.string().valid('IN', 'TRANSFER'),
@@ -233,7 +233,7 @@ const stockMovementSchemas = {
         'number.positive': 'معرف المخزن المستقبل غير صحيح',
         'number.base': 'معرف المخزن المستقبل يجب أن يكون رقم'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
@@ -246,31 +246,31 @@ const stockMovementSchemas = {
       .messages({
         'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER'
       }),
-    
+
     inventoryItemId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف الصنف غير صحيح',
         'number.base': 'معرف الصنف يجب أن يكون رقم'
       }),
-    
+
     quantity: Joi.number().integer().min(1).optional()
       .messages({
         'number.min': 'الكمية يجب أن تكون على الأقل 1',
         'number.base': 'الكمية يجب أن تكون رقم صحيح'
       }),
-    
+
     fromWarehouseId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف المخزن المصدر غير صحيح',
         'number.base': 'معرف المخزن المصدر يجب أن يكون رقم'
       }),
-    
+
     toWarehouseId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف المخزن المستقبل غير صحيح',
         'number.base': 'معرف المخزن المستقبل يجب أن يكون رقم'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
@@ -284,51 +284,51 @@ const stockMovementSchemas = {
         'number.min': 'رقم الصفحة يجب أن يكون على الأقل 1',
         'number.base': 'رقم الصفحة يجب أن يكون رقم'
       }),
-    
+
     limit: Joi.number().integer().min(1).max(100).default(50).optional()
       .messages({
         'number.min': 'عدد العناصر يجب أن يكون على الأقل 1',
         'number.max': 'عدد العناصر يجب ألا يزيد عن 100',
         'number.base': 'عدد العناصر يجب أن يكون رقم'
       }),
-    
+
     type: Joi.string().valid('IN', 'OUT', 'TRANSFER').optional()
       .messages({
         'any.only': 'نوع الحركة يجب أن يكون IN أو OUT أو TRANSFER'
       }),
-    
+
     inventoryItemId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف الصنف غير صحيح',
         'number.base': 'معرف الصنف يجب أن يكون رقم'
       }),
-    
+
     warehouseId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف المخزن غير صحيح',
         'number.base': 'معرف المخزن يجب أن يكون رقم'
       }),
-    
+
     startDate: Joi.date().iso().optional()
       .messages({
         'date.base': 'تاريخ البداية غير صحيح'
       }),
-    
+
     endDate: Joi.date().iso().optional()
       .messages({
         'date.base': 'تاريخ النهاية غير صحيح'
       }),
-    
+
     sort: Joi.string().valid('createdAt', 'quantity', 'type', 'itemName').default('createdAt').optional()
       .messages({
         'any.only': 'حقل الترتيب غير صحيح'
       }),
-    
+
     sortDir: Joi.string().valid('ASC', 'DESC').default('DESC').optional()
       .messages({
         'any.only': 'اتجاه الترتيب يجب أن يكون ASC أو DESC'
       }),
-    
+
     q: Joi.string().max(255).allow('').optional()
       .messages({
         'string.max': 'نص البحث يجب ألا يزيد عن 255 حرف'
@@ -347,27 +347,27 @@ const vendorSchemas = {
         'string.empty': 'اسم المورد مطلوب',
         'any.required': 'اسم المورد مطلوب'
       }),
-    
+
     contactPerson: Joi.string().max(100).optional(),
-    
+
     phone: Joi.string().max(20).required()
       .messages({
         'string.empty': 'رقم الهاتف مطلوب',
         'any.required': 'رقم الهاتف مطلوب'
       }),
-    
+
     email: Joi.string().email().max(100).allow('', null).optional(),
-    
+
     address: Joi.string().max(500).optional(),
     taxNumber: Joi.string().max(50).optional(),
-    
+
     paymentTerms: Joi.string().valid('cash', 'net15', 'net30', 'net45', 'net60').default('net30'),
     creditLimit: Joi.number().min(0).precision(2).default(0),
-    
+
     website: Joi.string().uri().max(255).allow('', null).optional(),
     country: Joi.string().max(100).default('Egypt'),
     city: Joi.string().max(100).optional(),
-    
+
     notes: Joi.string().max(1000).allow('', null).optional(),
     status: Joi.string().valid('active', 'inactive', 'blocked').default('active')
   }),
@@ -508,7 +508,7 @@ const customerSchemas = {
         'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف',
         'any.required': 'اسم العميل مطلوب'
       }),
-    
+
     phone: Joi.string().min(5).max(30).trim().required()
       .messages({
         'string.empty': 'رقم الهاتف مطلوب',
@@ -516,20 +516,20 @@ const customerSchemas = {
         'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف',
         'any.required': 'رقم الهاتف مطلوب'
       }),
-    
+
     email: Joi.string().email().max(100).allow('', null).optional()
       .messages({
         'string.email': 'البريد الإلكتروني غير صحيح',
         'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     address: Joi.string().max(500).allow('', null).optional()
       .messages({
         'string.max': 'العنوان يجب ألا يزيد عن 500 حرف'
       }),
-    
+
     companyId: Joi.number().integer().positive().allow(null).optional(),
-    
+
     customFields: Joi.object().optional()
   }),
 
@@ -540,26 +540,26 @@ const customerSchemas = {
         'string.min': 'اسم العميل يجب أن يكون على الأقل 2 أحرف',
         'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     phone: Joi.string().min(5).max(30).trim().optional()
       .messages({
         'string.min': 'رقم الهاتف يجب أن يكون على الأقل 5 أحرف',
         'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف'
       }),
-    
+
     email: Joi.string().email().max(100).allow('', null).optional()
       .messages({
         'string.email': 'البريد الإلكتروني غير صحيح',
         'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     address: Joi.string().max(500).allow('', null).optional()
       .messages({
         'string.max': 'العنوان يجب ألا يزيد عن 500 حرف'
       }),
-    
+
     companyId: Joi.number().integer().positive().allow(null).optional(),
-    
+
     customFields: Joi.object().optional()
   }).min(1), // At least one field must be present
 
@@ -597,18 +597,18 @@ const warehouseSchemas = {
         'string.empty': 'اسم المخزن مطلوب',
         'any.required': 'اسم المخزن مطلوب'
       }),
-    
+
     location: Joi.string().max(255).optional(),
     branchId: Joi.number().integer().positive().optional(),
     managerId: Joi.number().integer().positive().optional(),
-    
+
     type: Joi.string().valid('main', 'branch', 'temporary', 'virtual').default('branch'),
     capacity: Joi.number().min(0).precision(2).optional(),
-    
+
     address: Joi.string().max(500).optional(),
     phone: Joi.string().max(20).optional(),
     email: Joi.string().email().max(100).allow('', null).optional(),
-    
+
     isActive: Joi.boolean().default(true)
   }),
 
@@ -640,32 +640,32 @@ const serviceSchemas = {
         'string.max': 'اسم الخدمة يجب ألا يزيد عن 100 حرف',
         'any.required': 'اسم الخدمة مطلوب'
       }),
-    
+
     description: Joi.string().max(1000).allow('', null).optional()
       .messages({
         'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
       }),
-    
+
     basePrice: Joi.number().positive().precision(2).required()
       .messages({
         'number.base': 'السعر الأساسي يجب أن يكون رقم',
         'number.positive': 'السعر الأساسي يجب أن يكون أكبر من صفر',
         'any.required': 'السعر الأساسي مطلوب'
       }),
-    
+
     category: Joi.string().max(50).allow('', null).optional()
       .messages({
         'string.max': 'الفئة يجب ألا تزيد عن 50 حرف'
       }),
-    
+
     categoryId: Joi.number().integer().positive().allow(null).optional(),
-    
+
     estimatedDuration: Joi.number().integer().min(0).allow(null).optional()
       .messages({
         'number.base': 'المدة المقدرة يجب أن تكون رقم',
         'number.min': 'المدة المقدرة يجب أن تكون صفر أو أكبر'
       }),
-    
+
     isActive: Joi.boolean().default(true)
   }),
 
@@ -676,31 +676,31 @@ const serviceSchemas = {
         'string.min': 'اسم الخدمة يجب أن يكون على الأقل 3 أحرف',
         'string.max': 'اسم الخدمة يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     description: Joi.string().max(1000).allow('', null).optional()
       .messages({
         'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
       }),
-    
+
     basePrice: Joi.number().positive().precision(2).optional()
       .messages({
         'number.base': 'السعر الأساسي يجب أن يكون رقم',
         'number.positive': 'السعر الأساسي يجب أن يكون أكبر من صفر'
       }),
-    
+
     category: Joi.string().max(50).allow('', null).optional()
       .messages({
         'string.max': 'الفئة يجب ألا تزيد عن 50 حرف'
       }),
-    
+
     categoryId: Joi.number().integer().positive().allow(null).optional(),
-    
+
     estimatedDuration: Joi.number().integer().min(0).allow(null).optional()
       .messages({
         'number.base': 'المدة المقدرة يجب أن تكون رقم',
         'number.min': 'المدة المقدرة يجب أن تكون صفر أو أكبر'
       }),
-    
+
     isActive: Joi.boolean().optional()
   }).min(1), // At least one field must be present
 
@@ -748,55 +748,55 @@ const expenseSchemas = {
         'number.positive': 'فئة المصروف غير صحيحة',
         'number.base': 'فئة المصروف يجب أن تكون رقم'
       }),
-    
+
     vendorId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف المورد غير صحيح',
         'number.base': 'معرف المورد يجب أن يكون رقم'
       }),
-    
+
     amount: Joi.number().min(0).precision(2).required()
       .messages({
         'number.min': 'المبلغ يجب أن يكون أكبر من أو يساوي صفر',
         'number.base': 'المبلغ يجب أن يكون رقم',
         'any.required': 'المبلغ مطلوب'
       }),
-    
+
     description: Joi.string().max(1000).allow('', null).optional()
       .messages({
         'string.max': 'الوصف يجب ألا يزيد عن 1000 حرف'
       }),
-    
+
     expenseDate: Joi.date().iso().required()
       .messages({
         'date.base': 'تاريخ المصروف غير صحيح (يجب أن يكون بصيغة ISO: YYYY-MM-DD)',
         'date.format': 'تاريخ المصروف غير صحيح (يجب أن يكون بصيغة: YYYY-MM-DD)',
         'any.required': 'تاريخ المصروف مطلوب'
       }),
-    
+
     invoiceId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفاتورة غير صحيح',
         'number.base': 'معرف الفاتورة يجب أن يكون رقم'
       }),
-    
+
     receiptUrl: Joi.string().uri().max(500).allow('', null).optional()
       .messages({
         'string.uri': 'رابط الإيصال غير صحيح (يجب أن يبدأ بـ http:// أو https://)',
         'string.max': 'رابط الإيصال يجب ألا يزيد عن 500 حرف'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
       }),
-    
+
     repairId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف طلب الإصلاح غير صحيح',
         'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
       }),
-    
+
     branchId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفرع غير صحيح',
@@ -1541,21 +1541,21 @@ const stockLevelSchemas = {
         'number.base': 'معرف الصنف يجب أن يكون رقم',
         'any.required': 'معرف الصنف مطلوب'
       }),
-    
+
     warehouseId: Joi.number().integer().positive().required()
       .messages({
         'number.positive': 'معرف المخزن غير صحيح',
         'number.base': 'معرف المخزن يجب أن يكون رقم',
         'any.required': 'معرف المخزن مطلوب'
       }),
-    
+
     quantity: Joi.number().integer().min(0).required()
       .messages({
         'number.min': 'الكمية يجب أن تكون أكبر من أو تساوي 0',
         'number.base': 'الكمية يجب أن تكون رقم صحيح',
         'any.required': 'الكمية مطلوبة'
       }),
-    
+
     notes: Joi.string().max(1000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 1000 حرف'
@@ -1569,13 +1569,13 @@ const stockLevelSchemas = {
         'number.min': 'الكمية يجب أن تكون أكبر من أو تساوي 0',
         'number.base': 'الكمية يجب أن تكون رقم صحيح'
       }),
-    
+
     minLevel: Joi.number().integer().min(0).optional()
       .messages({
         'number.min': 'مستوى المخزون الأدنى يجب أن يكون أكبر من أو يساوي 0',
         'number.base': 'مستوى المخزون الأدنى يجب أن يكون رقم صحيح'
       }),
-    
+
     notes: Joi.string().max(1000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 1000 حرف'
@@ -1625,13 +1625,13 @@ const repairSchemas = {
         'number.positive': 'معرف العميل غير صحيح',
         'number.base': 'معرف العميل يجب أن يكون رقم'
       }),
-    
+
     companyId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الشركة غير صحيح',
         'number.base': 'معرف الشركة يجب أن يكون رقم'
       }),
-    
+
     customerName: Joi.string().min(2).max(100).trim().required()
       .when('customerId', {
         is: Joi.number().integer().positive(),
@@ -1644,7 +1644,7 @@ const repairSchemas = {
         'string.max': 'اسم العميل يجب ألا يزيد عن 100 حرف',
         'any.required': 'اسم العميل مطلوب (إذا لم يتم تحديد customerId)'
       }),
-    
+
     customerPhone: Joi.string().min(5).max(30).trim().required()
       .when('customerId', {
         is: Joi.number().integer().positive(),
@@ -1657,65 +1657,65 @@ const repairSchemas = {
         'string.max': 'رقم الهاتف يجب ألا يزيد عن 30 حرف',
         'any.required': 'رقم الهاتف مطلوب (إذا لم يتم تحديد customerId)'
       }),
-    
+
     customerEmail: Joi.string().email().max(100).allow('', null).optional()
       .messages({
         'string.email': 'البريد الإلكتروني غير صحيح',
         'string.max': 'البريد الإلكتروني يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     deviceType: Joi.string().valid('LAPTOP', 'SMARTPHONE', 'TABLET', 'SMARTWATCH', 'EARPHONES', 'DESKTOP', 'MONITOR', 'OTHER').required()
       .messages({
         'any.only': 'نوع الجهاز يجب أن يكون: LAPTOP, SMARTPHONE, TABLET, SMARTWATCH, EARPHONES, DESKTOP, MONITOR, OTHER',
         'any.required': 'نوع الجهاز مطلوب'
       }),
-    
+
     deviceBrand: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'الماركة يجب ألا تزيد عن 100 حرف'
       }),
-    
+
     brandId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الماركة غير صحيح',
         'number.base': 'معرف الماركة يجب أن يكون رقم'
       }),
-    
+
     deviceModel: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'الموديل يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     serialNumber: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'الرقم التسلسلي يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     devicePassword: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'كلمة مرور الجهاز يجب ألا تزيد عن 100 حرف'
       }),
-    
+
     cpu: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'المعالج يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     gpu: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'كرت الشاشة يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     ram: Joi.string().max(50).allow('', null).optional()
       .messages({
         'string.max': 'الذاكرة يجب ألا تزيد عن 50 حرف'
       }),
-    
+
     storage: Joi.string().max(100).allow('', null).optional()
       .messages({
         'string.max': 'التخزين يجب ألا يزيد عن 100 حرف'
       }),
-    
+
     accessories: Joi.array().items(Joi.alternatives().try(
       Joi.string(),
       Joi.number().integer().positive()
@@ -1723,45 +1723,43 @@ const repairSchemas = {
       .messages({
         'array.base': 'المتعلقات يجب أن تكون مصفوفة'
       }),
+
+    // Support both problemDescription and reportedProblem (backwards compatibility)
+    // Both are optional in schema, all validation happens in route handler
+    problemDescription: Joi.any().optional(),
     
-    problemDescription: Joi.string().min(10).max(2000).trim().required()
-      .messages({
-        'string.empty': 'وصف المشكلة مطلوب',
-        'string.min': 'وصف المشكلة يجب أن يكون على الأقل 10 أحرف',
-        'string.max': 'وصف المشكلة يجب ألا يزيد عن 2000 حرف',
-        'any.required': 'وصف المشكلة مطلوب'
-      }),
-    
+    reportedProblem: Joi.any().optional(),
+
     priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').default('MEDIUM').optional()
       .messages({
         'any.only': 'الأولوية يجب أن تكون: LOW, MEDIUM, HIGH, URGENT'
       }),
-    
+
     estimatedCost: Joi.number().min(0).precision(2).default(0).optional()
       .messages({
         'number.min': 'التكلفة المتوقعة يجب أن تكون أكبر من أو تساوي صفر',
         'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
       }),
-    
+
     actualCost: Joi.number().min(0).precision(2).allow(null).optional()
       .messages({
         'number.min': 'التكلفة الفعلية يجب أن تكون أكبر من أو تساوي صفر',
         'number.base': 'التكلفة الفعلية يجب أن تكون رقم'
       }),
-    
+
     expectedDeliveryDate: Joi.date().iso().allow(null).optional()
       .messages({
         'date.base': 'تاريخ التسليم المتوقع غير صحيح (يجب أن يكون بصيغة ISO)',
         'date.format': 'تاريخ التسليم المتوقع غير صحيح'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
       }),
-    
+
     status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow(null).optional(),
-    
+
     customerNotes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'ملاحظات العميل يجب ألا تزيد عن 2000 حرف'
@@ -1775,54 +1773,54 @@ const repairSchemas = {
         'number.positive': 'معرف الجهاز غير صحيح',
         'number.base': 'معرف الجهاز يجب أن يكون رقم'
       }),
-    
+
     reportedProblem: Joi.string().min(10).max(2000).trim().optional()
       .messages({
         'string.min': 'وصف المشكلة يجب أن يكون على الأقل 10 أحرف',
         'string.max': 'وصف المشكلة يجب ألا يزيد عن 2000 حرف'
       }),
-    
+
     technicianReport: Joi.string().max(5000).allow('', null).optional()
       .messages({
         'string.max': 'تقرير الفني يجب ألا يزيد عن 5000 حرف'
       }),
-    
+
     status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').optional(),
-    
+
     customerId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف العميل غير صحيح',
         'number.base': 'معرف العميل يجب أن يكون رقم'
       }),
-    
+
     branchId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف الفرع غير صحيح',
         'number.base': 'معرف الفرع يجب أن يكون رقم'
       }),
-    
+
     technicianId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفني غير صحيح',
         'number.base': 'معرف الفني يجب أن يكون رقم'
       }),
-    
+
     quotationId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف العرض السعري غير صحيح',
         'number.base': 'معرف العرض السعري يجب أن يكون رقم'
       }),
-    
+
     invoiceId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفاتورة غير صحيح',
         'number.base': 'معرف الفاتورة يجب أن يكون رقم'
       }),
-    
+
     deviceBatchId: Joi.number().integer().positive().allow(null).optional(),
-    
+
     attachments: Joi.array().allow(null).optional(),
-    
+
     customFields: Joi.object().allow(null).optional()
   }).min(1), // At least one field must be present
 
@@ -1833,7 +1831,7 @@ const repairSchemas = {
         'any.only': 'الحالة غير صحيحة',
         'any.required': 'الحالة مطلوبة'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
@@ -1847,29 +1845,29 @@ const repairSchemas = {
         'number.min': 'التكلفة المتوقعة يجب أن تكون أكبر من أو تساوي صفر',
         'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
       }),
-    
+
     actualCost: Joi.number().min(0).precision(2).allow(null).optional()
       .messages({
         'number.min': 'التكلفة الفعلية يجب أن تكون أكبر من أو تساوي صفر',
         'number.base': 'التكلفة الفعلية يجب أن تكون رقم'
       }),
-    
+
     priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').optional()
       .messages({
         'any.only': 'الأولوية يجب أن تكون: LOW, MEDIUM, HIGH, URGENT'
       }),
-    
+
     expectedDeliveryDate: Joi.date().iso().allow(null).optional()
       .messages({
         'date.base': 'تاريخ التسليم المتوقع غير صحيح',
         'date.format': 'تاريخ التسليم المتوقع غير صحيح'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
       }),
-    
+
     accessories: Joi.array().items(Joi.alternatives().try(
       Joi.string(),
       Joi.object().unknown()
@@ -1921,28 +1919,28 @@ const repairRequestServiceSchemas = {
         'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم',
         'any.required': 'معرف طلب الإصلاح مطلوب'
       }),
-    
+
     serviceId: Joi.number().integer().positive().required()
       .messages({
         'number.positive': 'معرف الخدمة غير صحيح',
         'number.base': 'معرف الخدمة يجب أن يكون رقم',
         'any.required': 'معرف الخدمة مطلوب'
       }),
-    
+
     technicianId: Joi.number().integer().positive().required()
       .messages({
         'number.positive': 'معرف الفني غير صحيح',
         'number.base': 'معرف الفني يجب أن يكون رقم',
         'any.required': 'معرف الفني مطلوب'
       }),
-    
+
     price: Joi.number().min(0).precision(2).required()
       .messages({
         'number.min': 'السعر يجب أن يكون أكبر من أو تساوي صفر',
         'number.base': 'السعر يجب أن يكون رقم',
         'any.required': 'السعر مطلوب'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
@@ -1956,25 +1954,25 @@ const repairRequestServiceSchemas = {
         'number.positive': 'معرف طلب الإصلاح غير صحيح',
         'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
       }),
-    
+
     serviceId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف الخدمة غير صحيح',
         'number.base': 'معرف الخدمة يجب أن يكون رقم'
       }),
-    
+
     technicianId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف الفني غير صحيح',
         'number.base': 'معرف الفني يجب أن يكون رقم'
       }),
-    
+
     price: Joi.number().min(0).precision(2).optional()
       .messages({
         'number.min': 'السعر يجب أن يكون أكبر من أو تساوي صفر',
         'number.base': 'السعر يجب أن يكون رقم'
       }),
-    
+
     notes: Joi.string().max(2000).allow('', null).optional()
       .messages({
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'

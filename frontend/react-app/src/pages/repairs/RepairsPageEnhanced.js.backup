@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -149,8 +149,45 @@ const RepairsPageEnhanced = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // loadRepairs مع useCallback لتجنب re-render غير ضروري
-  const loadRepairs = useCallback(async () => {
+  // مزامنة URL مع الحالة (بدون إعادة تحميل الصفحة)
+  useEffect(() => {
+    // بناء URL parameters الجديدة
+    const newParams = new URLSearchParams();
+    if (page > 1) newParams.set('page', String(page));
+    if (limit !== 10) newParams.set('limit', String(limit));
+    if (debouncedSearch) newParams.set('search', debouncedSearch);
+    if (status) newParams.set('status', status);
+    if (customerId) newParams.set('customerId', customerId);
+    if (technicianId) newParams.set('technicianId', technicianId);
+    if (dateFrom) newParams.set('dateFrom', dateFrom);
+    if (dateTo) newParams.set('dateTo', dateTo);
+    if (sortBy !== 'createdAt') newParams.set('sortBy', sortBy);
+    if (sortOrder !== 'DESC') newParams.set('sortOrder', sortOrder);
+
+    const newParamsString = newParams.toString();
+    
+    // تحديث URL فقط إذا تغيرت القيم فعلياً (مقارنة مع آخر قيمة)
+    if (lastParamsRef.current !== newParamsString) {
+      lastParamsRef.current = newParamsString;
+      // استخدام window.history.replaceState مباشرة لتجنب re-render
+      // هذا يمنع reload الصفحة تماماً
+      const newUrl = `${window.location.pathname}${newParamsString ? `?${newParamsString}` : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder]);
+
+  // تحميل البيانات
+  useEffect(() => {
+    loadRepairs();
+  }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder]);
+
+  // تحميل العملاء والفنيين للفلاتر
+  useEffect(() => {
+    loadFiltersData();
+  }, []);
+
+  const loadRepairs = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -185,42 +222,7 @@ const RepairsPageEnhanced = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder, notifications]);
-
-  // تحميل البيانات عند تغيير الفلاتر
-  useEffect(() => {
-    loadRepairs();
-  }, [loadRepairs]);
-
-  // مزامنة URL مع الحالة (بدون إعادة تحميل الصفحة)
-  useEffect(() => {
-    // بناء URL parameters الجديدة
-    const newParams = new URLSearchParams();
-    if (page > 1) newParams.set('page', String(page));
-    if (limit !== 10) newParams.set('limit', String(limit));
-    if (debouncedSearch) newParams.set('search', debouncedSearch);
-    if (status) newParams.set('status', status);
-    if (customerId) newParams.set('customerId', customerId);
-    if (technicianId) newParams.set('technicianId', technicianId);
-    if (dateFrom) newParams.set('dateFrom', dateFrom);
-    if (dateTo) newParams.set('dateTo', dateTo);
-    if (sortBy !== 'createdAt') newParams.set('sortBy', sortBy);
-    if (sortOrder !== 'DESC') newParams.set('sortOrder', sortOrder);
-
-    const newParamsString = newParams.toString();
-    
-    // تحديث URL فقط إذا تغيرت القيم فعلياً (مقارنة مع آخر قيمة)
-    if (lastParamsRef.current !== newParamsString) {
-      lastParamsRef.current = newParamsString;
-      // استخدام setSearchParams مع replace: true لتجنب re-render
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [page, limit, debouncedSearch, status, customerId, technicianId, dateFrom, dateTo, sortBy, sortOrder, setSearchParams]);
-
-  // تحميل العملاء والفنيين للفلاتر
-  useEffect(() => {
-    loadFiltersData();
-  }, []);
+  };
 
   const loadFiltersData = async () => {
     try {

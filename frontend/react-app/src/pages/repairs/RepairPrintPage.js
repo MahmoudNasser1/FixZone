@@ -36,7 +36,7 @@ export default function RepairPrintPage() {
           try {
             const cust = await apiService.getCustomer(rep.customerId);
             setCustomer(cust);
-          } catch {}
+          } catch { }
         }
       } catch (e) {
         setError('تعذر تحميل تفاصيل الطلب للطباعة');
@@ -44,7 +44,7 @@ export default function RepairPrintPage() {
         setLoading(false);
         // منح وقت بسيط للرندر ثم الطباعة
         setTimeout(() => {
-          try { window.print(); } catch {}
+          try { window.print(); } catch { }
         }, 300);
       }
     };
@@ -112,16 +112,16 @@ export default function RepairPrintPage() {
       `}</style>
 
       <div className="container">
-        <div className="no-print" style={{ marginBottom: 12, display:'flex', gap:8, flexWrap:'wrap' }}>
+        <div className="no-print" style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={() => window.print()} style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: '#fff' }}>طباعة الآن</button>
-          <button onClick={() => window.open(`${window.location.pathname}?copy=customer`, '_blank')} style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: copyType==='customer'?'#e0f2fe':'#fff' }}>نسخة العميل</button>
-          <button onClick={() => window.open(`${window.location.pathname}?copy=archive`, '_blank')} style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: copyType==='archive'?'#fee2e2':'#fff' }}>نسخة الأرشيف</button>
+          <button onClick={() => window.open(`${window.location.pathname}?copy=customer`, '_blank')} style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: copyType === 'customer' ? '#e0f2fe' : '#fff' }}>نسخة العميل</button>
+          <button onClick={() => window.open(`${window.location.pathname}?copy=archive`, '_blank')} style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: copyType === 'archive' ? '#fee2e2' : '#fff' }}>نسخة الأرشيف</button>
         </div>
 
         <div className="card">
           <div className="header">
             <div className="brand">
-              <img src={BRAND.logo} alt="logo" onError={(e)=>{e.currentTarget.style.display='none';}} />
+              <img src={BRAND.logo} alt="logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
               <div>
                 <div className="name">{BRAND.name}</div>
                 <div className="sub">{BRAND.subtitle}</div>
@@ -135,12 +135,11 @@ export default function RepairPrintPage() {
                 <div className="row">التسليم المتوقع: <strong>{fmt(repair.expectedDelivery)}</strong></div>
               )}
               <div className="badges" style={{ marginTop: 6 }}>
-                <span className={`badge ${
-                  repair?.status === 'completed' ? 'badge-green' :
-                  repair?.status === 'in-progress' ? 'badge-blue' :
-                  repair?.status === 'pending' ? 'badge-yellow' :
-                  repair?.status === 'cancelled' ? 'badge-red' : ''
-                }`}>
+                <span className={`badge ${repair?.status === 'completed' ? 'badge-green' :
+                    repair?.status === 'in-progress' ? 'badge-blue' :
+                      repair?.status === 'pending' ? 'badge-yellow' :
+                        repair?.status === 'cancelled' ? 'badge-red' : ''
+                  }`}>
                   حالة: {repair?.status || 'غير محدد'}
                 </span>
               </div>
@@ -256,7 +255,7 @@ export default function RepairPrintPage() {
           </div>
         </div>
 
-        <div className="cut-line no-print" style={{ textAlign:'center', color:'#94a3b8', fontSize:12, marginTop:8 }}>— — — — — — — — — — — — — — — —</div>
+        <div className="cut-line no-print" style={{ textAlign: 'center', color: '#94a3b8', fontSize: 12, marginTop: 8 }}>— — — — — — — — — — — — — — — —</div>
         {/* وسم مائي حسب نوع النسخة */}
         {showWatermark && (
           <div className="wm">
