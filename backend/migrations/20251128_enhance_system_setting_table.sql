@@ -2,6 +2,10 @@
 -- This migration adds new columns to support advanced settings features
 -- Note: This file should be executed by the migration runner which checks for column existence
 
+-- Set table and database names
+SET @tablename = 'SystemSetting';
+SET @dbname = DATABASE();
+
 -- Add isEncrypted column
 SET @columnname = 'isEncrypted';
 SET @preparedStatement = (SELECT IF(
