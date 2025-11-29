@@ -114,6 +114,7 @@ const stockLevelsRouter = require('./routes/stockLevels');
 const inventoryIssueRouter = require('./routes/inventoryIssue');
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboardRoutes');
+const navigationRouter = require('./routes/navigation');
 const messagingRouter = require('./routes/messaging');
 const inventoryEnhancedRouter = require('./routes/inventoryEnhanced');
 const stockCountRouter = require('./routes/stockCount');
@@ -172,6 +173,7 @@ router.use('/inspectiontypes', inspectionTypesRouter);
 router.use('/inspectionreports', inspectionReportsRouter);
 router.use('/inspectioncomponents', inspectionComponentsRouter);
 router.use('/notifications', notificationsRouter);
+router.use('/navigation', navigationRouter); // Navigation routes for sidebar and navigation system
 
 router.use('/systemsettings', systemSettingsRouter); // Legacy route (keep for backward compatibility)
 router.use('/settings', settingsRouter); // New enhanced settings route

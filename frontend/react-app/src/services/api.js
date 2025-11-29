@@ -553,12 +553,31 @@ class ApiService {
   }
 
   // ==================
+  // Navigation APIs
+  // ==================
+
+  // Get navigation items (filtered by permissions)
+  async getNavigationItems() {
+    return this.request('/navigation/items');
+  }
+
+  // Get navigation stats (for badges)
+  async getNavigationStats() {
+    return this.request('/navigation/stats');
+  }
+
+  // ==================
   // Dashboard APIs
   // ==================
 
   // Get dashboard statistics
   async getDashboardStats() {
     return this.request('/dashboard/stats');
+  }
+  
+  // Get quick stats for Topbar
+  async getQuickStats() {
+    return this.request('/dashboard/quick-stats');
   }
 
   // Get recent repairs

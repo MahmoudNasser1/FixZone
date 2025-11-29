@@ -1200,7 +1200,7 @@ const CustomersPage = () => {
   };
 
   // فلترة العملاء
-  const filteredCustomers = getPaginatedCustomers();
+  const filteredCustomers = getFilteredCustomers();
 
   // حساب الإحصائيات
   const stats = {

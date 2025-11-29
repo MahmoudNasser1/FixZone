@@ -262,6 +262,88 @@ exports.getAlerts = async (_req, res) => {
     }
 };
 
+// Get quick stats for Topbar (lightweight stats)
+exports.getQuickStats = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const roleId = req.user?.roleId || req.user?.role;
+    
+    const stats = {};
+    
+    // Pending repairs - استخدام حالات شاملة
+    try {
+      const [pending] = await db.execute(
+        `SELECT COUNT(*) as count 
+         FROM RepairRequest 
+         WHERE status IN ('pending', 'in_progress', 'waiting_parts', 'RECEIVED', 'INSPECTION', 
+                          'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'ON_HOLD')
+         AND deletedAt IS NULL`
+      );
+      stats.pendingRepairs = pending[0]?.count || 0;
+    } catch (error) {
+      console.error('Error fetching pending repairs:', error);
+      stats.pendingRepairs = 0;
+    }
+    
+    // New messages (from notifications)
+    try {
+      const [messages] = await db.execute(
+        `SELECT COUNT(*) as count 
+         FROM Notification 
+         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL`,
+        [userId]
+      );
+      stats.newMessages = messages[0]?.count || 0;
+    } catch (error) {
+      console.error('Error fetching new messages:', error);
+      stats.newMessages = 0;
+    }
+    
+    // Low stock - استخدام StockLevel
+    try {
+      const [lowStock] = await db.execute(
+        `SELECT COUNT(DISTINCT sl.inventoryItemId) as count 
+         FROM StockLevel sl
+         JOIN InventoryItem ii ON sl.inventoryItemId = ii.id
+         WHERE sl.quantity <= sl.minLevel 
+         AND ii.deletedAt IS NULL
+         AND sl.deletedAt IS NULL`
+      );
+      stats.lowStock = lowStock[0]?.count || 0;
+    } catch (error) {
+      console.error('Error fetching low stock:', error);
+      stats.lowStock = 0;
+    }
+    
+    // Today's revenue
+    try {
+      const [revenue] = await db.execute(
+        `SELECT COALESCE(SUM(totalAmount), 0) as revenue 
+         FROM Invoice 
+         WHERE DATE(createdAt) = CURDATE() 
+         AND status = 'paid'
+         AND deletedAt IS NULL`
+      );
+      stats.todayRevenue = parseFloat(revenue[0]?.revenue || 0);
+    } catch (error) {
+      console.error('Error fetching today revenue:', error);
+      stats.todayRevenue = 0;
+    }
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching quick stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch quick stats',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 // Get customer statistics for customer dashboard
 exports.getCustomerStats = async (req, res) => {
     try {

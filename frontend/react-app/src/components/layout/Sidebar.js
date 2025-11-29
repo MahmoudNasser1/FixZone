@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Wrench, Users, Warehouse, BarChart2, Settings, ChevronDown, ChevronRight,
   DollarSign, FileText, Package, UserCheck, Calendar, MessageSquare,
   TrendingUp, PieChart, Activity, Shield, Database, HelpCircle,
-  Smartphone, Printer, Monitor, Cpu, HardDrive, Battery, Wifi,
-  CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart
+  Smartphone, Printer, Monitor, HardDrive,
+  CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart,
+  Search, X
 } from 'lucide-react';
 import useUIStore from '../../stores/uiStore';
 import useAuthStore from '../../stores/authStore';
 import { Badge } from '../ui/Badge';
+import { Input } from '../ui/Input';
 import { cn } from '../../lib/utils';
+import { useNavigation, useNavigationStats, useNavigationSearch, getBadgeCount } from '../../hooks/useNavigation';
+import { mapNavItems } from '../../utils/iconMapper';
+import { isAdmin as checkIsAdmin } from '../../utils/permissions';
 
 const navItems = [
   {
@@ -111,19 +116,142 @@ const Sidebar = () => {
   const location = useLocation();
   const { isSidebarOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
-  // Check for Admin: roleId === 1 OR role === 1 OR role === 'admin'
-  // Also handle case where API returns role as number but not roleId
-  const roleId = user?.roleId || user?.role;
-  const isAdmin = !!(user && (
-    roleId === 1 ||
-    roleId === '1' ||
-    user.role === 1 ||
-    user.role === 'admin' ||
-    user.roleId === 1 ||
-    user.roleId === '1'
-  ));
+  
+  // Navigation Hooks
+  const { navItems: apiNavItems, loading: navLoading } = useNavigation();
+  const { stats } = useNavigationStats();
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Check for Admin using permission utility
+  const isAdmin = checkIsAdmin(user);
   const [openMenus, setOpenMenus] = useState(new Set());
-  const [openSections, setOpenSections] = useState(new Set(['الرئيسية', 'إدارة الإصلاحات', 'النظام المالي', 'الإعدادات والإدارة']));
+  const [openSections, setOpenSections] = useState(new Set());
+  
+  // Use API navigation items or fallback to static items
+  const navigationItems = useMemo(() => {
+    if (apiNavItems && apiNavItems.length > 0) {
+      return mapNavItems(apiNavItems);
+    }
+    return navItems; // Fallback to static items
+  }, [apiNavItems]);
+  
+  // Filter navigation items based on search
+  const filteredNavItems = useNavigationSearch(navigationItems, searchQuery);
+
+  // Find the section that contains the current page
+  const findSectionForCurrentPage = useCallback((items, pathname) => {
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return null;
+    }
+
+    if (!pathname) {
+      return null;
+    }
+
+    let foundSection = null;
+    let foundMenuItem = null;
+
+    try {
+      for (const section of items) {
+        if (!section || !section.items || !Array.isArray(section.items)) {
+          continue;
+        }
+
+        for (const item of section.items) {
+          if (!item) continue;
+
+          // Check direct href match (exact match)
+          if (item.href === pathname) {
+            foundSection = section.section;
+            break;
+          }
+          
+          // Check if pathname starts with item.href (for nested routes like /repairs/123)
+          // But avoid matching /customers with /customer (different routes)
+          if (item.href && item.href !== '/' && pathname.startsWith(item.href + '/')) {
+            foundSection = section.section;
+            break;
+          }
+          
+          // Also check exact match for /customers (without trailing slash)
+          if (item.href === pathname) {
+            foundSection = section.section;
+            break;
+          }
+          
+          // Check subItems
+          if (item.subItems && Array.isArray(item.subItems)) {
+            for (const subItem of item.subItems) {
+              if (!subItem || !subItem.href) continue;
+              
+              if (subItem.href === pathname || (subItem.href !== '/' && pathname.startsWith(subItem.href + '/'))) {
+                foundSection = section.section;
+                foundMenuItem = item.label;
+                break;
+              }
+            }
+            if (foundMenuItem) break;
+          }
+        }
+        if (foundSection) break;
+      }
+
+      // Open the menu item if it has subItems
+      if (foundMenuItem) {
+        setOpenMenus(prev => new Set([...prev, foundMenuItem]));
+      }
+    } catch (error) {
+      console.error('Error in findSectionForCurrentPage:', error);
+      return null;
+    }
+
+    return foundSection;
+  }, []);
+
+  // Track the last pathname to detect navigation changes
+  const lastPathnameRef = React.useRef(location.pathname);
+  const isInitialMount = React.useRef(true);
+
+  // Update open sections based on current page location (only when pathname changes)
+  useEffect(() => {
+    // On initial mount or when pathname changes
+    if (isInitialMount.current || lastPathnameRef.current !== location.pathname) {
+      lastPathnameRef.current = location.pathname;
+      isInitialMount.current = false;
+      
+      try {
+        // Find the section containing the current page
+        const currentSection = findSectionForCurrentPage(navigationItems, location.pathname);
+        
+        if (currentSection) {
+          // Open only the section containing the current page, close all others
+          setOpenSections(new Set([currentSection]));
+        } else {
+          // If no section found, close all sections
+          setOpenSections(new Set());
+        }
+      } catch (error) {
+        console.error('Error in findSectionForCurrentPage:', error);
+        // Don't crash - just keep current state
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, navigationItems]); // Include navigationItems to update when they load
+
+  
+  // Helper to get badge value from stats or static value
+  const getItemBadge = (item) => {
+    if (!item) return null;
+    
+    // If badgeKey exists, get from stats
+    if (item.badgeKey && stats) {
+      const count = getBadgeCount(stats, item.badgeKey);
+      if (count) return count;
+    }
+    
+    // Otherwise use static badge
+    return item.badge || null;
+  };
 
   const handleMenuToggle = (label) => {
     if (!isSidebarOpen) return;
@@ -232,19 +360,24 @@ const Sidebar = () => {
         {isSidebarOpen && (
           <>
             <span className="truncate font-medium flex-1">{item.label}</span>
-            {item.badge && (
-              <Badge
-                variant={item.badge === 'نقص' ? 'destructive' : item.badge === 'جديد' ? 'success' : 'default'}
-                size="sm"
-                className="mr-2 flex-shrink-0"
-              >
-                {item.badge}
-              </Badge>
-            )}
+            {(() => {
+              const badgeValue = getItemBadge(item);
+              if (!badgeValue) return null;
+              
+              return (
+                <Badge
+                  variant={badgeValue === 'نقص' ? 'destructive' : badgeValue === 'جديد' ? 'success' : 'default'}
+                  size="sm"
+                  className="mr-2 flex-shrink-0"
+                >
+                  {badgeValue}
+                </Badge>
+              );
+            })()}
           </>
         )}
-        {!isSidebarOpen && item.badge && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800"></div>
+        {!isSidebarOpen && getItemBadge(item) && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-card"></div>
         )}
       </Link>
     );
@@ -276,9 +409,36 @@ const Sidebar = () => {
         )}
       </div>
 
+      {/* Search inside Sidebar */}
+      {isSidebarOpen && (
+        <div className="px-3 py-2 border-b border-border">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="بحث في القائمة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10 bg-muted/50 border-input text-foreground placeholder:text-muted-foreground"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        {navItems.map((section) => (
+        {navLoading && isSidebarOpen && (
+          <div className="px-3 py-2 text-sm text-muted-foreground">جاري التحميل...</div>
+        )}
+        {filteredNavItems.map((section) => (
           <div key={section.section} className="mb-6">
             {isSidebarOpen && (
               <button
@@ -330,4 +490,5 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+// Memoize component for performance
+export default memo(Sidebar);

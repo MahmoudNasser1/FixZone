@@ -17,9 +17,10 @@ const MainLayout = ({
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
   const isCustomer = roleId === ROLE_CUSTOMER || user?.type === 'customer';
-  const isCustomerRoute = location.pathname.startsWith('/customer');
+  // Only hide sidebar for /customer/* routes (customer portal), not /customers/* (admin customer management)
+  const isCustomerRoute = location.pathname.startsWith('/customer/') || location.pathname === '/customer';
 
-  // Hide Sidebar for customer routes
+  // Hide Sidebar for customer portal routes only, not admin customer management
   const showSidebar = !isCustomer && !isCustomerRoute;
 
   return (

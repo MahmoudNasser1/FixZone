@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../stores/authStore';
 import useUIStore from '../../stores/uiStore';
+import { useQuickStats, formatCurrency } from '../../hooks/useQuickStats';
 import {
   LogOut, User, Settings, Menu, Sun, Moon, Bell, Search, Plus,
-  Wrench, Users, Package, FileText, Calculator, MessageSquare,
-  Clock, TrendingUp, AlertCircle, CheckCircle, Zap, Command
+  Wrench, Users, Package, FileText, MessageSquare,
+  Clock, TrendingUp, AlertCircle, CheckCircle, Zap
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import {
@@ -78,19 +79,14 @@ const Topbar = () => {
     }
   };
 
+  // Get quick stats from hook
+  const { stats: quickStats } = useQuickStats();
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
-  };
-
-  // إحصائيات سريعة للعرض في TopBar
-  const quickStats = {
-    pendingRepairs: 12,
-    newMessages: 3,
-    lowStock: 5,
-    todayRevenue: '2,450'
   };
 
   return (
@@ -114,10 +110,20 @@ const Topbar = () => {
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
             <div className="flex items-center space-x-1 space-x-reverse text-brand-green">
               <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">{quickStats.todayRevenue} جنية</span>
+              <span className="font-medium">{formatCurrency(quickStats.todayRevenue || 0)} جنية</span>
             </div>
             <span className="text-muted-foreground">اليوم</span>
           </div>
+          
+          {quickStats.lowStock > 0 && (
+            <div className="flex items-center space-x-2 space-x-reverse text-sm">
+              <div className="flex items-center space-x-1 space-x-reverse text-red-600">
+                <Package className="w-4 h-4" />
+                <span className="font-medium">{quickStats.lowStock}</span>
+              </div>
+              <span className="text-muted-foreground">نقص مخزون</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -188,13 +194,13 @@ const Topbar = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              {(quickStats.newMessages > 0 || quickStats.lowStock > 0) && (
+              {((quickStats.newMessages && quickStats.newMessages > 0) || (quickStats.lowStock && quickStats.lowStock > 0)) && (
                 <Badge
                   variant="destructive"
                   size="sm"
                   className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                 >
-                  {quickStats.newMessages + quickStats.lowStock}
+                  {(quickStats.newMessages || 0) + (quickStats.lowStock || 0)}
                 </Badge>
               )}
               <span className="sr-only">الإشعارات</span>
@@ -205,7 +211,7 @@ const Topbar = () => {
             <DropdownMenuSeparator />
 
             {/* إشعارات هامة */}
-            {quickStats.newMessages > 0 && (
+            {quickStats.newMessages && quickStats.newMessages > 0 && (
               <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
@@ -222,7 +228,7 @@ const Topbar = () => {
               </DropdownMenuItem>
             )}
 
-            {quickStats.lowStock > 0 && (
+            {quickStats.lowStock && quickStats.lowStock > 0 && (
               <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
@@ -349,4 +355,5 @@ const Topbar = () => {
   );
 };
 
-export default Topbar;
+// Memoize component for performance
+export default memo(Topbar);

@@ -3,6 +3,7 @@
 
 const db = require('../db');
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
+const SettingsIntegration = require('../utils/settingsIntegration');
 
 /**
  * Get all inventory items with filters, search, and pagination
