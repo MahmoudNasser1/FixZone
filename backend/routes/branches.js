@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
+const branchesFinancialService = require('../services/financial/branches.service');
 
 // Get all branches
 router.get('/', async (req, res) => {
@@ -74,6 +76,78 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error deleting branch with ID ${id}:`, err);
     res.status(500).send('Server Error');
+  }
+});
+
+// Branch Financial APIs
+// GET /api/branches/:id/financial-summary
+router.get('/:id/financial-summary', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const summary = await branchesFinancialService.getFinancialSummary(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error('Error getting branch financial summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting branch financial summary',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/branches/:id/invoices
+router.get('/:id/invoices', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      status: req.query.status,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const invoices = await branchesFinancialService.getInvoices(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: invoices
+    });
+  } catch (error) {
+    console.error('Error getting branch invoices:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting branch invoices',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/branches/:id/expenses
+router.get('/:id/expenses', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      categoryId: req.query.categoryId,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const expenses = await branchesFinancialService.getExpenses(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: expenses
+    });
+  } catch (error) {
+    console.error('Error getting branch expenses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting branch expenses',
+      error: error.message
+    });
   }
 });
 

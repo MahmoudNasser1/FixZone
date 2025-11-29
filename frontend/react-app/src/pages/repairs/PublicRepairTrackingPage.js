@@ -23,7 +23,8 @@ import {
   Laptop,
   Tablet,
   Building2,
-  Shield
+  Shield,
+  ShoppingCart
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -77,6 +78,18 @@ const PublicRepairTrackingPage = () => {
       color: 'bg-orange-100 text-orange-800',
       icon: Wrench,
       description: 'يتم إصلاح الجهاز حالياً'
+    },
+    'WAITING_PARTS': {
+      label: 'بانتظار قطع غيار',
+      color: 'bg-orange-100 text-orange-800',
+      icon: ShoppingCart,
+      description: 'في انتظار وصول قطع الغيار'
+    },
+    'READY_FOR_PICKUP': {
+      label: 'جاهز للاستلام',
+      color: 'bg-green-100 text-green-800',
+      icon: Package,
+      description: 'انتهى الإصلاح والجهاز جاهز للاستلام'
     },
     'READY_FOR_DELIVERY': {
       label: 'جاهز للتسليم',

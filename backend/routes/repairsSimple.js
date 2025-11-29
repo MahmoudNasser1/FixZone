@@ -89,12 +89,12 @@ router.get('/', cacheMiddleware(180), async (req, res) => { // Cache for 3 minut
 // Get repair by tracking number (for public tracking page) - MUST BE BEFORE /:id
 router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for 5 minutes
   try {
-    const { trackingToken, requestNumber } = req.query;
+    const { trackingToken, id } = req.query;
     
-    if (!trackingToken && !requestNumber) {
+    if (!trackingToken && !id) {
       return res.status(400).json({
         success: false,
-        error: 'Tracking token or request number is required'
+        error: 'Tracking token or ID is required'
       });
     }
     
@@ -119,13 +119,17 @@ router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for
     if (trackingToken) {
       query += ' AND rr.trackingToken = ?';
       params.push(trackingToken);
-    } else {
-      // البحث بالرقم المولد في Frontend - الصيغة الصحيحة
+    } else if (id) {
+      // البحث مباشرة بالـ ID
       query += ' AND rr.id = ?';
-      // استخراج ID من رقم الطلب REP-20251020-022
-      const idFromRequestNumber = parseInt(requestNumber.split('-')[2]);
-      console.log('Tracking requestNumber:', requestNumber, 'parsed ID:', idFromRequestNumber);
-      params.push(idFromRequestNumber);
+      const repairId = parseInt(id, 10);
+      if (isNaN(repairId) || repairId <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid ID format'
+        });
+      }
+      params.push(repairId);
     }
     
     console.log('Final query:', query);

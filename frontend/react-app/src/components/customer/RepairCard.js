@@ -8,7 +8,9 @@ import {
     XCircle,
     AlertCircle,
     Calendar,
-    User
+    User,
+    ShoppingCart,
+    Package
 } from 'lucide-react';
 
 /**
@@ -37,6 +39,18 @@ export default function RepairCard({ repair, onClick }) {
                 variant: 'info',
                 icon: Wrench,
                 color: '#3B82F6'
+            },
+            'waiting-parts': {
+                label: 'بانتظار قطع غيار',
+                variant: 'warning',
+                icon: ShoppingCart,
+                color: '#F97316'
+            },
+            'ready-for-pickup': {
+                label: 'جاهز للاستلام',
+                variant: 'success',
+                icon: Package,
+                color: '#10B981'
             },
             completed: {
                 label: 'مكتمل',

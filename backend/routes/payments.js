@@ -10,10 +10,7 @@ router.use(authMiddleware);
 // Get all payments with detailed information (must be before /stats/summary and /:id)
 router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) => {
   try {
-    // DEBUG: Log request info
-    console.log('🔍 [DEBUG] GET /payments called');
-    console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
-    console.log('🔍 [DEBUG] req.query:', req.query);
+    // Request received
     
     const { page = 1, limit = 10, dateFrom, dateTo, paymentMethod, customerId, invoiceId } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
@@ -124,8 +121,7 @@ router.get('/', validate(paymentSchemas.getPayments, 'query'), async (req, res) 
     // CRITICAL: Ensure these are integers before pushing to queryParams
     queryParams.push(finalLimit, finalOffset);
     
-    // DEBUG: Log query params
-    console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
+    // Query params prepared
     
     // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
     // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode

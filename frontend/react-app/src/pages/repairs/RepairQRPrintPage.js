@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import apiService from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
+import { getFrontendBaseUrl } from '../../lib/apiConfig';
 
 // صفحة طباعة QR لطلب الإصلاح
 export default function RepairQRPrintPage() {
@@ -39,7 +40,8 @@ export default function RepairQRPrintPage() {
     load();
   }, [id]);
 
-  const qrTarget = `${window.location.origin}/repairs/${id}`;
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const qrTarget = `${frontendBaseUrl}/repairs/${id}`;
   const qrData = encodeURIComponent(qrTarget);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${qrData}`;
 

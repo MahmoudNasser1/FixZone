@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  // Safety check for environment
+  // Safety check for environment - exit early if not in browser
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return;
   }
@@ -10,25 +10,40 @@
   const RETRY_DELAYS = [500, 1000, 2000];
   let retryAttempts = 0;
   let scheduledId = null;
+  let isInitialized = false;
 
-  // Safe event listener attachment
+  // Safe event listener attachment with null checks
   const safeAddListener = (element, event, handler) => {
-    if (element && typeof element.addEventListener === 'function') {
-      try {
-        element.addEventListener(event, handler);
-        return true;
-      } catch (e) {
-        console.warn('ShareModal: Failed to add listener', e);
+    try {
+      if (!element || typeof element !== 'object') {
+        return false;
       }
+      if (typeof element.addEventListener !== 'function') {
+        return false;
+      }
+      element.addEventListener(event, handler);
+      return true;
+    } catch (e) {
+      // Silently fail - don't log warnings in production
+      return false;
     }
-    return false;
   };
 
   // Main initialization function
   const initShareModal = () => {
+    // Prevent multiple initializations
+    if (isInitialized) {
+      return true;
+    }
+
     try {
-      // Extra safety check
+      // Extra safety checks
       if (typeof document === 'undefined' || !document.getElementById) {
+        return false;
+      }
+
+      // Check if document.body is ready
+      if (!document.body) {
         return false;
       }
 
@@ -37,6 +52,11 @@
 
       // If elements don't exist, we can't do anything - silently fail
       if (!shareButton || !shareModal) {
+        return false;
+      }
+
+      // Double check that elements are actually DOM elements
+      if (!(shareButton instanceof Element) || !(shareModal instanceof Element)) {
         return false;
       }
 
@@ -63,12 +83,12 @@
         }
       };
 
-      // Attach listeners - only if elements exist
-      if (shareButton) {
+      // Attach listeners - only if elements exist and are valid
+      if (shareButton && shareButton instanceof Element) {
         safeAddListener(shareButton, 'click', openModal);
       }
       
-      if (shareModal) {
+      if (shareModal && shareModal instanceof Element) {
         safeAddListener(shareModal, 'click', backdropClick);
         
         // Close button inside modal
@@ -76,58 +96,106 @@
           const closeButtons = shareModal.querySelectorAll('.close, [data-close-modal]');
           if (closeButtons && closeButtons.length > 0) {
             Array.from(closeButtons).forEach(btn => {
-              if (btn) {
+              if (btn && btn instanceof Element) {
                 safeAddListener(btn, 'click', closeModal);
               }
             });
           }
         } catch (queryError) {
-          console.warn('ShareModal: Error querying close buttons', queryError);
+          // Silently fail - don't log in production
+          return false;
         }
       }
 
+      isInitialized = true;
       return true;
     } catch (error) {
-      console.warn('ShareModal: Error during init', error);
+      // Silently fail - don't log errors in production
       return false;
     }
   };
 
-  // Retry logic
+  // Retry logic with max attempts
+  const MAX_RETRIES = 3;
   const attemptInit = () => {
+    // Check if elements exist before trying
+    if (typeof document === 'undefined' || !document.body) {
+      if (retryAttempts < MAX_RETRIES) {
+        scheduledId = setTimeout(() => {
+          retryAttempts++;
+          attemptInit();
+        }, RETRY_DELAYS[Math.min(retryAttempts, RETRY_DELAYS.length - 1)]);
+      }
+      return;
+    }
+
+    const shareButton = document.getElementById('share-button');
+    const shareModal = document.getElementById('share-modal');
+    
+    // If elements don't exist, don't retry - they may not be on this page
+    if (!shareButton || !shareModal) {
+      return; // Silently exit - elements not on this page
+    }
+
     if (initShareModal()) {
       return; // Success
     }
 
-    if (retryAttempts < RETRY_DELAYS.length) {
+    if (retryAttempts < MAX_RETRIES) {
       scheduledId = setTimeout(() => {
         retryAttempts++;
         attemptInit();
-      }, RETRY_DELAYS[retryAttempts]);
+      }, RETRY_DELAYS[Math.min(retryAttempts, RETRY_DELAYS.length - 1)]);
     }
   };
 
   // Start when DOM is ready - with extra safety checks
-  if (typeof document !== 'undefined') {
+  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     try {
-      if (document.readyState === 'loading') {
-        if (typeof document.addEventListener === 'function') {
-          document.addEventListener('DOMContentLoaded', attemptInit);
+      // Wait for DOM to be fully ready
+      const initializeWhenReady = () => {
+        // Double check document.body exists
+        if (!document.body) {
+          // If body doesn't exist yet, wait a bit more (max 10 retries = 5 seconds)
+          if (retryAttempts < 10) {
+            setTimeout(initializeWhenReady, 50);
+          }
+          return;
         }
-      } else {
+        
+        // Check if elements exist before trying to initialize
+        const shareButton = document.getElementById('share-button');
+        const shareModal = document.getElementById('share-modal');
+        
+        // If elements don't exist, don't try to initialize
+        if (!shareButton || !shareModal) {
+          return; // Silently exit - elements may not be on this page
+        }
+        
+        attemptInit();
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeWhenReady);
+      } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
         // DOM is already ready, but wait a bit to ensure elements are rendered
-        setTimeout(attemptInit, 100);
+        setTimeout(initializeWhenReady, 200);
+      } else {
+        // Fallback: wait a bit then try
+        setTimeout(initializeWhenReady, 300);
       }
     } catch (e) {
-      console.warn('ShareModal: Error setting up initialization', e);
+      // Silently fail - don't log in production
     }
   }
 
   // Cleanup on unload (optional, but good practice)
-  if (typeof window !== 'undefined' && window.addEventListener) {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     try {
       window.addEventListener('beforeunload', () => {
-        if (scheduledId) clearTimeout(scheduledId);
+        if (scheduledId) {
+          clearTimeout(scheduledId);
+        }
       });
     } catch (e) {
       // Ignore errors during cleanup

@@ -56,6 +56,8 @@ const RepairsPageEnhanced = () => {
     { value: '', label: 'جميع الحالات' },
     { value: 'pending', label: 'في الانتظار' },
     { value: 'in_progress', label: 'قيد التنفيذ' },
+    { value: 'waiting-parts', label: 'بانتظار قطع غيار' },
+    { value: 'ready-for-pickup', label: 'جاهز للاستلام' },
     { value: 'completed', label: 'مكتمل' },
     { value: 'delivered', label: 'تم التسليم' },
     { value: 'cancelled', label: 'ملغي' }
@@ -103,6 +105,8 @@ const RepairsPageEnhanced = () => {
         const statusColors = {
           pending: 'bg-yellow-100 text-yellow-800',
           in_progress: 'bg-blue-100 text-blue-800',
+          'waiting-parts': 'bg-orange-100 text-orange-800',
+          'ready-for-pickup': 'bg-green-100 text-green-800',
           completed: 'bg-green-100 text-green-800',
           delivered: 'bg-purple-100 text-purple-800',
           cancelled: 'bg-red-100 text-red-800',

@@ -26,7 +26,8 @@
 ```
 ├── STRATEGIC_ROADMAP.md              🗺️ الخارطة الكاملة (24 أسبوع)
 ├── ROADMAP_EXECUTIVE_SUMMARY.md      📊 الملخص التنفيذي (للمدراء)
-└── ROADMAP_VISUAL.md                 🎨 الخارطة المرئية (Quick Guide)
+├── ROADMAP_VISUAL.md                 🎨 الخارطة المرئية (Quick Guide)
+└── ROADMAP_UPDATE_2025-11-28.md       📅 آخر تحديث (28 نوفمبر 2025)
 ```
 
 ### **الوصف:**
@@ -41,7 +42,8 @@
 ### **البدء:**
 👉 [STRATEGIC_ROADMAP.md](./STRATEGIC_ROADMAP.md) - الخارطة الكاملة  
 👉 [ROADMAP_EXECUTIVE_SUMMARY.md](./ROADMAP_EXECUTIVE_SUMMARY.md) - الملخص التنفيذي  
-👉 [ROADMAP_VISUAL.md](./ROADMAP_VISUAL.md) - الخارطة المرئية
+👉 [ROADMAP_VISUAL.md](./ROADMAP_VISUAL.md) - الخارطة المرئية  
+👉 [ROADMAP_UPDATE_2025-11-28.md](./ROADMAP_UPDATE_2025-11-28.md) - آخر تحديث ⭐
 
 ---
 

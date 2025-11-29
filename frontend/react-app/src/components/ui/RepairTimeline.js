@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Clock, CheckCircle, Play, Pause, XCircle, 
-  AlertTriangle, Calendar, User 
+  AlertTriangle, Calendar, User, ShoppingCart, Package
 } from 'lucide-react';
 import SimpleBadge from './SimpleBadge';
 
@@ -21,6 +21,20 @@ const RepairTimeline = ({ repair, compact = false }) => {
         bgColor: 'bg-blue-100',
         text: 'قيد التنفيذ',
         description: 'جاري العمل على إصلاح الجهاز'
+      },
+      'waiting-parts': {
+        icon: ShoppingCart,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-100',
+        text: 'بانتظار قطع غيار',
+        description: 'في انتظار وصول قطع الغيار'
+      },
+      'ready-for-pickup': {
+        icon: Package,
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+        text: 'جاهز للاستلام',
+        description: 'انتهى الإصلاح والجهاز جاهز للاستلام'
       },
       'on-hold': {
         icon: Pause,
@@ -72,18 +86,20 @@ const RepairTimeline = ({ repair, compact = false }) => {
 
   const calculateProgress = (status) => {
     const progressMap = {
-      pending: 25,
-      'in-progress': 60,
-      'on-hold': 40,
+      pending: 20,
+      'in-progress': 50,
+      'waiting-parts': 40,
+      'ready-for-pickup': 90,
+      'on-hold': 30,
       completed: 100,
       cancelled: 0
     };
     
-    return progressMap[status] || 25;
+    return progressMap[status] || 20;
   };
 
   const estimateTimeRemaining = (status, createdAt) => {
-    if (status === 'completed' || status === 'cancelled') return null;
+    if (status === 'completed' || status === 'cancelled' || status === 'ready-for-pickup') return null;
     
     const created = new Date(createdAt);
     const now = new Date();
@@ -93,6 +109,7 @@ const RepairTimeline = ({ repair, compact = false }) => {
     const estimatedTotalDays = {
       pending: 1,
       'in-progress': 3,
+      'waiting-parts': 5,
       'on-hold': 5
     };
     
@@ -124,6 +141,8 @@ const RepairTimeline = ({ repair, compact = false }) => {
               className={`h-2 rounded-full transition-all duration-300 ${
                 repair.status === 'completed' ? 'bg-green-500' :
                 repair.status === 'cancelled' ? 'bg-red-500' :
+                repair.status === 'ready-for-pickup' ? 'bg-green-500' :
+                repair.status === 'waiting-parts' ? 'bg-orange-500' :
                 repair.status === 'in-progress' ? 'bg-blue-500' : 'bg-yellow-500'
               }`}
               style={{ width: `${progress}%` }}
@@ -172,6 +191,8 @@ const RepairTimeline = ({ repair, compact = false }) => {
             className={`h-3 rounded-full transition-all duration-500 ${
               repair.status === 'completed' ? 'bg-green-500' :
               repair.status === 'cancelled' ? 'bg-red-500' :
+              repair.status === 'ready-for-pickup' ? 'bg-green-500' :
+              repair.status === 'waiting-parts' ? 'bg-orange-500' :
               repair.status === 'in-progress' ? 'bg-blue-500' : 'bg-yellow-500'
             }`}
             style={{ width: `${progress}%` }}

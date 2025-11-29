@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
     const mappedSortBy = sortByMapping[String(sortBy)] || String(sortBy);
     const safeSortBy = allowedSortBy.has(mappedSortBy) ? mappedSortBy : 'id';
     
-    console.log('Debug - sortBy:', sortBy, 'mappedSortBy:', mappedSortBy, 'safeSortBy:', safeSortBy);
+    // SortBy mapped: sortBy -> mappedSortBy -> safeSortBy
     const safeSortDir = String(sortDir).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
     // Handle both pagination formats: page/pageSize and limit/offset

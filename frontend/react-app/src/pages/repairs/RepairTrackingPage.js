@@ -24,7 +24,8 @@ import {
   Smartphone,
   Monitor,
   Laptop,
-  Tablet
+  Tablet,
+  ShoppingCart
 } from 'lucide-react';
 import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -41,10 +42,10 @@ const RepairTrackingPage = () => {
 
   // State management
   const [trackingCode, setTrackingCode] = useState('');
-  const [requestNumber, setRequestNumber] = useState('');
+  const [repairId, setRepairId] = useState('');
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState('requestNumber'); // 'trackingToken' or 'requestNumber'
+  const [searchType, setSearchType] = useState('id'); // 'trackingToken' or 'id'
 
   // Repair status configuration
   const statusConfig = {
@@ -77,6 +78,18 @@ const RepairTrackingPage = () => {
       color: 'bg-orange-100 text-orange-800',
       icon: Wrench,
       description: 'يتم إصلاح الجهاز حالياً'
+    },
+    'WAITING_PARTS': {
+      label: 'بانتظار قطع غيار',
+      color: 'bg-orange-100 text-orange-800',
+      icon: ShoppingCart,
+      description: 'في انتظار وصول قطع الغيار'
+    },
+    'READY_FOR_PICKUP': {
+      label: 'جاهز للاستلام',
+      color: 'bg-green-100 text-green-800',
+      icon: Package,
+      description: 'انتهى الإصلاح والجهاز جاهز للاستلام'
     },
     'READY_FOR_DELIVERY': {
       label: 'جاهز للتسليم',
@@ -144,7 +157,7 @@ const RepairTrackingPage = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     
-    if (!trackingCode && !requestNumber) {
+    if (!trackingCode && !repairId) {
       notify('warning', 'يرجى إدخال رمز التتبع أو رقم الطلب');
       return;
     }
@@ -155,8 +168,8 @@ const RepairTrackingPage = () => {
       const params = new URLSearchParams();
       if (searchType === 'trackingToken' && trackingCode) {
         params.append('trackingToken', trackingCode);
-      } else if (searchType === 'requestNumber' && requestNumber) {
-        params.append('requestNumber', requestNumber);
+      } else if (searchType === 'id' && repairId) {
+        params.append('id', repairId);
       }
 
       const data = await apiService.request(`/repairs/tracking?${params.toString()}`);
@@ -175,7 +188,7 @@ const RepairTrackingPage = () => {
   // Clear search
   const handleClear = () => {
     setTrackingCode('');
-    setRequestNumber('');
+    setRepairId('');
     setRepairData(null);
   };
 
@@ -208,7 +221,7 @@ const RepairTrackingPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">تتبع طلب الإصلاح</h1>
-            <p className="text-gray-600">ابحث عن طلب الإصلاح باستخدام رمز التتبع أو رقم الطلب</p>
+            <p className="text-gray-600">ابحث عن طلب الإصلاح باستخدام رمز التتبع أو رقم الطلب (ID)</p>
           </div>
           <div className="flex items-center space-x-2 space-x-reverse">
             <SimpleButton
@@ -248,12 +261,12 @@ const RepairTrackingPage = () => {
               <input
                 type="radio"
                 name="searchType"
-                value="requestNumber"
-                checked={searchType === 'requestNumber'}
+                value="id"
+                checked={searchType === 'id'}
                 onChange={(e) => setSearchType(e.target.value)}
                 className="w-4 h-4 text-blue-600"
               />
-              <span className="mr-2 text-sm font-medium text-gray-700">رقم الطلب</span>
+              <span className="mr-2 text-sm font-medium text-gray-700">رقم الطلب (ID)</span>
             </label>
           </div>
 
@@ -270,17 +283,18 @@ const RepairTrackingPage = () => {
                 />
               ) : (
                 <Input
-                  type="text"
-                  placeholder="أدخل رقم الطلب (مثال: REP-20251002-001)"
-                  value={requestNumber}
-                  onChange={(e) => setRequestNumber(e.target.value)}
+                  type="number"
+                  placeholder="أدخل رقم الطلب (ID) - مثال: 1"
+                  value={repairId}
+                  onChange={(e) => setRepairId(e.target.value)}
                   className="w-full"
+                  min="1"
                 />
               )}
             </div>
             <SimpleButton
               type="submit"
-              disabled={loading || (!trackingCode && !requestNumber)}
+              disabled={loading || (!trackingCode && !repairId)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? (

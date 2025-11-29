@@ -37,8 +37,13 @@ export const useSettings = () => {
       }
     } catch (err) {
       const errorMessage = err.message || 'Failed to load settings';
-      setError(errorMessage);
-      notifications.error('خطأ', { message: errorMessage });
+      // Don't show error for 401 (unauthorized) - user is not logged in yet
+      const isUnauthorized = errorMessage.includes('401') || errorMessage.includes('authorization denied') || errorMessage.includes('No token');
+      
+      if (!isUnauthorized) {
+        setError(errorMessage);
+        notifications.error('خطأ', { message: errorMessage });
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -76,8 +81,13 @@ export const useSettings = () => {
       }
     } catch (err) {
       const errorMessage = err.message || 'Failed to load settings';
-      setError(errorMessage);
-      notifications.error('خطأ', { message: errorMessage });
+      // Don't show error for 401 (unauthorized) - user is not logged in yet
+      const isUnauthorized = errorMessage.includes('401') || errorMessage.includes('authorization denied') || errorMessage.includes('No token');
+      
+      if (!isUnauthorized) {
+        setError(errorMessage);
+        notifications.error('خطأ', { message: errorMessage });
+      }
       throw err;
     } finally {
       setLoading(false);

@@ -45,7 +45,7 @@ router.use(cookieParser());
 // إضافة middleware للتشخيص
 router.use((req, res, next) => {
   if (req.url.includes('/repairs') && req.method === 'POST') {
-    console.log('=== REPAIR REQUEST DEBUG ===');
+    // Repair request received
     console.log('URL:', req.url);
     console.log('Method:', req.method);
     console.log('Content-Type:', req.headers['content-type']);
@@ -87,6 +87,11 @@ const invoiceItemsRouter = require('./routes/invoiceItems');
 const paymentsRouter = require('./routes/payments');
 const expenseCategoriesRouter = require('./routes/expenseCategories');
 const expensesRouter = require('./routes/expenses');
+
+// New Financial Module Routes (using new Controllers/Services/Repositories)
+const financialExpensesRouter = require('./routes/financial/expenses.routes');
+const financialPaymentsRouter = require('./routes/financial/payments.routes');
+const financialInvoicesRouter = require('./routes/financial/invoices.routes');
 const servicesRouter = require('./routes/servicesSimple');
 const serviceCategoriesRouter = require('./routes/serviceCategories');
 const servicePricingRulesRouter = require('./routes/servicePricingRules');
@@ -165,6 +170,12 @@ router.use('/invoiceitems', invoiceItemsRouter);
 router.use('/payments', paymentsRouter);
 router.use('/expensecategories', expenseCategoriesRouter);
 router.use('/expenses', expensesRouter);
+
+// New Financial Module Routes (v2 - using new architecture)
+router.use('/financial/expenses', financialExpensesRouter);
+router.use('/financial/payments', financialPaymentsRouter);
+router.use('/financial/invoices', financialInvoicesRouter);
+
 router.use('/services', servicesRouter);
 router.use('/servicecategories', serviceCategoriesRouter);
 router.use('/servicepricingrules', servicePricingRulesRouter);

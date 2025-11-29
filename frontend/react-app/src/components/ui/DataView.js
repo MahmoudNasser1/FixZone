@@ -641,7 +641,34 @@ const DataView = ({
     }
 
     if (data.length === 0) {
-      return emptyState || (
+      // Handle emptyState as object with title, description, action
+      if (emptyState && typeof emptyState === 'object' && !React.isValidElement(emptyState)) {
+        return (
+          <div className="text-center py-12">
+            {emptyState.title && (
+              <div className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {emptyState.title}
+              </div>
+            )}
+            {emptyState.description && (
+              <div className="text-gray-500 dark:text-gray-400 mb-4">
+                {emptyState.description}
+              </div>
+            )}
+            {emptyState.action && (
+              <div className="mt-4">
+                {emptyState.action}
+              </div>
+            )}
+          </div>
+        );
+      }
+      // Handle emptyState as React element
+      if (emptyState && React.isValidElement(emptyState)) {
+        return emptyState;
+      }
+      // Default empty state
+      return (
         <div className="text-center py-12">
           <div className="text-gray-500 dark:text-gray-400">لا توجد بيانات للعرض</div>
         </div>

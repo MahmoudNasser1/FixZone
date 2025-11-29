@@ -1603,7 +1603,7 @@ const repairSchemas = {
         'string.max': 'نص البحث يجب ألا يزيد عن 200 حرف'
       }),
     searchField: Joi.string().valid('nameOrPhone', 'customerName', 'customerPhone', 'requestNumber', 'problemDescription', 'deviceType', 'deviceBrand', 'deviceModel', 'all').optional(),
-    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow('', null).optional(),
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'waiting-parts', 'waiting_parts', 'ready-for-pickup', 'ready_for_pickup', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD').allow('', null).optional(),
     customerId: Joi.number().integer().positive().optional()
       .messages({
         'number.positive': 'معرف العميل غير صحيح',
@@ -1768,7 +1768,7 @@ const repairSchemas = {
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
       }),
 
-    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').allow(null).optional(),
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'waiting-parts', 'waiting_parts', 'ready-for-pickup', 'ready_for_pickup', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD').allow(null).optional(),
 
     customerNotes: Joi.string().max(2000).allow('', null).optional()
       .messages({
@@ -1795,7 +1795,7 @@ const repairSchemas = {
         'string.max': 'تقرير الفني يجب ألا يزيد عن 5000 حرف'
       }),
 
-    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').optional(),
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'waiting-parts', 'waiting_parts', 'ready-for-pickup', 'ready_for_pickup', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD').optional(),
 
     customerId: Joi.number().integer().positive().optional()
       .messages({
@@ -1836,7 +1836,7 @@ const repairSchemas = {
 
   // Update repair status
   updateStatus: Joi.object({
-    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS').required()
+    status: Joi.string().valid('pending', 'in-progress', 'in_progress', 'on-hold', 'on_hold', 'waiting-parts', 'waiting_parts', 'ready-for-pickup', 'ready_for_pickup', 'completed', 'cancelled', 'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD').required()
       .messages({
         'any.only': 'الحالة غير صحيحة',
         'any.required': 'الحالة مطلوبة'

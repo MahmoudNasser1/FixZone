@@ -7,10 +7,7 @@ class InvoicesControllerSimple {
   // Get all invoices with improved pagination and filters
   async getAllInvoices(req, res) {
     try {
-      // DEBUG: Log request info
-      console.log('🔍 [DEBUG] getAllInvoices called');
-      console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
-      console.log('🔍 [DEBUG] req.query:', req.query);
+      // Request received
 
       const {
         repairRequestId,
@@ -110,8 +107,7 @@ class InvoicesControllerSimple {
       // CRITICAL: Ensure these are integers before pushing to queryParams
       queryParams.push(finalLimit, finalOffset);
       
-      // DEBUG: Log query params before execution
-      console.log('🔍 [DEBUG] Query params:', queryParams.map((p, i) => `[${i}]: ${p} (${typeof p})`));
+      // Query params prepared
 
       // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
       // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
@@ -529,9 +525,24 @@ class InvoicesControllerSimple {
   async getInvoiceItems(req, res) {
     try {
       const { id } = req.params;
-      const [items] = await db.execute(`
-        SELECT * FROM InvoiceItem WHERE invoiceId = ?
-      `, [id]);
+      
+      // Check if deletedAt column exists
+      const [columnCheck] = await db.execute(`
+        SELECT COUNT(*) as exists 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'InvoiceItem' 
+        AND COLUMN_NAME = 'deletedAt'
+      `);
+
+      const hasSoftDelete = columnCheck[0].exists > 0;
+      
+      // Build query based on whether soft delete exists
+      const query = hasSoftDelete
+        ? `SELECT * FROM InvoiceItem WHERE invoiceId = ? AND (deletedAt IS NULL OR deletedAt IS NULL)`
+        : `SELECT * FROM InvoiceItem WHERE invoiceId = ?`;
+      
+      const [items] = await db.execute(query, [id]);
       res.json({ success: true, data: items });
     } catch (error) {
       console.error('Error fetching invoice items:', error);
@@ -702,16 +713,41 @@ class InvoicesControllerSimple {
     try {
       const { id, itemId } = req.params;
 
-      await db.execute(`
-        DELETE FROM InvoiceItem WHERE id = ? AND invoiceId = ?
-      `, [itemId, id]);
+      // Check if deletedAt column exists
+      const [columnCheck] = await db.execute(`
+        SELECT COUNT(*) as exists 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'InvoiceItem' 
+        AND COLUMN_NAME = 'deletedAt'
+      `);
 
-      // Recalculate and update invoice total
-      const [totalResult] = await db.execute(`
-        SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
-        FROM InvoiceItem WHERE invoiceId = ?
-      `, [id]);
+      const hasSoftDelete = columnCheck[0].exists > 0;
 
+      if (hasSoftDelete) {
+        // Use soft delete
+        await db.execute(`
+          UPDATE InvoiceItem 
+          SET deletedAt = NOW(), updatedAt = NOW() 
+          WHERE id = ? AND invoiceId = ?
+        `, [itemId, id]);
+      } else {
+        // Use hard delete (fallback for old schema)
+        await db.execute(`
+          DELETE FROM InvoiceItem WHERE id = ? AND invoiceId = ?
+        `, [itemId, id]);
+      }
+
+      // Recalculate and update invoice total (exclude soft-deleted items)
+      const totalQuery = hasSoftDelete
+        ? `SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+           FROM InvoiceItem 
+           WHERE invoiceId = ? AND (deletedAt IS NULL OR deletedAt IS NULL)`
+        : `SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+           FROM InvoiceItem 
+           WHERE invoiceId = ?`;
+
+      const [totalResult] = await db.execute(totalQuery, [id]);
       const newTotal = Number(totalResult[0].calculatedTotal);
 
       await db.execute(`

@@ -137,10 +137,7 @@ exports.getDashboardStats = async (req, res) => {
 // Recent repairs for dashboard
 exports.getRecentRepairs = async (req, res) => {
     try {
-        // DEBUG: Log request info
-        console.log('🔍 [DEBUG] getRecentRepairs called');
-        console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
-        console.log('🔍 [DEBUG] req.query:', req.query);
+        // Request received
         
         const limitValue = parseInt(req.query.limit, 10) || 10;
         // CRITICAL: Use parseInt() explicitly to ensure integer for MariaDB strict mode
@@ -158,7 +155,7 @@ exports.getRecentRepairs = async (req, res) => {
         
         // CRITICAL: Ensure safeLimit is an integer, not a string or float
         const safeLimit = parseInt(finalLimit, 10);
-        console.log('🔍 [DEBUG] Executing query with limit:', safeLimit, 'type:', typeof safeLimit);
+        // Executing query with limit: safeLimit
         
         // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
         // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
@@ -347,10 +344,7 @@ exports.getQuickStats = async (req, res) => {
 // Get customer statistics for customer dashboard
 exports.getCustomerStats = async (req, res) => {
     try {
-        // DEBUG: Log request info
-        console.log('🔍 [DEBUG] getCustomerStats called');
-        console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role, customerId: req.user.customerId } : 'undefined');
-        console.log('🔍 [DEBUG] req.query:', req.query);
+        // Request received
         
         // Get customerId from JWT token or query parameter
         const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
@@ -377,7 +371,7 @@ exports.getCustomerStats = async (req, res) => {
             });
         }
         
-        console.log('🔍 [DEBUG] Using customerId:', safeCustomerId);
+        // Using customerId: safeCustomerId
 
         // Get repair statistics
         const [repairStats] = await db.execute(`

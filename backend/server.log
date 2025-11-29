@@ -3270,3 +3270,3245 @@ Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
   sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
 }
 ✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error fetching new messages: Error: Unknown column 'deletedAt' in 'where clause'
+    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at exports.getQuickStats (/opt/lampp/htdocs/FixZone/backend/controllers/dashboardController.js:290:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT COUNT(*) as count \n' +
+    '         FROM Notification \n' +
+    '         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'deletedAt' in 'where clause'"
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764380943317_zj66r9r9j (Total: 1)
+🔌 Client disconnected: client_1764381561083_i6dy87f6s (Total: 0)

@@ -16,7 +16,7 @@ import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
-  UserPlus, Trash2, Eye
+  UserPlus, Trash2, Eye, ShoppingCart, Package
 } from 'lucide-react';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
@@ -1521,7 +1521,9 @@ const RepairDetailsPage = () => {
     const statusMap = {
       pending: { text: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       'in-progress': { text: 'قيد الإصلاح', color: 'bg-blue-100 text-blue-800', icon: Play },
-      'on-hold': { text: 'معلق', color: 'bg-orange-100 text-orange-800', icon: AlertTriangle },
+      'waiting-parts': { text: 'بانتظار قطع غيار', color: 'bg-orange-100 text-orange-800', icon: ShoppingCart },
+      'ready-for-pickup': { text: 'جاهز للاستلام', color: 'bg-green-100 text-green-800', icon: Package },
+      'on-hold': { text: 'معلق', color: 'bg-gray-100 text-gray-800', icon: AlertTriangle },
       completed: { text: 'مكتمل', color: 'bg-green-100 text-green-800', icon: CheckCircle },
       cancelled: { text: 'ملغي', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
@@ -3061,6 +3063,8 @@ const RepairDetailsPage = () => {
                   >
                     <option value="pending">في الانتظار</option>
                     <option value="in-progress">قيد الإصلاح</option>
+                    <option value="waiting-parts">بانتظار قطع غيار</option>
+                    <option value="ready-for-pickup">جاهز للاستلام</option>
                     <option value="on-hold">معلق</option>
                     <option value="completed">مكتمل</option>
                     <option value="cancelled">ملغي</option>

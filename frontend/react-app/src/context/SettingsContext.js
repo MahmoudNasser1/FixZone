@@ -49,7 +49,11 @@ export function SettingsProvider({ children }) {
       loadAPISettings().catch((err) => {
         // Silently fail - don't spam console
         hasLoadedRef.current = false; // Allow retry on error
-        if (process.env.NODE_ENV === 'development') {
+        // Don't log 401 errors (user not logged in) - this is expected
+        const isUnauthorized = err?.message?.includes('401') || 
+                               err?.message?.includes('authorization denied') || 
+                               err?.message?.includes('No token');
+        if (!isUnauthorized && process.env.NODE_ENV === 'development') {
           console.warn('Failed to load API settings:', err.message);
         }
       });

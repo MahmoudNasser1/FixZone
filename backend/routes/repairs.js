@@ -107,29 +107,33 @@ function mapFrontendStatusToDb(frontStatus) {
     pending: 'RECEIVED',
     in_progress: 'UNDER_REPAIR',
     'in-progress': 'UNDER_REPAIR', // دعم الشرطة أيضاً
-    on_hold: 'WAITING_PARTS',
-    'on-hold': 'WAITING_PARTS', // دعم الشرطة أيضاً
+    waiting_parts: 'WAITING_PARTS',
+    'waiting-parts': 'WAITING_PARTS', // دعم الشرطة أيضاً
+    ready_for_pickup: 'READY_FOR_PICKUP',
+    'ready-for-pickup': 'READY_FOR_PICKUP', // دعم الشرطة أيضاً
+    on_hold: 'ON_HOLD',
+    'on-hold': 'ON_HOLD', // دعم الشرطة أيضاً - تم تصحيحه من WAITING_PARTS إلى ON_HOLD
     completed: 'DELIVERED',
     cancelled: 'REJECTED'
   };
   // إذا كانت القيمة بالفعل من قيم قاعدة البيانات، أعدها كما هي
   const dbValues = new Set([
-    'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'WAITING_PARTS'
+    'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD'
   ]);
   if (dbValues.has(frontStatus)) return frontStatus;
-  return map[s] || map[frontStatus] || 'RECEIVED';
+  const result = map[s] || map[frontStatus] || 'RECEIVED';
+  // Debug logging (يمكن إزالته لاحقاً)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[mapFrontendStatusToDb] Input: "${frontStatus}" -> Output: "${result}" (normalized: "${s}")`);
+  }
+  return result;
 }
 
 // Get all repair requests with statistics
 // Get all repair requests with improved pagination and filters
 router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), async (req, res) => {
   try {
-    // DEBUG: Log request info
-    console.log('🔍 [DEBUG] GET /repairs called');
-    console.log('🔍 [DEBUG] req.user:', req.user ? { id: req.user.id, role: req.user.role } : 'undefined');
-    console.log('🔍 [DEBUG] req.query:', req.query);
-
-    // Log incoming query for debugging (especially on production)
+    // Log incoming query for debugging (only in production for troubleshooting)
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Incoming query params:', JSON.stringify(req.query));
     }
@@ -204,7 +208,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       queryParams.push(priority.toUpperCase());
     }
     } else {
-      console.log('🔍 [SEARCH DEBUG] Search active - ignoring customerId, status, priority filters');
+      // Search active - ignoring customerId, status, priority filters
     }
 
     // Search filter - دعم البحث في جميع الحقول مع إمكانية تحديد نوع البحث
@@ -213,7 +217,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       const searchValue = searchTerm.trim();
       
       // Log للتصحيح
-      console.log('🔍 [SEARCH DEBUG] Search term:', searchTerm, '| searchField:', searchField);
+      // Search term: searchTerm, searchField: searchField
       
       // تحديد الحقول التي يجب البحث فيها حسب searchField
       if (searchField) {
@@ -235,10 +239,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
             // البحث في رقم الطلب - دعم البحث بالـ ID مباشرة أو بالرقم الكامل
             // إذا كان الرقم عبارة عن أرقام فقط، نبحث في ID مباشرة
             const isNumericSearch = /^\d+$/.test(searchValue);
-            console.log('🔍 [SEARCH DEBUG] requestNumber search - isNumeric:', isNumericSearch, 'searchValue:', searchValue);
+            // requestNumber search - isNumeric: isNumericSearch
             if (isNumericSearch) {
               const numericId = parseInt(searchValue, 10);
-              console.log('🔍 [SEARCH DEBUG] Searching for ID:', numericId);
+              // Searching for ID: numericId
               
               // البحث في ID مباشرة فقط - هذا هو الأكثر دقة
               // مثلاً: البحث عن "88" يجد فقط ID = 88 (وليس 188 أو 880)
@@ -246,12 +250,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
               whereConditions.push('rr.id = ?');
               queryParams.push(numericId);
               
-              console.log('🔍 [SEARCH DEBUG] Added exact ID search condition:', numericId);
+              // Added exact ID search condition
             } else {
               // إذا كان الرقم يحتوي على حروف (مثلاً: "REP-20241120-850")، نبحث في التنسيق الكامل
               whereConditions.push('CONCAT("REP-", YEAR(rr.createdAt), LPAD(MONTH(rr.createdAt), 2, "0"), LPAD(DAY(rr.createdAt), 2, "0"), "-", LPAD(rr.id, 3, "0")) LIKE ?');
               queryParams.push(searchPattern);
-              console.log('🔍 [SEARCH DEBUG] Added search condition for full format pattern:', searchPattern);
+              // Added search condition for full format pattern
             }
             break;
           case 'problemDescription':
@@ -392,25 +396,21 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     
     // Log للتصحيح
     if (searchTerm && searchTerm.trim()) {
-      console.log('🔍 [SEARCH DEBUG] Final query WHERE:', whereConditions.join(' AND '));
-      console.log('🔍 [SEARCH DEBUG] Query params (without limit/offset):', JSON.stringify(queryParams.slice(0, -2)));
-      console.log('🔍 [SEARCH DEBUG] Final limit:', finalLimit, 'offset:', finalOffset);
-      console.log('🔍 [SEARCH DEBUG] Full query:', query.replace(/\s+/g, ' ').trim());
+      // Query built with filters and search
     }
     
     const [rows] = await db.query(query, queryParams);
     
     // Log للتصحيح
     if (searchTerm && searchTerm.trim()) {
-      console.log('🔍 [SEARCH DEBUG] Found', rows.length, 'results for search term:', searchTerm, 'with searchField:', searchField);
+      // Found rows.length results
       if (rows.length > 0) {
-        console.log('🔍 [SEARCH DEBUG] Sample results (first 3):');
         rows.slice(0, 3).forEach((row, idx) => {
           const reqNum = `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`;
           console.log(`  [${idx + 1}] ID: ${row.id}, RequestNumber: ${reqNum}, Customer: ${row.customerName || 'N/A'}`);
         });
       } else {
-        console.log('🔍 [SEARCH DEBUG] No results found - check if the ID exists in database');
+        // No results found
       }
     }
 
@@ -670,10 +670,12 @@ function getStatusMapping(dbStatus) {
     'INSPECTION': 'pending',
     'AWAITING_APPROVAL': 'pending',
     'UNDER_REPAIR': 'in-progress',
+    'WAITING_PARTS': 'waiting-parts',
+    'READY_FOR_PICKUP': 'ready-for-pickup',
     'READY_FOR_DELIVERY': 'completed',
     'DELIVERED': 'completed',
     'REJECTED': 'cancelled',
-    'WAITING_PARTS': 'on-hold'
+    'ON_HOLD': 'on-hold'
   };
   return statusMap[dbStatus] || 'pending';
 }
@@ -1178,6 +1180,8 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
   const { id } = req.params;
   let { status, notes } = req.body || {};
 
+  console.log(`[UPDATE STATUS] Request for repair ${id}:`, { originalStatus: status, notes });
+
   // Get database connection for transaction
   const connection = await db.getConnection();
 
@@ -1186,7 +1190,17 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
     await connection.beginTransaction();
 
     // دعم التحويل من صيغة الواجهة إلى صيغة قاعدة البيانات
+    const originalStatus = status;
     status = mapFrontendStatusToDb(status);
+    console.log(`[UPDATE STATUS] Mapped status: "${originalStatus}" -> "${status}"`);
+    
+    // Validate that status is not null
+    if (!status) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({ success: false, error: 'Invalid status value', details: `Status "${originalStatus}" could not be mapped to a valid database status` });
+    }
+    
     const [beforeRows] = await connection.execute('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!beforeRows || beforeRows.length === 0) {
       await connection.rollback();
@@ -1194,6 +1208,7 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
     const fromStatus = beforeRows[0].status || null;
+    console.log(`[UPDATE STATUS] Updating from "${fromStatus}" to "${status}" for repair ${id}`);
     const [result] = await connection.execute('UPDATE RepairRequest SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [status, id]);
     if (result.affectedRows === 0) {
       await connection.rollback();
@@ -1201,9 +1216,11 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
     const changedById = (req.user && req.user.id) ? req.user.id : null;
+    // Ensure notes is null instead of undefined
+    const notesValue = (notes !== undefined && notes !== null) ? String(notes) : null;
     await connection.execute(
       'INSERT INTO StatusUpdateLog (repairRequestId, fromStatus, toStatus, notes, changedById) VALUES (?, ?, ?, ?, ?)',
-      [id, fromStatus, status, notes, changedById]
+      [id, fromStatus, status, notesValue, changedById]
     );
 
     // 🔧 Fix #2: Auto-create invoice when status changes to READY_FOR_DELIVERY or DELIVERED
@@ -1408,10 +1425,12 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       'INSPECTION': 'pending',
       'AWAITING_APPROVAL': 'pending',
       'UNDER_REPAIR': 'in-progress',
+      'WAITING_PARTS': 'waiting-parts',
+      'READY_FOR_PICKUP': 'ready-for-pickup',
       'READY_FOR_DELIVERY': 'completed',
       'DELIVERED': 'completed',
       'REJECTED': 'cancelled',
-      'WAITING_PARTS': 'on-hold'
+      'ON_HOLD': 'on-hold'
     };
 
     // 🔧 Fix #6: Include invoice information in response if auto-created
@@ -1442,8 +1461,19 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
       await connection.rollback();
       connection.release();
     }
-    console.error('Error updating status:', err);
-    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+    console.error('❌ Error updating repair status:', err);
+    console.error('❌ Error stack:', err.stack);
+    console.error('❌ Error code:', err.code);
+    console.error('❌ SQL Message:', err.sqlMessage);
+    console.error('❌ Status value:', status);
+    console.error('❌ Original status from request:', req.body.status);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Server Error', 
+      details: err.message,
+      sqlMessage: err.sqlMessage,
+      code: err.code
+    });
   }
 });
 
@@ -1872,8 +1902,11 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     const termsRendered = renderTemplate(settings.terms || '', termsVars)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
+    // استخدام FRONTEND_URL من متغيرات البيئة، أو REACT_APP_FRONTEND_URL، أو القيمة الافتراضية
+    const frontendUrl = process.env.FRONTEND_URL || process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000';
+    // تنظيف URL من الشرطة المائلة في النهاية
+    const cleanFrontendUrl = frontendUrl.replace(/\/+$/, '');
+    const trackUrl = `${cleanFrontendUrl}/track?trackingToken=${repair.trackingToken || repair.id}`;
 
     // Generate QR Code server-side
     let qrCodeDataUrl = '';
@@ -2545,10 +2578,12 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       'RECEIVED': 'تم الاستلام',
       'INSPECTION': 'قيد الفحص',
       'UNDER_REPAIR': 'قيد الإصلاح',
+      'WAITING_PARTS': 'بانتظار قطع غيار',
+      'READY_FOR_PICKUP': 'جاهز للاستلام',
       'READY_FOR_DELIVERY': 'جاهز للتسليم',
       'DELIVERED': 'تم التسليم',
       'REJECTED': 'مرفوض',
-      'WAITING_PARTS': 'في انتظار القطع'
+      'ON_HOLD': 'معلق'
     };
     const statusText = statusTextMap[repair.status] || repair.status;
 

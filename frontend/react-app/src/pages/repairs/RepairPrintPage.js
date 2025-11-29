@@ -57,6 +57,19 @@ export default function RepairPrintPage() {
     try { return new Date(d).toLocaleString('ar-SA'); } catch { return d || ''; }
   };
 
+  const getStatusText = (status) => {
+    const statusMap = {
+      'pending': 'في الانتظار',
+      'in-progress': 'قيد الإصلاح',
+      'waiting-parts': 'بانتظار قطع غيار',
+      'ready-for-pickup': 'جاهز للاستلام',
+      'on-hold': 'معلق',
+      'completed': 'مكتمل',
+      'cancelled': 'ملغي'
+    };
+    return statusMap[status] || status || 'غير محدد';
+  };
+
   if (loading) return <div style={{ padding: 24 }}>جاري التحضير للطباعة...</div>;
   if (error) return <div style={{ padding: 24, color: '#b91c1c' }}>{error}</div>;
 
@@ -139,11 +152,13 @@ export default function RepairPrintPage() {
               )}
               <div className="badges" style={{ marginTop: 6 }}>
                 <span className={`badge ${repair?.status === 'completed' ? 'badge-green' :
+                    repair?.status === 'ready-for-pickup' ? 'badge-green' :
+                    repair?.status === 'waiting-parts' ? 'badge-orange' :
                     repair?.status === 'in-progress' ? 'badge-blue' :
                       repair?.status === 'pending' ? 'badge-yellow' :
                         repair?.status === 'cancelled' ? 'badge-red' : ''
                   }`}>
-                  حالة: {repair?.status || 'غير محدد'}
+                  حالة: {getStatusText(repair?.status)}
                 </span>
               </div>
             </div>

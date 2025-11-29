@@ -59,7 +59,12 @@ const useAuthStore = create(
           const resetRequired = Boolean(userData.forcePasswordReset);
           set({ isAuthenticated: true, user: userData, token: null, forcePasswordReset: resetRequired });
           return true;
-        } catch (_e) {
+        } catch (error) {
+          // Silently fail if 401 (no token) - this is expected when user is not logged in
+          // Only log other errors
+          if (error.response?.status !== 401) {
+            console.error('Error restoring session:', error);
+          }
           set({ isAuthenticated: false, user: null, token: null });
           return false;
         }
@@ -91,5 +96,36 @@ axios.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor to suppress 401 errors in console
+// Note: Network tab will still show 401 errors (this is normal browser behavior)
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Suppress 401 errors from console (expected when user is not logged in)
+    if (error.response?.status === 401) {
+      // Check if it's an auth endpoint or settings endpoint
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/') || url.includes('/settings');
+      const isLoginPage = typeof window !== 'undefined' && 
+        (window.location.pathname === '/login' || 
+         window.location.pathname === '/customer/login');
+      
+      // Only suppress if it's auth/settings endpoint or we're on login page
+      if (isAuthEndpoint || isLoginPage) {
+        // Mark error as silent to prevent console logging
+        error.silent = true;
+        // Prevent axios from logging to console by overriding config
+        if (error.config) {
+          error.config.silent = true;
+        }
+        // Suppress the error - don't log to console
+        return Promise.reject(error);
+      }
+    }
+    // For other errors, let them through (they will be logged normally)
+    return Promise.reject(error);
+  }
+);
 
 export default useAuthStore;

@@ -4,6 +4,9 @@ import { getDefaultApiBaseUrl } from '../lib/apiConfig';
 // API Service للتعامل مع Backend APIs
 const API_BASE_URL = getDefaultApiBaseUrl();
 
+// Track if we're already redirecting to avoid multiple redirects
+let isRedirecting = false;
+
 class ApiService {
   // Helper method للطلبات
   async request(endpoint, options = {}) {
@@ -24,10 +27,52 @@ class ApiService {
     };
 
     try {
+      // Suppress 401 errors in console for auth/settings endpoints when not logged in
+      const isAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/settings');
+      const isLoginPage = typeof window !== 'undefined' && 
+        (window.location.pathname === '/login' || 
+         window.location.pathname === '/customer/login');
+      
       const response = await fetch(url, config);
 
       // Check if response is ok
       if (!response.ok) {
+        // Handle 401 Unauthorized - redirect to login if not already there
+        if (response.status === 401) {
+          // Skip redirect for auth endpoints to avoid infinite loops
+          const isAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/settings');
+          const isLoginPage = typeof window !== 'undefined' && 
+            (window.location.pathname === '/login' || 
+             window.location.pathname === '/customer/login');
+          
+          // For auth/settings endpoints on login page, silently fail (don't log to console)
+          if (isAuthEndpoint && isLoginPage) {
+            const error = new Error('No token, authorization denied');
+            error.silent = true; // Mark as silent to avoid console logging
+            throw error;
+          }
+          
+          if (!isAuthEndpoint && !isLoginPage && !isRedirecting) {
+            isRedirecting = true;
+            // Clear auth state using dynamic import to avoid circular dependency
+            import('../stores/authStore').then(({ default: useAuthStore }) => {
+              try {
+                useAuthStore.getState().logout();
+              } catch (e) {
+                // Ignore errors if store is not available
+              }
+            }).catch(() => {
+              // Ignore import errors
+            });
+            // Redirect to login after a short delay
+            setTimeout(() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+              }
+            }, 100);
+          }
+        }
+
         // Try to get error message from response
         let errorMessage = `HTTP error! status: ${response.status}`;
         let errorDetails = null;
@@ -56,14 +101,25 @@ class ApiService {
         if (errorDetails) {
           error.details = errorDetails;
         }
+        // Mark 401 errors from auth/settings endpoints as silent
+        if (response.status === 401 && isAuthEndpoint) {
+          error.silent = true;
+        }
         throw error;
       }
+
+      // Reset redirect flag on successful response
+      isRedirecting = false;
 
       // Parse JSON and return
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Only log errors that are not marked as silent
+      // Silent errors are typically 401s on auth endpoints when user is not logged in
+      if (!error.silent) {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }

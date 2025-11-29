@@ -56,6 +56,12 @@ const QuickStatsCard = ({
         icon: 'text-gray-600',
         text: 'text-gray-900',
         border: 'border-gray-200'
+      },
+      orange: {
+        bg: 'bg-orange-50',
+        icon: 'text-orange-600',
+        text: 'text-orange-900',
+        border: 'border-orange-200'
       }
     };
     

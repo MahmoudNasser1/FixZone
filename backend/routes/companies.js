@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+const companiesFinancialService = require('../services/financial/companies.service');
 
 // GET /api/companies - جلب جميع الشركات
 router.get('/', authMiddleware, async (req, res) => {
@@ -354,6 +355,54 @@ router.get('/:id/customers', authMiddleware, async (req, res) => {
     res.status(500).json({ 
       error: 'حدث خطأ في جلب عملاء الشركة',
       details: error.message 
+    });
+  }
+});
+
+// Company Financial APIs
+// GET /api/companies/:id/financial-summary
+router.get('/:id/financial-summary', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const summary = await companiesFinancialService.getFinancialSummary(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error('Error getting company financial summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting company financial summary',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/companies/:id/invoices
+router.get('/:id/invoices', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      status: req.query.status,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const invoices = await companiesFinancialService.getInvoices(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: invoices
+    });
+  } catch (error) {
+    console.error('Error getting company invoices:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting company invoices',
+      error: error.message
     });
   }
 });

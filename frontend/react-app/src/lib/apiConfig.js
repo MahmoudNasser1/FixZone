@@ -32,3 +32,17 @@ export const getDefaultWsUrl = () => {
   return 'ws://localhost:4000/ws';
 };
 
+// Get Frontend Base URL for public links (QR codes, sharing, etc.)
+// Uses REACT_APP_FRONTEND_URL if set, otherwise uses current origin
+export const getFrontendBaseUrl = () => {
+  const explicitUrl = process.env.REACT_APP_FRONTEND_URL?.trim();
+  if (explicitUrl) {
+    return normalizeOrigin(explicitUrl);
+  }
+  if (hasWindow && hasWindow.origin) {
+    return normalizeOrigin(hasWindow.origin);
+  }
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3000';
+};
+

@@ -74,7 +74,7 @@ import JobDetailsPage from './pages/technician/JobDetailsPage';
 import WorkflowDashboardPage from './pages/integration/WorkflowDashboardPage';
 
 import InvoicesPage from './pages/invoices/InvoicesPage';
-import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
+import InvoiceDetailsPageOld from './pages/invoices/InvoiceDetailsPage';
 import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
 import EditInvoicePage from './pages/invoices/EditInvoicePage';
 // Temporarily commented out missing pages:
@@ -90,6 +90,12 @@ import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
 
 // Expenses Pages
 import { ExpensesPage } from './pages/expenses';
+
+// Financial Module Pages (v2 - new architecture)
+import FinancialDashboardPage from './pages/financial/FinancialDashboardPage';
+import { ExpensesListPage, ExpenseCreatePage, ExpenseEditPage, ExpenseDetailsPage } from './pages/financial/expenses';
+import { PaymentsListPage, PaymentCreatePage } from './pages/financial/payments';
+import { InvoicesListPage, InvoiceDetailsPage, InvoiceCreatePage } from './pages/financial/invoices';
 
 // Quotations Pages
 import { QuotationsPage } from './pages/quotations';
@@ -383,7 +389,7 @@ function App() {
                       <Route path="invoices/new" element={<CreateInvoicePage />} />
                       <Route path="invoices/create" element={<CreateInvoicePage />} />
                       <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
-                      <Route path="invoices/:id" element={<InvoiceDetailsPage />} />
+                      <Route path="invoices/:id" element={<InvoiceDetailsPageOld />} />
                       {/* Payments */}
                       <Route path="payments" element={<PaymentsPage />} />
                       <Route path="payments/new" element={<CreatePaymentPage />} />
@@ -391,6 +397,19 @@ function App() {
                       <Route path="payments/:id/edit" element={<EditPaymentPage />} />
                       <Route path="payments/reports" element={<PaymentReportsPage />} />
                       <Route path="payments/overdue" element={<OverduePaymentsPage />} />
+
+                      {/* Financial Module (v2 - new architecture) */}
+                      <Route path="financial" element={<FinancialDashboardPage />} />
+                      <Route path="financial/dashboard" element={<FinancialDashboardPage />} />
+                      <Route path="financial/expenses" element={<ExpensesListPage />} />
+                      <Route path="financial/expenses/create" element={<ExpenseCreatePage />} />
+                      <Route path="financial/expenses/:id" element={<ExpenseDetailsPage />} />
+                      <Route path="financial/expenses/:id/edit" element={<ExpenseEditPage />} />
+                      <Route path="financial/payments" element={<PaymentsListPage />} />
+                      <Route path="financial/payments/create" element={<PaymentCreatePage />} />
+                      <Route path="financial/invoices" element={<InvoicesListPage />} />
+                      <Route path="financial/invoices/create" element={<InvoiceCreatePage />} />
+                      <Route path="financial/invoices/:id" element={<InvoiceDetailsPage />} />
 
                       {/* Reports */}
                       <Route path="reports/financial" element={<FinancialReportsPage />} />

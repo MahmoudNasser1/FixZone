@@ -70,13 +70,18 @@ const navItems = [
   {
     section: 'النظام المالي',
     items: [
-      { href: '/finance', label: 'النظام المالي', icon: DollarSign },
-      { href: '/invoices', label: 'الفواتير', icon: Receipt, badge: '8' },
+      { href: '/financial', label: 'لوحة التحكم المالية', icon: DollarSign },
+      // Financial Module v2 (New Architecture)
+      { href: '/financial/invoices', label: 'الفواتير', icon: Receipt, badge: '8' },
+      { href: '/financial/payments', label: 'المدفوعات', icon: CreditCard },
+      { href: '/financial/expenses', label: 'المصروفات', icon: Banknote },
+      { href: '/reports/financial', label: 'التقارير المالية', icon: Calculator },
+      // Old routes (for backward compatibility - يمكن إزالتها لاحقاً)
+      { href: '/invoices', label: 'الفواتير (قديم)', icon: Receipt },
       { href: '/quotations', label: 'العروض السعرية', icon: FileText },
       { href: '/purchase-orders', label: 'طلبات الشراء', icon: ShoppingCart },
-      { href: '/payments', label: 'المدفوعات', icon: CreditCard },
-      { href: '/expenses', label: 'المصروفات', icon: Banknote },
-      { href: '/financial-reports', label: 'التقارير المالية', icon: Calculator },
+      { href: '/payments', label: 'المدفوعات (قديم)', icon: CreditCard },
+      { href: '/expenses', label: 'المصروفات (قديم)', icon: Banknote },
     ]
   },
   {

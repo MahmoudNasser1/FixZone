@@ -43,6 +43,12 @@ const statusMap = {
     icon: Package,
     color: 'bg-orange-50 text-orange-700 border-orange-200'
   },
+  'READY_FOR_PICKUP': { 
+    label: 'جاهز للاستلام', 
+    variant: 'success', 
+    icon: Package,
+    color: 'bg-green-50 text-green-700 border-green-200'
+  },
   'WAITING_CUSTOMER': { 
     label: 'بانتظار العميل', 
     variant: 'secondary', 
@@ -79,6 +85,18 @@ const statusMap = {
     variant: 'info', 
     icon: Wrench,
     color: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+  },
+  'waiting-parts': { 
+    label: 'بانتظار قطع غيار', 
+    variant: 'warning', 
+    icon: Package,
+    color: 'bg-orange-50 text-orange-700 border-orange-200'
+  },
+  'ready-for-pickup': { 
+    label: 'جاهز للاستلام', 
+    variant: 'success', 
+    icon: Package,
+    color: 'bg-green-50 text-green-700 border-green-200'
   },
   'completed': { 
     label: 'مكتمل', 

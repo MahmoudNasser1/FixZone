@@ -10,7 +10,7 @@ import {
   Search, Plus, Download, Eye, Edit, Trash2, Calendar,
   Wrench, Clock, CheckCircle, Play, XCircle, RefreshCw, User, DollarSign, Filter,
   ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, AlertTriangle, Printer,
-  Wifi, WifiOff
+  Wifi, WifiOff, Package, ShoppingCart
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import Breadcrumb from '../../components/layout/Breadcrumb';
@@ -129,9 +129,10 @@ const RepairsPage = () => {
     totalRequests: 0,
     pendingRequests: 0,
     inProgressRequests: 0,
+    waitingPartsRequests: 0,
+    readyForPickupRequests: 0,
     completedRequests: 0,
-    onHoldRequests: 0,
-    cancelledRequests: 0
+    onHoldRequests: 0
   });
 
   useEffect(() => {
@@ -151,11 +152,12 @@ const RepairsPage = () => {
 
           setGlobalStats({
             totalRequests: totalRequests,
-            pendingRequests: getCount('pending'),
-            inProgressRequests: getCount('in_progress') + getCount('diagnosed') + getCount('received'), // Group active statuses
+            pendingRequests: getCount('pending') + getCount('received'),
+            inProgressRequests: getCount('in_progress') + getCount('under_repair'),
+            waitingPartsRequests: getCount('waiting_parts') + getCount('waiting-parts'),
+            readyForPickupRequests: getCount('ready_for_pickup') + getCount('ready-for-pickup'),
             completedRequests: getCount('completed') + getCount('delivered'),
-            onHoldRequests: getCount('on_hold') + getCount('waiting_parts'),
-            cancelledRequests: getCount('cancelled') + getCount('rejected')
+            onHoldRequests: getCount('on_hold') + getCount('on-hold')
           });
         }
       } catch (error) {
@@ -197,9 +199,10 @@ const RepairsPage = () => {
     { key: 'all', label: 'الكل' },
     { key: 'pending', label: 'في الانتظار' },
     { key: 'in-progress', label: 'قيد الإصلاح' },
-    { key: 'on-hold', label: 'معلق' },
+    { key: 'waiting-parts', label: 'بانتظار قطع غيار' },
+    { key: 'ready-for-pickup', label: 'جاهز للاستلام' },
     { key: 'completed', label: 'مكتمل' },
-    { key: 'cancelled', label: 'ملغي' },
+    { key: 'on-hold', label: 'معلق' },
   ];
 
   // خيارات نوع البحث (فلتر البحث)
@@ -976,7 +979,14 @@ const RepairsPage = () => {
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
   const priorityRank = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-  const statusRank = { pending: 1, 'in-progress': 2, 'on-hold': 1.5, completed: 3, cancelled: 0 };
+  const statusRank = { 
+    pending: 1, 
+    'in-progress': 2, 
+    'waiting-parts': 2.5, 
+    'ready-for-pickup': 3, 
+    completed: 4, 
+    'on-hold': 1.5 
+  };
   const sortedRepairs = [...filteredRepairs].sort((a, b) => {
     const dir = sortOrder === 'asc' ? 1 : -1;
     const getVal = (r) => {
@@ -1040,9 +1050,10 @@ const RepairsPage = () => {
     total: repairs.length,
     pending: repairs.filter(repair => repair.status === 'pending').length,
     inProgress: repairs.filter(repair => repair.status === 'in-progress').length,
+    waitingParts: repairs.filter(repair => repair.status === 'waiting-parts').length,
+    readyForPickup: repairs.filter(repair => repair.status === 'ready-for-pickup').length,
     onHold: repairs.filter(repair => repair.status === 'on-hold').length,
-    completed: repairs.filter(repair => repair.status === 'completed').length,
-    cancelled: repairs.filter(repair => repair.status === 'cancelled').length
+    completed: repairs.filter(repair => repair.status === 'completed').length
   };
 
   // دالة لتحديد لون الحالة
@@ -1054,6 +1065,12 @@ const RepairsPage = () => {
         break;
       case 'in-progress':
         color = 'info'; // أزرق للإصلاح
+        break;
+      case 'waiting-parts':
+        color = 'secondary'; // رمادي لبانتظار قطع غيار
+        break;
+      case 'ready-for-pickup':
+        color = 'success'; // أخضر لجاهز للاستلام
         break;
       case 'on-hold':
         color = 'secondary'; // رمادي للمعلق
@@ -1077,6 +1094,10 @@ const RepairsPage = () => {
         return 'في الانتظار';
       case 'in-progress':
         return 'قيد الإصلاح';
+      case 'waiting-parts':
+        return 'بانتظار قطع غيار';
+      case 'ready-for-pickup':
+        return 'جاهز للاستلام';
       case 'on-hold':
         return 'معلق';
       case 'completed':
@@ -1286,7 +1307,7 @@ const RepairsPage = () => {
 
 
       {/* بطاقات الفلترة - QuickStatsCard كأزرار */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* الكل */}
         <button
           onClick={() => setStatus('all')}
@@ -1335,6 +1356,38 @@ const RepairsPage = () => {
           />
         </button>
 
+        {/* بانتظار قطع غيار */}
+        <button
+          onClick={() => setStatus('waiting-parts')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'waiting-parts' ? 'ring-2 ring-orange-500 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="بانتظار قطع غيار"
+            value={globalStats.waitingPartsRequests}
+            icon={ShoppingCart}
+            color="orange"
+          />
+        </button>
+
+        {/* جاهز للاستلام */}
+        <button
+          onClick={() => setStatus('ready-for-pickup')}
+          className={`
+            text-right transition-all duration-200 transform hover:scale-105
+            ${status === 'ready-for-pickup' ? 'ring-2 ring-green-500 shadow-lg scale-105' : 'hover:shadow-md'}
+          `}
+        >
+          <QuickStatsCard
+            title="جاهز للاستلام"
+            value={globalStats.readyForPickupRequests}
+            icon={Package}
+            color="green"
+          />
+        </button>
+
         {/* مكتملة */}
         <button
           onClick={() => setStatus('completed')}
@@ -1348,38 +1401,6 @@ const RepairsPage = () => {
             value={globalStats.completedRequests}
             icon={CheckCircle}
             color="green"
-          />
-        </button>
-
-        {/* معلق */}
-        <button
-          onClick={() => setStatus('on-hold')}
-          className={`
-            text-right transition-all duration-200 transform hover:scale-105
-            ${status === 'on-hold' ? 'ring-2 ring-orange-500 shadow-lg scale-105' : 'hover:shadow-md'}
-          `}
-        >
-          <QuickStatsCard
-            title="معلق"
-            value={globalStats.onHoldRequests}
-            icon={AlertTriangle}
-            color="gray"
-          />
-        </button>
-
-        {/* ملغي */}
-        <button
-          onClick={() => setStatus('cancelled')}
-          className={`
-            text-right transition-all duration-200 transform hover:scale-105
-            ${status === 'cancelled' ? 'ring-2 ring-red-600 shadow-lg scale-105' : 'hover:shadow-md'}
-          `}
-        >
-          <QuickStatsCard
-            title="ملغي"
-            value={globalStats.cancelledRequests}
-            icon={XCircle}
-            color="danger"
           />
         </button>
       </div>

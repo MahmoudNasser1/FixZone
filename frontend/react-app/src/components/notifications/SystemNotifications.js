@@ -18,14 +18,12 @@ const SystemNotifications = () => {
         hasShownWelcome.current = true;
       }, 2000);
     }
-
-    // تم تعطيل جميع الإشعارات العشوائية والتلقائية
-    console.log('SystemNotifications: تم تعطيل جميع الإشعارات العشوائية');
     
     return () => {
       // لا حاجة لتنظيف أي مؤقتات
     };
-  }, [notifications]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // هذا المكون لا يعرض أي شيء، فقط يدير الإشعارات
   return null;

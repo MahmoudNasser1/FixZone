@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const authMiddleware = require('../middleware/authMiddleware');
 const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 const { validate, customerSchemas } = require('../middleware/validation');
+const customersFinancialService = require('../services/financial/customers.service');
 
 const CUSTOMER_ROLE_ID = Number(process.env.CUSTOMER_ROLE_ID || 6);
 
@@ -724,6 +725,73 @@ router.get('/:id/repairs', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'حدث خطأ في جلب طلبات الإصلاح للعميل' 
+    });
+  }
+});
+
+// Customer Financial APIs
+// GET /api/customers/:id/balance
+router.get('/:id/balance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const balance = await customersFinancialService.getBalance(parseInt(id));
+    res.json({
+      success: true,
+      data: balance
+    });
+  } catch (error) {
+    console.error('Error getting customer balance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting customer balance',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/customers/:id/invoices
+router.get('/:id/invoices', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      status: req.query.status,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const invoices = await customersFinancialService.getInvoices(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: invoices
+    });
+  } catch (error) {
+    console.error('Error getting customer invoices:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting customer invoices',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/customers/:id/payments
+router.get('/:id/payments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filters = {
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo
+    };
+    const payments = await customersFinancialService.getPayments(parseInt(id), filters);
+    res.json({
+      success: true,
+      data: payments
+    });
+  } catch (error) {
+    console.error('Error getting customer payments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting customer payments',
+      error: error.message
     });
   }
 });
