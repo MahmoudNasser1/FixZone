@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../stores/authStore';
 import useUIStore from '../../stores/uiStore';
-import { 
-  LogOut, User, Settings, Menu, Sun, Moon, Bell, Search, Plus, 
+import {
+  LogOut, User, Settings, Menu, Sun, Moon, Bell, Search, Plus,
   Wrench, Users, Package, FileText, Calculator, MessageSquare,
   Clock, TrendingUp, AlertCircle, CheckCircle, Zap, Command
 } from 'lucide-react';
@@ -94,29 +94,29 @@ const Topbar = () => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 shadow-sm">
+    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 shadow-sm">
       {/* Left Section */}
       <div className="flex items-center space-x-4 space-x-reverse">
         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
           <Menu className="w-5 h-5" />
         </Button>
-        
+
         {/* Quick Stats */}
         <div className="hidden lg:flex items-center space-x-6 space-x-reverse">
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
-            <div className="flex items-center space-x-1 space-x-reverse text-orange-600">
+            <div className="flex items-center space-x-1 space-x-reverse text-brand-orange">
               <Wrench className="w-4 h-4" />
               <span className="font-medium">{quickStats.pendingRepairs}</span>
             </div>
-            <span className="text-gray-500">طلبات معلقة</span>
+            <span className="text-muted-foreground">طلبات معلقة</span>
           </div>
-          
+
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
-            <div className="flex items-center space-x-1 space-x-reverse text-green-600">
+            <div className="flex items-center space-x-1 space-x-reverse text-brand-green">
               <TrendingUp className="w-4 h-4" />
               <span className="font-medium">{quickStats.todayRevenue} جنية</span>
             </div>
-            <span className="text-gray-500">اليوم</span>
+            <span className="text-muted-foreground">اليوم</span>
           </div>
         </div>
       </div>
@@ -124,13 +124,13 @@ const Topbar = () => {
       {/* Center Section - Search */}
       <div className="flex-1 max-w-md mx-4">
         <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="text"
             placeholder="بحث في الطلبات، العملاء، القطع..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+            className="pr-10 bg-muted/50 border-input focus:bg-background transition-colors"
           />
         </form>
       </div>
@@ -139,7 +139,7 @@ const Topbar = () => {
       <div className="flex items-center space-x-2 space-x-reverse">
         {/* Notification Center */}
         <NotificationCenter />
-        
+
         {/* Quick Actions */}
         <DropdownMenu open={showQuickActions} onOpenChange={setShowQuickActions}>
           <DropdownMenuTrigger asChild>
@@ -155,7 +155,7 @@ const Topbar = () => {
               <DropdownMenuItem key={action.href} asChild>
                 <Link
                   to={action.href}
-                  className="flex items-center justify-between w-full px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex items-center justify-between w-full px-2 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
                 >
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <div className={cn("p-1.5 rounded-md text-white", action.color)}>
@@ -163,7 +163,7 @@ const Topbar = () => {
                     </div>
                     <span>{action.label}</span>
                   </div>
-                  <kbd className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-600 rounded">
+                  <kbd className="px-2 py-1 text-xs bg-muted rounded text-muted-foreground">
                     {action.shortcut}
                   </kbd>
                 </Link>
@@ -189,9 +189,9 @@ const Topbar = () => {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {(quickStats.newMessages > 0 || quickStats.lowStock > 0) && (
-                <Badge 
-                  variant="destructive" 
-                  size="sm" 
+                <Badge
+                  variant="destructive"
+                  size="sm"
                   className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                 >
                   {quickStats.newMessages + quickStats.lowStock}
@@ -203,60 +203,60 @@ const Topbar = () => {
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="text-right">الإشعارات</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             {/* إشعارات هامة */}
             {quickStats.newMessages > 0 && (
-              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-blue-50">
+              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-brand-blue" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">رسائل جديدة</p>
-                  <p className="text-sm text-gray-500">{quickStats.newMessages} رسائل غير مقروءة</p>
+                  <p className="text-sm font-medium text-foreground">رسائل جديدة</p>
+                  <p className="text-sm text-muted-foreground">{quickStats.newMessages} رسائل غير مقروءة</p>
                 </div>
                 <div className="flex-shrink-0">
                   <Badge variant="default" size="sm">{quickStats.newMessages}</Badge>
                 </div>
               </DropdownMenuItem>
             )}
-            
+
             {quickStats.lowStock > 0 && (
-              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-orange-50">
+              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                  <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4 text-brand-orange" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">نقص في المخزون</p>
-                  <p className="text-sm text-gray-500">{quickStats.lowStock} قطع تحتاج إعادة طلب</p>
+                  <p className="text-sm font-medium text-foreground">نقص في المخزون</p>
+                  <p className="text-sm text-muted-foreground">{quickStats.lowStock} قطع تحتاج إعادة طلب</p>
                 </div>
                 <div className="flex-shrink-0">
                   <Badge variant="destructive" size="sm">{quickStats.lowStock}</Badge>
                 </div>
               </DropdownMenuItem>
             )}
-            
-            <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-green-50">
+
+            <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-brand-green" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">تم إنجاز طلب إصلاح</p>
-                <p className="text-sm text-gray-500">طلب #1234 - هاتف iPhone 12</p>
+                <p className="text-sm font-medium text-foreground">تم إنجاز طلب إصلاح</p>
+                <p className="text-sm text-muted-foreground">طلب #1234 - هاتف iPhone 12</p>
               </div>
               <div className="flex-shrink-0">
-                <span className="text-xs text-gray-400">منذ 5 دقائق</span>
+                <span className="text-xs text-muted-foreground">منذ 5 دقائق</span>
               </div>
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/notifications" className="w-full text-center py-2 text-sm text-blue-600 hover:text-blue-800">
+              <Link to="/notifications" className="w-full text-center py-2 text-sm text-primary hover:text-primary/80 cursor-pointer">
                 عرض جميع الإشعارات
               </Link>
             </DropdownMenuItem>
@@ -271,8 +271,8 @@ const Topbar = () => {
                 {user ? user.name?.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-medium">{user ? user.name : 'مستخدم'}</span>
-                <span className="text-xs text-gray-500">{user ? user.role : 'موظف'}</span>
+                <span className="text-sm font-medium text-foreground">{user ? user.name : 'مستخدم'}</span>
+                <span className="text-xs text-muted-foreground">{user ? user.role : 'موظف'}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -295,30 +295,30 @@ const Topbar = () => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             <DropdownMenuItem asChild>
               <Link to="/profile" className="flex items-center space-x-2 space-x-reverse">
                 <User className="w-4 h-4" />
                 <span>الملف الشخصي</span>
               </Link>
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem asChild>
               <Link to="/settings" className="flex items-center space-x-2 space-x-reverse">
                 <Settings className="w-4 h-4" />
                 <span>الإعدادات</span>
               </Link>
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem asChild>
               <Link to="/help" className="flex items-center space-x-2 space-x-reverse">
                 <MessageSquare className="w-4 h-4" />
                 <span>المساعدة والدعم</span>
               </Link>
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* إحصائيات سريعة */}
             <div className="px-2 py-2">
               <div className="text-xs text-gray-500 mb-2">إحصائيات اليوم</div>
@@ -333,9 +333,9 @@ const Topbar = () => {
                 </div>
               </div>
             </div>
-            
+
             <DropdownMenuSeparator />
-            
+
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
               <div className="flex items-center space-x-2 space-x-reverse w-full">
                 <LogOut className="w-4 h-4" />

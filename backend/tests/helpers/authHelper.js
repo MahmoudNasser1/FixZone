@@ -85,9 +85,36 @@ async function createTestUser(userData = {}) {
   }
 }
 
+/**
+ * Get or create test user token (non-admin)
+ * @returns {Promise<{token: string, userId: number}>}
+ */
+async function getTestUserToken() {
+  try {
+    // Try to find existing non-admin user
+    const [users] = await db.execute(
+      'SELECT id, role FROM User WHERE role != 1 AND deletedAt IS NULL LIMIT 1'
+    );
+
+    if (users.length > 0) {
+      const user = users[0];
+      const token = getTestAuthToken(user.id, user.role);
+      return { token, userId: user.id };
+    }
+
+    // If no user found, use admin token as fallback
+    return await getTestAdminToken();
+  } catch (error) {
+    console.error('Error getting test user token:', error);
+    // Fallback: return a mock token
+    return { token: getTestAuthToken(2, 2), userId: 2 };
+  }
+}
+
 module.exports = {
   getTestAuthToken,
   getTestAdminToken,
+  getTestUserToken,
   createTestUser
 };
 

@@ -110,7 +110,7 @@ export default function CustomerRepairsPage() {
     }
 
     return (
-        <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+        <div className="min-h-screen bg-background">
             {/* Header */}
             <CustomerHeader user={user} notificationCount={3} />
 
@@ -119,14 +119,13 @@ export default function CustomerRepairsPage() {
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
                         <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}
+                            className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-blue to-brand-blue-light"
                         >
                             <Wrench className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">طلبات الإصلاح</h1>
-                            <p className="text-sm text-gray-600">إدارة ومتابعة طلبات إصلاح الأجهزة</p>
+                            <h1 className="text-2xl font-bold text-foreground">طلبات الإصلاح</h1>
+                            <p className="text-sm text-muted-foreground">إدارة ومتابعة طلبات إصلاح الأجهزة</p>
                         </div>
                     </div>
                 </div>
@@ -142,7 +141,7 @@ export default function CustomerRepairsPage() {
 
                 {/* Results Count */}
                 <div className="mb-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                         عرض <span className="font-semibold">{repairs.length}</span> من{' '}
                         <span className="font-semibold">{totalItems}</span> طلب
                     </p>
@@ -152,15 +151,14 @@ export default function CustomerRepairsPage() {
                 {repairs.length === 0 ? (
                     <div className="text-center py-16">
                         <div
-                            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
-                            style={{ background: '#F3F4F6' }}
+                            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted"
                         >
                             <PackageOpen className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
                             لا توجد طلبات إصلاح
                         </h3>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             {searchQuery
                                 ? 'لم يتم العثور على نتائج مطابقة للبحث'
                                 : activeFilter !== 'all'
@@ -174,11 +172,7 @@ export default function CustomerRepairsPage() {
                                     setActiveFilter('all');
                                     setSearchQuery('');
                                 }}
-                                className="px-6 py-2 rounded-lg font-medium transition-colors"
-                                style={{
-                                    background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)',
-                                    color: 'white'
-                                }}
+                                className="px-6 py-2 rounded-lg font-medium transition-colors bg-gradient-to-r from-brand-blue to-brand-blue-light text-white hover:from-brand-blue-light hover:to-brand-blue"
                             >
                                 إظهار الكل
                             </button>
@@ -198,17 +192,7 @@ export default function CustomerRepairsPage() {
                                 <button
                                     onClick={() => goToPage(currentPage - 1)}
                                     disabled={currentPage === 1}
-                                    className="p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{
-                                        background: currentPage === 1 ? '#F3F4F6' : 'white',
-                                        border: '1px solid #E5E7EB'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (currentPage !== 1) e.currentTarget.style.borderColor = '#053887';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = '#E5E7EB';
-                                    }}
+                                    className="p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-card border border-border hover:border-brand-blue"
                                 >
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
@@ -219,14 +203,10 @@ export default function CustomerRepairsPage() {
                                         <button
                                             key={page}
                                             onClick={() => goToPage(page)}
-                                            className="w-10 h-10 rounded-lg font-medium transition-all"
-                                            style={{
-                                                background: currentPage === page
-                                                    ? 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'
-                                                    : 'white',
-                                                color: currentPage === page ? 'white' : '#374151',
-                                                border: `1px solid ${currentPage === page ? '#053887' : '#E5E7EB'}`
-                                            }}
+                                            className={`w-10 h-10 rounded-lg font-medium transition-all ${currentPage === page
+                                                    ? 'bg-gradient-to-r from-brand-blue to-brand-blue-light text-white border-brand-blue'
+                                                    : 'bg-card text-foreground border-border hover:border-brand-blue'
+                                                } border`}
                                         >
                                             {page}
                                         </button>
@@ -236,17 +216,7 @@ export default function CustomerRepairsPage() {
                                 <button
                                     onClick={() => goToPage(currentPage + 1)}
                                     disabled={currentPage === totalPages}
-                                    className="p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{
-                                        background: currentPage === totalPages ? '#F3F4F6' : 'white',
-                                        border: '1px solid #E5E7EB'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (currentPage !== totalPages) e.currentTarget.style.borderColor = '#053887';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = '#E5E7EB';
-                                    }}
+                                    className="p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-card border border-border hover:border-brand-blue"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>

@@ -218,197 +218,185 @@ export default function CustomerDashboard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
-      {/* Enhanced Header */}
-      <CustomerHeader user={user} notificationCount={3} />
+      <div className="min-h-screen bg-background">
+        {/* Enhanced Header */}
+        <CustomerHeader user={user} notificationCount={3} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards - Enhanced */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <EnhancedStatsCard
-            title="طلبات الإصلاح"
-            value={stats.totalRepairs}
-            subtitle={`${stats.activeRepairs} نشط`}
-            icon={Wrench}
-            gradient="linear-gradient(135deg, #053887 0%, #0a4da3 100%)"
-            change={`+${stats.activeRepairs} نشطة`}
-            changeType="increase"
-            actionLabel="عرض الكل"
-            onClick={() => navigate('/customer/repairs')}
-          />
-          <EnhancedStatsCard
-            title="الفواتير"
-            value={stats.totalInvoices}
-            subtitle={`${stats.pendingInvoices} في الانتظار`}
-            icon={FileText}
-            gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
-            change={`${stats.paidInvoices} مدفوعة`}
-            changeType="neutral"
-            actionLabel="عرض الفواتير"
-            onClick={() => navigate('/customer/invoices')}
-          />
-          <EnhancedStatsCard
-            title="الأجهزة"
-            value={stats.totalDevices}
-            subtitle="إجمالي الأجهزة"
-            icon={Package}
-            gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
-            actionLabel="عرض التفاصيل"
-            onClick={() => navigate('/customer/devices')}
-          />
-          <EnhancedStatsCard
-            title="الفواتير المدفوعة"
-            value={stats.paidInvoices}
-            subtitle={`من ${stats.totalInvoices}`}
-            icon={CreditCard}
-            gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
-            actionLabel="عرض السجل"
-            onClick={() => navigate('/customer/invoices?status=paid')}
-          />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4" style={{ color: '#111827' }}>إجراءات سريعة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <QuickActionCard
-              icon={Plus}
-              label="طلب إصلاح جديد"
-              gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
-              onClick={() => navigate('/repairs/new')}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Cards - Enhanced */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <EnhancedStatsCard
+              title="طلبات الإصلاح"
+              value={stats.totalRepairs}
+              subtitle={`${stats.activeRepairs} نشط`}
+              icon={Wrench}
+              gradient="linear-gradient(135deg, #053887 0%, #0a4da3 100%)"
+              change={`+${stats.activeRepairs} نشطة`}
+              changeType="increase"
+              actionLabel="عرض الكل"
+              onClick={() => navigate('/customer/repairs')}
             />
-            <QuickActionCard
-              icon={Search}
-              label="تتبع طلب"
-              gradient="linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)"
-              onClick={() => navigate('/track')}
-            />
-            <QuickActionCard
+            <EnhancedStatsCard
+              title="الفواتير"
+              value={stats.totalInvoices}
+              subtitle={`${stats.pendingInvoices} في الانتظار`}
               icon={FileText}
-              label="فواتيري"
-              gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+              gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
+              change={`${stats.paidInvoices} مدفوعة`}
+              changeType="neutral"
+              actionLabel="عرض الفواتير"
               onClick={() => navigate('/customer/invoices')}
-              badge={stats.pendingInvoices > 0 ? stats.pendingInvoices : null}
             />
-            <QuickActionCard
-              icon={Phone}
-              label="تواصل معنا"
+            <EnhancedStatsCard
+              title="الأجهزة"
+              value={stats.totalDevices}
+              subtitle="إجمالي الأجهزة"
+              icon={Package}
+              gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+              actionLabel="عرض التفاصيل"
+              onClick={() => navigate('/customer/devices')}
+            />
+            <EnhancedStatsCard
+              title="الفواتير المدفوعة"
+              value={stats.paidInvoices}
+              subtitle={`من ${stats.totalInvoices}`}
+              icon={CreditCard}
               gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
-              onClick={() => window.open('tel:+201234567890')}
+              actionLabel="عرض السجل"
+              onClick={() => navigate('/customer/invoices?status=paid')}
             />
           </div>
-        </div>
 
-        {/* Repairs & Invoices Lists */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Repairs */}
-          <SimpleCard>
-            <SimpleCardHeader>
-              <SimpleCardTitle className="flex items-center justify-between">
-                <span>آخر طلبات الإصلاح</span>
-                <Wrench className="w-5 h-5" style={{ color: '#053887' }} />
-              </SimpleCardTitle>
-            </SimpleCardHeader>
-            <SimpleCardContent>
-              {repairs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Wrench className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>لا توجد طلبات إصلاح حالياً</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {repairs.slice(0, 5).map((repair) => (
-                    <div
-                      key={repair.id}
-                      className="p-4 rounded-lg border transition-all duration-200 cursor-pointer hover:shadow-md"
-                      style={{ borderColor: '#E5E7EB' }}
-                      onClick={() => navigate(`/repairs/${repair.id}`)}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#053887'}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900">#{repair.id}</p>
-                          <p className="text-sm text-gray-600">{repair.deviceType || 'جهاز'}</p>
-                        </div>
-                        {getStatusBadge(repair.status)}
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {repair.issueDescription?.substring(0, 60) || 'لا يوجد وصف'}...
-                      </p>
-                    </div>
-                  ))}
-                  {repairs.length > 5 && (
-                    <button
-                      onClick={() => navigate('/customer/repairs')}
-                      className="w-full py-2 text-sm font-medium rounded-lg transition-colors"
-                      style={{ color: '#053887' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      عرض الكل ({repairs.length})
-                    </button>
-                  )}
-                </div>
-              )}
-            </SimpleCardContent>
-          </SimpleCard>
+          {/* Quick Actions */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4 text-foreground">إجراءات سريعة</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickActionCard
+                icon={Plus}
+                label="طلب إصلاح جديد"
+                gradient="linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                onClick={() => navigate('/repairs/new')}
+              />
+              <QuickActionCard
+                icon={Search}
+                label="تتبع طلب"
+                gradient="linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)"
+                onClick={() => navigate('/track')}
+              />
+              <QuickActionCard
+                icon={FileText}
+                label="فواتيري"
+                gradient="linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+                onClick={() => navigate('/customer/invoices')}
+                badge={stats.pendingInvoices > 0 ? stats.pendingInvoices : null}
+              />
+              <QuickActionCard
+                icon={Phone}
+                label="تواصل معنا"
+                gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+                onClick={() => window.open('tel:+201234567890')}
+              />
+            </div>
+          </div>
 
-          {/* Recent Invoices */}
-          <SimpleCard>
-            <SimpleCardHeader>
-              <SimpleCardTitle className="flex items-center justify-between">
-                <span>آخر الفواتير</span>
-                <FileText className="w-5 h-5" style={{ color: '#10B981' }} />
-              </SimpleCardTitle>
-            </SimpleCardHeader>
-            <SimpleCardContent>
-              {invoices.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>لا توجد فواتير حالياً</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {invoices.slice(0, 5).map((invoice) => (
-                    <div
-                      key={invoice.id}
-                      className="p-4 rounded-lg border transition-all duration-200 cursor-pointer hover:shadow-md"
-                      style={{ borderColor: '#E5E7EB' }}
-                      onClick={() => navigate(`/invoices/${invoice.id}`)}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#10B981'}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900">فاتورة #{invoice.id}</p>
-                          <p className="text-sm text-gray-600">{invoice.totalAmount || 0} جنيه</p>
+          {/* Repairs & Invoices Lists */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Repairs */}
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center justify-between">
+                  <span>آخر طلبات الإصلاح</span>
+                  <Wrench className="w-5 h-5 text-brand-blue" />
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                {repairs.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Wrench className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>لا توجد طلبات إصلاح حالياً</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {repairs.slice(0, 5).map((repair) => (
+                      <div
+                        key={repair.id}
+                        className="p-4 rounded-lg border border-border transition-all duration-base cursor-pointer hover:shadow-md hover:border-brand-blue"
+                        onClick={() => navigate(`/repairs/${repair.id}`)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-foreground">#{repair.id}</p>
+                            <p className="text-sm text-muted-foreground">{repair.deviceType || 'جهاز'}</p>
+                          </div>
+                          {getStatusBadge(repair.status)}
                         </div>
-                        {getStatusBadge(invoice.paymentStatus || 'pending')}
+                        <p className="text-xs text-muted-foreground">
+                          {repair.issueDescription?.substring(0, 60) || 'لا يوجد وصف'}...
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        {new Date(invoice.createdAt || Date.now()).toLocaleDateString('ar-EG')}
-                      </p>
-                    </div>
-                  ))}
-                  {invoices.length > 5 && (
-                    <button
-                      onClick={() => navigate('/customer/invoices')}
-                      className="w-full py-2 text-sm font-medium rounded-lg transition-colors"
-                      style={{ color: '#10B981' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      عرض الكل ({invoices.length})
-                    </button>
-                  )}
-                </div>
-              )}
-            </SimpleCardContent>
-          </SimpleCard>
+                    ))}
+                    {repairs.length > 5 && (
+                      <button
+                        onClick={() => navigate('/customer/repairs')}
+                        className="w-full py-2 text-sm font-medium text-brand-blue rounded-lg transition-colors hover:bg-accent"
+                      >
+                        عرض الكل ({repairs.length})
+                      </button>
+                    )}
+                  </div>
+                )}
+              </SimpleCardContent>
+            </SimpleCard>
+
+            {/* Recent Invoices */}
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center justify-between">
+                  <span>آخر الفواتير</span>
+                  <FileText className="w-5 h-5 text-brand-green" />
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                {invoices.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>لا توجد فواتير حالياً</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {invoices.slice(0, 5).map((invoice) => (
+                      <div
+                        key={invoice.id}
+                        className="p-4 rounded-lg border border-border transition-all duration-base cursor-pointer hover:shadow-md hover:border-brand-green"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-foreground">فاتورة #{invoice.id}</p>
+                            <p className="text-sm text-muted-foreground">{invoice.totalAmount || 0} جنيه</p>
+                          </div>
+                          {getStatusBadge(invoice.paymentStatus || 'pending')}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(invoice.createdAt || Date.now()).toLocaleDateString('ar-EG')}
+                        </p>
+                      </div>
+                    ))}
+                    {invoices.length > 5 && (
+                      <button
+                        onClick={() => navigate('/customer/invoices')}
+                        className="w-full py-2 text-sm font-medium text-brand-green rounded-lg transition-colors hover:bg-accent"
+                      >
+                        عرض الكل ({invoices.length})
+                      </button>
+                    )}
+                  </div>
+                )}
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
         </div>
       </div>
-    </div>
-  </>
+    </>
   );
 }

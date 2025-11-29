@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getTechJobs } from '../../services/technicianService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import JobCard from '../../components/technician/JobCard';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+import { CardSkeleton } from '../../components/ui/Skeletons';
+import PageTransition from '../../components/ui/PageTransition';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import {
@@ -78,7 +80,7 @@ export default function JobsListPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition className="min-h-screen bg-background">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -86,16 +88,16 @@ export default function JobsListPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">قائمة المهام</h1>
-            <p className="text-gray-600 mt-1">إدارة ومتابعة جميع طلبات الإصلاح الموكلة إليك</p>
+            <h1 className="text-2xl font-bold text-foreground">قائمة المهام</h1>
+            <p className="text-muted-foreground mt-1">إدارة ومتابعة جميع طلبات الإصلاح الموكلة إليك</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-foreground hover:bg-muted transition-colors">
               <ArrowUpDown className="w-4 h-4" />
               <span>ترتيب</span>
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
               <Filter className="w-4 h-4" />
               <span>فلترة متقدمة</span>
             </button>
@@ -103,7 +105,7 @@ export default function JobsListPage() {
         </div>
 
         {/* Filters & Search Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4 justify-between">
 
             {/* Tabs */}
@@ -116,8 +118,8 @@ export default function JobsListPage() {
                     setSearchParams({ status: tab.id });
                   }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${filterStatus === tab.id
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-background text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
                   {tab.label}
@@ -133,7 +135,7 @@ export default function JobsListPage() {
                 placeholder="بحث برقم المهمة، اسم العميل، أو الجهاز..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10 pl-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                className="w-full pr-10 pl-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -141,8 +143,8 @@ export default function JobsListPage() {
 
         {/* Jobs Grid */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
+          <div className="py-12">
+            <CardSkeleton count={6} />
           </div>
         ) : filteredJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -155,12 +157,12 @@ export default function JobsListPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 border-dashed">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
+          <div className="text-center py-16 bg-card rounded-xl border border-border border-dashed">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">لا توجد مهام مطابقة</h3>
-            <p className="text-gray-500">جرب تغيير الفلاتر أو كلمات البحث</p>
+            <h3 className="text-lg font-medium text-foreground mb-1">لا توجد مهام مطابقة</h3>
+            <p className="text-muted-foreground">جرب تغيير الفلاتر أو كلمات البحث</p>
             <button
               onClick={() => {
                 setFilterStatus('all');
@@ -173,6 +175,6 @@ export default function JobsListPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

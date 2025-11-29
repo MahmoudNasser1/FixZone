@@ -3,42 +3,43 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Breadcrumb from './Breadcrumb';
+import PageTransition from '../ui/PageTransition';
 import useAuthStore from '../../stores/authStore';
 import { ROLE_CUSTOMER } from '../../constants/roles';
 
-const MainLayout = ({ 
-  showBreadcrumb = true, 
+const MainLayout = ({
+  showBreadcrumb = true,
   breadcrumbItems = null,
   pageTitle = null,
-  pageActions = null 
+  pageActions = null
 }) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
   const isCustomer = roleId === ROLE_CUSTOMER || user?.type === 'customer';
   const isCustomerRoute = location.pathname.startsWith('/customer');
-  
+
   // Hide Sidebar for customer routes
   const showSidebar = !isCustomer && !isCustomerRoute;
-  
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-background text-foreground">
       {showSidebar && <Sidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
-        
+
         {/* منطقة المحتوى الرئيسية */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* شريط التنقل والعنوان */}
           {(showBreadcrumb || pageTitle || pageActions) && (
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="bg-background border-b border-border px-6 py-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col space-y-2">
                   {showBreadcrumb && (
                     <Breadcrumb items={breadcrumbItems} />
                   )}
                   {pageTitle && (
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <h1 className="text-2xl font-bold text-foreground">
                       {pageTitle}
                     </h1>
                   )}
@@ -51,11 +52,13 @@ const MainLayout = ({
               </div>
             </div>
           )}
-          
+
           {/* المحتوى */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/30 p-6">
             <div className="max-w-7xl mx-auto">
-              <Outlet />
+              <PageTransition key={location.pathname}>
+                <Outlet />
+              </PageTransition>
             </div>
           </main>
         </div>
@@ -67,7 +70,7 @@ const MainLayout = ({
 // مكون مبسط للصفحات العادية
 export const SimpleLayout = ({ children, title, actions }) => {
   return (
-    <MainLayout 
+    <MainLayout
       pageTitle={title}
       pageActions={actions}
       showBreadcrumb={true}

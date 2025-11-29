@@ -1,1339 +1,1547 @@
-Ignoring invalid configuration option passed to Connection: prepare. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
-Ignoring invalid configuration option passed to Connection: acquireTimeout. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
-Ignoring invalid configuration option passed to Connection: timeout. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
+⚠️ SETTINGS_ENCRYPTION_KEY not set, using default (NOT SECURE FOR PRODUCTION)
 🔌 WebSocket service initialized
-🚀 Fix Zone Backend Server is running on port 3001
-📊 API Base URL: http://localhost:3001/api
-🏥 Health Check: http://localhost:3001/health
-🔌 WebSocket URL: ws://localhost:3001/ws
+🚀 Fix Zone Backend Server is running on port 4000
+📊 API Base URL: http://localhost:4000/api
+🏥 Health Check: http://localhost:4000/health
+🔌 WebSocket URL: ws://localhost:4000/ws
 ✅ Database connected successfully
-🔗 Client connected: client_1763581698897_mr4y0oc0u (Total: 1)
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-Error deleting payment with ID 20: Error: This command is not supported in the prepared statement protocol yet
-    at PromisePool.execute (/opt/lampp/htdocs/FixZone/backend/node_modules/mysql2/lib/promise/pool.js:54:22)
-    at /opt/lampp/htdocs/FixZone/backend/routes/payments.js:658:14
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at /opt/lampp/htdocs/FixZone/backend/middleware/validation.js:33:5
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/layer.js:95:5)
-    at /opt/lampp/htdocs/FixZone/backend/node_modules/express/lib/router/index.js:284:15 {
-  code: 'ER_UNSUPPORTED_PS',
-  errno: 1295,
-  sql: 'START TRANSACTION',
-  sqlState: 'HY000',
-  sqlMessage: 'This command is not supported in the prepared statement protocol yet'
+⏸️ Auto Backup Scheduler stopped
+✅ Daily backup scheduled: 02:00
+✅ Auto Backup Scheduler initialized
+   Daily: Enabled (02:00)
+   Weekly: Disabled
+🔗 Client connected: client_1764368893132_menrinnii (Total: 1)
+🔗 Client connected: client_1764368893926_ooy30mwex (Total: 2)
+🔌 Client disconnected: client_1764368893132_menrinnii (Total: 1)
+🔌 Client disconnected: client_1764368893926_ooy30mwex (Total: 0)
+🔗 Client connected: client_1764368910010_1t2byccnb (Total: 1)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔗 Client connected: client_1764368910683_iwg829rty (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764368910010_1t2byccnb (Total: 1)
+🔗 Client connected: client_1764368923639_swrszct15 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+⏸️ Auto Backup Scheduler stopped
+⏸️ Auto Backup Scheduler stopped
+✅ Daily backup scheduled: 02:00
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+⏳ Creating backup: Updatr...
+📦 Compressing backup...
+✅ Backup created: Updatr
+   Size: 0.17 MB
+   Location: /opt/lampp/htdocs/FixZone/backend/backups/database/Updatr.sql.gz
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Audit log (console): {
+  userId: 4,
+  action: 'settings.create',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T22:29:42.936Z'
 }
-🔌 Client disconnected: client_1763581698897_mr4y0oc0u (Total: 0)
-🔗 Client connected: client_1763582444046_eyjc97dn5 (Total: 1)
-🔌 Client disconnected: client_1763582444046_eyjc97dn5 (Total: 0)
-🔗 Client connected: client_1763583344607_pe1y74xqe (Total: 1)
-🔌 Client disconnected: client_1763583344607_pe1y74xqe (Total: 0)
-🔗 Client connected: client_1763583528047_ifkg89qhi (Total: 1)
-🔗 Client connected: client_1763583537287_2fpf8dwtg (Total: 2)
-🔌 Client disconnected: client_1763583528047_ifkg89qhi (Total: 1)
-🔌 Client disconnected: client_1763583537287_2fpf8dwtg (Total: 0)
-🔗 Client connected: client_1763583559179_xl01j15nr (Total: 1)
-🔌 Client disconnected: client_1763583559179_xl01j15nr (Total: 0)
-🔗 Client connected: client_1763583582506_jrcf2zjzq (Total: 1)
-🔗 Client connected: client_1763583591901_m749hrwe3 (Total: 2)
-🔌 Client disconnected: client_1763583582506_jrcf2zjzq (Total: 1)
-🔌 Client disconnected: client_1763583591901_m749hrwe3 (Total: 0)
-🔗 Client connected: client_1763583774084_rconpgw7o (Total: 1)
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-getAllInvoices called with repairRequestId: undefined
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-🔌 Client disconnected: client_1763583774084_rconpgw7o (Total: 0)
-🔗 Client connected: client_1763584613647_ee8gyp443 (Total: 1)
-🔌 Client disconnected: client_1763584613647_ee8gyp443 (Total: 0)
-🔗 Client connected: client_1763585242558_wbmi5kgit (Total: 1)
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-getAllInvoices called with repairRequestId: undefined
-Query executed: 
-        SELECT 
-          i.id,
-          i.totalAmount,
-          i.amountPaid,
-          i.status,
-          i.currency,
-          i.taxAmount,
-          i.repairRequestId,
-          i.createdAt,
-          c.name as customerName,
-          c.phone as customerPhone,
-          c.email as customerEmail,
-          rr.deviceBrand,
-          rr.deviceModel
-        FROM Invoice i
-        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE i.deletedAt IS NULL
-        ORDER BY i.createdAt DESC
-        LIMIT 50
-      
-Query params: []
-Found invoices: [
-  {
-    id: 15,
-    totalAmount: '3000.00',
-    amountPaid: null,
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-11-14T07:50:33.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 14,
-    totalAmount: '2340.00',
-    amountPaid: '340.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 75,
-    createdAt: 2025-10-27T16:23:18.000Z,
-    customerName: 'Mahmoud Nasser',
-    customerPhone: '01111111111',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 13,
-    totalAmount: '300.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T16:21:20.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 12,
-    totalAmount: '2340.00',
-    amountPaid: '100.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: 74,
-    createdAt: 2025-10-27T14:58:47.000Z,
-    customerName: 'saif',
-    customerPhone: '01000000000',
-    customerEmail: 'admin@laapak.com',
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 11,
-    totalAmount: '300.00',
-    amountPaid: '300.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-27T14:07:54.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 10,
-    totalAmount: '2000.00',
-    amountPaid: '2000.00',
-    status: 'paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:59:51.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 9,
-    totalAmount: '670.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:55:37.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 8,
-    totalAmount: '600.00',
-    amountPaid: '0.00',
-    status: 'draft',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:59.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  },
-  {
-    id: 7,
-    totalAmount: '600.00',
-    amountPaid: '200.00',
-    status: 'partially_paid',
-    currency: 'EGP',
-    taxAmount: '0.00',
-    repairRequestId: null,
-    createdAt: 2025-10-26T22:40:50.000Z,
-    customerName: null,
-    customerPhone: null,
-    customerEmail: null,
-    deviceBrand: null,
-    deviceModel: null
-  }
-]
-🔌 Client disconnected: client_1763585242558_wbmi5kgit (Total: 0)
-🔗 Client connected: client_1763585290726_fplbxdov2 (Total: 1)
-🔌 Client disconnected: client_1763585290726_fplbxdov2 (Total: 0)
-🔗 Client connected: client_1763585301531_fdbv74x1t (Total: 1)
+Audit log (console): {
+  userId: 4,
+  action: 'settings.create',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T22:29:42.937Z'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764368923639_swrszct15 (Total: 1)
+🔗 Client connected: client_1764370183833_1xghzfe3v (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764370183833_1xghzfe3v subscribed to room: repairs
+📺 Client client_1764370183833_1xghzfe3v unsubscribed from room: repairs
+📺 Client client_1764370183833_1xghzfe3v subscribed to room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764370183833_1xghzfe3v unsubscribed from room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764370183833_1xghzfe3v (Total: 1)
+🔗 Client connected: client_1764370221245_t7tc2vta2 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/payments?repairRequestId=1416
+⚠️ [AUTH] Method: GET
+🔌 Client disconnected: client_1764368910683_iwg829rty (Total: 1)
+🔗 Client connected: client_1764373724117_8oz8af67j (Total: 2)
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/settings/company
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/settings
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/settings/company
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/auth/me
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/auth/me
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/auth/me
+⚠️ [AUTH] Method: GET
+⚠️ [AUTH] No token found in request
+⚠️ [AUTH] URL: /api/auth/me
+⚠️ [AUTH] Method: GET
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+📺 Client client_1764373724117_8oz8af67j unsubscribed from room: repairs
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764373724117_8oz8af67j unsubscribed from room: repairs
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+📺 Client client_1764373724117_8oz8af67j unsubscribed from room: repairs
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764373724117_8oz8af67j unsubscribed from room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getRecentRepairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { limit: '5' }
+🔍 [DEBUG] Executing query with limit: 5 type: number
+Query executed, found invoices: 20
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /payments called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 10 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] getAllInvoices called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: { page: 1, limit: 20 }
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+🔍 [DEBUG] Query params: [ '[0]: 20 (number)', '[1]: 0 (number)' ]
+🔍 [DEBUG] Query params: [ '[0]: 10 (number)', '[1]: 0 (number)' ]
+Query executed, found invoices: 20
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764373724117_8oz8af67j unsubscribed from room: repairs
+📺 Client client_1764373724117_8oz8af67j subscribed to room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Could not check Expense table columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE...' at line 1
+Could not check columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TA...' at line 1
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Could not check Expense table columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE...' at line 1
+Could not check columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TA...' at line 1
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Could not check Expense table columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE...' at line 1
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Could not check Expense table columns: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'exists FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE...' at line 1
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764370221245_t7tc2vta2 (Total: 1)
+🔗 Client connected: client_1764373931064_lfcbrxwlh (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+📺 Client client_1764373931064_lfcbrxwlh unsubscribed from room: repairs
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ Backup deleted: Updatr
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup file not found on disk
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:295:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Audit log (console): {
+  userId: 4,
+  action: 'settings.delete',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T23:54:05.108Z'
+}
+Audit log (console): {
+  userId: 4,
+  action: 'settings.delete',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T23:54:05.108Z'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Audit log (console): {
+  userId: 4,
+  action: 'settings.delete',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T23:54:09.422Z'
+}
+Audit log (console): {
+  userId: 4,
+  action: 'settings.delete',
+  resource: 'settings',
+  settingKey: 'settings',
+  timestamp: '2025-11-28T23:54:09.423Z'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup file not found on disk
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:295:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+🔌 Client disconnected: client_1764373931064_lfcbrxwlh (Total: 1)
+🔗 Client connected: client_1764374255910_iigc05ci3 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup file not found on disk
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:295:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup not found
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:288:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+🔌 Client disconnected: client_1764374255910_iigc05ci3 (Total: 1)
+🔌 Client disconnected: client_1764373724117_8oz8af67j (Total: 0)
+🔗 Client connected: client_1764374336069_9ifmex5tk (Total: 1)
+🔗 Client connected: client_1764374336161_p4nkukx99 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764374336069_9ifmex5tk (Total: 1)
+🔌 Client disconnected: client_1764374336161_p4nkukx99 (Total: 0)
+🔗 Client connected: client_1764374349873_8dxnwlic1 (Total: 1)
+🔗 Client connected: client_1764374349923_xnub2akzw (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764374349873_8dxnwlic1 (Total: 1)
+🔗 Client connected: client_1764374363202_qjl5agiv4 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup file not found on disk
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:295:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+🔄 Starting scheduled daily backup...
+⏳ Creating backup: Auto_Daily_Backup_____________...
+📦 Compressing backup...
+✅ Backup created: Auto_Daily_Backup_____________
+   Size: 0.17 MB
+   Location: /opt/lampp/htdocs/FixZone/backend/backups/database/Auto_Daily_Backup_____________.sql.gz
+✅ Daily backup completed: Auto Daily Backup ٢٩‏/١١‏/٢٠٢٥
+🔌 Client disconnected: client_1764374363202_qjl5agiv4 (Total: 1)
+🔌 Client disconnected: client_1764374349923_xnub2akzw (Total: 0)
+🔗 Client connected: client_1764374447454_a3xhs71ap (Total: 1)
+🔗 Client connected: client_1764374448260_bmdxi0p5o (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764374448260_bmdxi0p5o (Total: 1)
+🔌 Client disconnected: client_1764374447454_a3xhs71ap (Total: 0)
+🔗 Client connected: client_1764374454414_olhy3s20a (Total: 1)
+🔗 Client connected: client_1764374454493_dazn2wd69 (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+🔌 Client disconnected: client_1764374454414_olhy3s20a (Total: 1)
+🔌 Client disconnected: client_1764374454493_dazn2wd69 (Total: 0)
+🔗 Client connected: client_1764374614313_nokeoubwt (Total: 1)
+🔗 Client connected: client_1764374614567_nt5p7gsto (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error getting statistics: RangeError: Invalid time value
+    at Date.toISOString (<anonymous>)
+    at /opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:472:45
+    at Array.reduce (<anonymous>)
+    at DatabaseBackupService.getStatistics (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:471:31)
+    at async exports.getStatistics (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:152:19)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+Error in deleteBackup: Error: Backup file not found on disk
+    at DatabaseBackupService.getBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:295:15)
+    at async DatabaseBackupService.deleteBackup (/opt/lampp/htdocs/FixZone/backend/services/database/databaseBackupService.js:410:22)
+    at async exports.deleteBackup (/opt/lampp/htdocs/FixZone/backend/controllers/database/databaseBackupController.js:131:5)
+🔌 Client disconnected: client_1764374614567_nt5p7gsto (Total: 1)
+🔗 Client connected: client_1764374753463_1lofpvlmr (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔌 Client disconnected: client_1764374753463_1lofpvlmr (Total: 1)
+🔌 Client disconnected: client_1764374614313_nokeoubwt (Total: 0)
+🔗 Client connected: client_1764374854338_dp6w2bmbi (Total: 1)
+🔗 Client connected: client_1764374854772_mnizu6tkd (Total: 2)
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }
+🔍 [DEBUG] GET /repairs called
+🔍 [DEBUG] req.user: { id: 4, role: 1 }
+🔍 [DEBUG] req.query: {
+  status: 'pending',
+  page: 1,
+  pageSize: 10,
+  limit: 10,
+  sort: 'createdAt',
+  sortBy: 'createdAt',
+  order: 'DESC',
+  sortOrder: 'DESC'
+}
+✅ [AUTH] Token verified successfully for user: { id: 4, role: 1 }

@@ -7,6 +7,7 @@ export { SettingsCategoryTabs } from './SettingsCategoryTabs';
 export { SettingsSearch } from './SettingsSearch';
 export { SettingsHistory } from './SettingsHistory';
 export { SettingsBackup } from './SettingsBackup';
+export { UnifiedBackup } from './UnifiedBackup';
 export { SettingsImportExport } from './SettingsImportExport';
 export { SettingsHelp } from './SettingsHelp';
 

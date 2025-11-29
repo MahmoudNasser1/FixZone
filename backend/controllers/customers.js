@@ -1,9 +1,22 @@
 const db = require('../db');
+const SettingsIntegration = require('../utils/settingsIntegration');
 
 exports.getAllCustomers = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM Customer WHERE deletedAt IS NULL');
-    res.json(rows);
+    
+    // Get currency and locale settings for frontend
+    const currencySettings = await SettingsIntegration.getCurrencySettings();
+    const localeSettings = await SettingsIntegration.getLocaleSettings();
+    
+    res.json({
+      success: true,
+      data: rows,
+      settings: {
+        currency: currencySettings,
+        locale: localeSettings
+      }
+    });
   } catch (err) {
     console.error('Error in getAllCustomers:', err);
     res.status(500).json({ error: err.message });
@@ -14,7 +27,19 @@ exports.getCustomerById = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM Customer WHERE id = ? AND deletedAt IS NULL', [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Customer not found' });
-    res.json(rows[0]);
+    
+    // Get currency and locale settings for frontend
+    const currencySettings = await SettingsIntegration.getCurrencySettings();
+    const localeSettings = await SettingsIntegration.getLocaleSettings();
+    
+    res.json({
+      success: true,
+      data: rows[0],
+      settings: {
+        currency: currencySettings,
+        locale: localeSettings
+      }
+    });
   } catch (err) {
     console.error('Error in getCustomerById:', err);
     res.status(500).json({ error: err.message });

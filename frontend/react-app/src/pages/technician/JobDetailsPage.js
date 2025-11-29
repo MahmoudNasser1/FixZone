@@ -8,7 +8,9 @@ import {
 } from '../../services/technicianService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import JobTimer from '../../components/technician/JobTimer';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+import { CardSkeleton } from '../../components/ui/Skeletons';
+import PageTransition from '../../components/ui/PageTransition';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import {
@@ -129,11 +131,11 @@ export default function JobDetailsPage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center min-h-screen items-center"><LoadingSpinner /></div>;
+  if (loading) return <div className="min-h-screen bg-background p-8"><CardSkeleton count={3} /></div>;
   if (!job) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <PageTransition className="min-h-screen bg-background pb-12">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -142,7 +144,7 @@ export default function JobDetailsPage() {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/technician/jobs')}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowRight className="w-5 h-5" />
             <span>عودة للقائمة</span>
@@ -176,15 +178,15 @@ export default function JobDetailsPage() {
             />
 
             {/* Device & Issue Info */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-50 rounded-xl">
                     <Smartphone className="w-8 h-8 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{job.deviceType}</h2>
-                    <p className="text-gray-500">#{job.id} • {job.brand} {job.model}</p>
+                    <h2 className="text-xl font-bold text-foreground">{job.deviceType}</h2>
+                    <p className="text-muted-foreground">#{job.id} • {job.brand} {job.model}</p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-bold ${job.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
@@ -193,20 +195,20 @@ export default function JobDetailsPage() {
                 </span>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-gray-500" />
+              <div className="bg-muted/50 rounded-lg p-4 mb-6">
+                <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground" />
                   وصف المشكلة
                 </h3>
-                <p className="text-gray-700 leading-relaxed">{job.issueDescription}</p>
+                <p className="text-foreground leading-relaxed">{job.issueDescription}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <span>تاريخ الاستلام: {new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Wrench className="w-4 h-4" />
                   <span>نوع الصيانة: {job.repairType || 'Hardware'}</span>
                 </div>
@@ -214,9 +216,9 @@ export default function JobDetailsPage() {
             </div>
 
             {/* Parts Management */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-gray-500" />
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Package className="w-5 h-5 text-muted-foreground" />
                 قطع الغيار المستخدمة
               </h3>
 
@@ -225,7 +227,7 @@ export default function JobDetailsPage() {
                 <select
                   value={selectedPart}
                   onChange={(e) => setSelectedPart(e.target.value)}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="flex-1 bg-background border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-foreground"
                 >
                   <option value="">اختر قطعة غيار...</option>
                   {availableParts.map(part => (
@@ -237,7 +239,7 @@ export default function JobDetailsPage() {
                   min="1"
                   value={partQuantity}
                   onChange={(e) => setPartQuantity(parseInt(e.target.value))}
-                  className="w-20 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-20 bg-background border border-border rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-primary outline-none text-foreground"
                 />
                 <button
                   onClick={handleAddPart}
@@ -252,46 +254,46 @@ export default function JobDetailsPage() {
               {job.parts && job.parts.length > 0 ? (
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full text-right">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-muted/50">
                       <tr>
-                        <th className="px-4 py-2 text-xs font-medium text-gray-500">القطعة</th>
-                        <th className="px-4 py-2 text-xs font-medium text-gray-500">الكمية</th>
-                        <th className="px-4 py-2 text-xs font-medium text-gray-500">السعر</th>
-                        <th className="px-4 py-2 text-xs font-medium text-gray-500">الإجمالي</th>
+                        <th className="px-4 py-2 text-xs font-medium text-muted-foreground">القطعة</th>
+                        <th className="px-4 py-2 text-xs font-medium text-muted-foreground">الكمية</th>
+                        <th className="px-4 py-2 text-xs font-medium text-muted-foreground">السعر</th>
+                        <th className="px-4 py-2 text-xs font-medium text-muted-foreground">الإجمالي</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-border">
                       {job.parts.map((part, idx) => (
                         <tr key={idx}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{part.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{part.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{part.price} ج.م</td>
-                          <td className="px-4 py-3 text-sm font-bold text-gray-900">{part.price * part.quantity} ج.م</td>
+                          <td className="px-4 py-3 text-sm text-foreground">{part.name}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{part.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{part.price} ج.م</td>
+                          <td className="px-4 py-3 text-sm font-bold text-foreground">{part.price * part.quantity} ج.م</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-4 text-sm">لم يتم إضافة قطع غيار بعد</p>
+                <p className="text-center text-muted-foreground py-4 text-sm">لم يتم إضافة قطع غيار بعد</p>
               )}
             </div>
 
             {/* Notes Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-gray-500" />
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-muted-foreground" />
                 الملاحظات والتقرير
               </h3>
 
               <div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
                 {job.notes && job.notes.map((note) => (
-                  <div key={note.id} className="bg-gray-50 rounded-lg p-3">
+                  <div key={note.id} className="bg-muted/30 rounded-lg p-3">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-bold text-gray-900">{note.author}</span>
-                      <span className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleTimeString('ar-EG')}</span>
+                      <span className="text-xs font-bold text-foreground">{note.author}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleTimeString('ar-EG')}</span>
                     </div>
-                    <p className="text-sm text-gray-700">{note.content}</p>
+                    <p className="text-sm text-foreground">{note.content}</p>
                   </div>
                 ))}
               </div>
@@ -302,7 +304,7 @@ export default function JobDetailsPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="أضف ملاحظة فنية..."
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="flex-1 bg-background border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-foreground"
                   onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
                 />
                 <button
@@ -319,25 +321,25 @@ export default function JobDetailsPage() {
           <div className="space-y-6">
 
             {/* Customer Info */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider text-gray-500">بيانات العميل</h3>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider text-muted-foreground">بيانات العميل</h3>
 
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
                   {job.customerName?.charAt(0)}
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">{job.customerName}</p>
-                  <p className="text-xs text-gray-500">عميل مميز</p>
+                  <p className="font-bold text-foreground">{job.customerName}</p>
+                  <p className="text-xs text-muted-foreground">عميل مميز</p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Phone className="w-4 h-4" />
                   <span dir="ltr">{job.customerPhone}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>{job.customerAddress || 'العنوان غير مسجل'}</span>
                 </div>
@@ -350,18 +352,18 @@ export default function JobDetailsPage() {
             </div>
 
             {/* Status History */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider text-gray-500">سجل الحالة</h3>
-              <div className="relative border-r border-gray-200 mr-2 space-y-6">
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider text-muted-foreground">سجل الحالة</h3>
+              <div className="relative border-r border-border mr-2 space-y-6">
                 <div className="relative pr-6">
-                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
-                  <p className="text-sm font-bold text-gray-900">قيد العمل</p>
-                  <p className="text-xs text-gray-500">اليوم، 10:30 ص</p>
+                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-background"></div>
+                  <p className="text-sm font-bold text-foreground">قيد العمل</p>
+                  <p className="text-xs text-muted-foreground">اليوم، 10:30 ص</p>
                 </div>
                 <div className="relative pr-6">
-                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white"></div>
-                  <p className="text-sm font-medium text-gray-500">تم الاستلام</p>
-                  <p className="text-xs text-gray-400">أمس، 04:15 م</p>
+                  <div className="absolute -right-1.5 top-1.5 w-3 h-3 rounded-full bg-muted border-2 border-background"></div>
+                  <p className="text-sm font-medium text-muted-foreground">تم الاستلام</p>
+                  <p className="text-xs text-muted-foreground/70">أمس، 04:15 م</p>
                 </div>
               </div>
             </div>
@@ -369,6 +371,6 @@ export default function JobDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

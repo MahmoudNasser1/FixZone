@@ -158,13 +158,14 @@ const ConfirmModal = ({
 };
 
 // Complete Modal component that handles isOpen and onClose props
-const ModalWrapper = ({ isOpen, onClose, title, children, size = "md", ...props }) => {
+const ModalWrapper = ({ isOpen, onClose, title, description, children, size = "md", ...props }) => {
   return (
     <Modal open={isOpen} onOpenChange={onClose} {...props}>
       <ModalContent size={size}>
-        {title && (
+        {(title || description) && (
           <ModalHeader>
-            <ModalTitle>{title}</ModalTitle>
+            {title && <ModalTitle>{title}</ModalTitle>}
+            {description && <ModalDescription>{description}</ModalDescription>}
           </ModalHeader>
         )}
         {children}

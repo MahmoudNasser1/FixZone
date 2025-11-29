@@ -1,4 +1,5 @@
 const db = require('../db');
+const SettingsIntegration = require('../utils/settingsIntegration');
 
 class AnalyticsController {
   // 1. تحليل قيمة المخزون
@@ -58,6 +59,9 @@ class AnalyticsController {
         ? ((potentialProfit / parseFloat(totalValue.totalPurchaseValue)) * 100).toFixed(2)
         : 0;
 
+      // Get currency settings for value formatting
+      const currencySettings = await SettingsIntegration.getCurrencySettings();
+
       res.json({
         success: true,
         data: {
@@ -83,7 +87,11 @@ class AnalyticsController {
             sellingValue: parseFloat(wh.sellingValue || 0),
             quantity: parseInt(wh.quantity || 0),
             itemCount: parseInt(wh.itemCount || 0)
-          }))
+          })),
+          // Include settings for frontend
+          settings: {
+            currency: currencySettings
+          }
         }
       });
     } catch (error) {

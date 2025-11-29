@@ -108,6 +108,7 @@ import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPag
 
 // Technician Portal Pages
 import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
+import TechnicianSettingsPage from './pages/technician/TechnicianSettingsPage';
 // Already imported above individually
 
 // Debug Page
@@ -306,7 +307,7 @@ function App() {
             <Route path="/technician/jobs" element={<TechnicianRoute><JobsListPage /></TechnicianRoute>} />
             <Route path="/technician/jobs/:id" element={<TechnicianRoute><JobDetailsPage /></TechnicianRoute>} />
             <Route path="/technician/profile" element={<TechnicianRoute><TechnicianProfilePage /></TechnicianRoute>} />
-            <Route path="/technician/settings" element={<TechnicianRoute><CustomerSettingsPage /></TechnicianRoute>} /> {/* Reusing Settings Page for now */}
+            <Route path="/technician/settings" element={<TechnicianRoute><TechnicianSettingsPage /></TechnicianRoute>} />
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
 
 

@@ -132,6 +132,9 @@ exports.getAllItems = asyncHandler(async (req, res) => {
     WHERE i.deletedAt IS NULL
   `);
 
+  // Get currency settings for price formatting
+  const currencySettings = await SettingsIntegration.getCurrencySettings();
+
   res.json({
     success: true,
     data: {
@@ -142,7 +145,11 @@ exports.getAllItems = asyncHandler(async (req, res) => {
         totalItems,
         totalPages: Math.ceil(totalItems / limit)
       },
-      summary: stats[0]
+      summary: stats[0],
+      // Include settings for frontend
+      settings: {
+        currency: currencySettings
+      }
     }
   });
 });
@@ -435,11 +442,18 @@ exports.getStats = asyncHandler(async (req, res) => {
     ORDER BY totalValue DESC
   `);
 
+  // Get currency settings for value formatting
+  const currencySettings = await SettingsIntegration.getCurrencySettings();
+
   res.json({
     success: true,
     data: {
       overview: stats[0],
-      byCategory
+      byCategory,
+      // Include settings for frontend
+      settings: {
+        currency: currencySettings
+      }
     }
   });
 });

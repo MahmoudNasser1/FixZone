@@ -6,8 +6,9 @@ import {
 } from '../../services/technicianService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import TechnicianStatsCard from '../../components/technician/TechnicianStatsCard';
-import QuickActionCard from '../../components/customer/QuickActionCard'; // Reusing from customer
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import QuickActionCard from '../../components/customer/QuickActionCard';
+import { CardSkeleton } from '../../components/ui/Skeletons';
+import PageTransition from '../../components/ui/PageTransition';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import { ROLE_TECHNICIAN } from '../../constants/roles';
@@ -89,22 +90,29 @@ export default function TechnicianDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-background p-4">
+        <TechnicianHeader user={user} notificationCount={5} />
+        <div className="max-w-7xl mx-auto py-8 space-y-8">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-96 bg-muted animate-pulse rounded" />
+          </div>
+          <CardSkeleton count={4} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition className="min-h-screen bg-background">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">مرحباً، مهندس {user?.name} 👋</h1>
-          <p className="text-gray-600 mt-1">إليك ملخص لأدائك والمهام الموكلة إليك اليوم</p>
+          <h1 className="text-2xl font-bold text-foreground">مرحباً، مهندس {user?.name} 👋</h1>
+          <p className="text-muted-foreground mt-1">إليك ملخص لأدائك والمهام الموكلة إليك اليوم</p>
         </div>
 
         {/* Stats Grid */}
@@ -148,7 +156,7 @@ export default function TechnicianDashboard() {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">إجراءات سريعة</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">إجراءات سريعة</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <QuickActionCard
               icon={QrCode}
@@ -189,59 +197,59 @@ export default function TechnicianDashboard() {
         {/* Recent Jobs */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">آخر المهام</h2>
+            <h2 className="text-lg font-bold text-foreground">آخر المهام</h2>
             <button
               onClick={() => navigate('/technician/jobs')}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               عرض الكل
             </button>
           </div>
 
           {recentJobs.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wrench className="w-8 h-8 text-gray-400" />
+            <div className="bg-card rounded-xl shadow-sm border border-border p-8 text-center">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wrench className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد مهام حالياً</h3>
-              <p className="text-gray-500">أنت جاهز لاستلام مهام جديدة!</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">لا توجد مهام حالياً</h3>
+              <p className="text-muted-foreground">أنت جاهز لاستلام مهام جديدة!</p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-muted border-b border-border">
                     <tr>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">رقم المهمة</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">الجهاز</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">المشكلة</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">الحالة</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">التاريخ</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">الإجراء</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">رقم المهمة</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الجهاز</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">المشكلة</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الحالة</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">التاريخ</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الإجراء</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border">
                     {recentJobs.map((job) => (
-                      <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{job.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{job.deviceType}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate max-w-xs">{job.issueDescription}</td>
+                      <tr key={job.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">#{job.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{job.deviceType}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground truncate max-w-xs">{job.issueDescription}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-bold rounded-full ${job.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            job.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
+                          <span className={`px-2 py-1 text-xs font-bold rounded-full ${job.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                            job.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                             }`}>
                             {job.status === 'completed' ? 'مكتمل' :
                               job.status === 'in_progress' ? 'قيد التنفيذ' : 'معلق'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {new Date(job.createdAt).toLocaleDateString('ar-EG')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => navigate(`/technician/jobs/${job.id}`)}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            className="text-primary hover:text-primary/80 font-medium"
                           >
                             عرض التفاصيل
                           </button>
@@ -255,6 +263,6 @@ export default function TechnicianDashboard() {
           )}
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

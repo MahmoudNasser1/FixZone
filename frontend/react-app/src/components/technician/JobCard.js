@@ -34,20 +34,20 @@ export default function JobCard({ job, onClick }) {
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      case 'medium': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'high': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
+      case 'medium': return 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800';
+      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-green-100 text-green-700';
-      case 'in_progress': return 'bg-blue-100 text-blue-700';
-      case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'in_progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -56,22 +56,22 @@ export default function JobCard({ job, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
+      className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
     >
       {/* Status Stripe */}
       <div className={`absolute top-0 right-0 w-1 h-full ${job.status === 'completed' ? 'bg-green-500' :
-          job.status === 'in_progress' ? 'bg-blue-500' :
-            'bg-yellow-500'
+        job.status === 'in_progress' ? 'bg-blue-500' :
+          'bg-yellow-500'
         }`} />
 
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors">
-            <Icon className="w-6 h-6 text-gray-600 group-hover:text-blue-600" />
+          <div className="p-2.5 bg-muted rounded-lg group-hover:bg-primary/10 transition-colors">
+            <Icon className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900">{job.deviceType}</h3>
-            <p className="text-xs text-gray-500">#{job.id}</p>
+            <h3 className="font-bold text-foreground">{job.deviceType}</h3>
+            <p className="text-xs text-muted-foreground">#{job.id}</p>
           </div>
         </div>
 
@@ -81,13 +81,13 @@ export default function JobCard({ job, onClick }) {
       </div>
 
       <div className="mb-4">
-        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
           {job.issueDescription}
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <User className="w-3.5 h-3.5" />
             <span>{job.customerName}</span>

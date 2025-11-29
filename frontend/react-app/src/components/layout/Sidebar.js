@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
+import {
   Home, Wrench, Users, Warehouse, BarChart2, Settings, ChevronDown, ChevronRight,
-  DollarSign, FileText, Package, UserCheck, Calendar, MessageSquare, 
+  DollarSign, FileText, Package, UserCheck, Calendar, MessageSquare,
   TrendingUp, PieChart, Activity, Shield, Database, HelpCircle,
   Smartphone, Printer, Monitor, Cpu, HardDrive, Battery, Wifi,
   CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart
@@ -115,9 +115,9 @@ const Sidebar = () => {
   // Also handle case where API returns role as number but not roleId
   const roleId = user?.roleId || user?.role;
   const isAdmin = !!(user && (
-    roleId === 1 || 
+    roleId === 1 ||
     roleId === '1' ||
-    user.role === 1 || 
+    user.role === 1 ||
     user.role === 'admin' ||
     user.roleId === 1 ||
     user.roleId === '1'
@@ -162,7 +162,7 @@ const Sidebar = () => {
           <button
             onClick={() => handleMenuToggle(item.label)}
             className={cn(
-              "w-full flex items-center justify-between py-2.5 my-1 rounded-lg transition-all duration-200 hover:bg-gray-700/50 group",
+              "w-full flex items-center justify-between py-2.5 my-1 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground group",
               isSidebarOpen ? "px-3" : "justify-center px-2",
               isSubItem && "text-sm py-2"
             )}
@@ -171,7 +171,7 @@ const Sidebar = () => {
               <item.icon className={cn(
                 "flex-shrink-0 transition-colors",
                 isSidebarOpen ? "w-5 h-5 ml-3" : "w-6 h-6",
-                "group-hover:text-blue-400"
+                "text-muted-foreground group-hover:text-primary"
               )} />
               {isSidebarOpen && (
                 <span className="truncate font-medium">{item.label}</span>
@@ -193,10 +193,10 @@ const Sidebar = () => {
                   key={subItem.href}
                   to={subItem.href}
                   className={cn(
-                    "flex items-center py-2 px-3 rounded-md text-sm transition-all duration-200 hover:bg-gray-700/30",
-                    location.pathname === subItem.href 
-                      ? "bg-blue-600 text-white shadow-lg" 
-                      : "text-gray-300 hover:text-white"
+                    "flex items-center py-2 px-3 rounded-md text-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground",
+                    location.pathname === subItem.href
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground"
                   )}
                 >
                   {subItem.icon && (
@@ -216,24 +216,24 @@ const Sidebar = () => {
         key={item.href}
         to={item.href}
         className={cn(
-          "flex items-center py-2.5 my-1 rounded-lg transition-all duration-200 hover:bg-gray-700/50 group relative",
+          "flex items-center py-2.5 my-1 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground group relative",
           isSidebarOpen ? "px-3" : "justify-center px-2",
-          isActive 
-            ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700" 
-            : "text-gray-300 hover:text-white",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground",
           isSubItem && "text-sm py-2"
         )}
       >
         <item.icon className={cn(
           "flex-shrink-0 transition-colors",
           isSidebarOpen ? "w-5 h-5 ml-3" : "w-6 h-6",
-          isActive ? "text-white" : "group-hover:text-blue-400"
+          isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"
         )} />
         {isSidebarOpen && (
           <>
             <span className="truncate font-medium flex-1">{item.label}</span>
             {item.badge && (
-              <Badge 
+              <Badge
                 variant={item.badge === 'نقص' ? 'destructive' : item.badge === 'جديد' ? 'success' : 'default'}
                 size="sm"
                 className="mr-2 flex-shrink-0"
@@ -253,20 +253,20 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "flex-shrink-0 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 ease-in-out border-l border-gray-700 shadow-2xl",
+        "flex-shrink-0 bg-card text-card-foreground flex flex-col transition-all duration-300 ease-in-out border-l border-border shadow-xl",
         isSidebarOpen ? "w-72" : "w-16"
       )}
     >
       {/* Header */}
-      <div className="h-16 flex items-center justify-center border-b border-gray-700/50 bg-gray-900/50 backdrop-blur-sm">
+      <div className="h-16 flex items-center justify-center border-b border-border bg-card/50 backdrop-blur-sm">
         {isSidebarOpen ? (
           <div className="flex items-center space-x-2 space-x-reverse">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">FixZone</h1>
-              <p className="text-xs text-gray-400">نظام إدارة الإصلاحات</p>
+              <h1 className="text-xl font-bold text-foreground">FixZone</h1>
+              <p className="text-xs text-muted-foreground">نظام إدارة الإصلاحات</p>
             </div>
           </div>
         ) : (
@@ -283,14 +283,14 @@ const Sidebar = () => {
             {isSidebarOpen && (
               <button
                 onClick={() => handleSectionToggle(section.section)}
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-200 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 <span>{section.section}</span>
-                <ChevronDown 
+                <ChevronDown
                   className={cn(
                     "w-4 h-4 transition-transform",
                     openSections.has(section.section) ? "rotate-0" : "-rotate-90"
-                  )} 
+                  )}
                 />
               </button>
             )}
@@ -304,18 +304,18 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-700/50 bg-gray-900/30">
+      <div className="p-4 border-t border-border bg-muted/30">
         {isSidebarOpen ? (
           <div className="flex items-center space-x-3 space-x-reverse">
             <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">محمود ناصر</p>
-              <p className="text-xs text-gray-400 truncate">مدير النظام</p>
+              <p className="text-sm font-medium text-foreground truncate">محمود ناصر</p>
+              <p className="text-xs text-muted-foreground truncate">مدير النظام</p>
             </div>
             <Link to="/settings">
-              <Settings className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+              <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
             </Link>
           </div>
         ) : (

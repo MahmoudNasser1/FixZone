@@ -65,11 +65,11 @@ export default function CustomerDevicesPage() {
 
     const getStatusColor = (status) => {
         const statusMap = {
-            in_repair: '#F59E0B',
-            completed: '#10B981',
-            pending: '#3B82F6'
+            in_repair: 'text-warning',
+            completed: 'text-success',
+            pending: 'text-info'
         };
-        return statusMap[status] || '#6B7280';
+        return statusMap[status] || 'text-muted-foreground';
     };
 
     if (loading) {
@@ -81,7 +81,7 @@ export default function CustomerDevicesPage() {
     }
 
     return (
-        <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+        <div className="min-h-screen bg-background">
             <CustomerHeader user={user} notificationCount={3} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -89,14 +89,13 @@ export default function CustomerDevicesPage() {
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
                         <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' }}
+                            className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-purple to-purple-600"
                         >
                             <Package className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">أجهزتي</h1>
-                            <p className="text-sm text-gray-600">عرض جميع الأجهزة المسجلة وسجل الإصلاحات</p>
+                            <h1 className="text-2xl font-bold text-foreground">أجهزتي</h1>
+                            <p className="text-sm text-muted-foreground">عرض جميع الأجهزة المسجلة وسجل الإصلاحات</p>
                         </div>
                     </div>
                 </div>
@@ -105,13 +104,12 @@ export default function CustomerDevicesPage() {
                 {devices.length === 0 ? (
                     <div className="text-center py-16">
                         <div
-                            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
-                            style={{ background: '#F3F4F6' }}
+                            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted"
                         >
                             <PackageOpen className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد أجهزة مسجلة</h3>
-                        <p className="text-gray-600">لم تقم بإضافة أي أجهزة بعد</p>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد أجهزة مسجلة</h3>
+                        <p className="text-muted-foreground">لم تقم بإضافة أي أجهزة بعد</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,24 +120,12 @@ export default function CustomerDevicesPage() {
                             return (
                                 <div
                                     key={device.id}
-                                    className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 cursor-pointer border"
-                                    style={{ borderColor: '#E5E7EB' }}
+                                    className="bg-card rounded-xl shadow-md p-6 transition-all duration-300 cursor-pointer border border-border hover:-translate-y-1 hover:shadow-xl hover:border-brand-purple"
                                     onClick={() => navigate(`/customer/devices/${device.id}`)}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-4px)';
-                                        e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1)';
-                                        e.currentTarget.style.borderColor = '#8B5CF6';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-                                        e.currentTarget.style.borderColor = '#E5E7EB';
-                                    }}
                                 >
                                     {/* Icon */}
                                     <div
-                                        className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center"
-                                        style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' }}
+                                        className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-brand-purple to-purple-600"
                                     >
                                         <DeviceIcon className="w-8 h-8 text-white" />
                                     </div>
@@ -157,15 +143,14 @@ export default function CustomerDevicesPage() {
                                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                         <div className="text-center">
                                             <p className="text-xs text-gray-500">عدد الإصلاحات</p>
-                                            <p className="text-lg font-bold" style={{ color: '#8B5CF6' }}>
+                                            <p className="text-lg font-bold text-brand-purple">
                                                 {device.totalRepairs || 0}
                                             </p>
                                         </div>
                                         <div className="text-center">
                                             <p className="text-xs text-gray-500">الحالة</p>
                                             <p
-                                                className="text-sm font-semibold"
-                                                style={{ color: statusColor }}
+                                                className={`text-sm font-semibold ${statusColor}`}
                                             >
                                                 {device.status === 'in_repair' ? 'قيد الإصلاح' :
                                                     device.status === 'completed' ? 'مكتمل' : 'معلق'}

@@ -6,10 +6,10 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import {
   SettingsCategoryTabs,
   SettingsHistory,
-  SettingsBackup,
   SettingsImportExport,
   SettingsHelp
 } from '../../components/settings';
+import { UnifiedBackup } from '../../components/settings/UnifiedBackup';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -823,7 +823,7 @@ export default function SettingsDashboard() {
   const mainTabs = [
     { key: 'settings', label: 'الإعدادات', icon: '⚙️' },
     { key: 'history', label: 'التاريخ', icon: '📜' },
-    { key: 'backup', label: 'النسخ الاحتياطية', icon: '💾' },
+    { key: 'backup', label: 'النسخ الاحتياطي', icon: '💾' },
     { key: 'import-export', label: 'استيراد/تصدير', icon: '📥' },
     { key: 'help', label: 'المساعدة', icon: '❓' },
   ];
@@ -907,9 +907,9 @@ export default function SettingsDashboard() {
         <SettingsHistory />
       )}
 
-      {/* Backup Tab */}
+      {/* Backup Tab (Unified) */}
       {activeTab === 'backup' && (
-        <SettingsBackup />
+        <UnifiedBackup />
       )}
 
       {/* Import/Export Tab */}

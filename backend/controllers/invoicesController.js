@@ -1,5 +1,6 @@
 const db = require('../db');
 const { validationResult } = require('express-validator');
+const SettingsIntegration = require('../utils/settingsIntegration');
 
 /**
  * Invoice Controller - Comprehensive invoice management
@@ -10,6 +11,10 @@ class InvoicesController {
   // Get new invoice page data
   async getNewInvoicePage(req, res) {
     try {
+      // Get currency settings from Settings Integration
+      const currencySettings = await SettingsIntegration.getCurrencySettings();
+      const companySettings = await SettingsIntegration.getCompanySettings();
+      
       // Return empty invoice data for new invoice creation
       res.json({
         success: true,
@@ -18,13 +23,19 @@ class InvoicesController {
           totalAmount: 0,
           amountPaid: 0,
           status: 'draft',
-          currency: 'EGP',
+          currency: currencySettings.code || 'EGP',
+          currencySymbol: currencySettings.symbol || 'ج.م',
           taxAmount: 0,
           discountAmount: 0,
           notes: '',
           dueDate: null,
           items: [],
-          payments: []
+          payments: [],
+          // Include settings for frontend
+          settings: {
+            currency: currencySettings,
+            company: companySettings
+          }
         }
       });
     } catch (error) {
@@ -203,6 +214,9 @@ class InvoicesController {
       
       const [stats] = await db.query(statsQuery);
 
+      // Get settings for invoices display
+      const currencySettings = await SettingsIntegration.getCurrencySettings();
+
       res.json({
         success: true,
         data: {
@@ -213,7 +227,11 @@ class InvoicesController {
             totalItems: totalCount,
             itemsPerPage: parseInt(limit)
           },
-          stats: stats[0]
+          stats: stats[0],
+          // Include settings for frontend
+          settings: {
+            currency: currencySettings
+          }
         }
       });
     } catch (error) {
@@ -304,6 +322,13 @@ class InvoicesController {
         correctStatus = 'draft';
       }
 
+      // Get settings for invoice display
+      const [currencySettings, companySettings, localeSettings] = await Promise.all([
+        SettingsIntegration.getCurrencySettings(),
+        SettingsIntegration.getCompanySettings(),
+        SettingsIntegration.getLocaleSettings()
+      ]);
+
       res.json({
         success: true,
         data: {
@@ -313,7 +338,13 @@ class InvoicesController {
           items,
           payments,
           itemsCount: items.length,
-          calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+          calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0),
+          // Include settings for frontend
+          settings: {
+            currency: currencySettings,
+            company: companySettings,
+            locale: localeSettings
+          }
         }
       });
     } catch (error) {
@@ -333,7 +364,7 @@ class InvoicesController {
         totalAmount = 0,
         amountPaid = 0,
         status = 'draft',
-        currency = 'EGP',
+        currency = null,
         taxAmount = 0,
         discountAmount = 0,
         notes = '',
@@ -410,8 +441,12 @@ class InvoicesController {
         // If this guard query fails, proceed to main try/catch to surface as server error
       }
 
-      // Create invoice without transaction for now
-      const invoiceCurrency = currency || 'EGP';
+      // Get currency from settings if not provided
+      let invoiceCurrency = currency;
+      if (!invoiceCurrency) {
+        const currencySettings = await SettingsIntegration.getCurrencySettings();
+        invoiceCurrency = currencySettings.code || 'EGP';
+      }
       
       // إذا كان customerId محدد وليس repairRequestId، استخدم customerId مباشرة
       // إذا كان repairRequestId محدد، احصل على customerId من RepairRequest
@@ -439,7 +474,7 @@ class InvoicesController {
         totalAmount,
         amountPaid,
         status,
-        invoiceCurrency,
+        currency: invoiceCurrency,
         taxAmount,
         discountAmount,
         dueDate
@@ -538,7 +573,12 @@ class InvoicesController {
         dueDate
       } = req.body;
       
-      const invoiceCurrency = currency || 'EGP';
+      // Get currency from settings if not provided
+      let invoiceCurrency = currency;
+      if (!invoiceCurrency) {
+        const currencySettings = await SettingsIntegration.getCurrencySettings();
+        invoiceCurrency = currencySettings.code || 'EGP';
+      }
 
       // Check if invoice exists
       const [existing] = await db.query(`
@@ -1172,7 +1212,7 @@ class InvoicesController {
       const { repairId } = req.params;
       const {
         status = 'draft',
-        currency = 'EGP',
+        currency = null,
         taxAmount = 0,
         discountAmount = 0,
         notes = '',

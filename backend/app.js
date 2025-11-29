@@ -98,6 +98,7 @@ const notificationsRouter = require('./routes/notifications');
 const notificationTemplatesRouter = require('./routes/notificationTemplates');
 const systemSettingsRouter = require('./routes/systemSettings');
 const settingsRouter = require('./routes/settings'); // New enhanced settings router
+const monitoringRouter = require('./routes/monitoring'); // Monitoring routes
 const auditLogsRouter = require('./routes/auditLogs');
 const invoiceTemplatesRouter = require('./routes/invoiceTemplates');
 const deviceBatchesRouter = require('./routes/deviceBatches');
@@ -123,6 +124,7 @@ const analyticsRouter = require('./routes/analytics');
 const vendorPaymentsRouter = require('./routes/vendorPayments');
 const customerDevicesRouter = require('./routes/customerDevices');
 const customerNotificationsRouter = require('./routes/customerNotifications');
+const databaseBackupRouter = require('./routes/database/backup');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -173,6 +175,7 @@ router.use('/notifications', notificationsRouter);
 
 router.use('/systemsettings', systemSettingsRouter); // Legacy route (keep for backward compatibility)
 router.use('/settings', settingsRouter); // New enhanced settings route
+router.use('/monitoring', monitoringRouter); // Monitoring routes
 router.use('/auditlogs', auditLogsRouter);
 router.use('/invoicetemplates', invoiceTemplatesRouter);
 router.use('/reports', reportRoutes);
@@ -197,6 +200,7 @@ router.use('/stock-count', stockCountRouter);
 router.use('/stock-transfer', stockTransferRouter);
 router.use('/barcode', barcodeRouter);
 router.use('/analytics', analyticsRouter);
+router.use('/database/backup', databaseBackupRouter);
 
 // Error handling middleware (must be last)
 router.use(errorHandler);

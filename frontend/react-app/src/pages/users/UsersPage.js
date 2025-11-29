@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import { TableSkeleton } from '../../components/ui/Skeletons';
 
 export default function UsersPage() {
   const notifications = useNotifications();
@@ -85,73 +86,106 @@ export default function UsersPage() {
   const roleOptions = useMemo(() => [{ id: '', name: 'الكل' }, ...roles], [roles]);
 
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">إدارة المستخدمين</h1>
+    <div className="p-6 space-y-6 bg-background min-h-screen">
+      <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>
 
       {/* أدوات التحكم */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
         <div className="md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">بحث بالاسم/البريد</label>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث..." className="w-full border rounded p-2" />
+          <label className="block text-sm font-medium text-foreground mb-1">بحث بالاسم/البريد</label>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="ابحث..."
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">الدور</label>
-          <select value={roleId} onChange={(e) => setRoleId(e.target.value)} className="w-full border rounded p-2">
+          <label className="block text-sm font-medium text-foreground mb-1">الدور</label>
+          <select
+            value={roleId}
+            onChange={(e) => setRoleId(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
             {roleOptions.map((r) => (
               <option key={String(r.id)} value={r.id}>{r.name ?? r.id}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">الترتيب</label>
-          <select value={`${sortBy}:${sortDir}`} onChange={(e) => {
-            const [sb, sd] = e.target.value.split(':');
-            setSortBy(sb); setSortDir(sd);
-          }} className="w-full border rounded p-2">
+          <label className="block text-sm font-medium text-foreground mb-1">الترتيب</label>
+          <select
+            value={`${sortBy}:${sortDir}`}
+            onChange={(e) => {
+              const [sb, sd] = e.target.value.split(':');
+              setSortBy(sb); setSortDir(sd);
+            }}
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
             <option value="createdAt:desc">الأحدث أولاً</option>
             <option value="createdAt:asc">الأقدم أولاً</option>
             <option value="name:asc">الاسم (تصاعدي)</option>
             <option value="name:desc">الاسم (تنازلي)</option>
           </select>
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} />
+        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeInactive}
+            onChange={(e) => setIncludeInactive(e.target.checked)}
+            className="rounded border-input text-primary focus:ring-primary"
+          />
           تضمين غير النشطين
         </label>
       </div>
 
-      {loading && <div>جاري التحميل...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+      {loading && <TableSkeleton rows={5} columns={6} />}
+      {error && <div className="text-destructive">{error}</div>}
 
       {!loading && !error && (
-        <div className="overflow-auto">
-          <table className="min-w-full border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 border">#</th>
-                <th className="p-2 border">الاسم</th>
-                <th className="p-2 border">البريد</th>
-                <th className="p-2 border">الدور</th>
-                <th className="p-2 border">نشط؟</th>
-                <th className="p-2 border">إجراءات</th>
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-muted">
+              <tr>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">#</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">الاسم</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">البريد</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">الدور</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">نشط؟</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">إجراءات</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border bg-card">
               {users.map((u) => (
-                <tr key={u.id} className={!u.isActive ? 'opacity-70' : ''}>
-                  <td className="p-2 border">{u.id}</td>
-                  <td className="p-2 border">{u.name}</td>
-                  <td className="p-2 border">{u.email}</td>
-                  <td className="p-2 border">
-                    <select value={u.roleId ?? ''} onChange={(e) => handleChangeRole(u, e.target.value)} className="border rounded p-1">
+                <tr key={u.id} className={`hover:bg-muted/50 transition-colors ${!u.isActive ? 'opacity-60' : ''}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{u.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{u.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{u.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <select
+                      value={u.roleId ?? ''}
+                      onChange={(e) => handleChangeRole(u, e.target.value)}
+                      className="px-2 py-1 rounded border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
                       {roles.map((r) => (
                         <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
                       ))}
                     </select>
                   </td>
-                  <td className="p-2 border">{u.isActive ? 'نعم' : 'لا'}</td>
-                  <td className="p-2 border">
-                    <button onClick={() => handleToggleActive(u)} className={`px-3 py-1 rounded text-white ${u.isActive ? 'bg-red-600' : 'bg-green-600'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${u.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
+                      {u.isActive ? 'نعم' : 'لا'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button
+                      onClick={() => handleToggleActive(u)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium text-white transition-colors ${u.isActive
+                        ? 'bg-destructive hover:bg-destructive/90'
+                        : 'bg-green-600 hover:bg-green-700'
+                        }`}
+                    >
                       {u.isActive ? 'تعطيل' : 'تفعيل'}
                     </button>
                   </td>

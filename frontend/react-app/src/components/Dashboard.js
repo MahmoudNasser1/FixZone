@@ -5,22 +5,22 @@ import { Wrench, CheckCircle, Clock, PlusCircle, UserPlus } from 'lucide-react';
 const Dashboard = () => {
   const stats = [
     {
-      title: 'Total Repairs',
+      title: 'إجمالي الإصلاحات',
       value: '1,254',
       icon: <Wrench className="h-4 w-4 text-muted-foreground" />,
     },
     {
-      title: 'Pending',
+      title: 'قيد الانتظار',
       value: '82',
       icon: <Clock className="h-4 w-4 text-muted-foreground" />,
     },
     {
-      title: 'Completed',
+      title: 'مكتملة',
       value: '1,100',
       icon: <CheckCircle className="h-4 w-4 text-muted-foreground" />,
     },
     {
-      title: 'New Customers',
+      title: 'عملاء جدد',
       value: '73',
       icon: <UserPlus className="h-4 w-4 text-muted-foreground" />,
     },
@@ -28,30 +28,30 @@ const Dashboard = () => {
 
   const recentActivities = [
     {
-      icon: <PlusCircle className="h-5 w-5 text-green-500" />,
-      description: 'New repair request #1256 for iPhone 13.',
-      time: '5m ago',
+      icon: <PlusCircle className="h-5 w-5 text-brand-green" />,
+      description: 'طلب إصلاح جديد #1256 لهاتف iPhone 13.',
+      time: 'منذ 5 دقائق',
     },
     {
-      icon: <CheckCircle className="h-5 w-5 text-blue-500" />,
-      description: 'Repair #1250 marked as completed.',
-      time: '1h ago',
+      icon: <CheckCircle className="h-5 w-5 text-brand-blue" />,
+      description: 'تم اكتمال الإصلاح #1250.',
+      time: 'منذ ساعة',
     },
     {
-      icon: <UserPlus className="h-5 w-5 text-purple-500" />,
-      description: 'New customer "Ali Hassan" was registered.',
-      time: '3h ago',
+      icon: <UserPlus className="h-5 w-5 text-brand-purple" />,
+      description: 'تسجيل عميل جديد "علي حسن".',
+      time: 'منذ 3 ساعات',
     },
-     {
-      icon: <PlusCircle className="h-5 w-5 text-green-500" />,
-      description: 'New repair request #1255 for Samsung S22.',
-      time: '6h ago',
+    {
+      icon: <PlusCircle className="h-5 w-5 text-brand-green" />,
+      description: 'طلب إصلاح جديد #1255 لهاتف Samsung S22.',
+      time: 'منذ 6 ساعات',
     },
   ];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-6 text-foreground">لوحة التحكم</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         {stats.map((stat, index) => (
           <Card key={index}>
@@ -69,15 +69,15 @@ const Dashboard = () => {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>النشاطات الأخيرة</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center">
+                <div key={index} className="flex items-center gap-4">
                   {activity.icon}
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm">{activity.description}</p>
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground">{activity.description}</p>
                   </div>
                   <p className="text-sm text-muted-foreground">{activity.time}</p>
                 </div>
@@ -87,12 +87,12 @@ const Dashboard = () => {
         </Card>
         {/* Placeholder for another card, e.g., Overdue Tasks */}
         <Card>
-            <CardHeader>
-                <CardTitle>Overdue Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">No overdue tasks.</p>
-            </CardContent>
+          <CardHeader>
+            <CardTitle>المهام المتأخرة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">لا توجد مهام متأخرة.</p>
+          </CardContent>
         </Card>
       </div>
     </div>

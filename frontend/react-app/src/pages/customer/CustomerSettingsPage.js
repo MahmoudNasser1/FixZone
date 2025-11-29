@@ -49,38 +49,38 @@ export default function CustomerSettingsPage() {
 
         if (passwordData.newPassword.length < 6) {
             notifications.error('خطأ', { message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
-        return;
+            return;
         }
 
-      setPasswordLoading(true);
+        setPasswordLoading(true);
 
         // TODO: API call
-      try {
-        const response = await api.request('/auth/customer/change-password', {
-          method: 'POST',
-          body: JSON.stringify({
-            currentPassword: passwordData.currentPassword,
-            newPassword: passwordData.newPassword
-          })
-        });
+        try {
+            const response = await api.request('/auth/customer/change-password', {
+                method: 'POST',
+                body: JSON.stringify({
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
 
-        if (response.success) {
-          notifications.success('نجاح', { message: 'تم تغيير كلمة المرور بنجاح' });
-          setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-          });
-          markPasswordResetComplete();
-        } else {
-          throw new Error(response.message || 'فشل تغيير كلمة المرور');
+            if (response.success) {
+                notifications.success('نجاح', { message: 'تم تغيير كلمة المرور بنجاح' });
+                setPasswordData({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                });
+                markPasswordResetComplete();
+            } else {
+                throw new Error(response.message || 'فشل تغيير كلمة المرور');
+            }
+        } catch (apiError) {
+            console.error('Change customer password error:', apiError);
+            notifications.error('خطأ', { message: apiError.message || 'خطأ في تغيير كلمة المرور' });
+        } finally {
+            setPasswordLoading(false);
         }
-      } catch (apiError) {
-        console.error('Change customer password error:', apiError);
-        notifications.error('خطأ', { message: apiError.message || 'خطأ في تغيير كلمة المرور' });
-      } finally {
-        setPasswordLoading(false);
-      }
     };
 
     const handleSaveNotifications = () => {
@@ -95,7 +95,7 @@ export default function CustomerSettingsPage() {
     ];
 
     return (
-        <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+        <div className="min-h-screen bg-background">
             <CustomerHeader user={user} notificationCount={3} />
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -103,14 +103,13 @@ export default function CustomerSettingsPage() {
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
                         <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)' }}
+                            className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600"
                         >
                             <SettingsIcon className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">الإعدادات</h1>
-                            <p className="text-sm text-gray-600">إدارة إعدادات الحساب والتفضيلات</p>
+                            <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
+                            <p className="text-sm text-muted-foreground">إدارة إعدادات الحساب والتفضيلات</p>
                         </div>
                     </div>
                 </div>
@@ -123,14 +122,10 @@ export default function CustomerSettingsPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="flex items-center gap-2 px-4 py-3 rounded-lg font-medium whitespace-nowrap transition-all"
-                                style={{
-                                    background: activeTab === tab.id
-                                        ? 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'
-                                        : 'white',
-                                    color: activeTab === tab.id ? 'white' : '#374151',
-                                    border: `1px solid ${activeTab === tab.id ? '#053887' : '#E5E7EB'}`
-                                }}
+                                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                        ? 'bg-gradient-to-r from-brand-blue to-brand-blue-light text-white border border-brand-blue'
+                                        : 'bg-card text-foreground border border-border hover:bg-muted'
+                                    }`}
                             >
                                 <TabIcon className="w-4 h-4" />
                                 {tab.label}
@@ -140,14 +135,14 @@ export default function CustomerSettingsPage() {
                 </div>
 
                 {/* Content */}
-                <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="bg-card rounded-xl shadow-md p-6 border border-border">
                     {/* Security Tab */}
                     {activeTab === 'security' && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">تغيير كلمة المرور</h2>
+                            <h2 className="text-xl font-bold text-foreground mb-4">تغيير كلمة المرور</h2>
                             <form onSubmit={handlePasswordChange} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         كلمة المرور الحالية
                                     </label>
                                     <input
@@ -155,12 +150,12 @@ export default function CustomerSettingsPage() {
                                         value={passwordData.currentPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition-all"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         كلمة المرور الجديدة
                                     </label>
                                     <input
@@ -168,12 +163,12 @@ export default function CustomerSettingsPage() {
                                         value={passwordData.newPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition-all"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         تأكيد كلمة المرور الجديدة
                                     </label>
                                     <input
@@ -181,15 +176,14 @@ export default function CustomerSettingsPage() {
                                         value={passwordData.confirmPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition-all"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={passwordLoading}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-brand-blue to-brand-blue-light hover:-translate-y-0.5"
                                 >
                                     <Save className="w-4 h-4" />
                                     {passwordLoading ? 'جاري الحفظ...' : 'حفظ التغييرات'}
@@ -204,12 +198,12 @@ export default function CustomerSettingsPage() {
                     {/* Notifications Tab */}
                     {activeTab === 'notifications' && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">إعدادات الإشعارات</h2>
+                            <h2 className="text-xl font-bold text-foreground mb-4">إعدادات الإشعارات</h2>
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                                <div className="flex items-center justify-between py-3 border-b border-border">
                                     <div>
-                                        <p className="font-medium text-gray-900">إشعارات البريد الإلكتروني</p>
-                                        <p className="text-sm text-gray-600">استقبال الإشعارات عبر البريد</p>
+                                        <p className="font-medium text-foreground">إشعارات البريد الإلكتروني</p>
+                                        <p className="text-sm text-muted-foreground">استقبال الإشعارات عبر البريد</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -226,10 +220,10 @@ export default function CustomerSettingsPage() {
                                     </label>
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                                <div className="flex items-center justify-between py-3 border-b border-border">
                                     <div>
-                                        <p className="font-medium text-gray-900">إشعارات SMS</p>
-                                        <p className="text-sm text-gray-600">استقبال الإشعارات عبر الرسائل النصية</p>
+                                        <p className="font-medium text-foreground">إشعارات SMS</p>
+                                        <p className="text-sm text-muted-foreground">استقبال الإشعارات عبر الرسائل النصية</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -246,10 +240,10 @@ export default function CustomerSettingsPage() {
                                     </label>
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                                <div className="flex items-center justify-between py-3 border-b border-border">
                                     <div>
-                                        <p className="font-medium text-gray-900">تحديثات الإصلاح</p>
-                                        <p className="text-sm text-gray-600">إشعارات عند تغيير حالة الإصلاح</p>
+                                        <p className="font-medium text-foreground">تحديثات الإصلاح</p>
+                                        <p className="text-sm text-muted-foreground">إشعارات عند تغيير حالة الإصلاح</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -266,10 +260,10 @@ export default function CustomerSettingsPage() {
                                     </label>
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                                <div className="flex items-center justify-between py-3 border-b border-border">
                                     <div>
-                                        <p className="font-medium text-gray-900">تذكير الفواتير</p>
-                                        <p className="text-sm text-gray-600">إشعارات عند اقتراب موعد السداد</p>
+                                        <p className="font-medium text-foreground">تذكير الفواتير</p>
+                                        <p className="text-sm text-muted-foreground">إشعارات عند اقتراب موعد السداد</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -288,8 +282,7 @@ export default function CustomerSettingsPage() {
 
                                 <button
                                     onClick={handleSaveNotifications}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all mt-4"
-                                    style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all mt-4 bg-gradient-to-r from-brand-blue to-brand-blue-light hover:-translate-y-0.5"
                                 >
                                     <Save className="w-4 h-4" />
                                     حفظ الإعدادات
@@ -301,12 +294,12 @@ export default function CustomerSettingsPage() {
                     {/* Preferences Tab */}
                     {activeTab === 'preferences' && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">التفضيلات العامة</h2>
+                            <h2 className="text-xl font-bold text-foreground mb-4">التفضيلات العامة</h2>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-gray-900">الوضع الليلي</p>
-                                        <p className="text-sm text-gray-600">فعّل الثيم الداكن في الواجهة</p>
+                                        <p className="font-medium text-foreground">الوضع الليلي</p>
+                                        <p className="text-sm text-muted-foreground">فعّل الثيم الداكن في الواجهة</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -320,8 +313,8 @@ export default function CustomerSettingsPage() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-gray-900">الإشعارات</p>
-                                        <p className="text-sm text-gray-600">أوقف أو شغّل كل الإشعارات دفعة واحدة</p>
+                                        <p className="font-medium text-foreground">الإشعارات</p>
+                                        <p className="text-sm text-muted-foreground">أوقف أو شغّل كل الإشعارات دفعة واحدة</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -334,21 +327,21 @@ export default function CustomerSettingsPage() {
                                     </label>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         اللغة
                                     </label>
-                                    <select className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <select className="w-full px-4 py-3 rounded-lg border-2 border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition-all">
                                         <option value="ar">العربية</option>
                                         <option value="en">English</option>
                                     </select>
                                 </div>
 
-                                <div className="pt-6 border-t border-gray-200">
-                                    <h3 className="text-lg font-bold text-red-600 mb-2 flex items-center gap-2">
+                                <div className="pt-6 border-t border-border">
+                                    <h3 className="text-lg font-bold text-destructive mb-2 flex items-center gap-2">
                                         <Trash2 className="w-5 h-5" />
                                         منطقة الخطر
                                     </h3>
-                                    <p className="text-sm text-gray-600 mb-4">
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         حذف الحساب سيؤدي إلى فقدان جميع بياناتك بشكل نهائي
                                     </p>
                                     <button

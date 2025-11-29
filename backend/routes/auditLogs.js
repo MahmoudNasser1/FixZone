@@ -32,17 +32,57 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const { action, actionType, details, entityType, entityId, userId, ipAddress, beforeValue, afterValue } = req.body;
   if (!action || !actionType || !userId) {
-    return res.status(400).send('Action, actionType, and userId are required');
+    return res.status(400).json({ 
+      error: 'Action, actionType, and userId are required',
+      message: 'خطأ في البيانات المدخلة - Action, actionType, and userId مطلوبة'
+    });
   }
   try {
+    // التحقق من وجود userId في جدول User
+    if (userId) {
+      const [userCheck] = await db.query('SELECT id FROM User WHERE id = ? AND deletedAt IS NULL', [userId]);
+      if (userCheck.length === 0) {
+        console.error(`User with ID ${userId} not found`);
+        return res.status(400).json({ 
+          error: 'User not found',
+          message: `المستخدم برقم ${userId} غير موجود`
+        });
+      }
+    }
+    
     const [result] = await db.query(
       'INSERT INTO AuditLog (action, actionType, details, entityType, entityId, userId, ipAddress, beforeValue, afterValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [action, actionType, details, entityType, entityId, userId, ipAddress, beforeValue, afterValue]
     );
-    res.status(201).json({ id: result.insertId, action, actionType, details, entityType, entityId, userId, ipAddress, beforeValue, afterValue });
+    res.status(201).json({ 
+      id: result.insertId, 
+      action, 
+      actionType, 
+      details, 
+      entityType, 
+      entityId, 
+      userId, 
+      ipAddress, 
+      beforeValue, 
+      afterValue,
+      createdAt: new Date().toISOString()
+    });
   } catch (err) {
     console.error('Error creating audit log:', err);
-    res.status(500).send('Server Error');
+    // إرجاع رسالة خطأ أوضح
+    let errorMessage = 'Server Error';
+    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      errorMessage = `المستخدم برقم ${userId} غير موجود في قاعدة البيانات`;
+    } else if (err.code === 'ER_BAD_FIELD_ERROR') {
+      errorMessage = 'خطأ في بنية قاعدة البيانات';
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    res.status(500).json({ 
+      error: 'Server Error',
+      message: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 

@@ -22,8 +22,19 @@ export const useSettingsBackup = () => {
       const response = await api.listBackups(pagination);
       
       if (response.success) {
-        setBackups(response.data || []);
-        return response.data;
+        // Ensure data is an array (handle both array and object with backups property)
+        let backupsData = response.data;
+        if (backupsData && !Array.isArray(backupsData)) {
+          // If data is an object with backups property, use that
+          if (backupsData.backups && Array.isArray(backupsData.backups)) {
+            backupsData = backupsData.backups;
+          } else {
+            // If it's not an array and doesn't have backups property, make it an empty array
+            backupsData = [];
+          }
+        }
+        setBackups(Array.isArray(backupsData) ? backupsData : []);
+        return backupsData;
       } else {
         throw new Error(response.message || 'Failed to load backups');
       }

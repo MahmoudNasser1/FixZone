@@ -22,9 +22,9 @@ export default function TechnicianStatsCard({
     onClick
 }) {
     const getChangeColor = () => {
-        if (changeType === 'increase') return 'text-green-600 bg-green-50';
-        if (changeType === 'decrease') return 'text-red-600 bg-red-50';
-        return 'text-gray-600 bg-gray-50';
+        if (changeType === 'increase') return 'text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400';
+        if (changeType === 'decrease') return 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400';
+        return 'text-muted-foreground bg-muted';
     };
 
     const getChangeIcon = () => {
@@ -38,7 +38,7 @@ export default function TechnicianStatsCard({
     return (
         <div
             onClick={onClick}
-            className="relative overflow-hidden bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+            className="relative overflow-hidden bg-card rounded-2xl p-6 shadow-sm border border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
         >
             {/* Background Gradient Overlay */}
             <div
@@ -65,10 +65,10 @@ export default function TechnicianStatsCard({
 
                 {/* Content */}
                 <div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1 tracking-tight">{value}</h3>
-                    <p className="text-sm font-medium text-gray-500">{title}</p>
+                    <h3 className="text-3xl font-bold text-foreground mb-1 tracking-tight">{value}</h3>
+                    <p className="text-sm font-medium text-muted-foreground">{title}</p>
                     {subtitle && (
-                        <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">{subtitle}</p>
                     )}
                 </div>
             </div>

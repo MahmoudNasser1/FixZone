@@ -537,13 +537,14 @@ class ApiService {
   // ==================
   async addRepairNote(repairId, content, currentUserId = 1) {
     // يستخدم جدول AuditLog لتخزين الملاحظات المرتبطة بطلب الإصلاح
+    // actionType يجب أن يكون أحد القيم المسموحة في enum: 'CREATE','UPDATE','DELETE','LOGIN'
     const payload = {
       action: 'repair_note',
-      actionType: 'NOTE',
+      actionType: 'CREATE', // استخدام 'CREATE' لأنها إنشاء ملاحظة جديدة
       details: content,
       entityType: 'RepairRequest',
       entityId: Number(repairId),
-      userId: currentUserId,
+      userId: Number(currentUserId) || 1, // التأكد من أن userId رقم صحيح
       ipAddress: '127.0.0.1',
       beforeValue: null,
       afterValue: null,
@@ -1047,7 +1048,85 @@ class ApiService {
     });
   }
 
-  // Backup/Restore APIs
+  // ==================
+  // Database Backup APIs
+  // ==================
+  async createDatabaseBackup(name, description, options = {}) {
+    return this.request('/database/backup', {
+      method: 'POST',
+      body: JSON.stringify({ name, description, ...options }),
+    });
+  }
+
+  async listDatabaseBackups(filters = {}) {
+    const qs = new URLSearchParams(filters).toString();
+    return this.request(`/database/backup${qs ? `?${qs}` : ''}`);
+  }
+
+  async getDatabaseBackup(id) {
+    return this.request(`/database/backup/${id}`);
+  }
+
+  async restoreDatabaseBackup(id, options = {}) {
+    return this.request(`/database/backup/${id}/restore`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async deleteDatabaseBackup(id) {
+    return this.request(`/database/backup/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getDatabaseBackupStatistics() {
+    return this.request('/database/backup/statistics');
+  }
+
+  async cleanupOldDatabaseBackups(daysToKeep = 30) {
+    return this.request('/database/backup/cleanup', {
+      method: 'POST',
+      body: JSON.stringify({ daysToKeep }),
+    });
+  }
+
+  // ==================
+  // Auto Backup Scheduler APIs
+  // ==================
+  async getAutoBackupSettings() {
+    return this.request('/database/backup/auto/settings');
+  }
+
+  async updateAutoBackupSettings(settings) {
+    return this.request('/database/backup/auto/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async startAutoBackup() {
+    return this.request('/database/backup/auto/start', {
+      method: 'POST',
+    });
+  }
+
+  async stopAutoBackup() {
+    return this.request('/database/backup/auto/stop', {
+      method: 'POST',
+    });
+  }
+
+  async testAutoBackup(type = 'daily') {
+    return this.request('/database/backup/auto/test', {
+      method: 'POST',
+      body: JSON.stringify({ type }),
+    });
+  }
+
+  // ==================
+  // Settings Backup/Restore APIs
+  // ==================
   async listBackups(pagination = {}) {
     const qs = new URLSearchParams(pagination).toString();
     return this.request(`/settings/backups${qs ? `?${qs}` : ''}`);

@@ -1494,7 +1494,10 @@ const RepairDetailsPage = () => {
 
     try {
       console.log('Adding note with content:', optimistic.content, 'to repair request:', id);
-      const res = await apiService.addRepairNote(id, optimistic.content);
+      // تمرير userId من user object (من auth store)
+      const currentUserId = user?.id || user?.userId || 1;
+      console.log('Using userId:', currentUserId, 'from user:', user);
+      const res = await apiService.addRepairNote(id, optimistic.content, currentUserId);
       console.log('Note added response:', res);
       // استبدال الملاحظة المؤقتة بالملاحظة من السيرفر
       const saved = {
@@ -2898,7 +2901,12 @@ const RepairDetailsPage = () => {
                               <p className="text-sm text-gray-600 mt-1">{payment.notes}</p>
                             )}
                             <div className="text-xs text-gray-500 mt-1">
-                              {new Date(payment.createdAt).toLocaleString('ar-SA')} • {payment.createdBy}
+                              <span>{new Date(payment.createdAt).toLocaleString('ar-SA')}</span>
+                              <span className="mr-2 text-gray-400">
+                                | {new Date(payment.createdAt).toLocaleDateString('en-GB')} {new Date(payment.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="mx-2">•</span>
+                              {payment.createdBy}
                             </div>
                           </div>
                         </div>
@@ -3016,7 +3024,12 @@ const RepairDetailsPage = () => {
                                        note.type === 'customer' ? 'عميل' : 'ملاحظة'}
                                     </SimpleBadge>
                                   </div>
-                                  <p className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleString('ar-SA')}</p>
+                                  <p className="text-xs text-gray-500">
+                                    <span>{new Date(note.createdAt).toLocaleString('ar-SA')}</span>
+                                    <span className="mr-2 text-gray-400">
+                                      | {new Date(note.createdAt).toLocaleDateString('en-GB')} {new Date(note.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </p>
                                 </div>
                                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
                               </div>

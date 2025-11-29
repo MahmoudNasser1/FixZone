@@ -57,7 +57,7 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
     const CurrentStatusIcon = statusConfig[status].icon;
 
     return (
-        <header className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
+        <header className="bg-card shadow-md sticky top-0 z-50 border-b border-border">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
 
@@ -65,8 +65,8 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                     <div className="flex items-center gap-3">
                         <img src="/logo.png" alt="FixZone Logo" className="h-10 w-auto" />
                         <div className="hidden md:block">
-                            <h1 className="text-xl font-bold text-gray-900">FixZone</h1>
-                            <p className="text-xs text-gray-500 font-medium">بوابة الفنيين</p>
+                            <h1 className="text-xl font-bold text-foreground">FixZone</h1>
+                            <p className="text-xs text-muted-foreground font-medium">بوابة الفنيين</p>
                         </div>
                     </div>
 
@@ -84,14 +84,14 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                 }}
                             >
                                 <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: statusConfig[status].color }} />
-                                <span className="text-sm font-medium text-gray-700">{statusConfig[status].label}</span>
-                                <ChevronDown className="w-3 h-3 text-gray-500" />
+                                <span className="text-sm font-medium text-foreground">{statusConfig[status].label}</span>
+                                <ChevronDown className="w-3 h-3 text-muted-foreground" />
                             </button>
 
                             {isStatusMenuOpen && (
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setIsStatusMenuOpen(false)} />
-                                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200 z-20">
+                                    <div className="absolute top-full left-0 mt-2 w-40 bg-popover rounded-lg shadow-xl border border-border py-1 animate-in fade-in zoom-in-95 duration-200 z-20">
                                         {Object.entries(statusConfig).map(([key, config]) => {
                                             const Icon = config.icon;
                                             return (
@@ -101,8 +101,8 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                                         setStatus(key);
                                                         setIsStatusMenuOpen(false);
                                                     }}
-                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                                    style={{ color: key === status ? config.color : '#374151' }}
+                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                                                    style={{ color: key === status ? config.color : 'var(--foreground)' }}
                                                 >
                                                     <Icon className="w-4 h-4" />
                                                     {config.label}
@@ -118,9 +118,9 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                         <div className="relative">
                             <button
                                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                                className={`relative p-2 rounded-full transition-colors ${isNotificationsOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                                className={`relative p-2 rounded-full transition-colors ${isNotificationsOpen ? 'bg-muted' : 'hover:bg-muted'}`}
                             >
-                                <Bell className="w-6 h-6 text-gray-600" />
+                                <Bell className="w-6 h-6 text-muted-foreground" />
                                 {notificationCount > 0 && (
                                     <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
                                         {notificationCount}
@@ -131,21 +131,21 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                             {isNotificationsOpen && (
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)} />
-                                    <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="p-3 border-b border-gray-100 bg-gray-50">
-                                            <h3 className="font-bold text-gray-900 text-sm">الإشعارات</h3>
+                                    <div className="absolute left-0 mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="p-3 border-b border-border bg-muted/50">
+                                            <h3 className="font-bold text-foreground text-sm">الإشعارات</h3>
                                         </div>
                                         <div className="max-h-80 overflow-y-auto">
                                             {techNotifications.map((notif) => (
-                                                <div key={notif.id} className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer">
+                                                <div key={notif.id} className="p-3 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
                                                     <div className="flex gap-3">
                                                         <div className={`mt-1 p-1.5 rounded-full ${notif.type === 'alert' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
                                                             {notif.type === 'alert' ? <AlertTriangle className="w-4 h-4" /> : <Wrench className="w-4 h-4" />}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-gray-900">{notif.title}</p>
-                                                            <p className="text-xs text-gray-600 mt-0.5">{notif.message}</p>
-                                                            <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                            <p className="text-sm font-bold text-foreground">{notif.title}</p>
+                                                            <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
+                                                            <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
                                                                 <Clock className="w-3 h-3" /> {notif.time}
                                                             </p>
                                                         </div>
@@ -162,11 +162,11 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                         <div className="relative">
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                                className="flex items-center gap-3 hover:bg-muted p-2 rounded-lg transition-colors"
                             >
                                 <div className="text-right hidden md:block">
-                                    <p className="text-sm font-bold text-gray-900">{user?.name || 'فني'}</p>
-                                    <p className="text-xs text-gray-500">فني صيانة</p>
+                                    <p className="text-sm font-bold text-foreground">{user?.name || 'فني'}</p>
+                                    <p className="text-xs text-muted-foreground">فني صيانة</p>
                                 </div>
                                 <div
                                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm"
@@ -184,29 +184,29 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                         className="fixed inset-0 z-10"
                                         onClick={() => setIsMenuOpen(false)}
                                     />
-                                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="px-4 py-3 border-b border-gray-100 md:hidden">
-                                            <p className="text-sm font-bold text-gray-900">{user?.name}</p>
-                                            <p className="text-xs text-gray-500">{user?.email}</p>
+                                    <div className="absolute left-0 mt-2 w-56 bg-popover rounded-xl shadow-xl border border-border py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="px-4 py-3 border-b border-border md:hidden">
+                                            <p className="text-sm font-bold text-foreground">{user?.name}</p>
+                                            <p className="text-xs text-muted-foreground">{user?.email}</p>
                                         </div>
 
                                         <button
                                             onClick={() => navigate('/technician/profile')}
-                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                                         >
-                                            <User className="w-4 h-4 text-gray-500" />
+                                            <User className="w-4 h-4 text-muted-foreground" />
                                             الملف الشخصي
                                         </button>
 
                                         <button
                                             onClick={() => navigate('/technician/settings')}
-                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                                         >
-                                            <Settings className="w-4 h-4 text-gray-500" />
+                                            <Settings className="w-4 h-4 text-muted-foreground" />
                                             الإعدادات
                                         </button>
 
-                                        <div className="h-px bg-gray-100 my-1" />
+                                        <div className="h-px bg-border my-1" />
 
                                         <button
                                             onClick={handleLogout}

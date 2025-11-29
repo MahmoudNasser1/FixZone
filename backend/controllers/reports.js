@@ -1,4 +1,5 @@
 const db = require('../db');
+const SettingsIntegration = require('../utils/settingsIntegration');
 
 exports.getSummaryReport = async (req, res) => {
   try {
@@ -12,12 +13,28 @@ exports.getSummaryReport = async (req, res) => {
     const [overdue] = await db.query("SELECT COUNT(*) as count FROM RepairRequest WHERE status!='DELIVERED' AND createdAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND deletedAt IS NULL");
     // Low stock (StockLevel.quantity < StockLevel.minLevel)
     const [lowStock] = await db.query("SELECT COUNT(*) as count FROM StockLevel WHERE quantity < minLevel");
+    
+    // Get settings for report formatting
+    const [currencySettings, companySettings, localeSettings] = await Promise.all([
+      SettingsIntegration.getCurrencySettings(),
+      SettingsIntegration.getCompanySettings(),
+      SettingsIntegration.getLocaleSettings()
+    ]);
+    
     res.json({
-      devicesReceived: received[0].count,
-      underRepair: underRepair[0].count,
-      delivered: delivered[0].count,
-      overdueDevices: overdue[0].count,
-      lowStockItems: lowStock[0].count
+      success: true,
+      data: {
+        devicesReceived: received[0].count,
+        underRepair: underRepair[0].count,
+        delivered: delivered[0].count,
+        overdueDevices: overdue[0].count,
+        lowStockItems: lowStock[0].count
+      },
+      settings: {
+        currency: currencySettings,
+        company: companySettings,
+        locale: localeSettings
+      }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -27,7 +44,17 @@ exports.getSummaryReport = async (req, res) => {
 exports.getInventoryReport = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT ii.*, sl.quantity, sl.minLevel, sl.warehouseId FROM InventoryItem ii LEFT JOIN StockLevel sl ON ii.id = sl.inventoryItemId WHERE ii.deletedAt IS NULL');
-    res.json(rows);
+    
+    // Get currency settings for price formatting
+    const currencySettings = await SettingsIntegration.getCurrencySettings();
+    
+    res.json({
+      success: true,
+      data: rows,
+      settings: {
+        currency: currencySettings
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

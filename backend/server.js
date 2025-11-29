@@ -112,6 +112,12 @@ const server = http.createServer(app);
 // Initialize WebSocket service
 websocketService.initialize(server);
 
+// Initialize Auto Backup Scheduler
+const autoBackupScheduler = require('./services/database/autoBackupScheduler');
+autoBackupScheduler.init().catch(err => {
+  console.error('Failed to initialize Auto Backup Scheduler:', err);
+});
+
 server.listen(PORT, () => {
   console.log(`🚀 Fix Zone Backend Server is running on port ${PORT}`);
   console.log(`📊 API Base URL: http://localhost:${PORT}/api`);
