@@ -190,14 +190,20 @@
       };
 
       // Check if document.addEventListener exists before using it
-      if (document.addEventListener && typeof document.addEventListener === 'function') {
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initializeWhenReady);
-        } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-          // DOM is already ready, but wait a bit to ensure elements are rendered
-          setTimeout(initializeWhenReady, 200);
-        } else {
-          // Fallback: wait a bit then try
+      // Double check document is not null before accessing addEventListener
+      if (document && document.addEventListener && typeof document.addEventListener === 'function') {
+        try {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeWhenReady);
+          } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            // DOM is already ready, but wait a bit to ensure elements are rendered
+            setTimeout(initializeWhenReady, 200);
+          } else {
+            // Fallback: wait a bit then try
+            setTimeout(initializeWhenReady, 300);
+          }
+        } catch (addListenerError) {
+          // If addEventListener fails, use setTimeout fallback
           setTimeout(initializeWhenReady, 300);
         }
       } else {
@@ -210,7 +216,7 @@
   }
 
   // Cleanup on unload (optional, but good practice)
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  if (typeof window !== 'undefined' && window && window.addEventListener && typeof window.addEventListener === 'function') {
     try {
       window.addEventListener('beforeunload', () => {
         if (scheduledId) {
