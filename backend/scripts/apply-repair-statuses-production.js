@@ -25,7 +25,7 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || process.env.MYSQL_ROOT_PASSWORD || '',
   database: process.env.DB_NAME || 'FZ',
   multipleStatements: true
 };
@@ -94,15 +94,48 @@ async function createBackup() {
   
   try {
     const mysqldumpPath = process.env.MYSQLDUMP_PATH || 'mysqldump';
+    
+    // Build command - use MYSQL_PWD environment variable for security
     let command = `${mysqldumpPath} -h ${dbConfig.host} -u ${dbConfig.user}`;
     
+    // Set up environment with password
+    const env = { ...process.env };
     if (dbConfig.password) {
+      // Use MYSQL_PWD environment variable (more secure, doesn't show in process list)
+      env.MYSQL_PWD = dbConfig.password;
+      // Also include in command for compatibility
       command += ` -p${dbConfig.password}`;
+    } else {
+      log('   ⚠️  No password in config. Trying without password...', 'yellow');
+      command += ` -p`;
     }
     
     command += ` --single-transaction --routines --triggers ${dbConfig.database} > "${backupFile}" 2>&1`;
     
-    execSync(command, { stdio: 'inherit' });
+    log(`   Executing backup command...`, 'blue');
+    
+    // Execute with environment variables
+    try {
+      execSync(command, { 
+        stdio: 'inherit',
+        env: env,
+        shell: '/bin/bash'
+      });
+    } catch (execError) {
+      // If command fails, try with MYSQL_PWD only
+      if (dbConfig.password && !env.MYSQL_PWD) {
+        log('   Retrying with MYSQL_PWD environment variable...', 'yellow');
+        env.MYSQL_PWD = dbConfig.password;
+        const retryCommand = `${mysqldumpPath} -h ${dbConfig.host} -u ${dbConfig.user} --single-transaction --routines --triggers ${dbConfig.database} > "${backupFile}" 2>&1`;
+        execSync(retryCommand, { 
+          stdio: 'inherit',
+          env: env,
+          shell: '/bin/bash'
+        });
+      } else {
+        throw execError;
+      }
+    }
     
     // Verify backup file exists and has content
     if (fs.existsSync(backupFile) && fs.statSync(backupFile).size > 0) {
@@ -150,7 +183,7 @@ async function fixStatuses() {
       WHERE deletedAt IS NULL
       AND status NOT IN (
         'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR',
-        'WAITING_PARTS', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD'
+        'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD'
       )
       GROUP BY status
     `);
@@ -184,13 +217,40 @@ async function applyMigration() {
   try {
     connection = await mysql.createConnection(dbConfig);
     
+    // Try to read from file first
     const migrationFile = path.join(__dirname, '../../migrations/06_ADD_REPAIR_STATUSES.sql');
+    let migrationSQL;
     
-    if (!fs.existsSync(migrationFile)) {
-      throw new Error(`Migration file not found: ${migrationFile}`);
+    if (fs.existsSync(migrationFile)) {
+      migrationSQL = fs.readFileSync(migrationFile, 'utf8');
+      log('   📄 Using migration file from disk', 'blue');
+    } else {
+      // If file doesn't exist, use inline SQL
+      log('   📄 Migration file not found, using inline SQL', 'yellow');
+      migrationSQL = `
+USE ${dbConfig.database};
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- تحديث ENUM في جدول RepairRequest لإضافة READY_FOR_PICKUP
+ALTER TABLE RepairRequest 
+MODIFY COLUMN status ENUM(
+    'RECEIVED',
+    'INSPECTION',
+    'AWAITING_APPROVAL',
+    'UNDER_REPAIR',
+    'WAITING_PARTS',
+    'READY_FOR_PICKUP',
+    'READY_FOR_DELIVERY',
+    'DELIVERED',
+    'REJECTED',
+    'ON_HOLD'
+) DEFAULT 'RECEIVED';
+
+SET FOREIGN_KEY_CHECKS = 1;
+      `.trim();
     }
     
-    const migrationSQL = fs.readFileSync(migrationFile, 'utf8');
     await connection.query(migrationSQL);
     
     log('   ✅ Migration applied successfully!', 'green');
