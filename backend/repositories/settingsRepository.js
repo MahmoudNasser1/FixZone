@@ -7,25 +7,30 @@ class SettingsRepository {
    */
   async findAll(filters = {}, pagination = {}) {
     try {
+      // Ensure pagination is an object
+      if (!pagination || typeof pagination !== 'object') {
+        pagination = {};
+      }
+      
       let where = [];
       const params = [];
       
-      if (filters.category) {
+      if (filters && filters.category) {
         where.push('category = ?');
         params.push(filters.category);
       }
       
-      if (filters.environment) {
+      if (filters && filters.environment) {
         where.push('(environment = ? OR environment = ?)');
         params.push(filters.environment, 'all');
       }
       
-      if (filters.isSystem !== undefined) {
+      if (filters && filters.isSystem !== undefined) {
         where.push('isSystem = ?');
         params.push(filters.isSystem ? 1 : 0);
       }
       
-      if (filters.search) {
+      if (filters && filters.search) {
         where.push('(`key` LIKE ? OR description LIKE ?)');
         const searchTerm = `%${filters.search}%`;
         params.push(searchTerm, searchTerm);
@@ -55,11 +60,11 @@ class SettingsRepository {
       }
       
       // Only add LIMIT/OFFSET if we have valid values
-      if (limit !== null) {
+      if (limit !== null && limit > 0) {
         sql += ` LIMIT ?`;
         params.push(limit);
         
-        if (offset !== null) {
+        if (offset !== null && offset >= 0) {
           sql += ` OFFSET ?`;
           params.push(offset);
         }
@@ -297,6 +302,11 @@ class SettingsRepository {
    */
   async count(filters = {}) {
     try {
+      // Ensure filters is an object
+      if (!filters || typeof filters !== 'object') {
+        filters = {};
+      }
+      
       let where = [];
       const params = [];
       
