@@ -3,8 +3,17 @@
   'use strict';
 
   // Safety check for environment - exit early if not in browser
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !document) {
     return;
+  }
+  
+  // Additional safety check - ensure document is actually an object
+  try {
+    if (!document || typeof document !== 'object' || !document.getElementById) {
+      return;
+    }
+  } catch (e) {
+    return; // Exit if document access fails
   }
 
   const RETRY_DELAYS = [500, 1000, 2000];
@@ -150,12 +159,12 @@
   };
 
   // Start when DOM is ready - with extra safety checks
-  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  if (typeof document !== 'undefined') {
     try {
       // Wait for DOM to be fully ready
       const initializeWhenReady = () => {
-        // Double check document.body exists
-        if (!document.body) {
+        // Double check document and document.body exist
+        if (!document || !document.body) {
           // If body doesn't exist yet, wait a bit more (max 10 retries = 5 seconds)
           if (retryAttempts < 10) {
             setTimeout(initializeWhenReady, 50);
@@ -164,24 +173,35 @@
         }
         
         // Check if elements exist before trying to initialize
-        const shareButton = document.getElementById('share-button');
-        const shareModal = document.getElementById('share-modal');
-        
-        // If elements don't exist, don't try to initialize
-        if (!shareButton || !shareModal) {
-          return; // Silently exit - elements may not be on this page
+        try {
+          const shareButton = document.getElementById('share-button');
+          const shareModal = document.getElementById('share-modal');
+          
+          // If elements don't exist, don't try to initialize
+          if (!shareButton || !shareModal) {
+            return; // Silently exit - elements may not be on this page
+          }
+          
+          attemptInit();
+        } catch (getElementError) {
+          // Silently fail if getElementById fails
+          return;
         }
-        
-        attemptInit();
       };
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeWhenReady);
-      } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-        // DOM is already ready, but wait a bit to ensure elements are rendered
-        setTimeout(initializeWhenReady, 200);
+      // Check if document.addEventListener exists before using it
+      if (document.addEventListener && typeof document.addEventListener === 'function') {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initializeWhenReady);
+        } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+          // DOM is already ready, but wait a bit to ensure elements are rendered
+          setTimeout(initializeWhenReady, 200);
+        } else {
+          // Fallback: wait a bit then try
+          setTimeout(initializeWhenReady, 300);
+        }
       } else {
-        // Fallback: wait a bit then try
+        // Fallback if addEventListener is not available
         setTimeout(initializeWhenReady, 300);
       }
     } catch (e) {

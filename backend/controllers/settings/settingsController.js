@@ -14,9 +14,13 @@ exports.getAllSettings = async (req, res) => {
     if (environment) filters.environment = environment;
     if (search) filters.search = search;
     
+    // Ensure page and limit are valid numbers
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit) || 50)); // Max 100 items per page
+    
     const pagination = {
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit)
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum
     };
     
     const result = await settingsService.getAllSettings(filters, pagination);
