@@ -35,13 +35,17 @@ class SettingsRepository {
       const whereClause = where.length > 0 ? where.join(' AND ') : '1=1';
       let sql = `SELECT * FROM SystemSetting WHERE ${whereClause} ORDER BY category, \`key\` ASC`;
       
-      if (pagination.limit) {
+      // Ensure limit and offset are valid numbers
+      const limit = pagination.limit ? parseInt(pagination.limit) : null;
+      const offset = pagination.offset ? parseInt(pagination.offset) : null;
+      
+      if (limit !== null && !isNaN(limit) && limit > 0) {
         sql += ` LIMIT ?`;
-        params.push(pagination.limit);
+        params.push(limit);
         
-        if (pagination.offset) {
+        if (offset !== null && !isNaN(offset) && offset >= 0) {
           sql += ` OFFSET ?`;
-          params.push(pagination.offset);
+          params.push(offset);
         }
       }
       

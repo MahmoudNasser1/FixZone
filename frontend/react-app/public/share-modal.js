@@ -103,7 +103,7 @@
           }
         } catch (queryError) {
           // Silently fail - don't log in production
-          return false;
+          // Don't return false here, just continue
         }
       }
 
