@@ -20,12 +20,20 @@ class SettingsService {
       const settings = await settingsRepository.findAll(filters, pagination);
       const count = await settingsRepository.count(filters);
       
+      // Ensure pagination values are valid numbers
+      const limit = (pagination && pagination.limit && !isNaN(parseInt(pagination.limit))) 
+        ? parseInt(pagination.limit) 
+        : null;
+      const offset = (pagination && pagination.offset && !isNaN(parseInt(pagination.offset))) 
+        ? parseInt(pagination.offset) 
+        : 0;
+      
       const result = {
         settings,
         count,
         pagination: {
-          limit: pagination.limit || null,
-          offset: pagination.offset || 0,
+          limit,
+          offset,
           total: count
         }
       };

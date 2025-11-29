@@ -36,14 +36,30 @@ class SettingsRepository {
       let sql = `SELECT * FROM SystemSetting WHERE ${whereClause} ORDER BY category, \`key\` ASC`;
       
       // Ensure limit and offset are valid numbers
-      const limit = pagination.limit ? parseInt(pagination.limit) : null;
-      const offset = pagination.offset ? parseInt(pagination.offset) : null;
+      // Parse and validate limit
+      let limit = null;
+      if (pagination.limit !== undefined && pagination.limit !== null && pagination.limit !== '') {
+        const parsedLimit = parseInt(pagination.limit, 10);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          limit = parsedLimit;
+        }
+      }
       
-      if (limit !== null && !isNaN(limit) && limit > 0) {
+      // Parse and validate offset
+      let offset = null;
+      if (pagination.offset !== undefined && pagination.offset !== null && pagination.offset !== '') {
+        const parsedOffset = parseInt(pagination.offset, 10);
+        if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+          offset = parsedOffset;
+        }
+      }
+      
+      // Only add LIMIT/OFFSET if we have valid values
+      if (limit !== null) {
         sql += ` LIMIT ?`;
         params.push(limit);
         
-        if (offset !== null && !isNaN(offset) && offset >= 0) {
+        if (offset !== null) {
           sql += ` OFFSET ?`;
           params.push(offset);
         }
