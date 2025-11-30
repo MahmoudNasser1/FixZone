@@ -12,7 +12,7 @@ import AttachmentManager from '../../components/ui/AttachmentManager';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { useSettings } from '../../context/SettingsContext';
 import useAuthStore from '../../stores/authStore';
-import { 
+import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
@@ -47,7 +47,7 @@ const RepairDetailsPage = () => {
   const [inspectionForm, setInspectionForm] = useState({
     inspectionTypeId: '',
     technicianId: '',
-    reportDate: new Date().toISOString().slice(0,10),
+    reportDate: new Date().toISOString().slice(0, 10),
     summary: '',
     result: '',
     recommendations: '',
@@ -70,7 +70,7 @@ const RepairDetailsPage = () => {
   // Device specifications editing state
   const [editingSpecs, setEditingSpecs] = useState(false);
   const [deviceSpecs, setDeviceSpecs] = useState({});
-  
+
   // Repair details editing state
   const [editingDetails, setEditingDetails] = useState(false);
   const [repairDetails, setRepairDetails] = useState({
@@ -100,7 +100,7 @@ const RepairDetailsPage = () => {
   const [addServiceOpen, setAddServiceOpen] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [deletingService, setDeletingService] = useState(null);
-  
+
   // Edit accessories state
   const [editingAccessories, setEditingAccessories] = useState(false);
   const [accessoriesForm, setAccessoriesForm] = useState([]);
@@ -144,7 +144,7 @@ const RepairDetailsPage = () => {
   const handleIssueChange = (e) => {
     const { name, value } = e.target;
     setIssueForm((f) => ({ ...f, [name]: value }));
-    
+
     // Update selected item info when item changes
     if (name === 'inventoryItemId' && value) {
       const selectedItem = items.find(item => item.id === Number(value));
@@ -199,13 +199,13 @@ const RepairDetailsPage = () => {
         setIssueError('الكمية يجب أن تكون رقمًا أكبر من الصفر');
         return;
       }
-      
+
       // Check available quantity before submitting
       if (availableQty !== null && quantity > availableQty) {
         setIssueError(`الكمية المطلوبة (${quantity}) أكبر من المخزون المتاح (${availableQty})`);
         return;
       }
-      
+
       setIssueLoading(true);
       console.log('Issuing part with data:', {
         repairRequestId: Number(id),
@@ -215,7 +215,7 @@ const RepairDetailsPage = () => {
         userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
       });
-      
+
       // 🔧 Fix #3: Get enhanced response from /api/inventory/issue
       const response = await inventoryService.issuePart({
         repairRequestId: Number(id),
@@ -225,10 +225,10 @@ const RepairDetailsPage = () => {
         userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
       });
-      
+
       // Handle response data
       const responseData = response?.data || response;
-      
+
       // 🔧 Fix #3: Display approval message if approval is required
       if (responseData?.approval?.required) {
         notifications.warning(
@@ -237,14 +237,14 @@ const RepairDetailsPage = () => {
       } else {
         notifications.success(responseData?.message || 'تم صرف القطعة وتحديث المخزون بنجاح');
       }
-      
+
       // 🔧 Fix #2: Display low stock warning from response
       if (responseData?.lowStockWarning?.warning) {
         notifications.warning(
           `⚠️ ${responseData.lowStockWarning.message || 'تنبيه: المخزون منخفض لهذا العنصر'}`
         );
       }
-      
+
       // 🔧 Fix #3: Display pricing information (profit, cost, etc.)
       if (responseData?.pricing) {
         const pricing = responseData.pricing;
@@ -256,7 +256,7 @@ const RepairDetailsPage = () => {
           profit: pricing.profit,
           profitMargin: pricing.profitMargin
         });
-        
+
         // Show profit info if significant
         if (pricing.profit && pricing.profit > 0) {
           notifications.info(
@@ -264,25 +264,25 @@ const RepairDetailsPage = () => {
           );
         }
       }
-      
+
       // 🔧 Fix #2: Display additional low stock warning from response
       if (responseData?.stockLevel?.isLowStock) {
         notifications.warning(
           `⚠️ تنبيه: المخزون منخفض لهذا العنصر في هذا المخزن (المتبقي: ${responseData.stockLevel.quantity || 0})`
         );
       }
-      
+
       setIssueOpen(false);
       setIssueForm({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '' });
       setAvailableQty(null);
       setMinLevel(null);
       setIsLowStock(null);
-      
+
       // refresh details if needed
       try {
         await fetchRepairDetails();
         await loadPartsUsed();
-      } catch (_) {}
+      } catch (_) { }
     } catch (e) {
       console.error('Error issuing part:', e);
       setIssueError(e?.message || 'تعذر تنفيذ عملية الصرف');
@@ -300,7 +300,7 @@ const RepairDetailsPage = () => {
       if (/[\u0600-\u06FF]/.test(value)) {
         return value; // Already Arabic
       }
-      
+
       // Map English values to Arabic labels
       const valueToLabel = {
         'CHARGER': 'شاحن الجهاز',
@@ -314,7 +314,7 @@ const RepairDetailsPage = () => {
         'MEMORY_CARD': 'بطاقة ذاكرة',
         'POWER_BANK': 'بطارية خارجية'
       };
-      
+
       return valueToLabel[value] || value; // Return Arabic label or original value if not found
     }
     return value;
@@ -380,7 +380,7 @@ const RepairDetailsPage = () => {
       console.log('Loading parts used for repair request:', id);
       const response = await apiService.request(`/partsused?repairRequestId=${id}`);
       console.log('Parts used response:', response);
-      
+
       // Handle different response formats
       let partsData = [];
       if (Array.isArray(response)) {
@@ -390,7 +390,7 @@ const RepairDetailsPage = () => {
       } else if (response && response.success && Array.isArray(response.data)) {
         partsData = response.data;
       }
-      
+
       // Ensure all numeric fields are properly parsed
       const processedParts = partsData.map(part => ({
         ...part,
@@ -402,7 +402,7 @@ const RepairDetailsPage = () => {
         profit: part.profit != null ? Number(part.profit) : null,
         profitMargin: part.profitMargin != null ? (typeof part.profitMargin === 'string' ? part.profitMargin : `${Number(part.profitMargin).toFixed(2)}%`) : null
       }));
-      
+
       setPartsUsed(processedParts);
     } catch (e) {
       console.error('Error loading parts used:', e);
@@ -419,7 +419,7 @@ const RepairDetailsPage = () => {
     if (!Array.isArray(partsUsed)) {
       return { total: 0, items: [] };
     }
-    
+
     const withMeta = partsUsed.map(pu => ({
       ...pu,
       _name: itemsMap[pu.inventoryItemId]?.name || '',
@@ -447,7 +447,7 @@ const RepairDetailsPage = () => {
       console.log('Loading services for repair request:', id);
       const data = await repairService.getRepairRequestServices(id);
       console.log('Services response:', data);
-      
+
       // التأكد من أن الاستجابة صحيحة
       let servicesData = [];
       if (Array.isArray(data)) {
@@ -457,7 +457,7 @@ const RepairDetailsPage = () => {
       } else if (data && data.services && Array.isArray(data.services)) {
         servicesData = data.services;
       }
-      
+
       setServices(servicesData);
     } catch (e) {
       console.error('Error loading services:', e);
@@ -517,7 +517,7 @@ const RepairDetailsPage = () => {
       // First, we need to get the invoice for this repair request
       // Get fresh invoices from the API directly to avoid state timing issues
       const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-      
+
       // Handle different response formats
       let freshInvoices = [];
       if (Array.isArray(freshInvoicesData)) {
@@ -529,11 +529,11 @@ const RepairDetailsPage = () => {
       } else if (freshInvoicesData?.invoices && Array.isArray(freshInvoicesData.invoices)) {
         freshInvoices = freshInvoicesData.invoices;
       }
-      
+
       if (!Array.isArray(freshInvoices)) {
         throw new Error('Invalid invoices response format');
       }
-      
+
       const invoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
       if (!invoice) {
         notifications.error('لا توجد فاتورة لهذا الطلب. يرجى إنشاء فاتورة أولاً');
@@ -606,7 +606,7 @@ const RepairDetailsPage = () => {
   const handleUpdateRepairDetails = async () => {
     try {
       console.log('Updating repair details with data:', repairDetails);
-      
+
       // Convert priority from Arabic/display value to backend format
       const priorityMap = {
         'منخفضة': 'LOW',
@@ -622,9 +622,9 @@ const RepairDetailsPage = () => {
         'HIGH': 'HIGH',
         'URGENT': 'URGENT'
       };
-      
+
       const normalizedPriority = priorityMap[repairDetails.priority] || repairDetails.priority || 'MEDIUM';
-      
+
       await apiService.updateRepairRequest(id, {
         estimatedCost: repairDetails.estimatedCost,
         actualCost: repairDetails.actualCost,
@@ -634,8 +634,8 @@ const RepairDetailsPage = () => {
       });
 
       // تحديث محلي
-      setRepair(prev => ({ 
-        ...prev, 
+      setRepair(prev => ({
+        ...prev,
         estimatedCost: repairDetails.estimatedCost,
         actualCost: repairDetails.actualCost,
         priority: repairDetails.priority,
@@ -726,7 +726,7 @@ const RepairDetailsPage = () => {
         ]);
         console.log('Warehouses response:', whResponse);
         console.log('Items response:', itResponse);
-        
+
         // معالجة بيانات المخازن
         let warehousesData = [];
         if (whResponse) {
@@ -750,7 +750,7 @@ const RepairDetailsPage = () => {
           }
         }
         setWarehouses(warehousesData);
-        
+
         // معالجة بيانات العناصر
         let itemsData = [];
         if (itResponse) {
@@ -776,19 +776,19 @@ const RepairDetailsPage = () => {
           }
         }
         setItems(itemsData);
-        
+
         console.log('Processed warehouses:', warehousesData);
         console.log('Processed items:', itemsData);
         try {
           const me = await apiService.authMe();
           if (me && (me.id || me.userId)) setCurrentUserId(Number(me.id || me.userId));
-        } catch {}
+        } catch { }
         // احضر الفواتير إن لم تكن محملة لاستخدامها في الربط الاختياري
         try {
           if (invoices.length === 0 && !invoicesLoading) {
             await loadInvoices();
           }
-        } catch {}
+        } catch { }
       } catch (e) {
         setIssueError('تعذر تحميل بيانات الصرف');
       }
@@ -802,11 +802,11 @@ const RepairDetailsPage = () => {
       try {
         setAddSvcError('');
         console.log('Loading add service data...');
-        
+
         // تحميل قائمة الخدمات المتاحة
         const svcResponse = await repairService.getAvailableServices();
         console.log('Available services response:', svcResponse);
-        
+
         // Handle new API response format (direct JSON)
         let servicesList = [];
         if (svcResponse) {
@@ -832,7 +832,7 @@ const RepairDetailsPage = () => {
             }
           }
         }
-        
+
         // Filter only active and non-deleted services
         servicesList = servicesList.filter(s => {
           // Check if service is active (default to true if not specified)
@@ -841,17 +841,17 @@ const RepairDetailsPage = () => {
           const notDeleted = !s.deletedAt;
           return isActive && notDeleted;
         });
-        
+
         setAvailableServices(servicesList);
         console.log('Available services set:', servicesList.length, 'services', servicesList);
-        
+
         // تحميل الفنيين إن لم يكونوا محملين مسبقًا
         if (techOptions.length === 0) {
           try {
             setTechLoading(true);
             const techResponse = await apiService.listTechnicians();
             console.log('Technicians response:', techResponse);
-            
+
             // Handle new API response format (direct JSON)
             let techList = [];
             if (Array.isArray(techResponse)) {
@@ -870,7 +870,7 @@ const RepairDetailsPage = () => {
             setTechLoading(false);
           }
         }
-        
+
         // تحميل الفواتير للربط الاختياري
         if (invoices.length === 0 && !invoicesLoading) {
           await loadInvoices();
@@ -1016,7 +1016,7 @@ const RepairDetailsPage = () => {
       }
       setAddSvcLoading(true);
       console.log('Adding service with data:', { serviceId, price, technicianId, notes, invoiceId });
-      
+
       // إنشاء خدمة طلب الإصلاح أولاً للحصول على ID
       const serviceResponse = await repairService.addRepairRequestService({
         repairRequestId: Number(id),
@@ -1027,12 +1027,12 @@ const RepairDetailsPage = () => {
       });
       const repairRequestServiceId = serviceResponse.id || serviceResponse.data?.id;
       console.log('✅ Service created with ID:', repairRequestServiceId);
-      
+
       // ربط الخدمة بالفاتورة (تلقائياً أو يدوياً)
       try {
         // Auto-select the invoice for this repair request if not manually selected
         let targetInvoiceId = invoiceId ? Number(invoiceId) : null;
-        
+
         if (!targetInvoiceId) {
           // Get fresh invoices and auto-select the one for this repair
           try {
@@ -1044,7 +1044,7 @@ const RepairDetailsPage = () => {
             console.log('Error fetching invoices:', invoiceErr);
           }
         }
-        
+
         // If still no invoice, create one automatically
         if (!targetInvoiceId) {
           try {
@@ -1064,12 +1064,12 @@ const RepairDetailsPage = () => {
             console.error('Error creating invoice:', createErr);
           }
         }
-        
+
         if (targetInvoiceId) {
           // Get service name for description
           const selectedService = availableServices.find(s => s.id === Number(serviceId));
           const serviceName = selectedService?.name || selectedService?.serviceName || 'خدمة غير محددة';
-          
+
           // Add service to invoice
           try {
             await apiService.addInvoiceItem(targetInvoiceId, {
@@ -1081,7 +1081,7 @@ const RepairDetailsPage = () => {
               description: `${serviceName}${notes ? ` - ${notes}` : ''}`.trim(),
               itemType: 'service'
             });
-            
+
             console.log('✅ Service automatically linked to invoice:', targetInvoiceId);
           } catch (itemErr) {
             console.error('Error adding service to invoice:', itemErr);
@@ -1113,11 +1113,11 @@ const RepairDetailsPage = () => {
         setMinLevel(null);
         setIsLowStock(null);
         if (!warehouseId || !inventoryItemId) return;
-        
+
         // Fix: inventoryService.listStockLevels returns data directly, not Response
         const levelsData = await inventoryService.listStockLevels({ warehouseId, inventoryItemId });
         let list = [];
-        
+
         // Handle different response formats
         if (Array.isArray(levelsData)) {
           list = levelsData;
@@ -1128,20 +1128,20 @@ const RepairDetailsPage = () => {
         } else if (levelsData && levelsData.items) {
           list = Array.isArray(levelsData.items) ? levelsData.items : [];
         }
-        
+
         // 🔧 Fix: Filter to ensure we get the correct warehouse and item combination
         // Even if backend filters, double-check on frontend to avoid mismatches
-        const row = list.find(level => 
-          Number(level.warehouseId) === Number(warehouseId) && 
+        const row = list.find(level =>
+          Number(level.warehouseId) === Number(warehouseId) &&
           Number(level.inventoryItemId) === Number(inventoryItemId)
         ) || (list && list[0] ? list[0] : null);
         if (row) {
           const qty = row.quantity != null ? Number(row.quantity) : 0;
           setAvailableQty(Number.isFinite(qty) ? qty : 0);
-          
+
           const ml = row.minLevel != null ? Number(row.minLevel) : null;
           setMinLevel(Number.isFinite(ml) && ml >= 0 ? ml : null);
-          
+
           const isLow = Boolean(row.isLowStock) || (qty <= (ml || 0));
           setIsLowStock(isLow);
         } else {
@@ -1171,7 +1171,7 @@ const RepairDetailsPage = () => {
         console.log('Repair response:', rep);
         if (rep) {
           setRepair(rep);
-          
+
           // تحديد مواصفات الجهاز من البيانات المحملة
           setDeviceSpecs(rep.deviceSpecs || {
             cpu: rep.cpu || '',
@@ -1181,12 +1181,12 @@ const RepairDetailsPage = () => {
             screenSize: rep.screenSize || '',
             os: rep.os || ''
           });
-          
+
           // تحديد تفاصيل طلب الإصلاح من البيانات المحملة
           // Load actual cost from invoice if exists
           let actualCostFromInvoice = rep.actualCost || null;
           // Will be updated when invoices load
-          
+
           setRepairDetails({
             estimatedCost: rep.estimatedCost || 0,
             actualCost: actualCostFromInvoice,
@@ -1194,19 +1194,19 @@ const RepairDetailsPage = () => {
             expectedDeliveryDate: rep.expectedDeliveryDate || null,
             notes: rep.notes || ''
           });
-          
+
           // ملاحظات/سجل
           try {
             const logs = await apiService.getRepairLogs(id);
             setNotes(Array.isArray(logs) ? logs : (logs.items || []));
-          } catch {}
-          
+          } catch { }
+
           // المرفقات
           try {
             const atts = await apiService.listAttachments(id);
             setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
-          } catch {}
-          
+          } catch { }
+
           // بيانات العميل - استخدم البيانات المتاحة في الطلب مباشرة
           if (rep?.customerName) {
             setCustomer({
@@ -1216,7 +1216,7 @@ const RepairDetailsPage = () => {
               email: rep.customerEmail
             });
           }
-          
+
           setNewStatus(rep?.status || 'pending');
         } else {
           throw new Error('Failed to fetch repair details');
@@ -1273,10 +1273,10 @@ const RepairDetailsPage = () => {
     try {
       setInvoicesLoading(true);
       setInvoicesError(null);
-      
+
       console.log('Loading invoices for repair request:', id);
       console.log('API call params:', { repairRequestId: id, limit: 50 });
-      
+
       // Use the new invoices service with repair request filter
       const data = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
       console.log('Invoices response:', data);
@@ -1284,7 +1284,7 @@ const RepairDetailsPage = () => {
       console.log('Invoices array:', invoicesArray);
       console.log('Invoices array length:', invoicesArray.length);
       setInvoices(invoicesArray);
-      
+
       // Update actual cost from invoice totalAmount if exists
       if (invoicesArray && invoicesArray.length > 0) {
         const latestInvoice = invoicesArray[0]; // Get latest invoice
@@ -1320,12 +1320,12 @@ const RepairDetailsPage = () => {
         taxAmount: 0,
         notes: `فاتورة لطلب الإصلاح ${repair?.requestNumber || id}`
       };
-      
+
       console.log('Creating invoice with payload:', payload);
       // Use the new invoices service
       const responseData = await apiService.createInvoiceFromRepair(id, payload);
       console.log('Invoice creation response:', responseData);
-      
+
       if (responseData.success) {
         notifications.success('تم إنشاء الفاتورة بنجاح مع ربط تلقائي للقطع والخدمات');
         await loadInvoices();
@@ -1347,7 +1347,7 @@ const RepairDetailsPage = () => {
             notifications.warning('هناك فاتورة موجودة لهذا الطلب. يرجى فتح الفاتورة الموجودة من قائمة الفواتير أدناه.');
             return;
           }
-        } catch (_) {}
+        } catch (_) { }
         notifications.warning('هناك فاتورة موجودة لهذا الطلب. يرجى إنشاء فاتورة جديدة أو فتح الفاتورة الموجودة.');
         return;
       }
@@ -1447,10 +1447,10 @@ const RepairDetailsPage = () => {
       // تحديث عبر API ثم تحديث الواجهة
       const response = await apiService.updateRepairStatus(id, newStatus);
       console.log('Status update response:', response);
-      
+
       setRepair(prev => (prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : prev));
       setEditingStatus(false);
-      
+
       // 🔧 Fix #6: Display invoice auto-creation notification if invoice was created
       if (response && response.invoiceCreated) {
         notifications.success(
@@ -1460,15 +1460,15 @@ const RepairDetailsPage = () => {
         // Refresh invoices list to show new invoice
         try {
           await loadInvoices();
-        } catch (_) {}
+        } catch (_) { }
       } else {
         notifications.success('تم تحديث الحالة بنجاح', { title: 'نجاح', duration: 2500 });
       }
-      
+
       // Refresh repair details to get updated data
       try {
         await fetchRepairDetails();
-      } catch (_) {}
+      } catch (_) { }
     } catch (err) {
       console.error('Error updating repair status:', err);
       setError('حدث خطأ في تحديث حالة الطلب');
@@ -1543,7 +1543,7 @@ const RepairDetailsPage = () => {
   // دالة تصفية الأنشطة
   const getFilteredSortedNotes = () => {
     let filtered = [...notes]; // نسخ المصفوفة لتجنب التعديل المباشر
-    
+
     // تصفية حسب النوع
     if (activityFilter !== 'all') {
       filtered = filtered.filter(note => {
@@ -1554,7 +1554,7 @@ const RepairDetailsPage = () => {
         return false; // إرجاع false بدلاً من true للفلترة الصحيحة
       });
     }
-    
+
     // ترتيب حسب التاريخ
     return filtered.sort((a, b) => {
       const dateA = new Date(a.createdAt || 0);
@@ -1652,10 +1652,10 @@ const RepairDetailsPage = () => {
             })() : 'غير محدد'}
           </p>
         </div>
-        
+
         <div className="w-full lg:w-auto">
           <div className="flex flex-wrap items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-2">
-            <SimpleButton 
+            <SimpleButton
               size="sm"
               variant="outline"
               onClick={() => setEditingStatus(!editingStatus)}
@@ -1738,179 +1738,224 @@ const RepairDetailsPage = () => {
         </div>
       )}
 
-      {/* حوار إضافة خدمة */}
+      {/* حوار إضافة خدمة - تصميم جديد */}
       {addServiceOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">إضافة خدمة لطلب الإصلاح</h3>
-              <button onClick={() => setAddServiceOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all">
+            {/* Header */}
+            <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-white">إضافة خدمة جديدة</h3>
+                <p className="text-blue-100 text-sm mt-1">أضف خدمة من القائمة أو أدخل خدمة مخصصة</p>
+              </div>
+              <button
+                onClick={() => setAddServiceOpen(false)}
+                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+
+            <div className="p-6 space-y-5">
               {addSvcError && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded">{addSvcError}</div>
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  {addSvcError}
+                </div>
               )}
-              
-              {/* معلومات التحميل */}
-              <div className="flex items-center gap-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                <div className="flex-1">
-                  <span className="font-medium">الخدمات:</span> {availableServices.length} متاحة
+
+              {/* Service Type Toggle */}
+              <div className="bg-gray-50 p-1.5 rounded-xl border border-gray-200 flex items-center relative">
+                <div className="flex-1 flex items-center justify-between px-4 py-2">
+                  <span className={`text-sm font-medium transition-colors ${!isManualService ? 'text-blue-700' : 'text-gray-500'}`}>
+                    من القائمة - اختر خدمة محفوظة
+                  </span>
+                  <Wrench className={`w-4 h-4 ${!isManualService ? 'text-blue-600' : 'text-gray-400'}`} />
                 </div>
-                <div className="flex-1">
-                  <span className="font-medium">الفنيون:</span> {techOptions.length} متاح
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  الخدمة {availableServices.length > 0 && <span className="text-xs text-green-600">({availableServices.length} متاحة)</span>}
-                </label>
-                <select
-                  name="serviceId"
-                  value={svcForm.serviceId}
-                  onChange={(e) => {
-                    const sel = e.target.value;
-                    const svc = availableServices.find(s => String(s.id) === String(sel) || String(s.serviceId) === String(sel));
-                    setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
-                  }}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                  disabled={isManualService || availableServices.length === 0}
-                >
-                  <option value="">
-                    {availableServices.length === 0 ? 'جاري التحميل...' : 'اختر الخدمة...'}
-                  </option>
-                  {availableServices.map(s => (
-                    <option key={s.id || s.serviceId} value={s.id || s.serviceId}>
-                      {s.serviceName || s.name || `خدمة #${s.id || s.serviceId}`} - {s.basePrice || s.price || '0'} ج.م
-                    </option>
-                  ))}
-                </select>
-                {availableServices.length === 0 && (
-                  <p className="text-xs text-gray-500 mt-1">لا توجد خدمات متاحة. يرجى إضافة خدمات من صفحة كتالوج الخدمات.</p>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
-                  <input type="number" name="price" value={svcForm.price} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg" disabled={isManualService} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الفني {techOptions.length > 0 && <span className="text-xs text-green-600">({techOptions.length} متاح)</span>}
+
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={isManualService}
+                      onChange={() => {
+                        setIsManualService(!isManualService);
+                        setAddSvcError('');
+                      }}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
-                  <select 
-                    name="technicianId" 
-                    value={svcForm.technicianId} 
-                    onChange={handleAddServiceChange} 
-                    className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                    disabled={techOptions.length === 0}
+                </div>
+
+                <div className="flex-1 flex items-center justify-between px-4 py-2 flex-row-reverse">
+                  <span className={`text-sm font-medium transition-colors ${isManualService ? 'text-blue-700' : 'text-gray-500'}`}>
+                    يدوي
+                  </span>
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-4">
+                {!isManualService ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">اختر الخدمة <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        name="serviceId"
+                        value={svcForm.serviceId}
+                        onChange={(e) => {
+                          const sel = e.target.value;
+                          const svc = availableServices.find(s => String(s.id) === String(sel) || String(s.serviceId) === String(sel));
+                          setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
+                        }}
+                        className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                        disabled={availableServices.length === 0}
+                      >
+                        <option value="">-- اختر الخدمة --</option>
+                        {availableServices.map(s => (
+                          <option key={s.id || s.serviceId} value={s.id || s.serviceId}>
+                            {s.serviceName || s.name || `خدمة #${s.id || s.serviceId}`}
+                          </option>
+                        ))}
+                      </select>
+                      <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">اسم الخدمة <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={manualServiceForm.name}
+                      onChange={handleManualServiceChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                      placeholder="أدخل اسم الخدمة..."
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الفني المسؤول <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        name="technicianId"
+                        value={svcForm.technicianId}
+                        onChange={handleAddServiceChange}
+                        className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                      >
+                        <option value="">-- اختر الفنى --</option>
+                        {techOptions.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name || t.fullName || `${t.firstName} ${t.lastName}` || `فني #${t.id}`}
+                          </option>
+                        ))}
+                      </select>
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">السعر (جنيه) <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name={isManualService ? "unitPrice" : "price"}
+                        value={isManualService ? manualServiceForm.unitPrice : svcForm.price}
+                        onChange={isManualService ? handleManualServiceChange : handleAddServiceChange}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-left ltr"
+                        placeholder="0.00"
+                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">ج.م</span>
+                    </div>
+                  </div>
+                </div>
+
+                {isManualService && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الكمية</label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="1"
+                      value={manualServiceForm.quantity}
+                      onChange={handleManualServiceChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">ملاحظات إضافية</label>
+                  <textarea
+                    name="notes"
+                    value={svcForm.notes}
+                    onChange={handleAddServiceChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
+                    rows={3}
+                    placeholder="أي تفاصيل أو ملاحظات خاصة بالخدمة..."
+                  />
+                </div>
+
+                {/* Invoice Link Section */}
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                  <label className="flex items-center gap-2 text-sm font-medium text-blue-800 mb-2">
+                    <FileText className="w-4 h-4" />
+                    ربط بفاتورة (اختياري)
+                  </label>
+                  <select
+                    name="invoiceId"
+                    value={svcForm.invoiceId}
+                    onChange={handleAddServiceChange}
+                    className="w-full px-4 py-2.5 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
-                    <option value="">
-                      {techOptions.length === 0 ? 'جاري التحميل...' : 'اختر الفني...'}
-                    </option>
-                    {techOptions.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name || t.fullName || `${t.firstName} ${t.lastName}` || `فني #${t.id}`}
+                    <option value="">بدون ربط - سيتم الربط تلقائياً بالفاتورة الأولى</option>
+                    {invoices.map((inv) => (
+                      <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
+                        {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
                       </option>
                     ))}
                   </select>
-                  {techOptions.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-1">لا يوجد فنيون متاحون.</p>
-                  )}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
-                <textarea name="notes" value={svcForm.notes} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg" rows={3} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الربط بفاتورة (اختياري)</label>
-                <select name="invoiceId" value={svcForm.invoiceId} onChange={handleAddServiceChange} className="w-full p-2 border border-gray-300 rounded-lg bg-white">
-                  <option value="">بدون ربط</option>
-                  {invoices.map((inv) => (
-                    <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
-                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="border border-yellow-300 bg-yellow-50 rounded-lg p-3 space-y-3">
-                <label className="flex items-center gap-2 text-sm font-medium text-yellow-800">
-                  <input
-                    type="checkbox"
-                    checked={isManualService}
-                    onChange={() => {
-                      setIsManualService(prev => !prev);
-                      setAddSvcError('');
-                    }}
-                  />
-                  إضافة خدمة يدوية (لن تُحفظ في كتالوج الخدمات)
-                </label>
-                {isManualService && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">اسم الخدمة اليدوية</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={manualServiceForm.name}
-                        onChange={handleManualServiceChange}
-                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
-                        placeholder="مثلاً: تثبيت نظام + برامج"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">الكمية</label>
-                      <input
-                        type="number"
-                        name="quantity"
-                        min="1"
-                        value={manualServiceForm.quantity}
-                        onChange={handleManualServiceChange}
-                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">سعر الوحدة</label>
-                      <input
-                        type="number"
-                        name="unitPrice"
-                        min="0"
-                        step="0.01"
-                        value={manualServiceForm.unitPrice}
-                        onChange={handleManualServiceChange}
-                        className="w-full p-2 border border-yellow-200 rounded-lg bg-white text-sm"
-                      />
-                    </div>
-                    <p className="text-xs text-yellow-700 md:col-span-3">
-                      سيتم حفظ الخدمة كعنصر فاتورة نصي يحمل الوصف والتكلفة والكمية المحددة.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
-              <SimpleButton variant="ghost" onClick={() => setAddServiceOpen(false)} disabled={addSvcLoading}>إلغاء</SimpleButton>
-              <SimpleButton
-                onClick={handleAddServiceSubmit}
-                disabled={
-                  addSvcLoading ||
-                  (isManualService
-                    ? !manualServiceForm.name?.trim() ||
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <button
+                onClick={() => setAddServiceOpen(false)}
+                className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                إلغاء
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-red-500">* حقول مطلوبة</span>
+                <button
+                  onClick={handleAddServiceSubmit}
+                  disabled={
+                    addSvcLoading ||
+                    (isManualService
+                      ? !manualServiceForm.name?.trim() ||
                       Number(manualServiceForm.unitPrice) <= 0 ||
                       Number(manualServiceForm.quantity) <= 0
-                    : !svcForm.serviceId || !svcForm.technicianId || !svcForm.price)
-                }
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {addSvcLoading
-                  ? 'جاري الإضافة...'
-                  : isManualService
-                  ? 'إضافة خدمة مخصصة'
-                  : 'إضافة'}
-              </SimpleButton>
+                      : !svcForm.serviceId || !svcForm.technicianId || !svcForm.price)
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:shadow-none"
+                >
+                  {addSvcLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      جاري الإضافة...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      إضافة الخدمة
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1961,7 +2006,7 @@ const RepairDetailsPage = () => {
                         <p className="text-gray-900">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('en-GB') : 'لم يتم تحديده بعد'}</p>
                       </div>
                     </div>
-                    
+
                     {/* نموذج تعديل تفاصيل طلب الإصلاح */}
                     {editingDetails ? (
                       <div className="mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -2165,7 +2210,7 @@ const RepairDetailsPage = () => {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -2220,16 +2265,16 @@ const RepairDetailsPage = () => {
                                     <div className="flex items-center gap-2">
                                       <SimpleBadge className={
                                         pu.status === 'used' ? 'bg-green-100 text-green-800' :
-                                        pu.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                                        pu.status === 'requested' ? 'bg-amber-100 text-amber-800' :
-                                        pu.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                        'bg-gray-100 text-gray-800'
+                                          pu.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                                            pu.status === 'requested' ? 'bg-amber-100 text-amber-800' :
+                                              pu.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                'bg-gray-100 text-gray-800'
                                       }>
                                         {pu.status === 'used' ? '✓ مستخدم' :
-                                         pu.status === 'approved' ? '✓ معتمد' :
-                                         pu.status === 'requested' ? '⏳ قيد الانتظار' :
-                                         pu.status === 'cancelled' ? '✗ ملغي' :
-                                         pu.status}
+                                          pu.status === 'approved' ? '✓ معتمد' :
+                                            pu.status === 'requested' ? '⏳ قيد الانتظار' :
+                                              pu.status === 'cancelled' ? '✗ ملغي' :
+                                                pu.status}
                                       </SimpleBadge>
                                     </div>
                                   )}
@@ -2246,12 +2291,12 @@ const RepairDetailsPage = () => {
                                   </div>
                                 )}
                               </div>
-                              
+
                               <div className="flex flex-col items-end gap-3">
                                 <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
                                   {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
                                 </SimpleBadge>
-                                
+
                                 <div className="flex gap-2">
                                   {!invoiced && (
                                     <SimpleButton
@@ -2263,13 +2308,13 @@ const RepairDetailsPage = () => {
                                           if (invoices.length === 0) {
                                             await loadInvoices();
                                           }
-                                          
+
                                           // Wait a moment for state to update, then get fresh invoices
                                           await new Promise(resolve => setTimeout(resolve, 100));
-                                          
+
                                           // Get fresh invoices from the API directly to avoid state timing issues
                                           const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-                                          
+
                                           // Handle different response formats
                                           let freshInvoices = [];
                                           if (Array.isArray(freshInvoicesData)) {
@@ -2281,12 +2326,12 @@ const RepairDetailsPage = () => {
                                           } else if (freshInvoicesData?.invoices && Array.isArray(freshInvoicesData.invoices)) {
                                             freshInvoices = freshInvoicesData.invoices;
                                           }
-                                          
+
                                           console.log('Debug - Fresh invoices (parts):', freshInvoices);
                                           if (!Array.isArray(freshInvoices)) {
                                             throw new Error('Invalid invoices response format');
                                           }
-                                          
+
                                           const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
                                           const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                           if (!targetInvoiceId) {
@@ -2300,7 +2345,7 @@ const RepairDetailsPage = () => {
                                             partsUsedId: pu.id || null,
                                             itemType: 'part'
                                           });
-                                          
+
                                           if (addData.success) {
                                             notifications.success('تم إضافة القطعة إلى الفاتورة');
                                             await loadPartsUsed();
@@ -2312,9 +2357,9 @@ const RepairDetailsPage = () => {
                                           } else {
                                             throw new Error(addData.error || 'Failed to add part to invoice');
                                           }
-                                    } catch (e) {
-                                      console.error('Error adding part to invoice:', e);
-                                      notifications.error(`تعذر إضافة القطعة إلى الفاتورة: ${e.message}`);
+                                        } catch (e) {
+                                          console.error('Error adding part to invoice:', e);
+                                          notifications.error(`تعذر إضافة القطعة إلى الفاتورة: ${e.message}`);
                                         }
                                       }}
                                     >
@@ -2322,7 +2367,7 @@ const RepairDetailsPage = () => {
                                       إضافة للفاتورة
                                     </SimpleButton>
                                   )}
-                                  
+
                                   <SimpleButton
                                     size="sm"
                                     variant="outline"
@@ -2435,7 +2480,7 @@ const RepairDetailsPage = () => {
                                         type="number"
                                         step="0.01"
                                         value={editingService.price || service.price || ''}
-                                        onChange={(e) => setEditingService({...editingService, price: e.target.value})}
+                                        onChange={(e) => setEditingService({ ...editingService, price: e.target.value })}
                                         className="w-full p-2 border border-gray-300 rounded-lg"
                                       />
                                     </div>
@@ -2443,7 +2488,7 @@ const RepairDetailsPage = () => {
                                       <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
                                       <select
                                         value={editingService.technicianId || service.technicianId || ''}
-                                        onChange={(e) => setEditingService({...editingService, technicianId: e.target.value})}
+                                        onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value })}
                                         className="w-full p-2 border border-gray-300 rounded-lg bg-white"
                                       >
                                         <option value="">اختر الفني...</option>
@@ -2458,7 +2503,7 @@ const RepairDetailsPage = () => {
                                       <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
                                       <textarea
                                         value={editingService.notes || service.notes || ''}
-                                        onChange={(e) => setEditingService({...editingService, notes: e.target.value})}
+                                        onChange={(e) => setEditingService({ ...editingService, notes: e.target.value })}
                                         className="w-full p-2 border border-gray-300 rounded-lg"
                                         rows={3}
                                       />
@@ -2479,7 +2524,7 @@ const RepairDetailsPage = () => {
                                         </div>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4 text-sm mb-2">
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -2492,7 +2537,7 @@ const RepairDetailsPage = () => {
                                         <span className="font-medium text-gray-900">{service.technicianName || 'غير محدد'}</span>
                                       </div>
                                     </div>
-                                    
+
                                     {service.notes && (
                                       <div className="bg-white/70 rounded-lg p-3 mt-2">
                                         <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
@@ -2502,7 +2547,7 @@ const RepairDetailsPage = () => {
                                   </>
                                 )}
                               </div>
-                              
+
                               <div className="flex flex-col items-end gap-3">
                                 <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
                                   {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
@@ -2563,19 +2608,19 @@ const RepairDetailsPage = () => {
                                   <SimpleButton
                                     size="sm"
                                     onClick={async () => {
-                                        try {
+                                      try {
                                         // تأكد من وجود فاتورة واحدة على الأقل
                                         if (invoices.length === 0) {
                                           await loadInvoices();
                                         }
-                                        
+
                                         // Wait a moment for state to update, then get fresh invoices
                                         await new Promise(resolve => setTimeout(resolve, 100));
-                                        
+
                                         // Get fresh invoices from the API directly to avoid state timing issues
                                         const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
                                         const freshInvoices = freshInvoicesData.data || [];
-                                        
+
                                         console.log('Debug - Fresh invoices:', freshInvoices);
                                         console.log('Debug - Looking for repairRequestId:', parseInt(id));
                                         console.log('Debug - Invoice repairRequestIds:', freshInvoices.map(inv => ({ id: inv.id, repairRequestId: inv.repairRequestId, type: typeof inv.repairRequestId })));
@@ -2606,7 +2651,7 @@ const RepairDetailsPage = () => {
                                           description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
                                           itemType: 'service'
                                         });
-                                        
+
                                         if (addData.success) {
                                           notifications.success('تم إضافة الخدمة إلى الفاتورة');
                                           await loadServices();
@@ -2645,7 +2690,7 @@ const RepairDetailsPage = () => {
 
           {activeTab === 'attachments' && (
             <>
-              <AttachmentManager 
+              <AttachmentManager
                 attachments={attachments}
                 onUpload={async (file) => {
                   try {
@@ -2676,7 +2721,7 @@ const RepairDetailsPage = () => {
                 }}
                 onDelete={(id) => {
                   const attachment = attachments.find(att => att.id === id);
-                  apiService.deleteAttachment?.(repair?.id || id, id).catch(() => {});
+                  apiService.deleteAttachment?.(repair?.id || id, id).catch(() => { });
                   setAttachments(prev => prev.filter(att => att.id !== id));
                   notifications.success(`تم حذف الملف "${attachment?.title || attachment?.name}" بنجاح`, { title: 'تم الحذف', duration: 3000 });
                 }}
@@ -2700,7 +2745,7 @@ const RepairDetailsPage = () => {
                   }
                 }}
                 onEdit={(id, updates) => {
-                  setAttachments(prev => prev.map(att => 
+                  setAttachments(prev => prev.map(att =>
                     att.id === id ? { ...att, ...updates } : att
                   ));
                   notifications.success('تم تحديث بيانات الملف بنجاح', { title: 'تم التحديث', duration: 3000 });
@@ -2758,9 +2803,9 @@ const RepairDetailsPage = () => {
                                   عرض
                                 </SimpleButton>
                               </Link>
-                              <SimpleButton 
-                                size="sm" 
-                                variant="outline" 
+                              <SimpleButton
+                                size="sm"
+                                variant="outline"
                                 onClick={() => handlePrint('invoice')}
                               >
                                 <Printer className="w-4 h-4 ml-1" />
@@ -2993,7 +3038,7 @@ const RepairDetailsPage = () => {
                             default: return <MessageSquare className="w-4 h-4 text-gray-600" />;
                           }
                         };
-                        
+
                         const getActivityBgColor = (type) => {
                           switch (type) {
                             case 'system': return 'bg-blue-50 border-blue-200';
@@ -3015,15 +3060,14 @@ const RepairDetailsPage = () => {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center space-x-2 space-x-reverse">
                                     <p className="text-sm font-medium text-gray-900">{note.author}</p>
-                                    <SimpleBadge className={`text-xs ${
-                                      note.type === 'system' ? 'bg-blue-100 text-blue-800' :
-                                      note.type === 'technician' ? 'bg-green-100 text-green-800' :
-                                      note.type === 'customer' ? 'bg-purple-100 text-purple-800' :
-                                      'bg-gray-100 text-gray-800'
-                                    }`}>
+                                    <SimpleBadge className={`text-xs ${note.type === 'system' ? 'bg-blue-100 text-blue-800' :
+                                        note.type === 'technician' ? 'bg-green-100 text-green-800' :
+                                          note.type === 'customer' ? 'bg-purple-100 text-purple-800' :
+                                            'bg-gray-100 text-gray-800'
+                                      }`}>
                                       {note.type === 'system' ? 'نظام' :
-                                       note.type === 'technician' ? 'فني' :
-                                       note.type === 'customer' ? 'عميل' : 'ملاحظة'}
+                                        note.type === 'technician' ? 'فني' :
+                                          note.type === 'customer' ? 'عميل' : 'ملاحظة'}
                                     </SimpleBadge>
                                   </div>
                                   <p className="text-xs text-gray-500">
@@ -3073,7 +3117,7 @@ const RepairDetailsPage = () => {
                     <SimpleButton size="sm" onClick={async () => {
                       try {
                         await handleStatusUpdate();
-                      } catch (_) {}
+                      } catch (_) { }
                     }}>
                       <Save className="w-4 h-4 ml-1" />
                       حفظ
@@ -3336,7 +3380,7 @@ const RepairDetailsPage = () => {
                           const updatedRepair = await apiService.updateRepairRequest(repair.id, {
                             accessories: accessoriesForm.filter(a => a != null).map(a => a.label || a.value || a.name || a)
                           });
-                          
+
                           // تحديث البيانات محلياً
                           setRepair(prev => ({ ...prev, accessories: accessoriesForm }));
                           setEditingAccessories(false);
@@ -3454,8 +3498,8 @@ const RepairDetailsPage = () => {
                     <p className="text-sm text-gray-500">طلب #{id} - {repair?.customerName}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setInspectionOpen(false)} 
+                <button
+                  onClick={() => setInspectionOpen(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -3470,9 +3514,9 @@ const RepairDetailsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">نوع الفحص</label>
-                    <select 
-                      value={inspectionForm.inspectionTypeId} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, inspectionTypeId:e.target.value}))} 
+                    <select
+                      value={inspectionForm.inspectionTypeId}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, inspectionTypeId: e.target.value }))}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">اختر النوع...</option>
@@ -3483,14 +3527,14 @@ const RepairDetailsPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">الفني المسؤول</label>
-                    <select 
-                      value={inspectionForm.technicianId} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, technicianId:e.target.value}))} 
+                    <select
+                      value={inspectionForm.technicianId}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, technicianId: e.target.value }))}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={techLoading}
                     >
                       <option value="">اختر الفني...</option>
-                      {techOptions.map((u)=> (
+                      {techOptions.map((u) => (
                         <option key={u.id} value={u.id}>{u.name || `مستخدم #${u.id}`}</option>
                       ))}
                     </select>
@@ -3498,11 +3542,11 @@ const RepairDetailsPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ التقرير</label>
-                    <input 
-                      type="date" 
-                      value={inspectionForm.reportDate} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, reportDate:e.target.value}))} 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    <input
+                      type="date"
+                      value={inspectionForm.reportDate}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, reportDate: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -3514,40 +3558,40 @@ const RepairDetailsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ملخص الفحص</label>
-                    <textarea 
-                      value={inspectionForm.summary} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, summary:e.target.value}))} 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    <textarea
+                      value={inspectionForm.summary}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, summary: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       rows={3}
                       placeholder="وصف مختصر لنتائج الفحص..."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">النتيجة والتشخيص</label>
-                    <textarea 
-                      value={inspectionForm.result} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, result:e.target.value}))} 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    <textarea
+                      value={inspectionForm.result}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, result: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       rows={3}
                       placeholder="التشخيص النهائي والمشاكل المكتشفة..."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">التوصيات</label>
-                    <textarea 
-                      value={inspectionForm.recommendations} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, recommendations:e.target.value}))} 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    <textarea
+                      value={inspectionForm.recommendations}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, recommendations: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       rows={3}
                       placeholder="الخطوات المقترحة للإصلاح..."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ملاحظات إضافية</label>
-                    <textarea 
-                      value={inspectionForm.notes} 
-                      onChange={(e)=>setInspectionForm(f=>({...f, notes:e.target.value}))} 
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    <textarea
+                      value={inspectionForm.notes}
+                      onChange={(e) => setInspectionForm(f => ({ ...f, notes: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       rows={3}
                       placeholder="أي ملاحظات أخرى..."
                     />
@@ -3558,11 +3602,11 @@ const RepairDetailsPage = () => {
 
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl">
               <div className="flex items-center justify-end gap-3">
-                <SimpleButton variant="ghost" onClick={()=>setInspectionOpen(false)}>
+                <SimpleButton variant="ghost" onClick={() => setInspectionOpen(false)}>
                   إلغاء
                 </SimpleButton>
-                <SimpleButton 
-                  onClick={async ()=>{
+                <SimpleButton
+                  onClick={async () => {
                     try {
                       const payload = {
                         repairRequestId: Number(id),
@@ -3595,132 +3639,183 @@ const RepairDetailsPage = () => {
         </div>
       )}
 
-      {/* حوار صرف قطعة */}
+      {/* حوار صرف قطعة - تصميم جديد */}
       {issueOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">صرف قطعة من المخزون</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all">
+            {/* Header */}
+            <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-white">صرف قطعة غيار</h3>
+                <p className="text-blue-100 text-sm mt-1">اختر القطعة والمخزن لإضافتها للطلب</p>
+              </div>
+              <button
+                onClick={() => setIssueOpen(false)}
+                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div className="p-6 space-y-4">
+
+            <div className="p-6 space-y-5">
               {issueError && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
                   {issueError}
                 </div>
               )}
               {Array.isArray(warehouses) && warehouses.length === 0 && (
-                <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded">
+                <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
                   لا توجد مخازن متاحة. يرجى إنشاء مخزن من إعدادات المخزون أولاً.
                 </div>
               )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">المخزن</label>
-                <select
-                  name="warehouseId"
-                  value={issueForm.warehouseId}
-                  onChange={handleIssueChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                >
-                  <option value="">اختر المخزن...</option>
-                  {warehouses.map((wh) => (
-                    <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">العنصر</label>
-                <select
-                  name="inventoryItemId"
-                  value={issueForm.inventoryItemId}
-                  onChange={handleIssueChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                >
-                  <option value="">اختر العنصر...</option>
-                  {items.map((it) => (
-                    <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
-                  ))}
-                </select>
-              </div>
-              {/* اختيار فاتورة اختياري لربط الصرف مباشرة بالفاتورة */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الربط بفاتورة (اختياري)</label>
-                <select
-                  name="invoiceId"
-                  value={issueForm.invoiceId}
-                  onChange={handleIssueChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                >
-                  <option value="">بدون ربط</option>
-                  {invoices.map((inv) => (
-                    <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
-                      {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
-                    </option>
-                  ))}
-                </select>
-                {invoices.length === 0 && (
-                  <p className="mt-1 text-xs text-gray-500">لا توجد فواتير بعد لهذا الطلب. يمكنك الإنشاء من تبويب "الفواتير".</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الكمية</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={availableQty !== null ? availableQty : undefined}
-                  name="quantity"
-                  value={issueForm.quantity}
-                  onChange={handleIssueChange}
-                  className={`w-full p-2 border rounded-lg ${
-                    availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
-                  }`}
-                />
-                {/* 🔧 Fix #1: Enhanced stock availability display */}
-                {availableQty !== null && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs">
-                      <span className="text-gray-600">المخزون المتاح: </span>
-                      <span className={`font-semibold ${availableQty === 0 ? 'text-red-600' : availableQty <= (minLevel || 0) ? 'text-amber-600' : 'text-green-600'}`}>
-                        {availableQty} {availableQty === 0 ? '❌' : availableQty <= (minLevel || 0) ? '⚠️' : '✓'}
-                      </span>
-                    </p>
-                    {minLevel !== null && minLevel > 0 && (
-                      <p className="text-xs text-gray-500">
-                        الحد الأدنى: {minLevel}
-                      </p>
-                    )}
-                    {availableQty !== null && Number(issueForm.quantity) > Number(availableQty) && (
-                      <p className="text-xs text-red-600 font-semibold">
-                        ⚠️ الكمية المطلوبة أكبر من المخزون المتاح!
-                      </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">المخزن <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <select
+                      name="warehouseId"
+                      value={issueForm.warehouseId}
+                      onChange={handleIssueChange}
+                      className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                    >
+                      <option value="">-- اختر المخزن --</option>
+                      {warehouses.map((wh) => (
+                        <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
+                      ))}
+                    </select>
+                    <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">العنصر <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <select
+                      name="inventoryItemId"
+                      value={issueForm.inventoryItemId}
+                      onChange={handleIssueChange}
+                      className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                    >
+                      <option value="">-- اختر العنصر --</option>
+                      {items.map((it) => (
+                        <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
+                      ))}
+                    </select>
+                    <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الكمية <span className="text-red-500">*</span></label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={availableQty !== null ? availableQty : undefined}
+                      name="quantity"
+                      value={issueForm.quantity}
+                      onChange={handleIssueChange}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow ${availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300'
+                        }`}
+                    />
+                  </div>
+
+                  {/* Stock Info Box */}
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 flex flex-col justify-center">
+                    {availableQty !== null ? (
+                      <>
+                        <span className="text-xs text-gray-500 mb-1">المخزون المتاح</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-lg font-bold ${availableQty === 0 ? 'text-red-600' : availableQty <= (minLevel || 0) ? 'text-amber-600' : 'text-green-600'}`}>
+                            {availableQty}
+                          </span>
+                          <span className="text-xs text-gray-400">قطعة</span>
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 text-center">اختر مخزن وعنصر لعرض المخزون</span>
                     )}
                   </div>
+                </div>
+
+                {/* Warnings */}
+                {availableQty !== null && Number(issueForm.quantity) > Number(availableQty) && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    الكمية المطلوبة أكبر من المخزون المتاح!
+                  </div>
                 )}
-                {/* 🔧 Fix #2: Enhanced low stock warning display */}
+
                 {isLowStock && availableQty !== null && (
-                  <div className={`mt-2 text-xs p-2 rounded flex items-start gap-2 ${
-                    availableQty === 0 
-                      ? 'bg-red-50 text-red-700 border border-red-200' 
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    <span className="text-base">{availableQty === 0 ? '❌' : '⚠️'}</span>
-                    <span>
-                      {availableQty === 0 
-                        ? 'المخزون منتهٍ تماماً!' 
-                        : availableQty <= (minLevel || 0)
-                          ? `المخزون منخفض! المتبقي: ${availableQty} / الحد الأدنى: ${minLevel || 0}`
-                          : 'تحذير: المخزون قد يكون منخفضاً'}
-                    </span>
+                  <div className={`p-3 rounded-lg border flex items-start gap-2 text-sm ${availableQty === 0
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                    <AlertTriangle className="w-4 h-4 mt-0.5" />
+                    <div>
+                      {availableQty === 0
+                        ? 'المخزون منتهٍ تماماً!'
+                        : `المخزون منخفض! (الحد الأدنى: ${minLevel || 0})`}
+                    </div>
                   </div>
                 )}
+
+                {/* Invoice Link Section */}
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                  <label className="flex items-center gap-2 text-sm font-medium text-blue-800 mb-2">
+                    <FileText className="w-4 h-4" />
+                    ربط بفاتورة (اختياري)
+                  </label>
+                  <select
+                    name="invoiceId"
+                    value={issueForm.invoiceId}
+                    onChange={handleIssueChange}
+                    className="w-full px-4 py-2.5 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="">بدون ربط - سيتم الربط تلقائياً بالفاتورة الأولى</option>
+                    {invoices.map((inv) => (
+                      <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
+                        {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
-              <SimpleButton variant="ghost" onClick={() => setIssueOpen(false)} disabled={issueLoading}>إلغاء</SimpleButton>
-              <SimpleButton onClick={handleIssueSubmit} disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))} className="bg-blue-600 hover:bg-blue-700">
-                {issueLoading ? 'جاري التنفيذ...' : 'صرف'}
-              </SimpleButton>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <button
+                onClick={() => setIssueOpen(false)}
+                className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                disabled={issueLoading}
+              >
+                إلغاء
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-red-500">* حقول مطلوبة</span>
+                <button
+                  onClick={handleIssueSubmit}
+                  disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:shadow-none"
+                >
+                  {issueLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      جاري الصرف...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      صرف القطعة
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
