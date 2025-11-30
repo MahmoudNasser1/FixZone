@@ -445,6 +445,8 @@ const RepairDetailsPage = () => {
       setServicesLoading(true);
       setServicesError('');
       console.log('Loading services for repair request:', id);
+      
+      // Load services from RepairRequestService
       const data = await repairService.getRepairRequestServices(id);
       console.log('Services response:', data);
 
@@ -458,6 +460,96 @@ const RepairDetailsPage = () => {
         servicesData = data.services;
       }
 
+      // Load manual services from invoice items
+      try {
+        console.log('🔍 Loading manual services from invoices for repair:', id);
+        const invoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+        console.log('📄 Invoices data response:', invoicesData);
+        
+        // Use normalizeInvoicesResponse to handle different response formats
+        const invoicesArray = normalizeInvoicesResponse(invoicesData);
+        console.log('📋 Normalized invoices array:', invoicesArray);
+        console.log('📋 Number of invoices found:', invoicesArray.length);
+        
+        // Get manual services from all invoices (itemType='service' without serviceId)
+        for (const invoice of invoicesArray) {
+          try {
+            const invoiceId = invoice.id || invoice.invoiceId;
+            if (!invoiceId) {
+              console.warn('⚠️ Invoice without ID:', invoice);
+              continue;
+            }
+            
+            console.log(`🔍 Loading items for invoice ${invoiceId}...`);
+            const itemsData = await apiService.getInvoiceItems(invoiceId);
+            console.log(`📦 Invoice ${invoiceId} items response:`, itemsData);
+            
+            const items = Array.isArray(itemsData.data) ? itemsData.data : (Array.isArray(itemsData) ? itemsData : []);
+            console.log(`📦 Invoice ${invoiceId} items array:`, items);
+            
+            // Filter manual services (itemType='service' without serviceId)
+            const manualServices = items.filter(item => {
+              const isService = item.itemType === 'service' || item.type === 'service';
+              const hasNoServiceId = !item.serviceId || item.serviceId === null;
+              const hasDescription = item.description && item.description.trim();
+              
+              console.log(`🔍 Item ${item.id}: isService=${isService}, hasNoServiceId=${hasNoServiceId}, hasDescription=${!!hasDescription}`, item);
+              
+              return isService && hasNoServiceId && hasDescription;
+            });
+            
+            console.log(`✅ Found ${manualServices.length} manual services in invoice ${invoiceId}:`, manualServices);
+            
+            // Convert manual services to RepairRequestService format
+            for (const manualService of manualServices) {
+              // Check if this manual service is already in servicesData (by description and invoice item ID)
+              const exists = servicesData.some(s => 
+                (s.invoiceItemId === manualService.id) || 
+                (!s.serviceId && s.serviceName === manualService.description)
+              );
+              
+              if (!exists) {
+                const manualServiceData = {
+                  id: `manual-${manualService.id}`, // Use a unique ID
+                  repairRequestId: Number(id),
+                  serviceId: null,
+                  serviceName: manualService.description,
+                  description: manualService.description, // Add description for matching
+                  technicianId: null,
+                  technicianName: null,
+                  price: Number(manualService.unitPrice || 0),
+                  finalPrice: Number(manualService.totalPrice || manualService.unitPrice || 0),
+                  notes: null,
+                  invoiceItemId: manualService.id,
+                  linkedInvoiceId: invoiceId,
+                  createdAt: manualService.createdAt,
+                  updatedAt: manualService.updatedAt,
+                  isManual: true // Flag to identify manual services
+                };
+                
+                console.log('➕ Adding manual service to services list:', manualServiceData);
+                servicesData.push(manualServiceData);
+              } else {
+                console.log('⏭️ Manual service already exists, skipping:', manualService.description);
+              }
+            }
+          } catch (itemErr) {
+            console.error(`❌ Error loading invoice items for invoice ${invoice.id}:`, itemErr);
+          }
+        }
+        
+        console.log(`✅ Total services after loading manual services: ${servicesData.length}`);
+      } catch (invoiceErr) {
+        console.error('❌ Error loading invoices for manual services:', invoiceErr);
+      }
+
+      console.log('📊 Final services data to set:', servicesData);
+      console.log('📊 Services breakdown:', {
+        fromRepairRequestService: servicesData.filter(s => !s.isManual).length,
+        manualServices: servicesData.filter(s => s.isManual).length,
+        total: servicesData.length
+      });
+      
       setServices(servicesData);
     } catch (e) {
       console.error('Error loading services:', e);
@@ -655,9 +747,9 @@ const RepairDetailsPage = () => {
   const getSortedPagedServices = () => {
     const withMeta = (services || []).map(s => ({
       ...s,
-      _name: s.serviceName || `خدمة #${s.serviceId}`,
-      _price: Number(s.price || 0),
-      _invoiced: !!s.invoiceItemId
+      _name: s.serviceName || s.description || `خدمة #${s.serviceId || 'يدوية'}`,
+      _price: Number(s.finalPrice || s.price || 0),
+      _invoiced: !!s.invoiceItemId || s.isManual // Manual services are always invoiced
     }));
     const sorted = withMeta.sort((a, b) => {
       const dir = svcSortDir === 'asc' ? 1 : -1;
@@ -987,8 +1079,12 @@ const RepairDetailsPage = () => {
       });
 
       notifications.success('تمت إضافة الخدمة اليدوية إلى الفاتورة');
-      await loadInvoices();
-      await loadServices();
+      
+      // Wait a bit to ensure the invoice is updated in the database
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await loadInvoices(); // تحديث الفواتير لعرض البنود الجديدة
+      await loadServices(); // تحديث الخدمات لعرض الخدمة اليدوية
 
       setAddServiceOpen(false);
       setManualServiceForm({ name: '', unitPrice: '', quantity: 1 });
@@ -1096,6 +1192,7 @@ const RepairDetailsPage = () => {
       setAddServiceOpen(false);
       setSvcForm({ serviceId: '', price: '', technicianId: '', notes: '', invoiceId: '' });
       await loadServices();
+      await loadInvoices(); // تحديث الفواتير لعرض البنود الجديدة
     } catch (e) {
       setAddSvcError(e?.message || 'تعذر إضافة الخدمة');
       notifications.error('تعذر إضافة الخدمة');
@@ -2217,15 +2314,7 @@ const RepairDetailsPage = () => {
                                     <span className="text-gray-600">الكمية:</span>
                                     <span className="font-medium text-gray-900">{pu.quantity}</span>
                                   </div>
-                                  {/* 🔧 Fix #5: Display purchase price */}
-                                  {pu.unitPurchasePrice !== null && pu.unitPurchasePrice !== undefined && (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                      <span className="text-gray-600">سعر الشراء:</span>
-                                      <span className="font-medium text-gray-900">{formatMoney(pu.unitPurchasePrice)}</span>
-                                    </div>
-                                  )}
-                                  {/* 🔧 Fix #5: Display selling price */}
+                                  {/* Display selling price only */}
                                   {pu.unitSellingPrice !== null && pu.unitSellingPrice !== undefined && (
                                     <div className="flex items-center gap-2">
                                       <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
@@ -2233,31 +2322,12 @@ const RepairDetailsPage = () => {
                                       <span className="font-medium text-gray-900">{formatMoney(pu.unitSellingPrice)}</span>
                                     </div>
                                   )}
-                                  {/* 🔧 Fix #5: Display total cost */}
-                                  {pu.totalCost !== null && pu.totalCost !== undefined && (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                      <span className="text-gray-600">التكلفة الإجمالية:</span>
-                                      <span className="font-medium text-gray-900">{formatMoney(pu.totalCost)}</span>
-                                    </div>
-                                  )}
-                                  {/* 🔧 Fix #5: Display total price */}
+                                  {/* Display total price */}
                                   {pu.totalPrice !== null && pu.totalPrice !== undefined && (
                                     <div className="flex items-center gap-2">
                                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                                       <span className="text-gray-600">السعر الإجمالي:</span>
                                       <span className="font-medium text-gray-900">{formatMoney(pu.totalPrice)}</span>
-                                    </div>
-                                  )}
-                                  {/* 🔧 Fix #5: Display profit */}
-                                  {pu.profit !== null && pu.profit !== undefined && (
-                                    <div className="flex items-center gap-2">
-                                      <div className={`w-2 h-2 rounded-full ${Number(pu.profit) >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                      <span className="text-gray-600">الربح:</span>
-                                      <span className={`font-semibold ${Number(pu.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {formatMoney(pu.profit)}
-                                        {pu.profitMargin && ` (${pu.profitMargin}%)`}
-                                      </span>
                                     </div>
                                   )}
                                   {/* Status badge */}
@@ -2279,17 +2349,6 @@ const RepairDetailsPage = () => {
                                     </div>
                                   )}
                                 </div>
-                                {/* 🔧 Fix #5: Display profit margin summary */}
-                                {pu.profit !== null && pu.profit !== undefined && Number(pu.profit) > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-gray-200">
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="text-gray-600">الربحية:</span>
-                                      <span className={`font-semibold ${Number(pu.profitMargin || 0) >= 20 ? 'text-green-600' : Number(pu.profitMargin || 0) >= 10 ? 'text-amber-600' : 'text-gray-600'}`}>
-                                        {pu.profitMargin || '0'}% ({formatMoney(pu.totalPrice || 0)} - {formatMoney(pu.totalCost || 0)})
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
 
                               <div className="flex flex-col items-end gap-3">
@@ -2517,10 +2576,14 @@ const RepairDetailsPage = () => {
                                       </div>
                                       <div>
                                         <div className="font-semibold text-gray-900 text-lg">
-                                          {service.serviceName || `خدمة إصلاح #${service.serviceId}`}
+                                          {service.serviceName || service.description || `خدمة إصلاح #${service.serviceId || 'يدوية'}`}
                                         </div>
                                         <div className="text-sm text-gray-500">
-                                          كود الخدمة: {service.serviceId || 'غير محدد'}
+                                          {service.isManual ? (
+                                            <span className="text-purple-600">خدمة يدوية</span>
+                                          ) : (
+                                            <>كود الخدمة: {service.serviceId || 'غير محدد'}</>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
@@ -2529,12 +2592,12 @@ const RepairDetailsPage = () => {
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                         <span className="text-gray-600">السعر:</span>
-                                        <span className="font-medium text-gray-900">{Number(service.price || 0).toFixed(2)} ج.م</span>
+                                        <span className="font-medium text-gray-900">{Number(service.finalPrice || service.price || 0).toFixed(2)} ج.م</span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                         <span className="text-gray-600">الفني:</span>
-                                        <span className="font-medium text-gray-900">{service.technicianName || 'غير محدد'}</span>
+                                        <span className="font-medium text-gray-900">{service.technicianName || (service.isManual ? 'غير محدد' : 'غير محدد')}</span>
                                       </div>
                                     </div>
 

@@ -281,17 +281,20 @@ class InvoicesController {
 
       const invoice = invoiceRows[0];
 
-      // Get invoice items (parts and services)
+      // Get invoice items (parts and services) - include manual services
+      // Note: InvoiceItem table doesn't have deletedAt column
       const [items] = await db.query(`
         SELECT 
           ii.*,
-          (ii.quantity * ii.unitPrice) as totalPrice,
-          CASE 
-            WHEN ii.inventoryItemId IS NOT NULL THEN 'part'
-            WHEN ii.serviceId IS NOT NULL THEN 'service'
-            ELSE 'other'
-          END as itemType,
-          COALESCE(inv.name, s.name, 'Unknown Item') as itemName,
+          COALESCE(ii.totalPrice, ii.quantity * ii.unitPrice) as totalPrice,
+          COALESCE(ii.itemType, 
+            CASE 
+              WHEN ii.inventoryItemId IS NOT NULL THEN 'part'
+              WHEN ii.serviceId IS NOT NULL THEN 'service'
+              ELSE 'other'
+            END
+          ) as itemType,
+          COALESCE(inv.name, s.name, ii.description, 'Unknown Item') as itemName,
           COALESCE(inv.sku, CONCAT('SVC-', s.id), NULL) as itemCode
         FROM InvoiceItem ii
         LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
@@ -891,6 +894,7 @@ class InvoicesController {
   async getInvoiceItems(req, res) {
     try {
       const { id } = req.params;
+      console.log('🔍 getInvoiceItems called for invoice ID:', id);
 
       // Validate invoice exists
       const [invoice] = await db.query(`
@@ -898,33 +902,49 @@ class InvoicesController {
       `, [id]);
 
       if (invoice.length === 0) {
+        console.log('❌ Invoice not found:', id);
         return res.status(404).json({ success: false, error: 'Invoice not found' });
       }
 
-      // Get invoice items
+      // Get invoice items (Note: InvoiceItem table doesn't have deletedAt or currency columns)
+      // Use explicit column list to avoid issues with missing columns
       const [items] = await db.query(`
         SELECT 
-          ii.*,
-          ii.description as itemDescription,
+          ii.id,
+          ii.invoiceId,
+          ii.inventoryItemId,
+          ii.serviceId,
           ii.quantity,
           ii.unitPrice,
           ii.totalPrice,
-          ii.itemType as type,
-          ii.currency,
+          ii.description,
+          ii.itemType,
           ii.createdAt,
-          ii.updatedAt
+          ii.updatedAt,
+          ii.description as itemDescription,
+          ii.itemType as type
         FROM InvoiceItem ii
-        WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
+        WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);
 
+      console.log('✅ Found', items.length, 'invoice items for invoice', id);
       res.json({
         success: true,
         data: items
       });
     } catch (error) {
-      console.error('Error in getInvoiceItems:', error);
-      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+      console.error('❌ Error in getInvoiceItems:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error code:', error.code);
+      console.error('Error SQL state:', error.sqlState);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Server error', 
+        details: error.message,
+        errorCode: error.code,
+        sqlState: error.sqlState
+      });
     }
   }
 
@@ -932,7 +952,7 @@ class InvoicesController {
   async addInvoiceItem(req, res) {
     try {
       const { id } = req.params; // invoiceId
-      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, description = null, partsUsedId = null } = req.body || {};
+      let { inventoryItemId = null, serviceId = null, quantity = 1, unitPrice = null, description = null, partsUsedId = null, itemType = null } = req.body || {};
 
       // Validate invoice exists
       const [invRows] = await db.query(`SELECT id FROM Invoice WHERE id = ? AND deletedAt IS NULL`, [id]);
@@ -940,9 +960,12 @@ class InvoicesController {
         return res.status(404).json({ success: false, error: 'Invoice not found' });
       }
 
-      // Validate payload
-      if (!inventoryItemId && !serviceId) {
-        return res.status(400).json({ success: false, error: 'Either inventoryItemId or serviceId is required' });
+      // Validate payload - Allow manual services (itemType='service' with description but no serviceId)
+      if (!inventoryItemId && !serviceId && !(itemType === 'service' && description)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Either inventoryItemId, serviceId, or manual service (itemType=service with description) is required' 
+        });
       }
 
       // Check for duplicates
@@ -966,26 +989,65 @@ class InvoicesController {
         }
       }
 
+      // For manual services (no serviceId), check for duplicate descriptions
+      if (!serviceId && !inventoryItemId && itemType === 'service' && description) {
+        const [existingManual] = await db.query(
+          `SELECT id FROM InvoiceItem WHERE invoiceId = ? AND serviceId IS NULL AND inventoryItemId IS NULL AND description = ? AND itemType = 'service'`,
+          [id, description]
+        );
+        if (existingManual.length > 0) {
+          return res.status(409).json({ success: false, error: 'هذه الخدمة اليدوية مضافة مسبقاً للفاتورة' });
+        }
+      }
+
       quantity = Number(quantity) || 1;
 
       // If unitPrice not provided, fetch default from item/service
-      if (unitPrice == null) {
+      if (unitPrice == null || unitPrice === undefined) {
         if (inventoryItemId) {
           const [rows] = await db.query(`SELECT sellingPrice FROM InventoryItem WHERE id = ?`, [inventoryItemId]);
           unitPrice = rows.length ? (rows[0].sellingPrice || 0) : 0;
         } else if (serviceId) {
           const [rows] = await db.query(`SELECT basePrice FROM Service WHERE id = ?`, [serviceId]);
           unitPrice = rows.length ? (rows[0].basePrice || 0) : 0;
+        } else {
+          // Manual service - require unitPrice
+          return res.status(400).json({ 
+            success: false, 
+            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)' 
+          });
         }
       }
 
+      // Validate unitPrice for manual services
+      if (!inventoryItemId && !serviceId && itemType === 'service') {
+        if (unitPrice == null || unitPrice === undefined || unitPrice === '') {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)' 
+          });
+        }
+      }
+
+      // Ensure unitPrice is a valid number
+      unitPrice = Number(unitPrice);
+      if (isNaN(unitPrice) || unitPrice < 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'السعر يجب أن يكون رقماً صحيحاً أكبر من أو يساوي الصفر' 
+        });
+      }
+
       const totalPrice = Number(quantity) * Number(unitPrice || 0);
+
+      // Determine itemType if not provided
+      const finalItemType = itemType || (inventoryItemId ? 'part' : 'service');
 
       // Insert invoice item
       const [result] = await db.query(
         `INSERT INTO InvoiceItem (invoiceId, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, description, itemType, createdAt, updatedAt)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [id, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, description, inventoryItemId ? 'part' : 'service']
+        [id, inventoryItemId, serviceId, quantity, unitPrice, totalPrice, description, finalItemType]
       );
 
       const itemId = result.insertId;
@@ -1009,11 +1071,13 @@ class InvoicesController {
       }
 
       // Recalculate invoice totalAmount as sum of items
+      // Note: InvoiceItem table doesn't have deletedAt column
       await db.query(
         `UPDATE Invoice i 
          SET i.totalAmount = (
-           SELECT COALESCE(SUM(ii.quantity * ii.unitPrice), 0)
-           FROM InvoiceItem ii WHERE ii.invoiceId = i.id
+           SELECT COALESCE(SUM(ii.totalPrice), COALESCE(SUM(ii.quantity * ii.unitPrice), 0))
+           FROM InvoiceItem ii 
+           WHERE ii.invoiceId = i.id
          ), i.updatedAt = NOW()
          WHERE i.id = ?`,
         [id]

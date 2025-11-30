@@ -525,28 +525,42 @@ class InvoicesControllerSimple {
   async getInvoiceItems(req, res) {
     try {
       const { id } = req.params;
+      console.log('🔍 getInvoiceItems (Simple) called for invoice ID:', id);
       
-      // Check if deletedAt column exists
-      const [columnCheck] = await db.execute(`
-        SELECT COUNT(*) as exists 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() 
-        AND TABLE_NAME = 'InvoiceItem' 
-        AND COLUMN_NAME = 'deletedAt'
-      `);
-
-      const hasSoftDelete = columnCheck[0].exists > 0;
+      // Use explicit column list to avoid issues with missing columns
+      // InvoiceItem table doesn't have deletedAt or currency columns
+      const [items] = await db.execute(`
+        SELECT 
+          id,
+          invoiceId,
+          inventoryItemId,
+          serviceId,
+          quantity,
+          unitPrice,
+          totalPrice,
+          description,
+          itemType,
+          createdAt,
+          updatedAt
+        FROM InvoiceItem 
+        WHERE invoiceId = ?
+        ORDER BY createdAt ASC
+      `, [id]);
       
-      // Build query based on whether soft delete exists
-      const query = hasSoftDelete
-        ? `SELECT * FROM InvoiceItem WHERE invoiceId = ? AND (deletedAt IS NULL OR deletedAt IS NULL)`
-        : `SELECT * FROM InvoiceItem WHERE invoiceId = ?`;
-      
-      const [items] = await db.execute(query, [id]);
+      console.log('✅ Found', items.length, 'invoice items for invoice', id);
       res.json({ success: true, data: items });
     } catch (error) {
-      console.error('Error fetching invoice items:', error);
-      res.status(500).json({ success: false, error: 'Server error', details: error.message });
+      console.error('❌ Error fetching invoice items:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error code:', error.code);
+      console.error('Error SQL state:', error.sqlState);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Server error', 
+        details: error.message,
+        errorCode: error.code,
+        sqlState: error.sqlState
+      });
     }
   }
 

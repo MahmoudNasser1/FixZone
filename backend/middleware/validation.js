@@ -1484,17 +1484,19 @@ const invoiceSchemas = {
       }),
     notes: Joi.string().max(500).allow('', null).optional()
   }).custom((value, helpers) => {
-    // Validate: إذا كان itemType = 'service'، يجب تحديد serviceId
-    if (value.itemType === 'service' && !value.serviceId) {
-      return helpers.error('custom.serviceRequiresServiceId');
+    // Validate: إذا كان itemType = 'service'، يجب تحديد serviceId أو description (للخدمات اليدوية)
+    if (value.itemType === 'service' && !value.serviceId && !value.description) {
+      return helpers.error('custom.serviceRequiresServiceIdOrDescription');
     }
     // Validate: إذا كان itemType = 'part'، يجب تحديد inventoryItemId
     if (value.itemType === 'part' && !value.inventoryItemId) {
       return helpers.error('custom.partRequiresItemId');
     }
+    // Allow manual services: itemType='service' with description but no serviceId
+    // This is valid - it's a manual/custom service
     return value;
   }).messages({
-    'custom.serviceRequiresServiceId': 'لعناصر الخدمة: يجب تحديد معرف الخدمة (serviceId)',
+    'custom.serviceRequiresServiceIdOrDescription': 'لعناصر الخدمة: يجب تحديد معرف الخدمة (serviceId) أو الوصف (description) للخدمات اليدوية',
     'custom.partRequiresItemId': 'لعناصر القطع: يجب تحديد معرف الصنف (inventoryItemId)'
   }),
 

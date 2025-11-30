@@ -127,23 +127,28 @@
   // Retry logic with max attempts
   const MAX_RETRIES = 3;
   const attemptInit = () => {
-    // Check if elements exist before trying
-    if (typeof document === 'undefined' || !document.body) {
-      if (retryAttempts < MAX_RETRIES) {
-        scheduledId = setTimeout(() => {
-          retryAttempts++;
-          attemptInit();
-        }, RETRY_DELAYS[Math.min(retryAttempts, RETRY_DELAYS.length - 1)]);
+    try {
+      // Check if elements exist before trying
+      if (typeof document === 'undefined' || !document || !document.body || !document.getElementById) {
+        if (retryAttempts < MAX_RETRIES) {
+          scheduledId = setTimeout(() => {
+            retryAttempts++;
+            attemptInit();
+          }, RETRY_DELAYS[Math.min(retryAttempts, RETRY_DELAYS.length - 1)]);
+        }
+        return;
       }
-      return;
-    }
 
-    const shareButton = document.getElementById('share-button');
-    const shareModal = document.getElementById('share-modal');
-    
-    // If elements don't exist, don't retry - they may not be on this page
-    if (!shareButton || !shareModal) {
-      return; // Silently exit - elements not on this page
+      const shareButton = document.getElementById('share-button');
+      const shareModal = document.getElementById('share-modal');
+      
+      // If elements don't exist, don't retry - they may not be on this page
+      if (!shareButton || !shareModal) {
+        return; // Silently exit - elements not on this page
+      }
+    } catch (e) {
+      // Silently fail if there's any error accessing DOM
+      return;
     }
 
     if (initShareModal()) {

@@ -42,8 +42,9 @@ router.post('/issue', async (req, res) => {
     });
   }
 
-  const conn = await db.getConnection();
+  let conn;
   try {
+    conn = await db.getConnection();
     await conn.beginTransaction();
 
     // 1) Fetch inventory item details (pricing)
@@ -404,15 +405,31 @@ router.post('/issue', async (req, res) => {
       }
     });
   } catch (err) {
-    try { await conn.rollback(); } catch (_) {}
+    try { 
+      if (conn) {
+        await conn.rollback(); 
+      }
+    } catch (rollbackErr) {
+      console.error('Error during rollback:', rollbackErr);
+    }
     console.error('Error issuing part transaction:', err);
+    console.error('Error stack:', err.stack);
+    console.error('Request body:', req.body);
     return res.status(500).json({ 
       success: false,
       message: 'Server Error',
-      details: err.message 
+      details: err.message,
+      errorCode: err.code || 'UNKNOWN_ERROR',
+      sqlState: err.sqlState || null
     });
   } finally {
-    conn.release();
+    if (conn) {
+      try {
+        conn.release();
+      } catch (releaseErr) {
+        console.error('Error releasing connection:', releaseErr);
+      }
+    }
   }
 });
 
