@@ -1932,18 +1932,16 @@ const repairRequestServiceSchemas = {
         'any.required': 'معرف طلب الإصلاح مطلوب'
       }),
 
-    serviceId: Joi.number().integer().positive().required()
+    serviceId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الخدمة غير صحيح',
-        'number.base': 'معرف الخدمة يجب أن يكون رقم',
-        'any.required': 'معرف الخدمة مطلوب'
+        'number.base': 'معرف الخدمة يجب أن يكون رقم'
       }),
 
-    technicianId: Joi.number().integer().positive().required()
+    technicianId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفني غير صحيح',
-        'number.base': 'معرف الفني يجب أن يكون رقم',
-        'any.required': 'معرف الفني مطلوب'
+        'number.base': 'معرف الفني يجب أن يكون رقم'
       }),
 
     price: Joi.number().min(0).precision(2).required()
@@ -1967,13 +1965,13 @@ const repairRequestServiceSchemas = {
         'number.base': 'معرف طلب الإصلاح يجب أن يكون رقم'
       }),
 
-    serviceId: Joi.number().integer().positive().optional()
+    serviceId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الخدمة غير صحيح',
         'number.base': 'معرف الخدمة يجب أن يكون رقم'
       }),
 
-    technicianId: Joi.number().integer().positive().optional()
+    technicianId: Joi.number().integer().positive().allow(null).optional()
       .messages({
         'number.positive': 'معرف الفني غير صحيح',
         'number.base': 'معرف الفني يجب أن يكون رقم'

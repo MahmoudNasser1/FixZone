@@ -49,6 +49,20 @@ router.get('/', validate(repairRequestServiceSchemas.getRepairRequestServices, '
     query += ' ORDER BY rrs.createdAt DESC';
     
     const [rows] = await db.execute(query, params);
+    
+    // Log technician information for debugging
+    console.log('🔍 Repair Request Services Query Result:', {
+      repairRequestId: repairRequestId || 'all',
+      count: rows.length,
+      services: rows.map(r => ({
+        id: r.id,
+        serviceId: r.serviceId,
+        serviceName: r.serviceName,
+        technicianId: r.technicianId,
+        technicianName: r.technicianName
+      }))
+    });
+    
     res.json(rows);
   } catch (err) {
     console.error('Error fetching repair request services:', err);
@@ -122,22 +136,18 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     const updateFinalPrice = finalPrice !== undefined ? finalPrice : (current.finalPrice || current.price);
     const updateNotes = notes !== undefined ? notes : current.notes;
     
-    if (!updateRepairRequestId || !updateServiceId || updatePrice === undefined) {
+    if (!updateRepairRequestId || updatePrice === undefined) {
       return res.status(400).json({ 
         success: false,
-        error: 'repairRequestId, serviceId, and price are required' 
+        error: 'repairRequestId and price are required' 
       });
     }
+    // Note: serviceId يمكن أن يكون null للخدمات اليدوية
     
     // Build UPDATE query - include finalPrice if it exists in table
-    let updateQuery = 'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP';
-    const updateParams = [updateRepairRequestId, updateServiceId, updatePrice, updateNotes];
-    
-    // Add optional fields if provided
-    if (technicianId !== undefined) {
-      updateQuery += ', technicianId = ?';
-      updateParams.push(updateTechnicianId);
-    }
+    // Always include technicianId to ensure it gets updated (even if null)
+    let updateQuery = 'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, technicianId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP';
+    const updateParams = [updateRepairRequestId, updateServiceId, updateTechnicianId, updatePrice, updateNotes];
     
     // Check if finalPrice column exists and add it if provided
     try {

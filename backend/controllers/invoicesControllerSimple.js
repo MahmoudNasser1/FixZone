@@ -527,24 +527,36 @@ class InvoicesControllerSimple {
       const { id } = req.params;
       console.log('🔍 getInvoiceItems (Simple) called for invoice ID:', id);
       
-      // Use explicit column list to avoid issues with missing columns
-      // InvoiceItem table doesn't have deletedAt or currency columns
+      // Get invoice items with JOIN to InventoryItem and Service for full details
+      // Only include columns that definitely exist in the database
       const [items] = await db.execute(`
         SELECT 
-          id,
-          invoiceId,
-          inventoryItemId,
-          serviceId,
-          quantity,
-          unitPrice,
-          totalPrice,
-          description,
-          itemType,
-          createdAt,
-          updatedAt
-        FROM InvoiceItem 
-        WHERE invoiceId = ?
-        ORDER BY createdAt ASC
+          ii.id,
+          ii.invoiceId,
+          ii.inventoryItemId,
+          ii.serviceId,
+          ii.quantity,
+          ii.unitPrice,
+          ii.totalPrice,
+          ii.description,
+          ii.itemType,
+          ii.createdAt,
+          ii.updatedAt,
+          -- Inventory Item details (for parts) - only confirmed columns
+          inv.id as partId,
+          inv.name as partName,
+          inv.sku as partSku,
+          inv.serialNumber as partSerialNumber,
+          inv.type as partType,
+          -- Service details (for services)
+          s.id as serviceId_full,
+          s.name as serviceName,
+          s.description as serviceDescription
+        FROM InvoiceItem ii
+        LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
+        LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
+        WHERE ii.invoiceId = ?
+        ORDER BY ii.createdAt ASC
       `, [id]);
       
       console.log('✅ Found', items.length, 'invoice items for invoice', id);

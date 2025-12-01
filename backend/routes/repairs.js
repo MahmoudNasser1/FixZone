@@ -1279,9 +1279,24 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
             `, [id]);
 
             for (const part of partsUsed) {
-              const unitPrice = part.unitSellingPrice || part.sellingPrice || 0;
+              // 🔧 Fix: Use unitSellingPrice from PartsUsed first, then fallback to InventoryItem sellingPrice
+              const unitPrice = part.unitSellingPrice !== null && part.unitSellingPrice !== undefined 
+                ? Number(part.unitSellingPrice) 
+                : (part.sellingPrice ? Number(part.sellingPrice) : 0);
               const quantity = part.quantity || 1;
-              const totalPrice = part.totalPrice || (quantity * unitPrice);
+              const totalPrice = part.totalPrice !== null && part.totalPrice !== undefined
+                ? Number(part.totalPrice)
+                : (quantity * unitPrice);
+              
+              console.log('📦 Creating invoice item from part:', {
+                partId: part.id,
+                partName: part.name,
+                unitSellingPrice: part.unitSellingPrice,
+                itemSellingPrice: part.sellingPrice,
+                finalUnitPrice: unitPrice,
+                quantity,
+                totalPrice
+              });
 
               const [itemResult] = await connection.execute(`
                 INSERT INTO InvoiceItem (
@@ -1749,11 +1764,19 @@ router.get('/:id/logs', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const [statusLogs] = await db.execute(
-      'SELECT id, fromStatus, toStatus, notes, changedById, createdAt FROM StatusUpdateLog WHERE repairRequestId = ? ORDER BY createdAt DESC',
+      `SELECT sul.id, sul.fromStatus, sul.toStatus, sul.notes, sul.changedById, sul.createdAt, 
+       u.name as userName
+       FROM StatusUpdateLog sul
+       LEFT JOIN User u ON sul.changedById = u.id
+       WHERE sul.repairRequestId = ? ORDER BY sul.createdAt DESC`,
       [id]
     );
     const [auditLogs] = await db.execute(
-      "SELECT id, action, actionType, details, userId, createdAt FROM AuditLog WHERE entityType = 'RepairRequest' AND entityId = ? ORDER BY createdAt DESC",
+      `SELECT al.id, al.action, al.actionType, al.details, al.userId, al.createdAt,
+       u.name as userName
+       FROM AuditLog al
+       LEFT JOIN User u ON al.userId = u.id
+       WHERE al.entityType = 'RepairRequest' AND al.entityId = ? ORDER BY al.createdAt DESC`,
       [id]
     );
 
@@ -1763,7 +1786,7 @@ router.get('/:id/logs', authMiddleware, async (req, res) => {
         id: `status-${s.id}`,
         type: 'status_change',
         content: s.notes || `${s.fromStatus || ''} → ${s.toStatus || ''}`,
-        author: s.changedById ? `User #${s.changedById}` : 'System',
+        author: s.userName || (s.changedById ? `مستخدم #${s.changedById}` : 'System'),
         createdAt: s.createdAt
       });
     }
@@ -1772,7 +1795,7 @@ router.get('/:id/logs', authMiddleware, async (req, res) => {
         id: `audit-${a.id}`,
         type: a.actionType || 'note',
         content: a.details || a.action,
-        author: a.userId ? `User #${a.userId}` : 'System',
+        author: a.userName || (a.userId ? `مستخدم #${a.userId}` : 'System'),
         createdAt: a.createdAt
       });
     }
@@ -1912,14 +1935,16 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     let qrCodeDataUrl = '';
     try {
       const QRCode = require('qrcode');
+      // استخدام حجم أكبر وجودة أعلى لضمان سهولة المسح
+      const qrSize = settings.qrSize || 80; // استخدام الإعداد من printSettings أو 80 كقيمة افتراضية
       qrCodeDataUrl = await QRCode.toDataURL(trackUrl, {
-        width: 60,
-        margin: 1,
+        width: Math.min(Math.max(qrSize, 60), 150), // بين 60 و 150 بكسل
+        margin: 2, // زيادة الهامش لسهولة المسح
         color: {
           dark: '#111827',
           light: '#ffffff'
         },
-        errorCorrectionLevel: 'M'
+        errorCorrectionLevel: 'H' // مستوى تصحيح أعلى لضمان المسح حتى مع التلف البسيط
       });
     } catch (error) {
       console.error('QR Code generation error:', error);
@@ -2039,8 +2064,9 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
           text-align: center;
         }
         .qr-code-container img {
-          width: 60px !important;
-          height: 60px !important;
+          width: ${settings.qrSize || 80}px !important;
+          height: ${settings.qrSize || 80}px !important;
+          max-width: 100%;
         }
         .qr-code-label {
           font-size: 8px;
@@ -2208,11 +2234,11 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
             </div>
             ${settings.showQr !== false && qrCodeDataUrl ? `
             <div class="qr-code-container">
-              <div style="background: #fff; padding: 4px; border: 1.5px solid #3b82f6; border-radius: 6px; display: inline-block;">
-                <img src="${qrCodeDataUrl}" alt="QR Code" style="display: block; width: 60px; height: 60px;" />
+              <div style="background: #fff; padding: 6px; border: 2px solid #3b82f6; border-radius: 8px; display: inline-block; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);">
+                <img src="${qrCodeDataUrl}" alt="QR Code" style="display: block; width: ${settings.qrSize || 80}px; height: ${settings.qrSize || 80}px; max-width: 100%;" />
               </div>
-              <div class="qr-code-label" style="margin-top: 4px; font-weight: 700; color: #3b82f6; font-size: 8px;">📱 تتبع حالة الجهاز</div>
-              <div style="font-size: 7px; color: #6b7280; margin-top: 1px;">امسح الكود لمتابعة الطلب</div>
+              <div class="qr-code-label" style="margin-top: 6px; font-weight: 700; color: #3b82f6; font-size: 9px;">📱 تتبع حالة الجهاز</div>
+              <div style="font-size: 8px; color: #6b7280; margin-top: 2px;">امسح الكود لمتابعة الطلب</div>
             </div>
             ` : ''}
           </div>
@@ -2563,11 +2589,15 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     `, [id]);
 
     // حساب الإجماليات
+    // 🔧 Fix: Use totalPrice from InvoiceItem instead of calculating quantity * unitPrice
+    // This ensures consistency with the actual stored prices (including custom prices)
     let subtotal = 0;
     invoiceItems.forEach(item => {
-      const qty = Number(item.quantity) || 1;
-      const price = Number(item.unitPrice) || 0;
-      subtotal += qty * price;
+      // Use totalPrice if available, otherwise calculate from quantity * unitPrice
+      const itemTotal = (item.totalPrice !== null && item.totalPrice !== undefined)
+        ? Number(item.totalPrice)
+        : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
+      subtotal += itemTotal;
     });
     const taxRate = 0.15; // 15% ضريبة
     const taxAmount = subtotal * taxRate;

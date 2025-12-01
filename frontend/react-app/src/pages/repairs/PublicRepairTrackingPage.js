@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Search, 
   QrCode, 
@@ -31,11 +32,13 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { useRepairUpdatesById } from '../../hooks/useWebSocket';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
 const PublicRepairTrackingPage = () => {
   const notifications = useNotifications();
+  const [searchParams] = useSearchParams();
   const notify = (type, message) => {
     notifications.addNotification({ type, message });
   };
@@ -108,6 +111,18 @@ const PublicRepairTrackingPage = () => {
       color: 'bg-gray-100 text-gray-800',
       icon: CheckCircle,
       description: 'انتهى الطلب بالكامل'
+    },
+    'ON_HOLD': {
+      label: 'معلق',
+      color: 'bg-gray-100 text-gray-800',
+      icon: AlertCircle,
+      description: 'الطلب معلق مؤقتاً'
+    },
+    'REJECTED': {
+      label: 'مرفوض',
+      color: 'bg-red-100 text-red-800',
+      icon: XCircle,
+      description: 'تم رفض الطلب'
     }
   };
 
@@ -131,6 +146,135 @@ const PublicRepairTrackingPage = () => {
     }
   };
 
+  // دالة البحث التلقائي (للاستخدام من useEffect)
+  const handleAutoSearch = async (value, type) => {
+    if (!value) return;
+
+    try {
+      setLoading(true);
+      
+      const params = new URLSearchParams();
+      if (type === 'trackingToken') {
+        // إذا كان trackingToken رقم فقط، نستخدم id بدلاً منه
+        const isNumeric = /^\d+$/.test(value);
+        if (isNumeric) {
+          params.append('id', value);
+        } else {
+          params.append('trackingToken', value);
+        }
+      } else if (type === 'requestNumber') {
+        params.append('requestNumber', value);
+      }
+
+      // إضافة timestamp لمنع cache
+      const cacheBuster = `&_t=${Date.now()}`;
+      const response = await fetch(`${API_BASE_URL}/repairsSimple/tracking?${params.toString()}${cacheBuster}`, {
+        cache: 'no-cache',
+        // لا نضيف Cache-Control header لأنه يسبب CORS error
+        // cache: 'no-cache' في fetch options كافٍ لمنع cache
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRepairData(data);
+        // لا نعرض إشعار عند البحث التلقائي
+      } else {
+        // إذا كان 404، لا نعرض خطأ في console (الطلب ببساطة غير موجود)
+        if (response.status === 404) {
+          setRepairData(null);
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'لم يتم العثور على طلب الإصلاح');
+      }
+    } catch (error) {
+      // لا نعرض خطأ في console عند البحث التلقائي - المستخدم يمكنه البحث يدوياً
+      // فقط في حالة أخطاء غير 404
+      if (error.message && !error.message.includes('404') && !error.message.includes('not found')) {
+        console.error('Error tracking repair:', error);
+      }
+      setRepairData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ref لتخزين آخر repairId تم تحميله
+  const currentRepairIdRef = useRef(null);
+  
+  // قراءة trackingToken من URL query parameters عند تحميل الصفحة
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get('trackingToken');
+    if (tokenFromUrl) {
+      setTrackingCode(tokenFromUrl);
+      setSearchType('trackingToken');
+      // البحث تلقائياً عن الطلب
+      handleAutoSearch(tokenFromUrl, 'trackingToken');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // تحديث تلقائي للحالة كل 30 ثانية
+  useEffect(() => {
+    if (!repairData || !repairData.id) return;
+
+    currentRepairIdRef.current = repairData.id;
+    
+    // تحديث تلقائي كل 10 ثواني (بدلاً من 30) لضمان التحديث السريع
+    const intervalId = setInterval(() => {
+      if (currentRepairIdRef.current) {
+        const isNumeric = /^\d+$/.test(String(currentRepairIdRef.current));
+        if (isNumeric) {
+          handleAutoSearch(String(currentRepairIdRef.current), 'trackingToken');
+        } else if (repairData.trackingToken) {
+          handleAutoSearch(repairData.trackingToken, 'trackingToken');
+        }
+      }
+    }, 10000); // 10 ثواني للتحديث السريع
+
+    return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repairData?.id]);
+
+  // تحديث تلقائي عند focus على الصفحة
+  useEffect(() => {
+    const handleFocus = () => {
+      if (repairData?.id) {
+        const isNumeric = /^\d+$/.test(String(repairData.id));
+        if (isNumeric) {
+          handleAutoSearch(String(repairData.id), 'trackingToken');
+        } else if (repairData.trackingToken) {
+          handleAutoSearch(repairData.trackingToken, 'trackingToken');
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repairData?.id]);
+
+  // استخدام WebSocket للتحديث التلقائي (إذا كان متاحاً)
+  useRepairUpdatesById(repairData?.id, (message) => {
+    if (message && message.data) {
+      const messageRepairId = message.data.id || message.data.repairRequestId;
+      if (messageRepairId === repairData?.id) {
+        // تحديث البيانات عند استلام تحديث من WebSocket
+        if (message.updateType === 'updated' || message.updateType === 'status_changed' || message.type === 'repair_update') {
+          // إعادة جلب البيانات فوراً
+          setTimeout(() => {
+            const isNumeric = /^\d+$/.test(String(repairData.id));
+            if (isNumeric) {
+              handleAutoSearch(String(repairData.id), 'trackingToken');
+            } else if (repairData.trackingToken) {
+              handleAutoSearch(repairData.trackingToken, 'trackingToken');
+            }
+          }, 500); // انتظر 500ms ثم حدث
+        }
+      }
+    }
+  });
+
   // Handle search
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -145,23 +289,44 @@ const PublicRepairTrackingPage = () => {
       
       const params = new URLSearchParams();
       if (searchType === 'trackingToken' && trackingCode) {
-        params.append('trackingToken', trackingCode);
+        // إذا كان trackingToken رقم فقط، نستخدم id بدلاً منه
+        const isNumeric = /^\d+$/.test(trackingCode);
+        if (isNumeric) {
+          params.append('id', trackingCode);
+        } else {
+          params.append('trackingToken', trackingCode);
+        }
       } else if (searchType === 'requestNumber' && requestNumber) {
         params.append('requestNumber', requestNumber);
       }
 
-      const response = await fetch(`${API_BASE_URL}/repairs/tracking?${params.toString()}`);
+      // إضافة timestamp لمنع cache
+      const cacheBuster = `&_t=${Date.now()}`;
+      const response = await fetch(`${API_BASE_URL}/repairsSimple/tracking?${params.toString()}${cacheBuster}`, {
+        cache: 'no-cache',
+        // لا نضيف Cache-Control header لأنه يسبب CORS error
+        // cache: 'no-cache' في fetch options كافٍ لمنع cache
+      });
       
       if (response.ok) {
         const data = await response.json();
         setRepairData(data);
         notify('success', 'تم العثور على طلب الإصلاح بنجاح');
       } else {
-        const errorData = await response.json();
+        // معالجة 404 بشكل خاص
+        if (response.status === 404) {
+          notify('error', 'لم يتم العثور على طلب الإصلاح');
+          setRepairData(null);
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'لم يتم العثور على طلب الإصلاح');
       }
     } catch (error) {
-      console.error('Error tracking repair:', error);
+      // لا نعرض خطأ في console إذا كان 404
+      if (!error.message || (!error.message.includes('404') && !error.message.includes('not found'))) {
+        console.error('Error tracking repair:', error);
+      }
       notify('error', error.message || 'خطأ في البحث عن طلب الإصلاح');
       setRepairData(null);
     } finally {
@@ -190,11 +355,28 @@ const PublicRepairTrackingPage = () => {
 
   // Get status progress percentage
   const getStatusProgress = (status) => {
+    // تحويل الحالة العربية إلى إنجليزية إذا لزم الأمر
+    const statusMap = {
+      'تم الاستلام': 'RECEIVED',
+      'قيد الفحص': 'INSPECTION',
+      'في انتظار الموافقة': 'AWAITING_APPROVAL',
+      'قيد الإصلاح': 'UNDER_REPAIR',
+      'جاهز للتسليم': 'READY_FOR_DELIVERY',
+      'جاهز للاستلام': 'READY_FOR_PICKUP',
+      'تم التسليم': 'DELIVERED',
+      'مرفوض': 'REJECTED',
+      'في انتظار القطع': 'WAITING_PARTS',
+      'معلق': 'ON_HOLD',
+      'مكتمل': 'COMPLETED'
+    };
+    const englishStatus = statusMap[status] || status;
+    
     const statusOrder = [
       'RECEIVED', 'INSPECTION', 'QUOTATION_SENT', 'QUOTATION_APPROVED',
-      'UNDER_REPAIR', 'READY_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'
+      'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 
+      'DELIVERED', 'COMPLETED'
     ];
-    const currentIndex = statusOrder.indexOf(status);
+    const currentIndex = statusOrder.indexOf(englishStatus);
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
 
@@ -353,13 +535,30 @@ const PublicRepairTrackingPage = () => {
               {/* Current Status */}
               <div className="flex items-center justify-center">
                 {(() => {
-                  const config = statusConfig[repairData.status] || statusConfig['RECEIVED'];
+                  // استخدام الحالة الإنجليزية من Backend أو statusLabel العربية
+                  const statusKey = repairData.status || 'RECEIVED';
+                  // تحويل الحالة العربية إلى إنجليزية إذا لزم الأمر
+                  const statusMap = {
+                    'تم الاستلام': 'RECEIVED',
+                    'قيد الفحص': 'INSPECTION',
+                    'في انتظار الموافقة': 'AWAITING_APPROVAL',
+                    'قيد الإصلاح': 'UNDER_REPAIR',
+                    'جاهز للتسليم': 'READY_FOR_DELIVERY',
+                    'جاهز للاستلام': 'READY_FOR_PICKUP',
+                    'تم التسليم': 'DELIVERED',
+                    'مرفوض': 'REJECTED',
+                    'في انتظار القطع': 'WAITING_PARTS',
+                    'معلق': 'ON_HOLD',
+                    'مكتمل': 'COMPLETED'
+                  };
+                  const englishStatus = statusMap[statusKey] || statusKey;
+                  const config = statusConfig[englishStatus] || statusConfig['RECEIVED'];
                   const Icon = config.icon;
                   return (
                     <div className="text-center">
                       <div className={`inline-flex items-center px-6 py-3 rounded-full text-lg font-medium ${config.color} mb-3`}>
                         <Icon className="w-6 h-6 mr-3" />
-                        {config.label}
+                        {repairData.statusLabel || config.label}
                       </div>
                       <p className="text-gray-600">{config.description}</p>
                     </div>
@@ -467,7 +666,12 @@ const PublicRepairTrackingPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">رمز التتبع</h4>
-                  <p className="text-gray-600 font-mono text-lg">{repairData.trackingToken || 'غير محدد'}</p>
+                  <p className="text-gray-600 font-mono text-lg">
+                    {repairData.trackingToken || repairData.id || 'غير محدد'}
+                  </p>
+                  {!repairData.trackingToken && repairData.id && (
+                    <p className="text-xs text-gray-500 mt-1">(رقم الطلب)</p>
+                  )}
                 </div>
                 
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -490,11 +694,29 @@ const PublicRepairTrackingPage = () => {
                 </SimpleButton>
                 
                 <SimpleButton
+                  onClick={() => {
+                    if (repairData?.id) {
+                      const isNumeric = /^\d+$/.test(String(repairData.id));
+                      if (isNumeric) {
+                        handleAutoSearch(String(repairData.id), 'trackingToken');
+                      } else if (repairData.trackingToken) {
+                        handleAutoSearch(repairData.trackingToken, 'trackingToken');
+                      }
+                    }
+                  }}
+                  variant="outline"
+                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                  disabled={!repairData || loading}
+                >
+                  <RefreshCw className={`w-4 h-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
+                  تحديث
+                </SimpleButton>
+                
+                <SimpleButton
                   onClick={handleClear}
                   variant="outline"
                   className="text-gray-600 border-gray-300 hover:bg-gray-50"
                 >
-                  <RefreshCw className="w-4 h-4 ml-2" />
                   بحث جديد
                 </SimpleButton>
               </div>

@@ -296,13 +296,43 @@ const InvoiceDetailsPage = () => {
                     <div key={item.id || index} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{item.description}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {item.itemType === 'part' && item.partName ? item.partName : (item.itemType === 'service' && item.serviceName ? item.serviceName : item.description)}
+                          </h4>
+                          
+                          {/* Part Details */}
+                          {item.itemType === 'part' && item.partName && (
+                            <div className="mt-2 space-y-1">
+                              {item.partSku && (
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">رمز الصنف:</span> {item.partSku}
+                                </p>
+                              )}
+                              {item.partSerialNumber && (
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">رقم السيريال:</span> {item.partSerialNumber}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Service Details */}
+                          {item.itemType === 'service' && item.serviceName && item.serviceDescription && (
+                            <p className="text-sm text-gray-600 mt-2">{item.serviceDescription}</p>
+                          )}
+                          
+                          {/* Common Details */}
+                          <div className="mt-2 space-y-1">
                           <p className="text-sm text-gray-600">
                             الكمية: {item.quantity} × {formatCurrency(item.unitPrice, invoice.currency)}
                           </p>
                           <p className="text-sm text-gray-500">
                             النوع: {item.itemType === 'service' ? 'خدمة' : 'قطعة'}
                           </p>
+                            {item.description && (!item.partName && !item.serviceName) && (
+                              <p className="text-sm text-gray-500 italic">{item.description}</p>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">

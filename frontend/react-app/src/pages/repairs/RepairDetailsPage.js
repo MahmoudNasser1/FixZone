@@ -16,7 +16,7 @@ import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
-  UserPlus, Trash2, Eye, ShoppingCart, Package
+  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw
 } from 'lucide-react';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
@@ -133,7 +133,7 @@ const RepairDetailsPage = () => {
   const [issueError, setIssueError] = useState('');
   const [warehouses, setWarehouses] = useState([]);
   const [items, setItems] = useState([]);
-  const [issueForm, setIssueForm] = useState({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '' });
+  const [issueForm, setIssueForm] = useState({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '', unitSellingPrice: '' });
   const [currentUserId, setCurrentUserId] = useState(1);
   const [availableQty, setAvailableQty] = useState(null);
   const [minLevel, setMinLevel] = useState(null);
@@ -143,12 +143,29 @@ const RepairDetailsPage = () => {
   // 🔧 Fix #1: Enhanced handleIssueChange to update selected item info
   const handleIssueChange = (e) => {
     const { name, value } = e.target;
+    
+    // Special handling for unitSellingPrice to allow manual editing
+    if (name === 'unitSellingPrice') {
+      // Allow empty value or numeric value
+      setIssueForm((f) => ({ ...f, [name]: value === '' ? '' : value }));
+      return;
+    }
+    
     setIssueForm((f) => ({ ...f, [name]: value }));
 
     // Update selected item info when item changes
     if (name === 'inventoryItemId' && value) {
       const selectedItem = items.find(item => item.id === Number(value));
       setSelectedItemInfo(selectedItem || null);
+      // Auto-fill selling price only if field is empty (not manually edited)
+      setIssueForm((f) => {
+        const currentPrice = f.unitSellingPrice;
+        // Only auto-fill if price is empty or not set
+        if ((!currentPrice || currentPrice === '') && selectedItem && selectedItem.sellingPrice) {
+          return { ...f, unitSellingPrice: selectedItem.sellingPrice };
+        }
+        return f; // Keep current price if manually set
+      });
     } else if (name === 'warehouseId' && !value) {
       // Reset when warehouse changes
       setSelectedItemInfo(null);
@@ -207,24 +224,27 @@ const RepairDetailsPage = () => {
       }
 
       setIssueLoading(true);
-      console.log('Issuing part with data:', {
-        repairRequestId: Number(id),
-        inventoryItemId: Number(issueForm.inventoryItemId),
-        warehouseId: Number(issueForm.warehouseId),
-        quantity,
-        userId: Number(currentUserId || user?.id || 1),
-        invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
-      });
-
       // 🔧 Fix #3: Get enhanced response from /api/inventory/issue
-      const response = await inventoryService.issuePart({
+      const issuePayload = {
         repairRequestId: Number(id),
         inventoryItemId: Number(issueForm.inventoryItemId),
         warehouseId: Number(issueForm.warehouseId),
         quantity,
         userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
-      });
+      };
+      
+      // Add custom selling price if provided
+      if (issueForm.unitSellingPrice && issueForm.unitSellingPrice.trim() !== '') {
+        const customPrice = Number(issueForm.unitSellingPrice);
+        if (!Number.isNaN(customPrice) && customPrice > 0) {
+          issuePayload.unitSellingPrice = customPrice;
+        }
+      }
+      
+      console.log('Issuing part with data:', issuePayload);
+      
+      const response = await inventoryService.issuePart(issuePayload);
 
       // Handle response data
       const responseData = response?.data || response;
@@ -273,7 +293,7 @@ const RepairDetailsPage = () => {
       }
 
       setIssueOpen(false);
-      setIssueForm({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '' });
+      setIssueForm({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '', unitSellingPrice: '' });
       setAvailableQty(null);
       setMinLevel(null);
       setIsLowStock(null);
@@ -285,8 +305,24 @@ const RepairDetailsPage = () => {
       } catch (_) { }
     } catch (e) {
       console.error('Error issuing part:', e);
-      setIssueError(e?.message || 'تعذر تنفيذ عملية الصرف');
-      notifications.error(e?.message || 'تعذر تنفيذ عملية الصرف');
+      console.error('Error details:', e?.response?.data || e?.data || e);
+      
+      // Extract error message from response
+      let errorMessage = 'تعذر تنفيذ عملية الصرف';
+      if (e?.response?.data) {
+        const errorData = e.response.data;
+        errorMessage = errorData.details || errorData.message || errorMessage;
+        if (errorData.errorCode) {
+          errorMessage += ` (${errorData.errorCode})`;
+        }
+      } else if (e?.data) {
+        errorMessage = e.data.details || e.data.message || errorMessage;
+      } else if (e?.message) {
+        errorMessage = e.message;
+      }
+      
+      setIssueError(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setIssueLoading(false);
     }
@@ -362,8 +398,8 @@ const RepairDetailsPage = () => {
   }, [id]);
 
   useEffect(() => {
-    // تحميل كسول للفواتير عند فتح تبويب الفواتير لأول مرة
-    if (activeTab === 'invoices' && invoices.length === 0 && !invoicesLoading) {
+    // تحديث الفواتير عند فتح تبويب الفواتير (دائماً للتأكد من البيانات المحدثة)
+    if (activeTab === 'invoices' && !invoicesLoading) {
       loadInvoices();
     }
     // تحميل المدفوعات عند فتح تبويب المدفوعات
@@ -459,17 +495,29 @@ const RepairDetailsPage = () => {
       } else if (data && data.services && Array.isArray(data.services)) {
         servicesData = data.services;
       }
+      
+      // تصفية RepairRequestService التي لها serviceId = null (الخدمات اليدوية)
+      // سنربطها مع الخدمات اليدوية من InvoiceItem لاحقاً
+      const manualServicesRRS = servicesData.filter(s => s.serviceId === null);
+      servicesData = servicesData.filter(s => s.serviceId !== null);
 
       // Load manual services from invoice items
       try {
-        console.log('🔍 Loading manual services from invoices for repair:', id);
+        // Silent loading - only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 Loading manual services from invoices for repair:', id);
+        }
         const invoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-        console.log('📄 Invoices data response:', invoicesData);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📄 Invoices data response:', invoicesData);
+        }
         
         // Use normalizeInvoicesResponse to handle different response formats
         const invoicesArray = normalizeInvoicesResponse(invoicesData);
-        console.log('📋 Normalized invoices array:', invoicesArray);
-        console.log('📋 Number of invoices found:', invoicesArray.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📋 Normalized invoices array:', invoicesArray);
+          console.log('📋 Number of invoices found:', invoicesArray.length);
+        }
         
         // Get manual services from all invoices (itemType='service' without serviceId)
         for (const invoice of invoicesArray) {
@@ -480,12 +528,19 @@ const RepairDetailsPage = () => {
               continue;
             }
             
-            console.log(`🔍 Loading items for invoice ${invoiceId}...`);
+            // Silent loading - remove console logs in production
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`🔍 Loading items for invoice ${invoiceId}...`);
+            }
             const itemsData = await apiService.getInvoiceItems(invoiceId);
-            console.log(`📦 Invoice ${invoiceId} items response:`, itemsData);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`📦 Invoice ${invoiceId} items response:`, itemsData);
+            }
             
             const items = Array.isArray(itemsData.data) ? itemsData.data : (Array.isArray(itemsData) ? itemsData : []);
-            console.log(`📦 Invoice ${invoiceId} items array:`, items);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`📦 Invoice ${invoiceId} items array:`, items);
+            }
             
             // Filter manual services (itemType='service' without serviceId)
             const manualServices = items.filter(item => {
@@ -493,38 +548,56 @@ const RepairDetailsPage = () => {
               const hasNoServiceId = !item.serviceId || item.serviceId === null;
               const hasDescription = item.description && item.description.trim();
               
-              console.log(`🔍 Item ${item.id}: isService=${isService}, hasNoServiceId=${hasNoServiceId}, hasDescription=${!!hasDescription}`, item);
+              // Only log in development
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`🔍 Item ${item.id}: isService=${isService}, hasNoServiceId=${hasNoServiceId}, hasDescription=${!!hasDescription}`, item);
+              }
               
               return isService && hasNoServiceId && hasDescription;
             });
             
-            console.log(`✅ Found ${manualServices.length} manual services in invoice ${invoiceId}:`, manualServices);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`✅ Found ${manualServices.length} manual services in invoice ${invoiceId}:`, manualServices);
+            }
             
             // Convert manual services to RepairRequestService format
             for (const manualService of manualServices) {
-              // Check if this manual service is already in servicesData (by description and invoice item ID)
+              // البحث عن RepairRequestService مرتبط بهذا invoiceItemId (serviceId = null و notes يحتوي على invoiceItemId)
+              const linkedRRS = manualServicesRRS.find(s => 
+                s.notes && 
+                s.notes.includes(`invoiceItemId:${manualService.id}`)
+              );
+              
+              // Check if this manual service is already in servicesData (by invoice item ID)
               const exists = servicesData.some(s => 
-                (s.invoiceItemId === manualService.id) || 
-                (!s.serviceId && s.serviceName === manualService.description)
+                s.invoiceItemId === manualService.id
               );
               
               if (!exists) {
+                // تنظيف الملاحظات لإزالة رابط invoiceItemId من العرض
+                let cleanNotes = linkedRRS?.notes || null;
+                if (cleanNotes && cleanNotes.includes('[invoiceItemId:')) {
+                  cleanNotes = cleanNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+                  if (cleanNotes === '') cleanNotes = null;
+                }
+                
                 const manualServiceData = {
                   id: `manual-${manualService.id}`, // Use a unique ID
                   repairRequestId: Number(id),
                   serviceId: null,
                   serviceName: manualService.description,
                   description: manualService.description, // Add description for matching
-                  technicianId: null,
-                  technicianName: null,
-                  price: Number(manualService.unitPrice || 0),
+                  technicianId: linkedRRS ? (linkedRRS.technicianId || null) : null,
+                  technicianName: linkedRRS ? (linkedRRS.technicianName || null) : null,
+                  price: linkedRRS ? (linkedRRS.price || Number(manualService.unitPrice || 0)) : Number(manualService.unitPrice || 0),
                   finalPrice: Number(manualService.totalPrice || manualService.unitPrice || 0),
-                  notes: null,
+                  notes: cleanNotes,
                   invoiceItemId: manualService.id,
                   linkedInvoiceId: invoiceId,
                   createdAt: manualService.createdAt,
                   updatedAt: manualService.updatedAt,
-                  isManual: true // Flag to identify manual services
+                  isManual: true, // Flag to identify manual services
+                  rrsId: linkedRRS ? linkedRRS.id : null // Store RepairRequestService ID for updates
                 };
                 
                 console.log('➕ Adding manual service to services list:', manualServiceData);
@@ -548,6 +621,17 @@ const RepairDetailsPage = () => {
         fromRepairRequestService: servicesData.filter(s => !s.isManual).length,
         manualServices: servicesData.filter(s => s.isManual).length,
         total: servicesData.length
+      });
+      
+      // Log technician information for debugging
+      servicesData.forEach((service, index) => {
+        console.log(`🔍 Service ${index + 1}:`, {
+          id: service.id,
+          serviceName: service.serviceName,
+          technicianId: service.technicianId,
+          technicianName: service.technicianName,
+          isManual: service.isManual
+        });
       });
       
       setServices(servicesData);
@@ -806,6 +890,29 @@ const RepairDetailsPage = () => {
     }
   }, [assignOpen]);
 
+  // تحميل قائمة الفنيين عند فتح وضع التعديل للخدمة
+  useEffect(() => {
+    const loadTechs = async () => {
+      try {
+        if (techOptions.length === 0) {
+          setTechLoading(true);
+          const res = await apiService.listTechnicians();
+          console.log('Technicians response (edit service):', res);
+          const items = Array.isArray(res) ? res : (res.items || []);
+          setTechOptions(items);
+        }
+      } catch (e) {
+        console.error('Error loading technicians (edit service):', e);
+        notifications.error('تعذر تحميل قائمة الفنيين');
+      } finally {
+        setTechLoading(false);
+      }
+    };
+    if (editingService && techOptions.length === 0) {
+      loadTechs();
+    }
+  }, [editingService]);
+
   // Load user id and lists when opening issue modal
   useEffect(() => {
     const loadIssueData = async () => {
@@ -1001,6 +1108,33 @@ const RepairDetailsPage = () => {
     return [];
   };
 
+  const getInvoiceStatusLabel = (status) => {
+    const statusMap = {
+      'draft': 'مسودة',
+      'sent': 'مرسلة',
+      'paid': 'مدفوعة',
+      'unpaid': 'غير مدفوعة',
+      'partial': 'مدفوعة جزئياً',
+      'overdue': 'متأخرة',
+      'cancelled': 'ملغاة'
+    };
+    return statusMap[status] || status || 'غير محدد';
+  };
+
+  const getInvoiceStatusBadge = (status) => {
+    const statusConfig = {
+      'draft': { variant: 'outline', className: 'bg-gray-100 text-gray-800' },
+      'sent': { variant: 'default', className: 'bg-blue-100 text-blue-800' },
+      'paid': { variant: 'default', className: 'bg-green-100 text-green-800' },
+      'unpaid': { variant: 'destructive', className: 'bg-red-100 text-red-800' },
+      'partial': { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800' },
+      'overdue': { variant: 'destructive', className: 'bg-red-100 text-red-800' },
+      'cancelled': { variant: 'outline', className: 'bg-gray-100 text-gray-800' }
+    };
+    const config = statusConfig[status] || { variant: 'outline', className: 'bg-gray-100 text-gray-800' };
+    return config;
+  };
+
   const ensureInvoiceForRepair = async (preferredInvoiceId) => {
     if (preferredInvoiceId) {
       return Number(preferredInvoiceId);
@@ -1070,13 +1204,34 @@ const RepairDetailsPage = () => {
       const qty = Number(manualServiceForm.quantity);
       const price = Number(manualServiceForm.unitPrice);
 
-      await apiService.addInvoiceItem(targetInvoiceId, {
+      // إضافة InvoiceItem
+      const invoiceItemResponse = await apiService.addInvoiceItem(targetInvoiceId, {
         itemType: 'service',
         description,
         quantity: qty,
         unitPrice: price,
         totalPrice: qty * price
       });
+
+      const invoiceItemId = invoiceItemResponse?.data?.id || invoiceItemResponse?.id;
+      
+      // إنشاء RepairRequestService للخدمة اليدوية لحفظ technicianId
+      if (invoiceItemId && svcForm.technicianId) {
+        try {
+          const notesWithLink = `${svcForm.notes || ''} [invoiceItemId:${invoiceItemId}]`.trim();
+          
+          await repairService.addRepairRequestService({
+            repairRequestId: Number(id),
+            serviceId: null, // null للخدمات اليدوية
+            technicianId: Number(svcForm.technicianId),
+            price: price,
+            notes: notesWithLink
+          });
+        } catch (rrsError) {
+          console.error('Error creating RepairRequestService for manual service:', rrsError);
+          // نستمر حتى لو فشل إنشاء RepairRequestService
+        }
+      }
 
       notifications.success('تمت إضافة الخدمة اليدوية إلى الفاتورة');
       
@@ -1256,6 +1411,19 @@ const RepairDetailsPage = () => {
     };
     fetchAvailable();
   }, [issueForm.warehouseId, issueForm.inventoryItemId]);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (issueOpen) {
+      // Reset form to initial state when opening modal
+      setIssueForm({ warehouseId: '', inventoryItemId: '', quantity: 1, invoiceId: '', unitSellingPrice: '' });
+      setSelectedItemInfo(null);
+      setAvailableQty(null);
+      setMinLevel(null);
+      setIsLowStock(null);
+      setIssueError('');
+    }
+  }, [issueOpen]);
 
   const fetchRepairDetails = async () => {
     try {
@@ -1473,16 +1641,95 @@ const RepairDetailsPage = () => {
 
   const handleUpdateService = async (serviceId, serviceData) => {
     try {
-      await apiService.updateRepairRequestService(serviceId, {
-        repairRequestId: parseInt(id),
-        ...serviceData
-      });
-      notifications.success('تم تحديث الخدمة بنجاح');
+      // التحقق إذا كانت الخدمة يدوية (ID يبدأ بـ "manual-")
+      const isManual = String(serviceId).startsWith('manual-');
+      
+      if (isManual) {
+        // للخدمات اليدوية: نحتاج تحديث InvoiceItem وإنشاء/تحديث RepairRequestService لحفظ technicianId
+        const invoiceItemId = String(serviceId).replace('manual-', '');
+        const service = services.find(s => s.id === serviceId);
+        
+        if (!service || !service.linkedInvoiceId) {
+          throw new Error('لا يمكن تحديث الخدمة اليدوية: معلومات الفاتورة غير موجودة');
+        }
+        
+        // تحديث InvoiceItem للوصف والسعر
+        const updateData = {
+          description: serviceData.notes 
+            ? `${service.serviceName || service.description} - ${serviceData.notes}`.trim()
+            : service.serviceName || service.description,
+          unitPrice: serviceData.price || service.price,
+          totalPrice: serviceData.price || service.price
+        };
+        
+        await apiService.updateInvoiceItem(service.linkedInvoiceId, invoiceItemId, updateData);
+        
+        // إنشاء أو تحديث RepairRequestService للخدمة اليدوية لحفظ technicianId
+        // نحفظ invoiceItemId في notes للربط
+        try {
+          const notesWithLink = `${serviceData.notes || ''} [invoiceItemId:${invoiceItemId}]`.trim();
+          
+          // استخدام rrsId إذا كان موجوداً (من service object)
+          if (service.rrsId) {
+            // تحديث RepairRequestService الموجود
+            await apiService.updateRepairRequestService(service.rrsId, {
+              repairRequestId: parseInt(id),
+              serviceId: null, // null للخدمات اليدوية
+              technicianId: serviceData.technicianId !== undefined ? serviceData.technicianId : service.technicianId,
+              price: serviceData.price !== undefined ? serviceData.price : service.price,
+              notes: notesWithLink
+            });
+          } else {
+            // البحث عن RepairRequestService موجود أولاً
+            const existingServices = await repairService.getRepairRequestServices(id);
+            const existingServicesArray = Array.isArray(existingServices) ? existingServices : [];
+            
+            const existingService = existingServicesArray.find(s => 
+              s.serviceId === null && 
+              s.notes && 
+              s.notes.includes(`invoiceItemId:${invoiceItemId}`)
+            );
+            
+            if (existingService && existingService.id) {
+              // تحديث RepairRequestService الموجود
+              await apiService.updateRepairRequestService(existingService.id, {
+                repairRequestId: parseInt(id),
+                serviceId: null,
+                technicianId: serviceData.technicianId !== undefined ? serviceData.technicianId : existingService.technicianId,
+                price: serviceData.price !== undefined ? serviceData.price : existingService.price,
+                notes: notesWithLink
+              });
+            } else {
+              // إنشاء RepairRequestService جديد للخدمة اليدوية
+              await repairService.addRepairRequestService({
+                repairRequestId: parseInt(id),
+                serviceId: null, // null للخدمات اليدوية
+                technicianId: serviceData.technicianId || null,
+                price: serviceData.price || service.price,
+                notes: notesWithLink
+              });
+            }
+          }
+        } catch (rrsError) {
+          console.error('Error creating/updating RepairRequestService for manual service:', rrsError);
+          // نستمر حتى لو فشل إنشاء RepairRequestService
+        }
+        
+        notifications.success('تم تحديث الخدمة اليدوية بنجاح');
+      } else {
+        // للخدمات العادية من القائمة
+        await apiService.updateRepairRequestService(serviceId, {
+          repairRequestId: parseInt(id),
+          ...serviceData
+        });
+        notifications.success('تم تحديث الخدمة بنجاح');
+      }
+      
       setEditingService(null);
       await loadServices();
     } catch (e) {
       console.error('Error updating service:', e);
-      notifications.error('تعذر تحديث الخدمة');
+      notifications.error('تعذر تحديث الخدمة: ' + (e.message || 'خطأ غير معروف'));
     }
   };
 
@@ -1579,7 +1826,7 @@ const RepairDetailsPage = () => {
     const optimistic = {
       id: `tmp-${Date.now()}`,
       content: newNote,
-      author: 'المستخدم الحالي',
+      author: user?.name || user?.username || 'المستخدم الحالي',
       createdAt: new Date().toISOString(),
       type: 'note'
     };
@@ -1596,15 +1843,25 @@ const RepairDetailsPage = () => {
       console.log('Using userId:', currentUserId, 'from user:', user);
       const res = await apiService.addRepairNote(id, optimistic.content, currentUserId);
       console.log('Note added response:', res);
-      // استبدال الملاحظة المؤقتة بالملاحظة من السيرفر
-      const saved = {
-        id: res?.id ?? optimistic.id,
-        content: optimistic.content,
-        author: res?.userId ? `مستخدم #${res.userId}` : optimistic.author,
-        createdAt: res?.createdAt || optimistic.createdAt,
-        type: res?.action || 'note',
-      };
-      setNotes(prev => prev.map(n => (n.id === optimistic.id ? saved : n)));
+      
+      // إعادة تحميل الملاحظات من API للحصول على الأسماء الصحيحة
+      try {
+        const logs = await apiService.getRepairLogs(id);
+        const updatedNotes = Array.isArray(logs) ? logs : (logs.items || []);
+        setNotes(updatedNotes);
+      } catch (reloadErr) {
+        console.error('Error reloading notes:', reloadErr);
+        // في حالة فشل إعادة التحميل، استخدم البيانات من الـ response
+        const saved = {
+          id: res?.id ?? optimistic.id,
+          content: optimistic.content,
+          author: user?.name || user?.username || (res?.userId ? `مستخدم #${res.userId}` : optimistic.author),
+          createdAt: res?.createdAt || optimistic.createdAt,
+          type: res?.action || 'note',
+        };
+        setNotes(prev => prev.map(n => (n.id === optimistic.id ? saved : n)));
+      }
+      
       notifications.success('تم حفظ الملاحظة بنجاح');
     } catch (e) {
       console.error('Error adding note:', e);
@@ -2546,8 +2803,8 @@ const RepairDetailsPage = () => {
                                     <div>
                                       <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
                                       <select
-                                        value={editingService.technicianId || service.technicianId || ''}
-                                        onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value })}
+                                        value={editingService.technicianId !== undefined ? editingService.technicianId : (service.technicianId || '')}
+                                        onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value || null })}
                                         className="w-full p-2 border border-gray-300 rounded-lg bg-white"
                                       >
                                         <option value="">اختر الفني...</option>
@@ -2597,7 +2854,9 @@ const RepairDetailsPage = () => {
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                         <span className="text-gray-600">الفني:</span>
-                                        <span className="font-medium text-gray-900">{service.technicianName || (service.isManual ? 'غير محدد' : 'غير محدد')}</span>
+                                        <span className="font-medium text-gray-900">
+                                          {service.technicianName || (service.technicianId ? `مستخدم #${service.technicianId}` : 'غير محدد')}
+                                        </span>
                                       </div>
                                     </div>
 
@@ -2624,7 +2883,7 @@ const RepairDetailsPage = () => {
                                         onClick={() => {
                                           handleUpdateService(service.id, {
                                             serviceId: editingService.serviceId || service.serviceId,
-                                            technicianId: editingService.technicianId || service.technicianId,
+                                            technicianId: editingService.technicianId !== undefined ? editingService.technicianId : service.technicianId,
                                             price: editingService.price || service.price,
                                             notes: editingService.notes !== undefined ? editingService.notes : service.notes
                                           });
@@ -2831,9 +3090,15 @@ const RepairDetailsPage = () => {
                       <FileText className="w-5 h-5 ml-2" />
                       فواتير الطلب
                     </SimpleCardTitle>
-                    <SimpleButton size="sm" onClick={handleCreateInvoice} disabled={invoicesLoading}>
-                      <Plus className="w-4 h-4 ml-1" /> إنشاء فاتورة
-                    </SimpleButton>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <SimpleButton size="sm" variant="outline" onClick={loadInvoices} disabled={invoicesLoading}>
+                        <RefreshCw className={`w-4 h-4 ml-1 ${invoicesLoading ? 'animate-spin' : ''}`} />
+                        تحديث
+                      </SimpleButton>
+                      <SimpleButton size="sm" onClick={handleCreateInvoice} disabled={invoicesLoading}>
+                        <Plus className="w-4 h-4 ml-1" /> إنشاء فاتورة
+                      </SimpleButton>
+                    </div>
                   </div>
                 </SimpleCardHeader>
                 <SimpleCardContent>
@@ -2852,31 +3117,44 @@ const RepairDetailsPage = () => {
                       {invoices.length === 0 ? (
                         <p className="text-gray-600">لا توجد فواتير بعد</p>
                       ) : (
-                        invoices.map(inv => (
-                          <div key={inv.id || inv.invoiceId} className="py-3 flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900">{inv.title || `فاتورة #${inv.id || inv.invoiceId}`}</p>
-                              <p className="text-sm text-gray-600">المبلغ: {formatMoney(inv.totalAmount || inv.amount || 0)}</p>
-                              <p className="text-xs text-gray-500">الحالة: {inv.status || 'غير محدد'}</p>
-                            </div>
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <Link to={`/invoices/${inv.id || inv.invoiceId}`}>
-                                <SimpleButton size="sm" variant="outline">
-                                  <Eye className="w-4 h-4 ml-1" />
-                                  عرض
+                        invoices.map(inv => {
+                          const statusBadge = getInvoiceStatusBadge(inv.status);
+                          return (
+                            <div key={inv.id || inv.invoiceId} className="py-3 flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-medium text-gray-900">{inv.title || `فاتورة #${inv.id || inv.invoiceId}`}</p>
+                                  <SimpleBadge className={statusBadge.className}>
+                                    {getInvoiceStatusLabel(inv.status)}
+                                  </SimpleBadge>
+                                </div>
+                                <p className="text-sm text-gray-600">المبلغ: {formatMoney(inv.totalAmount || inv.amount || 0, inv.currency || 'EGP')}</p>
+                                {inv.amountPaid !== undefined && inv.amountPaid !== null && (
+                                  <p className="text-xs text-gray-500">
+                                    المدفوع: {formatMoney(inv.amountPaid || 0, inv.currency || 'EGP')} | 
+                                    المتبقي: {formatMoney((parseFloat(inv.totalAmount || inv.amount || 0) - parseFloat(inv.amountPaid || 0)), inv.currency || 'EGP')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <Link to={`/invoices/${inv.id || inv.invoiceId}`}>
+                                  <SimpleButton size="sm" variant="outline">
+                                    <Eye className="w-4 h-4 ml-1" />
+                                    عرض
+                                  </SimpleButton>
+                                </Link>
+                                <SimpleButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handlePrint('invoice')}
+                                >
+                                  <Printer className="w-4 h-4 ml-1" />
+                                  طباعة فاتورة
                                 </SimpleButton>
-                              </Link>
-                              <SimpleButton
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handlePrint('invoice')}
-                              >
-                                <Printer className="w-4 h-4 ml-1" />
-                                طباعة فاتورة
-                              </SimpleButton>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   )}
@@ -3803,6 +4081,32 @@ const RepairDetailsPage = () => {
                       <span className="text-xs text-gray-400 text-center">اختر مخزن وعنصر لعرض المخزون</span>
                     )}
                   </div>
+                </div>
+
+                {/* Custom Selling Price Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    سعر البيع (اختياري)
+                    {selectedItemInfo?.sellingPrice && (
+                      <span className="text-xs text-gray-500 font-normal mr-2">
+                        (السعر الافتراضي: {formatMoney(selectedItemInfo.sellingPrice)})
+                      </span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="unitSellingPrice"
+                      value={issueForm.unitSellingPrice}
+                      onChange={handleIssueChange}
+                      placeholder={selectedItemInfo?.sellingPrice ? formatMoney(selectedItemInfo.sellingPrice) : "اتركه فارغاً لاستخدام السعر الافتراضي"}
+                      className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                    />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لاستخدام السعر الافتراضي من بيانات القطعة</p>
                 </div>
 
                 {/* Warnings */}

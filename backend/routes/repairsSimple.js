@@ -87,7 +87,8 @@ router.get('/', cacheMiddleware(180), async (req, res) => { // Cache for 3 minut
 });
 
 // Get repair by tracking number (for public tracking page) - MUST BE BEFORE /:id
-router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for 5 minutes
+// لا نستخدم cache هنا لأننا نريد بيانات محدثة دائماً
+router.get('/tracking', async (req, res) => {
   try {
     const { trackingToken, id } = req.query;
     
@@ -106,19 +107,45 @@ router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for
         rr.trackingToken,
         rr.createdAt,
         rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
         c.name as customerName,
         c.phone as customerPhone,
-        c.email as customerEmail
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
       WHERE rr.deletedAt IS NULL
     `;
     
     const params = [];
     
+    // دعم البحث بـ trackingToken أو ID
+    // إذا كان trackingToken رقم فقط، نبحث بالـ ID أيضاً
     if (trackingToken) {
-      query += ' AND rr.trackingToken = ?';
-      params.push(trackingToken);
+      // التحقق إذا كان trackingToken رقم فقط (ليس hex string)
+      const isNumeric = /^\d+$/.test(trackingToken);
+      if (isNumeric) {
+        // إذا كان رقم، نبحث بالـ ID
+        const repairId = parseInt(trackingToken, 10);
+        if (!isNaN(repairId) && repairId > 0) {
+          query += ' AND rr.id = ?';
+          params.push(repairId);
+        } else {
+          query += ' AND rr.trackingToken = ?';
+          params.push(trackingToken);
+        }
+      } else {
+        // إذا كان hex string، نبحث بالـ trackingToken
+        query += ' AND rr.trackingToken = ?';
+        params.push(trackingToken);
+      }
     } else if (id) {
       // البحث مباشرة بالـ ID
       query += ' AND rr.id = ?';
@@ -147,37 +174,61 @@ router.get('/tracking', cacheMiddleware(300), async (req, res) => { // Cache for
     const repair = rows[0];
     
     // تحويل الحالة من الإنجليزية إلى العربية للعرض
-           const statusMap = {
-             'RECEIVED': 'تم الاستلام',
-             'INSPECTION': 'قيد الفحص',
-             'AWAITING_APPROVAL': 'في انتظار الموافقة',
-             'UNDER_REPAIR': 'قيد الإصلاح',
-             'READY_FOR_DELIVERY': 'جاهز للتسليم',
-             'DELIVERED': 'تم التسليم',
-             'REJECTED': 'مرفوض',
-             'WAITING_PARTS': 'في انتظار القطع',
-             'ON_HOLD': 'معلق'
-           };
+    const statusMap = {
+      'RECEIVED': 'تم الاستلام',
+      'INSPECTION': 'قيد الفحص',
+      'AWAITING_APPROVAL': 'في انتظار الموافقة',
+      'UNDER_REPAIR': 'قيد الإصلاح',
+      'READY_FOR_DELIVERY': 'جاهز للتسليم',
+      'READY_FOR_PICKUP': 'جاهز للاستلام',
+      'DELIVERED': 'تم التسليم',
+      'REJECTED': 'مرفوض',
+      'WAITING_PARTS': 'في انتظار القطع',
+      'ON_HOLD': 'معلق',
+      'COMPLETED': 'مكتمل'
+    };
+
+    // تحويل الحالة من العربية إلى الإنجليزية (إذا كانت عربية)
+    const arabicToEnglishStatusMap = {
+      'تم الاستلام': 'RECEIVED',
+      'قيد الفحص': 'INSPECTION',
+      'في انتظار الموافقة': 'AWAITING_APPROVAL',
+      'قيد الإصلاح': 'UNDER_REPAIR',
+      'جاهز للتسليم': 'READY_FOR_DELIVERY',
+      'جاهز للاستلام': 'READY_FOR_PICKUP',
+      'تم التسليم': 'DELIVERED',
+      'مرفوض': 'REJECTED',
+      'في انتظار القطع': 'WAITING_PARTS',
+      'معلق': 'ON_HOLD',
+      'مكتمل': 'COMPLETED'
+    };
+
+    // الحالة من قاعدة البيانات (قد تكون عربية أو إنجليزية)
+    const dbStatus = repair.status || 'RECEIVED';
+    // تحويل إلى إنجليزية إذا كانت عربية
+    const englishStatus = arabicToEnglishStatusMap[dbStatus] || dbStatus;
+    // التسمية العربية
+    const arabicStatusLabel = statusMap[englishStatus] || statusMap[dbStatus] || dbStatus;
 
            res.json({
              id: repair.id,
              requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
-             trackingToken: repair.trackingToken,
-             status: statusMap[repair.status] || repair.status || 'تم الاستلام',
-             deviceType: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
-             deviceBrand: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
-             deviceModel: 'غير محدد', // الجدول الحالي لا يحتوي على هذا الحقل
-             problemDescription: repair.reportedProblem,
-             estimatedCost: '0.00', // الجدول الحالي لا يحتوي على هذا الحقل
-             actualCost: null, // الجدول الحالي لا يحتوي على هذا الحقل
-             priority: 'normal', // الجدول الحالي لا يحتوي على هذا الحقل
-             estimatedCompletionDate: null, // الجدول الحالي لا يحتوي على هذا الحقل
-             customerName: repair.customerName,
-             customerPhone: repair.customerPhone,
-             customerEmail: repair.customerEmail,
-             branchName: repair.branchName,
-             technicianName: repair.technicianName,
-             notes: null, // الجدول الحالي لا يحتوي على هذا الحقل
+             trackingToken: repair.trackingToken || null,
+             status: englishStatus, // إرجاع الحالة بالإنجليزية دائماً
+             statusLabel: arabicStatusLabel, // التسمية العربية للعرض
+             deviceType: repair.deviceType || 'غير محدد',
+             deviceBrand: repair.deviceBrand || 'غير محدد',
+             deviceModel: repair.deviceModel || 'غير محدد',
+             problemDescription: repair.reportedProblem || 'لا توجد تفاصيل',
+             estimatedCost: repair.estimatedCost ? parseFloat(repair.estimatedCost).toFixed(2) : '0.00',
+             actualCost: null,
+             priority: 'normal',
+             estimatedCompletionDate: repair.expectedDeliveryDate || null,
+             customerName: repair.customerName || 'غير محدد',
+             customerPhone: repair.customerPhone || 'غير محدد',
+             customerEmail: repair.customerEmail || null,
+             branchName: repair.branchName || 'غير محدد',
+             notes: null,
              createdAt: repair.createdAt,
              updatedAt: repair.updatedAt
            });

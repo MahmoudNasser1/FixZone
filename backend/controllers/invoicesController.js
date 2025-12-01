@@ -906,8 +906,8 @@ class InvoicesController {
         return res.status(404).json({ success: false, error: 'Invoice not found' });
       }
 
-      // Get invoice items (Note: InvoiceItem table doesn't have deletedAt or currency columns)
-      // Use explicit column list to avoid issues with missing columns
+      // Get invoice items with JOIN to InventoryItem and Service for full details
+      // Only include columns that definitely exist in the database
       const [items] = await db.query(`
         SELECT 
           ii.id,
@@ -922,8 +922,20 @@ class InvoicesController {
           ii.createdAt,
           ii.updatedAt,
           ii.description as itemDescription,
-          ii.itemType as type
+          ii.itemType as type,
+          -- Inventory Item details (for parts) - only confirmed columns
+          inv.id as partId,
+          inv.name as partName,
+          inv.sku as partSku,
+          inv.serialNumber as partSerialNumber,
+          inv.type as partType,
+          -- Service details (for services)
+          s.id as serviceId_full,
+          s.name as serviceName,
+          s.description as serviceDescription
         FROM InvoiceItem ii
+        LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
+        LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);

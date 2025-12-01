@@ -17,6 +17,8 @@ router.use(authMiddleware);
 // 7) Insert PartsUsed with full data (requestedBy, warehouseId, prices, profit, status='used', usedBy)
 // 8) Update repair cost breakdown
 router.post('/issue', async (req, res) => {
+  console.log('📥 Received issue request:', JSON.stringify(req.body, null, 2));
+  
   const { 
     repairRequestId, 
     inventoryItemId, 
@@ -26,8 +28,11 @@ router.post('/issue', async (req, res) => {
     invoiceItemId = null, 
     invoiceId = null,
     serialNumber = null,
-    notes = null
+    notes = null,
+    unitSellingPrice = null  // 🔧 Add custom selling price support
   } = req.body || {};
+  
+  console.log('📥 Extracted unitSellingPrice from req.body:', unitSellingPrice, typeof unitSellingPrice);
 
   if (!repairRequestId || !inventoryItemId || !warehouseId || !userId || typeof quantity !== 'number') {
     return res.status(400).json({ 
@@ -166,9 +171,35 @@ router.post('/issue', async (req, res) => {
 
     // 4) Calculate pricing and profit
     const unitPurchasePrice = item.purchasePrice ? Number(item.purchasePrice) : 0;
-    const unitSellingPrice = item.sellingPrice ? Number(item.sellingPrice) : 0;
+    // Use custom selling price if provided, otherwise use item's default selling price
+    // 🔧 Fix: Use the extracted unitSellingPrice from req.body (already extracted above)
+    // Check if unitSellingPrice is provided and is a valid number
+    let finalUnitSellingPrice;
+    if (unitSellingPrice !== null && unitSellingPrice !== undefined && unitSellingPrice !== '') {
+      const parsedPrice = Number(unitSellingPrice);
+      if (!Number.isNaN(parsedPrice) && parsedPrice > 0) {
+        finalUnitSellingPrice = parsedPrice;
+        console.log('✅ Using custom selling price:', finalUnitSellingPrice);
+      } else {
+        console.warn('⚠️ Invalid custom price provided, using default:', unitSellingPrice);
+        finalUnitSellingPrice = item.sellingPrice ? Number(item.sellingPrice) : 0;
+      }
+    } else {
+      finalUnitSellingPrice = item.sellingPrice ? Number(item.sellingPrice) : 0;
+      console.log('ℹ️ No custom price provided, using default:', finalUnitSellingPrice);
+    }
+    
+    console.log('💰 Pricing calculation:', {
+      customPrice: unitSellingPrice,
+      itemDefaultPrice: item.sellingPrice,
+      finalPrice: finalUnitSellingPrice,
+      itemName: item.name
+    });
+    
+    // Use finalUnitSellingPrice for all calculations
+    const calculatedUnitSellingPrice = finalUnitSellingPrice;
     const totalCost = unitPurchasePrice * quantity;
-    const totalPrice = unitSellingPrice * quantity;
+    const totalPrice = calculatedUnitSellingPrice * quantity;
     const profit = totalPrice - totalCost;
     const profitMargin = unitPurchasePrice > 0 ? ((profit / totalCost) * 100).toFixed(2) : 0;
 
@@ -256,10 +287,29 @@ router.post('/issue', async (req, res) => {
     // Additional columns will be added via migrations if needed
     const now = new Date();
     
+    // Log values before insert for debugging
+    console.log('📦 Inserting PartsUsed with values:', {
+      quantity,
+      repairRequestId,
+      inventoryItemId,
+      warehouseId,
+      invoiceItemId,
+      partStatus,
+      userId,
+      unitPurchasePrice,
+      unitSellingPrice: calculatedUnitSellingPrice,
+      totalCost,
+      totalPrice,
+      profit,
+      serialNumber,
+      notes
+    });
+    
     // Try to insert with enhanced columns first, fallback to basic columns if they don't exist
     let puResult;
     try {
       // Try with enhanced columns (if migration was applied)
+      // Check if profit column exists by trying to insert without it first if needed
       [puResult] = await conn.query(
         `INSERT INTO PartsUsed 
           (quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
@@ -270,25 +320,111 @@ router.post('/issue', async (req, res) => {
         [
           quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
           partStatus, userId, partStatus === 'used' ? userId : null, now, partStatus === 'used' ? now : null,
-          unitPurchasePrice, unitSellingPrice, totalCost, totalPrice, profit,
+          unitPurchasePrice, calculatedUnitSellingPrice, totalCost, totalPrice, profit,
           serialNumber, notes
         ]
       );
+      console.log('✅ PartsUsed inserted successfully with ID:', puResult.insertId);
     } catch (insertError) {
       // If enhanced columns don't exist, fallback to basic columns only
-      console.warn('Enhanced columns not available, using basic schema:', insertError.message);
+      console.error('❌ INSERT failed with enhanced columns:', insertError.message);
+      console.error('Insert error details:', {
+        code: insertError.code,
+        sqlState: insertError.sqlState,
+        sqlMessage: insertError.sqlMessage,
+        errno: insertError.errno,
+        sql: insertError.sql
+      });
+      
+      // Extract column name from error message if it's a "column not found" error
+      if (insertError.code === 'ER_BAD_FIELD_ERROR' && insertError.sqlMessage) {
+        const columnMatch = insertError.sqlMessage.match(/Unknown column '([^']+)'/);
+        if (columnMatch) {
+          console.error(`❌ Missing column: ${columnMatch[1]}`);
+        }
+      }
+      
+      // Try with pricing columns but without profit
       try {
         [puResult] = await conn.query(
           `INSERT INTO PartsUsed 
-            (quantity, repairRequestId, inventoryItemId, invoiceItemId) 
-            VALUES (?, ?, ?, ?)`,
-          [quantity, repairRequestId, inventoryItemId, invoiceItemId]
+            (quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
+             status, requestedBy, usedBy, requestedAt, usedAt,
+             unitPurchasePrice, calculatedUnitSellingPrice, totalCost, totalPrice,
+             serialNumber, notes) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
+            partStatus, userId, partStatus === 'used' ? userId : null, now, partStatus === 'used' ? now : null,
+            unitPurchasePrice, calculatedUnitSellingPrice, totalCost, totalPrice,
+            serialNumber, notes
+          ]
         );
-      } catch (fallbackError) {
-        // If even basic insert fails, log and rethrow
-        console.error('Failed to insert PartsUsed even with basic schema:', fallbackError);
-        throw fallbackError;
+      } catch (pricingError) {
+        // Try with warehouseId but without pricing
+        console.warn('Pricing columns not available, trying without pricing:', pricingError.message);
+        try {
+          [puResult] = await conn.query(
+            `INSERT INTO PartsUsed 
+              (quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
+               status, requestedBy, usedBy, requestedAt, usedAt,
+               serialNumber, notes) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId,
+              partStatus, userId, partStatus === 'used' ? userId : null, now, partStatus === 'used' ? now : null,
+              serialNumber, notes
+            ]
+          );
+        } catch (statusError) {
+          // Try with warehouseId but without status columns
+          console.warn('Status columns not available, trying without status:', statusError.message);
+          try {
+            [puResult] = await conn.query(
+              `INSERT INTO PartsUsed 
+                (quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId) 
+                VALUES (?, ?, ?, ?, ?)`,
+              [quantity, repairRequestId, inventoryItemId, warehouseId, invoiceItemId]
+            );
+          } catch (warehouseError) {
+            // If warehouseId doesn't exist, try without it
+            console.warn('WarehouseId column not available, trying without it:', warehouseError.message);
+            try {
+              [puResult] = await conn.query(
+                `INSERT INTO PartsUsed 
+                  (quantity, repairRequestId, inventoryItemId, invoiceItemId) 
+                  VALUES (?, ?, ?, ?)`,
+                [quantity, repairRequestId, inventoryItemId, invoiceItemId]
+              );
+            } catch (finalError) {
+              // If even basic insert fails, log and rethrow
+              console.error('❌ Failed to insert PartsUsed even with basic schema:', finalError);
+              console.error('Final error details:', {
+                code: finalError.code,
+                sqlState: finalError.sqlState,
+                sqlMessage: finalError.sqlMessage,
+                errno: finalError.errno,
+                stack: finalError.stack
+              });
+              
+              // Extract column name if it's a column error
+              if (finalError.code === 'ER_BAD_FIELD_ERROR' && finalError.sqlMessage) {
+                const columnMatch = finalError.sqlMessage.match(/Unknown column ['"]([^'"]+)['"]/);
+                if (columnMatch) {
+                  console.error(`❌ Missing column in basic schema: ${columnMatch[1]}`);
+                }
+              }
+              
+              throw finalError;
+            }
+          }
+        }
       }
+    }
+    
+    // If we get here, the insert was successful
+    if (!puResult || !puResult.insertId) {
+      throw new Error('Failed to insert PartsUsed: No insertId returned');
     }
 
     const partsUsedId = puResult.insertId;
@@ -326,15 +462,45 @@ router.post('/issue', async (req, res) => {
     // 8) If invoiceId provided and no invoiceItemId, create an invoice item and link both ways
     let createdInvoiceItemId = invoiceItemId || null;
     if (invoiceId && !createdInvoiceItemId) {
-      const totalPriceForInvoice = unitSellingPrice * Number(quantity);
-      const [invItemRes] = await conn.query(
-        'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, partsUsedId, itemType) VALUES (?, ?, ?, ?, ?, ?)',
-        [quantity, unitSellingPrice, totalPriceForInvoice, invoiceId, puResult.insertId, 'part']
-      );
-      createdInvoiceItemId = invItemRes.insertId;
+      const totalPriceForInvoice = calculatedUnitSellingPrice * Number(quantity);
+      // Check if partsUsedId column exists in InvoiceItem
+      try {
+        // Try with partsUsedId first (if column exists)
+        const [invItemRes] = await conn.query(
+          'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, partsUsedId, itemType, inventoryItemId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, invoiceId, puResult.insertId, 'part', inventoryItemId]
+        );
+        createdInvoiceItemId = invItemRes.insertId;
+      } catch (invItemError) {
+        // If partsUsedId doesn't exist, try without it
+        if (invItemError.code === 'ER_BAD_FIELD_ERROR' && invItemError.sqlMessage && invItemError.sqlMessage.includes('partsUsedId')) {
+          console.warn('partsUsedId column not found in InvoiceItem, inserting without it');
+          const [invItemRes] = await conn.query(
+            'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, itemType, inventoryItemId) VALUES (?, ?, ?, ?, ?, ?)',
+            [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, invoiceId, 'part', inventoryItemId]
+          );
+          createdInvoiceItemId = invItemRes.insertId;
+        } else {
+          throw invItemError;
+        }
+      }
+      
       // update PartsUsed with the generated invoiceItemId
       await conn.query('UPDATE PartsUsed SET invoiceItemId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', 
         [createdInvoiceItemId, puResult.insertId]);
+      
+      // 🔧 Fix: Recalculate and update invoice totalAmount after adding item
+      const [invoiceTotalResult] = await conn.query(`
+        SELECT COALESCE(SUM(totalPrice), 0) as calculatedTotal
+        FROM InvoiceItem WHERE invoiceId = ? AND (deletedAt IS NULL OR deletedAt IS NULL)
+      `, [invoiceId]);
+      
+      const newInvoiceTotal = Number(invoiceTotalResult[0]?.calculatedTotal || 0);
+      await conn.query(`
+        UPDATE Invoice SET totalAmount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?
+      `, [newInvoiceTotal, invoiceId]);
+      
+      console.log('💰 Updated invoice totalAmount after adding part:', { invoiceId, newTotal: newInvoiceTotal });
     }
 
     // 9) Update repair request cost breakdown (recalculate actualCost)
@@ -378,7 +544,7 @@ router.post('/issue', async (req, res) => {
         invoiceItemId: createdInvoiceItemId,
         pricing: {
           unitPurchasePrice,
-          unitSellingPrice,
+          unitSellingPrice: calculatedUnitSellingPrice,
           totalCost,
           totalPrice,
           profit: Number(profit.toFixed(2)),
@@ -412,15 +578,48 @@ router.post('/issue', async (req, res) => {
     } catch (rollbackErr) {
       console.error('Error during rollback:', rollbackErr);
     }
-    console.error('Error issuing part transaction:', err);
+    console.error('❌ Error issuing part transaction:', err);
+    console.error('Error message:', err.message);
+    console.error('Error code:', err.code);
+    console.error('SQL State:', err.sqlState);
     console.error('Error stack:', err.stack);
-    console.error('Request body:', req.body);
+    console.error('Request body:', JSON.stringify(req.body, null, 2));
+    
+    // Provide more detailed error message
+    let errorMessage = 'Server Error';
+    let errorDetails = err.message || 'Unknown error occurred';
+    
+    // Check for specific SQL errors
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      errorMessage = 'Database table not found';
+      errorDetails = `Table missing: ${err.message}`;
+    } else if (err.code === 'ER_BAD_FIELD_ERROR') {
+      errorMessage = 'Database column not found';
+      // Extract column name from error message
+      const columnMatch = err.message && err.message.match(/Unknown column ['"]([^'"]+)['"]/);
+      if (columnMatch) {
+        errorDetails = `Column '${columnMatch[1]}' not found in table. ${err.message}`;
+      } else {
+        errorDetails = `Column missing: ${err.message}`;
+      }
+    } else if (err.code === 'ER_DUP_ENTRY') {
+      errorMessage = 'Duplicate entry';
+      errorDetails = err.message;
+    } else if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      errorMessage = 'Foreign key constraint failed';
+      errorDetails = `Referenced record not found: ${err.message}`;
+    } else if (err.sqlState) {
+      errorMessage = 'Database error';
+      errorDetails = `${err.code || 'SQL Error'}: ${err.message}`;
+    }
+    
     return res.status(500).json({ 
       success: false,
-      message: 'Server Error',
-      details: err.message,
+      message: errorMessage,
+      details: errorDetails,
       errorCode: err.code || 'UNKNOWN_ERROR',
-      sqlState: err.sqlState || null
+      sqlState: err.sqlState || null,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   } finally {
     if (conn) {

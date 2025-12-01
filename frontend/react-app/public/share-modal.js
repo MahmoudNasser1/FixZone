@@ -3,17 +3,18 @@
   'use strict';
 
   // Safety check for environment - exit early if not in browser
-  if (typeof window === 'undefined' || typeof document === 'undefined' || !document) {
-    return;
-  }
-  
-  // Additional safety check - ensure document is actually an object
   try {
-    if (!document || typeof document !== 'object' || !document.getElementById) {
+    if (typeof window === 'undefined' || typeof document === 'undefined' || !document) {
+      return;
+    }
+    
+    // Additional safety check - ensure document is actually an object
+    if (!document || typeof document !== 'object' || typeof document.getElementById !== 'function') {
       return;
     }
   } catch (e) {
-    return; // Exit if document access fails
+    // Silently exit if any check fails
+    return;
   }
 
   const RETRY_DELAYS = [500, 1000, 2000];
@@ -139,8 +140,16 @@
         return;
       }
 
-      const shareButton = document.getElementById('share-button');
-      const shareModal = document.getElementById('share-modal');
+      // Safely get elements with null checks
+      let shareButton = null;
+      let shareModal = null;
+      try {
+        shareButton = document.getElementById('share-button');
+        shareModal = document.getElementById('share-modal');
+      } catch (getElementError) {
+        // Silently fail if getElementById throws
+        return;
+      }
       
       // If elements don't exist, don't retry - they may not be on this page
       if (!shareButton || !shareModal) {
@@ -179,28 +188,65 @@
         
         // Check if elements exist before trying to initialize
         try {
-          const shareButton = document.getElementById('share-button');
-          const shareModal = document.getElementById('share-modal');
+          // Use querySelector instead of getElementById for better error handling
+          const shareButton = document.querySelector('#share-button');
+          const shareModal = document.querySelector('#share-modal');
           
-          // If elements don't exist, don't try to initialize
+          // If elements don't exist, don't try to initialize - this is normal for pages without share modal
           if (!shareButton || !shareModal) {
-            return; // Silently exit - elements may not be on this page
+            // Silently exit - elements are not on this page (e.g., tracking page)
+            return;
+          }
+          
+          // Double check elements are valid DOM elements
+          if (!(shareButton instanceof Element) || !(shareModal instanceof Element)) {
+            return;
           }
           
           attemptInit();
         } catch (getElementError) {
-          // Silently fail if getElementById fails
+          // Silently fail if querySelector fails - this is normal
           return;
         }
       };
 
       // Check if document.addEventListener exists before using it
       // Double check document is not null before accessing addEventListener
-      if (document && document.addEventListener && typeof document.addEventListener === 'function') {
+      try {
+        // Extra safety: ensure document exists and is not null
+        if (typeof document === 'undefined' || document === null) {
+          setTimeout(initializeWhenReady, 300);
+          return;
+        }
+        
+        // Double check document is an object and has addEventListener
+        if (!document || typeof document !== 'object') {
+          setTimeout(initializeWhenReady, 300);
+          return;
+        }
+        
+        // Check if addEventListener exists and is a function
+        if (!document.addEventListener || typeof document.addEventListener !== 'function') {
+          setTimeout(initializeWhenReady, 300);
+          return;
+        }
+        
         try {
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeWhenReady);
-          } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+          // Check readyState safely
+          const readyState = document.readyState;
+          if (readyState === 'loading') {
+          // Wrap addEventListener in try-catch with extra safety
+          try {
+            if (document && typeof document.addEventListener === 'function') {
+              document.addEventListener('DOMContentLoaded', initializeWhenReady);
+            } else {
+              setTimeout(initializeWhenReady, 300);
+            }
+          } catch (e) {
+            // Silently fail and use setTimeout fallback
+            setTimeout(initializeWhenReady, 300);
+          }
+          } else if (readyState === 'interactive' || readyState === 'complete') {
             // DOM is already ready, but wait a bit to ensure elements are rendered
             setTimeout(initializeWhenReady, 200);
           } else {
@@ -211,8 +257,8 @@
           // If addEventListener fails, use setTimeout fallback
           setTimeout(initializeWhenReady, 300);
         }
-      } else {
-        // Fallback if addEventListener is not available
+      } catch (docError) {
+        // Silently fail if document access fails
         setTimeout(initializeWhenReady, 300);
       }
     } catch (e) {
@@ -221,13 +267,18 @@
   }
 
   // Cleanup on unload (optional, but good practice)
-  if (typeof window !== 'undefined' && window && window.addEventListener && typeof window.addEventListener === 'function') {
+  if (typeof window !== 'undefined' && window && typeof window.addEventListener === 'function') {
     try {
-      window.addEventListener('beforeunload', () => {
-        if (scheduledId) {
-          clearTimeout(scheduledId);
+      const cleanup = () => {
+        try {
+          if (scheduledId) {
+            clearTimeout(scheduledId);
+          }
+        } catch (e) {
+          // Ignore errors during cleanup
         }
-      });
+      };
+      window.addEventListener('beforeunload', cleanup);
     } catch (e) {
       // Ignore errors during cleanup
     }

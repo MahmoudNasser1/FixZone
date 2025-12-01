@@ -152,8 +152,20 @@ const inventoryService = {
   },
 
   // Issue a part to a repair request (transactional backend endpoint)
-  issuePart({ repairRequestId, inventoryItemId, warehouseId, quantity, userId, invoiceItemId = null, invoiceId = null }) {
-    const payload = { repairRequestId, inventoryItemId, warehouseId, quantity, userId, invoiceItemId, invoiceId };
+  issuePart({ repairRequestId, inventoryItemId, warehouseId, quantity, userId, invoiceItemId = null, invoiceId = null, unitSellingPrice = null, serialNumber = null, notes = null }) {
+    const payload = { 
+      repairRequestId, 
+      inventoryItemId, 
+      warehouseId, 
+      quantity, 
+      userId, 
+      invoiceItemId, 
+      invoiceId,
+      ...(unitSellingPrice !== null && unitSellingPrice !== undefined && unitSellingPrice !== '' && { unitSellingPrice: Number(unitSellingPrice) }),
+      ...(serialNumber && { serialNumber }),
+      ...(notes && { notes })
+    };
+    console.log('📤 Sending issuePart payload:', payload);
     return apiService.request('/inventory/issue', { method: 'POST', body: JSON.stringify(payload) });
   },
 
