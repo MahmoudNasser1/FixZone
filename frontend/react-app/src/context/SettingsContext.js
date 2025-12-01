@@ -42,8 +42,15 @@ export function SettingsProvider({ children }) {
   } = useSettingsAPI();
 
   // Load API settings on mount (only once) - use ref to prevent infinite loop
+  // Skip for public pages (like /track) that don't need settings
   const hasLoadedRef = useRef(false);
   useEffect(() => {
+    // Don't load settings on public tracking page
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/track')) {
+      return;
+    }
+    
     if (!hasLoadedRef.current && !apiLoading) {
       hasLoadedRef.current = true;
       loadAPISettings().catch((err) => {

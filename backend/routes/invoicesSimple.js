@@ -30,6 +30,45 @@ router.put('/:id', validate(Joi.object({ id: commonSchemas.id }), 'params'), val
 // DELETE /api/invoices/:id - Delete invoice
 router.delete('/:id', validate(Joi.object({ id: commonSchemas.id }), 'params'), invoicesController.deleteInvoice);
 
+// POST /api/invoices/:id/recalculate - Recalculate invoice totalAmount from items
+router.post('/:id/recalculate', validate(Joi.object({ id: commonSchemas.id }), 'params'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = require('../db');
+    
+    // Recalculate totalAmount from InvoiceItems
+    const [itemsTotal] = await db.execute(`
+      SELECT COALESCE(SUM(totalPrice), 0) as calculatedTotal
+      FROM InvoiceItem 
+      WHERE invoiceId = ?
+    `, [id]);
+    
+    const calculatedTotal = Number(itemsTotal[0]?.calculatedTotal || 0);
+    
+    // Update invoice totalAmount
+    await db.execute(`
+      UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+    `, [calculatedTotal, id]);
+    
+    res.json({
+      success: true,
+      message: 'تم إعادة حساب المجموع بنجاح',
+      data: {
+        invoiceId: id,
+        oldTotal: null, // We don't fetch it to avoid extra query
+        newTotal: calculatedTotal
+      }
+    });
+  } catch (error) {
+    console.error('Error recalculating invoice total:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+      details: error.message
+    });
+  }
+});
+
 // Invoice Items routes
 router.get('/:id/items', validate(Joi.object({ id: commonSchemas.id }), 'params'), invoicesController.getInvoiceItems);
 router.post('/:id/items', validate(Joi.object({ id: commonSchemas.id }), 'params'), validate(invoiceSchemas.addInvoiceItem, 'body'), invoicesController.addInvoiceItem);

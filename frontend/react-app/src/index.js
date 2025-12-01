@@ -21,11 +21,12 @@ if (typeof window !== 'undefined') {
                           errorString.includes('/settings') ||
                           (args[0]?.config?.url?.includes('/auth/')) ||
                           (args[0]?.config?.url?.includes('/settings'));
-    const isLoginPage = window.location.pathname === '/login' || 
-                        window.location.pathname === '/customer/login';
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath === '/login' || currentPath === '/customer/login';
+    const isPublicPage = currentPath.startsWith('/track'); // Public tracking page
     
-    // Suppress 401 errors from auth/settings endpoints or on login page
-    if (is401Error && (isAuthEndpoint || isLoginPage)) {
+    // Suppress 401 errors from auth/settings endpoints on login page or public pages
+    if (is401Error && isAuthEndpoint && (isLoginPage || isPublicPage)) {
       return; // Don't log to console
     }
     
@@ -51,7 +52,14 @@ if (typeof window !== 'undefined') {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 const Boot = () => {
   const restoreSession = useAuthStore((s) => s.restoreSession);
-  useEffect(() => { restoreSession(); }, [restoreSession]);
+  useEffect(() => {
+    // Don't restore session on public pages (like /track) that don't need authentication
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/track')) {
+      return;
+    }
+    restoreSession();
+  }, [restoreSession]);
   return <App />;
 };
 

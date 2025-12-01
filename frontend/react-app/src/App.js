@@ -259,7 +259,13 @@ function App() {
   const restoreSession = useAuthStore((state) => state.restoreSession);
 
   // Restore session from httpOnly cookie on app load
+  // Skip for public pages (like /track) that don't need authentication
   useEffect(() => {
+    const currentPath = window.location.pathname;
+    // Don't restore session on public tracking page
+    if (currentPath.startsWith('/track')) {
+      return;
+    }
     restoreSession();
   }, [restoreSession]);
 
@@ -316,6 +322,8 @@ function App() {
             <Route path="/technician/settings" element={<TechnicianRoute><TechnicianSettingsPage /></TechnicianRoute>} />
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
 
+            {/* Public Routes - لا تحتاج تسجيل دخول */}
+            <Route path="/track" element={<PublicRepairTrackingPage />} />
 
             {/* Staff/Admin Routes */}
             <Route
@@ -323,8 +331,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Routes>
-                    {/* Public routes outside layout */}
-                    <Route path="track" element={<PublicRepairTrackingPage />} />
 
                     {/* Print routes outside layout to produce clean print pages */}
                     <Route path="repairs/:id/print" element={<RepairPrintPage />} />

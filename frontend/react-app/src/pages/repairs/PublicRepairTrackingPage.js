@@ -220,7 +220,7 @@ const PublicRepairTrackingPage = () => {
 
     currentRepairIdRef.current = repairData.id;
     
-    // تحديث تلقائي كل 10 ثواني (بدلاً من 30) لضمان التحديث السريع
+    // تحديث تلقائي كل 30 ثانية
     const intervalId = setInterval(() => {
       if (currentRepairIdRef.current) {
         const isNumeric = /^\d+$/.test(String(currentRepairIdRef.current));
@@ -230,7 +230,7 @@ const PublicRepairTrackingPage = () => {
           handleAutoSearch(repairData.trackingToken, 'trackingToken');
         }
       }
-    }, 10000); // 10 ثواني للتحديث السريع
+    }, 30000); // 30 ثانية
 
     return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps

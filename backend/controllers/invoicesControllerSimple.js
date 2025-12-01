@@ -364,6 +364,28 @@ class InvoicesControllerSimple {
 
       const invoice = rows[0];
 
+      // 🔧 Fix: Recalculate totalAmount from InvoiceItems to ensure accuracy
+      // This ensures that the total includes all items (parts and services) even if totalAmount in Invoice table is outdated
+      const [itemsTotal] = await db.execute(`
+        SELECT COALESCE(SUM(totalPrice), 0) as calculatedTotal
+        FROM InvoiceItem 
+        WHERE invoiceId = ?
+      `, [id]);
+      
+      const calculatedTotalAmount = Number(itemsTotal[0]?.calculatedTotal || 0);
+      
+      // Update invoice totalAmount if it's different from calculated (to keep it in sync)
+      if (Math.abs(calculatedTotalAmount - parseFloat(invoice.totalAmount || 0)) > 0.01) {
+        console.log('💰 Recalculating invoice totalAmount:', {
+          invoiceId: id,
+          oldTotal: invoice.totalAmount,
+          newTotal: calculatedTotalAmount
+        });
+        await db.execute(`
+          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+        `, [calculatedTotalAmount, id]);
+      }
+
       // Calculate actual amountPaid from payments
       const [payments] = await db.execute(`
         SELECT COALESCE(SUM(amount), 0) as totalPaid 
@@ -372,7 +394,8 @@ class InvoicesControllerSimple {
       `, [id]);
 
       const actualAmountPaid = parseFloat(payments[0].totalPaid || 0);
-      const totalAmount = parseFloat(invoice.totalAmount || 0);
+      // Use calculated totalAmount instead of stored one
+      const totalAmount = calculatedTotalAmount;
 
       // Determine correct status based on actual payments
       let correctStatus = invoice.status;
@@ -388,6 +411,7 @@ class InvoicesControllerSimple {
         success: true,
         data: {
           ...invoice,
+          totalAmount: totalAmount, // Use calculated totalAmount
           amountPaid: actualAmountPaid,
           status: correctStatus
         }

@@ -460,15 +460,27 @@ router.post('/issue', async (req, res) => {
     }
 
     // 8) If invoiceId provided and no invoiceItemId, create an invoice item and link both ways
+    // 🔧 Fix: If invoiceId not provided, try to find existing invoice for this repair request
+    let finalInvoiceId = invoiceId;
+    if (!finalInvoiceId) {
+      const [existingInvoice] = await conn.query(`
+        SELECT id FROM Invoice WHERE repairRequestId = ? AND deletedAt IS NULL ORDER BY createdAt DESC LIMIT 1
+      `, [repairRequestId]);
+      if (existingInvoice.length > 0) {
+        finalInvoiceId = existingInvoice[0].id;
+        console.log('🔍 Found existing invoice for repair request:', { repairRequestId, invoiceId: finalInvoiceId });
+      }
+    }
+    
     let createdInvoiceItemId = invoiceItemId || null;
-    if (invoiceId && !createdInvoiceItemId) {
+    if (finalInvoiceId && !createdInvoiceItemId) {
       const totalPriceForInvoice = calculatedUnitSellingPrice * Number(quantity);
       // Check if partsUsedId column exists in InvoiceItem
       try {
         // Try with partsUsedId first (if column exists)
         const [invItemRes] = await conn.query(
           'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, partsUsedId, itemType, inventoryItemId) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, invoiceId, puResult.insertId, 'part', inventoryItemId]
+          [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, finalInvoiceId, puResult.insertId, 'part', inventoryItemId]
         );
         createdInvoiceItemId = invItemRes.insertId;
       } catch (invItemError) {
@@ -476,8 +488,8 @@ router.post('/issue', async (req, res) => {
         if (invItemError.code === 'ER_BAD_FIELD_ERROR' && invItemError.sqlMessage && invItemError.sqlMessage.includes('partsUsedId')) {
           console.warn('partsUsedId column not found in InvoiceItem, inserting without it');
           const [invItemRes] = await conn.query(
-            'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, itemType, inventoryItemId) VALUES (?, ?, ?, ?, ?, ?)',
-            [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, invoiceId, 'part', inventoryItemId]
+          'INSERT INTO InvoiceItem (quantity, unitPrice, totalPrice, invoiceId, itemType, inventoryItemId) VALUES (?, ?, ?, ?, ?, ?)',
+          [quantity, calculatedUnitSellingPrice, totalPriceForInvoice, finalInvoiceId, 'part', inventoryItemId]
           );
           createdInvoiceItemId = invItemRes.insertId;
         } else {
@@ -493,14 +505,14 @@ router.post('/issue', async (req, res) => {
       const [invoiceTotalResult] = await conn.query(`
         SELECT COALESCE(SUM(totalPrice), 0) as calculatedTotal
         FROM InvoiceItem WHERE invoiceId = ? AND (deletedAt IS NULL OR deletedAt IS NULL)
-      `, [invoiceId]);
+      `, [finalInvoiceId]);
       
       const newInvoiceTotal = Number(invoiceTotalResult[0]?.calculatedTotal || 0);
       await conn.query(`
         UPDATE Invoice SET totalAmount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?
-      `, [newInvoiceTotal, invoiceId]);
+      `, [newInvoiceTotal, finalInvoiceId]);
       
-      console.log('💰 Updated invoice totalAmount after adding part:', { invoiceId, newTotal: newInvoiceTotal });
+      console.log('💰 Updated invoice totalAmount after adding part:', { invoiceId: finalInvoiceId, newTotal: newInvoiceTotal });
     }
 
     // 9) Update repair request cost breakdown (recalculate actualCost)
@@ -542,6 +554,7 @@ router.post('/issue', async (req, res) => {
         stockMovementId: mvResult.insertId,
         partsUsedId: puResult.insertId,
         invoiceItemId: createdInvoiceItemId,
+        invoiceId: finalInvoiceId || invoiceId,
         pricing: {
           unitPurchasePrice,
           unitSellingPrice: calculatedUnitSellingPrice,

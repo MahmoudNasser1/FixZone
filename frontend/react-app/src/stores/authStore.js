@@ -107,12 +107,12 @@ axios.interceptors.response.use(
       // Check if it's an auth endpoint or settings endpoint
       const url = error.config?.url || '';
       const isAuthEndpoint = url.includes('/auth/') || url.includes('/settings');
-      const isLoginPage = typeof window !== 'undefined' && 
-        (window.location.pathname === '/login' || 
-         window.location.pathname === '/customer/login');
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isLoginPage = currentPath === '/login' || currentPath === '/customer/login';
+      const isPublicPage = currentPath.startsWith('/track'); // Public tracking page
       
-      // Only suppress if it's auth/settings endpoint or we're on login page
-      if (isAuthEndpoint || isLoginPage) {
+      // Suppress if it's auth/settings endpoint on login page or public pages
+      if (isAuthEndpoint && (isLoginPage || isPublicPage)) {
         // Mark error as silent to prevent console logging
         error.silent = true;
         // Prevent axios from logging to console by overriding config

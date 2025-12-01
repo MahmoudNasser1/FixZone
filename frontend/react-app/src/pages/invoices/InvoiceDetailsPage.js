@@ -197,7 +197,17 @@ const InvoiceDetailsPage = () => {
     );
   }
 
-  const remainingAmount = (invoice.totalAmount || 0) - (invoice.amountPaid || 0);
+  // 🔧 Fix: Calculate totalAmount from invoiceItems if available (more accurate than stored value)
+  const calculatedTotalFromItems = invoiceItems.reduce((sum, item) => {
+    return sum + (parseFloat(item.totalPrice) || 0);
+  }, 0);
+  
+  // Use calculated total if items exist, otherwise use stored totalAmount
+  const effectiveTotalAmount = invoiceItems.length > 0 && calculatedTotalFromItems > 0 
+    ? calculatedTotalFromItems 
+    : (invoice.totalAmount || 0);
+  
+  const remainingAmount = effectiveTotalAmount - (invoice.amountPaid || 0);
 
   return (
     <div className="space-y-6">
@@ -261,7 +271,7 @@ const InvoiceDetailsPage = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">المبلغ الإجمالي</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(invoice.totalAmount, invoice.currency)}</p>
+                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(effectiveTotalAmount, invoice.currency)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">المبلغ المدفوع</label>
@@ -388,7 +398,7 @@ const InvoiceDetailsPage = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">المبلغ الإجمالي:</span>
-                  <span className="font-semibold">{formatCurrency(invoice.totalAmount, invoice.currency)}</span>
+                  <span className="font-semibold">{formatCurrency(effectiveTotalAmount, invoice.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">المدفوع:</span>
@@ -402,8 +412,8 @@ const InvoiceDetailsPage = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-600">نسبة الدفع:</span>
                     <span className="font-semibold">
-                      {invoice.totalAmount > 0 ? 
-                        Math.round((invoice.amountPaid / invoice.totalAmount) * 100) : 0}%
+                      {effectiveTotalAmount > 0 ? 
+                        Math.round((invoice.amountPaid / effectiveTotalAmount) * 100) : 0}%
                     </span>
                   </div>
                 </div>

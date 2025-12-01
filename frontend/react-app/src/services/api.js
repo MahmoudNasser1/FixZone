@@ -29,9 +29,9 @@ class ApiService {
     try {
       // Suppress 401 errors in console for auth/settings endpoints when not logged in
       const isAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/settings');
-      const isLoginPage = typeof window !== 'undefined' && 
-        (window.location.pathname === '/login' || 
-         window.location.pathname === '/customer/login');
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isLoginPage = currentPath === '/login' || currentPath === '/customer/login';
+      const isPublicPage = currentPath.startsWith('/track'); // Public tracking page
       
       const response = await fetch(url, config);
 
@@ -39,14 +39,8 @@ class ApiService {
       if (!response.ok) {
         // Handle 401 Unauthorized - redirect to login if not already there
         if (response.status === 401) {
-          // Skip redirect for auth endpoints to avoid infinite loops
-          const isAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/settings');
-          const isLoginPage = typeof window !== 'undefined' && 
-            (window.location.pathname === '/login' || 
-             window.location.pathname === '/customer/login');
-          
-          // For auth/settings endpoints on login page, silently fail (don't log to console)
-          if (isAuthEndpoint && isLoginPage) {
+          // For auth/settings endpoints on login page or public pages, silently fail (don't log to console)
+          if (isAuthEndpoint && (isLoginPage || isPublicPage)) {
             const error = new Error('No token, authorization denied');
             error.silent = true; // Mark as silent to avoid console logging
             throw error;
