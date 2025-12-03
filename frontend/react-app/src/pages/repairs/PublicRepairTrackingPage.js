@@ -416,93 +416,94 @@ const PublicRepairTrackingPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="bg-blue-600 p-3 rounded-lg">
-                <Shield className="w-8 h-8 text-white" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 space-x-reverse flex-1 min-w-0">
+              <div className="bg-blue-600 p-2 sm:p-2.5 md:p-3 rounded-lg flex-shrink-0">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">تتبع طلب الإصلاح</h1>
-                <p className="text-gray-600">ابحث عن حالة طلب الإصلاح الخاص بك</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate">تتبع طلب الإصلاح</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">ابحث عن حالة طلب الإصلاح الخاص بك</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Building2 className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">FixZone</span>
+            <div className="flex items-center space-x-1 sm:space-x-2 space-x-reverse flex-shrink-0">
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <span className="text-xs sm:text-sm font-medium text-gray-700">FixZone</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Search Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <div className="text-center mb-8">
-            <QrCode className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">تتبع طلب الإصلاح</h2>
-            <p className="text-gray-600">أدخل رمز التتبع أو رقم الطلب لمعرفة حالة طلب الإصلاح</p>
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
+          <div className="text-center mb-4 sm:mb-6 md:mb-8">
+            <QrCode className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-blue-600 mx-auto mb-3 sm:mb-4" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">تتبع طلب الإصلاح</h2>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 px-2">أدخل رمز التتبع أو رقم الطلب لمعرفة حالة طلب الإصلاح</p>
           </div>
 
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto space-y-6">
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
             {/* Search Type Toggle */}
-            <div className="flex items-center justify-center space-x-6 space-x-reverse">
-              <label className="flex items-center cursor-pointer">
+            <div className="flex items-center justify-center space-x-4 sm:space-x-6 space-x-reverse flex-wrap gap-2">
+              <label className="flex items-center cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
                   name="searchType"
                   value="trackingToken"
                   checked={searchType === 'trackingToken'}
                   onChange={(e) => setSearchType(e.target.value)}
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600"
                 />
-                <span className="mr-2 text-sm font-medium text-gray-700">رمز التتبع</span>
+                <span className="mr-2 text-xs sm:text-sm font-medium text-gray-700">رمز التتبع</span>
               </label>
-              <label className="flex items-center cursor-pointer">
+              <label className="flex items-center cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
                   name="searchType"
                   value="requestNumber"
                   checked={searchType === 'requestNumber'}
                   onChange={(e) => setSearchType(e.target.value)}
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600"
                 />
-                <span className="mr-2 text-sm font-medium text-gray-700">رقم الطلب</span>
+                <span className="mr-2 text-xs sm:text-sm font-medium text-gray-700">رقم الطلب</span>
               </label>
             </div>
 
             {/* Search Input */}
-            <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 space-x-reverse gap-2">
               <div className="flex-1">
                 {searchType === 'trackingToken' ? (
                   <Input
                     type="text"
-                    placeholder="أدخل رمز التتبع (مثال: REP-2025-10-02-001)"
+                    placeholder="أدخل رمز التتبع"
                     value={trackingCode}
                     onChange={(e) => setTrackingCode(e.target.value)}
-                    className="w-full text-center text-lg py-4"
+                    className="w-full text-center sm:text-right text-sm sm:text-base md:text-lg py-3 sm:py-3.5 md:py-4"
                   />
                 ) : (
                   <Input
                     type="text"
-                    placeholder="أدخل رقم الطلب (مثال: REP-20251002-001)"
+                    placeholder="أدخل رقم الطلب"
                     value={requestNumber}
                     onChange={(e) => setRequestNumber(e.target.value)}
-                    className="w-full text-center text-lg py-4"
+                    className="w-full text-center sm:text-right text-sm sm:text-base md:text-lg py-3 sm:py-3.5 md:py-4"
                   />
                 )}
               </div>
               <SimpleButton
                 type="submit"
                 disabled={loading || (!trackingCode && !requestNumber)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 md:px-8 py-3 sm:py-3.5 md:py-4 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
               >
                 {loading ? (
-                  <RefreshCw className="w-5 h-5 ml-2 animate-spin" />
+                  <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 ml-2 animate-spin" />
                 ) : (
-                  <Search className="w-5 h-5 ml-2" />
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                 )}
-                {loading ? 'جاري البحث...' : 'بحث'}
+                <span className="hidden sm:inline">{loading ? 'جاري البحث...' : 'بحث'}</span>
+                <span className="sm:hidden">{loading ? '...' : 'بحث'}</span>
               </SimpleButton>
             </div>
 
@@ -511,7 +512,7 @@ const PublicRepairTrackingPage = () => {
                 type="button"
                 onClick={handleClear}
                 variant="outline"
-                className="w-full text-gray-600 border-gray-300 hover:bg-gray-50"
+                className="w-full text-gray-600 border-gray-300 hover:bg-gray-50 py-2.5 sm:py-3 text-sm sm:text-base"
               >
                 مسح
               </SimpleButton>
@@ -521,17 +522,17 @@ const PublicRepairTrackingPage = () => {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex justify-center items-center h-64">
+          <div className="flex justify-center items-center h-48 sm:h-64">
             <Loading size="xl" text="جاري البحث عن طلب الإصلاح..." />
           </div>
         )}
 
         {/* No Results */}
         {!loading && !repairData && (
-          <div className="text-center py-12">
-            <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">ابحث عن طلب الإصلاح</h3>
-            <p className="text-gray-600">
+          <div className="text-center py-8 sm:py-12">
+            <Search className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">ابحث عن طلب الإصلاح</h3>
+            <p className="text-sm sm:text-base text-gray-600 px-4">
               أدخل رمز التتبع أو رقم الطلب للعثور على حالة طلب الإصلاح
             </p>
           </div>
@@ -539,26 +540,26 @@ const PublicRepairTrackingPage = () => {
 
         {/* Repair Data Display */}
         {repairData && (
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {/* Status Progress */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">حالة الطلب</h2>
-                <p className="text-gray-600">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+              <div className="text-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">حالة الطلب</h2>
+                <p className="text-xs sm:text-sm md:text-base text-gray-600">
                   تم إنشاء الطلب في {formatDate(repairData.createdAt)}
                 </p>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-6">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-2">
                   <span>0%</span>
                   <span className="font-medium">{Math.round(getStatusProgress(repairData.status))}% مكتمل</span>
                   <span>100%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2 sm:h-3 rounded-full transition-all duration-500"
                     style={{ width: `${getStatusProgress(repairData.status)}%` }}
                   ></div>
                 </div>
@@ -588,11 +589,11 @@ const PublicRepairTrackingPage = () => {
                   const Icon = config.icon;
                   return (
                     <div className="text-center">
-                      <div className={`inline-flex items-center px-6 py-3 rounded-full text-lg font-medium ${config.color} mb-3`}>
-                        <Icon className="w-6 h-6 mr-3" />
+                      <div className={`inline-flex items-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-full text-sm sm:text-base md:text-lg font-medium ${config.color} mb-2 sm:mb-3`}>
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-3" />
                         {repairData.statusLabel || config.label}
                       </div>
-                      <p className="text-gray-600">{config.description}</p>
+                      <p className="text-xs sm:text-sm md:text-base text-gray-600 px-2">{config.description}</p>
                     </div>
                   );
                 })()}
@@ -600,89 +601,89 @@ const PublicRepairTrackingPage = () => {
             </div>
 
             {/* Repair Details Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               {/* Device Information */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <Package className="w-6 h-6 ml-3 text-blue-600" />
-                  معلومات الجهاز
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 flex items-center">
+                  <Package className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 text-blue-600 flex-shrink-0" />
+                  <span>معلومات الجهاز</span>
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 space-x-reverse">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
                     {(() => {
                       const DeviceIcon = getDeviceIcon(repairData.deviceType);
-                      return <DeviceIcon className="w-5 h-5 text-blue-600" />;
+                      return <DeviceIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />;
                     })()}
-                    <div>
-                      <h4 className="font-medium text-gray-900">نوع الجهاز</h4>
-                      <p className="text-gray-600">{repairData.deviceType || 'غير محدد'}</p>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">نوع الجهاز</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{repairData.deviceType || 'غير محدد'}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <Package className="w-5 h-5 text-green-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">الماركة</h4>
-                      <p className="text-gray-600">{repairData.deviceBrand || 'غير محدد'}</p>
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">الماركة</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{repairData.deviceBrand || 'غير محدد'}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <Wrench className="w-5 h-5 text-orange-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">الموديل</h4>
-                      <p className="text-gray-600">{repairData.deviceModel || 'غير محدد'}</p>
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <Wrench className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">الموديل</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{repairData.deviceModel || 'غير محدد'}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <FileText className="w-5 h-5 text-purple-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">وصف المشكلة</h4>
-                      <p className="text-gray-600">{repairData.problemDescription || 'لا توجد تفاصيل'}</p>
+                  <div className="flex items-start space-x-2 sm:space-x-3 space-x-reverse">
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">وصف المشكلة</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{repairData.problemDescription || 'لا توجد تفاصيل'}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Repair Information */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <Wrench className="w-6 h-6 ml-3 text-orange-600" />
-                  معلومات الإصلاح
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 flex items-center">
+                  <Wrench className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 text-orange-600 flex-shrink-0" />
+                  <span>معلومات الإصلاح</span>
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">تاريخ الاستلام</h4>
-                      <p className="text-gray-600">{formatDate(repairData.createdAt)}</p>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">تاريخ الاستلام</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{formatDate(repairData.createdAt)}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <Clock className="w-5 h-5 text-orange-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">التسليم المتوقع</h4>
-                      <p className="text-gray-600">{formatDate(repairData.estimatedCompletionDate)}</p>
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">التسليم المتوقع</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{formatDate(repairData.estimatedCompletionDate)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">التكلفة المقدرة</h4>
-                      <p className="text-gray-600">
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">التكلفة المقدرة</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">
                         {repairData.estimatedCost ? `${repairData.estimatedCost} ج.م` : 'غير محدد'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <MapPin className="w-5 h-5 text-purple-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">الفرع</h4>
-                      <p className="text-gray-600">{repairData.branchName || 'غير محدد'}</p>
+                  <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 space-x-reverse">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-0.5">الفرع</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">{repairData.branchName || 'غير محدد'}</p>
                     </div>
                   </div>
                 </div>
@@ -690,15 +691,15 @@ const PublicRepairTrackingPage = () => {
             </div>
 
             {/* Tracking Information */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                <QrCode className="w-6 h-6 ml-3 text-blue-600" />
-                معلومات التتبع
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 flex items-center">
+                <QrCode className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 text-blue-600 flex-shrink-0" />
+                <span>معلومات التتبع</span>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">رمز التتبع</h4>
-                  <p className="text-gray-600 font-mono text-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">رمز التتبع</h4>
+                  <p className="text-xs sm:text-sm md:text-base text-gray-600 font-mono break-all">
                     {repairData.trackingToken || repairData.id || 'غير محدد'}
                   </p>
                   {!repairData.trackingToken && repairData.id && (
@@ -706,33 +707,35 @@ const PublicRepairTrackingPage = () => {
                   )}
                 </div>
                 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">رقم الطلب</h4>
-                  <p className="text-gray-600 font-mono text-lg">{repairData.requestNumber || 'غير محدد'}</p>
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">رقم الطلب</h4>
+                  <p className="text-xs sm:text-sm md:text-base text-gray-600 font-mono break-all">{repairData.requestNumber || 'غير محدد'}</p>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-center space-x-4 space-x-reverse flex-wrap gap-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6">
+              <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-2 sm:gap-3 md:gap-4 sm:space-x-4 space-x-reverse">
                 <SimpleButton
                   onClick={handleOpenReports}
                   variant="outline"
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50 min-h-[44px] sm:min-h-[48px] text-xs sm:text-sm md:text-base py-2.5 sm:py-3"
                   disabled={!repairData}
                 >
-                  <FileCheck className="w-4 h-4 ml-2" />
-                  عرض التقارير
+                  <FileCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
+                  <span className="hidden sm:inline">عرض التقارير</span>
+                  <span className="sm:hidden">التقارير</span>
                 </SimpleButton>
                 
                 <SimpleButton
                   onClick={() => window.print()}
                   variant="outline"
-                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                  className="text-gray-600 border-gray-300 hover:bg-gray-50 min-h-[44px] sm:min-h-[48px] text-xs sm:text-sm md:text-base py-2.5 sm:py-3"
                 >
-                  <Printer className="w-4 h-4 ml-2" />
-                  طباعة
+                  <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
+                  <span className="hidden sm:inline">طباعة</span>
+                  <span className="sm:hidden">طباعة</span>
                 </SimpleButton>
                 
                 <SimpleButton
@@ -747,104 +750,107 @@ const PublicRepairTrackingPage = () => {
                     }
                   }}
                   variant="outline"
-                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                  className="text-gray-600 border-gray-300 hover:bg-gray-50 min-h-[44px] sm:min-h-[48px] text-xs sm:text-sm md:text-base py-2.5 sm:py-3"
                   disabled={!repairData || loading}
                 >
-                  <RefreshCw className={`w-4 h-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
-                  تحديث
+                  <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2 ${loading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">تحديث</span>
+                  <span className="sm:hidden">تحديث</span>
                 </SimpleButton>
                 
                 <SimpleButton
                   onClick={handleClear}
                   variant="outline"
-                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                  className="text-gray-600 border-gray-300 hover:bg-gray-50 min-h-[44px] sm:min-h-[48px] text-xs sm:text-sm md:text-base py-2.5 sm:py-3"
                 >
-                  بحث جديد
+                  <span className="hidden sm:inline">بحث جديد</span>
+                  <span className="sm:hidden">جديد</span>
                 </SimpleButton>
               </div>
             </div>
 
             {/* Reports Modal */}
             {reportsOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+                <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
                   {/* Modal Header */}
-                  <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                      <FileCheck className="w-6 h-6 ml-3 text-blue-600" />
-                      تقارير الفحص
+                  <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b sticky top-0 bg-white z-10">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 flex items-center">
+                      <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 text-blue-600" />
+                      <span>تقارير الفحص</span>
                     </h2>
                     <button
                       onClick={() => setReportsOpen(false)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1"
+                      aria-label="إغلاق"
                     >
-                      <X className="w-6 h-6" />
+                      <X className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   </div>
 
                   {/* Modal Content */}
-                  <div className="flex-1 overflow-y-auto p-6">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6">
                     {reportsLoading ? (
-                      <div className="flex items-center justify-center py-12">
+                      <div className="flex items-center justify-center py-8 sm:py-12">
                         <Loading size="lg" text="جاري تحميل التقارير..." />
                       </div>
                     ) : reports.length === 0 ? (
-                      <div className="text-center py-12">
-                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد تقارير</h3>
-                        <p className="text-gray-600">لا توجد تقارير فحص مرتبطة بهذا الطلب</p>
+                      <div className="text-center py-8 sm:py-12">
+                        <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">لا توجد تقارير</h3>
+                        <p className="text-sm sm:text-base text-gray-600 px-4">لا توجد تقارير فحص مرتبطة بهذا الطلب</p>
                       </div>
                     ) : (
-                      <div className="space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
                         {reports.map((report) => (
-                          <div key={report.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                            <div className="flex items-start justify-between mb-4">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          <div key={report.id} className="bg-gray-50 rounded-lg p-4 sm:p-5 md:p-6 border border-gray-200">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 sm:mb-4 gap-2">
+                              <div className="flex-1">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
                                   {report.inspectionTypeName || 'تقرير فحص'}
                                 </h3>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-xs sm:text-sm text-gray-600">
                                   {formatDate(report.reportDate)}
                                 </p>
                               </div>
                               {report.technicianName && (
-                                <div className="text-left">
-                                  <p className="text-sm text-gray-600">الفني</p>
-                                  <p className="text-sm font-medium text-gray-900">{report.technicianName}</p>
+                                <div className="text-right sm:text-left">
+                                  <p className="text-xs sm:text-sm text-gray-600">الفني</p>
+                                  <p className="text-xs sm:text-sm font-medium text-gray-900">{report.technicianName}</p>
                                 </div>
                               )}
                             </div>
 
                             {report.summary && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">الملخص</h4>
-                                <p className="text-gray-600 bg-white p-3 rounded border">{report.summary}</p>
+                              <div className="mb-3 sm:mb-4">
+                                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">الملخص</h4>
+                                <p className="text-xs sm:text-sm text-gray-600 bg-white p-2 sm:p-3 rounded border break-words">{report.summary}</p>
                               </div>
                             )}
 
                             {report.result && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">النتيجة</h4>
-                                <p className="text-gray-600 bg-white p-3 rounded border">{report.result}</p>
+                              <div className="mb-3 sm:mb-4">
+                                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">النتيجة</h4>
+                                <p className="text-xs sm:text-sm text-gray-600 bg-white p-2 sm:p-3 rounded border break-words">{report.result}</p>
                               </div>
                             )}
 
                             {report.recommendations && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">التوصيات</h4>
-                                <p className="text-gray-600 bg-white p-3 rounded border">{report.recommendations}</p>
+                              <div className="mb-3 sm:mb-4">
+                                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">التوصيات</h4>
+                                <p className="text-xs sm:text-sm text-gray-600 bg-white p-2 sm:p-3 rounded border break-words">{report.recommendations}</p>
                               </div>
                             )}
 
                             {report.notes && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">ملاحظات</h4>
-                                <p className="text-gray-600 bg-white p-3 rounded border">{report.notes}</p>
+                              <div className="mb-3 sm:mb-4">
+                                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">ملاحظات</h4>
+                                <p className="text-xs sm:text-sm text-gray-600 bg-white p-2 sm:p-3 rounded border break-words">{report.notes}</p>
                               </div>
                             )}
 
                             {report.branchName && (
-                              <div className="text-sm text-gray-600">
+                              <div className="text-xs sm:text-sm text-gray-600">
                                 <span className="font-medium">الفرع:</span> {report.branchName}
                               </div>
                             )}
@@ -855,11 +861,11 @@ const PublicRepairTrackingPage = () => {
                   </div>
 
                   {/* Modal Footer */}
-                  <div className="flex items-center justify-end p-6 border-t">
+                  <div className="flex items-center justify-end p-4 sm:p-5 md:p-6 border-t sticky bottom-0 bg-white">
                     <SimpleButton
                       onClick={() => setReportsOpen(false)}
                       variant="outline"
-                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                      className="text-gray-600 border-gray-300 hover:bg-gray-50 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base w-full sm:w-auto px-6"
                     >
                       إغلاق
                     </SimpleButton>
