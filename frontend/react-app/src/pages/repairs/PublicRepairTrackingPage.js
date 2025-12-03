@@ -25,7 +25,9 @@ import {
   Tablet,
   Building2,
   Shield,
-  ShoppingCart
+  ShoppingCart,
+  FileCheck,
+  X
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -49,6 +51,9 @@ const PublicRepairTrackingPage = () => {
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchType, setSearchType] = useState('trackingToken'); // 'trackingToken' or 'requestNumber'
+  const [reportsOpen, setReportsOpen] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
   // Repair status configuration
   const statusConfig = {
@@ -380,6 +385,33 @@ const PublicRepairTrackingPage = () => {
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
 
+  // Load inspection reports
+  const loadReports = async () => {
+    if (!repairData?.id) return;
+    
+    try {
+      setReportsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairData.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReports(data.data || []);
+      } else {
+        setReports([]);
+      }
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      setReports([]);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  // Handle open reports modal
+  const handleOpenReports = () => {
+    setReportsOpen(true);
+    loadReports();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -683,7 +715,17 @@ const PublicRepairTrackingPage = () => {
 
             {/* Action Buttons */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-center space-x-4 space-x-reverse">
+              <div className="flex items-center justify-center space-x-4 space-x-reverse flex-wrap gap-4">
+                <SimpleButton
+                  onClick={handleOpenReports}
+                  variant="outline"
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  disabled={!repairData}
+                >
+                  <FileCheck className="w-4 h-4 ml-2" />
+                  عرض التقارير
+                </SimpleButton>
+                
                 <SimpleButton
                   onClick={() => window.print()}
                   variant="outline"
@@ -721,6 +763,110 @@ const PublicRepairTrackingPage = () => {
                 </SimpleButton>
               </div>
             </div>
+
+            {/* Reports Modal */}
+            {reportsOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between p-6 border-b">
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                      <FileCheck className="w-6 h-6 ml-3 text-blue-600" />
+                      تقارير الفحص
+                    </h2>
+                    <button
+                      onClick={() => setReportsOpen(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {reportsLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loading size="lg" text="جاري تحميل التقارير..." />
+                      </div>
+                    ) : reports.length === 0 ? (
+                      <div className="text-center py-12">
+                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد تقارير</h3>
+                        <p className="text-gray-600">لا توجد تقارير فحص مرتبطة بهذا الطلب</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {reports.map((report) => (
+                          <div key={report.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                  {report.inspectionTypeName || 'تقرير فحص'}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {formatDate(report.reportDate)}
+                                </p>
+                              </div>
+                              {report.technicianName && (
+                                <div className="text-left">
+                                  <p className="text-sm text-gray-600">الفني</p>
+                                  <p className="text-sm font-medium text-gray-900">{report.technicianName}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {report.summary && (
+                              <div className="mb-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">الملخص</h4>
+                                <p className="text-gray-600 bg-white p-3 rounded border">{report.summary}</p>
+                              </div>
+                            )}
+
+                            {report.result && (
+                              <div className="mb-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">النتيجة</h4>
+                                <p className="text-gray-600 bg-white p-3 rounded border">{report.result}</p>
+                              </div>
+                            )}
+
+                            {report.recommendations && (
+                              <div className="mb-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">التوصيات</h4>
+                                <p className="text-gray-600 bg-white p-3 rounded border">{report.recommendations}</p>
+                              </div>
+                            )}
+
+                            {report.notes && (
+                              <div className="mb-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">ملاحظات</h4>
+                                <p className="text-gray-600 bg-white p-3 rounded border">{report.notes}</p>
+                              </div>
+                            )}
+
+                            {report.branchName && (
+                              <div className="text-sm text-gray-600">
+                                <span className="font-medium">الفرع:</span> {report.branchName}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="flex items-center justify-end p-6 border-t">
+                    <SimpleButton
+                      onClick={() => setReportsOpen(false)}
+                      variant="outline"
+                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                    >
+                      إغلاق
+                    </SimpleButton>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -13,6 +13,30 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get inspection reports by repair request ID
+router.get('/repair/:repairRequestId', async (req, res) => {
+  const { repairRequestId } = req.params;
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        ir.*,
+        it.name as inspectionTypeName,
+        u.name as technicianName,
+        b.name as branchName
+      FROM InspectionReport ir
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id
+      LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
+      LEFT JOIN Branch b ON ir.branchId = b.id
+      WHERE ir.repairRequestId = ?
+      ORDER BY ir.reportDate DESC, ir.createdAt DESC
+    `, [repairRequestId]);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(`Error fetching inspection reports for repair ${repairRequestId}:`, err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
 // Get inspection report by ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
