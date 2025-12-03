@@ -27,7 +27,9 @@ import {
   Shield,
   ShoppingCart,
   FileCheck,
-  X
+  X,
+  Image,
+  Download
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -35,6 +37,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { useRepairUpdatesById } from '../../hooks/useWebSocket';
+import { ZoomIn } from 'lucide-react';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -54,6 +57,8 @@ const PublicRepairTrackingPage = () => {
   const [reportsOpen, setReportsOpen] = useState(false);
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
 
   // Repair status configuration
   const statusConfig = {
@@ -410,7 +415,61 @@ const PublicRepairTrackingPage = () => {
   const handleOpenReports = () => {
     setReportsOpen(true);
     loadReports();
+    // Load attachments when opening reports modal
+    if (repairData?.id) {
+      loadAttachments();
+    }
   };
+
+  // Load attachments
+  const loadAttachments = async () => {
+    if (!repairData?.id) {
+      console.log('No repair data ID, skipping attachments load');
+      return;
+    }
+    
+    try {
+      setAttachmentsLoading(true);
+      console.log('Loading attachments for repair ID:', repairData.id);
+      const response = await fetch(`${API_BASE_URL}/repairsSimple/${repairData.id}/attachments`);
+      console.log('Attachments API response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const attachmentsList = data.data || [];
+        console.log('Attachments loaded successfully:', attachmentsList.length, 'items');
+        console.log('Attachments details:', attachmentsList);
+        console.log('Debug info:', data.debug);
+        
+        if (attachmentsList.length === 0 && data.debug) {
+          console.warn('No attachments found. Debug info:', {
+            hasAttachmentsField: data.debug.hasAttachmentsField,
+            rawAttachmentsCount: data.debug.rawAttachmentsCount,
+            uploadRoot: data.debug.uploadRoot
+          });
+        }
+        
+        setAttachments(attachmentsList);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn('Failed to load attachments:', response.status, errorData);
+        setAttachments([]);
+      }
+    } catch (error) {
+      console.error('Error loading attachments:', error);
+      setAttachments([]);
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  };
+
+  // Load attachments when repair data is available (only once, not when opening reports)
+  // Note: We load attachments when opening reports modal instead to avoid double loading
+  // useEffect(() => {
+  //   if (repairData?.id) {
+  //     loadAttachments();
+  //   }
+  // }, [repairData?.id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -850,12 +909,181 @@ const PublicRepairTrackingPage = () => {
                             )}
 
                             {report.branchName && (
-                              <div className="text-xs sm:text-sm text-gray-600">
+                              <div className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                                 <span className="font-medium">الفرع:</span> {report.branchName}
                               </div>
                             )}
                           </div>
                         ))}
+
+                        {/* Attachments Section */}
+                        {attachments.length > 0 && (
+                          <div className="bg-blue-50 rounded-lg p-4 sm:p-5 md:p-6 border border-blue-200">
+                            <div className="flex items-center mb-4 sm:mb-5">
+                              <Image className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 text-blue-600" />
+                              <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+                                المرفقات والصور ({attachments.length})
+                              </h3>
+                            </div>
+                            
+                            {attachmentsLoading ? (
+                              <div className="flex items-center justify-center py-8">
+                                <Loading size="md" text="جاري تحميل المرفقات..." />
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {attachments.map((attachment, index) => {
+                                  const isImage = attachment.type?.startsWith('image/') || 
+                                    /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachment.name || attachment.id);
+                                  
+                                  const getImageUrl = () => {
+                                    if (attachment.url) {
+                                      if (attachment.url.startsWith('http://') || attachment.url.startsWith('https://')) {
+                                        return attachment.url;
+                                      }
+                                      if (attachment.url.startsWith('/')) {
+                                        return `${window.location.origin}${attachment.url}`;
+                                      }
+                                      return `${window.location.origin}/${attachment.url}`;
+                                    }
+                                    return `${window.location.origin}/uploads/repairs/${repairData.id}/${encodeURIComponent(attachment.id)}`;
+                                  };
+
+                                  return (
+                                    <div key={attachment.id || index} className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                                      {attachment._warning && (
+                                        <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                                          ⚠️ {attachment._warning}
+                                        </div>
+                                      )}
+                                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                        {isImage ? (
+                                          <>
+                                            <div className="flex-shrink-0">
+                                              <div 
+                                                className="relative w-full sm:w-40 h-40 sm:h-40 rounded-lg overflow-hidden bg-gray-100 cursor-pointer group border-2 border-gray-200"
+                                                onClick={() => {
+                                                  // Open image in new tab for better viewing
+                                                  const imageUrl = getImageUrl();
+                                                  window.open(imageUrl, '_blank');
+                                                }}
+                                              >
+                                                <img
+                                                  src={getImageUrl()}
+                                                  alt={attachment.name || attachment.title || `صورة ${index + 1}`}
+                                                  className="w-full h-full object-cover"
+                                                  loading="lazy"
+                                                  onError={(e) => {
+                                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23ddd" width="200" height="200"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3Eصورة غير متاحة%3C/text%3E%3C/svg%3E';
+                                                  }}
+                                                />
+                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+                                                  <ZoomIn className="w-8 h-8 sm:w-10 sm:h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-start justify-between mb-2">
+                                                <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+                                                  {attachment.title || attachment.name || `صورة ${index + 1}`}
+                                                </h4>
+                                                <SimpleButton
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const link = document.createElement('a');
+                                                    link.href = getImageUrl();
+                                                    link.download = attachment.name || `image-${index + 1}.jpg`;
+                                                    link.click();
+                                                  }}
+                                                  variant="outline"
+                                                  size="sm"
+                                                  className="text-xs sm:text-sm flex-shrink-0"
+                                                >
+                                                  <Download className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                                                </SimpleButton>
+                                              </div>
+                                              
+                                              {attachment.description ? (
+                                                <div className="mb-3">
+                                                  <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1">الوصف:</p>
+                                                  <p className="text-xs sm:text-sm text-gray-600 bg-gray-50 p-2 sm:p-3 rounded border break-words leading-relaxed">
+                                                    {attachment.description}
+                                                  </p>
+                                                </div>
+                                              ) : (
+                                                <p className="text-xs sm:text-sm text-gray-500 italic mb-3">لا يوجد وصف</p>
+                                              )}
+                                              
+                                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500">
+                                                <span className="bg-gray-100 px-2 py-1 rounded">الحجم: {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'غير محدد'}</span>
+                                                {attachment.uploadedAt && (
+                                                  <span className="bg-gray-100 px-2 py-1 rounded">{formatDate(attachment.uploadedAt)}</span>
+                                                )}
+                                                {attachment.uploadedBy && (
+                                                  <span className="bg-gray-100 px-2 py-1 rounded">بواسطة: {attachment.uploadedBy}</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <div className="flex-1 w-full">
+                                            <div className="flex items-start gap-3">
+                                              <div className="flex-shrink-0 bg-blue-50 p-2 rounded-lg">
+                                                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between mb-2">
+                                                  <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+                                                    {attachment.name || attachment.title || `مرفق ${index + 1}`}
+                                                  </h4>
+                                                  <SimpleButton
+                                                    onClick={() => {
+                                                      const link = document.createElement('a');
+                                                      link.href = getImageUrl();
+                                                      link.download = attachment.name || `attachment-${index + 1}`;
+                                                      link.click();
+                                                    }}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-xs sm:text-sm flex-shrink-0"
+                                                  >
+                                                    <Download className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                                                    تحميل
+                                                  </SimpleButton>
+                                                </div>
+                                                
+                                                {attachment.description ? (
+                                                  <div className="mb-3">
+                                                    <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1">الوصف:</p>
+                                                    <p className="text-xs sm:text-sm text-gray-600 bg-gray-50 p-2 sm:p-3 rounded border break-words leading-relaxed">
+                                                      {attachment.description}
+                                                    </p>
+                                                  </div>
+                                                ) : (
+                                                  <p className="text-xs sm:text-sm text-gray-500 italic mb-3">لا يوجد وصف</p>
+                                                )}
+                                                
+                                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500">
+                                                  <span className="bg-gray-100 px-2 py-1 rounded">الحجم: {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'غير محدد'}</span>
+                                                  {attachment.uploadedAt && (
+                                                    <span className="bg-gray-100 px-2 py-1 rounded">{formatDate(attachment.uploadedAt)}</span>
+                                                  )}
+                                                  {attachment.uploadedBy && (
+                                                    <span className="bg-gray-100 px-2 py-1 rounded">بواسطة: {attachment.uploadedBy}</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

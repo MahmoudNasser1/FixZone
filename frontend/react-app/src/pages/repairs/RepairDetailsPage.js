@@ -140,6 +140,45 @@ const RepairDetailsPage = () => {
   const [isLowStock, setIsLowStock] = useState(null);
   const [selectedItemInfo, setSelectedItemInfo] = useState(null); // For displaying item details
 
+  // WhatsApp message template from settings
+  const [repairReceivedMessageTemplate, setRepairReceivedMessageTemplate] = useState(null);
+
+  // Load WhatsApp message template from settings
+  useEffect(() => {
+    const loadMessageTemplate = async () => {
+      try {
+        const item = await apiService.getSystemSetting('messaging_settings');
+        if (item && item.value) {
+          const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+          if (parsed.whatsapp && parsed.whatsapp.repairReceivedMessage) {
+            setRepairReceivedMessageTemplate(parsed.whatsapp.repairReceivedMessage);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading messaging settings:', error);
+        // Use default template if settings not found
+        setRepairReceivedMessageTemplate(`جهازك وصل Fix Zone يا فندم
+
+
+
+ده ملخص الطلب :
+
+• رقم الطلب: {repairNumber}
+
+• الجهاز: {deviceInfo}
+
+• المشكلة: {problem}{oldInvoiceNumber}
+
+تقدر تشوف التحديثات أول بأول من هنا:
+
+{trackingUrl}
+
+فريق الفنيين هيبدأ الفحص خلال الساعات القادمة.`);
+      }
+    };
+    loadMessageTemplate();
+  }, []);
+
   // 🔧 Fix #1: Enhanced handleIssueChange to update selected item info
   const handleIssueChange = (e) => {
     const { name, value } = e.target;
@@ -3498,13 +3537,74 @@ const RepairDetailsPage = () => {
                     </div>
                   )}
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
                   <Link to={`/customers/${customer.id}`}>
                     <SimpleButton variant="outline" size="sm" className="w-full">
                       <User className="w-4 h-4 ml-1" />
                       عرض ملف العميل
                     </SimpleButton>
                   </Link>
+                  {customer.phone && repair && (
+                    <SimpleButton 
+                      size="sm" 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        // تنظيف رقم الهاتف (إزالة المسافات والرموز)
+                        const cleanPhone = customer.phone.replace(/[\s\-\(\)\+]/g, '');
+                        // إضافة 20 في البداية إذا لم تكن موجودة
+                        const phoneNumber = cleanPhone.startsWith('20') ? cleanPhone : (cleanPhone.startsWith('0') ? '20' + cleanPhone.substring(1) : '20' + cleanPhone);
+                        
+                        // بناء الرسالة من القالب في الإعدادات
+                        const repairNumber = repair.requestNumber || `REP-${repair.id}`;
+                        const deviceInfo = `${repair.deviceBrand || ''} ${repair.deviceModel || ''}`.trim() || 'غير محدد';
+                        const problem = repair.reportedProblem || repair.problemDescription || 'غير محدد';
+                        
+                        // الحصول على رقم الفاتورة القديم (أول فاتورة مرتبطة بالطلب)
+                        const oldInvoiceNumber = invoices && invoices.length > 0 ? (invoices[0].invoiceNumber || invoices[0].id || '') : '';
+                        const oldInvoiceNumberText = oldInvoiceNumber ? `\n\n• رقم الفاتورة القديم: ${oldInvoiceNumber}` : '';
+                        
+                        // بناء رابط التتبع
+                        const trackingToken = repair.trackingToken || repair.id;
+                        const trackingUrl = `${window.location.origin}/track?trackingToken=${trackingToken}`;
+                        
+                        // استخدام القالب من الإعدادات أو القالب الافتراضي
+                        const template = repairReceivedMessageTemplate || `جهازك وصل Fix Zone يا فندم
+
+
+
+ده ملخص الطلب :
+
+• رقم الطلب: {repairNumber}
+
+• الجهاز: {deviceInfo}
+
+• المشكلة: {problem}{oldInvoiceNumber}
+
+تقدر تشوف التحديثات أول بأول من هنا:
+
+{trackingUrl}
+
+فريق الفنيين هيبدأ الفحص خلال الساعات القادمة.`;
+                        
+                        // استبدال المتغيرات في القالب
+                        const message = template
+                          .replace(/{repairNumber}/g, repairNumber)
+                          .replace(/{deviceInfo}/g, deviceInfo)
+                          .replace(/{problem}/g, problem)
+                          .replace(/{oldInvoiceNumber}/g, oldInvoiceNumberText)
+                          .replace(/{trackingUrl}/g, trackingUrl);
+                        
+                        // ترميز الرسالة
+                        const encodedMessage = encodeURIComponent(message);
+                        
+                        // فتح واتساب ويب
+                        window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+                      }}
+                    >
+                      <MessageSquare className="w-4 h-4 ml-1" />
+                      إرسال رسالة واتساب
+                    </SimpleButton>
+                  )}
                 </div>
               </SimpleCardContent>
             </SimpleCard>

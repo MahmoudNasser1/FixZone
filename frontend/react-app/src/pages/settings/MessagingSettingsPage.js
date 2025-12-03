@@ -15,7 +15,24 @@ export default function MessagingSettingsPage() {
             apiUrl: '',
             apiToken: '',
             webEnabled: true,
-            defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}'
+            defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}',
+            repairReceivedMessage: `جهازك وصل Fix Zone يا فندم
+
+
+
+ده ملخص الطلب :
+
+• رقم الطلب: {repairNumber}
+
+• الجهاز: {deviceInfo}
+
+• المشكلة: {problem}{oldInvoiceNumber}
+
+تقدر تشوف التحديثات أول بأول من هنا:
+
+{trackingUrl}
+
+فريق الفنيين هيبدأ الفحص خلال الساعات القادمة.`
         },
         email: {
             enabled: false,
@@ -208,6 +225,21 @@ export default function MessagingSettingsPage() {
                         />
                         <p className="text-xs text-gray-500 mt-1">
                             المتغيرات المتاحة: {'{customerName}, {invoiceId}, {amount}, {currency}, {invoiceLink}'}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">رسالة استلام طلب الإصلاح</label>
+                        <textarea
+                            value={messagingSettings.whatsapp.repairReceivedMessage}
+                            onChange={(e) => handleMessagingChange('whatsapp', 'repairReceivedMessage', e.target.value)}
+                            rows={12}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            المتغيرات المتاحة: {'{repairNumber}, {deviceInfo}, {problem}, {oldInvoiceNumber}, {trackingUrl}'}
+                            <br />
+                            ملاحظة: {'{oldInvoiceNumber}'} سيظهر فقط إذا كان موجوداً
                         </p>
                     </div>
 

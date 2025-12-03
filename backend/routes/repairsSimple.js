@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const path = require('path');
+const fs = require('fs');
 const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
 const websocketService = require('../services/websocketService');
 
@@ -240,6 +242,196 @@ router.get('/tracking', async (req, res) => {
       error: 'Server Error',
       details: error.message
     });
+  }
+});
+
+// Get attachments for a repair (public endpoint - no auth required)
+router.get('/:id/attachments', async (req, res) => {
+  const repairId = req.params.id;
+  try {
+    console.log(`[ATTACHMENTS API] Fetching attachments for repair ID: ${repairId}`);
+    
+    // Verify repair exists
+    const [repairRows] = await db.execute('SELECT id, attachments FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairId]);
+    if (!repairRows || repairRows.length === 0) {
+      console.log(`[ATTACHMENTS API] Repair request ${repairId} not found`);
+      return res.status(404).json({ success: false, error: 'Repair request not found' });
+    }
+
+    console.log(`[ATTACHMENTS API] Repair found. Attachments field type: ${typeof repairRows[0].attachments}, value:`, repairRows[0].attachments);
+
+    // Parse attachments from JSON field
+    let attachments = [];
+    try {
+      if (repairRows[0].attachments) {
+        // Check if it's already a string or object
+        if (typeof repairRows[0].attachments === 'string') {
+          attachments = JSON.parse(repairRows[0].attachments);
+        } else if (Array.isArray(repairRows[0].attachments)) {
+          attachments = repairRows[0].attachments;
+        } else if (typeof repairRows[0].attachments === 'object') {
+          attachments = [repairRows[0].attachments];
+        }
+        console.log(`[ATTACHMENTS API] Parsed ${attachments.length} attachments from database`);
+      } else {
+        console.log(`[ATTACHMENTS API] No attachments field in database (null or empty)`);
+      }
+    } catch (e) {
+      console.warn('[ATTACHMENTS API] Failed to parse attachments from database:', e);
+      console.warn('[ATTACHMENTS API] Raw attachments value:', repairRows[0].attachments);
+      attachments = [];
+    }
+
+    // Get upload root directory
+    const uploadRoot = path.join(__dirname, '../../uploads/repairs');
+    console.log(`[ATTACHMENTS API] Upload root directory: ${uploadRoot}`);
+
+    // Verify files still exist on filesystem and filter out missing ones
+    const validAttachments = [];
+    console.log(`[ATTACHMENTS API] Starting to process ${attachments.length} attachments`);
+    
+    for (let i = 0; i < attachments.length; i++) {
+      const attachment = attachments[i];
+      console.log(`[ATTACHMENTS API] ===== Processing attachment ${i + 1}/${attachments.length} =====`);
+      console.log(`[ATTACHMENTS API] Attachment data:`, JSON.stringify(attachment, null, 2));
+      
+      const filePath = path.join(uploadRoot, String(repairId), attachment.id);
+      const fileExists = fs.existsSync(filePath);
+      console.log(`[ATTACHMENTS API] Checking file: ${filePath}`);
+      console.log(`[ATTACHMENTS API] File exists: ${fileExists}`);
+      
+      // Check if directory exists
+      const dirPath = path.join(uploadRoot, String(repairId));
+      const dirExists = fs.existsSync(dirPath);
+      console.log(`[ATTACHMENTS API] Directory exists: ${dirExists}, path: ${dirPath}`);
+      
+      // If directory exists, list files in it
+      if (dirExists) {
+        try {
+          const filesInDir = fs.readdirSync(dirPath);
+          console.log(`[ATTACHMENTS API] Files in directory:`, filesInDir);
+        } catch (e) {
+          console.error(`[ATTACHMENTS API] Error reading directory:`, e);
+        }
+      }
+      
+      // Build public URL
+      let publicUrl = attachment.url;
+      if (!publicUrl) {
+        // Build relative URL if no URL exists
+        publicUrl = `/uploads/repairs/${repairId}/${encodeURIComponent(attachment.id)}`;
+      } else if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
+        // If absolute URL, extract pathname to make it relative (works better with same origin)
+        try {
+          const urlObj = new URL(publicUrl);
+          publicUrl = urlObj.pathname;
+        } catch (e) {
+          // If URL parsing fails, use relative path
+          publicUrl = `/uploads/repairs/${repairId}/${encodeURIComponent(attachment.id)}`;
+        }
+      } else if (!publicUrl.startsWith('/')) {
+        // If URL doesn't start with /, add it
+        publicUrl = `/${publicUrl}`;
+      }
+
+      if (fileExists) {
+        // File exists, add it
+        validAttachments.push({
+          ...attachment,
+          url: publicUrl
+        });
+        console.log(`[ATTACHMENTS API] Added valid attachment: ${attachment.id || attachment.name}`);
+      } else {
+        // File doesn't exist, try to find it by alternative name
+        let foundFile = null;
+        if (dirExists && attachment.name) {
+          try {
+            const filesInDir = fs.readdirSync(dirPath);
+            // Try exact match first
+            foundFile = filesInDir.find(f => f === attachment.id || f === attachment.name);
+            
+            // If not found, try partial match (filename without extension)
+            if (!foundFile && attachment.name) {
+              const nameWithoutExt = attachment.name.replace(/\.[^/.]+$/, '');
+              foundFile = filesInDir.find(f => {
+                const fWithoutExt = f.replace(/\.[^/.]+$/, '');
+                return fWithoutExt === nameWithoutExt || f.includes(nameWithoutExt) || nameWithoutExt.includes(fWithoutExt);
+              });
+            }
+            
+            if (foundFile) {
+              console.log(`[ATTACHMENTS API] Found file by alternative name: ${foundFile}`);
+              const alternativePublicUrl = `/uploads/repairs/${repairId}/${encodeURIComponent(foundFile)}`;
+              
+              validAttachments.push({
+                ...attachment,
+                id: foundFile, // Update id to match actual filename
+                url: alternativePublicUrl
+              });
+              console.log(`[ATTACHMENTS API] Added attachment with corrected filename: ${foundFile}`);
+            } else {
+              console.warn(`[ATTACHMENTS API] Attachment file not found: ${filePath}`);
+              if (filesInDir && filesInDir.length > 0) {
+                console.warn(`[ATTACHMENTS API] Available files: ${filesInDir.join(', ')}`);
+              }
+              
+              // Still return the attachment with URL even if file doesn't exist
+              // The file might be in a different location or accessible via the URL
+              validAttachments.push({
+                ...attachment,
+                url: publicUrl,
+                _warning: 'File not found on filesystem, but URL is available'
+              });
+              console.log(`[ATTACHMENTS API] ✅ Added attachment with warning (file not found but URL available): ${attachment.id || attachment.name}`);
+            }
+          } catch (e) {
+            console.error(`[ATTACHMENTS API] Error searching for alternative file:`, e);
+            
+            // Still return the attachment with URL even if we can't verify file existence
+            validAttachments.push({
+              ...attachment,
+              url: publicUrl,
+              _warning: 'Could not verify file existence, but URL is available'
+            });
+            console.log(`[ATTACHMENTS API] ✅ Added attachment with warning (could not verify): ${attachment.id || attachment.name}`);
+          }
+        } else {
+          // Directory doesn't exist, but still return attachment with URL
+          // The file might be accessible via the URL even if directory doesn't exist
+          console.warn(`[ATTACHMENTS API] Directory does not exist: ${dirPath}`);
+          console.warn(`[ATTACHMENTS API] Attachment file path: ${filePath}`);
+          
+          validAttachments.push({
+            ...attachment,
+            url: publicUrl,
+            _warning: 'Directory not found, but URL is available'
+          });
+          console.log(`[ATTACHMENTS API] ✅ Added attachment with warning (directory not found but URL available): ${attachment.id || attachment.name}`);
+        }
+      }
+    }
+
+    console.log(`[ATTACHMENTS API] ===== FINAL RESULT =====`);
+    console.log(`[ATTACHMENTS API] Raw attachments from DB: ${attachments.length}`);
+    console.log(`[ATTACHMENTS API] Valid attachments to return: ${validAttachments.length}`);
+    console.log(`[ATTACHMENTS API] Valid attachments data:`, JSON.stringify(validAttachments, null, 2));
+    
+    res.json({ 
+      success: true, 
+      data: validAttachments,
+      debug: {
+        repairId: repairId,
+        rawAttachmentsCount: attachments.length,
+        validAttachmentsCount: validAttachments.length,
+        uploadRoot: uploadRoot,
+        hasAttachmentsField: !!repairRows[0].attachments,
+        rawAttachments: attachments,
+        validAttachments: validAttachments
+      }
+    });
+  } catch (e) {
+    console.error('[ATTACHMENTS API] List attachments error:', e);
+    res.status(500).json({ success: false, error: 'Failed to list attachments', details: e.message });
   }
 });
 
