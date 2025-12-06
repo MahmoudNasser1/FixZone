@@ -8,7 +8,228 @@ const db = require('../db');
 const path = require('path');
 const fs = require('fs');
 
-// Apply authentication middleware to all routes
+// Public print endpoint with phone verification (must be before authMiddleware)
+// This endpoint verifies phone number and then redirects to the regular print endpoint
+router.get('/public/:id/print', async (req, res) => {
+  const { id } = req.params;
+  const { phoneNumber, repairRequestId } = req.query;
+  
+  try {
+    if (!phoneNumber || !repairRequestId) {
+      return res.status(400).send(`
+        <html dir="rtl">
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h1>خطأ في الطلب</h1>
+            <p>يرجى إدخال رقم الهاتف ورقم طلب الإصلاح</p>
+          </body>
+        </html>
+      `);
+    }
+
+    // Normalize phone numbers
+    const normalizedPhone = phoneNumber.replace(/\D/g, '');
+
+    // Verify phone number matches the repair request's customer
+    const [repairRows] = await db.query(`
+      SELECT rr.id, c.phone as customerPhone
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      WHERE rr.id = ? AND rr.deletedAt IS NULL
+    `, [repairRequestId]);
+
+    if (repairRows.length === 0) {
+      return res.status(404).send(`
+        <html dir="rtl">
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h1>طلب الإصلاح غير موجود</h1>
+          </body>
+        </html>
+      `);
+    }
+
+    const repair = repairRows[0];
+    const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
+
+    // Verify phone number matches
+    if (normalizedCustomerPhone !== normalizedPhone) {
+      return res.status(403).send(`
+        <html dir="rtl">
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h1>غير مصرح</h1>
+            <p>رقم الهاتف غير صحيح</p>
+          </body>
+        </html>
+      `);
+    }
+
+    // Verify invoice belongs to this repair request
+    const [invoiceCheck] = await db.query(`
+      SELECT id FROM Invoice 
+      WHERE id = ? AND repairRequestId = ? AND deletedAt IS NULL
+    `, [id, repairRequestId]);
+
+    if (invoiceCheck.length === 0) {
+      return res.status(404).send(`
+        <html dir="rtl">
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h1>الفاتورة غير موجودة</h1>
+          </body>
+        </html>
+      `);
+    }
+
+    // If verification passes, redirect to print with verification parameters
+    return res.redirect(`/api/invoices/${id}/print?public=true&phoneNumber=${encodeURIComponent(phoneNumber)}&repairRequestId=${repairRequestId}`);
+  } catch (error) {
+    console.error('Error in public print verification:', error);
+    return res.status(500).send(`
+      <html dir="rtl">
+        <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+          <h1>خطأ في الخادم</h1>
+          <p>${error.message || 'حدث خطأ أثناء التحقق'}</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// Public endpoint for invoice verification by phone number (must be before authMiddleware)
+router.get('/public/verify', async (req, res) => {
+  try {
+    const { repairRequestId, phoneNumber } = req.query;
+    
+    if (!repairRequestId || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'repairRequestId and phoneNumber are required'
+      });
+    }
+
+    // Normalize phone numbers (remove non-digits)
+    const normalizedPhone = phoneNumber.replace(/\D/g, '');
+
+    // Verify phone number matches the repair request's customer
+    const [repairRows] = await db.query(`
+      SELECT rr.id, c.phone as customerPhone
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id
+      WHERE rr.id = ? AND rr.deletedAt IS NULL
+    `, [repairRequestId]);
+
+    if (repairRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair request not found'
+      });
+    }
+
+    const repair = repairRows[0];
+    const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
+
+    // Verify phone number matches
+    if (normalizedCustomerPhone !== normalizedPhone) {
+      return res.status(403).json({
+        success: false,
+        error: 'Phone number does not match'
+      });
+    }
+
+    // If phone matches, fetch invoices for this repair
+    // Note: Only select columns that exist in Invoice table
+    const [invoiceRows] = await db.query(`
+      SELECT 
+        i.id,
+        i.totalAmount,
+        i.amountPaid,
+        i.status,
+        i.currency,
+        i.taxAmount,
+        i.createdAt,
+        (SELECT paymentMethod FROM Payment WHERE invoiceId = i.id ORDER BY createdAt DESC LIMIT 1) as paymentMethod,
+        (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = i.id) as actualAmountPaid
+      FROM Invoice i
+      WHERE i.repairRequestId = ? AND i.deletedAt IS NULL
+      ORDER BY i.createdAt DESC
+      LIMIT 1
+    `, [repairRequestId]);
+
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No invoices found for this repair request'
+      });
+    }
+
+    const invoice = invoiceRows[0];
+    
+    // Use actual amount paid from payments if available, otherwise use amountPaid from invoice
+    const actualPaid = parseFloat(invoice.actualAmountPaid || invoice.amountPaid || 0);
+    const totalAmount = parseFloat(invoice.totalAmount || 0);
+    
+    res.json({
+      success: true,
+      data: {
+        id: invoice.id,
+        invoiceId: invoice.id, // Use id as invoiceId for consistency with frontend
+        title: `فاتورة #${invoice.id}`, // Generate title from id since title column doesn't exist
+        totalAmount: totalAmount,
+        amountPaid: actualPaid,
+        status: invoice.status,
+        currency: invoice.currency || 'EGP',
+        taxAmount: parseFloat(invoice.taxAmount || 0),
+        createdAt: invoice.createdAt,
+        paymentMethod: invoice.paymentMethod || null
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying invoice:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+      details: error.message
+    });
+  }
+});
+
+// Load print settings helper (needed for print route)
+function loadPrintSettings() {
+  try {
+    const p = path.join(__dirname, '..', 'config', 'print-settings.json');
+    const raw = fs.readFileSync(p, 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    return {
+      title: 'فاتورة',
+      showLogo: false,
+      logoUrl: '',
+      margins: { top: 16, right: 16, bottom: 16, left: 16 },
+      dateDisplay: 'both',
+      companyName: 'FixZone'
+    };
+  }
+}
+
+// Format dates helper (needed for print route)
+function formatDates(dateObj, mode) {
+  const formats = { gregorian: '', hijri: '' };
+  try {
+    formats.gregorian = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'full', timeStyle: 'short' }).format(dateObj);
+  } catch (_) {
+    formats.gregorian = dateObj.toLocaleString('ar-EG');
+  }
+  try {
+    formats.hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { dateStyle: 'full' }).format(dateObj);
+  } catch (_) {
+    formats.hijri = '';
+  }
+  const selected = (mode || 'both').toLowerCase();
+  if (selected === 'gregorian') return { primary: formats.gregorian, secondary: '' };
+  if (selected === 'hijri') return { primary: formats.hijri || formats.gregorian, secondary: '' };
+  return { primary: formats.gregorian, secondary: formats.hijri };
+}
+
+// Apply authentication middleware to all other routes
+// Note: Print route below will handle phone verification for public requests
 router.use(authMiddleware);
 
 // GET /api/invoices - Get all invoices
@@ -57,6 +278,44 @@ function formatDates(dateObj, mode) {
 // Print invoice route (MUST come before /:id route)
 router.get('/:id/print', async (req, res) => {
   const { id } = req.params;
+  const { public, phoneNumber, repairRequestId } = req.query;
+  
+  // If this is a public request, verify phone number
+  if (public === 'true' && phoneNumber && repairRequestId) {
+    try {
+      const normalizedPhone = phoneNumber.replace(/\D/g, '');
+      const [repairRows] = await db.query(`
+        SELECT rr.id, c.phone as customerPhone
+        FROM RepairRequest rr
+        LEFT JOIN Customer c ON rr.customerId = c.id
+        WHERE rr.id = ? AND rr.deletedAt IS NULL
+      `, [repairRequestId]);
+
+      if (repairRows.length === 0) {
+        return res.status(404).send('طلب الإصلاح غير موجود');
+      }
+
+      const repair = repairRows[0];
+      const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
+
+      if (normalizedCustomerPhone !== normalizedPhone) {
+        return res.status(403).send('رقم الهاتف غير صحيح');
+      }
+
+      // Verify invoice belongs to this repair
+      const [invoiceCheck] = await db.query(`
+        SELECT id FROM Invoice 
+        WHERE id = ? AND repairRequestId = ? AND deletedAt IS NULL
+      `, [id, repairRequestId]);
+
+      if (invoiceCheck.length === 0) {
+        return res.status(404).send('الفاتورة غير موجودة');
+      }
+    } catch (verifyError) {
+      return res.status(500).send('خطأ في التحقق: ' + verifyError.message);
+    }
+  }
+  
   try {
     const settings = loadPrintSettings();
     const invoiceSettings = settings.invoice || {};

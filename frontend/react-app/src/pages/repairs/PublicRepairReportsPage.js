@@ -10,6 +10,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
@@ -227,24 +228,30 @@ const PublicRepairReportsPage = () => {
               </div>
             ) : (
               <div className="space-y-4 sm:space-y-6">
-                {reports.map((report) => (
-                  <SimpleCard key={report.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                {reports.map((report, index) => (
+                  <SimpleCard key={report.id || index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
+                      <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
+                        <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
+                          <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+                        </div>
+                        <span className="font-semibold text-foreground">
+                          {report.inspectionTypeName || report.typeName || report.name || `تقرير فحص #${index + 1}`}
+                        </span>
+                      </SimpleCardTitle>
+                    </SimpleCardHeader>
                     <SimpleCardContent className="p-4 sm:p-5 md:p-6">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
                         <div className="flex-1">
-                          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
-                            {report.inspectionTypeName || 'تقرير فحص'}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {formatDate(report.reportDate)}
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                            تاريخ التقرير: {formatDate(report.reportDate)}
                           </p>
+                          {report.technicianName && (
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              الفني: <span className="font-medium text-foreground">{report.technicianName}</span>
+                            </p>
+                          )}
                         </div>
-                        {report.technicianName && (
-                          <div className="text-right sm:text-left">
-                            <p className="text-xs sm:text-sm text-muted-foreground mb-1">الفني</p>
-                            <p className="text-xs sm:text-sm font-medium text-foreground">{report.technicianName}</p>
-                          </div>
-                        )}
                       </div>
 
                       {report.summary && (

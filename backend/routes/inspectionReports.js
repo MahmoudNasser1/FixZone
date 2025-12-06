@@ -20,11 +20,11 @@ router.get('/repair/:repairRequestId', async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         ir.*,
-        it.name as inspectionTypeName,
+        COALESCE(it.name, 'تقرير فحص') as inspectionTypeName,
         u.name as technicianName,
         b.name as branchName
       FROM InspectionReport ir
-      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
       LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
       LEFT JOIN Branch b ON ir.branchId = b.id
       WHERE ir.repairRequestId = ?

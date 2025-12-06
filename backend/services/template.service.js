@@ -14,13 +14,27 @@ class TemplateService {
     try {
       const settings = await settingsRepository.findByKey('messaging_settings');
       
-      if (!settings || !settings.value) {
-        throw new Error('إعدادات المراسلة غير موجودة');
+      // Default messaging settings if not found
+      let messagingSettings = null;
+      if (settings && settings.value) {
+        messagingSettings = typeof settings.value === 'string' 
+          ? JSON.parse(settings.value) 
+          : settings.value;
+      } else {
+        // Use default settings when messaging_settings doesn't exist
+        messagingSettings = {
+          whatsapp: {
+            enabled: true,
+            webEnabled: true,
+            apiEnabled: false,
+            defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}',
+            repairReceivedMessage: 'جهازك وصل Fix Zone يا فندم\n\nده ملخص الطلب:\n• رقم الطلب: {repairNumber}\n• الجهاز: {deviceInfo}\n• المشكلة: {problem}{oldInvoiceNumber}\n\nتقدر تشوف التحديثات أول بأول من هنا:\n{trackingUrl}\n\nفريق الفنيين هيبدأ الفحص خلال الساعات القادمة.'
+          },
+          email: {
+            enabled: false
+          }
+        };
       }
-
-      const messagingSettings = typeof settings.value === 'string' 
-        ? JSON.parse(settings.value) 
-        : settings.value;
 
       // البحث عن القالب حسب النوع والاسم
       // قوالب الفواتير

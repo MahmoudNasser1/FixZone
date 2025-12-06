@@ -38,7 +38,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { useRepairUpdatesById } from '../../hooks/useWebSocket';
-import { ZoomIn } from 'lucide-react';
+import { ZoomIn, Receipt, Lock } from 'lucide-react';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -59,6 +59,10 @@ const PublicRepairTrackingPage = () => {
   const [hasReports, setHasReports] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [showInvoiceAuth, setShowInvoiceAuth] = useState(false);
+  const [invoicePhone, setInvoicePhone] = useState('');
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState('');
 
   // Repair status configuration
   const statusConfig = {
@@ -406,6 +410,60 @@ const PublicRepairTrackingPage = () => {
   //   }
   // }, [repairData?.id]);
 
+  // Handle invoice authentication and open print page
+  const handleInvoiceAuth = async () => {
+    if (!invoicePhone.trim()) {
+      setInvoiceError('يرجى إدخال رقم الهاتف');
+      return;
+    }
+
+    if (!repairData?.id) {
+      setInvoiceError('لا يوجد طلب إصلاح');
+      return;
+    }
+
+    try {
+      setInvoiceLoading(true);
+      setInvoiceError('');
+
+      // Use public verification endpoint that checks phone number
+      const response = await fetch(
+        `${API_BASE_URL}/invoices/public/verify?repairRequestId=${repairData.id}&phoneNumber=${encodeURIComponent(invoicePhone)}`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          // Open the print-ready invoice page in a new window with phone verification
+          const invoiceId = result.data.id;
+          const printUrl = `${API_BASE_URL}/invoices/public/${invoiceId}/print?phoneNumber=${encodeURIComponent(invoicePhone)}&repairRequestId=${repairData.id}`;
+          window.open(printUrl, '_blank');
+          
+          // Reset form
+          setShowInvoiceAuth(false);
+          setInvoicePhone('');
+          setInvoiceError('');
+        } else {
+          setInvoiceError(result.error || 'لا توجد فواتير لهذا الطلب');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403) {
+          setInvoiceError('رقم الهاتف غير صحيح');
+        } else if (response.status === 404) {
+          setInvoiceError(errorData.error || 'لا توجد فواتير لهذا الطلب');
+        } else {
+          setInvoiceError(errorData.error || 'فشل في جلب بيانات الفاتورة');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      setInvoiceError('حدث خطأ أثناء جلب بيانات الفاتورة');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
   // Force light mode for this page
   useEffect(() => {
     const root = document.documentElement;
@@ -456,7 +514,7 @@ const PublicRepairTrackingPage = () => {
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
                 {repairData?.customerName ? (
                   <>
-                    اهلاً بشمهندس <span className="text-blue-600 dark:text-blue-400">{repairData.customerName}</span>
+                    اهلاً <span className="text-blue-600 dark:text-blue-400">{repairData.customerName}</span>
                   </>
                 ) : (
                   'تتبع طلب الإصلاح'
@@ -554,7 +612,7 @@ const PublicRepairTrackingPage = () => {
                                 navigate(`/track/reports?repairId=${id}`);
                               }
                             }}
-                            className="inline-flex items-center justify-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-background border-2 border-border text-foreground rounded-full shadow-sm hover:shadow-md hover:bg-muted transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background active:scale-95 gap-2 sm:gap-3"
+                            className="inline-flex items-center justify-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-background active:scale-95 gap-2 sm:gap-3 font-semibold"
                             aria-label="عرض التقارير"
                           >
                             <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
@@ -644,6 +702,18 @@ const PublicRepairTrackingPage = () => {
                       <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التكلفة الفعلية</h4>
+                      <p className="text-sm sm:text-base text-muted-foreground break-words">
+                        {repairData.actualCost ? `${repairData.actualCost} ج.م` : 'غير محدد'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted rounded-full flex-shrink-0">
+                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
                       <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التكلفة المقدرة</h4>
                       <p className="text-sm sm:text-base text-muted-foreground break-words">
                         {repairData.estimatedCost ? `${repairData.estimatedCost} ج.م` : 'غير محدد'}
@@ -664,6 +734,84 @@ const PublicRepairTrackingPage = () => {
                 </SimpleCardContent>
               </SimpleCard>
             </div>
+
+            {/* Invoice Section */}
+            <SimpleCard className="mt-4 sm:mt-6 md:mt-8">
+              <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
+                <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
+                  <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
+                    <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+                  </div>
+                  <span className="font-semibold text-foreground">الفاتورة</span>
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent className="p-4 sm:p-5 md:p-6">
+                {showInvoiceAuth ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <Lock className="w-4 h-4 inline ml-1" />
+                        يرجى إدخال رقم الهاتف المسجل للتحقق من هويتك وعرض الفاتورة
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">رقم الهاتف المسجل</label>
+                      <Input
+                        type="tel"
+                        value={invoicePhone}
+                        onChange={(e) => {
+                          setInvoicePhone(e.target.value);
+                          setInvoiceError('');
+                        }}
+                        placeholder="أدخل رقم الهاتف المسجل"
+                        className="w-full"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && invoicePhone.trim() && !invoiceLoading) {
+                            handleInvoiceAuth();
+                          }
+                        }}
+                      />
+                      {invoiceError && (
+                        <p className="text-red-600 text-sm mt-2">{invoiceError}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <SimpleButton
+                        onClick={handleInvoiceAuth}
+                        disabled={invoiceLoading || !invoicePhone.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {invoiceLoading ? 'جاري التحقق...' : 'تحقق وعرض الفاتورة'}
+                      </SimpleButton>
+                      <SimpleButton
+                        onClick={() => {
+                          setShowInvoiceAuth(false);
+                          setInvoicePhone('');
+                          setInvoiceError('');
+                        }}
+                        variant="ghost"
+                      >
+                        إلغاء
+                      </SimpleButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground mb-2">
+                      للاطلاع على الفاتورة، يرجى التحقق من رقم الهاتف
+                    </p>
+                    <SimpleButton
+                      onClick={() => setShowInvoiceAuth(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white mt-2"
+                    >
+                      <Lock className="w-4 h-4 ml-2" />
+                      عرض الفاتورة
+                    </SimpleButton>
+                  </div>
+                )}
+              </SimpleCardContent>
+            </SimpleCard>
 
           </div>
         )}

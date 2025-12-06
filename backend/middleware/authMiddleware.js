@@ -3,6 +3,12 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 const authMiddleware = (req, res, next) => {
+    // Allow public print requests with phone verification
+    if (req.path && req.path.includes('/print') && req.query.public === 'true' && req.query.phoneNumber && req.query.repairRequestId) {
+        // Phone verification will be handled in the route handler
+        return next();
+    }
+    
     // Try multiple sources for the token: Cookie, Authorization Bearer, x-auth-token
     let token = null;
 

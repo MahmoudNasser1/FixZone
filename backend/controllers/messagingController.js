@@ -13,19 +13,21 @@ class MessagingController {
 
       // جلب إعدادات البريد الإلكتروني
       const [settingsRows] = await db.execute(
-        'SELECT value FROM SystemSettings WHERE `key` = ?',
+        'SELECT value FROM SystemSetting WHERE `key` = ?',
         ['messaging_settings']
       );
 
-      if (settingsRows.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'إعدادات المراسلة غير موجودة' 
-        });
+      let messagingSettings = null;
+      if (settingsRows.length > 0 && settingsRows[0].value) {
+        messagingSettings = JSON.parse(settingsRows[0].value);
+      } else {
+        // Default settings
+        messagingSettings = {
+          email: { enabled: false }
+        };
       }
 
-      const messagingSettings = JSON.parse(settingsRows[0].value);
-      const emailSettings = messagingSettings.email;
+      const emailSettings = messagingSettings.email || {};
 
       if (!emailSettings.enabled) {
         return res.status(400).json({ 
@@ -90,19 +92,21 @@ class MessagingController {
 
       // جلب إعدادات الواتساب
       const [settingsRows] = await db.execute(
-        'SELECT value FROM SystemSettings WHERE `key` = ?',
+        'SELECT value FROM SystemSetting WHERE `key` = ?',
         ['messaging_settings']
       );
 
-      if (settingsRows.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'إعدادات المراسلة غير موجودة' 
-        });
+      let messagingSettings = null;
+      if (settingsRows.length > 0 && settingsRows[0].value) {
+        messagingSettings = JSON.parse(settingsRows[0].value);
+      } else {
+        // Default settings
+        messagingSettings = {
+          whatsapp: { enabled: false, apiEnabled: false }
+        };
       }
 
-      const messagingSettings = JSON.parse(settingsRows[0].value);
-      const whatsappSettings = messagingSettings.whatsapp;
+      const whatsappSettings = messagingSettings.whatsapp || {};
 
       if (!whatsappSettings.enabled || !whatsappSettings.apiEnabled) {
         return res.status(400).json({ 
@@ -159,7 +163,7 @@ class MessagingController {
   async getMessagingSettings(req, res) {
     try {
       const [rows] = await db.execute(
-        'SELECT value FROM SystemSettings WHERE `key` = ?',
+        'SELECT value FROM SystemSetting WHERE `key` = ?',
         ['messaging_settings']
       );
 
@@ -215,14 +219,14 @@ class MessagingController {
 
       // التحقق من وجود الإعدادات مسبقاً
       const [existingRows] = await db.execute(
-        'SELECT id FROM SystemSettings WHERE `key` = ?',
+        'SELECT id FROM SystemSetting WHERE `key` = ?',
         ['messaging_settings']
       );
 
       if (existingRows.length > 0) {
         // تحديث
         await db.execute(
-          'UPDATE SystemSettings SET value = ?, description = ? WHERE `key` = ?',
+          'UPDATE SystemSetting SET value = ?, description = ? WHERE `key` = ?',
           [
             JSON.stringify(settings),
             'إعدادات المراسلة والإشعارات',
@@ -232,7 +236,7 @@ class MessagingController {
       } else {
         // إنشاء جديد
         await db.execute(
-          'INSERT INTO SystemSettings (`key`, value, description) VALUES (?, ?, ?)',
+          'INSERT INTO SystemSetting (`key`, value, description) VALUES (?, ?, ?)',
           [
             'messaging_settings',
             JSON.stringify(settings),

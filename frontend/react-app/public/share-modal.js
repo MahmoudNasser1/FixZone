@@ -235,19 +235,19 @@
           // Check readyState safely
           const readyState = document.readyState;
           if (readyState === 'loading') {
-          // Wrap addEventListener in try-catch with extra safety
-          try {
-            // Triple check document exists and addEventListener is available
-            const doc = document;
-            if (doc && doc !== null && typeof doc === 'object' && typeof doc.addEventListener === 'function') {
-              doc.addEventListener('DOMContentLoaded', initializeWhenReady);
-            } else {
+            // Wrap addEventListener in try-catch with extra safety
+            try {
+              // Triple check document exists and addEventListener is available
+              const doc = document;
+              if (doc && doc !== null && typeof doc === 'object' && typeof doc.addEventListener === 'function') {
+                doc.addEventListener('DOMContentLoaded', initializeWhenReady);
+              } else {
+                setTimeout(initializeWhenReady, 300);
+              }
+            } catch (e) {
+              // Silently fail and use setTimeout fallback
               setTimeout(initializeWhenReady, 300);
             }
-          } catch (e) {
-            // Silently fail and use setTimeout fallback
-            setTimeout(initializeWhenReady, 300);
-          }
           } else if (readyState === 'interactive' || readyState === 'complete') {
             // DOM is already ready, but wait a bit to ensure elements are rendered
             setTimeout(initializeWhenReady, 200);

@@ -47,6 +47,8 @@ const RepairDetailsPage = () => {
   const [techOptions, setTechOptions] = useState([]);
   const [techLoading, setTechLoading] = useState(false);
   const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [inspectionTypes, setInspectionTypes] = useState([]);
+  const [inspectionTypesLoading, setInspectionTypesLoading] = useState(false);
   const [inspectionForm, setInspectionForm] = useState({
     inspectionTypeId: '',
     technicianId: '',
@@ -909,7 +911,7 @@ const RepairDetailsPage = () => {
     };
   };
 
-  // تحميل الفنيين عند فتح حوار تقرير الفحص مباشرة
+  // تحميل الفنيين وأنواع الفحص عند فتح حوار تقرير الفحص مباشرة
   useEffect(() => {
     const loadTechs = async () => {
       try {
@@ -925,10 +927,36 @@ const RepairDetailsPage = () => {
         setTechLoading(false);
       }
     };
-    if (inspectionOpen && techOptions.length === 0) {
-      loadTechs();
+
+    const loadInspectionTypes = async () => {
+      try {
+        setInspectionTypesLoading(true);
+        const response = await fetch(`${API_BASE_URL}/inspectiontypes`);
+        if (response.ok) {
+          const data = await response.json();
+          const types = Array.isArray(data) ? data : (data.data || []);
+          setInspectionTypes(types.filter(type => type.deletedAt === null || !type.deletedAt));
+        } else {
+          console.error('Error fetching inspection types:', response.statusText);
+          setInspectionTypes([]);
+        }
+      } catch (e) {
+        console.error('Error loading inspection types:', e);
+        setInspectionTypes([]);
+      } finally {
+        setInspectionTypesLoading(false);
+      }
+    };
+
+    if (inspectionOpen) {
+      if (techOptions.length === 0) {
+        loadTechs();
+      }
+      if (inspectionTypes.length === 0) {
+        loadInspectionTypes();
+      }
     }
-  }, [inspectionOpen]);
+  }, [inspectionOpen, techOptions.length, inspectionTypes.length, notifications]);
 
   // تحميل قائمة الفنيين عند فتح حوار الإسناد
   useEffect(() => {
@@ -2214,10 +2242,6 @@ const RepairDetailsPage = () => {
             <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('delivery')} className="rounded-lg">
               <Printer className="w-4 h-4 ml-2" />
               طباعة التسليم
-            </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('qr')} className="rounded-lg">
-              <QrCode className="w-4 h-4 ml-2" />
-              طباعة QR
             </SimpleButton>
             <SimpleButton size="sm" variant="ghost" onClick={handleDelete} className="rounded-lg text-red-600">
               <Trash2 className="w-4 h-4 ml-2" />
@@ -3686,6 +3710,20 @@ const RepairDetailsPage = () => {
                                     المتبقي: {formatMoney((parseFloat(inv.totalAmount || inv.amount || 0) - parseFloat(inv.amountPaid || 0)), inv.currency || 'EGP')}
                                   </p>
                                 )}
+                                {inv.createdAt && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    التاريخ: {new Date(inv.createdAt).toLocaleDateString('en-GB', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
+                                )}
+                                {inv.paymentMethod && (
+                                  <p className="text-xs text-gray-500">
+                                    طريقة الدفع: {getPaymentMethodText(inv.paymentMethod)}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex items-center space-x-2 space-x-reverse">
                                 <Link to={`/invoices/${inv.id || inv.invoiceId}`}>
@@ -3737,12 +3775,12 @@ const RepairDetailsPage = () => {
                       <div className="text-sm text-gray-600">إجمالي المدفوع</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{formatMoney(repair?.estimatedCost || 0)}</div>
-                      <div className="text-sm text-gray-600">التكلفة المقدرة</div>
+                      <div className="text-2xl font-bold text-blue-600">{formatMoney(repair?.actualCost || 0)}</div>
+                      <div className="text-sm text-gray-600">التكلفة الفعلية</div>
                     </div>
                     <div className="text-center">
-                      <div className={`text-2xl font-bold ${(repair?.estimatedCost || 0) - getTotalPayments() > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {formatMoney((repair?.estimatedCost || 0) - getTotalPayments())}
+                      <div className={`text-2xl font-bold ${(repair?.actualCost || 0) - getTotalPayments() > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {formatMoney((repair?.actualCost || 0) - getTotalPayments())}
                       </div>
                       <div className="text-sm text-gray-600">المتبقي</div>
                     </div>
@@ -3836,6 +3874,15 @@ const RepairDetailsPage = () => {
                                 <span className="text-sm text-gray-500 en-text">#{payment.reference}</span>
                               )}
                             </div>
+                            {payment.paymentDate && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                التاريخ: {new Date(payment.paymentDate).toLocaleDateString('en-GB', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </p>
+                            )}
                             {payment.notes && (
                               <p className="text-sm text-gray-600 mt-1">{payment.notes}</p>
                             )}
@@ -4484,11 +4531,14 @@ const RepairDetailsPage = () => {
                       value={inspectionForm.inspectionTypeId}
                       onChange={(e) => setInspectionForm(f => ({ ...f, inspectionTypeId: e.target.value }))}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={inspectionTypesLoading}
                     >
-                      <option value="">اختر النوع...</option>
-                      <option value="1">فحص مبدئي</option>
-                      <option value="2">فحص تفصيلي</option>
-                      <option value="3">فحص نهائي</option>
+                      <option value="">{inspectionTypesLoading ? 'جاري التحميل...' : 'اختر النوع...'}</option>
+                      {inspectionTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -4573,6 +4623,14 @@ const RepairDetailsPage = () => {
                 </SimpleButton>
                 <SimpleButton
                   onClick={async () => {
+                    if (!inspectionForm.inspectionTypeId) {
+                      notifications.error('يرجى اختيار نوع الفحص');
+                      return;
+                    }
+                    if (!inspectionForm.reportDate) {
+                      notifications.error('يرجى تحديد تاريخ التقرير');
+                      return;
+                    }
                     try {
                       const payload = {
                         repairRequestId: Number(id),
@@ -4588,13 +4646,25 @@ const RepairDetailsPage = () => {
                       await apiService.createInspectionReport(payload);
                       notifications.success('تم حفظ تقرير الفحص بنجاح');
                       setInspectionOpen(false);
+                      // إعادة تعيين النموذج
+                      setInspectionForm({
+                        inspectionTypeId: '',
+                        technicianId: '',
+                        reportDate: new Date().toISOString().slice(0, 10),
+                        summary: '',
+                        result: '',
+                        recommendations: '',
+                        notes: '',
+                      });
                       // إعادة تحميل البيانات
                       fetchRepairDetails();
                     } catch (e) {
+                      console.error('Error creating inspection report:', e);
                       notifications.error('تعذر حفظ تقرير الفحص');
                     }
                   }}
                   className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!inspectionForm.inspectionTypeId || !inspectionForm.reportDate}
                 >
                   <CheckCircle className="w-4 h-4 ml-2" />
                   حفظ التقرير
