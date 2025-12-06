@@ -101,15 +101,68 @@ router.put('/:id', async (req, res) => {
 // Delete a parts used entry
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
+  const connection = await db.getConnection();
+  
   try {
-    const [result] = await db.query('DELETE FROM PartsUsed WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Parts used entry not found');
+    await connection.beginTransaction();
+    
+    // First, get the parts used entry details before deleting
+    const [partsRows] = await connection.execute('SELECT * FROM PartsUsed WHERE id = ?', [id]);
+    
+    if (partsRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Parts used entry not found' });
     }
-    res.json({ message: 'Parts used entry deleted successfully' });
+    
+    const partUsed = partsRows[0];
+    const { invoiceItemId, repairRequestId, inventoryItemId } = partUsed;
+    
+    // Check if this part exists in any invoice items
+    if (invoiceItemId) {
+      // Find the invoice for this invoice item
+      const [invoiceItems] = await connection.execute(`
+        SELECT invoiceId FROM InvoiceItem WHERE id = ?
+      `, [invoiceItemId]);
+      
+      // Delete the invoice item
+      if (invoiceItems.length > 0) {
+        const invoiceId = invoiceItems[0].invoiceId;
+        
+        await connection.execute(`
+          DELETE FROM InvoiceItem WHERE id = ?
+        `, [invoiceItemId]);
+        
+        // Recalculate invoice total
+        const [totalResult] = await connection.execute(`
+          SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+          FROM InvoiceItem WHERE invoiceId = ?
+        `, [invoiceId]);
+        
+        const newTotal = Number(totalResult[0].calculatedTotal);
+        
+        await connection.execute(`
+          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+        `, [newTotal, invoiceId]);
+        
+        console.log(`Deleted invoice item ${invoiceItemId} from invoice ${invoiceId} and updated total to ${newTotal}`);
+      }
+    }
+    
+    // Now delete the parts used entry
+    const [result] = await connection.execute('DELETE FROM PartsUsed WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Parts used entry not found' });
+    }
+    
+    await connection.commit();
+    res.json({ success: true, message: 'Parts used entry deleted successfully' });
   } catch (err) {
+    await connection.rollback();
     console.error(`Error deleting parts used entry with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  } finally {
+    connection.release();
   }
 });
 

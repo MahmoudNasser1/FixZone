@@ -369,6 +369,7 @@ class InvoicesController {
         status = 'draft',
         currency = null,
         taxAmount = 0,
+        shippingAmount = 0,
         discountAmount = 0,
         notes = '',
         dueDate = null
@@ -464,24 +465,53 @@ class InvoicesController {
         }
       }
       
-      const [result] = await db.query(`
-        INSERT INTO Invoice (
-          repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
-          currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-      `, [
-        repairRequestId || null,
-        finalCustomerId || null,
-        vendorId || null,
-        invoiceType,
-        totalAmount,
-        amountPaid,
-        status,
-        currency: invoiceCurrency,
-        taxAmount,
-        discountAmount,
-        dueDate
-      ]);
+      // محاولة إدراج shippingAmount إذا كان موجوداً في قاعدة البيانات
+      let result;
+      try {
+        result = await db.query(`
+          INSERT INTO Invoice (
+            repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
+            currency, taxAmount, shippingAmount, discountAmount, dueDate, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `, [
+          repairRequestId || null,
+          finalCustomerId || null,
+          vendorId || null,
+          invoiceType,
+          totalAmount,
+          amountPaid,
+          status,
+          invoiceCurrency,
+          taxAmount,
+          shippingAmount,
+          discountAmount,
+          dueDate
+        ]);
+      } catch (error) {
+        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون shippingAmount
+        if (error.message && error.message.includes('shippingAmount')) {
+          result = await db.query(`
+            INSERT INTO Invoice (
+              repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
+              currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+          `, [
+            repairRequestId || null,
+            finalCustomerId || null,
+            vendorId || null,
+            invoiceType,
+            totalAmount,
+            amountPaid,
+            status,
+            invoiceCurrency,
+            taxAmount,
+            discountAmount,
+            dueDate
+          ]);
+        } else {
+          throw error;
+        }
+      }
 
       const invoiceId = result.insertId;
 
@@ -550,6 +580,13 @@ class InvoicesController {
         WHERE i.id = ?
       `, [invoiceId]);
 
+      // Trigger automation notification (async, don't wait)
+      const automationService = require('../services/automation.service');
+      automationService.onInvoiceCreated(
+        invoiceId,
+        req.user?.id
+      ).catch(err => console.error(`Error in automation for invoice ${invoiceId}:`, err));
+
       res.status(201).json({
         success: true,
         data: createdInvoice[0],
@@ -571,6 +608,7 @@ class InvoicesController {
         status,
         currency,
         taxAmount,
+        shippingAmount,
         discountAmount,
         notes,
         dueDate
@@ -615,6 +653,10 @@ class InvoicesController {
       if (taxAmount !== undefined) {
         updates.push('taxAmount = ?');
         values.push(taxAmount);
+      }
+      if (shippingAmount !== undefined) {
+        updates.push('shippingAmount = ?');
+        values.push(shippingAmount);
       }
       if (discountAmount !== undefined) {
         updates.push('discountAmount = ?');

@@ -93,7 +93,7 @@ const Topbar = () => {
     <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 shadow-sm">
       {/* Left Section */}
       <div className="flex items-center space-x-4 space-x-reverse">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} data-sidebar-toggle>
           <Menu className="w-5 h-5" />
         </Button>
 

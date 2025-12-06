@@ -203,29 +203,8 @@ router.post('/issue', async (req, res) => {
     const profit = totalPrice - totalCost;
     const profitMargin = unitPurchasePrice > 0 ? ((profit / totalCost) * 100).toFixed(2) : 0;
 
-    // 🔧 Fix #3: Check if approval is needed for expensive/critical parts
-    const needsApproval = 
-      totalCost > 500 || // أكثر من 500 جنيه
-      unitPurchasePrice > 1000; // سعر الوحدة أكثر من 1000 جنيه
-    
-    // Determine approver role based on cost
-    let approverRoleId = null;
-    let approvalPriority = 'normal';
-    if (needsApproval) {
-      if (totalCost > 5000) {
-        approverRoleId = 1; // Super Admin
-        approvalPriority = 'urgent';
-      } else if (totalCost > 1000) {
-        approverRoleId = 2; // Branch Manager (assuming role 2)
-        approvalPriority = 'high';
-      } else {
-        approverRoleId = 3; // Supervisor (assuming role 3)
-        approvalPriority = 'normal';
-      }
-    }
-
-    // If approval needed, set status to 'requested' instead of 'used'
-    const partStatus = needsApproval ? 'requested' : 'used';
+    // Approval logic removed - always set status to 'used'
+    const partStatus = 'used';
 
     // 5) Decrease quantity and recompute isLowStock
     // Allow negative stock for urgent repairs (will be corrected later via inventory adjustments)
@@ -429,36 +408,6 @@ router.post('/issue', async (req, res) => {
 
     const partsUsedId = puResult.insertId;
 
-    // 🔧 Fix #3: Create approval request if needed
-    let approvalId = null;
-    if (needsApproval && approverRoleId) {
-      try {
-        const [approvalResult] = await conn.query(`
-          INSERT INTO RepairPartsApproval (
-            repairRequestId, partsUsedId, requestedBy, approverRoleId, 
-            status, priority, totalCost, requestReason, 
-            autoApproved, requestedAt, createdAt
-          ) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, 0, NOW(), NOW())
-        `, [
-          repairRequestId,
-          partsUsedId,
-          userId,
-          approverRoleId,
-          approvalPriority,
-          totalCost,
-          `قطعة ${item.name || 'غير محددة'} - التكلفة: ${totalCost.toFixed(2)} جنيه`
-        ]);
-
-        approvalId = approvalResult.insertId;
-
-        // Update PartsUsed status to 'requested' (already set above)
-        console.log(`⚠️ Approval request ${approvalId} created for part ${inventoryItemId}, total cost: ${totalCost}`);
-      } catch (approvalError) {
-        console.error('Error creating approval request:', approvalError);
-        // Don't fail the part issue if approval creation fails, but log it
-      }
-    }
-
     // 8) If invoiceId provided and no invoiceItemId, create an invoice item and link both ways
     // 🔧 Fix: If invoiceId not provided, try to find existing invoice for this repair request
     let finalInvoiceId = invoiceId;
@@ -539,12 +488,10 @@ router.post('/issue', async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: needsApproval 
-        ? 'تم طلب القطعة. في انتظار الموافقة.' 
-        : (isNegativeStock 
-            ? `تم صرف القطعة بنجاح. ⚠️ تحذير: المخزون أصبح سالباً (${newQty}). يرجى تصحيح المخزون لاحقاً.`
-            : 'تم صرف القطعة بنجاح'),
-      warning: !needsApproval && isNegativeStock ? {
+      message: isNegativeStock 
+        ? `تم صرف القطعة بنجاح. ⚠️ تحذير: المخزون أصبح سالباً (${newQty}). يرجى تصحيح المخزون لاحقاً.`
+        : 'تم صرف القطعة بنجاح',
+      warning: isNegativeStock ? {
         message: `⚠️ تحذير: المخزون أصبح سالباً (${newQty}). يرجى تصحيح المخزون عبر إضافة مخزون جديد.`,
         newQuantity: newQty,
         actionRequired: 'add_stock'
@@ -564,17 +511,6 @@ router.post('/issue', async (req, res) => {
           profitMargin: `${profitMargin}%`
         },
         lowStockWarning,
-        approval: needsApproval ? {
-          required: true,
-          approvalId: approvalId,
-          status: 'pending',
-          priority: approvalPriority,
-          approverRoleId: approverRoleId,
-          message: `⚠️ هذه القطعة تحتاج موافقة. تم إنشاء طلب موافقة #${approvalId}`
-        } : {
-          required: false,
-          message: '✅ لا تحتاج موافقة - تم الصرف مباشرة'
-        },
         partStatus: partStatus,
         repairCost: {
           partsCost: totalPartsCost,

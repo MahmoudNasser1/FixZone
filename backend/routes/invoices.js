@@ -105,7 +105,7 @@ router.get('/:id/print', async (req, res) => {
       SELECT 
         ii.*,
         COALESCE(inv.name, s.name, ii.description, 'عنصر غير محدد') as itemName,
-        COALESCE(inv.sku, CONCAT('SVC-', s.id), ii.sku, '') as itemCode
+        COALESCE(inv.sku, CONCAT('SVC-', s.id), '') as itemCode
       FROM InvoiceItem ii
       LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
       LEFT JOIN Service s ON ii.serviceId = s.id

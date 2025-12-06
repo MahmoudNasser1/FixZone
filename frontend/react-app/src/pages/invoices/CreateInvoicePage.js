@@ -22,9 +22,11 @@ const CreateInvoicePage = () => {
     invoiceType: 'sale',
     totalAmount: 0,
     taxAmount: 0,
+    shippingAmount: 0,
     currency: settings.currency.code || 'EGP',
     notes: ''
   });
+  const [printSettings, setPrintSettings] = useState(null);
 
   const [invoiceItems, setInvoiceItems] = useState([]);
   const [repairRequest, setRepairRequest] = useState(null);
@@ -47,6 +49,39 @@ const CreateInvoicePage = () => {
     if (repairRequestId) {
       fetchRepairRequest();
     }
+    // Load print settings
+    async function loadPrintSettings() {
+      try {
+        const settings = await apiService.getPrintSettings();
+        if (settings && settings.invoice) {
+          setPrintSettings(settings.invoice);
+          // Apply default percentages/amounts if available
+          if (settings.invoice.financial) {
+            const financial = settings.invoice.financial;
+            setFormData(prev => ({
+              ...prev,
+              taxAmount: financial.defaultTaxPercent > 0 && prev.totalAmount > 0
+                ? (prev.totalAmount * financial.defaultTaxPercent) / 100
+                : prev.taxAmount,
+              shippingAmount: financial.defaultShippingAmount > 0
+                ? financial.defaultShippingAmount
+                : prev.shippingAmount
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading print settings:', error);
+        setPrintSettings({
+          financial: {
+            showTax: true,
+            showShipping: true,
+            defaultTaxPercent: 0,
+            defaultShippingAmount: 0
+          }
+        });
+      }
+    }
+    loadPrintSettings();
   }, [repairRequestId]);
 
   useEffect(() => {
@@ -201,10 +236,26 @@ const CreateInvoicePage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const numValue = name === 'totalAmount' || name === 'taxAmount' || name === 'shippingAmount' 
+      ? parseFloat(value) || 0 
+      : value;
+    
+    setFormData(prev => {
+      const updated = { ...prev, [name]: numValue };
+      
+      // Apply default percentages/amounts when totalAmount changes
+      if (name === 'totalAmount' && printSettings?.financial) {
+        const financial = printSettings.financial;
+        if (financial.defaultTaxPercent > 0) {
+          updated.taxAmount = (numValue * financial.defaultTaxPercent) / 100;
+        }
+        if (financial.defaultShippingAmount > 0) {
+          updated.shippingAmount = financial.defaultShippingAmount;
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const addInvoiceItem = () => {
@@ -289,10 +340,22 @@ const CreateInvoicePage = () => {
 
       // Recalculate total amount immediately
       const total = updated.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
-      setFormData(prevForm => ({
-        ...prevForm,
-        totalAmount: total
-      }));
+      setFormData(prevForm => {
+        const updatedForm = { ...prevForm, totalAmount: total };
+        
+        // Apply default percentages/amounts when totalAmount changes
+        if (printSettings?.financial) {
+          const financial = printSettings.financial;
+          if (financial.defaultTaxPercent > 0) {
+            updatedForm.taxAmount = (total * financial.defaultTaxPercent) / 100;
+          }
+          if (financial.defaultShippingAmount > 0) {
+            updatedForm.shippingAmount = financial.defaultShippingAmount;
+          }
+        }
+        
+        return updatedForm;
+      });
 
       return updated;
     });
@@ -303,20 +366,44 @@ const CreateInvoicePage = () => {
       const updated = prev.filter((_, i) => i !== index);
       // Recalculate total amount immediately
       const total = updated.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
-      setFormData(prevForm => ({
-        ...prevForm,
-        totalAmount: total
-      }));
+      setFormData(prevForm => {
+        const updatedForm = { ...prevForm, totalAmount: total };
+        
+        // Apply default percentages/amounts when totalAmount changes
+        if (printSettings?.financial) {
+          const financial = printSettings.financial;
+          if (financial.defaultTaxPercent > 0) {
+            updatedForm.taxAmount = (total * financial.defaultTaxPercent) / 100;
+          }
+          if (financial.defaultShippingAmount > 0) {
+            updatedForm.shippingAmount = financial.defaultShippingAmount;
+          }
+        }
+        
+        return updatedForm;
+      });
       return updated;
     });
   };
 
   const calculateTotalAmount = () => {
     const total = invoiceItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-    setFormData(prev => ({
-      ...prev,
-      totalAmount: total
-    }));
+    setFormData(prev => {
+      const updated = { ...prev, totalAmount: total };
+      
+      // Apply default percentages/amounts when totalAmount changes
+      if (printSettings?.financial) {
+        const financial = printSettings.financial;
+        if (financial.defaultTaxPercent > 0) {
+          updated.taxAmount = (total * financial.defaultTaxPercent) / 100;
+        }
+        if (financial.defaultShippingAmount > 0) {
+          updated.shippingAmount = financial.defaultShippingAmount;
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -351,7 +438,8 @@ const CreateInvoicePage = () => {
         vendorId: formData.invoiceType === 'purchase' ? (formData.vendorId || null) : null,
         invoiceType: formData.invoiceType,
         totalAmount: parseFloat(formData.totalAmount),
-        taxAmount: parseFloat(formData.taxAmount),
+        taxAmount: printSettings?.financial?.showTax !== false ? parseFloat(formData.taxAmount) : 0,
+        shippingAmount: printSettings?.financial?.showShipping !== false ? parseFloat(formData.shippingAmount) : 0,
         status: 'draft',
         amountPaid: 0
       };
@@ -608,20 +696,38 @@ const CreateInvoicePage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      مبلغ الضريبة
-                    </label>
-                    <input
-                      type="number"
-                      name="taxAmount"
-                      value={formData.taxAmount}
-                      onChange={handleInputChange}
-                      step="0.01"
-                      min="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
+                  {printSettings?.financial?.showTax !== false && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        مبلغ الضريبة
+                      </label>
+                      <input
+                        type="number"
+                        name="taxAmount"
+                        value={formData.taxAmount}
+                        onChange={handleInputChange}
+                        step="0.01"
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+                  {printSettings?.financial?.showShipping !== false && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        مبلغ الشحن
+                      </label>
+                      <input
+                        type="number"
+                        name="shippingAmount"
+                        value={formData.shippingAmount}
+                        onChange={handleInputChange}
+                        step="0.01"
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -815,15 +921,27 @@ const CreateInvoicePage = () => {
                     <span className="text-gray-600">المجموع الفرعي:</span>
                     <span className="font-semibold">{formatCurrency(formData.totalAmount)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">الضريبة:</span>
-                    <span className="font-semibold">{formatCurrency(formData.taxAmount)}</span>
-                  </div>
+                  {printSettings?.financial?.showTax !== false && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">الضريبة:</span>
+                      <span className="font-semibold">{formatCurrency(formData.taxAmount)}</span>
+                    </div>
+                  )}
+                  {printSettings?.financial?.showShipping !== false && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">الشحن:</span>
+                      <span className="font-semibold">{formatCurrency(formData.shippingAmount)}</span>
+                    </div>
+                  )}
                   <div className="border-t pt-3">
                     <div className="flex justify-between">
                       <span className="text-lg font-semibold">المجموع الإجمالي:</span>
                       <span className="text-lg font-bold text-blue-600">
-                        {formatCurrency(parseFloat(formData.totalAmount) + parseFloat(formData.taxAmount))}
+                        {formatCurrency(
+                          parseFloat(formData.totalAmount) + 
+                          (printSettings?.financial?.showTax !== false ? parseFloat(formData.taxAmount) : 0) +
+                          (printSettings?.financial?.showShipping !== false ? parseFloat(formData.shippingAmount) : 0)
+                        )}
                       </span>
                     </div>
                   </div>

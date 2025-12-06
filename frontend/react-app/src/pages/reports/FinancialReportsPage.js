@@ -18,6 +18,8 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -215,40 +217,46 @@ const FinancialReportsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <SimpleCard>
+        <SimpleCardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <SimpleCardTitle className="text-2xl flex items-center gap-2">
               <ChartBarIcon className="h-8 w-8 text-blue-600" />
               التقارير المالية
-            </h1>
-            <p className="text-gray-600 mt-1">تقارير شاملة للإيرادات والمصروفات والأرباح</p>
+              </SimpleCardTitle>
+              <p className="text-muted-foreground mt-1">تقارير شاملة للإيرادات والمصروفات والأرباح</p>
           </div>
           <div className="flex gap-2">
-            <button
+              <SimpleButton
               onClick={exportToPDF}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                variant="destructive"
+                className="flex items-center gap-2"
             >
               <DocumentArrowDownIcon className="h-4 w-4" />
               تصدير PDF
-            </button>
-            <button
+              </SimpleButton>
+              <SimpleButton
               onClick={exportToExcel}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
             >
               <DocumentArrowDownIcon className="h-4 w-4" />
               تصدير Excel
-            </button>
+              </SimpleButton>
+            </div>
           </div>
-        </div>
-      </div>
+        </SimpleCardHeader>
+      </SimpleCard>
 
       {/* Date Range Filter */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
           فلترة الفترة الزمنية
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -273,15 +281,19 @@ const FinancialReportsPage = () => {
             />
           </div>
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Profit & Loss Summary */}
       {profitLossData && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle className="flex items-center gap-2">
             <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
             ملخص الأرباح والخسائر
-          </h3>
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm font-medium text-green-800">إجمالي الإيرادات</div>
@@ -317,28 +329,40 @@ const FinancialReportsPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </SimpleCardContent>
+        </SimpleCard>
       )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Revenue Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">الإيرادات الشهرية</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>الإيرادات الشهرية</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Bar data={monthlyChartData} options={chartOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
         {/* Daily Revenue Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">الإيرادات اليومية (آخر 7 أيام)</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>الإيرادات اليومية (آخر 7 أيام)</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Line data={dailyChartData} options={chartOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
 
       {/* Expenses Breakdown */}
       {expenses.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">توزيع المصروفات حسب الفئة</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>توزيع المصروفات حسب الفئة</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -371,7 +395,8 @@ const FinancialReportsPage = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </SimpleCardContent>
+        </SimpleCard>
       )}
     </div>
   );

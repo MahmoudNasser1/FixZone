@@ -46,32 +46,33 @@
     "headerFontSize": 24,
     "showInvoiceNumber": true,
     "showInvoiceDate": true,
-    "showDueDate": true,
+    "showDueDate": false,
     "showCustomerInfo": true,
     "customerInfoLayout": "vertical",
     "showCompanyInfo": true,
     "companyInfoLayout": "vertical",
+    "showDeviceSection": true,
     "showItemsTable": true,
     "tableStyle": "bordered",
     "showItemDescription": true,
     "showItemQuantity": true,
     "showItemPrice": true,
     "showItemDiscount": true,
-    "showItemTax": true,
+    "showItemTax": false,
     "showItemTotal": true,
     "showSubtotal": true,
     "showDiscount": true,
     "showTax": true,
     "showShipping": true,
     "showTotal": true,
-    "showPaymentMethod": true,
-    "showPaymentStatus": true,
-    "showNotes": true,
+    "showPaymentMethod": false,
+    "showPaymentStatus": false,
+    "showNotes": false,
     "notesLabel": "ملاحظات",
-    "showTerms": true,
+    "showTerms": false,
     "termsLabel": "الشروط والأحكام",
     "termsText": "شكراً لتعاملكم معنا",
-    "showSignature": true,
+    "showSignature": false,
     "signatureLabel": "التوقيع",
     "showFooter": true,
     "footerText": "",
@@ -83,9 +84,9 @@
     "tableFontSize": 11,
     "margins": {
       "top": 20,
-      "right": 20,
+      "right": 5,
       "bottom": 20,
-      "left": 20
+      "left": 5
     },
     "lineHeight": 1.5,
     "spacing": {
@@ -94,11 +95,11 @@
       "paragraph": 10
     },
     "colors": {
-      "primary": "#000000",
-      "secondary": "#666666",
-      "border": "#cccccc",
-      "headerBg": "#f5f5f5",
-      "alternateRow": "#fafafa"
+      "primary": "#0f172a",
+      "secondary": "#475569",
+      "border": "#cbd5e1",
+      "headerBg": "#f1f5f9",
+      "alternateRow": "#f8fafc"
     },
     "showBarcode": true,
     "barcodePosition": "bottom",
@@ -128,6 +129,12 @@
       "thousandSeparator": ",",
       "decimalSeparator": "."
     },
-    "dateDisplay": "both"
+    "dateDisplay": "both",
+    "financial": {
+      "showTax": false,
+      "showShipping": false,
+      "defaultTaxPercent": 13,
+      "defaultShippingAmount": 150
+    }
   }
 }

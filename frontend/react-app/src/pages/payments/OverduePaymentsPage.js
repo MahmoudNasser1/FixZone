@@ -8,6 +8,7 @@ import {
   AlertTriangle, Clock, Phone, Mail, Calendar, 
   DollarSign, User, FileText, Send, CheckCircle
 } from 'lucide-react';
+import SendButton from '../../components/messaging/SendButton';
 
 const OverduePaymentsPage = () => {
   const [overduePayments, setOverduePayments] = useState([]);
@@ -68,13 +69,8 @@ const OverduePaymentsPage = () => {
   };
 
   const handleSendReminder = async (paymentId) => {
-    try {
-      // إرسال تذكير للعميل
-      addNotification('تم إرسال التذكير بنجاح', 'success');
-      console.log('Sending reminder for payment:', paymentId);
-    } catch (error) {
-      addNotification('فشل في إرسال التذكير', 'error');
-    }
+    // سيتم التعامل معه عبر SendButton
+    console.log('Send reminder for payment:', paymentId);
   };
 
   const handleBulkReminder = async () => {
@@ -264,14 +260,19 @@ const OverduePaymentsPage = () => {
                     </div>
 
                     <div className="flex space-x-2 space-x-reverse">
-                      <SimpleButton
-                        size="sm"
-                        onClick={() => handleSendReminder(payment.id)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Send className="w-4 h-4 ml-1" />
-                        تذكير
-                      </SimpleButton>
+                      {payment.customerPhone && (
+                        <SendButton
+                          entityType="payment"
+                          entityId={payment.id}
+                          customerId={payment.customerId}
+                          recipient={payment.customerPhone}
+                          template="paymentReminderMessage"
+                          showChannelSelector={false}
+                          variant="default"
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700"
+                        />
+                      )}
                       <SimpleButton
                         size="sm"
                         onClick={() => handleMarkAsContacted(payment.id)}

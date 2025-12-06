@@ -6,6 +6,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { Save, X } from 'lucide-react';
+import { formatCurrency } from '../../utils/numberFormat';
 
 export default function EditInvoicePage() {
   const { id } = useParams();
@@ -19,7 +20,8 @@ export default function EditInvoicePage() {
     status: 'draft',
     currency: 'EGP',
     taxAmount: 0,
-    discountAmount: 0,
+    discountPercent: 0,
+    shippingAmount: 0,
     notes: '',
     dueDate: ''
   });
@@ -28,6 +30,31 @@ export default function EditInvoicePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [invoice, setInvoice] = useState(null);
+  const [printSettings, setPrintSettings] = useState(null);
+
+  // Load print settings
+  useEffect(() => {
+    async function loadPrintSettings() {
+      try {
+        const settings = await apiService.getPrintSettings();
+        if (settings && settings.invoice) {
+          setPrintSettings(settings.invoice);
+        }
+      } catch (error) {
+        console.error('Error loading print settings:', error);
+        // Use defaults if loading fails
+        setPrintSettings({
+          financial: {
+            showTax: true,
+            showShipping: true,
+            defaultTaxPercent: 0,
+            defaultShippingAmount: 0
+          }
+        });
+      }
+    }
+    loadPrintSettings();
+  }, []);
 
   // Load invoice data
   useEffect(() => {
@@ -52,6 +79,13 @@ export default function EditInvoicePage() {
           const amountPaid = Number(invoiceData.amountPaid) || 0;
           const taxAmount = Number(invoiceData.taxAmount) || 0;
           const discountAmount = Number(invoiceData.discountAmount) || 0;
+          const discountPercent = Number(invoiceData.discountPercent) || 0;
+          const shippingAmount = Number(invoiceData.shippingAmount) || 0;
+          
+          // If discountAmount exists but discountPercent doesn't, calculate percentage
+          const calculatedDiscountPercent = discountPercent || (totalAmount > 0 && discountAmount > 0 
+            ? (discountAmount / totalAmount) * 100 
+            : 0);
           
           setForm({
             totalAmount,
@@ -59,7 +93,8 @@ export default function EditInvoicePage() {
             status: invoiceData.status || 'draft',
             currency: invoiceData.currency || 'EGP',
             taxAmount,
-            discountAmount,
+            discountPercent: calculatedDiscountPercent,
+            shippingAmount,
             notes: invoiceData.notes || '',
             dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
           });
@@ -81,13 +116,20 @@ export default function EditInvoicePage() {
     try {
       setSaving(true);
       
+      // Calculate discount amount from percentage
+      const discountAmount = form.totalAmount > 0 && form.discountPercent > 0
+        ? (form.totalAmount * form.discountPercent) / 100
+        : 0;
+
       const updateData = {
         totalAmount: form.totalAmount,
         amountPaid: form.amountPaid,
         status: form.status,
         currency: form.currency,
         taxAmount: form.taxAmount,
-        discountAmount: form.discountAmount,
+        discountPercent: form.discountPercent,
+        discountAmount: discountAmount,
+        shippingAmount: form.shippingAmount,
         notes: form.notes,
         dueDate: form.dueDate || null
       };
@@ -226,29 +268,54 @@ export default function EditInvoicePage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الضريبة</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={form.taxAmount}
-                      onChange={(e) => setForm(prev => ({ ...prev, taxAmount: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  {printSettings?.financial?.showTax !== false && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">الضريبة</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.taxAmount}
+                        onChange={(e) => setForm(prev => ({ ...prev, taxAmount: Number(e.target.value) }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الخصم</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الخصم (%)</label>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
-                      value={form.discountAmount}
-                      onChange={(e) => setForm(prev => ({ ...prev, discountAmount: Number(e.target.value) }))}
+                      max="100"
+                      value={form.discountPercent}
+                      onChange={(e) => setForm(prev => ({ ...prev, discountPercent: Number(e.target.value) }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
                     />
+                    {form.discountPercent > 0 && form.totalAmount > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        مبلغ الخصم: {formatCurrency((form.totalAmount * form.discountPercent) / 100, form.currency)}
+                      </p>
+                    )}
                   </div>
+
+                  {printSettings?.financial?.showShipping !== false && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">الشحن</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.shippingAmount}
+                        onChange={(e) => setForm(prev => ({ ...prev, shippingAmount: Number(e.target.value) }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق</label>
@@ -287,43 +354,61 @@ export default function EditInvoicePage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">المبلغ الأساسي:</span>
-                  <span className="font-medium">{form.totalAmount.toFixed(2)} {form.currency}</span>
+                  <span className="font-medium">{formatCurrency(form.totalAmount, form.currency)}</span>
                 </div>
                 
-                {form.taxAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>+ الضريبة:</span>
-                    <span>{form.taxAmount.toFixed(2)} {form.currency}</span>
+                {form.discountPercent > 0 && form.totalAmount > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>- الخصم ({form.discountPercent}%):</span>
+                    <span>-{formatCurrency((form.totalAmount * form.discountPercent) / 100, form.currency)}</span>
                   </div>
                 )}
                 
-                {form.discountAmount > 0 && (
-                  <div className="flex justify-between text-red-600">
-                    <span>- الخصم:</span>
-                    <span>{form.discountAmount.toFixed(2)} {form.currency}</span>
+                {printSettings?.financial?.showTax !== false && form.taxAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>+ الضريبة:</span>
+                    <span>+{formatCurrency(form.taxAmount, form.currency)}</span>
+                  </div>
+                )}
+                
+                {printSettings?.financial?.showShipping !== false && form.shippingAmount > 0 && (
+                  <div className="flex justify-between text-blue-600">
+                    <span>+ الشحن:</span>
+                    <span>+{formatCurrency(form.shippingAmount, form.currency)}</span>
                   </div>
                 )}
                 
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold">
                     <span>الإجمالي النهائي:</span>
-                    <span>{(form.totalAmount + form.taxAmount - form.discountAmount).toFixed(2)} {form.currency}</span>
+                    <span>{formatCurrency((
+                      form.totalAmount - 
+                      (form.totalAmount * form.discountPercent / 100) + 
+                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + 
+                      (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0)
+                    ), form.currency)}</span>
                   </div>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">المدفوع:</span>
-                  <span className="font-medium text-green-600">{form.amountPaid.toFixed(2)} {form.currency}</span>
+                  <span className="font-medium text-green-600">{formatCurrency(form.amountPaid, form.currency)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">المتبقي:</span>
                   <span className={`font-medium ${
-                    (form.totalAmount + form.taxAmount - form.discountAmount - form.amountPaid) > 0 
+                    (form.totalAmount - (form.totalAmount * form.discountPercent / 100) + (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) - form.amountPaid) > 0 
                       ? 'text-red-600' 
                       : 'text-green-600'
                   }`}>
-                    {(form.totalAmount + form.taxAmount - form.discountAmount - form.amountPaid).toFixed(2)} {form.currency}
+                    {formatCurrency((
+                      form.totalAmount - 
+                      (form.totalAmount * form.discountPercent / 100) + 
+                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + 
+                      (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) - 
+                      form.amountPaid
+                    ), form.currency)}
                   </span>
                 </div>
               </div>

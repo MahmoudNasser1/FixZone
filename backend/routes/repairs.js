@@ -698,8 +698,14 @@ router.patch('/bulk-status', authMiddleware, async (req, res) => {
 
     const dbStatus = mapFrontendStatusToDb(status);
 
-    // Create placeholders for the IN clause
+    // Get old statuses before update
     const placeholders = repairIds.map(() => '?').join(',');
+    const [oldStatuses] = await connection.execute(
+      `SELECT id, status FROM RepairRequest WHERE id IN (${placeholders}) AND deletedAt IS NULL`,
+      repairIds
+    );
+
+    // Create placeholders for the IN clause
     const query = `
       UPDATE RepairRequest 
       SET status = ?, updatedAt = NOW() 
@@ -709,6 +715,19 @@ router.patch('/bulk-status', authMiddleware, async (req, res) => {
     const [result] = await connection.execute(query, [dbStatus, ...repairIds]);
 
     await connection.commit();
+
+    // Trigger automation notifications (async, don't wait)
+    const automationService = require('../services/automation.service');
+    oldStatuses.forEach(repair => {
+      if (repair.status !== dbStatus) {
+        automationService.onRepairStatusChange(
+          repair.id,
+          repair.status,
+          dbStatus,
+          req.user?.id
+        ).catch(err => console.error(`Error in automation for repair ${repair.id}:`, err));
+      }
+    });
 
     res.json({
       success: true,
@@ -722,6 +741,70 @@ router.patch('/bulk-status', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Server Error during bulk update' });
   } finally {
     connection.release();
+  }
+});
+
+// Get most common device specifications for quick actions
+// MUST be before /:id route to avoid matching conflicts
+router.get('/device-specs/common', authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 6;
+    
+    // Get most common CPU values
+    const [cpuResults] = await db.execute(`
+      SELECT cpu as value, COUNT(*) as count
+      FROM Device
+      WHERE cpu IS NOT NULL AND cpu != '' AND deletedAt IS NULL
+      GROUP BY cpu
+      ORDER BY count DESC
+      LIMIT ?
+    `, [limit]);
+    
+    // Get most common GPU values
+    const [gpuResults] = await db.execute(`
+      SELECT gpu as value, COUNT(*) as count
+      FROM Device
+      WHERE gpu IS NOT NULL AND gpu != '' AND deletedAt IS NULL
+      GROUP BY gpu
+      ORDER BY count DESC
+      LIMIT ?
+    `, [limit]);
+    
+    // Get most common RAM values
+    const [ramResults] = await db.execute(`
+      SELECT ram as value, COUNT(*) as count
+      FROM Device
+      WHERE ram IS NOT NULL AND ram != '' AND deletedAt IS NULL
+      GROUP BY ram
+      ORDER BY count DESC
+      LIMIT ?
+    `, [limit]);
+    
+    // Get most common Storage values
+    const [storageResults] = await db.execute(`
+      SELECT storage as value, COUNT(*) as count
+      FROM Device
+      WHERE storage IS NOT NULL AND storage != '' AND deletedAt IS NULL
+      GROUP BY storage
+      ORDER BY count DESC
+      LIMIT ?
+    `, [limit]);
+    
+    res.json({
+      success: true,
+      data: {
+        cpu: cpuResults.map(r => r.value),
+        gpu: gpuResults.map(r => r.value),
+        ram: ramResults.map(r => r.value),
+        storage: storageResults.map(r => r.value)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching common device specs:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch common device specifications'
+    });
   }
 });
 
@@ -759,6 +842,12 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
 
     const repair = rows[0];
 
+    // Debug: Check what's in the database
+    console.log('🔍 [GET /:id] Repair ID:', id);
+    console.log('🔍 [GET /:id] repair.customFields raw from DB:', repair.customFields);
+    console.log('🔍 [GET /:id] repair.customFields type:', typeof repair.customFields);
+    console.log('🔍 [GET /:id] repair.estimatedCost:', repair.estimatedCost);
+
     // جلب الملحقات المرتبطة بالطلب
     const [accRows] = await db.execute(`
       SELECT rra.accessoryOptionId as id, vo.label
@@ -766,6 +855,22 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
       LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
       WHERE rra.repairRequestId = ?
     `, [id]);
+
+    // Parse customFields
+    let parsedCustomFields = {};
+    try {
+      if (repair.customFields) {
+        if (typeof repair.customFields === 'string') {
+          parsedCustomFields = JSON.parse(repair.customFields);
+        } else if (typeof repair.customFields === 'object') {
+          parsedCustomFields = repair.customFields;
+        }
+      }
+      console.log('🔍 [GET /:id] Parsed customFields:', parsedCustomFields);
+    } catch (e) {
+      console.error('❌ [GET /:id] Error parsing customFields:', e);
+      parsedCustomFields = {};
+    }
 
     const response = {
       id: repair.id,
@@ -797,6 +902,7 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
         ram: repair.ram || null,
         storage: repair.storage || null,
       },
+      customFields: parsedCustomFields,
       accessories: repair.accessories ? JSON.parse(repair.accessories).filter(a => a != null) : []
     };
 
@@ -809,6 +915,15 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
 
 // Create a new repair request
 router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (req, res) => {
+  console.log('🔍 [POST /] Received request body:', {
+    estimatedCostMin: req.body.estimatedCostMin,
+    estimatedCostMax: req.body.estimatedCostMax,
+    minType: typeof req.body.estimatedCostMin,
+    maxType: typeof req.body.estimatedCostMax,
+    minUndefined: req.body.estimatedCostMin === undefined,
+    maxUndefined: req.body.estimatedCostMax === undefined
+  });
+  
   const {
     customerId, customerName, customerPhone, customerEmail,
     deviceType, deviceBrand, brandId, deviceModel, serialNumber,
@@ -816,8 +931,16 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     cpu, gpu, ram, storage,
     accessories,
     problemDescription, reportedProblem, priority, estimatedCost, notes, status, expectedDeliveryDate,
-    companyId // Include companyId from request body
+    companyId, // Include companyId from request body
+    estimatedCostMin, estimatedCostMax // Include estimated cost range
   } = req.body;
+  
+  console.log('🔍 [POST /] Extracted values:', {
+    estimatedCostMin,
+    estimatedCostMax,
+    minType: typeof estimatedCostMin,
+    maxType: typeof estimatedCostMax
+  });
   
   // Use problemDescription or reportedProblem (support both for backwards compatibility)
   const finalProblemDescription = String(problemDescription || reportedProblem || '').trim();
@@ -997,6 +1120,9 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       branchIdToUse = null;
     }
     
+    // Use estimatedCost if provided, otherwise 0 (no average calculation)
+    const finalEstimatedCost = estimatedCost !== undefined && estimatedCost !== null ? parseFloat(estimatedCost) : 0;
+
     const insertQuery = `
       INSERT INTO RepairRequest (
         deviceId, reportedProblem, status, trackingToken, customerId, branchId, technicianId, estimatedCost, expectedDeliveryDate
@@ -1012,7 +1138,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       actualCustomerId,
       branchIdToUse,
       null, // technicianId
-      estimatedCost || 0,
+      finalEstimatedCost,
       expectedDeliveryDate || null
     ];
 
@@ -1042,9 +1168,83 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       console.log('Accessories saved:', accessories);
     }
 
+    // حفظ نطاق التكلفة المقدرة في customFields
+    console.log('🔍 [POST /] Saving estimated cost range:', {
+      estimatedCostMin,
+      estimatedCostMax,
+      minType: typeof estimatedCostMin,
+      maxType: typeof estimatedCostMax,
+      minUndefined: estimatedCostMin === undefined,
+      maxUndefined: estimatedCostMax === undefined
+    });
+    
+    // Save estimated cost range to customFields
+    console.log('🔍 [POST /] Processing estimated cost range for saving:', {
+      estimatedCostMin,
+      estimatedCostMax,
+      minType: typeof estimatedCostMin,
+      maxType: typeof estimatedCostMax,
+      minIsNumber: typeof estimatedCostMin === 'number',
+      maxIsNumber: typeof estimatedCostMax === 'number'
+    });
+    
+    // Update customFields with estimated cost range if provided (matching PATCH /:id/details logic)
+    console.log('🔍 [POST /] Updating customFields:', {
+      estimatedCostMin,
+      estimatedCostMax,
+      minType: typeof estimatedCostMin,
+      maxType: typeof estimatedCostMax,
+      minUndefined: estimatedCostMin === undefined,
+      maxUndefined: estimatedCostMax === undefined
+    });
+    
+    if (estimatedCostMin !== undefined || estimatedCostMax !== undefined) {
+      const customFields = {};
+      
+      // Update with new range values (store directly, matching PATCH logic)
+      if (estimatedCostMin !== undefined) {
+        customFields.estimatedCostMin = estimatedCostMin !== null ? parseFloat(estimatedCostMin) : null;
+      }
+      if (estimatedCostMax !== undefined) {
+        customFields.estimatedCostMax = estimatedCostMax !== null ? parseFloat(estimatedCostMax) : null;
+      }
+      
+      console.log('🔍 [POST /] Prepared customFields object:', customFields);
+      const customFieldsJson = JSON.stringify(customFields);
+      console.log('🔍 [POST /] Saving customFields JSON:', customFieldsJson);
+      
+      // Save customFields (always save, even if values are null, to match PATCH behavior)
+      await connection.execute(
+        'UPDATE RepairRequest SET customFields = ? WHERE id = ?',
+        [customFieldsJson, result.insertId]
+      );
+      console.log('✅ [POST /] Estimated cost range saved in customFields:', customFields);
+      
+      // Verify it was saved
+      const [verifyRows] = await connection.execute(
+        'SELECT customFields FROM RepairRequest WHERE id = ?',
+        [result.insertId]
+      );
+      if (verifyRows.length > 0) {
+        console.log('✅ [POST /] Verification - customFields in DB:', verifyRows[0].customFields);
+      }
+    } else {
+      console.log('⚠️ [POST /] estimatedCostMin and estimatedCostMax are both undefined, skipping customFields update');
+    }
+
     // Commit transaction
     await connection.commit();
     connection.release();
+
+    // Trigger automation notification for new repair (RECEIVED status)
+    const repairId = result.insertId;
+    const automationService = require('../services/automation.service');
+    automationService.onRepairStatusChange(
+      repairId,
+      null, // No old status for new repair
+      repairStatus || 'RECEIVED', // New status (should be RECEIVED)
+      req.user?.id || null
+    ).catch(err => console.error(`Error in automation for new repair ${repairId}:`, err));
 
     // إرجاع البيانات المُنشأة مع تفاصيل كاملة (استخدام db.execute بعد إغلاق connection)
     const [newRepairData] = await db.execute(`
@@ -1147,11 +1347,30 @@ router.put('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
   const { id } = req.params;
   let { deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, attachments, customFields } = req.body;
   try {
+    // Get old status before update
+    const [oldRepair] = await db.execute('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
+    if (oldRepair.length === 0) {
+      return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
+    }
+    const oldStatus = oldRepair[0].status;
+    
     status = mapFrontendStatusToDb(status);
     const [result] = await db.execute('UPDATE RepairRequest SET deviceId = ?, reportedProblem = ?, technicianReport = ?, status = ?, customerId = ?, branchId = ?, technicianId = ?, quotationId = ?, invoiceId = ?, deviceBatchId = ?, attachments = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, JSON.stringify(attachments), JSON.stringify(customFields), id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
+    
+    // Trigger automation notification if status changed
+    if (oldStatus !== status) {
+      const automationService = require('../services/automation.service');
+      automationService.onRepairStatusChange(
+        parseInt(id),
+        oldStatus,
+        status,
+        req.user?.id || null
+      ).catch(err => console.error(`Error in automation for repair ${id}:`, err));
+    }
+    
     res.json({ success: true, message: 'Repair request updated successfully' });
   } catch (err) {
     console.error(`Error updating repair request with ID ${id}:`, err);
@@ -1434,6 +1653,23 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
     await connection.commit();
     connection.release();
 
+    // Trigger automation notification (async, don't wait) - AFTER commit
+    if (fromStatus !== status) {
+      console.log(`[REPAIR ROUTE] Triggering automation: repairId=${id}, fromStatus=${fromStatus}, toStatus=${status}`);
+      const automationService = require('../services/automation.service');
+      automationService.onRepairStatusChange(
+        parseInt(id),
+        fromStatus,
+        status,
+        changedById
+      ).catch(err => {
+        console.error(`[REPAIR ROUTE] ❌ Error in automation for repair ${id}:`, err);
+        console.error(`[REPAIR ROUTE] Error stack:`, err.stack);
+      });
+    } else {
+      console.log(`[REPAIR ROUTE] Status unchanged (${fromStatus} -> ${status}), skipping automation`);
+    }
+
     // أعِد الصيغة الأمريكية للواجهة للتوحيد
     const uiMap = {
       'RECEIVED': 'pending',
@@ -1495,7 +1731,19 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
 // Update repair details (estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories)
 router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateDetails), async (req, res) => {
   const { id } = req.params;
-  const { estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
+  const { estimatedCost, estimatedCostMin, estimatedCostMax, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
+
+  console.log('🔍 [PATCH /:id/details] Received request body:', {
+    id,
+    estimatedCost,
+    estimatedCostMin,
+    estimatedCostMax,
+    actualCost,
+    priority,
+    expectedDeliveryDate,
+    notes,
+    accessories: accessories ? 'present' : 'not present'
+  });
 
   try {
     // Validate priority if provided
@@ -1552,7 +1800,7 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
       values.push(Array.isArray(accessories) ? JSON.stringify(accessories) : null);
     }
 
-    if (updates.length === 0) {
+    if (updates.length === 0 && estimatedCostMin === undefined && estimatedCostMax === undefined) {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
@@ -1565,6 +1813,64 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Repair request not found or already deleted' });
+    }
+
+    // Update customFields with estimated cost range if provided (no average calculation)
+    console.log('🔍 [PATCH /:id/details] Updating customFields:', {
+      estimatedCostMin,
+      estimatedCostMax,
+      minType: typeof estimatedCostMin,
+      maxType: typeof estimatedCostMax,
+      minUndefined: estimatedCostMin === undefined,
+      maxUndefined: estimatedCostMax === undefined
+    });
+    
+    if (estimatedCostMin !== undefined || estimatedCostMax !== undefined) {
+      // Get current customFields
+      const [currentRows] = await db.execute('SELECT customFields FROM RepairRequest WHERE id = ?', [id]);
+      let customFields = {};
+      try {
+        if (currentRows[0]?.customFields) {
+          customFields = typeof currentRows[0].customFields === 'string' 
+            ? JSON.parse(currentRows[0].customFields) 
+            : (currentRows[0].customFields || {});
+        }
+        console.log('🔍 [PATCH /:id/details] Current customFields from DB:', customFields);
+      } catch (e) {
+        console.error('❌ [PATCH /:id/details] Error parsing current customFields:', e);
+        customFields = {};
+      }
+
+      // Update with new range values (store directly, no average)
+      if (estimatedCostMin !== undefined) {
+        customFields.estimatedCostMin = estimatedCostMin !== null ? parseFloat(estimatedCostMin) : null;
+      }
+      if (estimatedCostMax !== undefined) {
+        customFields.estimatedCostMax = estimatedCostMax !== null ? parseFloat(estimatedCostMax) : null;
+      }
+
+      console.log('🔍 [PATCH /:id/details] Updated customFields object:', customFields);
+      const customFieldsJson = JSON.stringify(customFields);
+      console.log('🔍 [PATCH /:id/details] Saving customFields JSON:', customFieldsJson);
+
+      // Save updated customFields
+      await db.execute(
+        'UPDATE RepairRequest SET customFields = ? WHERE id = ?',
+        [customFieldsJson, id]
+      );
+      
+      console.log('✅ [PATCH /:id/details] customFields saved successfully');
+      
+      // Verify it was saved
+      const [verifyRows] = await db.execute(
+        'SELECT customFields FROM RepairRequest WHERE id = ?',
+        [id]
+      );
+      if (verifyRows.length > 0) {
+        console.log('✅ [PATCH /:id/details] Verification - customFields in DB:', verifyRows[0].customFields);
+      }
+    } else {
+      console.log('⚠️ [PATCH /:id/details] estimatedCostMin and estimatedCostMax are both undefined, skipping customFields update');
     }
 
     res.json({ message: 'Repair details updated successfully' });
@@ -1905,6 +2211,22 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     const requestNumber = `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
     const dates = formatDates(reqDate, dateMode);
 
+    // Extract estimated cost range from customFields (no average - direct range display)
+    let estimatedCostRange = '';
+    try {
+      const customFields = typeof repair.customFields === 'string' 
+        ? JSON.parse(repair.customFields) 
+        : (repair.customFields || {});
+      const minCost = customFields.estimatedCostMin;
+      const maxCost = customFields.estimatedCostMax;
+      if (minCost !== undefined && maxCost !== undefined && minCost !== null && maxCost !== null) {
+        estimatedCostRange = `من ${minCost.toFixed(2)} إلى ${maxCost.toFixed(2)} ج.م`;
+      }
+    } catch (e) {
+      // If parsing fails, leave empty
+      estimatedCostRange = '';
+    }
+
     // حساب الهوامش مع وضع مضغوط إن لزم
     const mm = settings.margins || {};
     const factor = settings.compactMode ? 0.6 : 1;
@@ -1920,9 +2242,17 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
       branchAddress: settings.branchAddress || '',
       branchPhone: settings.branchPhone || '',
       requestNumber,
-      customerName: repair.customerName || ''
+      customerName: repair.customerName || '',
+      estimatedCostRange: estimatedCostRange || 'لم يتم تحديدها'
     };
-    const termsRendered = renderTemplate(settings.terms || '', termsVars)
+    
+    // Add estimated cost range to terms if not already included
+    let termsText = settings.terms || '';
+    if (estimatedCostRange && !termsText.includes('estimatedCostRange') && !termsText.includes('التكلفة المقدرة')) {
+      termsText += `\n\nالتكلفة المقدرة للإصلاح: {{estimatedCostRange}}`;
+    }
+    
+    const termsRendered = renderTemplate(termsText, termsVars)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
     // استخدام FRONTEND_URL من متغيرات البيئة، أو REACT_APP_FRONTEND_URL، أو القيمة الافتراضية
@@ -2507,20 +2837,91 @@ router.get('/:id/print/inspection', authMiddleware, async (req, res) => {
 router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
-    const settings = loadPrintSettings();
-    const invoiceSettings = settings.invoice || {};
+    // جلب invoiceId من الفاتورة المرتبطة بطلب الإصلاح
+    const [invoiceRows] = await db.execute(`
+      SELECT id 
+      FROM Invoice 
+      WHERE repairRequestId = ? AND deletedAt IS NULL 
+      LIMIT 1
+    `, [id]);
+    
+    if (invoiceRows && invoiceRows.length > 0) {
+      const invoiceId = invoiceRows[0].id;
+      // إعادة التوجيه إلى route الفواتير الموحد
+      // نستخدم relative URL للتوافق مع أي base URL
+      return res.redirect(`/api/invoices/${invoiceId}/print`);
+    }
+    
+    // إذا لم توجد فاتورة مرتبطة، نعرض رسالة خطأ
+    return res.status(404).send(`
+      <html dir="rtl">
+        <head>
+          <meta charset="UTF-8">
+          <title>فاتورة غير موجودة</title>
+          <style>
+            body { font-family: 'Tajawal', Arial, sans-serif; text-align: center; padding: 50px; direction: rtl; }
+            h1 { color: #dc2626; }
+            p { color: #6b7280; }
+          </style>
+        </head>
+        <body>
+          <h1>فاتورة غير موجودة</h1>
+          <p>لم يتم العثور على فاتورة مرتبطة بطلب الإصلاح رقم ${id}</p>
+          <p>يرجى إنشاء فاتورة أولاً من قسم الفواتير</p>
+        </body>
+      </html>
+    `);
     
     // استخدام إعدادات الفاتورة أو الإعدادات العامة كبديل
     const getSetting = (key, defaultValue) => {
-      // للقيم المتداخلة مثل colors.primary
+      // للقيم المتداخلة مثل colors.primary أو financial.showTax
       if (key.includes('.')) {
-        const [parent, child] = key.split('.');
-        if (invoiceSettings[parent] && invoiceSettings[parent][child] !== undefined) {
-          return invoiceSettings[parent][child];
+        const parts = key.split('.');
+        let value = invoiceSettings;
+        let found = true;
+        
+        // البحث في invoiceSettings
+        for (let i = 0; i < parts.length; i++) {
+          if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
+            value = value[parts[i]];
+          } else {
+            found = false;
+            break;
+          }
         }
-        if (settings[parent] && settings[parent][child] !== undefined) {
-          return settings[parent][child];
+        
+        if (found && value !== undefined) {
+          // للقيم boolean، نتحقق من false أيضاً
+          if (typeof value === 'boolean') {
+            return value;
+          }
+          // للقيم الأخرى، نتحقق من null و ''
+          if (value !== null && value !== '') {
+            return value;
+          }
         }
+        
+        // البحث في settings العامة
+        value = settings;
+        found = true;
+        for (let i = 0; i < parts.length; i++) {
+          if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
+            value = value[parts[i]];
+          } else {
+            found = false;
+            break;
+          }
+        }
+        
+        if (found && value !== undefined) {
+          if (typeof value === 'boolean') {
+            return value;
+          }
+          if (value !== null && value !== '') {
+            return value;
+          }
+        }
+        
         return defaultValue;
       }
       // للقيم العادية
@@ -2545,6 +2946,11 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       return defaultValue;
     };
     
+    // Debug: طباعة الإعدادات للتحقق
+    console.log('Invoice Settings:', JSON.stringify(invoiceSettings, null, 2));
+    console.log('financial.showTax:', getSetting('financial.showTax', true));
+    console.log('financial.showShipping:', getSetting('financial.showShipping', true));
+    
     const [repairRows] = await db.execute(`
       SELECT rr.*, 
              c.name AS customerName, c.phone AS customerPhone, c.email AS customerEmail,
@@ -2566,6 +2972,43 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     }
 
     const repair = repairRows[0];
+
+    // جلب بيانات الفاتورة
+    let invoice = { taxAmount: 0, shippingAmount: 0, totalAmount: 0 };
+    
+    try {
+      // محاولة جلب جميع الأعمدة المتاحة
+      const [invoiceRows] = await db.execute(`
+        SELECT taxAmount, totalAmount
+        FROM Invoice
+        WHERE repairRequestId = ? AND deletedAt IS NULL
+        LIMIT 1
+      `, [id]);
+      
+      if (invoiceRows && invoiceRows.length > 0) {
+        invoice.taxAmount = Number(invoiceRows[0].taxAmount) || 0;
+        invoice.totalAmount = Number(invoiceRows[0].totalAmount) || 0;
+        
+        // محاولة جلب shippingAmount إذا كان موجوداً في قاعدة البيانات
+        try {
+          const [shippingCheck] = await db.execute(`
+            SELECT shippingAmount
+            FROM Invoice
+            WHERE repairRequestId = ? AND deletedAt IS NULL
+            LIMIT 1
+          `, [id]);
+          if (shippingCheck && shippingCheck.length > 0 && shippingCheck[0].shippingAmount !== undefined && shippingCheck[0].shippingAmount !== null) {
+            invoice.shippingAmount = Number(shippingCheck[0].shippingAmount) || 0;
+          }
+        } catch (shippingError) {
+          // العمود غير موجود، نستخدم 0
+          invoice.shippingAmount = 0;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      // في حالة الخطأ، نستخدم القيم الافتراضية
+    }
 
     // جلب عناصر الفاتورة متوافقة مع المخطط الحالي
     // InvoiceItem يحتوي على inventoryItemId (للقطع) و serviceId (للخدمات)
@@ -2599,9 +3042,29 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
       subtotal += itemTotal;
     });
-    const taxRate = 0.15; // 15% ضريبة
-    const taxAmount = subtotal * taxRate;
-    const total = subtotal + taxAmount;
+    
+    // حساب الضريبة: إذا كانت موجودة في الفاتورة نستخدمها، وإلا نحسبها من العناصر (15%)
+    let taxAmount = Number(invoice.taxAmount) || 0;
+    if (taxAmount === 0 && subtotal > 0) {
+      // حساب الضريبة من مجموع العناصر (15%)
+      taxAmount = subtotal * 0.15;
+    }
+    
+    // استخدام قيمة الشحن من الفاتورة
+    const shippingAmount = Number(invoice.shippingAmount) || 0;
+    
+    // Debug: طباعة القيم للتحقق
+    console.log('Invoice values:', {
+      taxAmount: invoice.taxAmount,
+      shippingAmount: invoice.shippingAmount,
+      calculatedTax: taxAmount,
+      subtotal: subtotal
+    });
+    
+    // حساب الإجمالي النهائي بناءً على الإعدادات
+    const showTax = getSetting('financial.showTax', true);
+    const showShipping = getSetting('financial.showShipping', true);
+    const total = subtotal + (showTax ? taxAmount : 0) + (showShipping ? shippingAmount : 0);
 
     // ترجمة حالة الطلب (سيرفر سايد)
     const statusTextMap = {
@@ -2958,16 +3421,16 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
               <td class="number">-${(0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
             ` : ''}
-            ${getSetting('showTax', true) ? `
+            ${getSetting('financial.showTax', true) ? `
             <tr>
-              <td>الضريبة (15%):</td>
+              <td>الضريبة:</td>
               <td class="number">${taxAmount.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
             ` : ''}
-            ${getSetting('showShipping', true) ? `
+            ${getSetting('financial.showShipping', true) ? `
             <tr>
               <td>الشحن:</td>
-              <td class="number">${(0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
+              <td class="number">${shippingAmount.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>
             </tr>
             ` : ''}
             ${getSetting('showTotal', true) ? `

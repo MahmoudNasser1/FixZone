@@ -4,6 +4,8 @@ import { SimpleCard, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import paymentService from '../../services/paymentService';
+import SendButton from '../../components/messaging/SendButton';
+import MessageLogViewer from '../../components/messaging/MessageLogViewer';
 
 export default function PaymentDetailsPage() {
   const { id } = useParams();
@@ -114,6 +116,16 @@ export default function PaymentDetailsPage() {
           >
             حذف
           </SimpleButton>
+          {payment.customerPhone && (
+            <SendButton
+              entityType="payment"
+              entityId={payment.id}
+              customerId={payment.customerId}
+              recipient={payment.customerPhone}
+              template="paymentReminderMessage"
+              showChannelSelector={true}
+            />
+          )}
         </div>
       </div>
 
@@ -274,6 +286,16 @@ export default function PaymentDetailsPage() {
             </div>
           </SimpleCardContent>
         </SimpleCard>
+      )}
+
+      {/* Message Log */}
+      {payment && (
+        <MessageLogViewer
+          entityType="payment"
+          entityId={payment.id}
+          customerId={payment.customerId}
+          limit={5}
+        />
       )}
 
       {/* Print Styles */}

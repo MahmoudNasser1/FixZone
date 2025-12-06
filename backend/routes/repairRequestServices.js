@@ -192,35 +192,106 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
 // Soft delete a repair request service
 router.delete('/:id', validate(repairRequestServiceSchemas.deleteRepairRequestService, 'params'), async (req, res) => {
   const { id } = req.params;
+  const connection = await db.getConnection();
+  
   try {
+    await connection.beginTransaction();
+    
+    // First, get the repair request service details before deleting
+    let getServiceQuery = 'SELECT * FROM RepairRequestService WHERE id = ?';
+    try {
+      const [checkResult] = await connection.execute(
+        "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'deletedAt'"
+      );
+      if (checkResult[0].count > 0) {
+        getServiceQuery += ' AND (deletedAt IS NULL OR deletedAt = "")';
+      }
+    } catch (e) {
+      // Column doesn't exist, use basic query
+    }
+    
+    const [serviceRows] = await connection.execute(getServiceQuery, [id]);
+    
+    if (serviceRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Repair request service not found or already deleted' });
+    }
+    
+    const service = serviceRows[0];
+    const { serviceId, repairRequestId } = service;
+    
+    // Check if this service exists in any invoice items
+    // Find invoices linked to this repair request
+    if (serviceId && repairRequestId) {
+      const [invoices] = await connection.execute(`
+        SELECT id FROM Invoice 
+        WHERE repairRequestId = ? AND deletedAt IS NULL
+      `, [repairRequestId]);
+      
+      // For each invoice, check if there are invoice items with this serviceId
+      for (const invoice of invoices) {
+        const [invoiceItems] = await connection.execute(`
+          SELECT id FROM InvoiceItem 
+          WHERE invoiceId = ? AND serviceId = ?
+        `, [invoice.id, serviceId]);
+        
+        // Delete all invoice items with this serviceId
+        if (invoiceItems.length > 0) {
+          await connection.execute(`
+            DELETE FROM InvoiceItem 
+            WHERE invoiceId = ? AND serviceId = ?
+          `, [invoice.id, serviceId]);
+          
+          // Recalculate invoice total
+          const [totalResult] = await connection.execute(`
+            SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
+            FROM InvoiceItem WHERE invoiceId = ?
+          `, [invoice.id]);
+          
+          const newTotal = Number(totalResult[0].calculatedTotal);
+          
+          await connection.execute(`
+            UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
+          `, [newTotal, invoice.id]);
+          
+          console.log(`Deleted ${invoiceItems.length} invoice item(s) from invoice ${invoice.id} and updated total to ${newTotal}`);
+        }
+      }
+    }
+    
+    // Now delete the repair request service
     // Check if RepairRequestService table has deletedAt column
-    // If not, we'll use hard delete for now (can be migrated later)
-    // For now, check if it exists first
-    const [checkResult] = await db.execute(
+    const [checkResult] = await connection.execute(
       "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'deletedAt'"
     );
     
     if (checkResult[0].count > 0) {
       // Use soft delete
-      const [result] = await db.execute(
+      const [result] = await connection.execute(
         'UPDATE RepairRequestService SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
         [id]
       );
       if (result.affectedRows === 0) {
+        await connection.rollback();
         return res.status(404).json({ error: 'Repair request service not found or already deleted' });
       }
     } else {
       // Hard delete (table doesn't have deletedAt column yet)
-      const [result] = await db.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
+      const [result] = await connection.execute('DELETE FROM RepairRequestService WHERE id = ?', [id]);
       if (result.affectedRows === 0) {
+        await connection.rollback();
         return res.status(404).json({ error: 'Repair request service not found' });
       }
     }
     
+    await connection.commit();
     res.json({ success: true, message: 'Repair request service deleted successfully' });
   } catch (err) {
+    await connection.rollback();
     console.error(`Error deleting repair request service with ID ${id}:`, err);
     res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  } finally {
+    connection.release();
   }
 });
 

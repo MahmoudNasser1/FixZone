@@ -269,6 +269,7 @@ class InvoicesControllerSimple {
         status = 'draft',
         currency = 'EGP',
         taxAmount = 0,
+        shippingAmount = 0,
         amountPaid = 0
       } = req.body;
 
@@ -312,11 +313,27 @@ class InvoicesControllerSimple {
         }
       }
 
-      const [result] = await connection.execute(
-        `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
-      );
+      // محاولة إدراج shippingAmount إذا كان موجوداً في قاعدة البيانات
+      let result;
+      try {
+        // محاولة مع shippingAmount
+        [result] = await connection.execute(
+          `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount]
+        );
+      } catch (error) {
+        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون shippingAmount
+        if (error.message && error.message.includes('shippingAmount')) {
+          [result] = await connection.execute(
+            `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
+          );
+        } else {
+          throw error;
+        }
+      }
 
       await connection.commit();
 
@@ -432,7 +449,7 @@ class InvoicesControllerSimple {
       await connection.beginTransaction();
 
       const { id } = req.params;
-      const { totalAmount, amountPaid, status, currency, taxAmount, discountAmount, notes } = req.body;
+      const { totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, notes } = req.body;
 
       // Check if invoice exists
       const [existing] = await connection.execute(`
@@ -467,6 +484,10 @@ class InvoicesControllerSimple {
       if (taxAmount !== undefined) {
         updates.push('taxAmount = ?');
         params.push(taxAmount);
+      }
+      if (shippingAmount !== undefined) {
+        updates.push('shippingAmount = ?');
+        params.push(shippingAmount);
       }
       if (discountAmount !== undefined) {
         updates.push('discountAmount = ?');

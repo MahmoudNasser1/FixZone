@@ -1,4 +1,8 @@
-const nodemailer = require('nodemailer');
+const messagingService = require('../services/messaging.service');
+const templateService = require('../services/template.service');
+const whatsappService = require('../services/whatsapp.service');
+const emailService = require('../services/email.service');
+const settingsRepository = require('../repositories/settingsRepository');
 const db = require('../db');
 
 class MessagingController {
@@ -247,6 +251,270 @@ class MessagingController {
         success: false, 
         message: 'فشل في حفظ إعدادات المراسلة',
         error: error.message 
+      });
+    }
+  }
+
+  // ============================================
+  // وظائف جديدة باستخدام messagingService
+  // ============================================
+
+  /**
+   * إرسال رسالة موحدة (يدعم WhatsApp و Email)
+   * POST /api/messaging/send
+   */
+  async sendMessage(req, res) {
+    try {
+      const {
+        entityType,
+        entityId,
+        customerId,
+        channels,
+        recipient,
+        message,
+        template,
+        variables,
+        options
+      } = req.body;
+
+      if (!entityType || !entityId || !channels || !recipient) {
+        return res.status(400).json({
+          success: false,
+          message: 'بيانات الإرسال غير مكتملة'
+        });
+      }
+
+      const result = await messagingService.sendMessage({
+        entityType,
+        entityId,
+        customerId,
+        channels: Array.isArray(channels) ? channels : [channels],
+        recipient,
+        message,
+        template,
+        variables,
+        options,
+        sentBy: req.user?.id
+      });
+
+      res.json({
+        success: result.success,
+        data: result,
+        message: result.success ? 'تم إرسال الرسالة بنجاح' : 'حدث خطأ في إرسال بعض الرسائل'
+      });
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في إرسال الرسالة',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * الحصول على سجل المراسلات
+   * GET /api/messaging/logs
+   */
+  async getMessageLogs(req, res) {
+    try {
+      const filters = {
+        entityType: req.query.entityType,
+        entityId: req.query.entityId ? parseInt(req.query.entityId) : undefined,
+        customerId: req.query.customerId ? parseInt(req.query.customerId) : undefined,
+        channel: req.query.channel,
+        status: req.query.status,
+        recipient: req.query.recipient,
+        dateFrom: req.query.dateFrom,
+        dateTo: req.query.dateTo
+      };
+
+      const pagination = {
+        limit: req.query.limit ? parseInt(req.query.limit) : 20,
+        offset: req.query.offset ? parseInt(req.query.offset) : 0
+      };
+
+      const result = await messagingService.getMessageLogs(filters, pagination);
+
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Error getting message logs:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في جلب سجل المراسلات',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * الحصول على رسالة محددة
+   * GET /api/messaging/logs/:id
+   */
+  async getMessageLog(req, res) {
+    try {
+      const { id } = req.params;
+
+      const [logs] = await db.execute(
+        'SELECT * FROM MessagingLog WHERE id = ?',
+        [id]
+      );
+
+      if (logs.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'السجل غير موجود'
+        });
+      }
+
+      const log = logs[0];
+      log.metadata = log.metadata ? JSON.parse(log.metadata) : {};
+
+      res.json({
+        success: true,
+        data: log
+      });
+    } catch (error) {
+      console.error('Error getting message log:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في جلب السجل',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * إعادة محاولة إرسال رسالة فاشلة
+   * POST /api/messaging/retry/:id
+   */
+  async retryMessage(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await messagingService.retryMessage(parseInt(id));
+
+      res.json({
+        success: result.success,
+        data: result,
+        message: result.success ? 'تم إعادة إرسال الرسالة بنجاح' : 'فشلت إعادة المحاولة'
+      });
+    } catch (error) {
+      console.error('Error retrying message:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في إعادة المحاولة',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * الحصول على إحصائيات المراسلات
+   * GET /api/messaging/stats
+   * Query params:
+   *   - dateFrom: تاريخ البداية (YYYY-MM-DD)
+   *   - dateTo: تاريخ النهاية (YYYY-MM-DD)
+   *   - channel: القناة (whatsapp, email)
+   *   - entityType: نوع الكيان (invoice, repair, quotation, payment)
+   *   - groupBy: التجميع (day, week, month) - للاستخدام المستقبلي
+   */
+  async getStats(req, res) {
+    try {
+      const filters = {
+        dateFrom: req.query.dateFrom,
+        dateTo: req.query.dateTo,
+        channel: req.query.channel,
+        entityType: req.query.entityType,
+        groupBy: req.query.groupBy
+      };
+
+      const stats = await messagingService.getStats(filters);
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Error getting stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في جلب الإحصائيات',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * حذف سجل رسالة
+   * DELETE /api/messaging/logs/:id
+   */
+  async deleteMessageLog(req, res) {
+    try {
+      const { id } = req.params;
+
+      await db.execute(
+        'DELETE FROM MessagingLog WHERE id = ?',
+        [id]
+      );
+
+      res.json({
+        success: true,
+        message: 'تم حذف السجل بنجاح'
+      });
+    } catch (error) {
+      console.error('Error deleting message log:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في حذف السجل',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * التحقق من صحة إعدادات WhatsApp
+   * GET /api/messaging/validate/whatsapp
+   */
+  async validateWhatsApp(req, res) {
+    try {
+      const validation = await whatsappService.validateSettings();
+
+      res.json({
+        success: true,
+        data: validation
+      });
+    } catch (error) {
+      console.error('Error validating WhatsApp:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في التحقق من إعدادات WhatsApp',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * التحقق من صحة إعدادات Email
+   * GET /api/messaging/validate/email
+   */
+  async validateEmail(req, res) {
+    try {
+      const validation = await emailService.validateSettings();
+
+      res.json({
+        success: true,
+        data: validation
+      });
+    } catch (error) {
+      console.error('Error validating Email:', error);
+      res.status(500).json({
+        success: false,
+        message: 'فشل في التحقق من إعدادات Email',
+        error: error.message
       });
     }
   }

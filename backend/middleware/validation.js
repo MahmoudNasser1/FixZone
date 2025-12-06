@@ -1753,6 +1753,18 @@ const repairSchemas = {
         'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
       }),
 
+    estimatedCostMin: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة المقدرة (من) يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المقدرة (من) يجب أن تكون رقم'
+      }),
+
+    estimatedCostMax: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة المقدرة (إلى) يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المقدرة (إلى) يجب أن تكون رقم'
+      }),
+
     actualCost: Joi.number().min(0).precision(2).allow(null).optional()
       .messages({
         'number.min': 'التكلفة الفعلية يجب أن تكون أكبر من أو تساوي صفر',
@@ -1852,10 +1864,22 @@ const repairSchemas = {
 
   // Update repair details
   updateDetails: Joi.object({
-    estimatedCost: Joi.number().min(0).precision(2).optional()
+    estimatedCost: Joi.number().min(0).precision(2).allow(null).optional()
       .messages({
         'number.min': 'التكلفة المتوقعة يجب أن تكون أكبر من أو تساوي صفر',
         'number.base': 'التكلفة المتوقعة يجب أن تكون رقم'
+      }),
+
+    estimatedCostMin: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة المقدرة (من) يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المقدرة (من) يجب أن تكون رقم'
+      }),
+
+    estimatedCostMax: Joi.number().min(0).precision(2).allow(null).optional()
+      .messages({
+        'number.min': 'التكلفة المقدرة (إلى) يجب أن تكون أكبر من أو تساوي صفر',
+        'number.base': 'التكلفة المقدرة (إلى) يجب أن تكون رقم'
       }),
 
     actualCost: Joi.number().min(0).precision(2).allow(null).optional()

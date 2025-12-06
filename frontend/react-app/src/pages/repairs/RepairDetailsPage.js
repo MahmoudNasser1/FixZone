@@ -18,7 +18,10 @@ import {
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
   UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw
 } from 'lucide-react';
+import SendButton from '../../components/messaging/SendButton';
+import MessageLogViewer from '../../components/messaging/MessageLogViewer';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { formatNumber, formatCurrency } from '../../utils/numberFormat';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -75,6 +78,8 @@ const RepairDetailsPage = () => {
   const [editingDetails, setEditingDetails] = useState(false);
   const [repairDetails, setRepairDetails] = useState({
     estimatedCost: 0,
+    estimatedCostMin: null,
+    estimatedCostMax: null,
     actualCost: null,
     priority: 'MEDIUM',
     expectedDeliveryDate: null,
@@ -288,14 +293,8 @@ const RepairDetailsPage = () => {
       // Handle response data
       const responseData = response?.data || response;
 
-      // 🔧 Fix #3: Display approval message if approval is required
-      if (responseData?.approval?.required) {
-        notifications.warning(
-          `⚠️ ${responseData.approval.message || 'هذه القطعة تحتاج موافقة. تم إنشاء طلب موافقة.'}`
-        );
-      } else {
-        notifications.success(responseData?.message || 'تم صرف القطعة وتحديث المخزون بنجاح');
-      }
+      // Approval logic removed - always show success
+      notifications.success(responseData?.message || 'تم صرف القطعة وتحديث المخزون بنجاح');
 
       // 🔧 Fix #2: Display low stock warning from response
       if (responseData?.lowStockWarning?.warning) {
@@ -304,25 +303,7 @@ const RepairDetailsPage = () => {
         );
       }
 
-      // 🔧 Fix #3: Display pricing information (profit, cost, etc.)
-      if (responseData?.pricing) {
-        const pricing = responseData.pricing;
-        console.log('Part pricing:', {
-          purchasePrice: pricing.unitPurchasePrice,
-          sellingPrice: pricing.unitSellingPrice,
-          totalCost: pricing.totalCost,
-          totalPrice: pricing.totalPrice,
-          profit: pricing.profit,
-          profitMargin: pricing.profitMargin
-        });
-
-        // Show profit info if significant
-        if (pricing.profit && pricing.profit > 0) {
-          notifications.info(
-            `💰 الربح المتوقع: ${formatMoney(pricing.profit)} (هامش ربح: ${pricing.profitMargin || '0'}%)`
-          );
-        }
-      }
+      // Pricing information removed - no profit notifications
 
       // 🔧 Fix #2: Display additional low stock warning from response
       if (responseData?.stockLevel?.isLowStock) {
@@ -749,7 +730,7 @@ const RepairDetailsPage = () => {
         throw new Error('Invalid invoices response format');
       }
 
-      const invoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+      const invoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
       if (!invoice) {
         notifications.error('لا توجد فاتورة لهذا الطلب. يرجى إنشاء فاتورة أولاً');
         return;
@@ -823,43 +804,78 @@ const RepairDetailsPage = () => {
       console.log('Updating repair details with data:', repairDetails);
 
       // Convert priority from Arabic/display value to backend format
+      // Backend validation accepts both uppercase and lowercase, but backend normalizes to lowercase
       const priorityMap = {
         'منخفضة': 'LOW',
         'متوسطة': 'MEDIUM',
         'عالية': 'HIGH',
         'عاجلة': 'URGENT',
         'low': 'LOW',
+        'normal': 'MEDIUM', // 'normal' maps to 'MEDIUM' in validation
         'medium': 'MEDIUM',
         'high': 'HIGH',
         'urgent': 'URGENT',
         'LOW': 'LOW',
         'MEDIUM': 'MEDIUM',
+        'NORMAL': 'MEDIUM',
         'HIGH': 'HIGH',
         'URGENT': 'URGENT'
       };
 
       const normalizedPriority = priorityMap[repairDetails.priority] || repairDetails.priority || 'MEDIUM';
 
+      // Calculate estimatedCost from range if both values exist (for validation - backend expects a number)
+      // This is only for validation purposes - we use the range for display
+      let calculatedEstimatedCost = 0;
+      if (repairDetails.estimatedCostMin !== null && repairDetails.estimatedCostMax !== null) {
+        calculatedEstimatedCost = (repairDetails.estimatedCostMin + repairDetails.estimatedCostMax) / 2;
+      } else if (repairDetails.estimatedCost !== null && repairDetails.estimatedCost !== undefined) {
+        calculatedEstimatedCost = parseFloat(repairDetails.estimatedCost) || 0;
+      }
+
+      // Send update request
       await apiService.updateRepairRequest(id, {
-        estimatedCost: repairDetails.estimatedCost,
-        actualCost: repairDetails.actualCost,
+        estimatedCost: calculatedEstimatedCost, // Send calculated value for validation (backend still requires it)
+        estimatedCostMin: repairDetails.estimatedCostMin,
+        estimatedCostMax: repairDetails.estimatedCostMax,
+        actualCost: repairDetails.actualCost !== null && repairDetails.actualCost !== undefined ? parseFloat(repairDetails.actualCost) : null,
         priority: normalizedPriority,
         expectedDeliveryDate: repairDetails.expectedDeliveryDate,
         notes: repairDetails.notes
       });
 
       // تحديث محلي
+      // Update customFields with the range
+      let updatedCustomFields = {};
+      try {
+        updatedCustomFields = typeof repair.customFields === 'string' 
+          ? JSON.parse(repair.customFields) 
+          : (repair.customFields || {});
+      } catch (e) {
+        updatedCustomFields = {};
+      }
+      
+      if (repairDetails.estimatedCostMin !== undefined) {
+        updatedCustomFields.estimatedCostMin = repairDetails.estimatedCostMin;
+      }
+      if (repairDetails.estimatedCostMax !== undefined) {
+        updatedCustomFields.estimatedCostMax = repairDetails.estimatedCostMax;
+      }
+
       setRepair(prev => ({
         ...prev,
-        estimatedCost: repairDetails.estimatedCost,
         actualCost: repairDetails.actualCost,
         priority: repairDetails.priority,
         expectedDeliveryDate: repairDetails.expectedDeliveryDate,
-        notes: repairDetails.notes
+        notes: repairDetails.notes,
+        customFields: updatedCustomFields
       }));
 
       notifications.success('تم تحديث تفاصيل الطلب بنجاح');
       setEditingDetails(false);
+      
+      // Refresh repair data to ensure we have the latest from the server
+      await fetchRepairDetails();
     } catch (e) {
       console.error('Error updating repair details:', e);
       notifications.error('تعذر تحديث تفاصيل الطلب');
@@ -1147,6 +1163,13 @@ const RepairDetailsPage = () => {
     return [];
   };
 
+  // Helper function to check if invoice belongs to repair request
+  // Handles both repairId and repairRequestId fields from API
+  const invoiceBelongsToRepair = (invoice, repairId) => {
+    const invoiceRepairId = invoice.repairId || invoice.repairRequestId;
+    return Number(invoiceRepairId) === Number(repairId);
+  };
+
   const getInvoiceStatusLabel = (status) => {
     const statusMap = {
       'draft': 'مسودة',
@@ -1179,7 +1202,7 @@ const RepairDetailsPage = () => {
       return Number(preferredInvoiceId);
     }
 
-    const existing = invoices.find(inv => Number(inv.repairRequestId) === Number(id));
+    const existing = invoices.find(inv => invoiceBelongsToRepair(inv, id));
     if (existing?.id) {
       return existing.id;
     }
@@ -1187,7 +1210,7 @@ const RepairDetailsPage = () => {
     try {
       const response = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
       const fetched = normalizeInvoicesResponse(response);
-      const match = fetched.find(inv => Number(inv.repairRequestId) === Number(id));
+      const match = fetched.find(inv => invoiceBelongsToRepair(inv, id));
       if (match?.id) {
         return match.id;
       }
@@ -1328,7 +1351,7 @@ const RepairDetailsPage = () => {
           try {
             const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
             const freshInvoices = Array.isArray(freshInvoicesData.data) ? freshInvoicesData.data : (Array.isArray(freshInvoicesData) ? freshInvoicesData : []);
-            const repairInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+            const repairInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
             targetInvoiceId = repairInvoice?.id || repairInvoice?.invoiceId;
           } catch (invoiceErr) {
             console.log('Error fetching invoices:', invoiceErr);
@@ -1473,6 +1496,18 @@ const RepairDetailsPage = () => {
       try {
         const rep = await apiService.getRepairRequest(id);
         console.log('Repair response:', rep);
+        console.log('🔍 Repair customFields:', rep?.customFields);
+        console.log('🔍 Repair customFields type:', typeof rep?.customFields);
+        console.log('🔍 Repair problem data:', {
+          reportedProblem: rep?.reportedProblem,
+          problemDescription: rep?.problemDescription,
+          hasReportedProblem: !!rep?.reportedProblem,
+          hasProblemDescription: !!rep?.problemDescription,
+          reportedProblemType: typeof rep?.reportedProblem,
+          problemDescriptionType: typeof rep?.problemDescription,
+          reportedProblemValue: rep?.reportedProblem ? `${String(rep.reportedProblem).substring(0, 50)}...` : 'NULL/EMPTY',
+          problemDescriptionValue: rep?.problemDescription ? `${String(rep.problemDescription).substring(0, 50)}...` : 'NULL/EMPTY'
+        });
         if (rep) {
           setRepair(rep);
 
@@ -1491,8 +1526,32 @@ const RepairDetailsPage = () => {
           let actualCostFromInvoice = rep.actualCost || null;
           // Will be updated when invoices load
 
+          // Extract estimated cost range from customFields
+          let customFields = {};
+          try {
+            if (rep.customFields) {
+              if (typeof rep.customFields === 'string') {
+                customFields = JSON.parse(rep.customFields);
+              } else if (typeof rep.customFields === 'object') {
+                customFields = rep.customFields;
+              }
+            }
+            console.log('🔍 Loaded customFields from repair:', customFields);
+            console.log('🔍 Estimated cost range:', {
+              min: customFields.estimatedCostMin,
+              max: customFields.estimatedCostMax,
+              hasMin: customFields.estimatedCostMin !== undefined && customFields.estimatedCostMin !== null,
+              hasMax: customFields.estimatedCostMax !== undefined && customFields.estimatedCostMax !== null
+            });
+          } catch (e) {
+            console.error('Error parsing customFields:', e);
+            customFields = {};
+          }
+
           setRepairDetails({
             estimatedCost: rep.estimatedCost || 0,
+            estimatedCostMin: customFields.estimatedCostMin !== undefined ? customFields.estimatedCostMin : null,
+            estimatedCostMax: customFields.estimatedCostMax !== undefined ? customFields.estimatedCostMax : null,
             actualCost: actualCostFromInvoice,
             priority: rep.priority || 'MEDIUM',
             expectedDeliveryDate: rep.expectedDeliveryDate || null,
@@ -1646,7 +1705,7 @@ const RepairDetailsPage = () => {
         try {
           // Load existing invoices to find the duplicate
           await loadInvoices();
-          const existingInvoice = invoices.find(inv => inv.repairRequestId === parseInt(id));
+          const existingInvoice = invoices.find(inv => invoiceBelongsToRepair(inv, id));
           if (existingInvoice?.id) {
             notifications.warning('هناك فاتورة موجودة لهذا الطلب. يرجى فتح الفاتورة الموجودة من قائمة الفواتير أدناه.');
             return;
@@ -1783,6 +1842,20 @@ const RepairDetailsPage = () => {
     } catch (e) {
       console.error('Error deleting service:', e);
       notifications.error('تعذر حذف الخدمة');
+    }
+  };
+
+  const handleDeletePart = async (partId) => {
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذه القطعة؟ سيتم حذفها من الفاتورة أيضاً إذا كانت موجودة.');
+    if (!confirmed) return;
+    try {
+      await apiService.request(`/partsused/${partId}`, { method: 'DELETE' });
+      notifications.success('تم حذف القطعة بنجاح');
+      await loadPartsUsed();
+      await loadInvoices();
+    } catch (e) {
+      console.error('Error deleting part:', e);
+      notifications.error('تعذر حذف القطعة');
     }
   };
 
@@ -2386,7 +2459,32 @@ const RepairDetailsPage = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة</label>
-                        <p className="text-gray-900 font-semibold">{formatMoney(repair.estimatedCost || 0)}</p>
+                        {(() => {
+                          // Try to get min/max from customFields
+                          let customFields = {};
+                          try {
+                            if (repair.customFields) {
+                              customFields = typeof repair.customFields === 'string' 
+                                ? JSON.parse(repair.customFields) 
+                                : (repair.customFields || {});
+                            }
+                          } catch (e) {
+                            customFields = {};
+                          }
+                          
+                          const minCost = customFields?.estimatedCostMin;
+                          const maxCost = customFields?.estimatedCostMax;
+                          
+                          if (minCost !== undefined && maxCost !== undefined && minCost !== null && maxCost !== null) {
+                            return (
+                              <p className="text-gray-900 font-semibold">
+                                من {formatNumber(minCost)} إلى {formatNumber(maxCost)} ج.م
+                              </p>
+                            );
+                          } else {
+                            return <p className="text-gray-900 font-semibold">لم يتم تحديدها بعد</p>;
+                          }
+                        })()}
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -2406,13 +2504,37 @@ const RepairDetailsPage = () => {
                         <h4 className="text-lg font-medium text-gray-900 mb-4">تعديل تفاصيل الطلب</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (من)</label>
                             <input
                               type="number"
                               min="0"
                               step="0.01"
-                              value={repairDetails.estimatedCost}
-                              onChange={(e) => setRepairDetails(prev => ({ ...prev, estimatedCost: parseFloat(e.target.value) || 0 }))}
+                              value={repairDetails.estimatedCostMin !== null && repairDetails.estimatedCostMin !== undefined ? repairDetails.estimatedCostMin : ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setRepairDetails(prev => ({ 
+                                  ...prev, 
+                                  estimatedCostMin: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                                }));
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (إلى)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={repairDetails.estimatedCostMax !== null && repairDetails.estimatedCostMax !== undefined ? repairDetails.estimatedCostMax : ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setRepairDetails(prev => ({ 
+                                  ...prev, 
+                                  estimatedCostMax: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                                }));
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="0.00"
                             />
@@ -2469,8 +2591,19 @@ const RepairDetailsPage = () => {
                           </SimpleButton>
                           <SimpleButton size="sm" variant="ghost" onClick={() => {
                             setEditingDetails(false);
+                            // Reset to current repair values including customFields
+                            let customFields = {};
+                            try {
+                              customFields = typeof repair.customFields === 'string' 
+                                ? JSON.parse(repair.customFields) 
+                                : (repair.customFields || {});
+                            } catch (e) {
+                              customFields = {};
+                            }
                             setRepairDetails({
                               estimatedCost: repair.estimatedCost || 0,
+                              estimatedCostMin: customFields.estimatedCostMin || null,
+                              estimatedCostMax: customFields.estimatedCostMax || null,
                               actualCost: repair.actualCost || null,
                               priority: repair.priority || 'MEDIUM',
                               expectedDeliveryDate: repair.expectedDeliveryDate || null,
@@ -2505,6 +2638,314 @@ const RepairDetailsPage = () => {
                       </div>
                     </div>
                   )}
+                </SimpleCardContent>
+              </SimpleCard>
+
+              {/* خدمات الإصلاح (Services) */}
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <div className="flex items-center justify-between">
+                    <SimpleCardTitle className="flex items-center">
+                      <Settings className="w-5 h-5 ml-2" />
+                      خدمات الإصلاح
+                    </SimpleCardTitle>
+                    <SimpleButton size="sm" variant="outline" onClick={() => setAddServiceOpen(true)}>
+                      <Plus className="w-4 h-4 ml-1" /> إضافة خدمة
+                    </SimpleButton>
+                  </div>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  {/* أدوات التحكم: فرز وترقيم لخدمات الإصلاح */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <label>ترتيب حسب:</label>
+                      <select
+                        value={svcSortBy}
+                        onChange={(e) => { setSvcSortBy(e.target.value); setSvcPage(1); }}
+                        className="border rounded px-2 py-1 text-sm"
+                      >
+                        <option value="name">الاسم</option>
+                        <option value="price">السعر</option>
+                        <option value="invoiced">حالة الفوترة</option>
+                      </select>
+                      <select
+                        value={svcSortDir}
+                        onChange={(e) => { setSvcSortDir(e.target.value); setSvcPage(1); }}
+                        className="border rounded px-2 py-1 text-sm"
+                      >
+                        <option value="asc">تصاعدي</option>
+                        <option value="desc">تنازلي</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <button
+                        className="px-2 py-1 border rounded disabled:opacity-50"
+                        disabled={svcPage <= 1}
+                        onClick={() => setSvcPage(p => Math.max(1, p - 1))}
+                      >السابق</button>
+                      <span className="px-2">صفحة {svcPage}</span>
+                      <button
+                        className="px-2 py-1 border rounded"
+                        onClick={() => setSvcPage(p => p + 1)}
+                      >التالي</button>
+                      <select
+                        value={svcPageSize}
+                        onChange={(e) => { setSvcPageSize(Number(e.target.value)); setSvcPage(1); }}
+                        className="border rounded px-2 py-1 text-sm"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                      </select>
+                    </div>
+                  </div>
+                  {partsLoading ? (
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  ) : partsError ? (
+                    <div className="text-red-600 text-sm">{partsError}</div>
+                  ) : services.length === 0 ? (
+                    <div className="text-center py-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                      <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <div className="text-gray-600 text-lg font-medium">لا توجد خدمات مسجلة</div>
+                      <div className="text-gray-500 text-sm mt-2">لم يتم تسجيل أي خدمات إصلاح لهذا الطلب بعد</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {getSortedPagedServices().items.map((service) => {
+                        const invoiced = !!service.invoiceItemId;
+                        const isEditing = editingService?.id === service.id;
+                        return (
+                          <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                {isEditing ? (
+                                  <div className="space-y-3">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editingService.price || service.price || ''}
+                                        onChange={(e) => setEditingService({ ...editingService, price: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
+                                      <select
+                                        value={editingService.technicianId !== undefined ? editingService.technicianId : (service.technicianId || '')}
+                                        onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value || null })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                                      >
+                                        <option value="">اختر الفني...</option>
+                                        {techOptions.map((tech) => (
+                                          <option key={tech.id} value={tech.id}>
+                                            {tech.name || `مستخدم #${tech.id}`}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
+                                      <textarea
+                                        value={editingService.notes || service.notes || ''}
+                                        onChange={(e) => setEditingService({ ...editingService, notes: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        rows={3}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <Settings className="w-5 h-5 text-purple-600" />
+                                      </div>
+                                      <div>
+                                        <div className="font-semibold text-gray-900 text-lg">
+                                          {service.serviceName || service.description || `خدمة إصلاح #${service.serviceId || 'يدوية'}`}
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                          {service.isManual ? (
+                                            <span className="text-purple-600">خدمة يدوية</span>
+                                          ) : (
+                                            <>كود الخدمة: {service.serviceId || 'غير محدد'}</>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 text-sm mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="text-gray-600">السعر:</span>
+                                        <span className="font-medium text-gray-900">{formatCurrency(service.finalPrice || service.price || 0)}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span className="text-gray-600">الفني:</span>
+                                        <span className="font-medium text-gray-900">
+                                          {service.technicianName || (service.technicianId ? `مستخدم #${service.technicianId}` : 'غير محدد')}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {service.notes && (
+                                      <div className="bg-white/70 rounded-lg p-3 mt-2">
+                                        <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
+                                        <div className="text-sm text-gray-700">{service.notes}</div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col items-end gap-3">
+                                <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
+                                  {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
+                                </SimpleBadge>
+                                <div className="flex gap-2">
+                                  {editingService?.id === service.id ? (
+                                    <>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          handleUpdateService(service.id, {
+                                            serviceId: editingService.serviceId || service.serviceId,
+                                            technicianId: editingService.technicianId !== undefined ? editingService.technicianId : service.technicianId,
+                                            price: editingService.price || service.price,
+                                            notes: editingService.notes !== undefined ? editingService.notes : service.notes
+                                          });
+                                        }}
+                                        className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                                      >
+                                        <Save className="w-4 h-4 ml-1" />
+                                        حفظ
+                                      </SimpleButton>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingService(null)}
+                                        className="bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                      >
+                                        <X className="w-4 h-4 ml-1" />
+                                        إلغاء
+                                      </SimpleButton>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingService(service)}
+                                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                                      >
+                                        <Edit className="w-4 h-4 ml-1" />
+                                        تعديل
+                                      </SimpleButton>
+                                      <SimpleButton
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleDeleteService(service.id)}
+                                        className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                                      >
+                                        <Trash2 className="w-4 h-4 ml-1" />
+                                        حذف
+                                      </SimpleButton>
+                                    </>
+                                  )}
+                                </div>
+                                {!invoiced && (
+                                  <SimpleButton
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        // First check the invoices state (already loaded and normalized)
+                                        let targetInvoice = invoices.find(inv => invoiceBelongsToRepair(inv, id));
+                                        let targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
+
+                                        // If not found in state, fetch fresh from API (same logic as ensureInvoiceForRepair)
+                                        if (!targetInvoiceId) {
+                                          try {
+                                            const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+                                            const freshInvoices = normalizeInvoicesResponse(freshInvoicesData);
+                                            
+                                            console.log('Debug - Fresh invoices:', freshInvoices);
+                                            console.log('Debug - Looking for repairRequestId:', parseInt(id));
+                                            
+                                            targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
+                                            targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
+                                            
+                                            // Update invoices state if we found one
+                                            if (targetInvoiceId && invoices.length === 0) {
+                                              setInvoices(freshInvoices);
+                                            }
+                                          } catch (fetchErr) {
+                                            console.error('Error fetching invoices:', fetchErr);
+                                          }
+                                        }
+
+                                        if (!targetInvoiceId) {
+                                          notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
+                                          return;
+                                        }
+                                        console.log('Adding service to invoice:', {
+                                          targetInvoiceId,
+                                          service,
+                                          serviceKeys: Object.keys(service),
+                                          payload: {
+                                            serviceId: service.serviceId || service.id,
+                                            quantity: 1,
+                                            unitPrice: Number(service.price || 0),
+                                            description: service.notes || service.serviceName || '',
+                                            itemType: 'service'
+                                          }
+                                        });
+                                        // إضافة عنصر فاتورة للخدمة
+                                        const addData = await apiService.addInvoiceItem(targetInvoiceId, {
+                                          serviceId: service.serviceId || service.id || null,
+                                          quantity: 1,
+                                          unitPrice: Number(service.price || 0),
+                                          description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
+                                          itemType: 'service'
+                                        });
+
+                                        if (addData.success) {
+                                          notifications.success('تم إضافة الخدمة إلى الفاتورة');
+                                          await loadServices();
+                                          await loadInvoices();
+                                        } else if (addData.duplicate) {
+                                          notifications.warning('هذه الخدمة موجودة بالفعل في الفاتورة');
+                                          await loadServices(); // Refresh to update button state
+                                        } else {
+                                          throw new Error(addData.error || 'Failed to add service to invoice');
+                                        }
+                                      } catch (e) {
+                                        console.error('Error adding service to invoice:', e);
+                                        notifications.error(`تعذر إضافة الخدمة إلى الفاتورة: ${e.message}`);
+                                      }
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    إضافة للفاتورة
+                                  </SimpleButton>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* ترقيم صفحات مبسط بناءً على العدد الكلي */}
+                  <div className="flex justify-end items-center gap-2 mt-3 text-sm text-gray-600">
+                    <span>إجمالي العناصر: {getSortedPagedServices().total}</span>
+                  </div>
                 </SimpleCardContent>
               </SimpleCard>
 
@@ -2687,7 +3128,7 @@ const RepairDetailsPage = () => {
                                             throw new Error('Invalid invoices response format');
                                           }
 
-                                          const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
+                                          const targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
                                           const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                           if (!targetInvoiceId) {
                                             notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
@@ -2731,6 +3172,15 @@ const RepairDetailsPage = () => {
                                   >
                                     <Printer className="w-4 h-4" />
                                     طباعة
+                                  </SimpleButton>
+                                  <SimpleButton
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeletePart(pu.id)}
+                                    className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    حذف
                                   </SimpleButton>
                                 </div>
                               </div>
@@ -2888,7 +3338,7 @@ const RepairDetailsPage = () => {
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                         <span className="text-gray-600">السعر:</span>
-                                        <span className="font-medium text-gray-900">{Number(service.finalPrice || service.price || 0).toFixed(2)} ج.م</span>
+                                        <span className="font-medium text-gray-900">{formatCurrency(service.finalPrice || service.price || 0)}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -2970,24 +3420,31 @@ const RepairDetailsPage = () => {
                                     size="sm"
                                     onClick={async () => {
                                       try {
-                                        // تأكد من وجود فاتورة واحدة على الأقل
-                                        if (invoices.length === 0) {
-                                          await loadInvoices();
+                                        // First check the invoices state (already loaded and normalized)
+                                        let targetInvoice = invoices.find(inv => invoiceBelongsToRepair(inv, id));
+                                        let targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
+
+                                        // If not found in state, fetch fresh from API (same logic as ensureInvoiceForRepair)
+                                        if (!targetInvoiceId) {
+                                          try {
+                                            const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
+                                            const freshInvoices = normalizeInvoicesResponse(freshInvoicesData);
+                                            
+                                            console.log('Debug - Fresh invoices:', freshInvoices);
+                                            console.log('Debug - Looking for repairRequestId:', parseInt(id));
+                                            
+                                            targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
+                                            targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
+                                            
+                                            // Update invoices state if we found one
+                                            if (targetInvoiceId && invoices.length === 0) {
+                                              setInvoices(freshInvoices);
+                                            }
+                                          } catch (fetchErr) {
+                                            console.error('Error fetching invoices:', fetchErr);
+                                          }
                                         }
 
-                                        // Wait a moment for state to update, then get fresh invoices
-                                        await new Promise(resolve => setTimeout(resolve, 100));
-
-                                        // Get fresh invoices from the API directly to avoid state timing issues
-                                        const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-                                        const freshInvoices = freshInvoicesData.data || [];
-
-                                        console.log('Debug - Fresh invoices:', freshInvoices);
-                                        console.log('Debug - Looking for repairRequestId:', parseInt(id));
-                                        console.log('Debug - Invoice repairRequestIds:', freshInvoices.map(inv => ({ id: inv.id, repairRequestId: inv.repairRequestId, type: typeof inv.repairRequestId })));
-                                        const targetInvoice = freshInvoices.find(inv => inv.repairRequestId === parseInt(id));
-                                        console.log('Debug - Found target invoice:', targetInvoice);
-                                        const targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
                                         if (!targetInvoiceId) {
                                           notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
                                           return;
@@ -3544,67 +4001,80 @@ const RepairDetailsPage = () => {
                       عرض ملف العميل
                     </SimpleButton>
                   </Link>
-                  {customer.phone && repair && (
-                    <SimpleButton 
-                      size="sm" 
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => {
-                        // تنظيف رقم الهاتف (إزالة المسافات والرموز)
-                        const cleanPhone = customer.phone.replace(/[\s\-\(\)\+]/g, '');
-                        // إضافة 20 في البداية إذا لم تكن موجودة
-                        const phoneNumber = cleanPhone.startsWith('20') ? cleanPhone : (cleanPhone.startsWith('0') ? '20' + cleanPhone.substring(1) : '20' + cleanPhone);
-                        
-                        // بناء الرسالة من القالب في الإعدادات
-                        const repairNumber = repair.requestNumber || `REP-${repair.id}`;
-                        const deviceInfo = `${repair.deviceBrand || ''} ${repair.deviceModel || ''}`.trim() || 'غير محدد';
-                        const problem = repair.reportedProblem || repair.problemDescription || 'غير محدد';
-                        
-                        // الحصول على رقم الفاتورة القديم (أول فاتورة مرتبطة بالطلب)
-                        const oldInvoiceNumber = invoices && invoices.length > 0 ? (invoices[0].invoiceNumber || invoices[0].id || '') : '';
-                        const oldInvoiceNumberText = oldInvoiceNumber ? `\n\n• رقم الفاتورة القديم: ${oldInvoiceNumber}` : '';
-                        
-                        // بناء رابط التتبع
-                        const trackingToken = repair.trackingToken || repair.id;
-                        const trackingUrl = `${window.location.origin}/track?trackingToken=${trackingToken}`;
-                        
-                        // استخدام القالب من الإعدادات أو القالب الافتراضي
-                        const template = repairReceivedMessageTemplate || `جهازك وصل Fix Zone يا فندم
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          )}
 
+          {/* إرسال إشعار للعميل */}
+          {customer && customer.phone && repair && (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center">
+                  <MessageSquare className="w-5 h-5 ml-2" />
+                  إرسال إشعار للعميل
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="space-y-2">
+                  <SendButton
+                    entityType="repair"
+                    entityId={repair.id}
+                    customerId={repair.customerId}
+                    recipient={customer.phone}
+                    template="repairReceivedMessage"
+                    variables={{}}
+                    // لا نرسل variables - دع backend يجلبها تلقائياً من قاعدة البيانات
+                    // هذا يضمن أن البيانات دائماً محدثة وصحيحة
+                    onSuccess={() => notifications.success('تم إرسال إشعار الإصلاح بنجاح!')}
+                    onError={(err) => notifications.error(`فشل إرسال إشعار الإصلاح: ${err.message}`)}
+                    showChannelSelector={true}
+                    defaultChannels={['whatsapp']}
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    يمكنك اختيار إرسال الإشعار عبر واتساب أو البريد الإلكتروني أو كليهما
+                  </p>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          )}
 
-
-ده ملخص الطلب :
-
-• رقم الطلب: {repairNumber}
-
-• الجهاز: {deviceInfo}
-
-• المشكلة: {problem}{oldInvoiceNumber}
-
-تقدر تشوف التحديثات أول بأول من هنا:
-
-{trackingUrl}
-
-فريق الفنيين هيبدأ الفحص خلال الساعات القادمة.`;
-                        
-                        // استبدال المتغيرات في القالب
-                        const message = template
-                          .replace(/{repairNumber}/g, repairNumber)
-                          .replace(/{deviceInfo}/g, deviceInfo)
-                          .replace(/{problem}/g, problem)
-                          .replace(/{oldInvoiceNumber}/g, oldInvoiceNumberText)
-                          .replace(/{trackingUrl}/g, trackingUrl);
-                        
-                        // ترميز الرسالة
-                        const encodedMessage = encodeURIComponent(message);
-                        
-                        // فتح واتساب ويب
-                        window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
-                      }}
-                    >
-                      <MessageSquare className="w-4 h-4 ml-1" />
-                      إرسال رسالة واتساب
-                    </SimpleButton>
+          {/* معلومات العميل (محدث) */}
+          {customer && (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle className="flex items-center">
+                  <User className="w-5 h-5 ml-2" />
+                  معلومات العميل
+                </SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">الاسم</label>
+                    <p className="text-gray-900">{customer.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">الهاتف</label>
+                    <p className="text-gray-900 en-text">{customer.phone}</p>
+                  </div>
+                  {customer.email && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
+                      <p className="text-gray-900 en-text">{customer.email}</p>
+                    </div>
                   )}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <Link to={`/customers/${customer.id}`}>
+                    <SimpleButton variant="outline" size="sm" className="w-full">
+                      <User className="w-4 h-4 ml-1" />
+                      عرض ملف العميل
+                    </SimpleButton>
+                  </Link>
                 </div>
               </SimpleCardContent>
             </SimpleCard>
@@ -4285,6 +4755,18 @@ const RepairDetailsPage = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Message Log */}
+      {repair && (
+        <div className="mt-6">
+          <MessageLogViewer
+            entityType="repair"
+            entityId={repair.id}
+            customerId={repair.customerId}
+            limit={5}
+          />
         </div>
       )}
     </div>

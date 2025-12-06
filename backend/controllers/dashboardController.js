@@ -287,7 +287,7 @@ exports.getQuickStats = async (req, res) => {
       const [messages] = await db.execute(
         `SELECT COUNT(*) as count 
          FROM Notification 
-         WHERE userId = ? AND isRead = 0 AND deletedAt IS NULL`,
+         WHERE userId = ? AND isRead = 0`,
         [userId]
       );
       stats.newMessages = messages[0]?.count || 0;

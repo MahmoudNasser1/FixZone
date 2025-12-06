@@ -12,6 +12,16 @@ import {
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import './NewRepairPageEnhanced.css';
 
+// Helper function to format number without trailing zeros
+const formatNumber = (num) => {
+  if (num === null || num === undefined) return '';
+  const n = Number(num);
+  if (isNaN(n)) return '';
+  // Convert to number and back to string to remove trailing zeros
+  // This handles both integers and decimals properly
+  return parseFloat(n.toString()).toString();
+};
+
 const NewRepairPageEnhanced = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -72,6 +82,12 @@ const NewRepairPageEnhanced = () => {
   ]); // Store all brands for filtering
   const [accessoryOptions, setAccessoryOptions] = useState([]);
   const [deviceTypeOptions, setDeviceTypeOptions] = useState([]);
+  const [commonSpecs, setCommonSpecs] = useState({
+    cpu: [],
+    gpu: [],
+    ram: [],
+    storage: []
+  });
 
   const [formData, setFormData] = useState({
     customerId: searchParams.get('customerId') || '',
@@ -92,8 +108,8 @@ const NewRepairPageEnhanced = () => {
     accessories: [],
     problemDescription: '',
     priority: 'MEDIUM',
-    estimatedCostMin: '',
-    estimatedCostMax: '',
+    estimatedCostMin: null,
+    estimatedCostMax: null,
     actualCost: '',
     expectedDeliveryDate: '',
     notes: ''
@@ -105,6 +121,7 @@ const NewRepairPageEnhanced = () => {
   // تحميل البيانات الأساسية عند بدء الصفحة
   useEffect(() => {
     loadInitialData();
+    loadCommonSpecs();
 
     // إذا كان هناك customerId في الـ URL، جلب بيانات العميل
     const customerId = searchParams.get('customerId');
@@ -112,6 +129,35 @@ const NewRepairPageEnhanced = () => {
       fetchCustomerDetails(customerId);
     }
   }, []);
+
+  // Load common device specifications for quick actions
+  const loadCommonSpecs = async () => {
+    try {
+      const response = await apiService.request('/repairs/device-specs/common?limit=6', {
+        method: 'GET'
+      });
+      console.log('Common specs response:', response);
+      if (response && response.success && response.data) {
+        setCommonSpecs({
+          cpu: response.data.cpu || [],
+          gpu: response.data.gpu || [],
+          ram: response.data.ram || [],
+          storage: response.data.storage || []
+        });
+        console.log('Common specs loaded:', {
+          cpu: response.data.cpu?.length || 0,
+          gpu: response.data.gpu?.length || 0,
+          ram: response.data.ram?.length || 0,
+          storage: response.data.storage?.length || 0
+        });
+      } else {
+        console.warn('Common specs response missing success or data:', response);
+      }
+    } catch (error) {
+      console.error('Error loading common specs:', error);
+      // Silently fail - quick actions are optional
+    }
+  };
 
   const loadInitialData = async () => {
     try {
@@ -590,9 +636,17 @@ const NewRepairPageEnhanced = () => {
         problemDescription: formData.problemDescription.trim(), // Backend expects problemDescription - must be at least 10 chars
         customerNotes: formData.notes.trim() || null,
         priority: formData.priority === 'عالية' ? 'HIGH' : formData.priority === 'متوسطة' ? 'MEDIUM' : formData.priority === 'منخفضة' ? 'LOW' : 'MEDIUM', // Convert Arabic to English, default MEDIUM
-        estimatedCost: formData.estimatedCostMin && formData.estimatedCostMax 
-          ? parseFloat((parseFloat(formData.estimatedCostMin) + parseFloat(formData.estimatedCostMax)) / 2) // Send average if range provided
-          : (formData.estimatedCostMin ? parseFloat(formData.estimatedCostMin) : null), // Send as number, not string
+        // Calculate estimatedCost from range if both values exist (for validation - backend expects a number)
+        // This is only for validation purposes - we use the range for display
+        estimatedCost: (formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined && formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined)
+          ? (formData.estimatedCostMin + formData.estimatedCostMax) / 2 // Calculate average for validation
+          : (formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined 
+              ? formData.estimatedCostMin 
+              : (formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined 
+                  ? formData.estimatedCostMax 
+                  : 0)), // Use single value or 0
+        estimatedCostMin: formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined ? formData.estimatedCostMin : null, // Send min value
+        estimatedCostMax: formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined ? formData.estimatedCostMax : null, // Send max value
         // CRITICAL: Get companyId from multiple sources to ensure it's not lost
         // Check selectedCompany first (most up-to-date), then formData, then selectedCustomer
         companyId: (() => {
@@ -1102,6 +1156,22 @@ const NewRepairPageEnhanced = () => {
               onChange={handleInputChange}
               placeholder="أدخل نوع المعالج"
             />
+            {commonSpecs.cpu.length > 0 && (
+              <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="flex gap-2 min-w-max pb-1">
+                  {commonSpecs.cpu.map((value, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, cpu: value }))}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">كارت الرسوميات (GPU)</label>
@@ -1112,6 +1182,22 @@ const NewRepairPageEnhanced = () => {
               onChange={handleInputChange}
               placeholder="أدخل نوع كارت الرسوميات"
             />
+            {commonSpecs.gpu.length > 0 && (
+              <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="flex gap-2 min-w-max pb-1">
+                  {commonSpecs.gpu.map((value, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, gpu: value }))}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">الذاكرة (RAM)</label>
@@ -1122,6 +1208,22 @@ const NewRepairPageEnhanced = () => {
               onChange={handleInputChange}
               placeholder="أدخل حجم الذاكرة"
             />
+            {commonSpecs.ram.length > 0 && (
+              <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="flex gap-2 min-w-max pb-1">
+                  {commonSpecs.ram.map((value, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, ram: value }))}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">التخزين (Storage)</label>
@@ -1132,6 +1234,22 @@ const NewRepairPageEnhanced = () => {
               onChange={handleInputChange}
               placeholder="أدخل حجم التخزين"
             />
+            {commonSpecs.storage.length > 0 && (
+              <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="flex gap-2 min-w-max pb-1">
+                  {commonSpecs.storage.map((value, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, storage: value }))}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1238,8 +1356,14 @@ const NewRepairPageEnhanced = () => {
               <Input
                 type="number"
                 name="estimatedCostMin"
-                value={formData.estimatedCostMin}
-                onChange={handleInputChange}
+                value={formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined && formData.estimatedCostMin !== '' ? formData.estimatedCostMin : ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    estimatedCostMin: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                  }));
+                }}
                 placeholder="500"
                 step="0.01"
                 min="0"
@@ -1250,8 +1374,14 @@ const NewRepairPageEnhanced = () => {
               <Input
                 type="number"
                 name="estimatedCostMax"
-                value={formData.estimatedCostMax}
-                onChange={handleInputChange}
+                value={formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined && formData.estimatedCostMax !== '' ? formData.estimatedCostMax : ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    estimatedCostMax: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                  }));
+                }}
                 placeholder="1500"
                 step="0.01"
                 min="0"
@@ -1389,11 +1519,13 @@ const NewRepairPageEnhanced = () => {
               <div>
                 <span className="text-sm font-medium text-gray-500">التكلفة المتوقعة:</span>
                 <p className="text-gray-900">
-                  {formData.estimatedCostMin && formData.estimatedCostMax 
-                    ? `${formData.estimatedCostMin} - ${formData.estimatedCostMax} ج.م`
-                    : formData.estimatedCostMin 
-                      ? `من ${formData.estimatedCostMin} ج.م`
-                      : 'غير محدد'}
+                  {formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined && formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined
+                    ? `${formatNumber(formData.estimatedCostMin)} - ${formatNumber(formData.estimatedCostMax)} ج.م`
+                    : formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined
+                      ? `من ${formatNumber(formData.estimatedCostMin)} ج.م`
+                      : formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined
+                        ? `حتى ${formatNumber(formData.estimatedCostMax)} ج.م`
+                        : 'غير محدد'}
                 </p>
               </div>
             </div>

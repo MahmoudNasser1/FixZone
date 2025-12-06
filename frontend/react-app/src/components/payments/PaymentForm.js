@@ -66,6 +66,11 @@ const PaymentForm = ({
         notes: payment.notes || '',
         invoiceId: payment.invoiceId || ''
       });
+      
+      // Load invoice data if invoiceId exists
+      if (payment.invoiceId) {
+        loadInvoiceForPayment(payment.invoiceId);
+      }
     } else if (invoice) {
       // Calculate remaining amount from backend data
       const totalAmount = invoice.totalAmount || invoice.finalAmount || 0;
@@ -85,6 +90,21 @@ const PaymentForm = ({
       loadAvailableInvoices();
     }
   }, [payment, invoice]);
+
+  const loadInvoiceForPayment = async (invoiceId) => {
+    try {
+      const response = await apiService.getInvoiceById(invoiceId);
+      const invoice = response.data || response;
+      setSelectedInvoice(invoice);
+      
+      // Calculate remaining amount
+      const totalPaid = invoice.amountPaid || 0;
+      const remaining = (invoice.totalAmount || 0) - totalPaid;
+      setRemainingAmount(remaining);
+    } catch (error) {
+      console.error('Error loading invoice for payment:', error);
+    }
+  };
 
   const loadAvailableInvoices = async () => {
     try {
@@ -165,25 +185,27 @@ const PaymentForm = ({
       return;
     }
 
-    // Check if invoice is fully paid
-    const inv = selectedInvoice || invoice;
-    const invoiceTotalAmount = inv?.totalAmount || inv?.finalAmount || 0;
-    const invoiceAmountPaid = inv?.amountPaid || 0;
-    const invoiceRemaining = invoiceTotalAmount - invoiceAmountPaid;
-    
-    if (inv && invoiceRemaining <= 0) {
-      setErrors({
-        amount: 'الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة'
-      });
-      return;
-    }
+    // Check if invoice is fully paid (only for new payments, not when editing)
+    if (!payment) {
+      const inv = selectedInvoice || invoice;
+      const invoiceTotalAmount = inv?.totalAmount || inv?.finalAmount || 0;
+      const invoiceAmountPaid = inv?.amountPaid || 0;
+      const invoiceRemaining = invoiceTotalAmount - invoiceAmountPaid;
+      
+      if (inv && invoiceRemaining <= 0) {
+        setErrors({
+          amount: 'الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة'
+        });
+        return;
+      }
 
-    // Check if amount exceeds remaining balance
-    if (selectedInvoice && parseFloat(formData.amount) > remainingAmount) {
-      setErrors({
-        amount: `المبلغ يتجاوز المتبقي (${paymentService.formatAmount(remainingAmount)})`
-      });
-      return;
+      // Check if amount exceeds remaining balance (only for new payments)
+      if (selectedInvoice && parseFloat(formData.amount) > remainingAmount) {
+        setErrors({
+          amount: `المبلغ يتجاوز المتبقي (${paymentService.formatAmount(remainingAmount)})`
+        });
+        return;
+      }
     }
 
     onSubmit(formData);
@@ -192,11 +214,13 @@ const PaymentForm = ({
   const paymentMethods = paymentService.getPaymentMethods();
 
   // Calculate if invoice is fully paid
+  // When editing a payment, don't disable form based on invoice status
   const inv = selectedInvoice || invoice;
   const totalAmount = inv?.totalAmount || inv?.finalAmount || 0;
   const amountPaid = inv?.amountPaid || 0;
   const remaining = totalAmount - amountPaid;
-  const isFullyPaid = remaining <= 0;
+  // Only check if fully paid when creating new payment, not when editing
+  const isFullyPaid = !payment && remaining <= 0;
 
   return (
     <SimpleCard>
@@ -310,17 +334,17 @@ const PaymentForm = ({
               onChange={handleInputChange}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.amount ? 'border-red-500' : 'border-gray-300'
-              } ${isFullyPaid ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              } ${!payment && isFullyPaid ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="أدخل المبلغ"
               step="0.01"
               min="0"
-              max={remainingAmount || undefined}
-              disabled={isFullyPaid}
+              max={payment ? undefined : (remainingAmount || undefined)}
+              disabled={!payment && isFullyPaid}
             />
             {errors.amount && (
               <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
             )}
-            {isFullyPaid && (
+            {!payment && isFullyPaid && (
               <p className="text-gray-500 text-sm mt-1">لا يمكن إضافة دفعة للفاتورة المدفوعة بالكامل</p>
             )}
           </div>
@@ -413,7 +437,7 @@ const PaymentForm = ({
             <SimpleButton
               type="submit"
               className="bg-green-600 hover:bg-green-700"
-              disabled={loading || remainingAmount <= 0 || isFullyPaid}
+              disabled={loading || (!payment && (remainingAmount <= 0 || isFullyPaid))}
             >
               {loading ? 'جاري الحفظ...' : (payment ? 'تحديث الدفعة' : 'إضافة الدفعة')}
             </SimpleButton>

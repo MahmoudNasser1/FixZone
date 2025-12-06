@@ -51,11 +51,16 @@ const ModalContent = React.forwardRef(({ className, size, children, ...props }, 
     <ModalOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(modalVariants({ size }), className)}
+      className={cn(modalVariants({ size }), "max-h-[90vh] flex flex-col", className)}
+      onOpenAutoFocus={(e) => e.preventDefault()}
+      onInteractOutside={(e) => {
+        // منع إغلاق الـ modal عند النقر خارجها أثناء التعديل
+        // يمكن إزالة هذا إذا أردت السماح بالإغلاق
+      }}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10">
         <X className="h-4 w-4" />
         <span className="sr-only">إغلاق</span>
       </DialogPrimitive.Close>
@@ -159,8 +164,14 @@ const ConfirmModal = ({
 
 // Complete Modal component that handles isOpen and onClose props
 const ModalWrapper = ({ isOpen, onClose, title, description, children, size = "md", ...props }) => {
+  const handleOpenChange = (open) => {
+    if (!open && onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <Modal open={isOpen} onOpenChange={onClose} {...props}>
+    <Modal open={isOpen} onOpenChange={handleOpenChange} {...props}>
       <ModalContent size={size}>
         {(title || description) && (
           <ModalHeader>

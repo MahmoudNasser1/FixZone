@@ -739,12 +739,14 @@ router.put('/:id', validate(paymentSchemas.updatePayment, 'body'), async (req, r
 // Delete a payment
 router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (req, res) => {
   const { id } = req.params;
+  const connection = await db.getConnection();
+  
   try {
-    // Start transaction
-    await db.execute('START TRANSACTION');
+    // Start transaction using connection
+    await connection.beginTransaction();
     
     // Get payment details before deletion with invoice info
-    const [paymentRows] = await db.execute(`
+    const [paymentRows] = await connection.execute(`
       SELECT p.invoiceId, p.amount, i.repairRequestId
       FROM Payment p
       LEFT JOIN Invoice i ON p.invoiceId = i.id
@@ -752,7 +754,8 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
     `, [id]);
     
     if (paymentRows.length === 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -762,10 +765,11 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
     const payment = paymentRows[0];
     
     // Delete payment
-    const [result] = await db.execute('DELETE FROM Payment WHERE id = ?', [id]);
+    const [result] = await connection.execute('DELETE FROM Payment WHERE id = ?', [id]);
     
     if (result.affectedRows === 0) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ 
         success: false,
         error: 'Payment not found' 
@@ -773,14 +777,14 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
     }
     
     // Update invoice status after payment deletion
-    const [paymentSum] = await db.execute(`
+    const [paymentSum] = await connection.execute(`
       SELECT COALESCE(SUM(amount), 0) as totalPaid 
       FROM Payment 
       WHERE invoiceId = ?
     `, [payment.invoiceId]);
     
     const totalPaid = paymentSum[0].totalPaid;
-    const [invoiceRows] = await db.execute(`
+    const [invoiceRows] = await connection.execute(`
       SELECT totalAmount as finalAmount 
       FROM Invoice 
       WHERE id = ?
@@ -794,7 +798,7 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
         newStatus = 'partially_paid';
       }
       
-      await db.execute(`
+      await connection.execute(`
         UPDATE Invoice 
         SET status = ?, amountPaid = ?
         WHERE id = ?
@@ -803,12 +807,12 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
       // Update RepairRequest status if no longer fully paid
       if (newStatus !== 'paid' && payment.repairRequestId) {
         // Revert RepairRequest status if it was ready_for_delivery
-        const [repairRequest] = await db.execute(`
+        const [repairRequest] = await connection.execute(`
           SELECT status FROM RepairRequest WHERE id = ?
         `, [payment.repairRequestId]);
         
         if (repairRequest.length > 0 && repairRequest[0].status === 'ready_for_delivery') {
-          await db.execute(`
+          await connection.execute(`
             UPDATE RepairRequest 
             SET status = 'completed'
             WHERE id = ?
@@ -818,7 +822,8 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
     }
     
     // Commit transaction
-    await db.execute('COMMIT');
+    await connection.commit();
+    connection.release();
     
     res.json({ 
       success: true,
@@ -826,9 +831,13 @@ router.delete('/:id', validate(paymentSchemas.deletePayment, 'params'), async (r
     });
   } catch (err) {
     // Rollback transaction on error
-    await db.execute('ROLLBACK').catch(rollbackErr => {
+    try {
+      await connection.rollback();
+    } catch (rollbackErr) {
       console.error('Rollback error:', rollbackErr);
-    });
+    } finally {
+      connection.release();
+    }
     
     console.error(`Error deleting payment with ID ${id}:`, err);
     res.status(500).json({ 

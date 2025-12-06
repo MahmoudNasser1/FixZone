@@ -19,6 +19,7 @@ import {
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -179,24 +180,27 @@ const TechnicianReportsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
+      <SimpleCard>
+        <SimpleCardHeader>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <SimpleCardTitle className="text-2xl flex items-center gap-2">
               <UserGroupIcon className="h-8 w-8 text-blue-600" />
               تقارير أداء الفنيين
-            </h1>
-            <p className="text-gray-600 mt-1">تحليل شامل لأداء الفنيين وإنتاجيتهم</p>
+            </SimpleCardTitle>
+            <p className="text-muted-foreground mt-1">تحليل شامل لأداء الفنيين وإنتاجيتهم</p>
           </div>
-        </div>
-      </div>
+        </SimpleCardHeader>
+      </SimpleCard>
 
       {/* Date Range Filter */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
           فلترة الفترة الزمنية
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -221,14 +225,18 @@ const TechnicianReportsPage = () => {
             />
           </div>
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Performance Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <ChartBarIcon className="h-5 w-5 text-blue-600" />
           ملخص الأداء
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
             <div className="text-sm font-medium text-blue-800">إجمالي الفنيين</div>
@@ -255,35 +263,51 @@ const TechnicianReportsPage = () => {
             </div>
           </div>
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Performance Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">مقارنة أداء الفنيين</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>مقارنة أداء الفنيين</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Bar data={performanceChartData} options={chartOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
         {/* Revenue Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">إيرادات الفنيين</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>إيرادات الفنيين</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Bar data={revenueChartData} options={revenueChartOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
 
       {/* Time Performance Chart */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <ClockIcon className="h-5 w-5 text-blue-600" />
           متوسط وقت الإصلاح
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <Line data={timeChartData} options={chartOptions} />
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Detailed Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل أداء الفنيين</h3>
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle>تفاصيل أداء الفنيين</SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -362,14 +386,18 @@ const TechnicianReportsPage = () => {
             </tbody>
           </table>
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Top Performers */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <StarIcon className="h-5 w-5 text-yellow-600" />
           أفضل الفنيين
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {technicianData
             .sort((a, b) => b.completedRepairs - a.completedRepairs)
@@ -389,7 +417,8 @@ const TechnicianReportsPage = () => {
               </div>
             ))}
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
     </div>
   );
 };

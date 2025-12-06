@@ -78,20 +78,25 @@ class PaymentService {
     ];
   }
 
-  // Format payment amount
+  // Format payment amount (without trailing zeros)
   formatAmount(amount, currency = 'EGP') {
     if (!amount && amount !== 0) {
-      return '0.00 ج.م';
+      return '0 ج.م';
     }
     try {
-      return new Intl.NumberFormat('ar-EG', {
+      const numAmount = Number(amount);
+      const formatted = new Intl.NumberFormat('ar-EG', {
         style: 'currency',
         currency: currency,
-        minimumFractionDigits: 2
-      }).format(Number(amount));
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }).format(numAmount);
+      // Remove trailing zeros
+      return formatted.replace(/\.0+$/, '').replace(/(\d+\.\d*?)0+$/, '$1');
     } catch (error) {
       console.error('Error formatting amount:', error, 'Amount:', amount);
-      return `${Number(amount || 0).toFixed(2)} ${currency}`;
+      const numStr = parseFloat(Number(amount || 0).toString()).toString();
+      return `${numStr} ${currency}`;
     }
   }
 

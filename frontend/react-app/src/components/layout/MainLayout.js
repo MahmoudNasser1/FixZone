@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
-import Breadcrumb from './Breadcrumb';
 import PageTransition from '../ui/PageTransition';
 import useAuthStore from '../../stores/authStore';
 import { ROLE_CUSTOMER } from '../../constants/roles';
@@ -31,29 +30,6 @@ const MainLayout = ({
 
         {/* منطقة المحتوى الرئيسية */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* شريط التنقل والعنوان */}
-          {(showBreadcrumb || pageTitle || pageActions) && (
-            <div className="bg-background border-b border-border px-6 py-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col space-y-2">
-                  {showBreadcrumb && (
-                    <Breadcrumb items={breadcrumbItems} />
-                  )}
-                  {pageTitle && (
-                    <h1 className="text-2xl font-bold text-foreground">
-                      {pageTitle}
-                    </h1>
-                  )}
-                </div>
-                {pageActions && (
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    {pageActions}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* المحتوى */}
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/30 p-6">
             <div className="max-w-7xl mx-auto">

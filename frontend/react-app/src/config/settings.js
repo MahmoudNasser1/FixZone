@@ -65,23 +65,39 @@ export function saveSettings(next) {
   } catch {}
 }
 
+// Helper function to remove trailing zeros from number string
+function removeTrailingZeros(numStr) {
+  if (!numStr || typeof numStr !== 'string') return numStr;
+  // Remove trailing zeros and decimal point if all zeros
+  return numStr.replace(/\.0+$/, '').replace(/(\d+\.\d*?)0+$/, '$1');
+}
+
 export function formatMoney(amount, settings) {
   const cfg = (settings && settings.currency) || defaultSettings.currency;
   try {
+    const numAmount = Number(amount || 0);
+    
+    // Format with currency, but we'll remove trailing zeros
     const formatted = new Intl.NumberFormat(cfg.locale || 'ar-EG', {
       style: 'currency',
       currency: cfg.code || 'EGP',
-      minimumFractionDigits: cfg.minimumFractionDigits ?? 2,
-    }).format(Number(amount || 0));
+      minimumFractionDigits: 0, // Start with 0, we'll add decimals only if needed
+      maximumFractionDigits: 2, // Max 2 decimals
+    }).format(numAmount);
+    
+    // Remove trailing zeros from the formatted string
+    const cleaned = removeTrailingZeros(formatted);
     
     // Apply position if specified (before/after)
     if (cfg.position === 'before' && cfg.symbol) {
-      return `${cfg.symbol} ${Number(amount || 0).toFixed(cfg.minimumFractionDigits ?? 2)}`;
+      const numStr = parseFloat(numAmount.toString()).toString();
+      return `${cfg.symbol} ${numStr}`;
     }
     
-    return formatted;
+    return cleaned;
   } catch {
-    return `${amount} ${cfg.code || 'EGP'}`;
+    const numStr = parseFloat(Number(amount || 0).toString()).toString();
+    return `${numStr} ${cfg.code || 'EGP'}`;
   }
 }
 

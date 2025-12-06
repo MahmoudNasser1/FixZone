@@ -10,6 +10,8 @@ import {
   CheckCircle, XCircle, Clock, AlertCircle, Download, Edit, 
   Plus, Eye, Printer, Send, CreditCard, Receipt
 } from 'lucide-react';
+import SendButton from '../../components/messaging/SendButton';
+import MessageLogViewer from '../../components/messaging/MessageLogViewer';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
@@ -151,22 +153,45 @@ const InvoiceDetailsPage = () => {
   };
 
   const handlePrintInvoice = () => {
-    if (!id) return;
-    const base = `${API_BASE_URL}/invoices`;
-    const url = `${base}/${id}/print`;
-    window.open(url, '_blank');
+    // Use invoice.id if available, otherwise fall back to id from params
+    const invoiceId = invoice?.id || id;
+    
+    console.log('Print invoice clicked:', { invoiceId, invoice: invoice?.id, id });
+    
+    if (!invoiceId || invoiceId === 'new') {
+      console.error('Cannot print: Invoice ID is missing or invalid', { invoiceId, invoice: invoice?.id, id });
+      alert('لا يمكن طباعة الفاتورة: رقم الفاتورة غير صحيح');
+      return;
+    }
+    
+    try {
+      const base = `${API_BASE_URL}/invoices`;
+      const url = `${base}/${invoiceId}/print`;
+      console.log('Opening print URL:', url, 'API_BASE_URL:', API_BASE_URL);
+      
+      const printWindow = window.open(url, '_blank');
+      
+      if (!printWindow) {
+        console.error('Failed to open print window - popup blocked');
+        alert('فشل فتح نافذة الطباعة. يرجى التحقق من إعدادات منع النوافذ المنبثقة.');
+      } else {
+        console.log('Print window opened successfully');
+      }
+    } catch (error) {
+      console.error('Error opening print window:', error);
+      alert('حدث خطأ أثناء محاولة فتح صفحة الطباعة');
+    }
   };
 
-  const handleSendInvoice = async () => {
-    if (window.confirm('هل تريد إرسال الفاتورة للعميل؟')) {
-      try {
-        // Implement send invoice functionality
-        alert('تم إرسال الفاتورة للعميل');
-      } catch (err) {
-        console.error('Error sending invoice:', err);
-        alert('حدث خطأ في إرسال الفاتورة');
-      }
-    }
+  // Handle successful send
+  const handleSendSuccess = (result) => {
+    console.log('Message sent successfully:', result);
+    // Optionally refresh invoice data or show success message
+  };
+
+  // Handle send error
+  const handleSendError = (error) => {
+    console.error('Error sending message:', error);
   };
 
   if (loading) {
@@ -203,9 +228,20 @@ const InvoiceDetailsPage = () => {
   }, 0);
   
   // Use calculated total if items exist, otherwise use stored totalAmount
-  const effectiveTotalAmount = invoiceItems.length > 0 && calculatedTotalFromItems > 0 
+  const subtotal = invoiceItems.length > 0 && calculatedTotalFromItems > 0 
     ? calculatedTotalFromItems 
     : (invoice.totalAmount || 0);
+  
+  // Calculate discount, tax, and shipping
+  const discountPercent = Number(invoice.discountPercent) || 0;
+  const discountAmount = discountPercent > 0 && subtotal > 0 
+    ? (subtotal * discountPercent) / 100 
+    : (Number(invoice.discountAmount) || 0);
+  const taxAmount = Number(invoice.taxAmount) || 0;
+  const shippingAmount = Number(invoice.shippingAmount) || 0;
+  
+  // Calculate final total
+  const effectiveTotalAmount = subtotal - discountAmount + taxAmount + shippingAmount;
   
   const remainingAmount = effectiveTotalAmount - (invoice.amountPaid || 0);
 
@@ -241,10 +277,24 @@ const InvoiceDetailsPage = () => {
             <Printer className="w-4 h-4 ml-2" />
             طباعة
           </SimpleButton>
-          <SimpleButton onClick={handleSendInvoice}>
-            <Send className="w-4 h-4 ml-2" />
-            إرسال
-          </SimpleButton>
+          {invoice.customerPhone && (
+            <div className="space-y-2">
+              <SendButton
+                entityType="invoice"
+                entityId={invoice.id}
+                customerId={invoice.customerId}
+                recipient={invoice.customerPhone}
+                template="defaultMessage"
+                onSuccess={handleSendSuccess}
+                onError={handleSendError}
+                showChannelSelector={true}
+                defaultChannels={['whatsapp']}
+              />
+              <p className="text-xs text-gray-500">
+                يمكنك اختيار إرسال الفاتورة عبر واتساب أو البريد الإلكتروني أو كليهما
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -281,10 +331,24 @@ const InvoiceDetailsPage = () => {
                   <label className="text-sm font-medium text-gray-500">المبلغ المتبقي</label>
                   <p className="text-lg font-semibold text-gray-900">{formatCurrency(remainingAmount, invoice.currency)}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">الضريبة</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(invoice.taxAmount, invoice.currency)}</p>
-                </div>
+                {taxAmount > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">الضريبة</label>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(taxAmount, invoice.currency)}</p>
+                  </div>
+                )}
+                {(discountPercent > 0 || discountAmount > 0) && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">الخصم {discountPercent > 0 ? `(${discountPercent}%)` : ''}</label>
+                    <p className="text-lg font-semibold text-red-600">-{formatCurrency(discountAmount, invoice.currency)}</p>
+                  </div>
+                )}
+                {shippingAmount > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">الشحن</label>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(shippingAmount, invoice.currency)}</p>
+                  </div>
+                )}
               </div>
           </SimpleCardContent>
         </SimpleCard>
@@ -352,6 +416,44 @@ const InvoiceDetailsPage = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              
+              {/* Invoice Summary - Discount, Tax, Shipping */}
+              {(discountPercent > 0 || discountAmount > 0 || taxAmount > 0 || shippingAmount > 0) && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">المجموع الفرعي:</span>
+                      <span className="font-medium">{formatCurrency(subtotal, invoice.currency)}</span>
+                    </div>
+                    
+                    {(discountPercent > 0 || discountAmount > 0) && (
+                      <div className="flex justify-between text-sm text-red-600">
+                        <span>الخصم {discountPercent > 0 ? `(${discountPercent}%)` : ''}:</span>
+                        <span className="font-medium">-{formatCurrency(discountAmount, invoice.currency)}</span>
+                      </div>
+                    )}
+                    
+                    {taxAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>الضريبة:</span>
+                        <span className="font-medium">+{formatCurrency(taxAmount, invoice.currency)}</span>
+                      </div>
+                    )}
+                    
+                    {shippingAmount > 0 && (
+                      <div className="flex justify-between text-sm text-blue-600">
+                        <span>الشحن:</span>
+                        <span className="font-medium">+{formatCurrency(shippingAmount, invoice.currency)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between text-lg font-semibold pt-3 border-t border-gray-300">
+                      <span>الإجمالي النهائي:</span>
+                      <span>{formatCurrency(effectiveTotalAmount, invoice.currency)}</span>
+                    </div>
+                  </div>
                 </div>
               )}
               </SimpleCardContent>
@@ -617,13 +719,40 @@ const InvoiceDetailsPage = () => {
                   <Download className="w-4 h-4 ml-2" />
                   تحميل PDF
                 </SimpleButton>
-                <SimpleButton variant="outline" size="sm" className="w-full" onClick={handleSendInvoice}>
-                  <Send className="w-4 h-4 ml-2" />
-                  إرسال للعميل
-                </SimpleButton>
+                {invoice.customerPhone && (
+                  <div className="w-full space-y-2">
+                    <SendButton
+                      entityType="invoice"
+                      entityId={invoice.id}
+                      customerId={invoice.customerId}
+                      recipient={invoice.customerPhone}
+                      template="defaultMessage"
+                      onSuccess={handleSendSuccess}
+                      onError={handleSendError}
+                      showChannelSelector={true}
+                      defaultChannels={['whatsapp']}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    />
+                    <p className="text-xs text-gray-500 text-center">
+                      اختر القناة: واتساب أو بريد إلكتروني
+                    </p>
+                  </div>
+                )}
           </div>
             </SimpleCardContent>
           </SimpleCard>
+
+          {/* Message Log */}
+          {id && id !== 'new' && invoice && (
+            <MessageLogViewer
+              entityType="invoice"
+              entityId={parseInt(id)}
+              customerId={invoice.customerId}
+              limit={5}
+            />
+          )}
         </div>
       </div>
     </div>

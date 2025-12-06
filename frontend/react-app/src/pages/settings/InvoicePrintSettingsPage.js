@@ -26,6 +26,7 @@ export default function InvoicePrintSettingsPage() {
         customerInfoLayout: 'vertical',
         showCompanyInfo: true,
         companyInfoLayout: 'vertical',
+        showDeviceSection: true,
         showItemsTable: true,
         tableStyle: 'bordered',
         showItemDescription: true,
@@ -94,6 +95,12 @@ export default function InvoicePrintSettingsPage() {
             decimalPlaces: 2,
             thousandSeparator: ',',
             decimalSeparator: '.'
+        },
+        financial: {
+            showTax: true,
+            showShipping: true,
+            defaultTaxPercent: 15,
+            defaultShippingAmount: 150
         }
     });
 
@@ -131,7 +138,7 @@ export default function InvoicePrintSettingsPage() {
         const { name, value, type, checked } = e.target;
         const bools = new Set([
             'showLogo', 'showHeader', 'showInvoiceNumber', 'showInvoiceDate', 'showDueDate',
-            'showCustomerInfo', 'showCompanyInfo', 'showItemsTable', 'showItemDescription',
+            'showCustomerInfo', 'showCompanyInfo', 'showDeviceSection', 'showItemsTable', 'showItemDescription',
             'showItemQuantity', 'showItemPrice', 'showItemDiscount', 'showItemTax',
             'showItemTotal', 'showSubtotal', 'showDiscount', 'showTax', 'showShipping',
             'showTotal', 'showPaymentMethod', 'showPaymentStatus', 'showNotes', 'showTerms',
@@ -195,6 +202,17 @@ export default function InvoicePrintSettingsPage() {
             }));
             return;
         }
+        if (name.startsWith('financial.')) {
+            const key = name.split('.')[1];
+            setInvoicePrint((ip) => ({
+                ...ip,
+                financial: { 
+                    ...ip.financial, 
+                    [key]: key === 'showTax' || key === 'showShipping' ? checked : (key === 'defaultTaxPercent' || key === 'defaultShippingAmount' ? Number(value) : value)
+                }
+            }));
+            return;
+        }
 
         setInvoicePrint((ip) => ({
             ...ip,
@@ -240,6 +258,12 @@ export default function InvoicePrintSettingsPage() {
                         decimalSeparator: invoicePrint.numberFormat.decimalSeparator || '.',
                     },
                     dateDisplay: invoicePrint.dateDisplay || 'both',
+                    financial: {
+                        showTax: !!invoicePrint.financial?.showTax,
+                        showShipping: !!invoicePrint.financial?.showShipping,
+                        defaultTaxPercent: Number(invoicePrint.financial?.defaultTaxPercent) || 15,
+                        defaultShippingAmount: Number(invoicePrint.financial?.defaultShippingAmount) || 150
+                    }
                 }
             };
             await api.updatePrintSettings(payload);
@@ -344,7 +368,10 @@ export default function InvoicePrintSettingsPage() {
                                 { key: 'showDueDate', label: 'تاريخ الاستحقاق' },
                                 { key: 'showCustomerInfo', label: 'بيانات العميل' },
                                 { key: 'showCompanyInfo', label: 'بيانات الشركة' },
+                                { key: 'showDeviceSection', label: 'تفاصيل الجهاز' },
                                 { key: 'showItemsTable', label: 'جدول الأصناف' },
+                                { key: 'showPaymentMethod', label: 'طريقة الدفع' },
+                                { key: 'showPaymentStatus', label: 'حالة الدفع' },
                                 { key: 'showNotes', label: 'الملاحظات' },
                                 { key: 'showTerms', label: 'الشروط والأحكام' },
                                 { key: 'showSignature', label: 'التوقيع' },
@@ -424,9 +451,204 @@ export default function InvoicePrintSettingsPage() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">اتجاه الصفحة</label>
+                                <select
+                                    name="orientation"
+                                    value={invoicePrint.orientation}
+                                    onChange={handleInvoicePrintChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                >
+                                    <option value="portrait">عمودي</option>
+                                    <option value="landscape">أفقي</option>
+                                </select>
+                            </div>
                             <div className="md:col-span-3">
                                 {PreviewCurrency}
                             </div>
+                        </div>
+                    </div>
+
+                    {/* QR Code Settings */}
+                    {invoicePrint.showQrCode && (
+                        <div className="border-b pb-4">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">إعدادات QR Code</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">الموضع</label>
+                                    <select
+                                        name="qrCodePosition"
+                                        value={invoicePrint.qrCodePosition}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    >
+                                        <option value="top-right">أعلى يمين</option>
+                                        <option value="top-left">أعلى يسار</option>
+                                        <option value="bottom-right">أسفل يمين</option>
+                                        <option value="bottom-left">أسفل يسار</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">الحجم (بكسل)</label>
+                                    <input
+                                        type="number"
+                                        name="qrCodeSize"
+                                        value={invoicePrint.qrCodeSize}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Barcode Settings */}
+                    {invoicePrint.showBarcode && (
+                        <div className="border-b pb-4">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">إعدادات الباركود</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">الموضع</label>
+                                    <select
+                                        name="barcodePosition"
+                                        value={invoicePrint.barcodePosition}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    >
+                                        <option value="top">أعلى</option>
+                                        <option value="bottom">أسفل</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">العرض</label>
+                                    <input
+                                        type="number"
+                                        name="barcodeWidth"
+                                        value={invoicePrint.barcodeWidth}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">الارتفاع</label>
+                                    <input
+                                        type="number"
+                                        name="barcodeHeight"
+                                        value={invoicePrint.barcodeHeight}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Terms Settings */}
+                    {invoicePrint.showTerms && (
+                        <div className="border-b pb-4">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">الشروط والأحكام</h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">عنوان القسم</label>
+                                    <input
+                                        name="termsLabel"
+                                        value={invoicePrint.termsLabel}
+                                        onChange={handleInvoicePrintChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">نص الشروط والأحكام</label>
+                                    <textarea
+                                        name="termsText"
+                                        value={invoicePrint.termsText}
+                                        onChange={handleInvoicePrintChange}
+                                        rows={4}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Financial Settings */}
+                    <div className="border-b pb-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">الإعدادات المالية</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="financial.showTax"
+                                    checked={!!invoicePrint.financial?.showTax}
+                                    onChange={handleInvoicePrintChange}
+                                    className="rounded text-blue-600"
+                                />
+                                <span className="text-sm text-gray-700">إظهار الضريبة</span>
+                            </label>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">نسبة الضريبة (%)</label>
+                                <input
+                                    type="number"
+                                    name="financial.defaultTaxPercent"
+                                    value={invoicePrint.financial?.defaultTaxPercent || 15}
+                                    onChange={handleInvoicePrintChange}
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    disabled={!invoicePrint.financial?.showTax}
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="financial.showShipping"
+                                    checked={!!invoicePrint.financial?.showShipping}
+                                    onChange={handleInvoicePrintChange}
+                                    className="rounded text-blue-600"
+                                />
+                                <span className="text-sm text-gray-700">إظهار الشحن</span>
+                            </label>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">مبلغ الشحن الافتراضي (ج.م)</label>
+                                <input
+                                    type="number"
+                                    name="financial.defaultShippingAmount"
+                                    value={invoicePrint.financial?.defaultShippingAmount || 150}
+                                    onChange={handleInvoicePrintChange}
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    disabled={!invoicePrint.financial?.showShipping}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Page Break Settings */}
+                    <div className="border-b pb-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">تقسيم الصفحات</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="pageBreak.avoidItems"
+                                    checked={!!invoicePrint.pageBreak.avoidItems}
+                                    onChange={handleInvoicePrintChange}
+                                    className="rounded text-blue-600"
+                                />
+                                <span className="text-sm text-gray-700">منع تقسيم الجدول بين صفحات</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="pageBreak.avoidCustomerInfo"
+                                    checked={!!invoicePrint.pageBreak.avoidCustomerInfo}
+                                    onChange={handleInvoicePrintChange}
+                                    className="rounded text-blue-600"
+                                />
+                                <span className="text-sm text-gray-700">منع تقسيم بيانات العميل بين صفحات</span>
+                            </label>
                         </div>
                     </div>
 

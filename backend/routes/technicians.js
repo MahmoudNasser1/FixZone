@@ -5,7 +5,7 @@ const db = require('../db');
 // Get all technicians
 router.get('/', async (req, res) => {
   try {
-    // جلب الفنيين
+    // جلب الفنيين فقط - فلترة صارمة حسب اسم الدور فقط (لا نعتمد على roleId)
     const [technicians] = await db.query(`
       SELECT 
         u.id, 
@@ -15,12 +15,14 @@ router.get('/', async (req, res) => {
         u.roleId,
         r.name as roleName
       FROM User u 
-      LEFT JOIN Role r ON u.roleId = r.id 
-      WHERE (r.name IN ('Technician', 'technician') OR u.roleId = 6)
+      INNER JOIN Role r ON u.roleId = r.id 
+      WHERE LOWER(TRIM(r.name)) = 'technician'
         AND u.deletedAt IS NULL
+        AND u.isActive = 1
       ORDER BY u.name
     `);
     
+    console.log(`[Technicians Route] Found ${technicians.length} technicians`);
     return res.json(technicians || []);
   } catch (err) {
     console.error('Error fetching technicians:', err);

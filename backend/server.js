@@ -89,6 +89,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve public files statically (for logos, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Start messaging cron jobs
+try {
+  const messagingCronJobs = require('./jobs/messagingCronJobs');
+  messagingCronJobs.startAllJobs();
+  console.log('✅ Messaging cron jobs initialized');
+} catch (error) {
+  console.error('⚠️ Failed to start messaging cron jobs:', error.message);
+  // Don't fail server startup if cron jobs fail
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

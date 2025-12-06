@@ -33,6 +33,7 @@ import NewRepairPageEnhanced from './pages/repairs/NewRepairPageEnhanced';
 import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
 import RepairTrackingPage from './pages/repairs/RepairTrackingPage';
 import PublicRepairTrackingPage from './pages/repairs/PublicRepairTrackingPage';
+import PublicRepairReportsPage from './pages/repairs/PublicRepairReportsPage';
 import RepairPrintPage from './pages/repairs/RepairPrintPage';
 import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
 import { SettingsProvider } from './context/SettingsContext';
@@ -99,6 +100,10 @@ import { InvoicesListPage, InvoiceDetailsPage, InvoiceCreatePage } from './pages
 
 // Quotations Pages
 import { QuotationsPage } from './pages/quotations';
+
+// Messaging Pages
+import MessagingCenterPage from './pages/messaging/MessagingCenterPage';
+import MessagingReportsPage from './pages/messaging/MessagingReportsPage';
 
 // Customer Portal Pages
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
@@ -324,6 +329,7 @@ function App() {
 
             {/* Public Routes - لا تحتاج تسجيل دخول */}
             <Route path="/track" element={<PublicRepairTrackingPage />} />
+            <Route path="/track/reports" element={<PublicRepairReportsPage />} />
 
             {/* Staff/Admin Routes */}
             <Route
@@ -359,6 +365,10 @@ function App() {
 
                       {/* Quotations */}
                       <Route path="quotations" element={<QuotationsPage />} />
+                      
+                      {/* Messaging Center */}
+                      <Route path="messaging" element={<MessagingCenterPage />} />
+                      <Route path="messaging/reports" element={<MessagingReportsPage />} />
 
                       {/* Customers */}
                       <Route path="customers" element={<CustomersPage />} />

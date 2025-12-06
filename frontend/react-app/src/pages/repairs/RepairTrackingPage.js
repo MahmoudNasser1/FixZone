@@ -30,6 +30,7 @@ import {
 import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import SimpleButton from '../../components/ui/SimpleButton';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 
@@ -215,13 +216,14 @@ const RepairTrackingPage = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <SimpleCard>
+        <SimpleCardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">تتبع طلب الإصلاح</h1>
-            <p className="text-gray-600">ابحث عن طلب الإصلاح باستخدام رمز التتبع أو رقم الطلب (ID)</p>
+              <h1 className="text-2xl font-bold text-foreground">تتبع طلب الإصلاح</h1>
+              <p className="text-muted-foreground mt-1">ابحث عن طلب الإصلاح باستخدام رمز التتبع أو رقم الطلب (ID)</p>
           </div>
           <div className="flex items-center space-x-2 space-x-reverse">
             <SimpleButton
@@ -234,14 +236,18 @@ const RepairTrackingPage = () => {
             </SimpleButton>
           </div>
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Search Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <div className="flex items-center space-x-4 space-x-reverse mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">البحث عن طلب الإصلاح</h2>
+      <SimpleCard>
+        <SimpleCardHeader>
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <SimpleCardTitle>البحث عن طلب الإصلاح</SimpleCardTitle>
           <QrCode className="w-5 h-5 text-blue-600" />
         </div>
+        </SimpleCardHeader>
+        <SimpleCardContent>
 
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Search Type Toggle */}
@@ -314,7 +320,8 @@ const RepairTrackingPage = () => {
             </SimpleButton>
           </div>
         </form>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Loading State */}
       {loading && (
@@ -325,35 +332,40 @@ const RepairTrackingPage = () => {
 
       {/* No Results */}
       {!loading && !repairData && (
-        <div className="text-center py-12">
-          <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">ابحث عن طلب الإصلاح</h3>
-          <p className="text-gray-600">
+        <SimpleCard>
+          <SimpleCardContent className="text-center py-12">
+            <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">ابحث عن طلب الإصلاح</h3>
+            <p className="text-muted-foreground">
             أدخل رمز التتبع أو رقم الطلب للعثور على حالة طلب الإصلاح
           </p>
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
       )}
 
       {/* Repair Data Display */}
       {repairData && (
         <div className="space-y-6">
           {/* Status Progress */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">حالة الطلب</h2>
-              <span className="text-sm text-gray-500">
+          <SimpleCard>
+            <SimpleCardHeader>
+              <div className="flex items-center justify-between">
+                <SimpleCardTitle>حالة الطلب</SimpleCardTitle>
+                <span className="text-sm text-muted-foreground">
                 {formatDate(repairData.createdAt)}
               </span>
             </div>
+            </SimpleCardHeader>
+            <SimpleCardContent>
 
             {/* Progress Bar */}
             <div className="mb-4">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
                 <span>0%</span>
                 <span className="font-medium">{getStatusProgress(repairData.status)}% مكتمل</span>
                 <span>100%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${getStatusProgress(repairData.status)}%` }}
@@ -373,20 +385,24 @@ const RepairTrackingPage = () => {
                       <Icon className="w-4 h-4 mr-2" />
                       {config.label}
                     </div>
-                    <p className="text-sm text-gray-600">{config.description}</p>
+                    <p className="text-sm text-muted-foreground">{config.description}</p>
                   </div>
                 );
               })()}
             </div>
-          </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
           {/* Repair Details */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-6">
               {/* Device Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات الجهاز</h3>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>معلومات الجهاز</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     {(() => {
@@ -394,95 +410,103 @@ const RepairTrackingPage = () => {
                       return <DeviceIcon className="w-5 h-5 text-blue-600" />;
                     })()}
                     <div>
-                      <h4 className="font-medium text-gray-900">نوع الجهاز</h4>
-                      <p className="text-gray-600">{repairData.deviceType || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">نوع الجهاز</h4>
+                      <p className="text-muted-foreground">{repairData.deviceType || 'غير محدد'}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Package className="w-5 h-5 text-green-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">الماركة</h4>
-                      <p className="text-gray-600">{repairData.deviceBrand || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">الماركة</h4>
+                      <p className="text-muted-foreground">{repairData.deviceBrand || 'غير محدد'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Wrench className="w-5 h-5 text-orange-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">الموديل</h4>
-                      <p className="text-gray-600">{repairData.deviceModel || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">الموديل</h4>
+                      <p className="text-muted-foreground">{repairData.deviceModel || 'غير محدد'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <FileText className="w-5 h-5 text-purple-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">وصف المشكلة</h4>
-                      <p className="text-gray-600">{repairData.problemDescription || 'لا توجد تفاصيل'}</p>
+                      <h4 className="font-medium text-foreground">وصف المشكلة</h4>
+                      <p className="text-muted-foreground">{repairData.problemDescription || 'لا توجد تفاصيل'}</p>
                     </div>
                   </div>
                 </div>
-              </div>
+                </SimpleCardContent>
+              </SimpleCard>
 
               {/* Customer Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات العميل</h3>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>معلومات العميل</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <User className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">اسم العميل</h4>
-                      <p className="text-gray-600">{repairData.customerName || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">اسم العميل</h4>
+                      <p className="text-muted-foreground">{repairData.customerName || 'غير محدد'}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Phone className="w-5 h-5 text-green-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">رقم الهاتف</h4>
-                      <p className="text-gray-600">{repairData.customerPhone || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">رقم الهاتف</h4>
+                      <p className="text-muted-foreground">{repairData.customerPhone || 'غير محدد'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Mail className="w-5 h-5 text-purple-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">البريد الإلكتروني</h4>
-                      <p className="text-gray-600">{repairData.customerEmail || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">البريد الإلكتروني</h4>
+                      <p className="text-muted-foreground">{repairData.customerEmail || 'غير محدد'}</p>
                     </div>
                   </div>
                 </div>
-              </div>
+                </SimpleCardContent>
+              </SimpleCard>
             </div>
 
             {/* Right Column */}
             <div className="space-y-6">
               {/* Repair Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات الإصلاح</h3>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>معلومات الإصلاح</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">تاريخ الاستلام</h4>
-                      <p className="text-gray-600">{formatDate(repairData.createdAt)}</p>
+                      <h4 className="font-medium text-foreground">تاريخ الاستلام</h4>
+                      <p className="text-muted-foreground">{formatDate(repairData.createdAt)}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <Clock className="w-5 h-5 text-orange-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">التسليم المتوقع</h4>
-                      <p className="text-gray-600">{formatDate(repairData.estimatedCompletionDate)}</p>
+                      <h4 className="font-medium text-foreground">التسليم المتوقع</h4>
+                      <p className="text-muted-foreground">{formatDate(repairData.estimatedCompletionDate)}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <DollarSign className="w-5 h-5 text-green-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">التكلفة المقدرة</h4>
-                      <p className="text-gray-600">
+                      <h4 className="font-medium text-foreground">التكلفة المقدرة</h4>
+                      <p className="text-muted-foreground">
                         {repairData.estimatedCost ? `${repairData.estimatedCost} ج.م` : 'غير محدد'}
                       </p>
                     </div>
@@ -491,7 +515,7 @@ const RepairTrackingPage = () => {
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">الأولوية</h4>
+                      <h4 className="font-medium text-foreground">الأولوية</h4>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         repairData.priority === 'high' ? 'bg-red-100 text-red-800' :
                         repairData.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -503,44 +527,52 @@ const RepairTrackingPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                </SimpleCardContent>
+              </SimpleCard>
 
               {/* Tracking Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات التتبع</h3>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>معلومات التتبع</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <QrCode className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">رمز التتبع</h4>
-                      <p className="text-gray-600 font-mono">{repairData.trackingToken || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">رمز التتبع</h4>
+                      <p className="text-muted-foreground font-mono">{repairData.trackingToken || 'غير محدد'}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <FileText className="w-5 h-5 text-green-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">رقم الطلب</h4>
-                      <p className="text-gray-600 font-mono">{repairData.requestNumber || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">رقم الطلب</h4>
+                      <p className="text-muted-foreground font-mono">{repairData.requestNumber || 'غير محدد'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <MapPin className="w-5 h-5 text-purple-600" />
                     <div>
-                      <h4 className="font-medium text-gray-900">الفرع</h4>
-                      <p className="text-gray-600">{repairData.branchName || 'غير محدد'}</p>
+                      <h4 className="font-medium text-foreground">الفرع</h4>
+                      <p className="text-muted-foreground">{repairData.branchName || 'غير محدد'}</p>
                     </div>
                   </div>
                 </div>
-              </div>
+                </SimpleCardContent>
+              </SimpleCard>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <SimpleCard>
+            <SimpleCardHeader>
+              <SimpleCardTitle>الإجراءات</SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">الإجراءات</h3>
               <div className="flex items-center space-x-2 space-x-reverse">
                 <SimpleButton
                   onClick={() => navigate(`/repairs/${repairData.id}`)}
@@ -569,7 +601,8 @@ const RepairTrackingPage = () => {
                 </SimpleButton>
               </div>
             </div>
-          </div>
+            </SimpleCardContent>
+          </SimpleCard>
         </div>
       )}
     </div>

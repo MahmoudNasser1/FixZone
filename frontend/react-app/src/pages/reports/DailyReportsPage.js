@@ -20,6 +20,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
 
 ChartJS.register(
   CategoryScale,
@@ -164,24 +166,29 @@ const DailyReportsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <SimpleCard>
+        <SimpleCardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <SimpleCardTitle className="text-2xl flex items-center gap-2">
               <DocumentTextIcon className="h-8 w-8 text-blue-600" />
               التقرير اليومي
-            </h1>
-            <p className="text-gray-600 mt-1">ملخص شامل لأداء اليوم</p>
+              </SimpleCardTitle>
+              <p className="text-muted-foreground mt-1">ملخص شامل لأداء اليوم</p>
+            </div>
           </div>
-        </div>
-      </div>
+        </SimpleCardHeader>
+      </SimpleCard>
 
       {/* Date Selector */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
           اختيار التاريخ
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="max-w-md">
           <input
             type="date"
@@ -190,15 +197,19 @@ const DailyReportsPage = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Revenue Summary */}
       {dailyData && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle className="flex items-center gap-2">
             <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
             ملخص الإيرادات
-          </h3>
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm font-medium text-green-800">إجمالي الإيرادات</div>
@@ -219,16 +230,20 @@ const DailyReportsPage = () => {
               </div>
             </div>
           </div>
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
       )}
 
       {/* Repair Statistics */}
       {repairStats && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle className="flex items-center gap-2">
             <CheckCircleIcon className="h-5 w-5 text-blue-600" />
             إحصائيات الإصلاحات
-          </h3>
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="text-sm font-medium text-blue-800">إجمالي الطلبات</div>
@@ -255,31 +270,43 @@ const DailyReportsPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </SimpleCardContent>
+        </SimpleCard>
       )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">الإيرادات اليومية</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>الإيرادات اليومية</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Bar data={revenueChartData} options={chartOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
         {/* Repair Status Chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">توزيع حالة الإصلاحات</h3>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle>توزيع حالة الإصلاحات</SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <Doughnut data={repairStatusData} options={doughnutOptions} />
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
 
       {/* Performance Metrics */}
       {repairStats && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <SimpleCard>
+          <SimpleCardHeader>
+            <SimpleCardTitle className="flex items-center gap-2">
             <ClockIcon className="h-5 w-5 text-blue-600" />
             مؤشرات الأداء
-          </h3>
+            </SimpleCardTitle>
+          </SimpleCardHeader>
+          <SimpleCardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-sm font-medium text-gray-800">متوسط وقت الإصلاح</div>
@@ -294,15 +321,19 @@ const DailyReportsPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </SimpleCardContent>
+        </SimpleCard>
       )}
 
       {/* Alerts */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <SimpleCardTitle className="flex items-center gap-2">
           <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
           تنبيهات اليوم
-        </h3>
+          </SimpleCardTitle>
+        </SimpleCardHeader>
+        <SimpleCardContent>
         <div className="space-y-3">
           <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3" />
@@ -315,7 +346,8 @@ const DailyReportsPage = () => {
             </div>
           )}
         </div>
-      </div>
+        </SimpleCardContent>
+      </SimpleCard>
     </div>
   );
 };

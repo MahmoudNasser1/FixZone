@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, memo, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Wrench, Users, Warehouse, BarChart2, Settings, ChevronDown, ChevronRight,
@@ -6,7 +6,7 @@ import {
   TrendingUp, PieChart, Activity, Shield, Database, HelpCircle,
   Smartphone, Printer, Monitor, HardDrive,
   CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart,
-  Search, X
+  Search, X, Inbox, Send
 } from 'lucide-react';
 import useUIStore from '../../stores/uiStore';
 import useAuthStore from '../../stores/authStore';
@@ -52,6 +52,8 @@ const navItems = [
       { href: '/companies', label: 'الشركات', icon: Building2, badge: '15' },
       { href: '/appointments', label: 'المواعيد', icon: Calendar },
       { href: '/communications', label: 'التواصل', icon: MessageSquare, badge: '3' },
+      { href: '/messaging', label: 'مركز الرسائل', icon: Inbox },
+      { href: '/messaging/reports', label: 'تقارير المراسلة', icon: BarChart2 },
     ]
   },
   {
@@ -119,8 +121,9 @@ const navItems = [
 
 const Sidebar = () => {
   const location = useLocation();
-  const { isSidebarOpen } = useUIStore();
+  const { isSidebarOpen, toggleSidebar } = useUIStore();
   const user = useAuthStore((s) => s.user);
+  const sidebarRef = useRef(null);
   
   // Navigation Hooks
   const { navItems: apiNavItems, loading: navLoading } = useNavigation();
@@ -132,12 +135,62 @@ const Sidebar = () => {
   const [openMenus, setOpenMenus] = useState(new Set());
   const [openSections, setOpenSections] = useState(new Set());
   
+  // Close sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Only close if sidebar is open
+      if (isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        // Check if click is not on the toggle button (if it exists in Topbar)
+        const target = event.target;
+        const isToggleButton = target.closest('[data-sidebar-toggle]');
+        if (!isToggleButton) {
+          toggleSidebar();
+        }
+      }
+    };
+
+    if (isSidebarOpen) {
+      // Add a small delay to prevent immediate closing when opening
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isSidebarOpen, toggleSidebar]);
+  
   // Use API navigation items or fallback to static items
   const navigationItems = useMemo(() => {
+    let items = [];
     if (apiNavItems && apiNavItems.length > 0) {
-      return mapNavItems(apiNavItems);
+      items = mapNavItems(apiNavItems);
+    } else {
+      items = navItems; // Fallback to static items
     }
-    return navItems; // Fallback to static items
+    
+    // Ensure messaging center is always present in "إدارة العملاء" section
+    const customersSection = items.find(section => section.section === 'إدارة العملاء');
+    if (customersSection) {
+      const hasMessaging = customersSection.items?.some(item => item.href === '/messaging');
+      if (!hasMessaging) {
+        // Add messaging link to customers section
+        customersSection.items = customersSection.items || [];
+        customersSection.items.push({ href: '/messaging', label: 'مركز الرسائل', icon: Inbox });
+      }
+    } else {
+      // If customers section doesn't exist, add it
+      items.push({
+        section: 'إدارة العملاء',
+        items: [
+          { href: '/messaging', label: 'مركز الرسائل', icon: Inbox }
+        ]
+      });
+    }
+    
+    return items;
   }, [apiNavItems]);
   
   // Filter navigation items based on search
@@ -259,7 +312,16 @@ const Sidebar = () => {
   };
 
   const handleMenuToggle = (label) => {
-    if (!isSidebarOpen) return;
+    // If sidebar is closed, open it first
+    if (!isSidebarOpen) {
+      toggleSidebar();
+      // Open the menu after a short delay to allow sidebar to open
+      setTimeout(() => {
+        setOpenMenus(new Set([label]));
+      }, 100);
+      return;
+    }
+    
     const newOpenMenus = new Set(openMenus);
     if (newOpenMenus.has(label)) {
       newOpenMenus.delete(label);
@@ -348,6 +410,12 @@ const Sidebar = () => {
       <Link
         key={item.href}
         to={item.href}
+        onClick={() => {
+          // If sidebar is closed, open it when clicking an icon
+          if (!isSidebarOpen) {
+            toggleSidebar();
+          }
+        }}
         className={cn(
           "flex items-center py-2.5 my-1 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground group relative",
           isSidebarOpen ? "px-3" : "justify-center px-2",
@@ -390,6 +458,7 @@ const Sidebar = () => {
 
   return (
     <aside
+      ref={sidebarRef}
       className={cn(
         "flex-shrink-0 bg-card text-card-foreground flex flex-col transition-all duration-300 ease-in-out border-l border-border shadow-xl",
         isSidebarOpen ? "w-72" : "w-16"
