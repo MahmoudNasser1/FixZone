@@ -672,11 +672,26 @@ class MessagingService {
         params
       );
 
-      // تحويل metadata من JSON
-      const finalLogs = logs.map(log => ({
-        ...log,
-        metadata: log.metadata ? JSON.parse(log.metadata) : {}
-      }));
+      // تحويل metadata من JSON (إذا كان string) أو استخدامه مباشرة (إذا كان object)
+      const finalLogs = logs.map(log => {
+        let metadata = {};
+        if (log.metadata) {
+          if (typeof log.metadata === 'string') {
+            try {
+              metadata = JSON.parse(log.metadata);
+            } catch (e) {
+              console.warn('Error parsing metadata JSON:', e, 'Raw value:', log.metadata);
+              metadata = {};
+            }
+          } else if (typeof log.metadata === 'object') {
+            metadata = log.metadata;
+          }
+        }
+        return {
+          ...log,
+          metadata
+        };
+      });
 
       return {
         logs: finalLogs,
