@@ -12,18 +12,40 @@ class WhatsAppService {
     try {
       const settings = await settingsRepository.findByKey('messaging_settings');
       
+      // Default WhatsApp settings if not found
       if (!settings || !settings.value) {
-        throw new Error('إعدادات المراسلة غير موجودة');
+        return {
+          enabled: true,
+          webEnabled: true,
+          apiEnabled: false,
+          apiUrl: '',
+          apiToken: '',
+          defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}',
+          repairReceivedMessage: 'جهازك وصل Fix Zone يا فندم\n\nده ملخص الطلب:\n• رقم الطلب: {repairNumber}\n• الجهاز: {deviceInfo}\n• المشكلة: {problem}{oldInvoiceNumber}\n\nتقدر تشوف التحديثات أول بأول من هنا:\n{trackingUrl}\n\nفريق الفنيين هيبدأ الفحص خلال الساعات القادمة.'
+        };
       }
 
       const messagingSettings = typeof settings.value === 'string' 
         ? JSON.parse(settings.value) 
         : settings.value;
 
-      return messagingSettings.whatsapp || {};
+      return messagingSettings.whatsapp || {
+        enabled: true,
+        webEnabled: true,
+        apiEnabled: false
+      };
     } catch (error) {
       console.error('Error loading WhatsApp settings:', error);
-      throw new Error(`فشل في تحميل إعدادات WhatsApp: ${error.message}`);
+      // Return default settings instead of throwing
+      return {
+        enabled: true,
+        webEnabled: true,
+        apiEnabled: false,
+        apiUrl: '',
+        apiToken: '',
+        defaultMessage: 'مرحباً {customerName}، فاتورتك رقم #{invoiceId} جاهزة بمبلغ {amount} {currency}. يمكنك تحميلها من: {invoiceLink}',
+        repairReceivedMessage: 'جهازك وصل Fix Zone يا فندم\n\nده ملخص الطلب:\n• رقم الطلب: {repairNumber}\n• الجهاز: {deviceInfo}\n• المشكلة: {problem}{oldInvoiceNumber}\n\nتقدر تشوف التحديثات أول بأول من هنا:\n{trackingUrl}\n\nفريق الفنيين هيبدأ الفحص خلال الساعات القادمة.'
+      };
     }
   }
 

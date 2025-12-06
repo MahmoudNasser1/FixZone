@@ -114,7 +114,12 @@ class TemplateService {
       return templateName || 'مرحباً {customerName}';
     } catch (error) {
       console.error('Error loading template:', error);
-      throw new Error(`فشل في تحميل القالب: ${error.message}`);
+      // Return default template instead of throwing
+      // This prevents the system from crashing when settings are missing
+      if (entityType === 'repair') {
+        return 'جهازك وصل Fix Zone يا فندم\n\nده ملخص الطلب:\n• رقم الطلب: {repairNumber}\n• الجهاز: {deviceInfo}\n• المشكلة: {problem}{oldInvoiceNumber}\n\nتقدر تشوف التحديثات أول بأول من هنا:\n{trackingUrl}\n\nفريق الفنيين هيبدأ الفحص خلال الساعات القادمة.';
+      }
+      return templateName || 'مرحباً {customerName}';
     }
   }
 

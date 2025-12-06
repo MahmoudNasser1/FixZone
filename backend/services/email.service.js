@@ -15,18 +15,42 @@ class EmailService {
     try {
       const settings = await settingsRepository.findByKey('messaging_settings');
       
+      // Default Email settings if not found
       if (!settings || !settings.value) {
-        throw new Error('إعدادات المراسلة غير موجودة');
+        return {
+          enabled: false,
+          smtpHost: '',
+          smtpPort: 587,
+          smtpUser: '',
+          smtpPassword: '',
+          fromEmail: '',
+          fromName: 'Fix Zone ERP',
+          defaultSubject: 'فاتورة #{invoiceId} - Fix Zone',
+          defaultTemplate: 'مرحباً {customerName},\n\nنرسل لك فاتورة الإصلاح رقم #{invoiceId}\n\nتفاصيل الفاتورة:\n- المبلغ الإجمالي: {amount} {currency}\n- تاريخ الإصدار: {issueDate}\n- حالة الدفع: {status}\n\nيمكنك تحميل الفاتورة من الرابط التالي:\n{invoiceLink}\n\nشكراً لتعاملكم معنا\nفريق Fix Zone'
+        };
       }
 
       const messagingSettings = typeof settings.value === 'string' 
         ? JSON.parse(settings.value) 
         : settings.value;
 
-      return messagingSettings.email || {};
+      return messagingSettings.email || {
+        enabled: false
+      };
     } catch (error) {
       console.error('Error loading Email settings:', error);
-      throw new Error(`فشل في تحميل إعدادات Email: ${error.message}`);
+      // Return default settings instead of throwing
+      return {
+        enabled: false,
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUser: '',
+        smtpPassword: '',
+        fromEmail: '',
+        fromName: 'Fix Zone ERP',
+        defaultSubject: 'فاتورة #{invoiceId} - Fix Zone',
+        defaultTemplate: 'مرحباً {customerName},\n\nنرسل لك فاتورة الإصلاح رقم #{invoiceId}\n\nتفاصيل الفاتورة:\n- المبلغ الإجمالي: {amount} {currency}\n- تاريخ الإصدار: {issueDate}\n- حالة الدفع: {status}\n\nيمكنك تحميل الفاتورة من الرابط التالي:\n{invoiceLink}\n\nشكراً لتعاملكم معنا\nفريق Fix Zone'
+      };
     }
   }
 
