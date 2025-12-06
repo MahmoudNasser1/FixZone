@@ -112,8 +112,8 @@ class PaymentsRepository extends BaseRepository {
        LEFT JOIN User u ON p.userId = u.id
        ${whereClause}
        ORDER BY COALESCE(p.paymentDate, p.createdAt) DESC
-       LIMIT ? OFFSET ?`,
-      [...queryParams, limit, offset]
+       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`,
+      queryParams
     );
 
     return {

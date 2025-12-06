@@ -57,11 +57,9 @@ router.get('/', authMiddleware, async (req, res) => {
 
     // pagination
     const offsetVal = (page - 1) * pageSize;
-    const paginatedQuery = `${query} LIMIT ? OFFSET ?`;
-    // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
-    // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
-    // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
-    const [companiesRows] = await db.query(paginatedQuery, [...params, pageSize, offsetVal]);
+    // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
+    const paginatedQuery = `${query} LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offsetVal)}`;
+    const [companiesRows] = await db.query(paginatedQuery, params);
 
     // تحويل MySQL objects إلى JSON objects عادية
     const formattedCompanies = companiesRows.map(company => ({

@@ -108,8 +108,8 @@ class InvoicesRepository extends BaseRepository {
        LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
        ${whereClause}
        ORDER BY i.createdAt DESC
-       LIMIT ? OFFSET ?`,
-      [...queryParams, limit, offset]
+       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`,
+      queryParams
     );
 
     return {

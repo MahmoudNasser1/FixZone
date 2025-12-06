@@ -720,14 +720,15 @@ router.get('/by-repair/:repairId', async (req, res) => {
     joins.push(`LEFT JOIN User u ON e.${userColumnName} = u.id`);
     selectFields += ', u.name as createdByName';
     
+    // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
     const [rows] = await db.query(`
       SELECT ${selectFields}
       FROM Expense e
       ${joins.join('\n')}
       ${whereClause}
       ORDER BY e.expenseDate DESC
-      LIMIT ? OFFSET ?
-    `, [repairId, parseInt(limit), parseInt(offset)]);
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `, [repairId]);
     
     const [countResult] = await db.query(
       `SELECT COUNT(*) as total FROM Expense e ${whereClause}`,

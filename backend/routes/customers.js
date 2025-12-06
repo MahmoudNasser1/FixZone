@@ -198,8 +198,8 @@ router.get('/', validate(customerSchemas.getCustomers, 'query'), async (req, res
       orderByClause = `ORDER BY c.${safeSortField} ${safeSortDirection}`;
     }
     
-    mainQuery += ` ${orderByClause} LIMIT ? OFFSET ?`;
-    mainParams.push(pageSize, offset);
+    // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
+    mainQuery += ` ${orderByClause} LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`;
     
     const [rows] = await db.query(mainQuery, mainParams);
     
@@ -294,8 +294,8 @@ router.get('/search', validate(customerSchemas.searchCustomers, 'query'), async 
        FROM Customer
        WHERE deletedAt IS NULL AND (name LIKE ? OR phone LIKE ?)
        ORDER BY createdAt DESC
-       LIMIT ? OFFSET ?`,
-      [like, like, pageSize, offset]
+       LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`,
+      [like, like]
     );
 
     // Get total count

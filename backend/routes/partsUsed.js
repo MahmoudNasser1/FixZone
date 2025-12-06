@@ -38,8 +38,8 @@ router.get('/', async (req, res) => {
       LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id
       WHERE ${whereClause}
       ORDER BY pu.createdAt DESC
-      LIMIT ? OFFSET ?`,
-      [...queryParams, parseInt(limit), offset]
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`,
+      queryParams
     );
     
     res.json(rows);

@@ -55,8 +55,8 @@ router.get('/', async (req, res) => {
     } else {
       // Pagination logic
       const offset = page * pageSize;
-      query += ` LIMIT ? OFFSET ?`;
-      params.push(pageSize, offset);
+      // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
+      query += ` LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`;
       
       const [companiesRows] = await db.query(query, params);
       

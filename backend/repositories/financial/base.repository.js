@@ -39,9 +39,10 @@ class BaseRepository {
     const total = countResult[0]?.total || 0;
 
     // Get data
+    // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
     const [rows] = await db.query(
-      `SELECT * FROM ${this.tableName} ${whereClause} ORDER BY ${this.tableName}.createdAt DESC LIMIT ? OFFSET ?`,
-      [...queryParams, limit, offset]
+      `SELECT * FROM ${this.tableName} ${whereClause} ORDER BY ${this.tableName}.createdAt DESC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`,
+      queryParams
     );
 
     return {

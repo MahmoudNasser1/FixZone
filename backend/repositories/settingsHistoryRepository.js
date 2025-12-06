@@ -51,17 +51,19 @@ class SettingsHistoryRepository {
       
       const params = [key];
       
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
       if (pagination.limit) {
-        sql += ` LIMIT ?`;
-        params.push(pagination.limit);
+        const limitVal = parseInt(pagination.limit);
+        sql += ` LIMIT ${limitVal}`;
         
         if (pagination.offset) {
-          sql += ` OFFSET ?`;
-          params.push(pagination.offset);
+          const offsetVal = parseInt(pagination.offset);
+          sql += ` OFFSET ${offsetVal}`;
         }
       }
       
-      const [rows] = await db.execute(sql, params);
+      const [rows] = await db.query(sql, params);
       return rows;
     } catch (error) {
       console.error('Error in findBySettingKey:', error);
@@ -84,17 +86,19 @@ class SettingsHistoryRepository {
       
       const params = [settingId];
       
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
       if (pagination.limit) {
-        sql += ` LIMIT ?`;
-        params.push(pagination.limit);
+        const limitVal = parseInt(pagination.limit);
+        sql += ` LIMIT ${limitVal}`;
         
         if (pagination.offset) {
-          sql += ` OFFSET ?`;
-          params.push(pagination.offset);
+          const offsetVal = parseInt(pagination.offset);
+          sql += ` OFFSET ${offsetVal}`;
         }
       }
       
-      const [rows] = await db.execute(sql, params);
+      const [rows] = await db.query(sql, params);
       return rows;
     } catch (error) {
       console.error('Error in findBySettingId:', error);
@@ -138,17 +142,19 @@ class SettingsHistoryRepository {
         ORDER BY sh.createdAt DESC
       `;
       
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
       if (pagination.limit) {
-        sql += ` LIMIT ?`;
-        params.push(pagination.limit);
+        const limitVal = parseInt(pagination.limit);
+        sql += ` LIMIT ${limitVal}`;
         
         if (pagination.offset) {
-          sql += ` OFFSET ?`;
-          params.push(pagination.offset);
+          const offsetVal = parseInt(pagination.offset);
+          sql += ` OFFSET ${offsetVal}`;
         }
       }
       
-      const [rows] = await db.execute(sql, params);
+      const [rows] = await db.query(sql, params);
       return rows;
     } catch (error) {
       console.error('Error in findAll:', error);

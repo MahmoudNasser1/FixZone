@@ -69,10 +69,11 @@ router.get('/', async (req, res) => {
       FROM Service
       ${whereSql}
       ORDER BY ${safeSortBy} ${safeSortDir}
-      LIMIT ? OFFSET ?
+      LIMIT ${parseInt(safeLimit)} OFFSET ${parseInt(safeOffset)}
     `;
 
-    const [rows] = await db.query(sql, [...params, safeLimit, safeOffset]);
+    // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
+    const [rows] = await db.query(sql, params);
 
     // Also return total count for the same filter (without limit/offset)
     const countSql = `SELECT COUNT(*) as total FROM Service ${whereSql}`;

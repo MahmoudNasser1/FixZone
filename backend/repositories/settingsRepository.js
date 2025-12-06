@@ -60,17 +60,17 @@ class SettingsRepository {
       }
       
       // Only add LIMIT/OFFSET if we have valid values
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
       if (limit !== null && limit > 0) {
-        sql += ` LIMIT ?`;
-        params.push(limit);
+        sql += ` LIMIT ${parseInt(limit)}`;
         
         if (offset !== null && offset >= 0) {
-          sql += ` OFFSET ?`;
-          params.push(offset);
+          sql += ` OFFSET ${parseInt(offset)}`;
         }
       }
       
-      const [rows] = await db.execute(sql, params);
+      const [rows] = await db.query(sql, params);
       
       // Parse JSON fields
       return rows.map(row => ({

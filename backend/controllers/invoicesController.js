@@ -146,11 +146,10 @@ class InvoicesController {
         ${whereClause}
         GROUP BY i.id
         ORDER BY ${sortField === 'customerName' ? 'c.name' : `i.${sortField}`} ${order}
-        LIMIT ? OFFSET ?
+        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
       `;
 
-      queryParams.push(parseInt(limit), parseInt(offset));
-
+      // CRITICAL: Interpolate LIMIT/OFFSET directly - db.query with LIMIT ? OFFSET ? as parameters can cause issues in MariaDB strict mode
       const [invoices] = await db.query(query, queryParams);
 
       // Calculate actual amountPaid for each invoice from payments

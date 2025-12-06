@@ -78,8 +78,8 @@ class ExpensesRepository extends BaseRepository {
        LEFT JOIN User u ON e.createdBy = u.id
        ${whereClause}
        ORDER BY e.date DESC, e.createdAt DESC
-       LIMIT ? OFFSET ?`,
-      [...queryParams, limit, offset]
+       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`,
+      queryParams
     );
 
     return {

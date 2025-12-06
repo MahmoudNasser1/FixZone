@@ -66,17 +66,19 @@ class SettingsBackupRepository {
       
       const params = [];
       
+      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
+      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
       if (pagination.limit) {
-        sql += ` LIMIT ?`;
-        params.push(pagination.limit);
+        const limitVal = parseInt(pagination.limit);
+        sql += ` LIMIT ${limitVal}`;
         
         if (pagination.offset) {
-          sql += ` OFFSET ?`;
-          params.push(pagination.offset);
+          const offsetVal = parseInt(pagination.offset);
+          sql += ` OFFSET ${offsetVal}`;
         }
       }
       
-      const [rows] = await db.execute(sql, params);
+      const [rows] = await db.query(sql, params);
       
       return rows.map(row => ({
         ...row,
