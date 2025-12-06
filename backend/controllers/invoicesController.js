@@ -370,6 +370,7 @@ class InvoicesController {
         taxAmount = 0,
         shippingAmount = 0,
         discountAmount = 0,
+        discountPercent = 0,
         notes = '',
         dueDate = null
       } = req.body;
@@ -464,14 +465,20 @@ class InvoicesController {
         }
       }
       
-      // محاولة إدراج shippingAmount إذا كان موجوداً في قاعدة البيانات
+      // Calculate discountAmount from discountPercent if provided
+      let finalDiscountAmount = discountAmount;
+      if (discountPercent > 0 && totalAmount > 0 && discountAmount === 0) {
+        finalDiscountAmount = (totalAmount * discountPercent) / 100;
+      }
+
+      // محاولة إدراج shippingAmount و discountPercent إذا كانا موجودين في قاعدة البيانات
       let result;
       try {
         result = await db.query(`
           INSERT INTO Invoice (
             repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
-            currency, taxAmount, shippingAmount, discountAmount, dueDate, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            currency, taxAmount, shippingAmount, discountAmount, discountPercent, dueDate, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `, [
           repairRequestId || null,
           finalCustomerId || null,
@@ -483,30 +490,57 @@ class InvoicesController {
           invoiceCurrency,
           taxAmount,
           shippingAmount,
-          discountAmount,
+          finalDiscountAmount,
+          discountPercent,
           dueDate
         ]);
       } catch (error) {
-        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون shippingAmount
-        if (error.message && error.message.includes('shippingAmount')) {
-          result = await db.query(`
-            INSERT INTO Invoice (
-              repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
-              currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-          `, [
-            repairRequestId || null,
-            finalCustomerId || null,
-            vendorId || null,
-            invoiceType,
-            totalAmount,
-            amountPaid,
-            status,
-            invoiceCurrency,
-            taxAmount,
-            discountAmount,
-            dueDate
-          ]);
+        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون الأعمدة المفقودة
+        if (error.message && (error.message.includes('shippingAmount') || error.message.includes('discountPercent'))) {
+          try {
+            result = await db.query(`
+              INSERT INTO Invoice (
+                repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
+                currency, taxAmount, shippingAmount, discountAmount, dueDate, createdAt, updatedAt
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            `, [
+              repairRequestId || null,
+              finalCustomerId || null,
+              vendorId || null,
+              invoiceType,
+              totalAmount,
+              amountPaid,
+              status,
+              invoiceCurrency,
+              taxAmount,
+              shippingAmount,
+              finalDiscountAmount,
+              dueDate
+            ]);
+          } catch (error2) {
+            if (error2.message && error2.message.includes('shippingAmount')) {
+              result = await db.query(`
+                INSERT INTO Invoice (
+                  repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, 
+                  currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+              `, [
+                repairRequestId || null,
+                finalCustomerId || null,
+                vendorId || null,
+                invoiceType,
+                totalAmount,
+                amountPaid,
+                status,
+                invoiceCurrency,
+                taxAmount,
+                finalDiscountAmount,
+                dueDate
+              ]);
+            } else {
+              throw error2;
+            }
+          }
         } else {
           throw error;
         }
@@ -1331,7 +1365,9 @@ class InvoicesController {
         status = 'draft',
         currency = null,
         taxAmount = 0,
+        shippingAmount = 0,
         discountAmount = 0,
+        discountPercent = 0,
         notes = '',
         dueDate = null
       } = req.body;
@@ -1365,22 +1401,78 @@ class InvoicesController {
       await connection.beginTransaction();
 
       try {
-        // Create invoice
-        const [result] = await connection.query(`
-          INSERT INTO Invoice (
-            repairRequestId, totalAmount, amountPaid, status, 
-            currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [
-          repairId,
-          0, // Will be calculated after adding items
-          0,
-          status,
-          currency,
-          taxAmount,
-          discountAmount,
-          dueDate
-        ]);
+        // Calculate discountAmount from discountPercent if provided
+        let finalDiscountAmount = discountAmount;
+        if (discountPercent > 0 && discountAmount === 0) {
+          // Will be calculated after totalAmount is known
+          finalDiscountAmount = 0;
+        }
+
+        // Create invoice - try with all fields, fallback if columns don't exist
+        let result;
+        try {
+          [result] = await connection.query(`
+            INSERT INTO Invoice (
+              repairRequestId, totalAmount, amountPaid, status, 
+              currency, taxAmount, shippingAmount, discountAmount, discountPercent, dueDate, createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+          `, [
+            repairId,
+            0, // Will be calculated after adding items
+            0,
+            status,
+            currency,
+            taxAmount,
+            shippingAmount,
+            finalDiscountAmount,
+            discountPercent,
+            dueDate
+          ]);
+        } catch (error) {
+          // Fallback if columns don't exist
+          if (error.message && (error.message.includes('shippingAmount') || error.message.includes('discountPercent'))) {
+            try {
+              [result] = await connection.query(`
+                INSERT INTO Invoice (
+                  repairRequestId, totalAmount, amountPaid, status, 
+                  currency, taxAmount, shippingAmount, discountAmount, dueDate, createdAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+              `, [
+                repairId,
+                0,
+                0,
+                status,
+                currency,
+                taxAmount,
+                shippingAmount,
+                finalDiscountAmount,
+                dueDate
+              ]);
+            } catch (error2) {
+              if (error2.message && error2.message.includes('shippingAmount')) {
+                [result] = await connection.query(`
+                  INSERT INTO Invoice (
+                    repairRequestId, totalAmount, amountPaid, status, 
+                    currency, taxAmount, discountAmount, dueDate, createdAt, updatedAt
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                `, [
+                  repairId,
+                  0,
+                  0,
+                  status,
+                  currency,
+                  taxAmount,
+                  finalDiscountAmount,
+                  dueDate
+                ]);
+              } else {
+                throw error2;
+              }
+            }
+          } else {
+            throw error;
+          }
+        }
 
         const invoiceId = result.insertId;
 
@@ -1427,11 +1519,41 @@ class InvoicesController {
           FROM InvoiceItem WHERE invoiceId = ?
         `, [invoiceId]);
 
-        const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount) - Number(discountAmount);
+        const subtotal = Number(totalResult[0].calculatedTotal);
+        
+        // Calculate discountAmount from discountPercent if needed
+        let calculatedDiscountAmount = finalDiscountAmount;
+        if (discountPercent > 0 && subtotal > 0) {
+          calculatedDiscountAmount = (subtotal * discountPercent) / 100;
+        }
+        
+        // Calculate final total: subtotal - discount + tax + shipping
+        const finalTotal = subtotal - calculatedDiscountAmount + Number(taxAmount) + Number(shippingAmount);
 
-        await connection.query(`
-          UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
-        `, [finalTotal, invoiceId]);
+        // Update invoice with calculated values
+        try {
+          await connection.query(`
+            UPDATE Invoice SET 
+              totalAmount = ?, 
+              discountAmount = ?,
+              discountPercent = ?,
+              updatedAt = NOW() 
+            WHERE id = ?
+          `, [finalTotal, calculatedDiscountAmount, discountPercent, invoiceId]);
+        } catch (updateError) {
+          // Fallback if discountPercent column doesn't exist
+          if (updateError.message && updateError.message.includes('discountPercent')) {
+            await connection.query(`
+              UPDATE Invoice SET 
+                totalAmount = ?, 
+                discountAmount = ?,
+                updatedAt = NOW() 
+              WHERE id = ?
+            `, [finalTotal, calculatedDiscountAmount, invoiceId]);
+          } else {
+            throw updateError;
+          }
+        }
 
         await connection.commit();
 

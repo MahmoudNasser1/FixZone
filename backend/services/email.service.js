@@ -298,7 +298,8 @@ class EmailService {
     const amountPaid = parseFloat(invoice.amountPaid) || 0;
     const remaining = total - amountPaid;
 
-    const invoiceLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invoices/${invoice.id}`;
+    const { getFrontendUrl } = require('../utils/frontendUrl');
+    const invoiceLink = `${getFrontendUrl()}/invoices/${invoice.id}`;
 
     const content = `
       <div style="margin-bottom: 30px;">

@@ -85,13 +85,26 @@ const InvoiceForm = ({ formData, errors, onChange, customers = [], repairs = [] 
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label="الخصم"
+          label="الخصم (%)"
+          name="discountPercent"
+          type="number"
+          value={formData.discountPercent || 0}
+          onChange={handleChange}
+          inputProps={{ min: 0, max: 100, step: 0.01 }}
+          helperText="نسبة الخصم"
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="مبلغ الخصم"
           name="discountAmount"
           type="number"
           value={formData.discountAmount || 0}
           onChange={handleChange}
           inputProps={{ min: 0, step: 0.01 }}
-          helperText="مبلغ الخصم"
+          helperText="مبلغ الخصم (يتم حسابه تلقائياً من النسبة)"
+          disabled={formData.discountPercent > 0}
         />
       </Grid>
 

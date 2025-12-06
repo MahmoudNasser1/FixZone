@@ -221,7 +221,10 @@ class AutomationService {
         repairNumber: repairNumber,
         deviceInfo: `${repair.deviceBrand || ''} ${repair.deviceModel || ''}`.trim() || 'غير محدد',
         problem: repair.reportedProblem || 'غير محدد',
-        trackingUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/track/${repair.trackingToken || repair.id}`,
+        trackingUrl: (() => {
+          const { getFrontendUrl } = require('../utils/frontendUrl');
+          return `${getFrontendUrl()}/track/${repair.trackingToken || repair.id}`;
+        })(),
         status: this.getRepairStatusLabel(newStatus),
         location: process.env.COMPANY_ADDRESS || 'مول البستان التجاري - الدور الأرضي - باب اللوق - القاهرة'
       };
@@ -356,7 +359,10 @@ class AutomationService {
         invoiceId: invoice.id,
         totalAmount: `${parseFloat(invoice.totalAmount || 0).toFixed(2)} ${invoice.currency || 'EGP'}`,
         currency: invoice.currency || 'EGP',
-        invoiceLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invoices/${invoice.id}`,
+        invoiceLink: (() => {
+          const { getFrontendUrl } = require('../utils/frontendUrl');
+          return `${getFrontendUrl()}/invoices/${invoice.id}`;
+        })(),
         status: this.getInvoiceStatusLabel(invoice.status)
       };
 

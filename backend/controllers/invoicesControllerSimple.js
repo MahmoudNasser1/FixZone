@@ -270,6 +270,8 @@ class InvoicesControllerSimple {
         currency = 'EGP',
         taxAmount = 0,
         shippingAmount = 0,
+        discountAmount = 0,
+        discountPercent = 0,
         amountPaid = 0
       } = req.body;
 
@@ -313,23 +315,52 @@ class InvoicesControllerSimple {
         }
       }
 
-      // محاولة إدراج shippingAmount إذا كان موجوداً في قاعدة البيانات
+      // Calculate discountAmount from discountPercent if provided
+      let finalDiscountAmount = discountAmount;
+      if (discountPercent > 0 && totalAmount > 0 && discountAmount === 0) {
+        finalDiscountAmount = (totalAmount * discountPercent) / 100;
+      }
+
+      // محاولة إدراج shippingAmount و discountAmount إذا كانا موجودين في قاعدة البيانات
       let result;
       try {
-        // محاولة مع shippingAmount
+        // محاولة مع shippingAmount و discountAmount و discountPercent
         [result] = await connection.execute(
-          `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount]
+          `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, discountPercent)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, finalDiscountAmount, discountPercent]
         );
       } catch (error) {
-        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون shippingAmount
-        if (error.message && error.message.includes('shippingAmount')) {
-          [result] = await connection.execute(
-            `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
-          );
+        // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون الأعمدة المفقودة
+        if (error.message && (error.message.includes('shippingAmount') || error.message.includes('discountAmount') || error.message.includes('discountPercent'))) {
+          try {
+            // محاولة مع shippingAmount و discountAmount فقط
+            [result] = await connection.execute(
+              `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, finalDiscountAmount]
+            );
+          } catch (error2) {
+            if (error2.message && error2.message.includes('shippingAmount')) {
+              // محاولة مع discountAmount فقط
+              try {
+                [result] = await connection.execute(
+                  `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, discountAmount)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, finalDiscountAmount]
+                );
+              } catch (error3) {
+                // بدون discountAmount أيضاً
+                [result] = await connection.execute(
+                  `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount]
+                );
+              }
+            } else {
+              throw error2;
+            }
+          }
         } else {
           throw error;
         }
@@ -449,7 +480,7 @@ class InvoicesControllerSimple {
       await connection.beginTransaction();
 
       const { id } = req.params;
-      const { totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, notes } = req.body;
+      const { totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, discountPercent, notes } = req.body;
 
       // Check if invoice exists
       const [existing] = await connection.execute(`
@@ -489,9 +520,51 @@ class InvoicesControllerSimple {
         updates.push('shippingAmount = ?');
         params.push(shippingAmount);
       }
-      if (discountAmount !== undefined) {
+      // Handle discount: if discountPercent is provided, calculate discountAmount from totalAmount
+      // If discountAmount is provided directly, use it
+      let finalDiscountAmount = discountAmount;
+      if (discountPercent !== undefined) {
+        // Check if discountPercent column exists before trying to update it
+        try {
+          const [colCheck] = await connection.execute(`
+            SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'Invoice' 
+            AND COLUMN_NAME = 'discountPercent'
+          `);
+          if (colCheck[0].count > 0) {
+            updates.push('discountPercent = ?');
+            params.push(discountPercent);
+          }
+        } catch (colError) {
+          // Column doesn't exist, skip it
+          console.log('discountPercent column does not exist, skipping');
+        }
+        
+        // Calculate discountAmount from discountPercent
+        // If totalAmount is being updated, use the new value; otherwise get current value
+        if (totalAmount !== undefined && totalAmount > 0) {
+          // Use the new totalAmount being set
+          finalDiscountAmount = (totalAmount * discountPercent) / 100;
+        } else if (discountAmount === undefined) {
+          // If totalAmount is not being updated, get current totalAmount to calculate discount
+          const [currentInvoice] = await connection.execute(
+            'SELECT totalAmount FROM Invoice WHERE id = ?',
+            [id]
+          );
+          if (currentInvoice.length > 0 && currentInvoice[0].totalAmount > 0) {
+            finalDiscountAmount = (currentInvoice[0].totalAmount * discountPercent) / 100;
+          } else {
+            finalDiscountAmount = 0;
+          }
+        }
+        // If discountAmount was also provided, it takes precedence
+      }
+      
+      // Update discountAmount if we have a value (either provided directly or calculated from discountPercent)
+      if (discountAmount !== undefined || finalDiscountAmount !== undefined) {
         updates.push('discountAmount = ?');
-        params.push(discountAmount);
+        params.push(finalDiscountAmount !== undefined ? finalDiscountAmount : discountAmount);
       }
       if (notes !== undefined) {
         updates.push('notes = ?');
@@ -898,11 +971,14 @@ class InvoicesControllerSimple {
       const {
         status = 'draft',
         currency = 'EGP',
-        taxAmount = 0
+        taxAmount = 0,
+        shippingAmount = 0,
+        discountAmount = 0,
+        discountPercent = 0
       } = req.body;
 
       // Extract fields that don't exist in Invoice table
-      const { notes, discountAmount, ...otherFields } = req.body;
+      const { notes, ...otherFields } = req.body;
 
       // Check if repair request exists
       const [repairRows] = await connection.execute(`
@@ -933,20 +1009,87 @@ class InvoicesControllerSimple {
         });
       }
 
-      // Create invoice
-      const [result] = await connection.execute(`
-        INSERT INTO Invoice (
-          repairRequestId, totalAmount, amountPaid, status, 
-          currency, taxAmount, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-      `, [
-        repairId,
-        0, // Will be calculated after adding items
-        0,
-        status,
-        currency,
-        taxAmount
-      ]);
+      // Calculate discountAmount from discountPercent if provided
+      let finalDiscountAmount = discountAmount;
+      if (discountPercent > 0 && discountAmount === 0) {
+        // Will be calculated after totalAmount is known
+        finalDiscountAmount = 0; // Will be recalculated after items are added
+      }
+
+      // Create invoice - try with all fields, fallback if columns don't exist
+      let result;
+      try {
+        [result] = await connection.execute(`
+          INSERT INTO Invoice (
+            repairRequestId, totalAmount, amountPaid, status, 
+            currency, taxAmount, shippingAmount, discountAmount, discountPercent, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `, [
+          repairId,
+          0, // Will be calculated after adding items
+          0,
+          status,
+          currency,
+          taxAmount,
+          shippingAmount,
+          finalDiscountAmount,
+          discountPercent
+        ]);
+      } catch (error) {
+        // Fallback if columns don't exist
+        if (error.message && (error.message.includes('shippingAmount') || error.message.includes('discountAmount') || error.message.includes('discountPercent'))) {
+          try {
+            [result] = await connection.execute(`
+              INSERT INTO Invoice (
+                repairRequestId, totalAmount, amountPaid, status, 
+                currency, taxAmount, shippingAmount, discountAmount, createdAt, updatedAt
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            `, [
+              repairId,
+              0,
+              0,
+              status,
+              currency,
+              taxAmount,
+              shippingAmount,
+              finalDiscountAmount
+            ]);
+          } catch (error2) {
+            if (error2.message && error2.message.includes('shippingAmount')) {
+              [result] = await connection.execute(`
+                INSERT INTO Invoice (
+                  repairRequestId, totalAmount, amountPaid, status, 
+                  currency, taxAmount, discountAmount, createdAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+              `, [
+                repairId,
+                0,
+                0,
+                status,
+                currency,
+                taxAmount,
+                finalDiscountAmount
+              ]);
+            } else {
+              [result] = await connection.execute(`
+                INSERT INTO Invoice (
+                  repairRequestId, totalAmount, amountPaid, status, 
+                  currency, taxAmount, createdAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+              `, [
+                repairId,
+                0,
+                0,
+                status,
+                currency,
+                taxAmount
+              ]);
+            }
+          }
+        } else {
+          throw error;
+        }
+      }
 
       const invoiceId = result.insertId;
 
@@ -993,11 +1136,41 @@ class InvoicesControllerSimple {
         FROM InvoiceItem WHERE invoiceId = ?
       `, [invoiceId]);
 
-      const finalTotal = Number(totalResult[0].calculatedTotal) + Number(taxAmount);
+      const subtotal = Number(totalResult[0].calculatedTotal);
+      
+      // Calculate discountAmount from discountPercent if needed
+      let calculatedDiscountAmount = finalDiscountAmount;
+      if (discountPercent > 0 && subtotal > 0) {
+        calculatedDiscountAmount = (subtotal * discountPercent) / 100;
+      }
+      
+      // Calculate final total: subtotal - discount + tax + shipping
+      const finalTotal = subtotal - calculatedDiscountAmount + Number(taxAmount) + Number(shippingAmount);
 
-      await connection.execute(`
-        UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
-      `, [finalTotal, invoiceId]);
+      // Update invoice with calculated values
+      try {
+        await connection.execute(`
+          UPDATE Invoice SET 
+            totalAmount = ?, 
+            discountAmount = ?,
+            discountPercent = ?,
+            updatedAt = NOW() 
+          WHERE id = ?
+        `, [finalTotal, calculatedDiscountAmount, discountPercent, invoiceId]);
+      } catch (updateError) {
+        // Fallback if discountPercent column doesn't exist
+        if (updateError.message && updateError.message.includes('discountPercent')) {
+          await connection.execute(`
+            UPDATE Invoice SET 
+              totalAmount = ?, 
+              discountAmount = ?,
+              updatedAt = NOW() 
+            WHERE id = ?
+          `, [finalTotal, calculatedDiscountAmount, invoiceId]);
+        } else {
+          throw updateError;
+        }
+      }
 
       await connection.commit();
 

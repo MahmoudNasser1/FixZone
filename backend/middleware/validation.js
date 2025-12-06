@@ -1381,6 +1381,22 @@ const invoiceSchemas = {
         'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
         'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
       }),
+    shippingAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الشحن يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الشحن يجب أن يكون رقم'
+      }),
+    discountAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الخصم يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الخصم يجب أن يكون رقم'
+      }),
+    discountPercent: Joi.number().min(0).max(100).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'نسبة الخصم يجب أن تكون أكبر من أو تساوي صفر',
+        'number.max': 'نسبة الخصم يجب أن تكون أقل من أو تساوي 100',
+        'number.base': 'نسبة الخصم يجب أن تكون رقم'
+      }),
     notes: Joi.string().max(2000).allow('', null).optional(),
     dueDate: Joi.date().iso().allow(null).optional()
   }).custom((value, helpers) => {
@@ -1425,6 +1441,22 @@ const invoiceSchemas = {
         'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
         'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
       }),
+    shippingAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'مبلغ الشحن يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الشحن يجب أن يكون رقم'
+      }),
+    discountAmount: Joi.number().min(0).precision(2).optional()
+      .messages({
+        'number.min': 'مبلغ الخصم يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الخصم يجب أن يكون رقم'
+      }),
+    discountPercent: Joi.number().min(0).max(100).precision(2).optional()
+      .messages({
+        'number.min': 'نسبة الخصم يجب أن تكون أكبر من أو تساوي صفر',
+        'number.max': 'نسبة الخصم يجب أن تكون أقل من أو تساوي 100',
+        'number.base': 'نسبة الخصم يجب أن تكون رقم'
+      }),
     notes: Joi.string().max(2000).allow('', null).optional(),
     dueDate: Joi.date().iso().allow(null).optional()
   }),
@@ -1443,11 +1475,30 @@ const invoiceSchemas = {
 
   // Create invoice from repair params
   createInvoiceFromRepair: Joi.object({
-    repairId: Joi.number().integer().positive().required()
+    status: Joi.string().valid('draft', 'sent', 'paid', 'partially_paid', 'overdue', 'cancelled').default('draft').optional(),
+    currency: Joi.string().max(10).default('EGP').optional(),
+    taxAmount: Joi.number().min(0).precision(2).default(0).optional()
       .messages({
-        'number.positive': 'معرف طلب الإصلاح غير صحيح',
-        'any.required': 'معرف طلب الإصلاح مطلوب'
-      })
+        'number.min': 'مبلغ الضريبة يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الضريبة يجب أن يكون رقم'
+      }),
+    shippingAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الشحن يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الشحن يجب أن يكون رقم'
+      }),
+    discountAmount: Joi.number().min(0).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'مبلغ الخصم يجب أن يكون أكبر من أو يساوي صفر',
+        'number.base': 'مبلغ الخصم يجب أن يكون رقم'
+      }),
+    discountPercent: Joi.number().min(0).max(100).precision(2).default(0).optional()
+      .messages({
+        'number.min': 'نسبة الخصم يجب أن تكون أكبر من أو تساوي صفر',
+        'number.max': 'نسبة الخصم يجب أن تكون أقل من أو تساوي 100',
+        'number.base': 'نسبة الخصم يجب أن تكون رقم'
+      }),
+    notes: Joi.string().max(2000).allow('', null).optional()
   }),
 
   // Invoice Item schemas

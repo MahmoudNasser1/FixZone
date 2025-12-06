@@ -37,6 +37,7 @@ const InvoiceCreatePage = () => {
     totalAmount: 0,
     taxAmount: 0,
     discountAmount: 0,
+    discountPercent: 0,
     dueDate: '',
     notes: '',
     currency: 'EGP',
@@ -81,10 +82,32 @@ const InvoiceCreatePage = () => {
     }));
   };
 
+  // Calculate discount amount from percentage
+  const calculatedDiscountAmount = useMemo(() => {
+    if (formData.discountPercent > 0 && formData.totalAmount > 0) {
+      return (formData.totalAmount * formData.discountPercent) / 100;
+    }
+    return formData.discountAmount || 0;
+  }, [formData.discountPercent, formData.totalAmount, formData.discountAmount]);
+
   // Calculate final total
   const finalTotal = useMemo(() => {
-    return formData.totalAmount + formData.taxAmount - formData.discountAmount;
-  }, [formData.totalAmount, formData.taxAmount, formData.discountAmount]);
+    return formData.totalAmount + formData.taxAmount - calculatedDiscountAmount;
+  }, [formData.totalAmount, formData.taxAmount, calculatedDiscountAmount]);
+
+  // Auto-calculate discount amount when discountPercent changes
+  useEffect(() => {
+    if (formData.discountPercent > 0 && formData.totalAmount > 0) {
+      const calculatedDiscount = (formData.totalAmount * formData.discountPercent) / 100;
+      if (Math.abs(calculatedDiscount - (formData.discountAmount || 0)) > 0.01) {
+        setFormData(prev => ({
+          ...prev,
+          discountAmount: calculatedDiscount
+        }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.discountPercent, formData.totalAmount]);
 
   // Auto-calculate tax when total or discount changes
   useEffect(() => {
@@ -150,7 +173,8 @@ const InvoiceCreatePage = () => {
         customerId: formData.customerId || null,
         repairRequestId: formData.repairRequestId || null,
         currency: formData.currency || 'EGP',
-        discountAmount: formData.discountAmount || 0,
+        discountAmount: calculatedDiscountAmount,
+        discountPercent: formData.discountPercent || 0,
         dueDate: formData.dueDate || null,
         notes: formData.notes || null,
         status: formData.status || 'draft',

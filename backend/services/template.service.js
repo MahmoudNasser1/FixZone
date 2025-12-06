@@ -188,7 +188,10 @@ class TemplateService {
         remainingAmount: formatMoney(remainingAmount, invoice.currency || 'EGP'),
         currency: invoice.currency || 'EGP',
         dueDate: formatDate(invoice.dueDate),
-        invoiceLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invoices/${invoice.id}`,
+        invoiceLink: (() => {
+          const { getFrontendUrl } = require('../utils/frontendUrl');
+          return `${getFrontendUrl()}/invoices/${invoice.id}`;
+        })(),
         status: this.getInvoiceStatusLabel(invoice.status)
       };
     } catch (error) {
@@ -300,7 +303,9 @@ class TemplateService {
       
       // رابط التتبع - trackingToken أو id
       const trackingToken = repair.trackingToken || repair.id;
-      const trackingUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/track?trackingToken=${trackingToken}`;
+      const { getFrontendUrl } = require('../utils/frontendUrl');
+      const frontendUrl = getFrontendUrl();
+      const trackingUrl = `${frontendUrl}/track?trackingToken=${trackingToken}`;
 
       // التشخيص - technicianReport أو notes أو diagnosticNotes
       const diagnosis = repair.technicianReport || repair.notes || repair.diagnosticNotes || 'قيد التشخيص';
@@ -393,7 +398,10 @@ class TemplateService {
         totalAmount: formatMoney(quotation.totalAmount, quotation.currency || 'EGP'),
         currency: quotation.currency || 'EGP',
         validUntil: validUntil,
-        quotationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/quotations/${quotation.id}`
+        quotationLink: (() => {
+          const { getFrontendUrl } = require('../utils/frontendUrl');
+          return `${getFrontendUrl()}/quotations/${quotation.id}`;
+        })()
       };
     } catch (error) {
       console.error('Error preparing quotation variables:', error);
@@ -437,7 +445,10 @@ class TemplateService {
         currency: payment.currency || invoice.currency || 'EGP',
         paymentDate: formatDate(payment.paymentDate || payment.createdAt),
         dueDate: formatDate(invoice.dueDate),
-        paymentLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payments/${payment.id}`
+        paymentLink: (() => {
+          const { getFrontendUrl } = require('../utils/frontendUrl');
+          return `${getFrontendUrl()}/payments/${payment.id}`;
+        })()
       };
     } catch (error) {
       console.error('Error preparing payment variables:', error);

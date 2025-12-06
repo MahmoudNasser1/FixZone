@@ -2256,11 +2256,9 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     const termsRendered = renderTemplate(termsText, termsVars)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
-    // استخدام FRONTEND_URL من متغيرات البيئة، أو REACT_APP_FRONTEND_URL، أو القيمة الافتراضية
-    const frontendUrl = process.env.FRONTEND_URL || process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000';
-    // تنظيف URL من الشرطة المائلة في النهاية
-    const cleanFrontendUrl = frontendUrl.replace(/\/+$/, '');
-    const trackUrl = `${cleanFrontendUrl}/track?trackingToken=${repair.trackingToken || repair.id}`;
+    const { getFrontendUrl } = require('../utils/frontendUrl');
+    const frontendUrl = getFrontendUrl(req);
+    const trackUrl = `${frontendUrl}/track?trackingToken=${repair.trackingToken || repair.id}`;
 
     // Generate QR Code server-side
     let qrCodeDataUrl = '';
@@ -3086,7 +3084,8 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     const requestNumber = repair.requestNumber || `REP-${reqDate.getFullYear()}${String(reqDate.getMonth() + 1).padStart(2, '0')}${String(reqDate.getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`;
 
     // إنشاء رابط التتبع للفاتورة
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const { getFrontendUrl } = require('../utils/frontendUrl');
+    const frontendUrl = getFrontendUrl(req);
     const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
     
     // تنسيق التاريخ حسب الإعدادات

@@ -29,6 +29,7 @@ const migrationFiles = [
   'add_shipping_amount_production.sql',
   'add_shipping_amount_production_final.sql',
   'add_shipping_amount_local.sql',
+  'add_discount_percent_to_invoice.sql', // Add discountPercent column
 ];
 
 // Colors for console output

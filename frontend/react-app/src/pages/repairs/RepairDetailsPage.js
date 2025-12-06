@@ -16,11 +16,11 @@ import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
-  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw
+  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw, Copy, Check
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
-import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { getDefaultApiBaseUrl, getFrontendBaseUrl } from '../../lib/apiConfig';
 import { formatNumber, formatCurrency } from '../../utils/numberFormat';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
@@ -85,6 +85,7 @@ const RepairDetailsPage = () => {
     expectedDeliveryDate: null,
     notes: ''
   });
+  const [trackingLinkCopied, setTrackingLinkCopied] = useState(false);
 
   // Activity log state with filtering
   const [activityFilter, setActivityFilter] = useState('all'); // all | system | technician | customer
@@ -2122,6 +2123,55 @@ const RepairDetailsPage = () => {
               }
             })() : 'غير محدد'}
           </p>
+          {/* Tracking Link */}
+          {repair.trackingToken || repair.id ? (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-gray-600">رابط التتبع:</span>
+              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5 max-w-md">
+                <span className="text-sm text-blue-600 font-mono truncate">
+                  {getFrontendBaseUrl()}/track?trackingToken={repair.trackingToken || repair.id}
+                </span>
+                <SimpleButton
+                  size="sm"
+                  variant="ghost"
+                  onClick={async () => {
+                    const trackingUrl = `${getFrontendBaseUrl()}/track?trackingToken=${repair.trackingToken || repair.id}`;
+                    try {
+                      await navigator.clipboard.writeText(trackingUrl);
+                      setTrackingLinkCopied(true);
+                      notifications.success('تم نسخ رابط التتبع');
+                      setTimeout(() => setTrackingLinkCopied(false), 2000);
+                    } catch (err) {
+                      // Fallback for older browsers
+                      const textArea = document.createElement('textarea');
+                      textArea.value = trackingUrl;
+                      textArea.style.position = 'fixed';
+                      textArea.style.opacity = '0';
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      try {
+                        document.execCommand('copy');
+                        setTrackingLinkCopied(true);
+                        notifications.success('تم نسخ رابط التتبع');
+                        setTimeout(() => setTrackingLinkCopied(false), 2000);
+                      } catch (fallbackErr) {
+                        notifications.error('فشل نسخ الرابط');
+                      }
+                      document.body.removeChild(textArea);
+                    }
+                  }}
+                  className="p-1 h-auto"
+                  title="نسخ رابط التتبع"
+                >
+                  {trackingLinkCopied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-600" />
+                  )}
+                </SimpleButton>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="w-full lg:w-auto">
