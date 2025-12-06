@@ -660,27 +660,26 @@ class MessagingService {
       const total = countResult[0].total;
 
       // السجلات مع pagination
-      const limit = pagination.limit || 20;
-      const offset = pagination.offset || 0;
+      const limit = parseInt(pagination.limit) || 20;
+      const offset = parseInt(pagination.offset) || 0;
 
-      // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
-      // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
-      // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
-      const [logs] = await db.query(
-        `SELECT * FROM MessagingLog 
-         ${whereClause}
-         ORDER BY createdAt DESC 
-         LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`
+      // CRITICAL: Use db.execute with LIMIT/OFFSET as integers in the query string (not as placeholders)
+      // db.execute works fine when LIMIT/OFFSET are template literals (integers), not ? placeholders
+      // This allows us to use parameterized queries for WHERE clause (safe from SQL injection)
+      // while still supporting LIMIT/OFFSET properly
+      const [logs] = await db.execute(
+        `SELECT * FROM MessagingLog ${whereClause} ORDER BY createdAt DESC LIMIT ${limit} OFFSET ${offset}`,
+        params
       );
 
       // تحويل metadata من JSON
-      const processedLogs = logs.map(log => ({
+      const finalLogs = logs.map(log => ({
         ...log,
         metadata: log.metadata ? JSON.parse(log.metadata) : {}
       }));
 
       return {
-        logs: processedLogs,
+        logs: finalLogs,
         total,
         limit,
         offset,

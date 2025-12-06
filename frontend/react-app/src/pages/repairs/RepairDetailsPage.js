@@ -160,7 +160,12 @@ const RepairDetailsPage = () => {
           }
         }
       } catch (error) {
-        console.error('Error loading messaging settings:', error);
+        // Silently handle 404 (setting doesn't exist yet) - this is expected
+        if (error.message && error.message.includes('not found')) {
+          // Setting doesn't exist, use default template - no need to log
+        } else {
+          console.error('Error loading messaging settings:', error);
+        }
         // Use default template if settings not found
         setRepairReceivedMessageTemplate(`جهازك وصل Fix Zone يا فندم
 
