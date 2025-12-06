@@ -1,6 +1,15 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
+// Validate required environment variables in production
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DB_PASSWORD) {
+    console.error('❌ ERROR: DB_PASSWORD environment variable is required in production!');
+    console.error('Please set DB_PASSWORD in your production environment variables.');
+    process.exit(1);
+  }
+}
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',

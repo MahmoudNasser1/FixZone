@@ -751,44 +751,45 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
     const limit = parseInt(req.query.limit) || 6;
     
     // Get most common CPU values
-    const [cpuResults] = await db.execute(`
+    // Use db.query instead of db.execute for LIMIT - prepared statements have issues with LIMIT in MariaDB
+    const [cpuResults] = await db.query(`
       SELECT cpu as value, COUNT(*) as count
       FROM Device
       WHERE cpu IS NOT NULL AND cpu != '' AND deletedAt IS NULL
       GROUP BY cpu
       ORDER BY count DESC
-      LIMIT ?
-    `, [limit]);
+      LIMIT ${parseInt(limit)}
+    `);
     
     // Get most common GPU values
-    const [gpuResults] = await db.execute(`
+    const [gpuResults] = await db.query(`
       SELECT gpu as value, COUNT(*) as count
       FROM Device
       WHERE gpu IS NOT NULL AND gpu != '' AND deletedAt IS NULL
       GROUP BY gpu
       ORDER BY count DESC
-      LIMIT ?
-    `, [limit]);
+      LIMIT ${parseInt(limit)}
+    `);
     
     // Get most common RAM values
-    const [ramResults] = await db.execute(`
+    const [ramResults] = await db.query(`
       SELECT ram as value, COUNT(*) as count
       FROM Device
       WHERE ram IS NOT NULL AND ram != '' AND deletedAt IS NULL
       GROUP BY ram
       ORDER BY count DESC
-      LIMIT ?
-    `, [limit]);
+      LIMIT ${parseInt(limit)}
+    `);
     
     // Get most common Storage values
-    const [storageResults] = await db.execute(`
+    const [storageResults] = await db.query(`
       SELECT storage as value, COUNT(*) as count
       FROM Device
       WHERE storage IS NOT NULL AND storage != '' AND deletedAt IS NULL
       GROUP BY storage
       ORDER BY count DESC
-      LIMIT ?
-    `, [limit]);
+      LIMIT ${parseInt(limit)}
+    `);
     
     res.json({
       success: true,

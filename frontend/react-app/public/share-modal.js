@@ -237,8 +237,10 @@
           if (readyState === 'loading') {
           // Wrap addEventListener in try-catch with extra safety
           try {
-            if (document && typeof document.addEventListener === 'function') {
-              document.addEventListener('DOMContentLoaded', initializeWhenReady);
+            // Triple check document exists and addEventListener is available
+            const doc = document;
+            if (doc && doc !== null && typeof doc === 'object' && typeof doc.addEventListener === 'function') {
+              doc.addEventListener('DOMContentLoaded', initializeWhenReady);
             } else {
               setTimeout(initializeWhenReady, 300);
             }
@@ -267,8 +269,8 @@
   }
 
   // Cleanup on unload (optional, but good practice)
-  if (typeof window !== 'undefined' && window && typeof window.addEventListener === 'function') {
-    try {
+  try {
+    if (typeof window !== 'undefined' && window && window !== null && typeof window === 'object' && typeof window.addEventListener === 'function') {
       const cleanup = () => {
         try {
           if (scheduledId) {
@@ -279,9 +281,9 @@
         }
       };
       window.addEventListener('beforeunload', cleanup);
-    } catch (e) {
-      // Ignore errors during cleanup
     }
+  } catch (e) {
+    // Ignore errors during cleanup
   }
 
 })();
