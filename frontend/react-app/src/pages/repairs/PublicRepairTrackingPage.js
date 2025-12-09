@@ -738,11 +738,22 @@ const PublicRepairTrackingPage = () => {
             {/* Invoice Section */}
             <SimpleCard className="mt-4 sm:mt-6 md:mt-8">
               <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-                <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
-                  <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
-                    <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+                <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
+                      <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+                    </div>
+                    <span className="font-semibold text-foreground">الفاتورة</span>
                   </div>
-                  <span className="font-semibold text-foreground">الفاتورة</span>
+                  {!showInvoiceAuth && (
+                    <SimpleButton
+                      onClick={() => setShowInvoiceAuth(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Lock className="w-4 h-4 ml-2" />
+                      عرض الفاتورة
+                    </SimpleButton>
+                  )}
                 </SimpleCardTitle>
               </SimpleCardHeader>
               <SimpleCardContent className="p-4 sm:p-5 md:p-6">

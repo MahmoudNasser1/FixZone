@@ -41,7 +41,12 @@ export default function RepairQRPrintPage() {
   }, [id]);
 
   const frontendBaseUrl = getFrontendBaseUrl();
-  const qrTarget = `${frontendBaseUrl}/repairs/${id}`;
+  // استخدام trackingToken بدلاً من ID في رابط التتبع
+  const qrTarget = repair?.trackingToken 
+    ? `${frontendBaseUrl}/track?trackingToken=${repair.trackingToken}`
+    : repair?.id 
+    ? `${frontendBaseUrl}/track?trackingToken=${repair.id}`
+    : `${frontendBaseUrl}/track?trackingToken=${id}`;
   const qrData = encodeURIComponent(qrTarget);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${qrData}`;
 

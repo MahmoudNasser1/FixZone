@@ -461,6 +461,7 @@ router.get('/:id', cacheMiddleware(180), async (req, res) => { // Cache for 3 mi
     const formattedRepair = {
       id: repair.id,
       requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
+      trackingToken: repair.trackingToken || null,
       customerName: repair.customerName || 'غير محدد',
       customerPhone: repair.customerPhone || 'غير محدد',
       customerEmail: repair.customerEmail || 'غير محدد',

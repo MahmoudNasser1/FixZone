@@ -223,7 +223,8 @@ class AutomationService {
         problem: repair.reportedProblem || 'غير محدد',
         trackingUrl: (() => {
           const { getFrontendUrl } = require('../utils/frontendUrl');
-          return `${getFrontendUrl()}/track/${repair.trackingToken || repair.id}`;
+          const trackingToken = repair.trackingToken || repair.id;
+          return `${getFrontendUrl()}/track?trackingToken=${trackingToken}`;
         })(),
         status: this.getRepairStatusLabel(newStatus),
         location: process.env.COMPANY_ADDRESS || 'مول البستان التجاري - الدور الأرضي - باب اللوق - القاهرة'

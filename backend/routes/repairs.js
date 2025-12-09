@@ -876,6 +876,7 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
     const response = {
       id: repair.id,
       requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
+      trackingToken: repair.trackingToken || null,
       customerId: repair.customerId,
       customerName: repair.customerName,
       customerPhone: repair.customerPhone,

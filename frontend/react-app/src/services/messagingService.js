@@ -463,9 +463,9 @@ class MessagingService {
       });
     }
     
-    // استخدام trackingToken من API، أو requestNumber، أو id كبديل
-    const trackingNumber = repair.trackingToken || repair.requestNumber || repair.id;
-    const trackingUrl = `${window.location.origin}/track/${trackingNumber}`;
+    // استخدام trackingToken بدلاً من ID في رابط التتبع
+    const trackingToken = repair.trackingToken || repair.id;
+    const trackingUrl = `${window.location.origin}/track?trackingToken=${trackingToken}`;
 
     let oldInvoiceNumberText = '';
     if (repair.oldInvoiceNumber) {

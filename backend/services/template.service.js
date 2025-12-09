@@ -231,6 +231,8 @@ class TemplateService {
       console.log('[TEMPLATE] ==========================================');
       console.log('[TEMPLATE] prepareRepairVariables called with:', {
         repairId: repair.id,
+        trackingToken: repair.trackingToken || 'NOT FOUND',
+        hasTrackingToken: !!repair.trackingToken,
         reportedProblem: repair.reportedProblem,
         reportedProblemValue: repair.reportedProblem ? `${String(repair.reportedProblem).substring(0, 100)}...` : 'NULL/EMPTY',
         hasReportedProblem: !!repair.reportedProblem,
