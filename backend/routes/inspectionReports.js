@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const websocketService = require('../services/websocketService');
 
 // Get all inspection reports
 router.get('/', async (req, res) => {
@@ -114,7 +115,38 @@ router.post('/', async (req, res) => {
       'INSERT INTO InspectionReport (repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       payload
     );
-    res.status(201).json({ id: resultQuery.insertId, repairRequestId, inspectionTypeId: validInspectionTypeId, technicianId: validTechnicianId, summary, result, recommendations, notes, reportDate, branchId: validBranchId, invoiceLink, qrCode });
+    
+    // إرسال WebSocket notification لتحديث صفحة التتبع
+    try {
+      const [repairRows] = await db.query(
+        'SELECT * FROM RepairRequest WHERE id = ? AND deletedAt IS NULL',
+        [repairRequestId]
+      );
+      if (repairRows && repairRows.length > 0) {
+        // إرسال تحديث للطلب لإعلام صفحة التتبع بوجود تقرير جديد
+        websocketService.sendRepairUpdate('updated', repairRows[0]);
+        console.log(`[InspectionReports] WebSocket notification sent for repair ${repairRequestId}`);
+      }
+    } catch (wsError) {
+      // لا نوقف العملية إذا فشل WebSocket
+      console.warn('[InspectionReports] Failed to send WebSocket notification:', wsError);
+    }
+    
+    res.status(201).json({ 
+      success: true,
+      id: resultQuery.insertId, 
+      repairRequestId, 
+      inspectionTypeId: validInspectionTypeId, 
+      technicianId: validTechnicianId, 
+      summary, 
+      result, 
+      recommendations, 
+      notes, 
+      reportDate, 
+      branchId: validBranchId, 
+      invoiceLink, 
+      qrCode 
+    });
   } catch (err) {
     console.error('Error creating inspection report:', err);
     res.status(500).json({ error: 'Server Error', details: err.message });

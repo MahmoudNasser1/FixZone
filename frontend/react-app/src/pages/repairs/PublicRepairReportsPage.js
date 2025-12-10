@@ -72,17 +72,28 @@ const PublicRepairReportsPage = () => {
   // Fetch reports
   useEffect(() => {
     const fetchReports = async () => {
-      if (!repairId && !repairData?.id) return;
+      const id = repairId || repairData?.id;
+      if (!id) {
+        setReportsLoading(false);
+        setReports([]);
+        return;
+      }
 
       try {
         setReportsLoading(true);
-        const id = repairId || repairData?.id;
         const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${id}`);
         
         if (response.ok) {
           const data = await response.json();
-          setReports(data.data || data.reports || data || []);
+          // Handle different response formats
+          const reportsList = data.data || data.reports || (Array.isArray(data) ? data : []);
+          setReports(Array.isArray(reportsList) ? reportsList : []);
+        } else if (response.status === 404) {
+          // No reports found - this is normal
+          setReports([]);
         } else {
+          // Other error
+          console.warn('Error fetching reports:', response.status);
           setReports([]);
         }
       } catch (error) {
@@ -93,9 +104,7 @@ const PublicRepairReportsPage = () => {
       }
     };
 
-    if (repairId || repairData?.id) {
-      fetchReports();
-    }
+    fetchReports();
   }, [repairId, repairData?.id]);
 
   const handleBack = () => {

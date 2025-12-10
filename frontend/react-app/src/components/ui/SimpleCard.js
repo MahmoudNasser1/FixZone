@@ -2,7 +2,7 @@ import React from 'react';
 
 const SimpleCard = ({ children, className = '' }) => {
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
+    <div className={`bg-card dark:bg-card rounded-lg border border-border shadow-sm ${className}`}>
       {children}
     </div>
   );
@@ -10,7 +10,7 @@ const SimpleCard = ({ children, className = '' }) => {
 
 const SimpleCardHeader = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+    <div className={`px-6 py-4 border-b border-border ${className}`}>
       {children}
     </div>
   );
@@ -18,7 +18,7 @@ const SimpleCardHeader = ({ children, className = '' }) => {
 
 const SimpleCardTitle = ({ children, className = '' }) => {
   return (
-    <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>
+    <h3 className={`text-lg font-semibold text-card-foreground dark:text-card-foreground ${className}`}>
       {children}
     </h3>
   );
