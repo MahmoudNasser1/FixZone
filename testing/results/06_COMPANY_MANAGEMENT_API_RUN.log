@@ -1,0 +1,12 @@
+🏢 اختبار Company Management API
+================================
+
+📝 خطوة 1: الحصول على Token...
+الرجاء تسجيل الدخول في المتصفح أولاً (http://localhost:3000)
+ثم افتح Browser Console واكتب:
+
+const authStorage = localStorage.getItem('auth-storage');
+const token = JSON.parse(authStorage)?.state?.token;
+console.log('Token:', token);
+
+[0;31m❌ Token مطلوب للاختبار[0m
