@@ -164,7 +164,7 @@ const DataView = ({
         {data.map((item, index) => (
           <div
             key={item.id || index}
-            className="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group cursor-pointer"
+            className="relative bg-card rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary transition-all duration-200 group cursor-pointer"
             onClick={() => onItemClick?.(item)}
           >
             {/* Checkbox للتحديد المتعدد */}
@@ -177,7 +177,7 @@ const DataView = ({
                     e.stopPropagation();
                     handleItemSelect(item.id, e.target.checked);
                   }}
-                  className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+                  className="w-4 h-4 text-primary bg-background border-2 border-input rounded focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all"
                 />
               </div>
             )}
@@ -221,8 +221,8 @@ const DataView = ({
                 <>
                   {/* العنوان الرئيسي */}
                   {(currentVisibleColumns.length > 0 || Object.keys(item).length > 0) && (
-                    <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <div className="border-b border-border pb-3">
+                      <h3 className="text-lg font-semibold text-foreground truncate">
                         {(() => {
                           if (currentVisibleColumns.length > 0) {
                             const firstCol = currentVisibleColumns[0];
@@ -251,10 +251,10 @@ const DataView = ({
                         
                         return (
                           <div key={col.key} className="flex justify-between items-start">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                               {col.label || col.header}
                             </span>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 text-right max-w-[65%] font-medium">
+                            <div className="text-sm text-foreground text-right max-w-[65%] font-medium">
                               {cellContent}
                             </div>
                           </div>
@@ -300,7 +300,7 @@ const DataView = ({
         {data.map((item, index) => (
           <div
             key={item.id || index}
-            className="relative flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group cursor-pointer"
+            className="relative flex items-center gap-4 p-4 bg-card rounded-lg border border-border hover:shadow-md hover:border-primary transition-all duration-200 group cursor-pointer"
             onClick={() => onItemClick?.(item)}
           >
             {/* Checkbox للتحديد المتعدد */}
@@ -313,7 +313,7 @@ const DataView = ({
                   handleItemSelect(item.id, e.target.checked);
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+                className="w-4 h-4 text-primary bg-background border-2 border-input rounded focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:border-primary/80"
                 title={selectedItems.includes(item.id) ? 'إلغاء التحديد' : 'تحديد'}
               />
             )}
@@ -364,10 +364,10 @@ const DataView = ({
                     
                     return (
                       <div key={col.key} className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {col.label || col.header}
                         </span>
-                        <div className="text-sm text-gray-900 dark:text-gray-100 mt-1 font-medium">
+                        <div className="text-sm text-foreground mt-1 font-medium">
                           {cellContent}
                         </div>
                       </div>

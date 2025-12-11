@@ -70,6 +70,7 @@ import TechnicianReportsPage from './pages/reports/TechnicianReportsPage';
 import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import JobsListPage from './pages/technician/JobsListPage';
 import JobDetailsPage from './pages/technician/JobDetailsPage';
+import TasksPage from './pages/technician/TasksPage';
 
 // Integration Pages
 import WorkflowDashboardPage from './pages/integration/WorkflowDashboardPage';
@@ -323,6 +324,7 @@ function App() {
             <Route path="/technician/dashboard" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
             <Route path="/technician/jobs" element={<TechnicianRoute><JobsListPage /></TechnicianRoute>} />
             <Route path="/technician/jobs/:id" element={<TechnicianRoute><JobDetailsPage /></TechnicianRoute>} />
+            <Route path="/technician/tasks" element={<TechnicianRoute><TasksPage /></TechnicianRoute>} />
             <Route path="/technician/profile" element={<TechnicianRoute><TechnicianProfilePage /></TechnicianRoute>} />
             <Route path="/technician/settings" element={<TechnicianRoute><TechnicianSettingsPage /></TechnicianRoute>} />
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}

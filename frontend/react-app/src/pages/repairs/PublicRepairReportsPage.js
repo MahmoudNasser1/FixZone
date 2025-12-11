@@ -104,7 +104,7 @@ const PublicRepairReportsPage = () => {
       }
     };
 
-    fetchReports();
+      fetchReports();
   }, [repairId, repairData?.id]);
 
   const handleBack = () => {

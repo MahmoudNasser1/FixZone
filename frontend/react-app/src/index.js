@@ -12,11 +12,16 @@ if (typeof window !== 'undefined') {
   const originalWarn = console.warn;
   
   console.error = (...args) => {
-    // Check if it's a 401 error from auth/settings endpoint
+    // Check if it's a 401 or 403 error from auth/settings endpoint
     const errorString = String(args[0] || '') + ' ' + (args[1] || '');
     const is401Error = errorString.includes('401') || 
                       errorString.includes('Unauthorized') ||
                       (args[0]?.response?.status === 401);
+    const is403Error = errorString.includes('403') || 
+                      errorString.includes('Forbidden') ||
+                      errorString.includes('Access denied') ||
+                      errorString.includes('Insufficient permissions') ||
+                      (args[0]?.response?.status === 403);
     const isAuthEndpoint = errorString.includes('/auth/') || 
                           errorString.includes('/settings') ||
                           (args[0]?.config?.url?.includes('/auth/')) ||
@@ -25,8 +30,8 @@ if (typeof window !== 'undefined') {
     const isLoginPage = currentPath === '/login' || currentPath === '/customer/login';
     const isPublicPage = currentPath.startsWith('/track'); // Public tracking page
     
-    // Suppress 401 errors from auth/settings endpoints on login page or public pages
-    if (is401Error && isAuthEndpoint && (isLoginPage || isPublicPage)) {
+    // Suppress 401/403 errors from auth/settings endpoints
+    if ((is401Error || is403Error) && isAuthEndpoint) {
       return; // Don't log to console
     }
     
@@ -35,12 +40,16 @@ if (typeof window !== 'undefined') {
   };
   
   console.warn = (...args) => {
-    // Also suppress warnings about 401 errors
+    // Also suppress warnings about 401/403 errors
     const warnString = String(args[0] || '');
     const is401Warning = warnString.includes('401') || warnString.includes('Unauthorized');
+    const is403Warning = warnString.includes('403') || 
+                        warnString.includes('Forbidden') ||
+                        warnString.includes('Access denied') ||
+                        warnString.includes('Insufficient permissions');
     const isAuthEndpoint = warnString.includes('/auth/') || warnString.includes('/settings');
     
-    if (is401Warning && isAuthEndpoint) {
+    if ((is401Warning || is403Warning) && isAuthEndpoint) {
       return; // Don't log to console
     }
     

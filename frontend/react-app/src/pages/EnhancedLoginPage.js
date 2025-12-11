@@ -6,7 +6,8 @@ import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../components/ThemeProvider';
 
 /**
  * 🎨 صفحة تسجيل الدخول المحسّنة
@@ -33,6 +34,8 @@ const EnhancedLoginPage = () => {
 
     const login = useAuthStore((state) => state.login);
     const navigate = useNavigate();
+    const { theme, setTheme } = useTheme();
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     // ===== Validation Functions =====
     const validateField = (name, value) => {
@@ -155,18 +158,38 @@ const EnhancedLoginPage = () => {
         }
     };
 
+    // ===== Theme Toggle Handler =====
+    const toggleTheme = () => {
+        const currentTheme = theme === 'system' 
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : theme;
+        setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    };
+
     // ===== Render =====
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background Decoration - ألوان البراند */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob" style={{ backgroundColor: '#053887' }}></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000" style={{ backgroundColor: '#0a4da3' }}></div>
-                <div className="absolute top-40 left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000" style={{ backgroundColor: '#1562bf' }}></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-5 dark:mix-blend-screen animate-blob bg-[#053887] dark:bg-blue-600"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-5 dark:mix-blend-screen animate-blob animation-delay-2000 bg-[#0a4da3] dark:bg-blue-500"></div>
+                <div className="absolute top-40 left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-5 dark:mix-blend-screen animate-blob animation-delay-4000 bg-[#1562bf] dark:bg-blue-400"></div>
             </div>
 
+            {/* Theme Toggle Button */}
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="absolute top-4 right-4 z-20 bg-background/80 dark:bg-background/90 backdrop-blur-sm hover:bg-background border border-border shadow-lg transition-all"
+                aria-label="تبديل المظهر"
+            >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
+
             {/* Login Card */}
-            <Card className="w-full max-w-md shadow-2xl backdrop-blur-sm bg-white/95 relative z-10 border-t-4" style={{ borderTopColor: '#053887' }}>
+            <Card className="w-full max-w-md shadow-2xl backdrop-blur-sm bg-card/95 dark:bg-card/90 relative z-10 border-t-4 border-primary">
                 <CardHeader className="text-center pb-2">
                     {/* Logo الحقيقي */}
                     <div className="mx-auto mb-4 flex items-center justify-center">
@@ -181,20 +204,15 @@ const EnhancedLoginPage = () => {
                             }}
                         />
                         {/* Fallback Logo */}
-                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg hidden" style={{ background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)' }}>
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg hidden bg-gradient-to-br from-[#053887] to-[#0a4da3] dark:from-blue-600 dark:to-blue-500">
                             <div className="text-white text-3xl font-bold">FZ</div>
                         </div>
                     </div>
 
-                    <CardTitle className="text-3xl font-bold" style={{
-                        background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
-                    }}>
+                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#053887] via-[#0a4da3] to-[#053887] dark:from-blue-400 dark:via-blue-300 dark:to-blue-500 bg-clip-text text-transparent">
                         أهلاً بيك
                     </CardTitle>
-                    <CardDescription className="text-base mt-2">
+                    <CardDescription className="text-base mt-2 text-muted-foreground">
                         سجل دخول علشان تدخل على حسابك
                     </CardDescription>
                 </CardHeader>
@@ -203,25 +221,22 @@ const EnhancedLoginPage = () => {
                     <CardContent className="space-y-5 pt-6">
                         {/* Error Message */}
                         {error && (
-                            <div className="border-l-4 p-4 rounded-lg flex items-start gap-3 animate-shake" style={{
-                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                                borderColor: '#EF4444'
-                            }}>
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
+                            <div className="border-l-4 p-4 rounded-lg flex items-start gap-3 animate-shake bg-destructive/10 dark:bg-destructive/20 border-destructive">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-destructive" />
                                 <div>
-                                    <p className="font-semibold text-sm" style={{ color: '#DC2626' }}>في مشكلة!</p>
-                                    <p className="text-sm mt-1" style={{ color: '#EF4444' }}>{error}</p>
+                                    <p className="font-semibold text-sm text-destructive">في مشكلة!</p>
+                                    <p className="text-sm mt-1 text-destructive/90">{error}</p>
                                 </div>
                             </div>
                         )}
 
                         {/* Email/Phone Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="loginIdentifier" className="text-right block font-semibold">
+                            <Label htmlFor="loginIdentifier" className="text-right block font-semibold text-foreground">
                                 الإيميل أو الموبايل
                             </Label>
                             <div className="relative">
-                                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#9CA3AF' }} />
+                                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none text-muted-foreground" />
                                 <Input
                                     id="loginIdentifier"
                                     name="loginIdentifier"
@@ -233,18 +248,15 @@ const EnhancedLoginPage = () => {
                                     required
                                     disabled={isLoading}
                                     dir="ltr"
-                                    className={`pr-10 h-12 text-base ${touched.loginIdentifier && validationErrors.loginIdentifier
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : ''
-                                        }`}
-                                    style={!validationErrors.loginIdentifier ? {
-                                        borderColor: '#E5E7EB',
-                                        focusRingColor: '#053887'
-                                    } : {}}
+                                    className={`pr-10 h-12 text-base bg-background text-foreground border-input ${
+                                        touched.loginIdentifier && validationErrors.loginIdentifier
+                                            ? 'border-destructive focus:ring-destructive'
+                                            : 'focus:ring-primary'
+                                    }`}
                                 />
                             </div>
                             {touched.loginIdentifier && validationErrors.loginIdentifier && (
-                                <p className="text-sm flex items-center gap-1 animate-fadeIn" style={{ color: '#EF4444' }}>
+                                <p className="text-sm flex items-center gap-1 animate-fadeIn text-destructive">
                                     <AlertCircle className="w-4 h-4" />
                                     {validationErrors.loginIdentifier}
                                 </p>
@@ -253,11 +265,11 @@ const EnhancedLoginPage = () => {
 
                         {/* Password Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-right block font-semibold">
+                            <Label htmlFor="password" className="text-right block font-semibold text-foreground">
                                 كلمة السر
                             </Label>
                             <div className="relative">
-                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#9CA3AF' }} />
+                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none text-muted-foreground" />
                                 <Input
                                     id="password"
                                     name="password"
@@ -273,21 +285,16 @@ const EnhancedLoginPage = () => {
                                     onBlur={handleBlur}
                                     disabled={isLoading}
                                     placeholder="اكتب كلمة السر"
-                                    className={`pr-10 pl-10 h-12 text-base ${touched.password && validationErrors.password
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : ''
-                                        }`}
-                                    style={!validationErrors.password ? {
-                                        borderColor: '#E5E7EB'
-                                    } : {}}
+                                    className={`pr-10 pl-10 h-12 text-base bg-background text-foreground border-input ${
+                                        touched.password && validationErrors.password
+                                            ? 'border-destructive focus:ring-destructive'
+                                            : 'focus:ring-primary'
+                                    }`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors"
-                                    style={{ color: '#9CA3AF' }}
-                                    onMouseEnter={(e) => e.target.style.color = '#6B7280'}
-                                    onMouseLeave={(e) => e.target.style.color = '#9CA3AF'}
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors text-muted-foreground hover:text-foreground"
                                     tabIndex={-1}
                                 >
                                     {showPassword ? (
@@ -298,7 +305,7 @@ const EnhancedLoginPage = () => {
                                 </button>
                             </div>
                             {touched.password && validationErrors.password && (
-                                <p className="text-sm flex items-center gap-1 animate-fadeIn" style={{ color: '#EF4444' }}>
+                                <p className="text-sm flex items-center gap-1 animate-fadeIn text-destructive">
                                     <AlertCircle className="w-4 h-4" />
                                     {validationErrors.password}
                                 </p>
@@ -310,21 +317,14 @@ const EnhancedLoginPage = () => {
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    className="w-4 h-4 rounded focus:ring-2"
-                                    style={{
-                                        color: '#053887',
-                                        borderColor: '#D1D5DB'
-                                    }}
+                                    className="w-4 h-4 rounded focus:ring-2 focus:ring-primary border-input text-primary"
                                     disabled={isLoading}
                                 />
-                                <span className="text-gray-700">فاكرني</span>
+                                <span className="text-foreground">فاكرني</span>
                             </label>
                             <a
                                 href="#"
-                                className="font-medium hover:underline"
-                                style={{ color: '#053887' }}
-                                onMouseEnter={(e) => e.target.style.color = '#042d6b'}
-                                onMouseLeave={(e) => e.target.style.color = '#053887'}
+                                className="font-medium hover:underline text-primary hover:text-primary/80 transition-colors"
                                 onClick={(e) => {
                                     e.preventDefault();
                                     alert('اتصل بالإدارة علشان تعيد كلمة السر');
@@ -339,12 +339,7 @@ const EnhancedLoginPage = () => {
                         {/* Login Button - ألوان البراند */}
                         <Button
                             type="submit"
-                            className="w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                            style={{
-                                background: 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'
-                            }}
-                            onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #042d6b 0%, #053887 50%, #0a4da3 100%)'}
-                            onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #053887 0%, #0a4da3 100%)'}
+                            className="w-full h-12 text-base font-semibold text-white bg-gradient-to-r from-[#053887] to-[#0a4da3] hover:from-[#042d6b] hover:to-[#053887] dark:from-blue-600 dark:to-blue-500 dark:hover:from-blue-500 dark:hover:to-blue-400 shadow-lg hover:shadow-xl transition-all duration-200"
                             disabled={isLoading || Object.keys(validationErrors).length > 0}
                         >
                             {isLoading ? (
@@ -364,14 +359,11 @@ const EnhancedLoginPage = () => {
                         </Button>
 
                         {/* Help Text */}
-                        <p className="text-center text-sm text-gray-600">
+                        <p className="text-center text-sm text-muted-foreground">
                             محتاج مساعدة؟{' '}
                             <a
                                 href="mailto:support@fixzone.com"
-                                className="font-medium hover:underline"
-                                style={{ color: '#053887' }}
-                                onMouseEnter={(e) => e.target.style.color = '#042d6b'}
-                                onMouseLeave={(e) => e.target.style.color = '#053887'}
+                                className="font-medium hover:underline text-primary hover:text-primary/80 transition-colors"
                             >
                                 اتصل بينا
                             </a>

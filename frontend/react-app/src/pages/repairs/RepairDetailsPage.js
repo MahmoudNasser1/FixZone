@@ -16,7 +16,7 @@ import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
-  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw, Copy, Check
+  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw, Copy, Check, Building2
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
@@ -41,7 +41,7 @@ const RepairDetailsPage = () => {
   const [newStatus, setNewStatus] = useState('');
   const [addingNote, setAddingNote] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [activeTab, setActiveTab] = useState('status'); // status | timeline | attachments | invoices | notes | payments | activity
+  const [activeTab, setActiveTab] = useState('status'); // status | timeline | attachments | invoices | notes | payments | activity | reports
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTechId, setAssignTechId] = useState('');
   const [techOptions, setTechOptions] = useState([]);
@@ -58,6 +58,11 @@ const RepairDetailsPage = () => {
     recommendations: '',
     notes: '',
   });
+  const [inspectionSaving, setInspectionSaving] = useState(false);
+  const [inspectionError, setInspectionError] = useState('');
+  const [inspectionReports, setInspectionReports] = useState([]);
+  const [inspectionReportsLoading, setInspectionReportsLoading] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicesError, setInvoicesError] = useState(null);
@@ -434,7 +439,95 @@ const RepairDetailsPage = () => {
     if (activeTab === 'payments' && payments.length === 0 && !paymentsLoading) {
       loadPayments();
     }
+    // تحميل التقارير عند فتح تبويب التقارير
+    if (activeTab === 'reports' && !inspectionReportsLoading) {
+      loadInspectionReports();
+    }
   }, [activeTab]);
+
+  // Load inspection reports
+  const loadInspectionReports = async () => {
+    try {
+      setInspectionReportsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Handle different response formats
+        let reportsList = [];
+        if (data.success && data.data) {
+          reportsList = Array.isArray(data.data) ? data.data : [];
+        } else if (data.data) {
+          reportsList = Array.isArray(data.data) ? data.data : [];
+        } else if (data.reports) {
+          reportsList = Array.isArray(data.reports) ? data.reports : [];
+        } else if (Array.isArray(data)) {
+          reportsList = data;
+        }
+        
+        setInspectionReports(reportsList);
+        console.log('[InspectionReports] Loaded reports:', reportsList);
+        console.log('[InspectionReports] Number of reports:', reportsList.length);
+      } else {
+        // Get error details
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: response.statusText };
+        }
+        console.error('[InspectionReports] Failed to load reports:', response.status, errorData);
+        setInspectionReports([]);
+        // Show error notification only if it's not a 404 (no reports is normal)
+        if (response.status !== 404) {
+          notifications.error(`تعذر تحميل التقارير: ${errorData.error || errorData.details || 'خطأ غير معروف'}`);
+        }
+      }
+    } catch (error) {
+      console.error('[InspectionReports] Error loading reports:', error);
+      setInspectionReports([]);
+      notifications.error(`خطأ في تحميل التقارير: ${error.message || 'خطأ في الاتصال'}`);
+    } finally {
+      setInspectionReportsLoading(false);
+    }
+  };
+
+  // Handle delete report
+  const handleDeleteReport = async (reportId) => {
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا التقرير؟');
+    if (!confirmed) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/inspectionreports/${reportId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        notifications.success('تم حذف التقرير بنجاح');
+        await loadInspectionReports();
+        await fetchRepairDetails();
+      } else {
+        throw new Error('فشل حذف التقرير');
+      }
+    } catch (error) {
+      console.error('[InspectionReports] Error deleting report:', error);
+      notifications.error('تعذر حذف التقرير');
+    }
+  };
+
+  // Handle edit report - open modal with report data
+  const handleEditReport = (report) => {
+    setEditingReport(report);
+    setInspectionForm({
+      inspectionTypeId: String(report.inspectionTypeId || ''),
+      technicianId: String(report.technicianId || ''),
+      reportDate: report.reportDate ? report.reportDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+      summary: report.summary || '',
+      result: report.result || '',
+      recommendations: report.recommendations || '',
+      notes: report.notes || '',
+    });
+    setInspectionError('');
+    setInspectionOpen(true);
+  };
 
   // 🔧 Fix #5: Enhanced loadPartsUsed to handle all data fields properly
   const loadPartsUsed = async () => {
@@ -2235,9 +2328,22 @@ const RepairDetailsPage = () => {
               <Printer className="w-4 h-4 ml-2" />
               طباعة تقرير فحص
             </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => setInspectionOpen(true)} className="rounded-lg">
-              <Edit className="w-4 h-4 ml-2" />
-              إنشاء/تعديل تقرير فحص
+            <SimpleButton size="sm" variant="outline" onClick={() => {
+              setEditingReport(null);
+              setInspectionForm({
+                inspectionTypeId: '',
+                technicianId: '',
+                reportDate: new Date().toISOString().slice(0, 10),
+                summary: '',
+                result: '',
+                recommendations: '',
+                notes: '',
+              });
+              setInspectionError('');
+              setInspectionOpen(true);
+            }} className="rounded-lg">
+              <Plus className="w-4 h-4 ml-2" />
+              إنشاء تقرير فحص
             </SimpleButton>
             <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('delivery')} className="rounded-lg">
               <Printer className="w-4 h-4 ml-2" />
@@ -2258,6 +2364,7 @@ const RepairDetailsPage = () => {
             { key: 'status', label: 'الحالة والتفاصيل', icon: Wrench },
             { key: 'timeline', label: 'المخطط الزمني', icon: Clock },
             { key: 'attachments', label: 'المرفقات', icon: Paperclip },
+            { key: 'reports', label: 'تقارير الفحص', icon: FileText },
             { key: 'invoices', label: 'الفواتير', icon: FileText },
             { key: 'payments', label: 'المدفوعات', icon: Settings },
             { key: 'activity', label: 'سجل الأنشطة', icon: MessageSquare },
@@ -3656,6 +3763,188 @@ const RepairDetailsPage = () => {
             </>
           )}
 
+          {activeTab === 'reports' && (
+            <>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <div className="flex items-center justify-between">
+                    <SimpleCardTitle className="flex items-center">
+                      <FileText className="w-5 h-5 ml-2" />
+                      تقارير الفحص
+                    </SimpleCardTitle>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <SimpleButton size="sm" variant="outline" onClick={loadInspectionReports} disabled={inspectionReportsLoading}>
+                        <RefreshCw className={`w-4 h-4 ml-1 ${inspectionReportsLoading ? 'animate-spin' : ''}`} />
+                        تحديث
+                      </SimpleButton>
+                      <SimpleButton size="sm" onClick={() => {
+                        setEditingReport(null);
+                        setInspectionForm({
+                          inspectionTypeId: '',
+                          technicianId: '',
+                          reportDate: new Date().toISOString().slice(0, 10),
+                          summary: '',
+                          result: '',
+                          recommendations: '',
+                          notes: '',
+                        });
+                        setInspectionError('');
+                        setInspectionOpen(true);
+                      }}>
+                        <Plus className="w-4 h-4 ml-1" />
+                        إنشاء تقرير جديد
+                      </SimpleButton>
+                    </div>
+                  </div>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  {inspectionReportsLoading ? (
+                    <div className="space-y-3">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  ) : inspectionReports.length === 0 ? (
+                    <div className="text-center py-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                      <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <div className="text-gray-600 text-lg font-medium">لا توجد تقارير فحص</div>
+                      <div className="text-gray-500 text-sm mt-2">لم يتم إنشاء أي تقارير فحص لهذا الطلب بعد</div>
+                      <SimpleButton
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => {
+                          setEditingReport(null);
+                          setInspectionForm({
+                            inspectionTypeId: '',
+                            technicianId: '',
+                            reportDate: new Date().toISOString().slice(0, 10),
+                            summary: '',
+                            result: '',
+                            recommendations: '',
+                            notes: '',
+                          });
+                          setInspectionError('');
+                          setInspectionOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 ml-1" />
+                        إنشاء أول تقرير
+                      </SimpleButton>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {inspectionReports.map((report) => (
+                        <div key={report.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-5 border-l-4 border-blue-400 hover:from-blue-100 hover:to-indigo-100 transition-all">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-gray-900 text-lg">
+                                    {report.inspectionTypeName || 'تقرير فحص'}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {report.reportDate ? new Date(report.reportDate).toLocaleDateString('ar-SA', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    }) : 'تاريخ غير محدد'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
+                                {report.technicianName && (
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-600">الفني:</span>
+                                    <span className="font-medium text-gray-900">{report.technicianName}</span>
+                                  </div>
+                                )}
+                                {report.branchName && (
+                                  <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-600">الفرع:</span>
+                                    <span className="font-medium text-gray-900">{report.branchName}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {report.summary && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">الملخص:</div>
+                                  <div className="text-sm text-gray-700">{report.summary}</div>
+                                </div>
+                              )}
+
+                              {report.result && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">النتيجة والتشخيص:</div>
+                                  <div className="text-sm text-gray-700">{report.result}</div>
+                                </div>
+                              )}
+
+                              {report.recommendations && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">التوصيات:</div>
+                                  <div className="text-sm text-gray-700">{report.recommendations}</div>
+                                </div>
+                              )}
+
+                              {report.notes && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">ملاحظات إضافية:</div>
+                                  <div className="text-sm text-gray-700">{report.notes}</div>
+                                </div>
+                              )}
+
+                              <div className="text-xs text-gray-500 mt-3">
+                                {report.createdAt && (
+                                  <span>
+                                    تم الإنشاء: {new Date(report.createdAt).toLocaleString('ar-SA')}
+                                  </span>
+                                )}
+                                {report.updatedAt && report.updatedAt !== report.createdAt && (
+                                  <span className="mr-2">
+                                    | آخر تحديث: {new Date(report.updatedAt).toLocaleString('ar-SA')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2 mr-4">
+                              <div className="flex gap-2">
+                                <SimpleButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditReport(report)}
+                                  className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                                >
+                                  <Edit className="w-4 h-4 ml-1" />
+                                  تعديل
+                                </SimpleButton>
+                                <SimpleButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteReport(report.id)}
+                                  className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                                >
+                                  <Trash2 className="w-4 h-4 ml-1" />
+                                  حذف
+                                </SimpleButton>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </SimpleCardContent>
+              </SimpleCard>
+            </>
+          )}
+
           {activeTab === 'invoices' && (
             <>
               <SimpleCard>
@@ -4507,12 +4796,27 @@ const RepairDetailsPage = () => {
                     <FileText className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">تقرير الفحص</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {editingReport ? 'تعديل تقرير الفحص' : 'تقرير فحص جديد'}
+                    </h3>
                     <p className="text-sm text-gray-500">طلب #{id} - {repair?.customerName}</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setInspectionOpen(false)}
+                  onClick={() => {
+                    setInspectionOpen(false);
+                    // Reset form and error when closing
+                    setInspectionForm({
+                      inspectionTypeId: '',
+                      technicianId: '',
+                      reportDate: new Date().toISOString().slice(0, 10),
+                      summary: '',
+                      result: '',
+                      recommendations: '',
+                      notes: '',
+                    });
+                    setInspectionError('');
+                  }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -4521,6 +4825,14 @@ const RepairDetailsPage = () => {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Error Message */}
+              {inspectionError && (
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>{inspectionError}</span>
+                </div>
+              )}
+              
               {/* معلومات أساسية */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">المعلومات الأساسية</h4>
@@ -4542,19 +4854,31 @@ const RepairDetailsPage = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">الفني المسؤول</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      الفني المسؤول
+                      {!inspectionForm.technicianId && (
+                        <span className="text-xs text-gray-500 mr-1">(سيتم تعيين الفني الحالي تلقائياً)</span>
+                      )}
+                    </label>
                     <select
                       value={inspectionForm.technicianId}
                       onChange={(e) => setInspectionForm(f => ({ ...f, technicianId: e.target.value }))}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={techLoading}
                     >
-                      <option value="">اختر الفني...</option>
+                      <option value="">
+                        {techLoading ? 'جاري التحميل...' : (assignTechId || repair?.technicianId ? 'استخدام الفني المحدد' : 'اختر الفني...')}
+                      </option>
                       {techOptions.map((u) => (
                         <option key={u.id} value={u.id}>{u.name || `مستخدم #${u.id}`}</option>
                       ))}
                     </select>
                     {techLoading && <p className="text-sm text-gray-500 mt-1">جاري تحميل الفنيين...</p>}
+                    {!techLoading && !inspectionForm.technicianId && (assignTechId || repair?.technicianId) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        سيتم استخدام: {techOptions.find(t => t.id === (assignTechId || repair?.technicianId))?.name || 'الفني المحدد'}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ التقرير</label>
@@ -4573,44 +4897,76 @@ const RepairDetailsPage = () => {
                 <h4 className="text-sm font-medium text-gray-700">تفاصيل التقرير</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">ملخص الفحص</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ملخص الفحص
+                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                    </label>
                     <textarea
                       value={inspectionForm.summary}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, summary: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
+                      onChange={(e) => {
+                        setInspectionForm(f => ({ ...f, summary: e.target.value }));
+                        setInspectionError(''); // Clear error when user types
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={4}
                       placeholder="وصف مختصر لنتائج الفحص..."
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.summary.length}/2000</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">النتيجة والتشخيص</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      النتيجة والتشخيص
+                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                    </label>
                     <textarea
                       value={inspectionForm.result}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, result: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
+                      onChange={(e) => {
+                        setInspectionForm(f => ({ ...f, result: e.target.value }));
+                        setInspectionError(''); // Clear error when user types
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={4}
                       placeholder="التشخيص النهائي والمشاكل المكتشفة..."
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.result.length}/2000</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">التوصيات</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      التوصيات
+                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                    </label>
                     <textarea
                       value={inspectionForm.recommendations}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, recommendations: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
+                      onChange={(e) => {
+                        setInspectionForm(f => ({ ...f, recommendations: e.target.value }));
+                        setInspectionError(''); // Clear error when user types
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={4}
                       placeholder="الخطوات المقترحة للإصلاح..."
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.recommendations.length}/2000</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">ملاحظات إضافية</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ملاحظات إضافية
+                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                    </label>
                     <textarea
                       value={inspectionForm.notes}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, notes: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
+                      onChange={(e) => {
+                        setInspectionForm(f => ({ ...f, notes: e.target.value }));
+                        setInspectionError(''); // Clear error when user types
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={4}
                       placeholder="أي ملاحظات أخرى..."
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.notes.length}/2000</p>
                   </div>
                 </div>
               </div>
@@ -4618,34 +4974,84 @@ const RepairDetailsPage = () => {
 
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl">
               <div className="flex items-center justify-end gap-3">
-                <SimpleButton variant="ghost" onClick={() => setInspectionOpen(false)}>
+                <SimpleButton 
+                  variant="ghost" 
+                  onClick={() => {
+                    setInspectionOpen(false);
+                    // Reset form and error when closing
+                    setInspectionForm({
+                      inspectionTypeId: '',
+                      technicianId: '',
+                      reportDate: new Date().toISOString().slice(0, 10),
+                      summary: '',
+                      result: '',
+                      recommendations: '',
+                      notes: '',
+                    });
+                    setInspectionError('');
+                  }}
+                  disabled={inspectionSaving}
+                >
                   إلغاء
                 </SimpleButton>
                 <SimpleButton
                   onClick={async () => {
+                    // Reset error
+                    setInspectionError('');
+                    
+                    // Validation
                     if (!inspectionForm.inspectionTypeId) {
+                      setInspectionError('يرجى اختيار نوع الفحص');
                       notifications.error('يرجى اختيار نوع الفحص');
                       return;
                     }
                     if (!inspectionForm.reportDate) {
+                      setInspectionError('يرجى تحديد تاريخ التقرير');
                       notifications.error('يرجى تحديد تاريخ التقرير');
                       return;
                     }
+                    
+                    // Check if at least one field is filled (summary, result, recommendations, or notes)
+                    if (!inspectionForm.summary && !inspectionForm.result && !inspectionForm.recommendations && !inspectionForm.notes) {
+                      setInspectionError('يرجى ملء حقل واحد على الأقل من (الملخص، النتيجة، التوصيات، أو الملاحظات)');
+                      notifications.warning('يرجى ملء حقل واحد على الأقل من تفاصيل التقرير');
+                      return;
+                    }
+                    
                     try {
+                      setInspectionSaving(true);
                       const payload = {
                         repairRequestId: Number(id),
                         inspectionTypeId: Number(inspectionForm.inspectionTypeId),
-                        technicianId: Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || 1),
+                        technicianId: Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id || 1),
                         reportDate: inspectionForm.reportDate,
-                        summary: inspectionForm.summary,
-                        result: inspectionForm.result,
-                        recommendations: inspectionForm.recommendations,
-                        notes: inspectionForm.notes,
-                        branchId: 1,
+                        summary: inspectionForm.summary || null,
+                        result: inspectionForm.result || null,
+                        recommendations: inspectionForm.recommendations || null,
+                        notes: inspectionForm.notes || null,
+                        branchId: repair?.branchId || 1,
                       };
-                      await apiService.createInspectionReport(payload);
-                      notifications.success('تم حفظ تقرير الفحص بنجاح');
+                      
+                      if (editingReport) {
+                        // Update existing report
+                        console.log('[InspectionReport] Updating report with payload:', payload);
+                        const response = await apiService.request(`/inspectionreports/${editingReport.id}`, {
+                          method: 'PUT',
+                          body: JSON.stringify(payload)
+                        });
+                        console.log('[InspectionReport] Report updated successfully:', response);
+                        notifications.success('تم تحديث تقرير الفحص بنجاح');
+                      } else {
+                        // Create new report
+                        console.log('[InspectionReport] Creating report with payload:', payload);
+                        const response = await apiService.createInspectionReport(payload);
+                        console.log('[InspectionReport] Report created successfully:', response);
+                        notifications.success('تم حفظ تقرير الفحص بنجاح');
+                      }
+                      
                       setInspectionOpen(false);
+                      setEditingReport(null);
+                      
                       // إعادة تعيين النموذج
                       setInspectionForm({
                         inspectionTypeId: '',
@@ -4656,18 +5062,40 @@ const RepairDetailsPage = () => {
                         recommendations: '',
                         notes: '',
                       });
+                      setInspectionError('');
+                      
                       // إعادة تحميل البيانات
-                      fetchRepairDetails();
+                      await fetchRepairDetails();
+                      // Always reload reports after creating/updating
+                      await loadInspectionReports();
+                      
+                      // إعطاء وقت للـ WebSocket notification للوصول
+                      setTimeout(() => {
+                        console.log('[InspectionReport] Report should be visible now via WebSocket');
+                      }, 1000);
                     } catch (e) {
-                      console.error('Error creating inspection report:', e);
-                      notifications.error('تعذر حفظ تقرير الفحص');
+                      console.error('[InspectionReport] Error creating report:', e);
+                      const errorMessage = e?.message || e?.error || 'تعذر حفظ تقرير الفحص';
+                      setInspectionError(errorMessage);
+                      notifications.error(errorMessage);
+                    } finally {
+                      setInspectionSaving(false);
                     }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={!inspectionForm.inspectionTypeId || !inspectionForm.reportDate}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!inspectionForm.inspectionTypeId || !inspectionForm.reportDate || inspectionSaving}
                 >
-                  <CheckCircle className="w-4 h-4 ml-2" />
-                  حفظ التقرير
+                  {inspectionSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin ml-2" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 ml-2" />
+                      حفظ التقرير
+                    </>
+                  )}
                 </SimpleButton>
               </div>
             </div>

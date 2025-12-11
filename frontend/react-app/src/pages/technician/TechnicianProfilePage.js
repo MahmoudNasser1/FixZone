@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
+import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
 import useAuthStore from '../../stores/authStore';
 import {
     User,
@@ -10,7 +12,8 @@ import {
     Clock,
     Star,
     Shield,
-    Briefcase
+    Briefcase,
+    ArrowRight
 } from 'lucide-react';
 
 /**
@@ -25,6 +28,7 @@ import {
  */
 
 export default function TechnicianProfilePage() {
+    const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
 
     // Mock Data
@@ -39,10 +43,21 @@ export default function TechnicianProfilePage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-20 md:pb-0">
             <TechnicianHeader user={user} notificationCount={3} />
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Back Button */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate('/technician/dashboard')}
+                        aria-label="العودة إلى لوحة التحكم"
+                        className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    >
+                        <ArrowRight className="w-5 h-5" />
+                        <span className="font-medium">العودة للرئيسية</span>
+                    </button>
+                </div>
 
                 {/* Profile Header Card */}
                 <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden mb-6">
@@ -151,6 +166,9 @@ export default function TechnicianProfilePage() {
 
                 </div>
             </div>
+
+            {/* Bottom Navigation - Mobile Only */}
+            <TechnicianBottomNav />
         </div>
     );
 }

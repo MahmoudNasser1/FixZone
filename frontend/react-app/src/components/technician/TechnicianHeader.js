@@ -11,10 +11,13 @@ import {
     CheckCircle,
     Clock,
     Circle,
-    AlertTriangle
+    AlertTriangle,
+    Sun,
+    Moon
 } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import { useNotifications } from '../notifications/NotificationSystem';
+import { useTheme } from '../ThemeProvider';
 
 /**
  * 🛠️ Technician Header Component
@@ -30,6 +33,7 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
     const navigate = useNavigate();
     const logout = useAuthStore((state) => state.logout);
     const notifications = useNotifications();
+    const { theme, setTheme } = useTheme();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [status, setStatus] = useState('available'); // available, busy, offline
@@ -114,6 +118,17 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                             )}
                         </div>
 
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            className="relative p-2 rounded-full transition-colors hover:bg-muted"
+                            aria-label="تبديل المظهر"
+                            title={theme === 'dark' ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن'}
+                        >
+                            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-muted-foreground" />
+                            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-muted-foreground" />
+                        </button>
+
                         {/* Notifications */}
                         <div className="relative">
                             <button
@@ -122,7 +137,7 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                             >
                                 <Bell className="w-6 h-6 text-muted-foreground" />
                                 {notificationCount > 0 && (
-                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-card">
                                         {notificationCount}
                                     </span>
                                 )}

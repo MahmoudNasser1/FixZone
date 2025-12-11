@@ -6,11 +6,11 @@ const websocketService = require('../services/websocketService');
 // Get all inspection reports
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM InspectionReport');
-    res.json(rows);
+    const [rows] = await db.query('SELECT * FROM InspectionReport WHERE deletedAt IS NULL ORDER BY createdAt DESC');
+    res.json({ success: true, data: rows });
   } catch (err) {
     console.error('Error fetching inspection reports:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
@@ -28,7 +28,7 @@ router.get('/repair/:repairRequestId', async (req, res) => {
       LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
       LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
       LEFT JOIN Branch b ON ir.branchId = b.id
-      WHERE ir.repairRequestId = ?
+      WHERE ir.repairRequestId = ? AND ir.deletedAt IS NULL
       ORDER BY ir.reportDate DESC, ir.createdAt DESC
     `, [repairRequestId]);
     res.json({ success: true, data: rows });
@@ -42,14 +42,14 @@ router.get('/repair/:repairRequestId', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query('SELECT * FROM InspectionReport WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT * FROM InspectionReport WHERE id = ? AND deletedAt IS NULL', [id]);
     if (rows.length === 0) {
-      return res.status(404).send('Inspection report not found');
+      return res.status(404).json({ success: false, error: 'Inspection report not found' });
     }
-    res.json(rows[0]);
+    res.json({ success: true, data: rows[0] });
   } catch (err) {
     console.error(`Error fetching inspection report with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
@@ -57,13 +57,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   let { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body || {};
   if (!repairRequestId || !reportDate) {
-    return res.status(400).json({ error: 'repairRequestId and reportDate are required' });
+    return res.status(400).json({ success: false, error: 'repairRequestId and reportDate are required' });
   }
   try {
     // Ensure repair exists
     const [repRows] = await db.query('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairRequestId]);
     if (!repRows || repRows.length === 0) {
-      return res.status(404).json({ error: 'Repair request not found' });
+      return res.status(404).json({ success: false, error: 'Repair request not found' });
     }
 
     // Validate/resolve inspectionTypeId
@@ -149,7 +149,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Error creating inspection report:', err);
-    res.status(500).json({ error: 'Server Error', details: err.message });
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
@@ -158,7 +158,7 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body;
   if (!repairRequestId || !inspectionTypeId || !technicianId || !reportDate) {
-    return res.status(400).send('repairRequestId, inspectionTypeId, technicianId, and reportDate are required');
+    return res.status(400).json({ success: false, error: 'repairRequestId, inspectionTypeId, technicianId, and reportDate are required' });
   }
   try {
     const [resultQuery] = await db.query(
@@ -166,27 +166,70 @@ router.put('/:id', async (req, res) => {
       [repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments, id]
     );
     if (resultQuery.affectedRows === 0) {
-      return res.status(404).send('Inspection report not found');
+      return res.status(404).json({ success: false, error: 'Inspection report not found' });
     }
-    res.json({ message: 'Inspection report updated successfully' });
+    
+    // إرسال WebSocket notification
+    try {
+      const [repairRows] = await db.query(
+        'SELECT * FROM RepairRequest WHERE id = ? AND deletedAt IS NULL',
+        [repairRequestId]
+      );
+      if (repairRows && repairRows.length > 0) {
+        websocketService.sendRepairUpdate('updated', repairRows[0]);
+        console.log(`[InspectionReports] WebSocket notification sent for repair ${repairRequestId}`);
+      }
+    } catch (wsError) {
+      console.warn('[InspectionReports] Failed to send WebSocket notification:', wsError);
+    }
+    
+    res.json({ success: true, message: 'Inspection report updated successfully' });
   } catch (err) {
     console.error(`Error updating inspection report with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
-// Hard delete an inspection report
+// Soft delete an inspection report
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.query('DELETE FROM InspectionReport WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Inspection report not found');
+    // جلب repairRequestId قبل الحذف لإرسال WebSocket notification
+    const [reportRows] = await db.query('SELECT repairRequestId FROM InspectionReport WHERE id = ? AND deletedAt IS NULL', [id]);
+    if (reportRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Inspection report not found' });
     }
-    res.json({ message: 'Inspection report deleted successfully' });
+    
+    const repairRequestId = reportRows[0].repairRequestId;
+    
+    // Soft delete
+    const [result] = await db.query(
+      'UPDATE InspectionReport SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
+      [id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, error: 'Inspection report not found or already deleted' });
+    }
+    
+    // إرسال WebSocket notification
+    try {
+      const [repairRows] = await db.query(
+        'SELECT * FROM RepairRequest WHERE id = ? AND deletedAt IS NULL',
+        [repairRequestId]
+      );
+      if (repairRows && repairRows.length > 0) {
+        websocketService.sendRepairUpdate('updated', repairRows[0]);
+        console.log(`[InspectionReports] WebSocket notification sent for repair ${repairRequestId} after report deletion`);
+      }
+    } catch (wsError) {
+      console.warn('[InspectionReports] Failed to send WebSocket notification:', wsError);
+    }
+    
+    res.json({ success: true, message: 'Inspection report deleted successfully' });
   } catch (err) {
     console.error(`Error deleting inspection report with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 

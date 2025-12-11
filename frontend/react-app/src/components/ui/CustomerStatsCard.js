@@ -33,12 +33,12 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-card rounded-lg border border-border p-4">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
           <div className="space-y-2">
-            <div className="h-3 bg-gray-200 rounded"></div>
-            <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-3 bg-muted rounded"></div>
+            <div className="h-3 bg-muted rounded w-3/4"></div>
           </div>
         </div>
       </div>
@@ -47,8 +47,8 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
 
   if (error || !stats) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="text-center text-gray-500 text-sm">
+      <div className="bg-card rounded-lg border border-border p-4">
+        <div className="text-center text-muted-foreground text-sm">
           <AlertTriangle className="w-4 h-4 mx-auto mb-1" />
           {error || 'لا توجد إحصائيات'}
         </div>
@@ -57,9 +57,9 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
   }
 
   const getStatusColor = (status) => {
-    if (status.isVip) return 'text-purple-600';
-    if (status.isActive) return 'text-green-600';
-    return 'text-gray-600';
+    if (status.isVip) return 'text-purple-600 dark:text-purple-400';
+    if (status.isActive) return 'text-green-600 dark:text-green-400';
+    return 'text-muted-foreground';
   };
 
   const getStatusIcon = (status) => {
@@ -70,9 +70,9 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
 
   const getRiskColor = (riskLevel) => {
     switch (riskLevel) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-green-100 text-green-800';
+      case 'high': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      default: return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
     }
   };
 
@@ -85,7 +85,7 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-lg border border-border p-4 hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center">
@@ -108,54 +108,54 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
       {/* Main Stats */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="text-center">
-          <div className="text-lg font-bold text-gray-900">{stats.totalRepairs}</div>
-          <div className="text-xs text-gray-600">إجمالي الطلبات</div>
+          <div className="text-lg font-bold text-foreground">{stats.totalRepairs}</div>
+          <div className="text-xs text-muted-foreground">إجمالي الطلبات</div>
         </div>
         <div className="text-center">
-          <div className="text-lg font-bold text-green-600">
+          <div className="text-lg font-bold text-green-600 dark:text-green-400">
             {stats.totalPaid.toFixed(0)} ج.م
           </div>
-          <div className="text-xs text-gray-600">إجمالي المدفوعات</div>
+          <div className="text-xs text-muted-foreground">إجمالي المدفوعات</div>
         </div>
       </div>
 
       {/* Status Breakdown */}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="text-center">
-          <div className="flex items-center justify-center text-green-600">
+          <div className="flex items-center justify-center text-green-600 dark:text-green-400">
             <CheckCircle className="w-3 h-3 ml-1" />
             <span className="text-sm font-medium">{stats.completedRepairs}</span>
           </div>
-          <div className="text-xs text-gray-600">مكتمل</div>
+          <div className="text-xs text-muted-foreground">مكتمل</div>
         </div>
         <div className="text-center">
-          <div className="flex items-center justify-center text-yellow-600">
+          <div className="flex items-center justify-center text-yellow-600 dark:text-yellow-400">
             <Clock className="w-3 h-3 ml-1" />
             <span className="text-sm font-medium">{stats.pendingRepairs}</span>
           </div>
-          <div className="text-xs text-gray-600">معلق</div>
+          <div className="text-xs text-muted-foreground">معلق</div>
         </div>
         <div className="text-center">
-          <div className="flex items-center justify-center text-blue-600">
+          <div className="flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Activity className="w-3 h-3 ml-1" />
             <span className="text-sm font-medium">{stats.inProgressRepairs}</span>
           </div>
-          <div className="text-xs text-gray-600">قيد التنفيذ</div>
+          <div className="text-xs text-muted-foreground">قيد التنفيذ</div>
         </div>
       </div>
 
       {/* Satisfaction Rate */}
       {stats.totalRepairs > 0 && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
             <span>معدل الإنجاز</span>
             <span>{stats.satisfactionRate}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div className="w-full bg-muted rounded-full h-1.5">
             <div 
               className={`h-1.5 rounded-full ${
-                stats.satisfactionRate >= 80 ? 'bg-green-500' :
-                stats.satisfactionRate >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                stats.satisfactionRate >= 80 ? 'bg-green-500 dark:bg-green-400' :
+                stats.satisfactionRate >= 60 ? 'bg-yellow-500 dark:bg-yellow-400' : 'bg-red-500 dark:bg-red-400'
               }`}
               style={{ width: `${stats.satisfactionRate}%` }}
             ></div>
@@ -165,7 +165,7 @@ const CustomerStatsCard = ({ customerId, customerName }) => {
 
       {/* Last Activity */}
       {stats.lastRepairDate && (
-        <div className="text-xs text-gray-600 text-center">
+        <div className="text-xs text-muted-foreground text-center">
           آخر طلب: {new Date(stats.lastRepairDate).toLocaleDateString('en-GB')}
         </div>
       )}

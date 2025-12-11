@@ -19,7 +19,8 @@ export default function TechnicianStatsCard({
     gradient,
     change,
     changeType = 'neutral',
-    onClick
+    onClick,
+    tooltip
 }) {
     const getChangeColor = () => {
         if (changeType === 'increase') return 'text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400';
@@ -39,6 +40,8 @@ export default function TechnicianStatsCard({
         <div
             onClick={onClick}
             className="relative overflow-hidden bg-card rounded-2xl p-6 shadow-sm border border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+            title={tooltip || title}
+            aria-label={tooltip || title}
         >
             {/* Background Gradient Overlay */}
             <div

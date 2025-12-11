@@ -22,10 +22,10 @@ const LoadingSpinner = ({
   };
 
   const colorClasses = {
-    blue: 'text-blue-600',
-    green: 'text-green-600',
-    red: 'text-red-600',
-    gray: 'text-gray-600',
+    blue: 'text-blue-600 dark:text-blue-400',
+    green: 'text-green-600 dark:text-green-400',
+    red: 'text-red-600 dark:text-red-400',
+    gray: 'text-muted-foreground',
     white: 'text-white'
   };
 
@@ -35,7 +35,7 @@ const LoadingSpinner = ({
         className={`${sizeClasses[size]} ${colorClasses[color]} animate-spin`}
       />
       {message && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 animate-pulse">
+        <p className="text-sm text-muted-foreground animate-pulse">
           {message}
         </p>
       )}
@@ -44,7 +44,7 @@ const LoadingSpinner = ({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
         {spinner}
       </div>
     );
@@ -60,18 +60,18 @@ export const TableLoadingSkeleton = ({ rows = 5, columns = 6 }) => {
   return (
     <div className="animate-pulse space-y-4">
       {/* Header Skeleton */}
-      <div className="flex gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded">
+      <div className="flex gap-4 p-4 bg-muted rounded">
         {Array.from({ length: columns }).map((_, i) => (
-          <div key={i} className="flex-1 h-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+          <div key={i} className="flex-1 h-4 bg-muted-foreground/20 rounded"></div>
         ))}
       </div>
       
       {/* Rows Skeleton */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div key={rowIndex} className="flex gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div key={rowIndex} className="flex gap-4 p-4 border-b border-border">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <div key={colIndex} className="flex-1">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </div>
           ))}
         </div>
@@ -88,12 +88,12 @@ export const CardLoadingSkeleton = ({ count = 4 }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-card rounded-lg shadow p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
+              <div className="w-12 h-12 bg-muted rounded-lg"></div>
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
-                <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+                <div className="h-6 bg-muted rounded w-3/4"></div>
               </div>
             </div>
           </div>
@@ -110,7 +110,7 @@ export const LoadingOverlay = ({ show, message = 'جاري التحميل...' })
   if (!show) return null;
 
   return (
-    <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
       <LoadingSpinner size="lg" message={message} />
     </div>
   );

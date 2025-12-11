@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
+import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
 import api from '../../services/api';
 import { useTheme } from '../../components/ThemeProvider';
-import { Settings as SettingsIcon, Lock, Bell, Globe, Trash2, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Lock, Bell, Globe, Trash2, Save, ArrowRight } from 'lucide-react';
 
 /**
  * ⚙️ Technician Settings Page
@@ -96,10 +97,22 @@ export default function TechnicianSettingsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-20 md:pb-0">
             <TechnicianHeader user={user} notificationCount={5} />
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Back Button */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate('/technician/dashboard')}
+                        aria-label="العودة إلى لوحة التحكم"
+                        className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 mb-4"
+                    >
+                        <ArrowRight className="w-5 h-5" />
+                        <span className="font-medium">العودة للرئيسية</span>
+                    </button>
+                </div>
+
                 {/* Page Title */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
@@ -318,6 +331,9 @@ export default function TechnicianSettingsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Bottom Navigation - Mobile Only */}
+            <TechnicianBottomNav />
         </div>
     );
 }

@@ -99,6 +99,10 @@ class ApiService {
         if (response.status === 401 && isAuthEndpoint) {
           error.silent = true;
         }
+        // Mark 403 errors from settings endpoints as silent (user may not have permissions)
+        if (response.status === 403 && isAuthEndpoint) {
+          error.silent = true;
+        }
         throw error;
       }
 
@@ -110,7 +114,7 @@ class ApiService {
       return data;
     } catch (error) {
       // Only log errors that are not marked as silent
-      // Silent errors are typically 401s on auth endpoints when user is not logged in
+      // Silent errors are typically 401s/403s on auth/settings endpoints when user is not logged in or doesn't have permissions
       if (!error.silent) {
         console.error('API request failed:', error);
       }

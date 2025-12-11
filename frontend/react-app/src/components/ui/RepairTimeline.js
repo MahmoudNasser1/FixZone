@@ -10,50 +10,50 @@ const RepairTimeline = ({ repair, compact = false }) => {
     const statusMap = {
       pending: {
         icon: Clock,
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-100',
+        color: 'text-yellow-600 dark:text-yellow-400',
+        bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
         text: 'في الانتظار',
         description: 'تم استلام الطلب وفي انتظار المراجعة'
       },
       'in-progress': {
         icon: Play,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
+        color: 'text-blue-600 dark:text-blue-400',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
         text: 'قيد التنفيذ',
         description: 'جاري العمل على إصلاح الجهاز'
       },
       'waiting-parts': {
         icon: ShoppingCart,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
+        color: 'text-orange-600 dark:text-orange-400',
+        bgColor: 'bg-orange-100 dark:bg-orange-900/30',
         text: 'بانتظار قطع غيار',
         description: 'في انتظار وصول قطع الغيار'
       },
       'ready-for-pickup': {
         icon: Package,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
+        color: 'text-green-600 dark:text-green-400',
+        bgColor: 'bg-green-100 dark:bg-green-900/30',
         text: 'جاهز للاستلام',
         description: 'انتهى الإصلاح والجهاز جاهز للاستلام'
       },
       'on-hold': {
         icon: Pause,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
+        color: 'text-orange-600 dark:text-orange-400',
+        bgColor: 'bg-orange-100 dark:bg-orange-900/30',
         text: 'معلق',
         description: 'تم إيقاف العمل مؤقتاً'
       },
       completed: {
         icon: CheckCircle,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
+        color: 'text-green-600 dark:text-green-400',
+        bgColor: 'bg-green-100 dark:bg-green-900/30',
         text: 'مكتمل',
         description: 'تم إنجاز الإصلاح بنجاح'
       },
       cancelled: {
         icon: XCircle,
-        color: 'text-red-600',
-        bgColor: 'bg-red-100',
+        color: 'text-red-600 dark:text-red-400',
+        bgColor: 'bg-red-100 dark:bg-red-900/30',
         text: 'ملغي',
         description: 'تم إلغاء طلب الإصلاح'
       }
@@ -65,17 +65,17 @@ const RepairTimeline = ({ repair, compact = false }) => {
   const getPriorityInfo = (priority) => {
     const priorityMap = {
       low: {
-        color: 'bg-gray-100 text-gray-800',
+        color: 'bg-muted text-muted-foreground',
         text: 'منخفضة',
         icon: Clock
       },
       medium: {
-        color: 'bg-yellow-100 text-yellow-800',
+        color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
         text: 'متوسطة',
         icon: AlertTriangle
       },
       high: {
-        color: 'bg-red-100 text-red-800',
+        color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
         text: 'عالية',
         icon: AlertTriangle
       }
@@ -136,14 +136,14 @@ const RepairTimeline = ({ repair, compact = false }) => {
         
         {/* Progress Bar */}
         <div className="flex-1 max-w-20">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
               className={`h-2 rounded-full transition-all duration-300 ${
-                repair.status === 'completed' ? 'bg-green-500' :
-                repair.status === 'cancelled' ? 'bg-red-500' :
-                repair.status === 'ready-for-pickup' ? 'bg-green-500' :
-                repair.status === 'waiting-parts' ? 'bg-orange-500' :
-                repair.status === 'in-progress' ? 'bg-blue-500' : 'bg-yellow-500'
+                repair.status === 'completed' ? 'bg-green-500 dark:bg-green-400' :
+                repair.status === 'cancelled' ? 'bg-red-500 dark:bg-red-400' :
+                repair.status === 'ready-for-pickup' ? 'bg-green-500 dark:bg-green-400' :
+                repair.status === 'waiting-parts' ? 'bg-orange-500 dark:bg-orange-400' :
+                repair.status === 'in-progress' ? 'bg-blue-500 dark:bg-blue-400' : 'bg-yellow-500 dark:bg-yellow-400'
               }`}
               style={{ width: `${progress}%` }}
             ></div>
@@ -159,7 +159,7 @@ const RepairTimeline = ({ repair, compact = false }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-card rounded-lg border border-border p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
@@ -167,8 +167,8 @@ const RepairTimeline = ({ repair, compact = false }) => {
             <StatusIcon className={`w-5 h-5 ${statusInfo.color}`} />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{statusInfo.text}</h3>
-            <p className="text-sm text-gray-600">{statusInfo.description}</p>
+            <h3 className="font-semibold text-foreground">{statusInfo.text}</h3>
+            <p className="text-sm text-muted-foreground">{statusInfo.description}</p>
           </div>
         </div>
         
@@ -182,18 +182,18 @@ const RepairTimeline = ({ repair, compact = false }) => {
 
       {/* Progress Bar */}
       <div className="mb-4">
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
           <span>التقدم</span>
           <span>{progress}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div className="w-full bg-muted rounded-full h-3">
           <div 
             className={`h-3 rounded-full transition-all duration-500 ${
-              repair.status === 'completed' ? 'bg-green-500' :
-              repair.status === 'cancelled' ? 'bg-red-500' :
-              repair.status === 'ready-for-pickup' ? 'bg-green-500' :
-              repair.status === 'waiting-parts' ? 'bg-orange-500' :
-              repair.status === 'in-progress' ? 'bg-blue-500' : 'bg-yellow-500'
+              repair.status === 'completed' ? 'bg-green-500 dark:bg-green-400' :
+              repair.status === 'cancelled' ? 'bg-red-500 dark:bg-red-400' :
+              repair.status === 'ready-for-pickup' ? 'bg-green-500 dark:bg-green-400' :
+              repair.status === 'waiting-parts' ? 'bg-orange-500 dark:bg-orange-400' :
+              repair.status === 'in-progress' ? 'bg-blue-500 dark:bg-blue-400' : 'bg-yellow-500 dark:bg-yellow-400'
             }`}
             style={{ width: `${progress}%` }}
           ></div>
@@ -202,7 +202,7 @@ const RepairTimeline = ({ repair, compact = false }) => {
 
       {/* Time Information */}
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-muted-foreground">
           <Calendar className="w-4 h-4 ml-2" />
           <div>
             <div className="font-medium">تاريخ الإنشاء</div>
@@ -211,7 +211,7 @@ const RepairTimeline = ({ repair, compact = false }) => {
         </div>
         
         {timeRemaining !== null && (
-          <div className="flex items-center text-gray-600">
+          <div className="flex items-center text-muted-foreground">
             <Clock className="w-4 h-4 ml-2" />
             <div>
               <div className="font-medium">الوقت المتبقي</div>
@@ -227,8 +227,8 @@ const RepairTimeline = ({ repair, compact = false }) => {
 
       {/* Customer Info */}
       {repair.customerName && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-center text-sm text-gray-600">
+        <div className="mt-4 pt-4 border-t border-border">
+          <div className="flex items-center text-sm text-muted-foreground">
             <User className="w-4 h-4 ml-2" />
             <span className="font-medium">العميل:</span>
             <span className="mr-2">{repair.customerName}</span>

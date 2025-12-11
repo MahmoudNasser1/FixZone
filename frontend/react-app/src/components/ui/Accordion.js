@@ -62,26 +62,26 @@ const Accordion = ({
         return (
           <div
             key={item.value}
-            className="border border-gray-200 rounded-lg overflow-hidden bg-white"
+            className="border border-border rounded-lg overflow-hidden bg-card"
           >
             <button
               onClick={() => toggleItem(item.value)}
               className={cn(
                 "w-full flex items-center justify-between p-4 text-right",
-                "hover:bg-gray-50 transition-colors",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                "hover:bg-accent transition-colors",
+                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
               )}
             >
               <div className="flex items-center gap-3 flex-1" dir="rtl">
                 {isOpen ? (
-                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="w-5 h-5 text-gray-500 rotate-180" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground rotate-180" />
                 )}
-                {item.icon && <span className="text-gray-600">{item.icon}</span>}
-                <span className="font-medium text-gray-900">{item.label}</span>
+                {item.icon && <span className="text-muted-foreground">{item.icon}</span>}
+                <span className="font-medium text-foreground">{item.label}</span>
                 {item.badge && (
-                  <span className="mr-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  <span className="mr-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -95,7 +95,7 @@ const Accordion = ({
             {isOpen && (
               <div 
                 key={`content-${item.value}`} // key ثابت للحفاظ على التركيز
-                className="border-t border-gray-200 p-4 bg-gray-50"
+                className="border-t border-border p-4 bg-muted/50"
               >
                 {item.content}
               </div>
@@ -122,25 +122,25 @@ const AccordionItem = ({
   className 
 }) => {
   return (
-    <div className={cn("border border-gray-200 rounded-lg overflow-hidden bg-white", className)}>
+    <div className={cn("border border-border rounded-lg overflow-hidden bg-card", className)}>
       <button
         onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 text-right",
-          "hover:bg-gray-50 transition-colors",
-          "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+          "hover:bg-accent transition-colors",
+          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
         )}
       >
         <div className="flex items-center gap-3 flex-1" dir="rtl">
           {isOpen ? (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-gray-500 rotate-180" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground rotate-180" />
           )}
-          {icon && <span className="text-gray-600">{icon}</span>}
-          <span className="font-medium text-gray-900">{label}</span>
+          {icon && <span className="text-muted-foreground">{icon}</span>}
+          <span className="font-medium text-foreground">{label}</span>
           {badge && (
-            <span className="mr-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+            <span className="mr-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
               {badge}
             </span>
           )}
@@ -152,7 +152,7 @@ const AccordionItem = ({
         )}
       </button>
       {isOpen && (
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="border-t border-border p-4 bg-muted/50">
           {children}
         </div>
       )}

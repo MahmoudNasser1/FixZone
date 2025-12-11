@@ -8,6 +8,7 @@ import {
 } from '../../services/technicianService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import JobTimer from '../../components/technician/JobTimer';
+import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
 
 import { CardSkeleton } from '../../components/ui/Skeletons';
 import PageTransition from '../../components/ui/PageTransition';
@@ -135,7 +136,7 @@ export default function JobDetailsPage() {
   if (!job) return null;
 
   return (
-    <PageTransition className="min-h-screen bg-background pb-12">
+    <PageTransition className="min-h-screen bg-background pb-20 md:pb-12">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -144,10 +145,11 @@ export default function JobDetailsPage() {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/technician/jobs')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="العودة إلى قائمة المهام"
+            className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             <ArrowRight className="w-5 h-5" />
-            <span>عودة للقائمة</span>
+            <span className="font-medium">عودة للقائمة</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -371,6 +373,9 @@ export default function JobDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <TechnicianBottomNav />
     </PageTransition>
   );
 }

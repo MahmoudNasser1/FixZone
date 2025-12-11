@@ -2148,6 +2148,43 @@ router.post('/:id/assign', authMiddleware, validate(repairSchemas.getRepairById,
 
     await connection.execute('UPDATE RepairRequest SET technicianId = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [techIdNum, id]);
 
+    // Get repair details for task creation
+    const [repairDetails] = await connection.execute(
+      'SELECT deviceId, reportedProblem FROM RepairRequest WHERE id = ?',
+      [id]
+    );
+
+    // Check if task already exists for this repair and technician
+    const [existingTask] = await connection.execute(
+      'SELECT id FROM Tasks WHERE repairId = ? AND technicianId = ? AND deletedAt IS NULL',
+      [id, techIdNum]
+    );
+
+    // Create task automatically if it doesn't exist
+    if (existingTask.length === 0 && repairDetails.length > 0) {
+      const repair = repairDetails[0];
+      const taskTitle = `إصلاح #${id}`;
+      const taskDescription = repair.reportedProblem || 'مهمة إصلاح جديدة';
+      
+      await connection.execute(`
+        INSERT INTO Tasks (
+          technicianId, title, description, taskType, repairId, deviceId,
+          priority, status, category, tags
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        techIdNum,
+        taskTitle,
+        taskDescription,
+        'repair',
+        id,
+        repair.deviceId || null,
+        'medium',
+        'todo',
+        null,
+        null
+      ]);
+    }
+
     // Audit
     const changedById = (req.user && req.user.id) ? req.user.id : null;
     await connection.execute(

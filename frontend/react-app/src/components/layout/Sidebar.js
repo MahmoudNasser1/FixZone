@@ -541,7 +541,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-border bg-muted/30">
         {isSidebarOpen ? (
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -554,7 +554,7 @@ const Sidebar = () => {
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
               <Users className="w-4 h-4 text-white" />
             </div>
           </div>

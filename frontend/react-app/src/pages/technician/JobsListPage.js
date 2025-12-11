@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getTechJobs } from '../../services/technicianService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import JobCard from '../../components/technician/JobCard';
+import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
 
 import { CardSkeleton } from '../../components/ui/Skeletons';
 import PageTransition from '../../components/ui/PageTransition';
@@ -35,6 +36,8 @@ export default function JobsListPage() {
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('date_desc');
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   useEffect(() => {
     loadJobs();
@@ -43,8 +46,6 @@ export default function JobsListPage() {
   const loadJobs = async () => {
     try {
       setLoading(true);
-      // محاكاة استدعاء API مع الفلاتر
-      // في الواقع سنرسل params للـ API
       const response = await getTechJobs({
         status: filterStatus !== 'all' ? filterStatus : undefined,
         sort: sortBy
@@ -52,10 +53,16 @@ export default function JobsListPage() {
 
       if (response.success) {
         setJobs(response.data || []);
+      } else {
+        throw new Error(response.error || 'فشل تحميل قائمة المهام');
       }
     } catch (error) {
       console.error('Error loading jobs:', error);
-      notifications.error('خطأ', { message: 'فشل تحميل قائمة المهام' });
+      notifications.error('خطأ', { 
+        message: error.message || 'فشل تحميل قائمة المهام. يرجى المحاولة مرة أخرى.',
+        duration: 5000
+      });
+      setJobs([]); // تعيين قائمة فارغة عند الفشل
     } finally {
       setLoading(false);
     }
@@ -80,7 +87,7 @@ export default function JobsListPage() {
   ];
 
   return (
-    <PageTransition className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-background pb-20 md:pb-0">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -93,11 +100,57 @@ export default function JobsListPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-foreground hover:bg-muted transition-colors">
-              <ArrowUpDown className="w-4 h-4" />
-              <span>ترتيب</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+            <div className="relative">
+              <button
+                onClick={() => setShowSortMenu(!showSortMenu)}
+                className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-foreground hover:bg-muted transition-colors"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+                <span>ترتيب</span>
+              </button>
+              {showSortMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                  <div className="absolute left-0 mt-2 w-48 bg-popover rounded-lg shadow-xl border border-border py-2 z-20">
+                    <button
+                      onClick={() => {
+                        setSortBy('date_desc');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-right px-4 py-2 text-sm hover:bg-muted transition-colors ${sortBy === 'date_desc' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      الأحدث أولاً
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy('date_asc');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-right px-4 py-2 text-sm hover:bg-muted transition-colors ${sortBy === 'date_asc' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      الأقدم أولاً
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy('priority');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-right px-4 py-2 text-sm hover:bg-muted transition-colors ${sortBy === 'priority' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      حسب الأولوية
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              onClick={() => setShowFilterPanel(!showFilterPanel)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-sm ${
+                showFilterPanel
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card border border-border text-foreground hover:bg-muted'
+              }`}
+            >
               <Filter className="w-4 h-4" />
               <span>فلترة متقدمة</span>
             </button>
@@ -135,11 +188,54 @@ export default function JobsListPage() {
                 placeholder="بحث برقم المهمة، اسم العميل، أو الجهاز..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10 pl-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                aria-label="بحث في المهام"
+                className="w-full pr-10 pl-4 py-2.5 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
         </div>
+
+        {/* Advanced Filter Panel */}
+        {showFilterPanel && (
+          <div className="mb-6 bg-card rounded-xl shadow-sm border border-border p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground">فلترة متقدمة</h3>
+              <button
+                onClick={() => {
+                  setFilterStatus('all');
+                  setSearchQuery('');
+                }}
+                className="text-sm text-primary hover:text-primary/80"
+              >
+                مسح الكل
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">نوع الجهاز</label>
+                <input
+                  type="text"
+                  placeholder="بحث بنوع الجهاز..."
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">من تاريخ</label>
+                <input
+                  type="date"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">إلى تاريخ</label>
+                <input
+                  type="date"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Jobs Grid */}
         {loading ? (
@@ -162,19 +258,31 @@ export default function JobsListPage() {
               <Search className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-1">لا توجد مهام مطابقة</h3>
-            <p className="text-muted-foreground">جرب تغيير الفلاتر أو كلمات البحث</p>
-            <button
-              onClick={() => {
-                setFilterStatus('all');
-                setSearchQuery('');
-              }}
-              className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              مسح الفلاتر
-            </button>
+            <p className="text-muted-foreground mb-4">جرب تغيير الفلاتر أو كلمات البحث</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => {
+                  setFilterStatus('all');
+                  setSearchQuery('');
+                  setShowFilterPanel(false);
+                }}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                مسح الفلاتر
+              </button>
+              <button
+                onClick={() => navigate('/technician/tasks')}
+                className="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors font-medium"
+              >
+                إضافة مهمة جديدة
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <TechnicianBottomNav />
     </PageTransition>
   );
 }

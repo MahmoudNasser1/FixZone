@@ -37,12 +37,18 @@ export const useSettings = () => {
       }
     } catch (err) {
       const errorMessage = err.message || 'Failed to load settings';
-      // Don't show error for 401 (unauthorized) - user is not logged in yet
+      // Don't show error for 401 (unauthorized) or 403 (forbidden) - user may not have permissions
       const isUnauthorized = errorMessage.includes('401') || errorMessage.includes('authorization denied') || errorMessage.includes('No token');
+      const isForbidden = errorMessage.includes('403') || errorMessage.includes('Access denied') || errorMessage.includes('Insufficient permissions');
       
-      if (!isUnauthorized) {
+      if (!isUnauthorized && !isForbidden) {
         setError(errorMessage);
         notifications.error('خطأ', { message: errorMessage });
+      }
+      // Don't throw error for 403 - just return empty settings
+      if (isForbidden) {
+        setSettings({});
+        return {};
       }
       throw err;
     } finally {
@@ -81,12 +87,17 @@ export const useSettings = () => {
       }
     } catch (err) {
       const errorMessage = err.message || 'Failed to load settings';
-      // Don't show error for 401 (unauthorized) - user is not logged in yet
+      // Don't show error for 401 (unauthorized) or 403 (forbidden) - user may not have permissions
       const isUnauthorized = errorMessage.includes('401') || errorMessage.includes('authorization denied') || errorMessage.includes('No token');
+      const isForbidden = errorMessage.includes('403') || errorMessage.includes('Access denied') || errorMessage.includes('Insufficient permissions');
       
-      if (!isUnauthorized) {
+      if (!isUnauthorized && !isForbidden) {
         setError(errorMessage);
         notifications.error('خطأ', { message: errorMessage });
+      }
+      // Don't throw error for 403 - just return empty settings
+      if (isForbidden) {
+        return {};
       }
       throw err;
     } finally {

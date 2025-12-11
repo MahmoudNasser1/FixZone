@@ -131,6 +131,11 @@ const vendorPaymentsRouter = require('./routes/vendorPayments');
 const customerDevicesRouter = require('./routes/customerDevices');
 const customerNotificationsRouter = require('./routes/customerNotifications');
 const databaseBackupRouter = require('./routes/database/backup');
+// Technician module routes
+const timeTrackingRouter = require('./routes/timeTracking');
+const tasksRouter = require('./routes/tasks');
+const notesRouter = require('./routes/notes');
+const technicianReportsRouter = require('./routes/technicianReports');
 // Delivery and payment routes - using existing routes
 // const deliveryRouter = require('./routes/delivery');
 // const paymentRouter = require('./routes/payment');
@@ -205,6 +210,11 @@ router.use('/auth', authRouter); // Must be before vendorPaymentsRouter to avoid
 router.use('/customer', customerDevicesRouter); // Customer specific routes
 router.use('/customer/notifications', customerNotificationsRouter);
 router.use('/tech', technicianRoutes);
+// Technician module routes
+router.use('/time-tracking', timeTrackingRouter);
+router.use('/tasks', tasksRouter);
+router.use('/notes', notesRouter);
+router.use('/technician-reports', technicianReportsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/messaging', messagingRouter);
 router.use('/inventory-enhanced', inventoryEnhancedRouter);

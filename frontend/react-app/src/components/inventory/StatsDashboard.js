@@ -18,13 +18,13 @@ const StatsDashboard = ({ stats, loading = false }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+          <div key={i} className="bg-card rounded-xl border border-border p-6 animate-pulse">
             <div className="flex items-center justify-between">
               <div>
-                <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-4 bg-muted rounded w-20 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-16"></div>
               </div>
-              <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+              <div className="h-12 w-12 bg-muted rounded-full"></div>
             </div>
           </div>
         ))}
@@ -38,8 +38,8 @@ const StatsDashboard = ({ stats, loading = false }) => {
       value: stats?.overview?.totalItems || 0,
       icon: Package,
       color: 'blue',
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      iconColor: 'text-blue-600 dark:text-blue-400',
       change: stats?.itemsChange || 0,
       changeType: stats?.itemsChange >= 0 ? 'up' : 'down'
     },
@@ -48,8 +48,8 @@ const StatsDashboard = ({ stats, loading = false }) => {
       value: `${(stats?.overview?.totalCostValue || 0).toLocaleString()} ج.م`,
       icon: DollarSign,
       color: 'green',
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      iconColor: 'text-green-600 dark:text-green-400',
       change: stats?.valueChange || 0,
       changeType: stats?.valueChange >= 0 ? 'up' : 'down'
     },
@@ -58,8 +58,8 @@ const StatsDashboard = ({ stats, loading = false }) => {
       value: stats?.alerts?.lowStockItems || 0,
       icon: AlertTriangle,
       color: 'yellow',
-      bgColor: 'bg-yellow-50',
-      iconColor: 'text-yellow-600',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
       change: stats?.lowStockChange || 0,
       changeType: stats?.lowStockChange >= 0 ? 'up' : 'down'
     },
@@ -68,8 +68,8 @@ const StatsDashboard = ({ stats, loading = false }) => {
       value: stats?.alerts?.outOfStockItems || 0,
       icon: X,
       color: 'red',
-      bgColor: 'bg-red-50',
-      iconColor: 'text-red-600',
+      bgColor: 'bg-red-50 dark:bg-red-900/20',
+      iconColor: 'text-red-600 dark:text-red-400',
       change: stats?.outOfStockChange || 0,
       changeType: stats?.outOfStockChange >= 0 ? 'up' : 'down'
     }
@@ -78,22 +78,22 @@ const StatsDashboard = ({ stats, loading = false }) => {
   const getChangeIcon = (type) => {
     switch (type) {
       case 'up':
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
+        return <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />;
       case 'down':
-        return <TrendingDown className="h-4 w-4 text-red-500" />;
+        return <TrendingDown className="h-4 w-4 text-red-500 dark:text-red-400" />;
       default:
-        return <Minus className="h-4 w-4 text-gray-400" />;
+        return <Minus className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getChangeColor = (type) => {
     switch (type) {
       case 'up':
-        return 'text-green-600';
+        return 'text-green-600 dark:text-green-400';
       case 'down':
-        return 'text-red-600';
+        return 'text-red-600 dark:text-red-400';
       default:
-        return 'text-gray-600';
+        return 'text-muted-foreground';
     }
   };
 
@@ -104,15 +104,15 @@ const StatsDashboard = ({ stats, loading = false }) => {
         return (
           <div
             key={index}
-            className={`bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200 ${stat.bgColor}`}
+            className={`bg-card rounded-xl border border-border p-6 hover:shadow-lg transition-shadow duration-200 ${stat.bgColor}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   {stat.title}
                 </p>
                 <div className="flex items-baseline">
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-foreground">
                     {stat.value}
                   </p>
                   {stat.change !== 0 && (
@@ -133,13 +133,13 @@ const StatsDashboard = ({ stats, loading = false }) => {
             {/* Progress bar for low stock items */}
             {stat.title === 'أصناف منخفضة' && stats?.overview?.totalItems > 0 && (
               <div className="mt-4">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>نسبة المخزون المنخفض</span>
                   <span>{((stats?.alerts?.lowStockItems / stats?.overview?.totalItems) * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
-                    className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-yellow-500 dark:bg-yellow-400 h-2 rounded-full transition-all duration-300"
                     style={{
                       width: `${(stats?.alerts?.lowStockItems / stats?.overview?.totalItems) * 100}%`
                     }}
