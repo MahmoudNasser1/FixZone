@@ -51,6 +51,7 @@ temp
 backups
 *.sql
 !backend/migrations/*.sql
+!migrations/*.sql
 *.tar.gz
 *.zip
 
