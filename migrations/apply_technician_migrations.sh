@@ -1,142 +1,109 @@
 #!/bin/bash
 
-# ============================================================================
-# Apply Technician Migrations Script
-# Usage: ./apply_technician_migrations.sh
-# ============================================================================
+# =====================================================
+# Script لتطبيق Technician Migrations
+# FixZone ERP - Technician Module Migrations
+# =====================================================
 
-# Colors
-RED='\033[0;31m'
+# الألوان
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Print colored message
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-print_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-
-# Get script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Try to load .env file if exists
-if [ -f "$PROJECT_DIR/backend/.env" ]; then
-    print_info "Loading environment variables from backend/.env..."
-    export $(cat "$PROJECT_DIR/backend/.env" | grep -v '^#' | xargs)
-elif [ -f "$PROJECT_DIR/.env" ]; then
-    print_info "Loading environment variables from .env..."
-    export $(cat "$PROJECT_DIR/.env" | grep -v '^#' | xargs)
-fi
-
-# Set default values
-DB_HOST=${DB_HOST:-localhost}
-DB_USER=${DB_USER:-root}
-DB_NAME=${DB_NAME:-FZ}
-DB_PORT=${DB_PORT:-3306}
-
-print_info "Database Configuration:"
-echo "  Host: $DB_HOST"
-echo "  User: $DB_USER"
-echo "  Database: $DB_NAME"
-echo "  Port: $DB_PORT"
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}🚀 FixZone Technician Migrations${NC}"
+echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Check if mysql command exists
-MYSQL_CMD="mysql"
-if ! command -v mysql &> /dev/null; then
-    # Try XAMPP MySQL path
-    if [ -f "/opt/lampp/bin/mysql" ]; then
-        MYSQL_CMD="/opt/lampp/bin/mysql"
-        print_info "Using XAMPP MySQL: $MYSQL_CMD"
+# إعدادات
+DB_NAME="FZ"
+DB_USER="root"
+BACKUP_DIR="./backups"
+
+# إنشاء مجلد النسخ الاحتياطي إذا لم يكن موجوداً
+mkdir -p $BACKUP_DIR
+
+# تحذير
+echo -e "${RED}⚠️  تحذير مهم:${NC}"
+echo -e "${YELLOW}هذا الـ Script سيطبق تعديلات على قاعدة البيانات${NC}"
+echo -e "${YELLOW}تأكد من:${NC}"
+echo -e "${YELLOW}  1. ✅ عمل نسخة احتياطية${NC}"
+echo -e "${YELLOW}  2. ✅ إيقاف السيرفر أو عدم وجود مستخدمين نشطين${NC}"
+echo ""
+echo -e "${RED}هل تريد عمل نسخة احتياطية أولاً؟ (yes/no)${NC}"
+read -r BACKUP_CONFIRM
+
+if [ "$BACKUP_CONFIRM" = "yes" ]; then
+    BACKUP_FILE="$BACKUP_DIR/backup_before_technician_migrations_$(date +%Y%m%d_%H%M%S).sql"
+    echo ""
+    echo -e "${YELLOW}من فضلك أدخل كلمة مرور MySQL:${NC}"
+    read -s DB_PASS
+    echo ""
+    echo -e "${BLUE}⏳ جاري عمل نسخة احتياطية...${NC}"
+    mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > $BACKUP_FILE
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ تم عمل النسخة الاحتياطية: $BACKUP_FILE${NC}"
     else
-        print_error "MySQL client not found. Please install it or set MYSQL_CMD path."
+        echo -e "${RED}❌ فشل عمل النسخة الاحتياطية!${NC}"
         exit 1
     fi
+else
+    echo -e "${YELLOW}⚠️  تم تخطي النسخة الاحتياطية${NC}"
+    echo -e "${YELLOW}من فضلك أدخل كلمة مرور MySQL:${NC}"
+    read -s DB_PASS
 fi
 
-# Migration files
+echo ""
+echo -e "${BLUE}⏳ جاري تطبيق الـ Migrations...${NC}"
+echo ""
+
+# قائمة ملفات Migration بالترتيب
 MIGRATIONS=(
-    "create_technician_notes_PRODUCTION.sql"
-    "create_technician_reports_PRODUCTION.sql"
-    "create_technician_tasks_PRODUCTION.sql"
-    "create_technician_time_tracking_PRODUCTION.sql"
+    "../backend/migrations/20250127_create_technician_notes.sql"
+    "../backend/migrations/20250127_create_technician_reports.sql"
+    "../backend/migrations/20250127_create_technician_tasks.sql"
+    "../backend/migrations/20250127_create_technician_time_tracking.sql"
+    "./add_deletedAt_to_inspection_reports_PRODUCTION.sql"
 )
 
-print_info "Found ${#MIGRATIONS[@]} migration files to apply"
-echo ""
-
-# Ask for confirmation
-read -p "Do you want to proceed? (y/n): " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_warning "Migration cancelled."
-    exit 0
-fi
-
-# Apply each migration
+# تطبيق كل migration
 SUCCESS_COUNT=0
 FAILED_COUNT=0
 
-for migration in "${MIGRATIONS[@]}"; do
-    MIGRATION_FILE="$SCRIPT_DIR/$migration"
-    
+for MIGRATION_FILE in "${MIGRATIONS[@]}"; do
     if [ ! -f "$MIGRATION_FILE" ]; then
-        print_error "Migration file not found: $migration"
-        ((FAILED_COUNT++))
+        echo -e "${RED}❌ ملف Migration غير موجود: $MIGRATION_FILE${NC}"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
         continue
     fi
     
-    print_info "Applying: $migration"
+    echo -e "${BLUE}📄 جاري تطبيق: $(basename $MIGRATION_FILE)${NC}"
     
-    # Run migration
-    $MYSQL_CMD -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p "$DB_NAME" < "$MIGRATION_FILE" 2>&1
+    mysql -u $DB_USER -p$DB_PASS $DB_NAME < $MIGRATION_FILE
     
     if [ $? -eq 0 ]; then
-        print_success "✅ $migration applied successfully!"
-        ((SUCCESS_COUNT++))
+        echo -e "${GREEN}✅ تم تطبيق: $(basename $MIGRATION_FILE)${NC}"
+        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
     else
-        print_error "❌ $migration failed!"
-        ((FAILED_COUNT++))
+        echo -e "${RED}❌ فشل تطبيق: $(basename $MIGRATION_FILE)${NC}"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
     fi
     echo ""
 done
 
-# Summary
-echo "=========================================="
+# النتيجة النهائية
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}📊 النتيجة النهائية:${NC}"
+echo -e "${GREEN}✅ نجح: $SUCCESS_COUNT${NC}"
+echo -e "${RED}❌ فشل: $FAILED_COUNT${NC}"
+echo -e "${BLUE}========================================${NC}"
+
 if [ $FAILED_COUNT -eq 0 ]; then
-    print_success "All migrations completed successfully!"
-    echo "  Success: $SUCCESS_COUNT"
-    echo "  Failed: $FAILED_COUNT"
+    echo -e "${GREEN}🎉 تم تطبيق جميع الـ Migrations بنجاح!${NC}"
+    exit 0
 else
-    print_warning "Some migrations failed!"
-    echo "  Success: $SUCCESS_COUNT"
-    echo "  Failed: $FAILED_COUNT"
+    echo -e "${RED}⚠️  بعض الـ Migrations فشلت. راجع الأخطاء أعلاه.${NC}"
+    exit 1
 fi
-echo "=========================================="
-
-# Verify tables
-print_info "Verifying created tables..."
-$MYSQL_CMD -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p "$DB_NAME" -e "
-    SELECT TABLE_NAME 
-    FROM INFORMATION_SCHEMA.TABLES 
-    WHERE TABLE_SCHEMA = '$DB_NAME' 
-    AND TABLE_NAME IN ('Notes', 'NoteAttachments', 'TechnicianReports', 'Tasks', 'TimeTracking', 'TimeAdjustments')
-    ORDER BY TABLE_NAME;
-" 2>/dev/null
-
-exit $FAILED_COUNT
-
