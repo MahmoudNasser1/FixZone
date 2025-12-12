@@ -1,5 +1,48 @@
 const db = require('../db');
 
+// Helper: Map frontend status to database status
+const mapFrontendStatusToDb = (frontStatus) => {
+  if (!frontStatus) return null;
+  const s = String(frontStatus).toLowerCase().replace(/-/g, '_');
+  const map = {
+    pending: 'RECEIVED',
+    in_progress: 'UNDER_REPAIR',
+    'in-progress': 'UNDER_REPAIR',
+    waiting_parts: 'WAITING_PARTS',
+    'waiting-parts': 'WAITING_PARTS',
+    ready_for_pickup: 'READY_FOR_PICKUP',
+    'ready-for-pickup': 'READY_FOR_PICKUP',
+    on_hold: 'ON_HOLD',
+    'on-hold': 'ON_HOLD',
+    completed: 'DELIVERED',
+    cancelled: 'REJECTED'
+  };
+  const dbValues = new Set([
+    'RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL', 'UNDER_REPAIR', 'WAITING_PARTS', 
+    'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 'DELIVERED', 'REJECTED', 'ON_HOLD'
+  ]);
+  if (dbValues.has(frontStatus)) return frontStatus;
+  return map[s] || map[frontStatus] || null;
+};
+
+// Helper: Map database status to frontend status
+const mapDbStatusToFrontend = (dbStatus) => {
+  if (!dbStatus) return 'pending';
+  const statusMap = {
+    'RECEIVED': 'pending',
+    'INSPECTION': 'pending',
+    'AWAITING_APPROVAL': 'pending',
+    'UNDER_REPAIR': 'in_progress',
+    'WAITING_PARTS': 'waiting-parts',
+    'READY_FOR_PICKUP': 'ready-for-pickup',
+    'READY_FOR_DELIVERY': 'completed',
+    'DELIVERED': 'completed',
+    'REJECTED': 'cancelled',
+    'ON_HOLD': 'on-hold'
+  };
+  return statusMap[dbStatus] || 'pending';
+};
+
 // Helper: build WHERE clause for technician jobs
 const buildTechJobsWhere = (technicianId, filters = {}) => {
   const where = ['rr.deletedAt IS NULL'];
@@ -11,10 +54,13 @@ const buildTechJobsWhere = (technicianId, filters = {}) => {
     params.push(technicianId);
   }
 
-  // Status filter
-  if (filters.status) {
-    where.push('rr.status = ?');
-    params.push(filters.status);
+  // Status filter - convert frontend status to database status
+  if (filters.status && filters.status !== 'all') {
+    const dbStatus = mapFrontendStatusToDb(filters.status);
+    if (dbStatus) {
+      where.push('rr.status = ?');
+      params.push(dbStatus);
+    }
   }
 
   // Simple search (customer name / phone / device model)
@@ -58,11 +104,26 @@ exports.getTechnicianDashboard = async (req, res) => {
       [technicianId]
     );
 
+    // Convert database status to frontend status for byStatus and aggregate counts
+    const statusMap = {};
+    byStatus.forEach(item => {
+      const frontendStatus = mapDbStatusToFrontend(item.status);
+      if (!statusMap[frontendStatus]) {
+        statusMap[frontendStatus] = 0;
+      }
+      statusMap[frontendStatus] += item.cnt;
+    });
+    
+    const byStatusFrontend = Object.entries(statusMap).map(([status, count]) => ({
+      status,
+      count
+    }));
+
     res.json({
       success: true,
       data: {
         totalJobs: totalRows[0]?.cnt || 0,
-        byStatus,
+        byStatus: byStatusFrontend,
         todayUpdated: todayRows[0]?.todayCount || 0,
       },
     });
@@ -110,10 +171,17 @@ exports.getTechnicianJobs = async (req, res) => {
       params
     );
 
+    // Map database status to frontend status and add issueDescription field
+    const mappedRows = rows.map(row => ({
+      ...row,
+      status: mapDbStatusToFrontend(row.status),
+      issueDescription: row.reportedProblem || 'لا توجد تفاصيل'
+    }));
+
     res.json({
       success: true,
-      data: rows,
-      count: rows.length,
+      data: mappedRows,
+      count: mappedRows.length,
     });
   } catch (error) {
     console.error('Error fetching technician jobs:', error);
@@ -142,6 +210,7 @@ exports.getTechnicianJobById = async (req, res) => {
          c.name AS customerName,
          c.phone AS customerPhone,
          c.email AS customerEmail,
+         c.address AS customerAddress,
          COALESCE(vo.label, d.brand) AS deviceBrand,
          d.model AS deviceModel,
          d.deviceType,
@@ -164,6 +233,23 @@ exports.getTechnicianJobById = async (req, res) => {
     }
 
     const job = rows[0];
+
+    // Map database status to frontend status
+    const frontendStatus = mapDbStatusToFrontend(job.status);
+    
+    // Prepare job data with proper field names and defaults
+    const jobData = {
+      ...job,
+      status: frontendStatus,
+      brand: job.deviceBrand,
+      model: job.deviceModel,
+      issueDescription: job.reportedProblem || 'لا توجد تفاصيل',
+      repairType: job.repairType || 'Hardware',
+      parts: job.parts || [],
+      notes: job.notes || [],
+      // Ensure createdAt is valid
+      createdAt: job.createdAt || new Date().toISOString(),
+    };
 
     // Load timeline using existing logs endpoint logic (StatusUpdateLog + AuditLog)
     const [statusLogs] = await db.query(
@@ -199,7 +285,7 @@ exports.getTechnicianJobById = async (req, res) => {
     res.json({
       success: true,
       data: {
-        job,
+        job: jobData,
         timeline,
       },
     });
@@ -475,10 +561,19 @@ exports.updateTechnicianJobStatus = async (req, res) => {
 
     const fromStatus = jobRows[0].status || null;
     
+    // Convert frontend status to database status
+    const dbStatus = mapFrontendStatusToDb(status);
+    if (!dbStatus) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Invalid status: ${status}` 
+      });
+    }
+    
     // Update status
     const [result] = await db.query(
       'UPDATE RepairRequest SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
-      [status, id]
+      [dbStatus, id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
@@ -490,13 +585,16 @@ exports.updateTechnicianJobStatus = async (req, res) => {
     const changedById = technicianId;
     await db.query(
       'INSERT INTO StatusUpdateLog (repairRequestId, fromStatus, toStatus, notes, changedById) VALUES (?, ?, ?, ?, ?)',
-      [id, fromStatus, status, notes, changedById]
+      [id, fromStatus, dbStatus, notes, changedById]
     );
 
     res.json({
       success: true,
       message: 'Status updated successfully',
-      data: { fromStatus, toStatus: status },
+      data: { 
+        fromStatus: mapDbStatusToFrontend(fromStatus), 
+        toStatus: mapDbStatusToFrontend(dbStatus) 
+      },
     });
   } catch (error) {
     console.error('Error updating technician job status:', error);

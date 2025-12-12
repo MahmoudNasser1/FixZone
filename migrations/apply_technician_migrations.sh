@@ -59,11 +59,12 @@ echo ""
 echo -e "${BLUE}⏳ جاري تطبيق الـ Migrations...${NC}"
 echo ""
 
-# قائمة ملفات Migration بالترتيب
+# قائمة ملفات Migration بالترتيب الصحيح
+# الترتيب مهم: Tasks يجب أن يُنشأ قبل Notes (لأن Notes يحتوي على foreign key لـ Tasks)
 MIGRATIONS=(
+    "../backend/migrations/20250127_create_technician_tasks.sql"
     "../backend/migrations/20250127_create_technician_notes.sql"
     "../backend/migrations/20250127_create_technician_reports.sql"
-    "../backend/migrations/20250127_create_technician_tasks.sql"
     "../backend/migrations/20250127_create_technician_time_tracking.sql"
     "./add_deletedAt_to_inspection_reports_PRODUCTION.sql"
 )

@@ -65,7 +65,9 @@ export default function JobDetailsPage() {
       setLoading(true);
       const response = await getTechJobDetails(id);
       if (response.success) {
-        setJob(response.data);
+        // API returns { data: { job, timeline } }
+        const jobData = response.data?.job || response.data;
+        setJob(jobData);
       } else {
         notifications.error('خطأ', { message: 'لم يتم العثور على المهمة' });
         navigate('/technician/jobs');
@@ -187,8 +189,8 @@ export default function JobDetailsPage() {
                     <Smartphone className="w-8 h-8 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">{job.deviceType}</h2>
-                    <p className="text-muted-foreground">#{job.id} • {job.brand} {job.model}</p>
+                    <h2 className="text-xl font-bold text-foreground">{job.deviceType || 'غير محدد'}</h2>
+                    <p className="text-muted-foreground">#{job.id} • {job.deviceBrand || job.brand || ''} {job.deviceModel || job.model || ''}</p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-bold ${job.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
@@ -202,13 +204,21 @@ export default function JobDetailsPage() {
                   <AlertCircle className="w-4 h-4 text-muted-foreground" />
                   وصف المشكلة
                 </h3>
-                <p className="text-foreground leading-relaxed">{job.issueDescription}</p>
+                <p className="text-foreground leading-relaxed">{job.issueDescription || job.reportedProblem || 'لا توجد تفاصيل'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="w-4 h-4" />
-                  <span>تاريخ الاستلام: {new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
+                  <span>تاريخ الاستلام: {job.createdAt ? (() => {
+                    try {
+                      const date = new Date(job.createdAt);
+                      if (isNaN(date.getTime())) return 'تاريخ غير صحيح';
+                      return date.toLocaleDateString('ar-EG');
+                    } catch (e) {
+                      return 'تاريخ غير صحيح';
+                    }
+                  })() : 'غير محدد'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Wrench className="w-4 h-4" />
@@ -343,7 +353,7 @@ export default function JobDetailsPage() {
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>{job.customerAddress || 'العنوان غير مسجل'}</span>
+                  <span>{job.customerAddress || job.customer?.address || 'العنوان غير مسجل'}</span>
                 </div>
               </div>
 
