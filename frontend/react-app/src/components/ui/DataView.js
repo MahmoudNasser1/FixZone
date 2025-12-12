@@ -267,10 +267,10 @@ const DataView = ({
                         .slice(0, 3)
                         .map(([key, value]) => (
                           <div key={key} className="flex justify-between items-start">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                               {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                             </span>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 text-right max-w-[65%] font-medium">
+                            <div className="text-sm text-foreground text-right max-w-[65%] font-medium">
                               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                             </div>
                           </div>
@@ -380,10 +380,10 @@ const DataView = ({
                     .slice(0, 4)
                     .map(([key, value]) => (
                       <div key={key} className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                         </span>
-                        <div className="text-sm text-gray-900 dark:text-gray-100 mt-1 font-medium">
+                        <div className="text-sm text-foreground mt-1 font-medium">
                           {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                         </div>
                       </div>
@@ -404,7 +404,7 @@ const DataView = ({
         {data.map((item, index) => (
           <div
             key={item.id || index}
-            className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group cursor-pointer"
+            className="relative bg-card rounded-lg border border-border p-4 hover:shadow-md hover:border-primary transition-all duration-200 group cursor-pointer"
             onClick={() => onItemClick?.(item)}
           >
             {/* Checkbox للتحديد المتعدد */}
@@ -418,7 +418,7 @@ const DataView = ({
                     handleItemSelect(item.id, e.target.checked);
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-3.5 h-3.5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer hover:border-blue-400"
+                  className="w-3.5 h-3.5 text-primary bg-background border-2 border-input rounded focus:ring-2 focus:ring-primary transition-all cursor-pointer hover:border-primary/80"
                   title={selectedItems.includes(item.id) ? 'إلغاء التحديد' : 'تحديد'}
                 />
               </div>
@@ -462,8 +462,8 @@ const DataView = ({
               <div className="space-y-3">
                 {/* العنوان الرئيسي */}
                 {(currentVisibleColumns.length > 0 || Object.keys(item).length > 0) && (
-                  <div className="border-b border-gray-100 dark:border-gray-700 pb-2">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  <div className="border-b border-border pb-2">
+                    <h4 className="text-sm font-semibold text-foreground truncate">
                       {(() => {
                         if (currentVisibleColumns.length > 0) {
                           const firstCol = currentVisibleColumns[0];
@@ -493,10 +493,10 @@ const DataView = ({
                         
                         return (
                           <div key={col.key}>
-                            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                               {col.label || col.header}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 truncate font-medium">
+                            <div className="text-sm text-foreground truncate font-medium">
                               {cellContent}
                             </div>
                           </div>
@@ -558,7 +558,7 @@ const DataView = ({
                   handleClearSelection();
                 }
               }}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+              className="w-4 h-4 text-primary bg-muted border-input rounded focus:ring-primary focus:ring-2 cursor-pointer"
             />
           </div>
         ),
@@ -572,7 +572,7 @@ const DataView = ({
                 handleItemSelect(row.original.id, e.target.checked);
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+              className="w-4 h-4 text-primary bg-background border-2 border-input rounded focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
             />
           </div>
         ),
@@ -646,12 +646,12 @@ const DataView = ({
         return (
           <div className="text-center py-12">
             {emptyState.title && (
-              <div className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <div className="text-lg font-semibold text-foreground mb-2">
                 {emptyState.title}
               </div>
             )}
             {emptyState.description && (
-              <div className="text-gray-500 dark:text-gray-400 mb-4">
+              <div className="text-muted-foreground mb-4">
                 {emptyState.description}
               </div>
             )}
@@ -670,7 +670,7 @@ const DataView = ({
       // Default empty state
       return (
         <div className="text-center py-12">
-          <div className="text-gray-500 dark:text-gray-400">لا توجد بيانات للعرض</div>
+          <div className="text-muted-foreground">لا توجد بيانات للعرض</div>
         </div>
       );
     }
@@ -695,10 +695,10 @@ const DataView = ({
       {/* شريط التحكم */}
       <div className="flex items-center justify-between gap-3 flex-wrap relative">
         {/* معلومات البيانات */}
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-xs text-muted-foreground">
           {data.length} عنصر
           {selectedItems.length > 0 && (
-            <span className="mr-2 text-blue-600 dark:text-blue-400">
+            <span className="mr-2 text-primary">
               ({selectedItems.length} محدد)
             </span>
           )}
@@ -727,7 +727,7 @@ const DataView = ({
             <button
               type="button"
               onClick={() => setShowControls((v) => !v)}
-              className="flex items-center gap-2 px-2.5 py-1.5 text-sm border rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex items-center gap-2 px-2.5 py-1.5 text-sm border rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary"
               aria-haspopup="menu"
               aria-expanded={showControls}
               aria-controls="dataview-controls-menu"
@@ -744,12 +744,12 @@ const DataView = ({
               <div
                 id="dataview-controls-menu"
                 role="menu"
-                className="absolute left-0 mt-2 w-72 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-3 origin-top-left animate-in fade-in zoom-in-95 focus:outline-none"
+                className="absolute left-0 mt-2 w-72 z-40 bg-popover border border-border rounded-md shadow-lg p-3 origin-top-left animate-in fade-in zoom-in-95 focus:outline-none"
                 ref={controlsMenuRef}
                 tabIndex={-1}
               >
                 {/* أوضاع العرض */}
-                <div className="mb-2 text-xs text-gray-500">وضع العرض</div>
+                <div className="mb-2 text-xs text-muted-foreground">وضع العرض</div>
                 <ViewModeToggle
                   currentMode={viewMode}
                   onModeChange={(m) => { setShowControls(false); handleViewModeChange(m); }}
@@ -764,10 +764,10 @@ const DataView = ({
                 {enableColumnToggle && (
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-xs text-gray-500">الأعمدة المرئية</div>
+                      <div className="text-xs text-muted-foreground">الأعمدة المرئية</div>
                       <button
                         type="button"
-                        className="text-xs px-2 py-0.5 rounded-md border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                        className="text-xs px-2 py-0.5 rounded-md border bg-background text-foreground"
                         onClick={() => setShowColumns(v => !v)}
                         aria-expanded={showColumns}
                         aria-controls="dataview-columns-section"

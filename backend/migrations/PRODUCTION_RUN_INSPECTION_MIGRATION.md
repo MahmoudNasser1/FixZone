@@ -130,3 +130,5 @@ SELECT COUNT(*) as total, COUNT(deletedAt) as deleted FROM InspectionReport;
 **تاريخ الإنشاء:** 2025-12-10  
 **الإصدار:** 1.0
 
+
+

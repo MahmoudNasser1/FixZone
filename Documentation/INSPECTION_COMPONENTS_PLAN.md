@@ -1258,3 +1258,5 @@ import InspectionComponentsList from '../../components/reports/InspectionCompone
 **تاريخ الإنشاء:** 2025-12-10  
 **الإصدار:** 1.0
 
+
+

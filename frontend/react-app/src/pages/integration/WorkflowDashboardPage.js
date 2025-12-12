@@ -699,31 +699,31 @@ const WorkflowDashboardPage = () => {
         {/* Daily Summary */}
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-blue-600" />
+            <CalendarIcon className="h-5 w-5 text-primary" />
             ملخص اليوم
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-              <div className="text-sm text-blue-700 mb-1">طلبات جديدة</div>
-              <div className="text-3xl font-bold text-blue-900">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <div className="text-sm text-blue-700 dark:text-blue-300 mb-1">طلبات جديدة</div>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                 {stats?.pendingRepairs || 0}
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-              <div className="text-sm text-green-700 mb-1">طلبات مكتملة</div>
-              <div className="text-3xl font-bold text-green-900">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+              <div className="text-sm text-green-700 dark:text-green-300 mb-1">طلبات مكتملة</div>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
                 {stats?.completedRepairs || 0}
               </div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-              <div className="text-sm text-purple-700 mb-1">إيرادات</div>
-              <div className="text-xl font-bold text-purple-900">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+              <div className="text-sm text-purple-700 dark:text-purple-300 mb-1">إيرادات</div>
+              <div className="text-xl font-bold text-purple-900 dark:text-purple-100">
                 {formatMoney(todayStats?.totalRevenue || 0, 'EGP')}
               </div>
             </div>
-            <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
-              <div className="text-sm text-orange-700 mb-1">مدفوعات</div>
-              <div className="text-3xl font-bold text-orange-900">
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+              <div className="text-sm text-orange-700 dark:text-orange-300 mb-1">مدفوعات</div>
+              <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">
                 {todayStats?.paymentCount || 0}
               </div>
             </div>
@@ -731,9 +731,9 @@ const WorkflowDashboardPage = () => {
         </div>
 
         {/* System Health */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Cog6ToothIcon className="h-5 w-5 text-green-600" />
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Cog6ToothIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
             حالة النظام
           </h3>
           <div className="space-y-4">
@@ -743,21 +743,21 @@ const WorkflowDashboardPage = () => {
               { label: 'المخزون', status: stats?.lowStockCount > 0 ? 'warning' : 'active', count: stats?.totalInventoryItems || 0 },
               { label: 'النظام المالي', status: pendingInvoices.length > 5 ? 'warning' : 'active', count: pendingInvoices.length }
             ].map((system, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    system.status === 'active' ? 'bg-green-500 animate-pulse' : 
-                    system.status === 'warning' ? 'bg-yellow-500 animate-pulse' : 
-                    'bg-gray-400'
+                    system.status === 'active' ? 'bg-green-500 dark:bg-green-400 animate-pulse' : 
+                    system.status === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' : 
+                    'bg-muted-foreground'
                   }`}></div>
-                  <span className="font-medium text-gray-800">{system.label}</span>
+                  <span className="font-medium text-foreground">{system.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">{system.count} عنصر</span>
+                  <span className="text-sm text-muted-foreground">{system.count} عنصر</span>
                   <span className={`text-xs font-bold ${
-                    system.status === 'active' ? 'text-green-600' : 
-                    system.status === 'warning' ? 'text-yellow-600' : 
-                    'text-gray-500'
+                    system.status === 'active' ? 'text-green-600 dark:text-green-400' : 
+                    system.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' : 
+                    'text-muted-foreground'
                   }`}>
                     {system.status === 'active' ? 'نشط' : system.status === 'warning' ? 'تحذير' : 'متوقف'}
                   </span>
@@ -767,13 +767,13 @@ const WorkflowDashboardPage = () => {
           </div>
 
           {/* Performance Indicator */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="mt-6 pt-4 border-t border-border">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">الأداء العام</span>
+              <span className="text-sm text-foreground">الأداء العام</span>
               <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
+                <div className="w-32 bg-muted rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
+                    className="bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500 h-2 rounded-full transition-all"
                     style={{ width: `${Math.min(100, (stats?.completedRepairs / (stats?.totalRepairs || 1)) * 100)}%` }}
                   ></div>
                 </div>

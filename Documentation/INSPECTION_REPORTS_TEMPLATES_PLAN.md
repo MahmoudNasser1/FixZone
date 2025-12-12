@@ -839,3 +839,5 @@ export default ReportTemplatesPage;
 **تاريخ الإنشاء:** 2025-12-10  
 **الإصدار:** 1.0
 
+
+

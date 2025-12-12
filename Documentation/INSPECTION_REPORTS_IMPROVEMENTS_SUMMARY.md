@@ -162,3 +162,5 @@ CREATE INDEX idx_inspection_report_deletedAt ON InspectionReport(deletedAt);
 **تاريخ التحديث:** 2025-12-10  
 **الإصدار:** 1.1
 
+
+

@@ -273,3 +273,5 @@ mysql -u root -p FZ -e "SELECT COUNT(*) as total, COUNT(deletedAt) as deleted FR
 **تاريخ الإنشاء:** 2025-12-11  
 **الإصدار:** 1.0
 
+
+

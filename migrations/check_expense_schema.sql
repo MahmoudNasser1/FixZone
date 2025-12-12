@@ -1,0 +1,10 @@
+-- Check Expense table schema
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = 'FZ'
+  AND TABLE_NAME = 'Expense'
+ORDER BY ORDINAL_POSITION;

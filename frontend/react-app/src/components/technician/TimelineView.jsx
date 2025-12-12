@@ -359,3 +359,5 @@ const TimelineView = ({ onTaskClick, onEditTask, refreshTrigger = 0 }) => {
 
 export default TimelineView;
 
+
+
