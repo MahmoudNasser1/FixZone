@@ -1053,7 +1053,8 @@ const RepairDetailsPage = () => {
         if (response.ok) {
           const data = await response.json();
           const types = Array.isArray(data) ? data : (data.data || []);
-          setInspectionTypes(types.filter(type => type.deletedAt === null || !type.deletedAt));
+          // Backend already filters by deletedAt and isActive, so we just use all returned types
+          setInspectionTypes(types);
         } else {
           console.error('Error fetching inspection types:', response.statusText);
           setInspectionTypes([]);
@@ -1267,6 +1268,9 @@ const RepairDetailsPage = () => {
               // Handle old API response format
               const techData = await techResponse.json();
               techList = Array.isArray(techData) ? techData : (techData.items || []);
+            } else if (techResponse?.success && techResponse?.data) {
+              // Handle { success: true, data: [...] } format
+              techList = Array.isArray(techResponse.data) ? techResponse.data : [];
             }
             setTechOptions(techList);
             console.log('Tech options set:', techList.length);

@@ -5,7 +5,13 @@ const db = require('../db');
 // Get all inspection types (excluding soft-deleted ones)
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM InspectionType WHERE deletedAt IS NULL');
+    // Get all non-deleted types, ordered by name
+    // Note: We don't filter by isActive here to show all available types
+    const [rows] = await db.query(`
+      SELECT * FROM InspectionType 
+      WHERE deletedAt IS NULL 
+      ORDER BY name ASC
+    `);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching inspection types:', err);

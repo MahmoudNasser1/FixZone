@@ -4,6 +4,7 @@ import {
   getTechJobDetails,
   updateTechJobStatus,
 } from '../../services/technicianService';
+import { getTimeTrackings } from '../../services/timeTrackingService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import JobTimer from '../../components/technician/JobTimer';
 import Stopwatch from '../../components/technician/Stopwatch';
@@ -91,6 +92,11 @@ export default function JobDetailsPage() {
   });
   const [inspectionSaving, setInspectionSaving] = useState(false);
   const [inspectionError, setInspectionError] = useState('');
+  
+  // Time tracking state
+  const [timeTrackings, setTimeTrackings] = useState([]);
+  const [timeTrackingsLoading, setTimeTrackingsLoading] = useState(false);
+  const [totalTime, setTotalTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   // Mock Parts Data
   const availableParts = [
@@ -124,21 +130,18 @@ export default function JobDetailsPage() {
     }
   }, [inspectionOpen]);
 
+  useEffect(() => {
+    if (job?.id) {
+      loadTimeTrackings();
+    }
+  }, [job?.id]);
+
   const loadJobDetails = async () => {
     try {
       setLoading(true);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:130',message:'loadJobDetails entry',data:{jobId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       const response = await getTechJobDetails(id);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:133',message:'loadJobDetails response',data:{success:response?.success,hasData:!!response?.data,hasJob:!!response?.data?.job,jobKeys:response?.data?.job?Object.keys(response.data.job):[],jobId:response?.data?.job?.id,repairRequestId:response?.data?.job?.repairRequestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       if (response.success) {
         const jobData = response.data?.job || response.data;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:136',message:'Setting job data',data:{jobId:jobData?.id,repairRequestId:jobData?.repairRequestId,allKeys:Object.keys(jobData||{})},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         setJob(jobData);
       } else {
         notifications.error('خطأ', { message: 'لم يتم العثور على المهمة' });
@@ -146,9 +149,6 @@ export default function JobDetailsPage() {
       }
     } catch (error) {
       console.error('Error loading job details:', error);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:140',message:'loadJobDetails error',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       notifications.error('خطأ', { message: 'فشل تحميل تفاصيل المهمة' });
     } finally {
       setLoading(false);
@@ -211,35 +211,19 @@ export default function JobDetailsPage() {
     
     try {
       setInspectionReportsLoading(true);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:198',message:'Loading inspection reports',data:{jobId:job?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${job.id}`, {
         credentials: 'include'
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:207',message:'loadInspectionReports response',data:{status:response?.status,ok:response?.ok,url:`${API_BASE_URL}/inspectionreports/repair/${job.id}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       
       if (response.ok) {
         const data = await response.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:211',message:'loadInspectionReports data parsed',data:{success:data?.success,hasData:!!data?.data,isArray:Array.isArray(data?.data),dataLength:Array.isArray(data?.data)?data.data.length:0,isDataArray:Array.isArray(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         let reportsList = [];
         if (data.success && data.data) {
           reportsList = Array.isArray(data.data) ? data.data : [];
         } else if (Array.isArray(data)) {
           reportsList = data;
         }
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:217',message:'Setting inspection reports',data:{reportsCount:reportsList.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         setInspectionReports(reportsList);
-      } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:219',message:'loadInspectionReports failed',data:{status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       }
     } catch (error) {
       console.error('Error loading inspection reports:', error);
@@ -256,22 +240,68 @@ export default function JobDetailsPage() {
       if (response.ok) {
         const data = await response.json();
         const types = Array.isArray(data) ? data : (data.data || []);
-        setInspectionTypes(types.filter(t => !t.deletedAt && t.isActive !== false));
+        // Backend already filters by deletedAt and isActive, so we just use all returned types
+        setInspectionTypes(types);
       }
     } catch (error) {
       console.error('Error loading inspection types:', error);
     }
   };
 
+  const loadTimeTrackings = async () => {
+    if (!job?.id) return;
+    
+    try {
+      setTimeTrackingsLoading(true);
+      const response = await getTimeTrackings({ repairId: job.id });
+      
+      if (response.success && response.data?.trackings) {
+        const trackings = response.data.trackings;
+        setTimeTrackings(trackings);
+        
+        // Calculate total time
+        const totalSeconds = trackings.reduce((sum, t) => {
+          return sum + (t.duration || 0);
+        }, 0);
+        
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        
+        setTotalTime({ hours, minutes, seconds });
+      }
+    } catch (error) {
+      console.error('Error loading time trackings:', error);
+    } finally {
+      setTimeTrackingsLoading(false);
+    }
+  };
+  
+  const formatTime = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'غير محدد';
+    const date = new Date(dateString);
+    return date.toLocaleString('ar-EG', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const handleSaveInspectionReport = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:238',message:'handleSaveInspectionReport entry',data:{jobId:job?.id,hasJob:!!job},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     if (!job?.id) {
       setInspectionError('لا يوجد طلب إصلاح مرتبط');
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:241',message:'No repair request ID found',data:{job},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return;
     }
 
@@ -306,24 +336,15 @@ export default function JobDetailsPage() {
       
       const method = editingReport ? 'PUT' : 'POST';
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:309',message:'Sending inspection report request',data:{method,url,payload,editingReport:!!editingReport},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload)
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:316',message:'Inspection report response',data:{status:response?.status,ok:response?.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
 
       if (response.ok) {
         const responseData = await response.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:321',message:'Inspection report success',data:{success:responseData?.success,reportId:responseData?.data?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         notifications.success('تم', { message: editingReport ? 'تم تحديث التقرير' : 'تم إنشاء التقرير' });
         setInspectionOpen(false);
         setEditingReport(null);
@@ -339,9 +360,6 @@ export default function JobDetailsPage() {
         loadInspectionReports();
       } else {
         const errorData = await response.json().catch(() => ({}));
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:335',message:'Inspection report error',data:{status:response.status,error:errorData?.error,details:errorData?.details},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         setInspectionError(errorData.error || 'فشل حفظ التقرير');
       }
     } catch (error) {
@@ -514,7 +532,13 @@ export default function JobDetailsPage() {
 
         {/* Stopwatch Section */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800 p-4 mb-6">
-          <Stopwatch repairId={job.id} />
+          <Stopwatch 
+            repairId={job.id} 
+            onStop={() => {
+              // Reload time trackings when stopwatch stops
+              loadTimeTrackings();
+            }}
+          />
         </div>
 
         {/* Tabs */}
@@ -607,6 +631,60 @@ export default function JobDetailsPage() {
                       اتصال بالعميل
                     </button>
                   </div>
+                </div>
+
+                {/* Time Tracking Section - Full Width */}
+                <div className="mt-6 space-y-4">
+                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Timer className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                    الوقت المستغرق
+                  </h3>
+                  {timeTrackingsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <RefreshCw className="w-5 h-5 text-slate-400 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Total Time Display */}
+                      <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 rounded-2xl p-4 border border-teal-200 dark:border-teal-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">إجمالي الوقت:</span>
+                          <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                            {totalTime.hours > 0 ? `${totalTime.hours}:` : ''}{totalTime.minutes.toString().padStart(2, '0')}:{totalTime.seconds.toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                          {timeTrackings.length > 0 ? `${timeTrackings.length} جلسة عمل` : 'لا توجد جلسات عمل مسجلة'}
+                        </div>
+                      </div>
+                      
+                      {/* Time Sessions List */}
+                      {timeTrackings.length > 0 && (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {timeTrackings.map((tracking) => (
+                            <div key={tracking.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {formatTime(tracking.duration || 0)}
+                                </span>
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  tracking.status === 'running' 
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                }`}>
+                                  {tracking.status === 'running' ? 'جاري' : 'مكتمل'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {formatDateTime(tracking.startTime)}
+                                {tracking.endTime && ` - ${formatDateTime(tracking.endTime)}`}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
