@@ -76,7 +76,7 @@ router.get('/', authMiddleware, async (req, res) => {
       FROM InspectionComponent ic
       LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
       LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
-      WHERE ic.deletedAt IS NULL
+      WHERE 1=1
     `;
     const params = [];
     
@@ -137,9 +137,9 @@ router.get('/:id',
         ii.name as partName,
         ii.sku as partSku
       FROM InspectionComponent ic
-      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id AND pu.deletedAt IS NULL
-      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND ii.deletedAt IS NULL
-      WHERE ic.id = ? AND ic.deletedAt IS NULL
+      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
+      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
+      WHERE ic.id = ?
     `, [id]);
     
     if (rows.length === 0) {
@@ -176,14 +176,14 @@ router.post('/',
   
   try {
     // Validate inspectionReportId exists
-    const [report] = await db.query('SELECT id, repairRequestId FROM InspectionReport WHERE id = ? AND deletedAt IS NULL', [inspectionReportId]);
+    const [report] = await db.query('SELECT id, repairRequestId FROM InspectionReport WHERE id = ?', [inspectionReportId]);
     if (!report || report.length === 0) {
       return res.status(404).json({ success: false, error: 'Inspection report not found' });
     }
     
     // Validate partsUsedId if provided
     if (partsUsedId) {
-      const [part] = await db.query('SELECT id FROM PartsUsed WHERE id = ? AND deletedAt IS NULL', [partsUsedId]);
+      const [part] = await db.query('SELECT id FROM PartsUsed WHERE id = ?', [partsUsedId]);
       if (!part || part.length === 0) {
         return res.status(400).json({ success: false, error: 'Invalid partsUsedId' });
       }
@@ -289,14 +289,14 @@ router.put('/:id',
   
   try {
     // Check if component exists
-    const [existing] = await db.query('SELECT id, inspectionReportId FROM InspectionComponent WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [existing] = await db.query('SELECT id, inspectionReportId FROM InspectionComponent WHERE id = ?', [id]);
     if (!existing || existing.length === 0) {
       return res.status(404).json({ success: false, error: 'Component not found' });
     }
     
     // Validate partsUsedId if provided
     if (partsUsedId) {
-      const [part] = await db.query('SELECT id FROM PartsUsed WHERE id = ? AND deletedAt IS NULL', [partsUsedId]);
+      const [part] = await db.query('SELECT id FROM PartsUsed WHERE id = ?', [partsUsedId]);
       if (!part || part.length === 0) {
         return res.status(400).json({ success: false, error: 'Invalid partsUsedId' });
       }
@@ -325,7 +325,7 @@ router.put('/:id',
        SET inspectionReportId = ?, name = ?, componentType = ?, status = ?, condition = ?, notes = ?, priority = ?, 
            photo = ?, estimatedCost = ?, partsUsedId = ?, isReplaced = ?, replacedAt = ?, 
            updatedAt = CURRENT_TIMESTAMP
-       WHERE id = ? AND deletedAt IS NULL`,
+       WHERE id = ?`,
       [
         inspectionReportId, 
         name, 
@@ -391,15 +391,15 @@ router.delete('/:id',
   const { id } = req.params;
   try {
     // Get inspectionReportId before delete
-    const [component] = await db.query('SELECT inspectionReportId FROM InspectionComponent WHERE id = ? AND deletedAt IS NULL', [id]);
+    const [component] = await db.query('SELECT inspectionReportId FROM InspectionComponent WHERE id = ?', [id]);
     
     if (component.length === 0) {
       return res.status(404).json({ success: false, error: 'Component not found' });
     }
     
-    // Soft delete
+    // Hard delete (since deletedAt column doesn't exist yet)
     const [result] = await db.query(
-      'UPDATE InspectionComponent SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL',
+      'DELETE FROM InspectionComponent WHERE id = ?',
       [id]
     );
     

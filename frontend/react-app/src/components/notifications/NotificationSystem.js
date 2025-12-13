@@ -138,16 +138,15 @@ const NotificationItem = ({ notification, onRemove, onAction }) => {
             )}
           </div>
           
-          {!notification.persistent && (
-            <div className="mr-4 flex-shrink-0 flex">
-              <button
-                className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition ease-in-out duration-150"
-                onClick={handleRemove}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="mr-4 flex-shrink-0 flex">
+            <button
+              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition ease-in-out duration-150"
+              onClick={handleRemove}
+              aria-label="إغلاق الإشعار"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
       
