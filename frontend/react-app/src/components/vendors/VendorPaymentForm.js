@@ -18,6 +18,7 @@ const VendorPaymentForm = ({
 }) => {
   const [formData, setFormData] = useState({
     purchaseOrderId: '',
+    invoiceId: '',
     amount: '',
     paymentMethod: 'cash',
     paymentDate: new Date().toISOString().split('T')[0],
@@ -30,7 +31,9 @@ const VendorPaymentForm = ({
 
   const [errors, setErrors] = useState({});
   const [availablePurchaseOrders, setAvailablePurchaseOrders] = useState([]);
+  const [availableInvoices, setAvailableInvoices] = useState([]);
   const [loadingPurchaseOrders, setLoadingPurchaseOrders] = useState(false);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
   const loadedRef = useRef(false);
   const vendorIdRef = useRef(vendorId);
@@ -60,10 +63,56 @@ const VendorPaymentForm = ({
     }
   };
 
+  const loadAvailableInvoices = async () => {
+    if (!vendorId) return;
+    
+    try {
+      setLoadingInvoices(true);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VendorPaymentForm.js:71',message:'loadAvailableInvoices called',data:{vendorId,invoiceType:'purchase'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
+      const response = await apiService.getInvoices({ vendorId, invoiceType: 'purchase', limit: 100 });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VendorPaymentForm.js:73',message:'loadAvailableInvoices response received',data:{responseStructure:Object.keys(response),hasData:!!response.data,hasInvoices:!!response.invoices,invoicesCount:Array.isArray(response.data?.invoices||response.invoices||response.data||response)?(response.data?.invoices||response.invoices||response.data||response).length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
+      const invoices = response.data?.invoices || response.invoices || response.data || response || [];
+      const invoicesArray = Array.isArray(invoices) ? invoices : [];
+      
+      // فلترة الفواتير غير المدفوعة فقط (outstanding balance > 0)
+      // والتأكد من أن الفواتير مرتبطة بالمورد المحدد
+      const unpaidInvoices = invoicesArray.filter(inv => {
+        // التأكد من أن الفاتورة مرتبطة بالمورد المحدد
+        const invVendorId = inv.vendorId || inv.vendor?.id;
+        if (invVendorId && parseInt(invVendorId) !== parseInt(vendorId)) {
+          return false; // تجاهل الفواتير التي لا تنتمي لهذا المورد
+        }
+        
+        const totalAmount = parseFloat(inv.totalAmount || 0);
+        const amountPaid = parseFloat(inv.amountPaid || inv.paidAmount || 0);
+        const remaining = totalAmount - amountPaid;
+        return remaining > 0;
+      });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VendorPaymentForm.js:90',message:'loadAvailableInvoices filtered',data:{totalInvoices:invoicesArray.length,unpaidInvoices:unpaidInvoices.length,vendorIds:invoicesArray.map(inv=>inv.vendorId||inv.vendor?.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
+      
+      setAvailableInvoices(unpaidInvoices);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VendorPaymentForm.js:95',message:'loadAvailableInvoices error',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
   useEffect(() => {
     if (payment) {
       setFormData({
         purchaseOrderId: payment.purchaseOrderId || '',
+        invoiceId: payment.invoiceId || '',
         amount: payment.amount || '',
         paymentMethod: payment.paymentMethod || 'cash',
         paymentDate: payment.paymentDate || new Date().toISOString().split('T')[0],
@@ -84,8 +133,9 @@ const VendorPaymentForm = ({
       setSelectedPurchaseOrder(purchaseOrder);
       loadedRef.current = true; // Prevent loading when purchaseOrder is provided
     } else if (vendorId && !payment && !purchaseOrder && !loadedRef.current) {
-      // جلب طلبات الشراء المتاحة فقط عند الحاجة
+      // جلب طلبات الشراء والفواتير المتاحة فقط عند الحاجة
       loadAvailablePurchaseOrders();
+      loadAvailableInvoices();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payment, purchaseOrder, vendorId]);
@@ -114,6 +164,20 @@ const VendorPaymentForm = ({
           amount: po.totalAmount || ''
         }));
         setSelectedPurchaseOrder(po);
+      }
+    }
+
+    // إذا تم اختيار فاتورة شراء، املأ المبلغ المتبقي تلقائياً
+    if (field === 'invoiceId' && value) {
+      const inv = availableInvoices.find(i => i.id === parseInt(value));
+      if (inv && !payment) {
+        const totalAmount = parseFloat(inv.totalAmount || 0);
+        const paidAmount = parseFloat(inv.amountPaid || inv.paidAmount || 0);
+        const remaining = totalAmount - paidAmount;
+        setFormData(prev => ({
+          ...prev,
+          amount: remaining > 0 ? remaining.toFixed(2) : ''
+        }));
       }
     }
   };
@@ -147,6 +211,7 @@ const VendorPaymentForm = ({
 
     const submitData = {
       purchaseOrderId: formData.purchaseOrderId || null,
+      invoiceId: formData.invoiceId || null,
       amount: parseFloat(formData.amount),
       paymentMethod: formData.paymentMethod,
       paymentDate: formData.paymentDate,
@@ -186,6 +251,36 @@ const VendorPaymentForm = ({
             </Select>
             {errors.purchaseOrderId && (
               <p className="text-red-500 text-sm mt-1">{errors.purchaseOrderId}</p>
+            )}
+          </div>
+
+          {/* Invoice */}
+          <div className="md:col-span-2">
+            <Label htmlFor="invoiceId">فاتورة الشراء (اختياري)</Label>
+            <Select
+              value={formData.invoiceId}
+              onValueChange={(value) => handleInputChange('invoiceId', value)}
+              disabled={!!payment || loadingInvoices}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingInvoices ? "جاري التحميل..." : "اختر فاتورة شراء"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">بدون فاتورة</SelectItem>
+                {availableInvoices.map((inv) => {
+                  const totalAmount = parseFloat(inv.totalAmount || 0);
+                  const paidAmount = parseFloat(inv.amountPaid || 0);
+                  const remaining = totalAmount - paidAmount;
+                  return (
+                    <SelectItem key={inv.id} value={inv.id.toString()}>
+                      فاتورة #{inv.id} - {totalAmount.toFixed(2)} ج.م (متبقي: {remaining.toFixed(2)} ج.م)
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {errors.invoiceId && (
+              <p className="text-red-500 text-sm mt-1">{errors.invoiceId}</p>
             )}
           </div>
 

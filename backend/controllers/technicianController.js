@@ -44,14 +44,15 @@ const mapDbStatusToFrontend = (dbStatus) => {
 };
 
 // Helper: build WHERE clause for technician jobs
+// Includes repairs assigned via TechnicianRepairs table
 const buildTechJobsWhere = (technicianId, filters = {}) => {
   const where = ['rr.deletedAt IS NULL'];
   const params = [];
 
-  // Technician scope
+  // Technician scope - include both direct assignment and TechnicianRepairs table
   if (technicianId) {
-    where.push('rr.technicianId = ?');
-    params.push(technicianId);
+    where.push('(rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))');
+    params.push(technicianId, technicianId);
   }
 
   // Status filter - convert frontend status to database status
@@ -81,28 +82,177 @@ exports.getTechnicianDashboard = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // Basic stats scoped to technician
+    // Basic stats scoped to technician - include TechnicianRepairs assignments
     const [totalRows] = await db.execute(
-      'SELECT COUNT(*) AS cnt FROM RepairRequest rr WHERE rr.deletedAt IS NULL AND rr.technicianId = ?',
-      [technicianId]
+      `SELECT COUNT(*) AS cnt 
+       FROM RepairRequest rr 
+       WHERE rr.deletedAt IS NULL 
+       AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))`,
+      [technicianId, technicianId]
     );
 
     const [byStatus] = await db.execute(
       `SELECT rr.status, COUNT(*) AS cnt 
        FROM RepairRequest rr 
-       WHERE rr.deletedAt IS NULL AND rr.technicianId = ?
+       WHERE rr.deletedAt IS NULL 
+       AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))
        GROUP BY rr.status`,
-      [technicianId]
+      [technicianId, technicianId]
     );
 
+    // Get today's stats
     const [todayRows] = await db.execute(
       `SELECT COUNT(*) AS todayCount 
        FROM RepairRequest rr 
        WHERE rr.deletedAt IS NULL 
-       AND rr.technicianId = ? 
+       AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))
        AND DATE(rr.updatedAt) = CURDATE()`,
-      [technicianId]
+      [technicianId, technicianId]
     );
+
+    // Get yesterday's stats for comparison
+    const [yesterdayRows] = await db.execute(
+      `SELECT 
+        COUNT(CASE WHEN rr.status = 'UNDER_REPAIR' THEN 1 END) AS inProgressYesterday,
+        COUNT(CASE WHEN rr.status = 'DELIVERED' THEN 1 END) AS completedYesterday
+       FROM RepairRequest rr 
+       WHERE rr.deletedAt IS NULL 
+       AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))
+       AND DATE(rr.updatedAt) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)`,
+      [technicianId, technicianId]
+    );
+
+    // Get today's completed and in progress counts
+    const [todayStatusRows] = await db.execute(
+      `SELECT 
+        COUNT(CASE WHEN rr.status = 'UNDER_REPAIR' THEN 1 END) AS inProgressToday,
+        COUNT(CASE WHEN rr.status = 'DELIVERED' AND DATE(rr.updatedAt) = CURDATE() THEN 1 END) AS completedToday
+       FROM RepairRequest rr 
+       WHERE rr.deletedAt IS NULL 
+       AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))`,
+      [technicianId, technicianId]
+    );
+
+    // Calculate changes
+    const inProgressChange = (todayStatusRows[0]?.inProgressToday || 0) - (yesterdayRows[0]?.inProgressYesterday || 0);
+    const completedChange = (todayStatusRows[0]?.completedToday || 0) - (yesterdayRows[0]?.completedYesterday || 0);
+
+    // Get daily time tracking (from TimeTracking table if exists)
+    let dailyTime = { hours: 0, minutes: 0, totalSessions: 0 };
+    try {
+      const [timeRows] = await db.execute(
+        `SELECT 
+          COALESCE(SUM(TIMESTAMPDIFF(MINUTE, startTime, COALESCE(endTime, NOW()))), 0) AS totalMinutes,
+          COUNT(*) AS totalSessions
+         FROM TimeTracking 
+         WHERE technicianId = ? 
+         AND DATE(startTime) = CURDATE() 
+         AND status = 'completed'`,
+        [technicianId]
+      );
+      if (timeRows && timeRows[0]) {
+        const totalMinutes = timeRows[0].totalMinutes || 0;
+        dailyTime = {
+          hours: Math.floor(totalMinutes / 60),
+          minutes: totalMinutes % 60,
+          totalSessions: timeRows[0].totalSessions || 0
+        };
+      }
+    } catch (timeError) {
+      console.error('Error fetching daily time:', timeError);
+      // Continue without time data
+    }
+
+    // Get pending tasks count
+    let pendingTasksCount = 0;
+    try {
+      const [taskRows] = await db.execute(
+        `SELECT COUNT(*) AS cnt FROM Task 
+         WHERE assignedTo = ? 
+         AND status = 'todo' 
+         AND deletedAt IS NULL`,
+        [technicianId]
+      );
+      pendingTasksCount = taskRows[0]?.cnt || 0;
+    } catch (taskError) {
+      console.error('Error fetching pending tasks:', taskError);
+    }
+
+    // Get upcoming tasks (next 7 days)
+    let upcomingTasks = [];
+    try {
+      const [upcomingRows] = await db.execute(
+        `SELECT id, title, description, dueDate, priority, status
+         FROM Task 
+         WHERE assignedTo = ? 
+         AND status IN ('todo', 'in_progress')
+         AND dueDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+         AND deletedAt IS NULL
+         ORDER BY dueDate ASC
+         LIMIT 5`,
+        [technicianId]
+      );
+      upcomingTasks = upcomingRows || [];
+    } catch (upcomingError) {
+      console.error('Error fetching upcoming tasks:', upcomingError);
+    }
+
+    // Get important notifications (from notifications table if exists)
+    let importantNotifications = [];
+    try {
+      const [notifRows] = await db.execute(
+        `SELECT id, title, message, type, createdAt, isRead
+         FROM Notification 
+         WHERE userId = ? 
+         AND (isRead = 0 OR isRead IS NULL)
+         AND (type = 'urgent' OR type = 'important' OR priority = 'high')
+         ORDER BY createdAt DESC
+         LIMIT 5`,
+        [technicianId]
+      );
+      importantNotifications = notifRows || [];
+    } catch (notifError) {
+      console.error('Error fetching notifications:', notifError);
+    }
+
+    // Get performance metrics (last 7 days)
+    let performanceMetrics = {
+      averageRepairTime: 0,
+      completionRate: 0,
+      totalCompleted: 0
+    };
+    try {
+      const [perfRows] = await db.execute(
+        `SELECT 
+          COUNT(*) AS totalCompleted,
+          AVG(TIMESTAMPDIFF(HOUR, rr.createdAt, rr.updatedAt)) AS avgHours
+         FROM RepairRequest rr
+         WHERE (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))
+         AND rr.status = 'DELIVERED'
+         AND DATE(rr.updatedAt) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+         AND rr.deletedAt IS NULL`,
+        [technicianId, technicianId]
+      );
+      if (perfRows && perfRows[0]) {
+        const total = perfRows[0].totalCompleted || 0;
+        const [allRows] = await db.execute(
+          `SELECT COUNT(*) AS total 
+           FROM RepairRequest rr
+           WHERE (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))
+           AND DATE(rr.createdAt) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+           AND rr.deletedAt IS NULL`,
+          [technicianId, technicianId]
+        );
+        const allTotal = allRows[0]?.total || 0;
+        performanceMetrics = {
+          averageRepairTime: Math.round((perfRows[0].avgHours || 0) * 10) / 10,
+          completionRate: allTotal > 0 ? Math.round((total / allTotal) * 100) : 0,
+          totalCompleted: total
+        };
+      }
+    } catch (perfError) {
+      console.error('Error fetching performance metrics:', perfError);
+    }
 
     // Convert database status to frontend status for byStatus and aggregate counts
     const statusMap = {};
@@ -125,6 +275,15 @@ exports.getTechnicianDashboard = async (req, res) => {
         totalJobs: totalRows[0]?.cnt || 0,
         byStatus: byStatusFrontend,
         todayUpdated: todayRows[0]?.todayCount || 0,
+        stats: {
+          inProgressChange,
+          completedChange,
+          pendingTasksCount
+        },
+        dailyTime,
+        upcomingTasks,
+        importantNotifications,
+        performance: performanceMetrics
       },
     });
   } catch (error) {
@@ -149,7 +308,7 @@ exports.getTechnicianJobs = async (req, res) => {
     const { where, params } = buildTechJobsWhere(technicianId, { status, search });
 
     const [rows] = await db.execute(
-      `SELECT 
+      `SELECT DISTINCT
          rr.id,
          rr.id AS requestNumber,
          rr.reportedProblem,
@@ -204,7 +363,7 @@ exports.getTechnicianJobById = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await db.execute(
-      `SELECT 
+      `SELECT DISTINCT
          rr.*,
          c.id AS customerId,
          c.name AS customerName,
@@ -221,8 +380,8 @@ exports.getTechnicianJobById = async (req, res) => {
        LEFT JOIN VariableOption vo ON d.brandId = vo.id
        WHERE rr.id = ? 
          AND rr.deletedAt IS NULL 
-         AND rr.technicianId = ?`,
-      [id, technicianId]
+         AND (rr.technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = rr.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
 
     if (!rows || rows.length === 0) {
@@ -311,10 +470,13 @@ exports.uploadTechnicianJobMedia = async (req, res) => {
     const { items } = req.body || {};
     // items: [{ filename, fileType, filePath, category }]
 
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [id, technicianId]
+      `SELECT id FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({
@@ -368,10 +530,13 @@ exports.createPartsRequest = async (req, res) => {
     if (!repairRequestId || !partName || !quantity) {
       return res.status(400).json({ success: false, message: 'repairRequestId, partName, and quantity are required' });
     }
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [repairRequestId, technicianId]
+      `SELECT id FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [repairRequestId, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({
@@ -547,10 +712,13 @@ exports.updateTechnicianJobStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Status is required' });
     }
 
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [id, technicianId]
+      `SELECT status FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({
@@ -621,10 +789,13 @@ exports.addTechnicianJobNote = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Note is required' });
     }
 
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [id, technicianId]
+      `SELECT id FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({
@@ -680,10 +851,13 @@ exports.uploadJobMedia = async (req, res) => {
       ? fileType.toUpperCase()
       : 'IMAGE';
 
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [id, technicianId]
+      `SELECT id FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({
@@ -731,10 +905,13 @@ exports.getJobMedia = async (req, res) => {
 
     const { id } = req.params;
 
-    // Ensure job belongs to technician
+    // Ensure job belongs to technician - check both direct assignment and TechnicianRepairs
     const [jobRows] = await db.execute(
-      'SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL AND technicianId = ?',
-      [id, technicianId]
+      `SELECT id FROM RepairRequest 
+       WHERE id = ? 
+       AND deletedAt IS NULL 
+       AND (technicianId = ? OR EXISTS (SELECT 1 FROM TechnicianRepairs tr WHERE tr.repairId = RepairRequest.id AND tr.technicianId = ?))`,
+      [id, technicianId, technicianId]
     );
     if (!jobRows || jobRows.length === 0) {
       return res.status(404).json({

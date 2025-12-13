@@ -8,7 +8,7 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import VendorPaymentsTab from './VendorPaymentsTab';
 import { 
   ArrowRight, Building2, Phone, Mail, MapPin, Calendar, 
-  Edit, DollarSign, TrendingUp, Package, FileText
+  Edit, DollarSign, TrendingUp, Package, FileText, Eye
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -19,6 +19,7 @@ const VendorDetailsPage = () => {
   const { addNotification } = useNotifications();
   const [vendor, setVendor] = useState(null);
   const [balance, setBalance] = useState(null);
+  const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [error, setError] = useState(null);
@@ -35,6 +36,23 @@ const VendorDetailsPage = () => {
       const response = await vendorService.getVendorById(id);
       if (response && response.success && response.data) {
         setVendor(response.data.vendor || response.data);
+        // Set purchase invoices if available
+        if (response.data.purchaseInvoices) {
+          setPurchaseInvoices(response.data.purchaseInvoices);
+        }
+        // Update balance from vendor outstandingBalance if available
+        if (response.data.vendor?.outstandingBalance !== undefined) {
+          const vendorData = response.data.vendor;
+          setBalance({
+            balance: vendorData.outstandingBalance,
+            creditUtilization: vendorData.creditLimit 
+              ? (vendorData.outstandingBalance / vendorData.creditLimit) * 100 
+              : 0,
+            isOverLimit: vendorData.creditLimit 
+              ? vendorData.outstandingBalance > vendorData.creditLimit 
+              : false
+          });
+        }
       } else if (response && response.id) {
         setVendor(response);
       } else {
@@ -131,8 +149,8 @@ const VendorDetailsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">الرصيد المستحق</p>
-                <p className={`text-2xl font-bold ${balance?.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {formatAmount(balance?.balance)}
+                <p className={`text-2xl font-bold ${(vendor?.outstandingBalance || balance?.balance || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {formatAmount(vendor?.outstandingBalance || balance?.balance || 0)}
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-gray-400" />
@@ -216,6 +234,16 @@ const VendorDetailsPage = () => {
           >
             طلبات الشراء
           </button>
+          <button
+            onClick={() => setActiveTab('invoices')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'invoices'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            فواتير الشراء
+          </button>
         </nav>
       </div>
 
@@ -298,7 +326,14 @@ const VendorDetailsPage = () => {
         )}
 
         {activeTab === 'payments' && (
-          <VendorPaymentsTab vendorId={id} />
+          <VendorPaymentsTab 
+            vendorId={id} 
+            onPaymentChange={() => {
+              // إعادة جلب بيانات المورد بعد إضافة/تعديل/حذف دفعة
+              fetchVendor();
+              fetchBalance();
+            }}
+          />
         )}
 
         {activeTab === 'orders' && (
@@ -311,6 +346,95 @@ const VendorDetailsPage = () => {
                 <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500">سيتم إضافة قائمة طلبات الشراء قريباً</p>
               </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        )}
+
+        {activeTab === 'invoices' && (
+          <SimpleCard>
+            <SimpleCardHeader>
+              <SimpleCardTitle>فواتير الشراء</SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent>
+              {purchaseInvoices.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">لا توجد فواتير شراء</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          رقم الفاتورة
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          التاريخ
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المبلغ الإجمالي
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المدفوع
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المتبقي
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الحالة
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الإجراءات
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {purchaseInvoices.map((invoice) => (
+                        <tr key={invoice.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {`#${invoice.id}`}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(invoice.invoiceDate)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatAmount(invoice.totalAmount)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatAmount(invoice.amountPaid || 0)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                            {formatAmount(invoice.outstandingBalance)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <SimpleBadge 
+                              color={
+                                invoice.status === 'paid' ? 'green' :
+                                invoice.status === 'partial' ? 'yellow' :
+                                'red'
+                              }
+                            >
+                              {invoice.status === 'paid' ? 'مدفوعة' :
+                               invoice.status === 'partial' ? 'مدفوعة جزئياً' :
+                               'غير مدفوعة'}
+                            </SimpleBadge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <SimpleButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/invoices/${invoice.id}`)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </SimpleButton>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </SimpleCardContent>
           </SimpleCard>
         )}

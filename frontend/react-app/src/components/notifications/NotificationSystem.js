@@ -55,20 +55,25 @@ const NotificationItem = ({ notification, onRemove, onAction }) => {
   };
 
   const getColorClasses = () => {
-    switch (notification.type) {
-      case 'success': 
-        return 'bg-green-50 border-green-200 text-green-800';
-      case 'error': 
-        return 'bg-red-50 border-red-200 text-red-800';
-      case 'warning': 
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      case 'info': 
-        return 'bg-blue-50 border-blue-200 text-blue-800';
-      case 'loading': 
-        return 'bg-gray-50 border-gray-200 text-gray-800';
-      default: 
-        return 'bg-white border-gray-200 text-gray-800';
+    const baseColors = {
+      success: 'bg-green-50 border-green-200 text-green-800',
+      error: 'bg-red-50 border-red-200 text-red-800',
+      warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+      info: 'bg-blue-50 border-blue-200 text-blue-800',
+      loading: 'bg-gray-50 border-gray-200 text-gray-800',
+      default: 'bg-white border-gray-200 text-gray-800'
+    };
+
+    let colorClass = baseColors[notification.type] || baseColors.default;
+    
+    // Add priority-based styling
+    if (notification.priority === 'urgent') {
+      colorClass += ' ring-2 ring-red-500 ring-opacity-50 animate-pulse';
+    } else if (notification.priority === 'high') {
+      colorClass += ' ring-2 ring-orange-500 ring-opacity-30';
     }
+    
+    return colorClass;
   };
 
   const getIconColorClasses = () => {
@@ -224,6 +229,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     const {
       dedupeKey,
       dedupeWindowMs = 1500,
+      priority = 'normal', // 'low', 'normal', 'high', 'urgent'
       ...rest
     } = notification || {};
 
@@ -235,6 +241,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
       persistent: false,
       showProgress: false,
       read: false,
+      priority: priority,
       createdAt: now,
       ...rest
     };
@@ -254,6 +261,14 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
 
     setNotifications(prev => {
       const updated = [newNotification, ...prev];
+      // Sort by priority: urgent > high > normal > low
+      const priorityOrder = { urgent: 4, high: 3, normal: 2, low: 1 };
+      updated.sort((a, b) => {
+        const priorityDiff = (priorityOrder[b.priority] || 2) - (priorityOrder[a.priority] || 2);
+        if (priorityDiff !== 0) return priorityDiff;
+        // If same priority, sort by creation time (newest first)
+        return b.createdAt - a.createdAt;
+      });
       // Keep only max notifications
       return updated.slice(0, maxNotifications);
     });
@@ -280,6 +295,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     return addNotification({
       type: 'success',
       message,
+      priority: options.priority || 'normal',
       ...options
     });
   };
@@ -289,6 +305,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
       type: 'error',
       message,
       persistent: true, // Errors should be persistent by default
+      priority: options.priority || 'high', // Errors are high priority by default
       ...options
     });
   };
@@ -297,6 +314,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     return addNotification({
       type: 'warning',
       message,
+      priority: options.priority || 'normal',
       ...options
     });
   };
@@ -305,6 +323,7 @@ export const NotificationProvider = ({ children, maxNotifications = 5, position 
     return addNotification({
       type: 'info',
       message,
+      priority: options.priority || 'normal',
       ...options
     });
   };

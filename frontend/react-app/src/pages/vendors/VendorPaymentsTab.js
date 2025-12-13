@@ -13,7 +13,7 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import { Plus, DollarSign, TrendingUp } from 'lucide-react';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 
-const VendorPaymentsTab = ({ vendorId }) => {
+const VendorPaymentsTab = ({ vendorId, onPaymentChange }) => {
   const { addNotification } = useNotifications();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +96,10 @@ const VendorPaymentsTab = ({ vendorId }) => {
       fetchPayments();
       fetchBalance();
       fetchStats();
+      // إشعار الصفحة الرئيسية بتحديث الرصيد
+      if (onPaymentChange) {
+        onPaymentChange();
+      }
     } catch (error) {
       addNotification('error', 'فشل في حذف الدفعة');
     }
@@ -115,6 +119,10 @@ const VendorPaymentsTab = ({ vendorId }) => {
       fetchPayments();
       fetchBalance();
       fetchStats();
+      // إشعار الصفحة الرئيسية بتحديث الرصيد
+      if (onPaymentChange) {
+        onPaymentChange();
+      }
     } catch (error) {
       addNotification('error', error.message || 'فشل في حفظ الدفعة');
     }

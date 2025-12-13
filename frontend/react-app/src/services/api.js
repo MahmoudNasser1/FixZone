@@ -100,8 +100,10 @@ class ApiService {
           error.silent = true;
         }
         // Mark 403 errors from settings endpoints as silent (user may not have permissions)
+        // This is expected for technicians who don't have admin access
         if (response.status === 403 && isAuthEndpoint) {
           error.silent = true;
+          error.forbidden = true; // Mark as forbidden to handle gracefully
         }
         throw error;
       }

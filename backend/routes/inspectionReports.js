@@ -1,20 +1,127 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult, param } = require('express-validator');
 const db = require('../db');
 const websocketService = require('../services/websocketService');
+const authMiddleware = require('../middleware/authMiddleware');
+const authorizeMiddleware = require('../middleware/authorizeMiddleware');
 
-// Get all inspection reports
-router.get('/', async (req, res) => {
+// Helper function to check if user can modify report
+const canModifyReport = async (userId, userRoleId, reportId) => {
+  // Admin (role 1) and Manager (role 2) can modify any report
+  if (userRoleId === 1 || userRoleId === 2) return true;
+  
+  // Technician can only modify their own reports (role 3 or 4)
+  if (userRoleId === 3 || userRoleId === 4) {
+    const [report] = await db.query(
+      'SELECT technicianId FROM InspectionReport WHERE id = ? AND deletedAt IS NULL',
+      [reportId]
+    );
+    if (report.length > 0 && report[0].technicianId === userId) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+// Get all inspection reports (Admin/Manager only) with pagination, filtering, and sorting
+router.get('/', authMiddleware, authorizeMiddleware([1, 2]), async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM InspectionReport WHERE deletedAt IS NULL ORDER BY createdAt DESC');
-    res.json({ success: true, data: rows });
+    const {
+      page = 1,
+      limit = 20,
+      repairRequestId,
+      technicianId,
+      inspectionTypeId,
+      startDate,
+      endDate,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC'
+    } = req.query;
+
+    // Build WHERE clause
+    let whereConditions = ['ir.deletedAt IS NULL'];
+    const params = [];
+
+    if (repairRequestId) {
+      whereConditions.push('ir.repairRequestId = ?');
+      params.push(parseInt(repairRequestId));
+    }
+    if (technicianId) {
+      whereConditions.push('ir.technicianId = ?');
+      params.push(parseInt(technicianId));
+    }
+    if (inspectionTypeId) {
+      whereConditions.push('ir.inspectionTypeId = ?');
+      params.push(parseInt(inspectionTypeId));
+    }
+    if (startDate) {
+      whereConditions.push('ir.reportDate >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      whereConditions.push('ir.reportDate <= ?');
+      params.push(endDate);
+    }
+
+    // Validate sortBy to prevent SQL injection
+    const allowedSortFields = ['createdAt', 'updatedAt', 'reportDate', 'id'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    // Calculate pagination
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build query with joins for better data
+    const query = `
+      SELECT 
+        ir.*,
+        COALESCE(it.name, 'تقرير فحص') as inspectionTypeName,
+        u.name as technicianName,
+        b.name as branchName
+      FROM InspectionReport ir
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
+      LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
+      LEFT JOIN Branch b ON ir.branchId = b.id
+      WHERE ${whereConditions.join(' AND ')}
+      ORDER BY ir.${safeSortBy} ${safeSortOrder}
+      LIMIT ? OFFSET ?
+    `;
+
+    params.push(limitNum, offset);
+
+    const [rows] = await db.query(query, params);
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM InspectionReport ir
+      WHERE ${whereConditions.join(' AND ')}
+    `;
+    const countParams = params.slice(0, -2); // Remove limit and offset
+    const [countRows] = await db.query(countQuery, countParams);
+    const total = countRows[0]?.total || 0;
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
   } catch (err) {
     console.error('Error fetching inspection reports:', err);
     res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });
 
-// Get inspection reports by repair request ID
+// Get inspection reports by repair request ID (Public - for tracking page)
 router.get('/repair/:repairRequestId', async (req, res) => {
   const { repairRequestId } = req.params;
   try {
@@ -38,8 +145,73 @@ router.get('/repair/:repairRequestId', async (req, res) => {
   }
 });
 
-// Get inspection report by ID
-router.get('/:id', async (req, res) => {
+// Get inspection reports by technician ID (Authenticated - Technician can see their own, Admin/Manager can see all)
+router.get('/technician/:technicianId', authMiddleware, async (req, res) => {
+  const { technicianId } = req.params;
+  const userRoleId = req.user?.roleId || req.user?.role;
+  const userId = req.user?.id;
+  
+  // Check if user can access this technician's reports
+  // Admin/Manager can see all, Technician can only see their own
+  if (userRoleId !== 1 && userRoleId !== 2 && parseInt(technicianId) !== userId) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Access denied: You can only view your own reports' 
+    });
+  }
+  
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        ir.*,
+        COALESCE(it.name, 'تقرير فحص') as inspectionTypeName,
+        u.name as technicianName,
+        b.name as branchName,
+        rr.id as repairRequestId,
+        rr.requestNumber,
+        rr.status as repairStatus
+      FROM InspectionReport ir
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
+      LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
+      LEFT JOIN Branch b ON ir.branchId = b.id
+      LEFT JOIN RepairRequest rr ON ir.repairRequestId = rr.id AND rr.deletedAt IS NULL
+      WHERE ir.technicianId = ? AND ir.deletedAt IS NULL
+      ORDER BY ir.reportDate DESC, ir.createdAt DESC
+    `, [technicianId]);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(`Error fetching inspection reports for technician ${technicianId}:`, err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
+// Get inspection reports by job ID (repairRequestId) - Authenticated
+router.get('/job/:jobId', authMiddleware, async (req, res) => {
+  const { jobId } = req.params;
+  // jobId is the repairRequestId
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        ir.*,
+        COALESCE(it.name, 'تقرير فحص') as inspectionTypeName,
+        u.name as technicianName,
+        b.name as branchName
+      FROM InspectionReport ir
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
+      LEFT JOIN User u ON ir.technicianId = u.id AND u.deletedAt IS NULL
+      LEFT JOIN Branch b ON ir.branchId = b.id
+      WHERE ir.repairRequestId = ? AND ir.deletedAt IS NULL
+      ORDER BY ir.reportDate DESC, ir.createdAt DESC
+    `, [jobId]);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(`Error fetching inspection reports for job ${jobId}:`, err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
+// Get inspection report by ID (Authenticated)
+router.get('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await db.query('SELECT * FROM InspectionReport WHERE id = ? AND deletedAt IS NULL', [id]);
@@ -53,12 +225,85 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new inspection report (resilient to missing FKs)
-router.post('/', async (req, res) => {
-  let { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body || {};
-  if (!repairRequestId || !reportDate) {
-    return res.status(400).json({ success: false, error: 'repairRequestId and reportDate are required' });
+// Validation middleware for creating/updating reports
+const validateInspectionReport = [
+  body('repairRequestId')
+    .notEmpty().withMessage('repairRequestId is required')
+    .custom((value) => {
+      const num = Number(value);
+      return !isNaN(num) && Number.isInteger(num);
+    }).withMessage('repairRequestId must be an integer'),
+  body('reportDate')
+    .notEmpty().withMessage('reportDate is required')
+    .custom((value) => {
+      // Accept ISO 8601 format or YYYY-MM-DD format
+      if (!value || typeof value !== 'string') return false;
+      const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+      const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (iso8601Regex.test(value) || dateOnlyRegex.test(value)) {
+        const date = new Date(value);
+        return !isNaN(date.getTime());
+      }
+      return false;
+    }).withMessage('reportDate must be a valid date (ISO 8601 or YYYY-MM-DD format)'),
+  body('inspectionTypeId')
+    .optional({ nullable: true, checkFalsy: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') return true;
+      const num = Number(value);
+      return !isNaN(num) && Number.isInteger(num);
+    }).withMessage('inspectionTypeId must be an integer'),
+  body('technicianId')
+    .optional({ nullable: true, checkFalsy: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') return true;
+      const num = Number(value);
+      return !isNaN(num) && Number.isInteger(num);
+    }).withMessage('technicianId must be an integer'),
+  body('summary')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString().withMessage('summary must be a string')
+    .isLength({ max: 5000 }).withMessage('summary must not exceed 5000 characters'),
+  body('result')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString().withMessage('result must be a string')
+    .isLength({ max: 5000 }).withMessage('result must not exceed 5000 characters'),
+  body('recommendations')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString().withMessage('recommendations must be a string')
+    .isLength({ max: 5000 }).withMessage('recommendations must not exceed 5000 characters'),
+  body('notes')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString().withMessage('notes must be a string')
+    .isLength({ max: 5000 }).withMessage('notes must not exceed 5000 characters'),
+];
+
+// Helper middleware to check validation results
+const checkValidation = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.error('[Validation Error] Inspection Report validation failed:', errors.array());
+    return res.status(400).json({
+      success: false,
+      error: 'Validation failed',
+      details: errors.array(),
+      receivedData: {
+        repairRequestId: req.body?.repairRequestId,
+        inspectionTypeId: req.body?.inspectionTypeId,
+        technicianId: req.body?.technicianId,
+        reportDate: req.body?.reportDate,
+        reportDateType: typeof req.body?.reportDate,
+        reportDateLength: req.body?.reportDate?.length
+      }
+    });
   }
+  next();
+};
+
+// Create a new inspection report (Authenticated - Admin/Manager/Technician)
+// Allow roles: 1 (Admin), 2 (Manager), 3 (Legacy Technician), 4 (Technician)
+router.post('/', authMiddleware, authorizeMiddleware([1, 2, 3, 4]), validateInspectionReport, checkValidation, async (req, res) => {
+  let { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body || {};
   try {
     // Ensure repair exists
     const [repRows] = await db.query('SELECT id FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [repairRequestId]);
@@ -96,6 +341,18 @@ router.post('/', async (req, res) => {
       if (br && br.length > 0) validBranchId = br[0].id;
     }
 
+    // Normalize reportDate to MySQL datetime format
+    let normalizedReportDate = reportDate;
+    if (reportDate && typeof reportDate === 'string') {
+      // If it's ISO 8601 format, convert to MySQL datetime format
+      if (reportDate.includes('T')) {
+        normalizedReportDate = new Date(reportDate).toISOString().slice(0, 19).replace('T', ' ');
+      } else if (reportDate.length === 10) {
+        // If it's YYYY-MM-DD, convert to MySQL datetime format
+        normalizedReportDate = reportDate + ' 00:00:00';
+      }
+    }
+    
     const payload = [
       Number(repairRequestId),
       validInspectionTypeId,
@@ -104,7 +361,7 @@ router.post('/', async (req, res) => {
       result || null,
       recommendations || null,
       notes || null,
-      reportDate,
+      normalizedReportDate,
       validBranchId,
       invoiceLink || null,
       qrCode || null,
@@ -153,17 +410,64 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update an inspection report
-router.put('/:id', async (req, res) => {
+// Update an inspection report (Authenticated - Admin/Manager can update any, Technician can update their own)
+router.put('/:id', 
+  authMiddleware,
+  param('id').isInt().withMessage('Report ID must be an integer'),
+  validateInspectionReport,
+  checkValidation,
+  async (req, res) => {
   const { id } = req.params;
-  const { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments } = req.body;
-  if (!repairRequestId || !inspectionTypeId || !technicianId || !reportDate) {
-    return res.status(400).json({ success: false, error: 'repairRequestId, inspectionTypeId, technicianId, and reportDate are required' });
+  const { repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate: rawReportDate, branchId, invoiceLink, qrCode, attachments } = req.body;
+  
+  // Normalize reportDate to MySQL datetime format
+  let reportDate = rawReportDate;
+  if (rawReportDate && typeof rawReportDate === 'string') {
+    // If it's ISO 8601 format, convert to MySQL datetime format
+    if (rawReportDate.includes('T')) {
+      reportDate = new Date(rawReportDate).toISOString().slice(0, 19).replace('T', ' ');
+    } else if (rawReportDate.length === 10) {
+      // If it's YYYY-MM-DD, convert to MySQL datetime format
+      reportDate = rawReportDate + ' 00:00:00';
+    }
   }
+  const userRoleId = req.user?.roleId || req.user?.role;
+  const userId = req.user?.id;
+  
+  // Check if user can modify this report
+  const canModify = await canModifyReport(userId, userRoleId, id);
+  if (!canModify) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Access denied: You can only modify your own reports' 
+    });
+  }
+  
   try {
+    // For technicians, ensure they can't change technicianId to someone else
+    let finalTechnicianId = technicianId;
+    if (userRoleId === 3 || userRoleId === 4) {
+      // Technician can only set themselves as technician
+      finalTechnicianId = userId;
+    }
+    
+    // Validate/resolve inspectionTypeId (similar to POST)
+    let validInspectionTypeId = inspectionTypeId;
+    if (inspectionTypeId) {
+      const [it] = await db.query('SELECT id FROM InspectionType WHERE id = ? AND deletedAt IS NULL', [inspectionTypeId]);
+      if (!it || it.length === 0) {
+        // Try to find default
+        const [byName] = await db.query("SELECT id FROM InspectionType WHERE name IN ('فحص مبدئي','فحص نهائي','Initial Inspection') AND deletedAt IS NULL ORDER BY id LIMIT 1");
+        if (byName && byName.length > 0) {
+          validInspectionTypeId = byName[0].id;
+        } else {
+          validInspectionTypeId = null;
+        }
+      }
+    }
     const [resultQuery] = await db.query(
       'UPDATE InspectionReport SET repairRequestId = ?, inspectionTypeId = ?, technicianId = ?, summary = ?, result = ?, recommendations = ?, notes = ?, reportDate = ?, branchId = ?, invoiceLink = ?, qrCode = ?, attachments = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
-      [repairRequestId, inspectionTypeId, technicianId, summary, result, recommendations, notes, reportDate, branchId, invoiceLink, qrCode, attachments, id]
+      [repairRequestId, validInspectionTypeId, finalTechnicianId, summary || null, result || null, recommendations || null, notes || null, reportDate, branchId || null, invoiceLink || null, qrCode || null, attachments ? JSON.stringify(attachments) : null, id]
     );
     if (resultQuery.affectedRows === 0) {
       return res.status(404).json({ success: false, error: 'Inspection report not found' });
@@ -190,9 +494,25 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Soft delete an inspection report
-router.delete('/:id', async (req, res) => {
+// Soft delete an inspection report (Authenticated - Admin/Manager can delete any, Technician can delete their own)
+router.delete('/:id', 
+  authMiddleware,
+  param('id').isInt().withMessage('Report ID must be an integer'),
+  checkValidation,
+  async (req, res) => {
   const { id } = req.params;
+  const userRoleId = req.user?.roleId || req.user?.role;
+  const userId = req.user?.id;
+  
+  // Check if user can delete this report
+  const canModify = await canModifyReport(userId, userRoleId, id);
+  if (!canModify) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Access denied: You can only delete your own reports' 
+    });
+  }
+  
   try {
     // جلب repairRequestId قبل الحذف لإرسال WebSocket notification
     const [reportRows] = await db.query('SELECT repairRequestId FROM InspectionReport WHERE id = ? AND deletedAt IS NULL', [id]);
@@ -229,6 +549,23 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true, message: 'Inspection report deleted successfully' });
   } catch (err) {
     console.error(`Error deleting inspection report with ID ${id}:`, err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
+// Export report to PDF (Placeholder - to be implemented in phase 6)
+router.get('/:id/export/pdf', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // TODO: Implement PDF export using pdfkit or puppeteer
+    // For now, return a placeholder response
+    res.status(501).json({ 
+      success: false, 
+      error: 'PDF export feature is under development',
+      message: 'ميزة التصدير إلى PDF قيد التطوير'
+    });
+  } catch (err) {
+    console.error(`Error exporting report ${id} to PDF:`, err);
     res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
 });

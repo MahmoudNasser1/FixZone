@@ -61,6 +61,8 @@ const PublicRepairTrackingPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchType, setSearchType] = useState('trackingToken'); // 'trackingToken' or 'requestNumber'
   const [hasReports, setHasReports] = useState(false);
+  const [inspectionReports, setInspectionReports] = useState([]);
+  const [inspectionReportsLoading, setInspectionReportsLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [showInvoiceAuth, setShowInvoiceAuth] = useState(false);
@@ -342,18 +344,20 @@ const PublicRepairTrackingPage = () => {
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
 
-  // Check for reports
-  const loadReports = async () => {
+  // Load inspection reports
+  const loadInspectionReports = async () => {
     if (!repairData?.id) {
       console.log('[Reports] No repair ID available');
       setHasReports(false);
+      setInspectionReports([]);
       return;
     }
     
     const repairId = repairData.id;
-    console.log('[Reports] Checking for reports for repair ID:', repairId);
+    console.log('[Reports] Loading reports for repair ID:', repairId);
     
     try {
+      setInspectionReportsLoading(true);
       const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairId}`);
       console.log('[Reports] API Response status:', response.status);
       
@@ -377,25 +381,32 @@ const PublicRepairTrackingPage = () => {
         console.log('[Reports] Parsed reports list:', reportsList);
         console.log('[Reports] Number of reports:', reportsList.length);
         
-        const hasReports = reportsList.length > 0;
-        console.log('[Reports] Setting hasReports to:', hasReports);
-        setHasReports(hasReports);
+        setInspectionReports(reportsList);
+        setHasReports(reportsList.length > 0);
       } else if (response.status === 404) {
         // No reports found - this is normal, not an error
         console.log('[Reports] No reports found (404)');
+        setInspectionReports([]);
         setHasReports(false);
       } else {
         // Other error - log but don't show error to user
         const errorData = await response.json().catch(() => ({}));
         console.warn('[Reports] Error loading reports:', response.status, errorData);
+        setInspectionReports([]);
         setHasReports(false);
       }
     } catch (error) {
       // Network error or other exception
       console.error('[Reports] Exception loading reports:', error);
+      setInspectionReports([]);
       setHasReports(false);
+    } finally {
+      setInspectionReportsLoading(false);
     }
   };
+
+  // Keep the old function name for backward compatibility
+  const loadReports = loadInspectionReports;
 
   // Check for reports when repair data is loaded or updated
   useEffect(() => {
@@ -753,6 +764,130 @@ const PublicRepairTrackingPage = () => {
               </div>
               </SimpleCardContent>
             </SimpleCard>
+
+            {/* Inspection Reports Section */}
+            {hasReports && (
+              <SimpleCard className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
+                  <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full ml-3 sm:ml-4">
+                        <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      </div>
+                      <span className="font-semibold text-foreground">التقارير الفنية</span>
+                    </div>
+                    <SimpleButton
+                      size="sm"
+                      variant="outline"
+                      onClick={loadInspectionReports}
+                      disabled={inspectionReportsLoading}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${inspectionReportsLoading ? 'animate-spin' : ''}`} />
+                      تحديث
+                    </SimpleButton>
+                  </SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent className="p-4 sm:p-5 md:p-6">
+                  {inspectionReportsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loading size="md" text="جاري تحميل التقارير..." />
+                    </div>
+                  ) : inspectionReports.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">لا توجد تقارير فنية متاحة</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {inspectionReports.map((report) => (
+                        <div
+                          key={report.id}
+                          className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 sm:p-5 border-l-4 border-blue-400 dark:border-blue-500 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-foreground text-base sm:text-lg">
+                                    {report.inspectionTypeName || 'تقرير فحص'}
+                                  </div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
+                                    {report.reportDate
+                                      ? new Date(report.reportDate).toLocaleDateString('ar-SA', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })
+                                      : 'تاريخ غير محدد'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
+                                {report.technicianName && (
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-muted-foreground">الفني:</span>
+                                    <span className="font-medium text-foreground">{report.technicianName}</span>
+                                  </div>
+                                )}
+                                {report.branchName && (
+                                  <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-muted-foreground">الفرع:</span>
+                                    <span className="font-medium text-foreground">{report.branchName}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {report.summary && (
+                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">الملخص:</div>
+                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.summary}</div>
+                                </div>
+                              )}
+
+                              {report.result && (
+                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">النتيجة والتشخيص:</div>
+                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.result}</div>
+                                </div>
+                              )}
+
+                              {report.recommendations && (
+                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">التوصيات:</div>
+                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.recommendations}</div>
+                                </div>
+                              )}
+
+                              {report.notes && (
+                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">ملاحظات إضافية:</div>
+                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.notes}</div>
+                                </div>
+                              )}
+
+                              <div className="text-xs text-muted-foreground mt-3">
+                                {report.createdAt && (
+                                  <span>
+                                    تم الإنشاء: {new Date(report.createdAt).toLocaleString('ar-SA')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </SimpleCardContent>
+              </SimpleCard>
+            )}
 
             {/* Repair Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">

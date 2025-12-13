@@ -204,6 +204,7 @@ const vendorPaymentsController = {
     const { vendorId } = req.params;
     const {
       purchaseOrderId,
+      invoiceId,
       amount,
       paymentMethod = 'cash',
       paymentDate,
@@ -269,6 +270,21 @@ const vendorPaymentsController = {
         }
       }
 
+      // التحقق من وجود فاتورة الشراء (إن وُجدت)
+      if (invoiceId) {
+        const [invoice] = await db.execute(
+          'SELECT id FROM Invoice WHERE id = ? AND vendorId = ? AND invoiceType = ? AND deletedAt IS NULL',
+          [invoiceId, vendorId, 'purchase']
+        );
+
+        if (!invoice.length) {
+          return res.status(400).json({
+            success: false,
+            message: 'فاتورة الشراء غير موجودة أو لا تنتمي لهذا المورد'
+          });
+        }
+      }
+
       // إنشاء رقم دفعة فريد
       const paymentNumber = await generatePaymentNumber();
 
@@ -276,6 +292,7 @@ const vendorPaymentsController = {
       const cleanData = cleanUndefined({
         vendorId,
         purchaseOrderId: purchaseOrderId || null,
+        invoiceId: invoiceId || null,
         paymentNumber,
         amount: parseFloat(amount),
         paymentMethod,
@@ -288,30 +305,52 @@ const vendorPaymentsController = {
         createdBy: req.user?.id || null
       });
 
-      const [result] = await db.execute(
-        `INSERT INTO VendorPayment (
-          vendorId, purchaseOrderId, paymentNumber, amount, paymentMethod,
-          paymentDate, referenceNumber, bankName, checkNumber, notes,
-          status, createdBy, createdAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [
-          cleanData.vendorId,
-          cleanData.purchaseOrderId,
-          cleanData.paymentNumber,
-          cleanData.amount,
-          cleanData.paymentMethod,
-          cleanData.paymentDate,
-          cleanData.referenceNumber,
-          cleanData.bankName,
-          cleanData.checkNumber,
-          cleanData.notes,
-          cleanData.status,
-          cleanData.createdBy
-        ]
-      );
+      const connection = await db.getConnection();
+      try {
+        await connection.beginTransaction();
 
-      // جلب الدفعة بعد الإنشاء
-      const [newPayment] = await db.execute(
+        // إنشاء دفعة في VendorPayment
+        const [result] = await connection.execute(
+          `INSERT INTO VendorPayment (
+            vendorId, purchaseOrderId, paymentNumber, amount, paymentMethod,
+            paymentDate, referenceNumber, bankName, checkNumber, notes,
+            status, createdBy, createdAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+          [
+            cleanData.vendorId,
+            cleanData.purchaseOrderId,
+            cleanData.paymentNumber,
+            cleanData.amount,
+            cleanData.paymentMethod,
+            cleanData.paymentDate,
+            cleanData.referenceNumber,
+            cleanData.bankName,
+            cleanData.checkNumber,
+            cleanData.notes,
+            cleanData.status,
+            cleanData.createdBy
+          ]
+        );
+
+        // إذا تم تحديد invoiceId، إنشاء سجل في جدول Payment أيضاً
+        if (invoiceId && status === 'completed') {
+          await connection.execute(
+            `INSERT INTO Payment (
+              invoiceId, amount, paymentMethod, currency, userId, createdAt
+            ) VALUES (?, ?, ?, 'EGP', ?, NOW())`,
+            [
+              invoiceId,
+              cleanData.amount,
+              cleanData.paymentMethod,
+              cleanData.createdBy
+            ]
+          );
+        }
+
+        await connection.commit();
+
+        // جلب الدفعة بعد الإنشاء
+        const [newPayment] = await connection.execute(
         `SELECT 
           vp.*,
           u.name as createdByName,
@@ -320,16 +359,22 @@ const vendorPaymentsController = {
         LEFT JOIN User u ON vp.createdBy = u.id
         LEFT JOIN PurchaseOrder po ON vp.purchaseOrderId = po.id
         WHERE vp.id = ?`,
-        [result.insertId]
-      );
+          [result.insertId]
+        );
 
-      res.status(201).json({
-        success: true,
-        message: 'تم تسجيل الدفعة بنجاح',
-        data: {
-          payment: newPayment[0]
-        }
-      });
+        res.status(201).json({
+          success: true,
+          message: 'تم تسجيل الدفعة بنجاح',
+          data: {
+            payment: newPayment[0]
+          }
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
 
     } catch (error) {
       console.error('Create vendor payment error:', error);
@@ -551,38 +596,55 @@ const vendorPaymentsController = {
         });
       }
 
-      // حساب إجمالي طلبات الشراء المستحقة
-      const [totalPurchases] = await db.execute(
+      // حساب الرصيد المستحق من فواتير الشراء (باستخدام المدفوعات الفعلية من جدول Payment)
+      const [purchaseInvoices] = await db.execute(
         `SELECT 
-          COALESCE(SUM(poi.totalPrice), 0) as totalAmount
-        FROM PurchaseOrder po
-        LEFT JOIN PurchaseOrderItem poi ON po.id = poi.purchaseOrderId
-        WHERE po.vendorId = ? 
-        AND po.status IN ('approved', 'received', 'pending')
-        AND po.deletedAt IS NULL`,
+          i.id,
+          i.totalAmount,
+          COALESCE(SUM(p.amount), 0) as amountPaid
+        FROM Invoice i
+        LEFT JOIN Payment p ON i.id = p.invoiceId
+        WHERE i.vendorId = ? 
+          AND i.invoiceType = 'purchase' 
+          AND i.deletedAt IS NULL
+        GROUP BY i.id`,
         [vendorId]
       );
 
-      // حساب إجمالي المدفوعات المكتملة
+      // حساب إجمالي الرصيد المستحق من جميع الفواتير
+      let totalOutstandingBalance = 0;
+      let totalInvoicesAmount = 0;
+      purchaseInvoices.forEach(inv => {
+        const totalAmount = parseFloat(inv.totalAmount || 0);
+        const amountPaid = parseFloat(inv.amountPaid || 0);
+        const outstanding = totalAmount - amountPaid;
+        totalInvoicesAmount += totalAmount;
+        if (outstanding > 0) {
+          totalOutstandingBalance += outstanding;
+        }
+      });
+
+      // حساب إجمالي المدفوعات من جدول Payment (للفواتير فقط)
       const [totalPayments] = await db.execute(
         `SELECT 
-          COALESCE(SUM(amount), 0) as totalAmount
-        FROM VendorPayment
-        WHERE vendorId = ? 
-        AND status = 'completed'`,
+          COALESCE(SUM(p.amount), 0) as totalAmount
+        FROM Payment p
+        INNER JOIN Invoice i ON p.invoiceId = i.id
+        WHERE i.vendorId = ? 
+          AND i.invoiceType = 'purchase' 
+          AND i.deletedAt IS NULL`,
         [vendorId]
       );
 
-      const totalPurchasesAmount = parseFloat(totalPurchases[0].totalAmount || 0);
       const totalPaymentsAmount = parseFloat(totalPayments[0].totalAmount || 0);
-      const balance = totalPurchasesAmount - totalPaymentsAmount;
+      const balance = totalOutstandingBalance;
       const creditLimit = parseFloat(vendor[0].creditLimit || 0);
       const creditUtilization = creditLimit > 0 ? (balance / creditLimit) * 100 : 0;
 
       res.json({
         success: true,
         data: {
-          totalPurchases: totalPurchasesAmount,
+          totalInvoices: totalInvoicesAmount,
           totalPayments: totalPaymentsAmount,
           balance: balance,
           creditLimit: creditLimit,

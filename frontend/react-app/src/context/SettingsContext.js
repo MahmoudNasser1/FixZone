@@ -57,12 +57,17 @@ export function SettingsProvider({ children }) {
         // Silently fail - don't spam console
         hasLoadedRef.current = false; // Allow retry on error
         // Don't log 401 (unauthorized) or 403 (forbidden) errors - this is expected
+        // Technicians don't have access to settings API, so 403 is normal
         const isUnauthorized = err?.message?.includes('401') || 
                                err?.message?.includes('authorization denied') || 
-                               err?.message?.includes('No token');
+                               err?.message?.includes('No token') ||
+                               err?.silent;
         const isForbidden = err?.message?.includes('403') || 
                            err?.message?.includes('Access denied') || 
-                           err?.message?.includes('Insufficient permissions');
+                           err?.message?.includes('Insufficient permissions') ||
+                           err?.forbidden ||
+                           err?.silent;
+        // Only log unexpected errors in development
         if (!isUnauthorized && !isForbidden && process.env.NODE_ENV === 'development') {
           console.warn('Failed to load API settings:', err.message);
         }

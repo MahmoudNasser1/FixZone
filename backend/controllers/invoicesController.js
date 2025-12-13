@@ -605,11 +605,16 @@ class InvoicesController {
         SELECT i.*, 
           COALESCE(c_direct.name, c_via_repair.name) as customerName,
           COALESCE(c_direct.phone, c_via_repair.phone) as customerPhone,
-          COALESCE(c_direct.email, c_via_repair.email) as customerEmail
+          COALESCE(c_direct.email, c_via_repair.email) as customerEmail,
+          v.name as vendorName,
+          v.contactPerson as vendorContact,
+          v.phone as vendorPhone,
+          v.email as vendorEmail
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
         LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
         LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
+        LEFT JOIN Vendor v ON i.vendorId = v.id
         WHERE i.id = ?
       `, [invoiceId]);
 

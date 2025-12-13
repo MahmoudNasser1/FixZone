@@ -7,7 +7,7 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { 
   Search, Plus, User, Mail, Phone, Shield, Edit, Trash2,
-  UserCheck, UserX, Eye, Key, Settings, ArrowUpDown, ArrowUp, ArrowDown,
+  UserCheck, UserX, Eye, Key, Settings, ArrowUpDown, ArrowUp, ArrowDown, Activity,
   Filter, RefreshCw, Download, Users as UsersIcon
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
@@ -30,6 +30,7 @@ const UsersPageEnhanced = () => {
   const [statusFilter, setStatusFilter] = useState('all'); // all | active | inactive
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [activeTab, setActiveTab] = useState('all'); // all | technicians
   
   // State للإحصائيات
   const [stats, setStats] = useState({
@@ -210,6 +211,11 @@ const UsersPageEnhanced = () => {
   // الفلترة والترتيب
   const getFilteredAndSortedUsers = () => {
     let filtered = [...users];
+    
+    // فلترة حسب Tab (الفنيين أو الكل)
+    if (activeTab === 'technicians') {
+      filtered = filtered.filter(user => user && isTechnicianRole(user.roleId));
+    }
     
     // البحث
     if (searchTerm) {
@@ -400,6 +406,54 @@ const UsersPageEnhanced = () => {
           </SimpleCard>
         </div>
       )}
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => {
+            setActiveTab('all');
+            setSelectedRole('');
+          }}
+          className={`px-4 py-2 font-medium transition-colors ${
+            activeTab === 'all'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          جميع المستخدمين
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('technicians');
+            // Auto-select technician role if available
+            const techRole = roles.find(r => r.name && r.name.toLowerCase().includes('technician'));
+            if (techRole) {
+              setSelectedRole(techRole.id.toString());
+            }
+          }}
+          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
+            activeTab === 'technicians'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          الفنيين ({stats.technicians})
+        </button>
+        {activeTab === 'technicians' && (
+          <div className="flex-1 flex items-center justify-end">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/technicians')}
+              className="flex items-center gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              إدارة الفنيين المتقدمة
+            </SimpleButton>
+          </div>
+        )}
+      </div>
 
       {/* الفلاتر والبحث */}
       <SimpleCard>
@@ -606,11 +660,30 @@ const UsersPageEnhanced = () => {
                             <SimpleButton
                               variant="ghost"
                               size="sm"
-                              onClick={() => navigate(`/users/${user.id}`)}
+                              onClick={() => {
+                                // If technician, go to technician details page, otherwise user details
+                                if (isTechnicianRole(user.roleId)) {
+                                  navigate(`/technicians/${user.id}`);
+                                } else {
+                                  navigate(`/users/${user.id}`);
+                                }
+                              }}
                               className="text-blue-600 hover:text-blue-800"
+                              title={isTechnicianRole(user.roleId) ? 'عرض تفاصيل الفني' : 'عرض تفاصيل المستخدم'}
                             >
                               <Eye className="w-4 h-4" />
                             </SimpleButton>
+                            {isTechnicianRole(user.roleId) && (
+                              <SimpleButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/technicians/${user.id}`)}
+                                className="text-purple-600 hover:text-purple-800"
+                                title="عرض الأداء"
+                              >
+                                <Activity className="w-4 h-4" />
+                              </SimpleButton>
+                            )}
                             <SimpleButton
                               variant="ghost"
                               size="sm"

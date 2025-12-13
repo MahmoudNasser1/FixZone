@@ -159,11 +159,47 @@ const vendorController = {
         [id]
       );
 
+      // حساب الرصيد المستحق من فواتير الشراء (باستخدام المدفوعات الفعلية من جدول Payment)
+      const [purchaseInvoices] = await db.execute(
+        `SELECT 
+          i.id,
+          i.totalAmount,
+          i.status,
+          i.createdAt as invoiceDate,
+          i.currency,
+          COALESCE(SUM(p.amount), 0) as amountPaid
+        FROM Invoice i
+        LEFT JOIN Payment p ON i.id = p.invoiceId
+        WHERE i.vendorId = ? 
+          AND i.invoiceType = 'purchase' 
+          AND i.deletedAt IS NULL
+        GROUP BY i.id
+        ORDER BY i.createdAt DESC`,
+        [id]
+      );
+
+      // حساب إجمالي الرصيد المستحق من جميع الفواتير
+      let totalOutstandingBalance = 0;
+      purchaseInvoices.forEach(inv => {
+        const totalAmount = parseFloat(inv.totalAmount || 0);
+        const amountPaid = parseFloat(inv.amountPaid || 0);
+        const outstanding = totalAmount - amountPaid;
+        if (outstanding > 0) {
+          totalOutstandingBalance += outstanding;
+        }
+        // إضافة outstandingBalance لكل فاتورة
+        inv.outstandingBalance = outstanding;
+      });
+
       res.json({
         success: true,
         data: {
-          vendor: vendor[0],
-          recentOrders
+          vendor: {
+            ...vendor[0],
+            outstandingBalance: totalOutstandingBalance
+          },
+          recentOrders,
+          purchaseInvoices: purchaseInvoices.slice(0, 10) // آخر 10 فواتير شراء
         }
       });
 

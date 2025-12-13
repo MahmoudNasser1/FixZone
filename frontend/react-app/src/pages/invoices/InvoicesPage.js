@@ -318,31 +318,28 @@ const InvoicesPage = () => {
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4" />
                           <span>المبلغ: {formatCurrency(invoice.totalAmount, invoice.currency)}</span>
-              </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>التاريخ: {formatDate(invoice.createdAt)}</span>
-              </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4" />
-                          <span>طلب الإصلاح: #{invoice.repairRequestId}</span>
-              </div>
-            </div>
-            
-                      {invoice.invoiceType === 'purchase' ? (
-                        invoice.vendorName && (
-                          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        </div>
+                        {invoice.invoiceType === 'purchase' && invoice.vendorName ? (
+                          <div className="flex items-center gap-2">
                             <Building2 className="w-4 h-4" />
                             <span>المورد: {invoice.vendorName}</span>
                           </div>
-                        )
-                      ) : (
-                        invoice.customerName && (
-                          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        ) : (
+                          <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            <span>العميل: {invoice.customerName}</span>
+                            <span>العميل: {invoice.customerName || 'غير محدد'}</span>
                           </div>
-                        )
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>التاريخ: {formatDate(invoice.createdAt)}</span>
+                        </div>
+                      </div>
+                      {invoice.repairRequestId && (
+                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                          <FileText className="w-4 h-4" />
+                          <span>طلب الإصلاح: #{invoice.repairRequestId}</span>
+                        </div>
                       )}
                       <div className="flex items-center gap-2 mt-1">
                         <SimpleBadge variant={invoice.invoiceType === 'purchase' ? 'secondary' : 'default'} className="text-xs">
@@ -367,17 +364,17 @@ const InvoicesPage = () => {
                         </Link>
                       )}
                       {invoice.id && (
-              <SimpleButton 
-                variant="outline" 
+                        <SimpleButton 
+                          variant="outline" 
                           size="sm"
                           onClick={() => handleDeleteInvoice(invoice.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
-              </SimpleButton>
+                        </SimpleButton>
                       )}
-            </div>
-          </div>
+                    </div>
+                  </div>
                 </div>
               ))}
         </div>

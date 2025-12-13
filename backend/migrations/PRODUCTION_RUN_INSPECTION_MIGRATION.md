@@ -132,3 +132,4 @@ SELECT COUNT(*) as total, COUNT(deletedAt) as deleted FROM InspectionReport;
 
 
 
+

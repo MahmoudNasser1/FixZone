@@ -2,18 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getTechDashboard,
-  getTechJobs
+  getTechJobs,
+  getTechJobDetails
 } from '../../services/technicianService';
-import { getDailyTotal } from '../../services/timeTrackingService';
+import { getDailyTotal, getActiveTracking } from '../../services/timeTrackingService';
+import { getTasks, getTaskStats } from '../../services/taskService';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
-import TechnicianStatsCard from '../../components/technician/TechnicianStatsCard';
-import QuickActionCard from '../../components/customer/QuickActionCard';
 import Stopwatch from '../../components/technician/Stopwatch';
-import NotesList from '../../components/technician/NotesList';
 import QuickReportForm from '../../components/technician/QuickReportForm';
 import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
+import QRScannerModal from '../../components/technician/QRScannerModal';
 import { CardSkeleton } from '../../components/ui/Skeletons';
-import { CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import PageTransition from '../../components/ui/PageTransition';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
@@ -28,17 +27,25 @@ import {
   Search,
   Timer,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  Smartphone,
+  Laptop,
+  Tablet,
+  Zap,
+  TrendingUp,
+  Calendar,
+  Play
 } from 'lucide-react';
 
 /**
- * 🛠️ Technician Dashboard Page
+ * 🛠️ Technician Dashboard Page - Redesigned
  * 
- * المميزات:
- * - Header مع Status Toggle
- * - Stats Cards محسنة
- * - Quick Actions
- * - Active Jobs List
+ * تصميم جديد مبسط يركز على:
+ * - المهمة الحالية بشكل بارز
+ * - Stopwatch متكامل
+ * - إحصائيات سريعة (3 فقط)
+ * - المهام القادمة
  */
 
 export default function TechnicianDashboard() {
@@ -51,10 +58,17 @@ export default function TechnicianDashboard() {
   const [recentJobs, setRecentJobs] = useState([]);
   const [dailyTime, setDailyTime] = useState(null);
   const [activeRepairId, setActiveRepairId] = useState(null);
+  const [activeJob, setActiveJob] = useState(null);
   const [showQuickReport, setShowQuickReport] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [taskStats, setTaskStats] = useState(null);
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [pendingRepairRequests, setPendingRepairRequests] = useState([]);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [currentElapsedTime, setCurrentElapsedTime] = useState(0);
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -81,7 +95,6 @@ export default function TechnicianDashboard() {
       setLoading(true);
       setError(null);
       
-      // جلب بيانات Dashboard
       const dashboardRes = await getTechDashboard();
       if (dashboardRes.success) {
         setDashboardData(dashboardRes.data);
@@ -89,17 +102,15 @@ export default function TechnicianDashboard() {
         throw new Error(dashboardRes.error || 'فشل تحميل بيانات Dashboard');
       }
 
-      // جلب المهام النشطة
       const jobsRes = await getTechJobs({ limit: 6, status: 'in_progress' });
       if (jobsRes.success) {
         setRecentJobs(jobsRes.data || []);
-        // تحديد أول إصلاح نشط للـ Stopwatch
         if (jobsRes.data && jobsRes.data.length > 0) {
           setActiveRepairId(jobsRes.data[0].id);
+          setActiveJob(jobsRes.data[0]);
         }
       }
 
-      // جلب الوقت اليومي (غير حرج - لا نرمي خطأ إذا فشل)
       try {
         const timeRes = await getDailyTotal();
         if (timeRes.success) {
@@ -107,10 +118,76 @@ export default function TechnicianDashboard() {
         }
       } catch (timeError) {
         console.error('Error loading daily time:', timeError);
-        // لا نعرض خطأ للوقت اليومي لأنه غير حرج
       }
 
-      // إعادة تعيين Retry Count عند النجاح
+      try {
+        const taskStatsRes = await getTaskStats();
+        if (taskStatsRes.success) {
+          setTaskStats(taskStatsRes.data);
+        }
+      } catch (taskError) {
+        console.error('Error loading task stats:', taskError);
+      }
+
+      try {
+        const tasksRes = await getTasks({ status: 'todo', limit: 5 });
+        if (tasksRes.success) {
+          setPendingTasks(tasksRes.data.tasks || []);
+        }
+      } catch (taskError) {
+        console.error('Error loading pending tasks:', taskError);
+      }
+
+      // Load pending repair requests (waiting for technician)
+      try {
+        const pendingRes = await getTechJobs({ limit: 5, status: 'pending' });
+        if (pendingRes.success) {
+          setPendingRepairRequests(pendingRes.data || []);
+        }
+      } catch (pendingError) {
+        console.error('Error loading pending repair requests:', pendingError);
+      }
+
+      // Check for active time tracking
+      try {
+        const trackingRes = await getActiveTracking();
+        if (trackingRes.success && trackingRes.data?.tracking) {
+          const tracking = trackingRes.data.tracking;
+          if (tracking.status === 'running') {
+            setIsTimerRunning(true);
+            // Calculate elapsed time
+            const start = new Date(tracking.startTime).getTime();
+            const now = Date.now();
+            const elapsed = Math.floor((now - start) / 1000);
+            setCurrentElapsedTime(elapsed);
+            
+            // If we have a repairId from tracking, fetch its details and set as activeJob
+            if (tracking.repairId) {
+              setActiveRepairId(tracking.repairId);
+              // Fetch job details for the active tracking repair
+              try {
+                const jobDetailsRes = await getTechJobDetails(tracking.repairId);
+                if (jobDetailsRes.success && jobDetailsRes.data?.job) {
+                  const job = jobDetailsRes.data.job;
+                  setActiveJob({
+                    id: job.id,
+                    repairNumber: job.id,
+                    deviceType: job.deviceType || job.brand,
+                    issueDescription: job.issueDescription || job.reportedProblem,
+                    customerName: job.customerName,
+                    status: job.status
+                  });
+                }
+              } catch (jobError) {
+                console.error('Error fetching job details for active tracking:', jobError);
+              }
+            }
+          }
+        }
+      } catch (trackingError) {
+        console.error('Error checking active tracking:', trackingError);
+      }
+
       setRetryCount(0);
       
       if (isRetry) {
@@ -121,7 +198,6 @@ export default function TechnicianDashboard() {
       const errorMessage = error.message || 'فشل تحميل البيانات. يرجى المحاولة مرة أخرى.';
       setError(errorMessage);
       
-      // إظهار إشعار فقط إذا لم تكن محاولة إعادة
       if (!isRetry) {
         notifications.error('خطأ', { message: errorMessage });
       }
@@ -139,7 +215,6 @@ export default function TechnicianDashboard() {
     }
   };
 
-  // تحديث الوقت اليومي فقط عند الحاجة (بدون refresh كامل للصفحة)
   const refreshDailyTime = async () => {
     try {
       const timeRes = await getDailyTotal();
@@ -148,7 +223,6 @@ export default function TechnicianDashboard() {
       }
     } catch (timeError) {
       console.error('Error refreshing daily time:', timeError);
-      // لا نعرض خطأ للوقت اليومي لأنه غير حرج
     }
   };
 
@@ -158,16 +232,47 @@ export default function TechnicianDashboard() {
     return statusItem ? statusItem.count : 0;
   };
 
+  const getDeviceIcon = (type) => {
+    const lowerType = type?.toLowerCase() || '';
+    if (lowerType.includes('iphone') || lowerType.includes('phone')) return Smartphone;
+    if (lowerType.includes('mac') || lowerType.includes('laptop')) return Laptop;
+    if (lowerType.includes('ipad') || lowerType.includes('tablet')) return Tablet;
+    return Smartphone;
+  };
+
+  const formatDailyTime = () => {
+    if (!dailyTime) return '0:00';
+    const hours = dailyTime.hours || 0;
+    const minutes = dailyTime.minutes || 0;
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const formatElapsedTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Loading State
   if (loading && !error) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
         <TechnicianHeader user={user} notificationCount={5} />
-        <div className="max-w-7xl mx-auto py-8 space-y-8">
+        <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
           <div className="space-y-2">
-            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-96 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-64 bg-muted animate-pulse rounded-lg" />
+            <div className="h-4 w-48 bg-muted animate-pulse rounded-lg" />
           </div>
-          <CardSkeleton count={4} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-64 bg-muted animate-pulse rounded-2xl" />
+            <div className="h-64 bg-muted animate-pulse rounded-2xl" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="h-24 bg-muted animate-pulse rounded-xl" />
+            <div className="h-24 bg-muted animate-pulse rounded-xl" />
+            <div className="h-24 bg-muted animate-pulse rounded-xl" />
+          </div>
         </div>
       </div>
     );
@@ -176,35 +281,33 @@ export default function TechnicianDashboard() {
   // Error State
   if (error && !loading) {
     return (
-      <PageTransition className="min-h-screen bg-background">
+      <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-red-950/20">
         <TechnicianHeader user={user} notificationCount={5} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/50 rounded-2xl p-8 shadow-xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
-                  خطأ في تحميل البيانات
-                </h3>
-                <p className="text-red-700 dark:text-red-400 mb-4">{error}</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleRetry}
-                    disabled={retryCount >= 3}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    إعادة المحاولة {retryCount > 0 && `(${retryCount}/3)`}
-                  </button>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-                  >
-                    تحديث الصفحة
-                  </button>
-                </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                خطأ في تحميل البيانات
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">{error}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRetry}
+                  disabled={retryCount >= 3}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-500/25 font-medium"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  إعادة المحاولة {retryCount > 0 && `(${retryCount}/3)`}
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                >
+                  تحديث الصفحة
+                </button>
               </div>
             </div>
           </div>
@@ -213,255 +316,516 @@ export default function TechnicianDashboard() {
     );
   }
 
+  const inProgressCount = getStatusCount('in_progress');
+  const completedCount = getStatusCount('completed');
+  const pendingCount = taskStats?.pending || pendingTasks.length || 0;
+
   return (
-    <PageTransition className="min-h-screen bg-background pb-20 md:pb-0">
+    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-24 md:pb-8">
       <TechnicianHeader user={user} notificationCount={5} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Welcome Section */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Welcome Section - Simplified */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">مرحباً، مهندس {user?.name} 👋</h1>
-          <p className="text-muted-foreground mt-1">إليك ملخص لأدائك والمهام الموكلة إليك اليوم</p>
-        </div>
-
-        {/* Stats Grid - محسّن Visual Hierarchy */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-          {loading ? (
-            <CardLoadingSkeleton count={4} />
-          ) : (
-            <>
-              <TechnicianStatsCard
-                title="مهام قيد العمل"
-                value={getStatusCount('in_progress')}
-                icon={Wrench}
-                gradient="from-blue-500 to-blue-600"
-                change={dashboardData?.stats?.inProgressChange}
-                changeType="increase"
-                tooltip="المهام قيد التنفيذ حالياً. اضغط لعرض التفاصيل"
-                onClick={() => navigate('/technician/jobs?status=in_progress')}
-              />
-              <TechnicianStatsCard
-                title="مكتملة اليوم"
-                value={getStatusCount('completed')}
-                icon={CheckCircle}
-                gradient="from-green-500 to-green-600"
-                change={dashboardData?.stats?.completedChange}
-                changeType="increase"
-                tooltip="المهام المكتملة اليوم. اضغط لعرض التفاصيل"
-                onClick={() => navigate('/technician/jobs?status=completed')}
-              />
-              <TechnicianStatsCard
-                title="في الانتظار"
-                value={getStatusCount('pending')}
-                icon={Clock}
-                gradient="from-orange-500 to-orange-600"
-                change={dashboardData?.stats?.pendingChange}
-                changeType="decrease"
-                tooltip="المهام في قائمة الانتظار. اضغط لعرض التفاصيل"
-                onClick={() => navigate('/technician/jobs?status=pending')}
-              />
-              <TechnicianStatsCard
-                title="وقت العمل اليوم"
-                value={dailyTime ? `${dailyTime.totalHours || 0}:${(dailyTime.totalMinutes || 0).toString().padStart(2, '0')}` : '0:00'}
-                icon={Timer}
-                gradient="from-purple-500 to-pink-500"
-                subtitle={dailyTime ? `${dailyTime.totalSessions || 0} جلسة عمل` : 'لم يبدأ بعد'}
-                tooltip="إجمالي وقت العمل اليوم. اضغط لعرض التفاصيل"
-                onClick={() => navigate('/technician/profile')}
-              />
-            </>
-          )}
-        </div>
-
-        {/* Stopwatch Section - محسّن: يظهر دائماً */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-foreground mb-4">تتبع الوقت</h2>
-          <div className="max-w-md">
-            <Stopwatch 
-              repairId={activeRepairId}
-              onTimeUpdate={(time) => {
-                // تحديث الوقت اليومي فقط عند إيقاف التتبع (لا نحدث كل ثانية)
-                refreshDailyTime();
-              }}
-            />
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+              أهلاً، {user?.name?.split(' ')[0]} 👋
+            </h1>
           </div>
+          <p className="text-slate-500 dark:text-slate-400">
+            {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-foreground mb-4">إجراءات سريعة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <QuickActionCard
-              icon={QrCode}
-              label="مسح QR Code"
-              gradient="from-indigo-500 to-violet-500"
-              onClick={() => {
-                // TODO: فتح QR Scanner Modal عند توفرها
-                notifications.info('قريباً', { message: 'ميزة مسح QR Code قيد التطوير' });
-              }}
-            />
-            <QuickActionCard
-              icon={Plus}
-              label="مهمة جديدة"
-              gradient="from-blue-500 to-indigo-500"
-              onClick={() => navigate('/technician/tasks')}
-            />
-            <QuickActionCard
-              icon={FileText}
-              label="التقارير"
-              gradient="from-teal-500 to-green-500"
-              onClick={() => {
-                notifications.info('قريباً', { message: 'نظام التقارير قيد التطوير' });
-                // TODO: إضافة رابط لصفحة التقارير عند توفرها
-                // navigate('/technician/reports');
-              }}
-            />
-            <QuickActionCard
-              icon={Search}
-              label="بحث"
-              gradient="from-gray-600 to-gray-800"
-              onClick={() => navigate('/technician/jobs')}
-            />
-          </div>
-        </div>
-
-        {/* Notes Section */}
-        <div className="mb-8">
-          <NotesList />
-        </div>
-
-        {/* Recent Jobs */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-foreground">آخر المهام</h2>
-            <button
-              onClick={() => navigate('/technician/jobs')}
-              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              عرض الكل
-            </button>
-          </div>
-
-          {recentJobs.length === 0 ? (
-            <div className="bg-card rounded-xl shadow-sm border border-border p-8 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wrench className="w-8 h-8 text-muted-foreground" />
+        {/* Active Work Session - Unified View */}
+        {activeJob && isTimerRunning ? (
+          // When actively working - show unified prominent card
+          <div className="mb-8 relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-[2rem] blur-md opacity-30 animate-pulse" />
+            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 rounded-3xl shadow-2xl shadow-emerald-500/30">
+              {/* Animated Background */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-white/5 rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
+                <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-white/5 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">لا توجد مهام حالياً</h3>
-              <p className="text-muted-foreground mb-4">أنت جاهز لاستلام مهام جديدة!</p>
-              <button
-                onClick={() => navigate('/technician/jobs')}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
-              >
-                عرض جميع المهام
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-right">
-                    <thead className="bg-muted border-b border-border">
-                      <tr>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">رقم المهمة</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الجهاز</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">المشكلة</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الحالة</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">التاريخ</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">الإجراء</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {recentJobs.map((job) => (
-                        <tr key={job.id} className="hover:bg-muted/50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">#{job.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{job.deviceType}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground truncate max-w-xs">{job.issueDescription}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${job.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                              job.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              }`}>
-                              {job.status === 'completed' ? 'مكتمل' :
-                                job.status === 'in_progress' ? 'قيد التنفيذ' : 'معلق'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                            {new Date(job.createdAt).toLocaleDateString('ar-EG')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => navigate(`/technician/jobs/${job.id}`)}
-                                className="text-primary hover:text-primary/80 font-medium"
-                              >
-                                عرض التفاصيل
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedRepair({ id: job.id, repairNumber: job.repairNumber });
-                                  setShowQuickReport(true);
-                                }}
-                                className="text-green-600 hover:text-green-800 font-medium"
-                              >
-                                تقرير سريع
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              
+              <div className="relative p-6 md:p-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="w-3 h-3 bg-emerald-400 rounded-full animate-ping absolute" />
+                      <div className="w-3 h-3 bg-emerald-400 rounded-full relative" />
+                    </div>
+                    <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold">
+                      🔧 جلسة عمل نشطة
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/30 backdrop-blur-sm rounded-full">
+                    <Timer className="w-4 h-4 text-emerald-200" />
+                    <span className="text-emerald-100 text-sm">اليوم: {formatDailyTime()}</span>
+                  </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center">
+                  {/* Task Info */}
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl">
+                      {React.createElement(getDeviceIcon(activeJob.deviceType), {
+                        className: "w-10 h-10 text-white"
+                      })}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-emerald-100/80 text-sm mb-1">أعمل حالياً على:</p>
+                      <h2 className="text-2xl font-bold text-white mb-1 truncate">
+                        {activeJob.deviceType || 'جهاز'}
+                      </h2>
+                      <p className="text-teal-100/70 text-sm truncate">
+                        {activeJob.issueDescription || 'لا يوجد وصف'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-teal-200/70">
+                          #{activeJob.repairNumber || activeJob.id}
+                        </span>
+                        {activeJob.customerName && (
+                          <span className="text-xs text-teal-200/70">
+                            • {activeJob.customerName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timer Display */}
+                  <div className="flex flex-col items-center lg:items-end">
+                    <p className="text-emerald-200/80 text-sm mb-2">الوقت المنقضي:</p>
+                    <div className="text-5xl md:text-6xl font-mono font-bold text-white tracking-wider animate-pulse" style={{ animationDuration: '2s' }}>
+                      {formatElapsedTime(currentElapsedTime)}
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 text-emerald-200/60 text-xs">
+                      <div className="flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                      </div>
+                      الحفظ التلقائي نشط
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between gap-4 mt-6 pt-6 border-t border-white/10">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => navigate(`/technician/jobs/${activeJob.id}`)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white text-teal-700 rounded-xl font-bold hover:bg-teal-50 transition-colors shadow-lg"
+                    >
+                      عرض التفاصيل
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedRepair({ id: activeJob.id, repairNumber: activeJob.repairNumber });
+                        setShowQuickReport(true);
+                      }}
+                      className="p-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors"
+                      title="إضافة تقرير سريع"
+                    >
+                      <FileText className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => navigate(`/technician/jobs/${activeJob.id}#notes`)}
+                      className="p-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors"
+                      title="إضافة ملاحظة"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="hidden md:block">
+                    <Stopwatch 
+                      repairId={activeRepairId}
+                      onTimeUpdate={(time) => {
+                        setCurrentElapsedTime(time);
+                        refreshDailyTime();
+                      }}
+                      onStart={() => setIsTimerRunning(true)}
+                      onStop={() => {
+                        setIsTimerRunning(false);
+                        setCurrentElapsedTime(0);
+                      }}
+                      compact={true}
+                    />
+                  </div>
                 </div>
               </div>
+              
+              {/* Progress Bar */}
+              <div className="h-1 bg-emerald-800/50 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400"
+                  style={{ 
+                    width: '100%',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 2s linear infinite'
+                  }} 
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          // When not actively working - show separate cards
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Current Task Card */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-700 rounded-3xl p-6 shadow-2xl shadow-teal-500/20">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
+                <div className="absolute bottom-0 right-0 w-60 h-60 bg-white rounded-full translate-x-1/3 translate-y-1/3" />
+              </div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium">
+                    المهمة الحالية
+                  </span>
+                  {activeJob && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/30 backdrop-blur-sm rounded-full text-amber-100 text-xs font-medium">
+                      <Clock className="w-3 h-3" />
+                      في انتظار البدء
+                    </span>
+                  )}
+                </div>
 
-              {/* Mobile Cards View */}
-              <div className="md:hidden space-y-4">
-                {recentJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="bg-card rounded-xl shadow-sm border border-border p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">#{job.id}</h3>
-                        <p className="text-sm text-muted-foreground">{job.deviceType}</p>
+                {activeJob ? (
+                  <>
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                        {React.createElement(getDeviceIcon(activeJob.deviceType), {
+                          className: "w-8 h-8 text-white"
+                        })}
                       </div>
-                      <span className={`px-2 py-1 text-xs font-bold rounded-full ${job.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                        job.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        }`}>
-                        {job.status === 'completed' ? 'مكتمل' :
-                          job.status === 'in_progress' ? 'قيد التنفيذ' : 'معلق'}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-bold text-white mb-1 truncate">
+                          {activeJob.deviceType || 'جهاز'}
+                        </h2>
+                        <p className="text-teal-100/80 text-sm line-clamp-2">
+                          {activeJob.issueDescription || 'لا يوجد وصف'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{job.issueDescription}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                      <span>{new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
-                    </div>
-                    <div className="flex gap-2">
+
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => navigate(`/technician/jobs/${job.id}`)}
-                        className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                        onClick={() => navigate(`/technician/jobs/${activeJob.id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white text-teal-700 rounded-xl font-bold hover:bg-teal-50 transition-colors shadow-lg"
                       >
                         عرض التفاصيل
+                        <ChevronLeft className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
-                          setSelectedRepair({ id: job.id, repairNumber: job.repairNumber });
+                          setSelectedRepair({ id: activeJob.id, repairNumber: activeJob.repairNumber });
                           setShowQuickReport(true);
                         }}
-                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                        className="p-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors"
                       >
-                        تقرير سريع
+                        <FileText className="w-5 h-5" />
                       </button>
                     </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Wrench className="w-8 h-8 text-white/80" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">لا توجد مهمة نشطة</h3>
+                    <p className="text-teal-100/70 text-sm mb-4">ابدأ العمل على مهمة جديدة</p>
+                    <button
+                      onClick={() => navigate('/technician/jobs')}
+                      className="px-6 py-2.5 bg-white text-teal-700 rounded-xl font-medium hover:bg-teal-50 transition-colors"
+                    >
+                      عرض المهام
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
-            </>
+            </div>
+
+            {/* Stopwatch Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200/50 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">تتبع الوقت</h3>
+                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <Timer className="w-4 h-4" />
+                  <span>اليوم: {formatDailyTime()}</span>
+                </div>
+              </div>
+              <Stopwatch 
+                repairId={activeRepairId}
+                onTimeUpdate={(time) => {
+                  setCurrentElapsedTime(time);
+                  refreshDailyTime();
+                }}
+                onStart={() => setIsTimerRunning(true)}
+                onStop={() => {
+                  setIsTimerRunning(false);
+                  setCurrentElapsedTime(0);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Quick Stats - 3 Cards Only */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                <Wrench className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{inProgressCount}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">قيد العمل</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
+                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{completedCount}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">مكتملة اليوم</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{pendingCount}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">معلقة</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Repair Requests - Prominent Section */}
+        {pendingRepairRequests.length > 0 && (
+          <div className="mb-8 relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-[2rem] blur-sm opacity-20 animate-pulse" />
+            <div className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-amber-950/50 dark:via-orange-950/30 dark:to-slate-900 rounded-3xl p-6 shadow-xl border-2 border-amber-200/50 dark:border-amber-800/50">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="p-2.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg shadow-amber-500/30">
+                      <AlertCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-bounce">
+                      {pendingRepairRequests.length}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">طلبات جديدة في الانتظار</h3>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">بحاجة لاهتمامك الآن</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/technician/jobs?status=pending')}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-medium hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg shadow-amber-500/25 text-sm"
+                >
+                  عرض الكل
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {pendingRepairRequests.slice(0, 3).map((request, index) => {
+                  const DeviceIcon = getDeviceIcon(request.deviceType);
+                  return (
+                    <div
+                      key={request.id}
+                      onClick={() => navigate(`/technician/jobs/${request.id}`)}
+                      className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all cursor-pointer group border border-amber-100 dark:border-amber-800/30 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md"
+                    >
+                      <div className="relative">
+                        <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl group-hover:bg-amber-200 dark:group-hover:bg-amber-800/40 transition-colors">
+                          <DeviceIcon className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                        </div>
+                        {index === 0 && (
+                          <span className="absolute -top-1 -left-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full">
+                            جديد
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                            {request.deviceType}
+                          </h4>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
+                            #{request.repairNumber || request.id}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                          {request.issueDescription || 'لا يوجد وصف'}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {request.createdAt ? new Date(request.createdAt).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : 'غير محدد'}
+                          </span>
+                          {request.customerName && (
+                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                              • {request.customerName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {request.priority === 'high' && (
+                          <span className="px-2.5 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-xs font-bold flex items-center gap-1">
+                            <Zap className="w-3 h-3" />
+                            عاجل
+                          </span>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/technician/jobs/${request.id}`);
+                          }}
+                          className="p-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-xl hover:from-teal-600 hover:to-emerald-700 transition-all shadow-md opacity-0 group-hover:opacity-100"
+                        >
+                          <Play className="w-4 h-4" />
+                        </button>
+                        <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {pendingRepairRequests.length > 3 && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => navigate('/technician/jobs?status=pending')}
+                    className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                  >
+                    +{pendingRepairRequests.length - 3} طلبات أخرى في الانتظار
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">إجراءات سريعة</h3>
+          <div className="grid grid-cols-4 gap-3">
+            <button
+              onClick={() => setShowQRScanner(true)}
+              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all"
+            >
+              <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-violet-500/25">
+                <QrCode className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">مسح QR</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/technician/jobs')}
+              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-lg transition-all"
+            >
+              <div className="p-3 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-teal-500/25">
+                <Briefcase className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">المهام</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/technician/time-reports')}
+              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all"
+            >
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/25">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">التقارير</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/technician/jobs')}
+              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-lg transition-all"
+            >
+              <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-slate-500/25">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">بحث</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Upcoming Tasks */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200/50 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">المهام القادمة</h3>
+            <button
+              onClick={() => navigate('/technician/jobs')}
+              className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors flex items-center gap-1"
+            >
+              عرض الكل
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+
+          {recentJobs.length === 0 && pendingTasks.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-1">لا توجد مهام معلقة</h4>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">أحسنت! أنت على اطلاع بكل شيء</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentJobs.slice(0, 3).map((job) => {
+                const DeviceIcon = getDeviceIcon(job.deviceType);
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => navigate(`/technician/jobs/${job.id}`)}
+                    className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer group"
+                  >
+                    <div className="p-2.5 bg-white dark:bg-slate-700 rounded-xl shadow-sm">
+                      <DeviceIcon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-slate-900 dark:text-white truncate">
+                        {job.deviceType}
+                      </h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                        {job.issueDescription}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
+                        job.priority === 'high' 
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      }`}>
+                        {job.priority === 'high' ? 'عاجل' : 'عادي'}
+                      </span>
+                      <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -481,6 +845,18 @@ export default function TechnicianDashboard() {
             }}
           />
         )}
+
+        {/* QR Scanner Modal */}
+        <QRScannerModal
+          isOpen={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
+          onScan={(result) => {
+            setShowQRScanner(false);
+            if (result.type === 'repair') {
+              navigate(`/technician/jobs/${result.id}`);
+            }
+          }}
+        />
       </div>
 
       {/* Bottom Navigation - Mobile Only */}
@@ -488,3 +864,11 @@ export default function TechnicianDashboard() {
     </PageTransition>
   );
 }
+
+// Add missing import for Briefcase
+const Briefcase = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+  </svg>
+);

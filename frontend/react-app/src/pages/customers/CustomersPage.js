@@ -13,7 +13,7 @@ import {
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX, History,
-  Upload, File, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, UserPlus
+  Upload, File, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, UserPlus, FileText
 } from 'lucide-react';
 
 const CustomersPage = () => {
@@ -908,6 +908,18 @@ const CustomersPage = () => {
               title={customer.hasUserAccount ? 'الحساب موجود بالفعل' : 'إنشاء حساب للعميل'}
             >
               <UserPlus className="w-4 h-4" />
+            </SimpleButton>
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/invoices/new?customerId=${customer.id}`);
+              }}
+              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+              title="إنشاء فاتورة بيع للعميل"
+            >
+              <FileText className="w-4 h-4" />
             </SimpleButton>
             <SimpleButton
               variant="ghost"

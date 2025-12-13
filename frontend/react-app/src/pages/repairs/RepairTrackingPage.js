@@ -25,7 +25,8 @@ import {
   Monitor,
   Laptop,
   Tablet,
-  ShoppingCart
+  ShoppingCart,
+  Building2
 } from 'lucide-react';
 import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -33,6 +34,9 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
+import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+
+const API_BASE_URL = getDefaultApiBaseUrl();
 
 const RepairTrackingPage = () => {
   const navigate = useNavigate();
@@ -47,6 +51,9 @@ const RepairTrackingPage = () => {
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchType, setSearchType] = useState('id'); // 'trackingToken' or 'id'
+  const [activeTab, setActiveTab] = useState('details'); // 'details' | 'reports'
+  const [inspectionReports, setInspectionReports] = useState([]);
+  const [inspectionReportsLoading, setInspectionReportsLoading] = useState(false);
 
   // Repair status configuration
   const statusConfig = {
@@ -213,6 +220,54 @@ const RepairTrackingPage = () => {
     ];
     const currentIndex = statusOrder.indexOf(status);
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
+  };
+
+  // Load inspection reports
+  const loadInspectionReports = async () => {
+    if (!repairData?.id) {
+      setInspectionReports([]);
+      return;
+    }
+    
+    try {
+      setInspectionReportsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairData.id}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        let reportsList = [];
+        if (data.success && data.data) {
+          reportsList = Array.isArray(data.data) ? data.data : [];
+        } else if (data.data) {
+          reportsList = Array.isArray(data.data) ? data.data : [];
+        } else if (Array.isArray(data)) {
+          reportsList = data;
+        }
+        setInspectionReports(reportsList);
+      } else {
+        setInspectionReports([]);
+      }
+    } catch (error) {
+      console.error('Error loading inspection reports:', error);
+      setInspectionReports([]);
+    } finally {
+      setInspectionReportsLoading(false);
+    }
+  };
+
+  // Load reports when tab is active
+  useEffect(() => {
+    if (activeTab === 'reports' && repairData?.id && !inspectionReportsLoading) {
+      loadInspectionReports();
+    }
+  }, [activeTab, repairData?.id]);
+
+  // Export report to PDF (placeholder - will be implemented in phase 6)
+  const handleExportPDF = (reportId) => {
+    // TODO: Implement PDF export in phase 6
+    notify('info', 'ميزة التصدير إلى PDF قيد التطوير');
   };
 
   return (
@@ -393,8 +448,39 @@ const RepairTrackingPage = () => {
             </SimpleCardContent>
           </SimpleCard>
 
-          {/* Repair Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Tabs Navigation */}
+          <SimpleCard>
+            <SimpleCardContent className="p-0">
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab('details')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'details'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  التفاصيل
+                </button>
+                <button
+                  onClick={() => setActiveTab('reports')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'reports'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  التقارير الفنية
+                </button>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+
+          {/* Tab Content */}
+          {activeTab === 'details' && (
+            <>
+              {/* Repair Details */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-6">
               {/* Device Information */}
@@ -566,43 +652,185 @@ const RepairTrackingPage = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <SimpleCard>
-            <SimpleCardHeader>
-              <SimpleCardTitle>الإجراءات</SimpleCardTitle>
-            </SimpleCardHeader>
-            <SimpleCardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <SimpleButton
-                  onClick={() => navigate(`/repairs/${repairData.id}`)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Eye className="w-4 h-4 ml-2" />
-                  عرض التفاصيل الكاملة
-                </SimpleButton>
-                
-                <SimpleButton
-                  onClick={() => window.print()}
-                  variant="outline"
-                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                >
-                  <Printer className="w-4 h-4 ml-2" />
-                  طباعة
-                </SimpleButton>
-                
-                <SimpleButton
-                  onClick={handleClear}
-                  variant="outline"
-                  className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                >
-                  <RefreshCw className="w-4 h-4 ml-2" />
-                  بحث جديد
-                </SimpleButton>
-              </div>
-            </div>
-            </SimpleCardContent>
-          </SimpleCard>
+              {/* Action Buttons */}
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>الإجراءات</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <SimpleButton
+                      onClick={() => navigate(`/repairs/${repairData.id}`)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Eye className="w-4 h-4 ml-2" />
+                      عرض التفاصيل الكاملة
+                    </SimpleButton>
+                    
+                    <SimpleButton
+                      onClick={() => window.print()}
+                      variant="outline"
+                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                    >
+                      <Printer className="w-4 h-4 ml-2" />
+                      طباعة
+                    </SimpleButton>
+                    
+                    <SimpleButton
+                      onClick={handleClear}
+                      variant="outline"
+                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                    >
+                      <RefreshCw className="w-4 h-4 ml-2" />
+                      بحث جديد
+                    </SimpleButton>
+                  </div>
+                </div>
+                </SimpleCardContent>
+              </SimpleCard>
+            </>
+          )}
+
+          {activeTab === 'reports' && (
+            <>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <div className="flex items-center justify-between">
+                    <SimpleCardTitle className="flex items-center">
+                      <FileText className="w-5 h-5 ml-2" />
+                      تقارير الفحص
+                    </SimpleCardTitle>
+                    <SimpleButton
+                      size="sm"
+                      variant="outline"
+                      onClick={loadInspectionReports}
+                      disabled={inspectionReportsLoading}
+                    >
+                      <RefreshCw className={`w-4 h-4 ml-1 ${inspectionReportsLoading ? 'animate-spin' : ''}`} />
+                      تحديث
+                    </SimpleButton>
+                  </div>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  {inspectionReportsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loading size="md" text="جاري تحميل التقارير..." />
+                    </div>
+                  ) : inspectionReports.length === 0 ? (
+                    <div className="text-center py-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                      <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <div className="text-gray-600 text-lg font-medium">لا توجد تقارير فحص</div>
+                      <div className="text-gray-500 text-sm mt-2">لم يتم إنشاء أي تقارير فحص لهذا الطلب بعد</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {inspectionReports.map((report) => (
+                        <div
+                          key={report.id}
+                          className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-5 border-l-4 border-blue-400 hover:from-blue-100 hover:to-indigo-100 transition-all"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-gray-900 text-lg">
+                                    {report.inspectionTypeName || 'تقرير فحص'}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {report.reportDate
+                                      ? new Date(report.reportDate).toLocaleDateString('ar-SA', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })
+                                      : 'تاريخ غير محدد'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
+                                {report.technicianName && (
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-600">الفني:</span>
+                                    <span className="font-medium text-gray-900">{report.technicianName}</span>
+                                  </div>
+                                )}
+                                {report.branchName && (
+                                  <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-600">الفرع:</span>
+                                    <span className="font-medium text-gray-900">{report.branchName}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {report.summary && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">الملخص:</div>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{report.summary}</div>
+                                </div>
+                              )}
+
+                              {report.result && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">النتيجة والتشخيص:</div>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{report.result}</div>
+                                </div>
+                              )}
+
+                              {report.recommendations && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2 mb-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">التوصيات:</div>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{report.recommendations}</div>
+                                </div>
+                              )}
+
+                              {report.notes && (
+                                <div className="bg-white/70 rounded-lg p-3 mt-2">
+                                  <div className="text-xs text-gray-500 mb-1 font-medium">ملاحظات إضافية:</div>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{report.notes}</div>
+                                </div>
+                              )}
+
+                              <div className="text-xs text-gray-500 mt-3">
+                                {report.createdAt && (
+                                  <span>
+                                    تم الإنشاء: {new Date(report.createdAt).toLocaleString('ar-SA')}
+                                  </span>
+                                )}
+                                {report.updatedAt && report.updatedAt !== report.createdAt && (
+                                  <span className="mr-2">
+                                    | آخر تحديث: {new Date(report.updatedAt).toLocaleString('ar-SA')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2 mr-4">
+                              <SimpleButton
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleExportPDF(report.id)}
+                                className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                              >
+                                <Download className="w-4 h-4 ml-1" />
+                                تصدير PDF
+                              </SimpleButton>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </SimpleCardContent>
+              </SimpleCard>
+            </>
+          )}
         </div>
       )}
     </div>

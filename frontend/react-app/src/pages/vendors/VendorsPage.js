@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building2, Users, TrendingUp, DollarSign, Eye } from 'lucide-react';
+import { Plus, Building2, Users, TrendingUp, DollarSign, Eye, FileText } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -232,6 +232,15 @@ const VendorsPage = () => {
               onClick={() => handleEditVendor(vendor)}
             >
               تعديل
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/invoices/new?vendorId=${vendor.id}`)}
+              title="إنشاء فاتورة شراء للمورد"
+            >
+              <FileText className="w-4 h-4 ml-1" />
+              فاتورة شراء
             </Button>
             <Button
               variant={vendor.status === 'active' ? 'danger' : 'success'}

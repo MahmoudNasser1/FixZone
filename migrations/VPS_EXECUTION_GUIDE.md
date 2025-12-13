@@ -275,3 +275,4 @@ mysql -u root -p FZ -e "SELECT COUNT(*) as total, COUNT(deletedAt) as deleted FR
 
 
 
+

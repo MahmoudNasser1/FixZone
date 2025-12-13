@@ -22,6 +22,8 @@ import SendButton from '../../components/messaging/SendButton';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
 import { getDefaultApiBaseUrl, getFrontendBaseUrl } from '../../lib/apiConfig';
 import { formatNumber, formatCurrency } from '../../utils/numberFormat';
+import InspectionComponentsList from '../../components/reports/InspectionComponentsList';
+import technicianService from '../../services/technicianService';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -44,8 +46,11 @@ const RepairDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('status'); // status | timeline | attachments | invoices | notes | payments | activity | reports
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTechId, setAssignTechId] = useState('');
+  const [assignRole, setAssignRole] = useState('primary');
   const [techOptions, setTechOptions] = useState([]);
   const [techLoading, setTechLoading] = useState(false);
+  const [assignedTechnicians, setAssignedTechnicians] = useState([]);
+  const [assignedTechsLoading, setAssignedTechsLoading] = useState(false);
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [inspectionTypes, setInspectionTypes] = useState([]);
   const [inspectionTypesLoading, setInspectionTypesLoading] = useState(false);
@@ -492,24 +497,44 @@ const RepairDetailsPage = () => {
     }
   };
 
-  // Handle delete report
+  // Handle delete report with optimistic update
   const handleDeleteReport = async (reportId) => {
     const confirmed = window.confirm('هل أنت متأكد من حذف هذا التقرير؟');
     if (!confirmed) return;
+    
+    // Optimistic update - remove from UI immediately
+    const reportToDelete = inspectionReports.find(r => r.id === reportId);
+    setInspectionReports(prev => prev.filter(r => r.id !== reportId));
+    
     try {
       const response = await fetch(`${API_BASE_URL}/inspectionreports/${reportId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
       if (response.ok) {
-        notifications.success('تم حذف التقرير بنجاح');
+        notifications.success('تم', { message: 'تم حذف التقرير بنجاح' });
+        // Reload to ensure consistency
         await loadInspectionReports();
         await fetchRepairDetails();
       } else {
-        throw new Error('فشل حذف التقرير');
+        // Revert optimistic update on error
+        if (reportToDelete) {
+          setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+          ));
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'فشل حذف التقرير');
       }
     } catch (error) {
       console.error('[InspectionReports] Error deleting report:', error);
-      notifications.error('تعذر حذف التقرير');
+      // Revert optimistic update on error
+      if (reportToDelete) {
+        setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        ));
+      }
+      notifications.error('خطأ', { message: error.message || 'تعذر حذف التقرير' });
     }
   };
 
@@ -1011,7 +1036,7 @@ const RepairDetailsPage = () => {
         setTechLoading(true);
         const res = await apiService.listTechnicians();
         console.log('Technicians response (inspection):', res);
-        const items = Array.isArray(res) ? res : (res.items || []);
+        const items = Array.isArray(res) ? res : (res.data || res.items || []);
         setTechOptions(items);
       } catch (e) {
         console.error('Error loading technicians (inspection):', e);
@@ -1058,7 +1083,8 @@ const RepairDetailsPage = () => {
         setTechLoading(true);
         const res = await apiService.listTechnicians();
         console.log('Technicians response (assign):', res);
-        const items = Array.isArray(res) ? res : (res.items || []);
+        const items = Array.isArray(res) ? res : (res.data || res.items || []);
+        console.log('Technicians items:', items);
         setTechOptions(items);
       } catch (e) {
         console.error('Error loading technicians (assign):', e);
@@ -1080,7 +1106,7 @@ const RepairDetailsPage = () => {
           setTechLoading(true);
           const res = await apiService.listTechnicians();
           console.log('Technicians response (edit service):', res);
-          const items = Array.isArray(res) ? res : (res.items || []);
+          const items = Array.isArray(res) ? res : (res.data || res.items || []);
           setTechOptions(items);
         }
       } catch (e) {
@@ -1697,6 +1723,9 @@ const RepairDetailsPage = () => {
             setAttachments(Array.isArray(atts) ? atts : (atts.items || []));
           } catch { }
 
+          // تحميل الفنيين المعينين من TechnicianRepairs
+          loadAssignedTechnicians();
+
           // بيانات العميل - استخدم البيانات المتاحة في الطلب مباشرة
           if (rep?.customerName) {
             setCustomer({
@@ -1847,20 +1876,69 @@ const RepairDetailsPage = () => {
     }
   };
 
+  const loadAssignedTechnicians = async () => {
+    if (!id) return;
+    try {
+      setAssignedTechsLoading(true);
+      // Use API to get technicians assigned to this repair
+      const response = await apiService.request(`/repairs/${id}/technicians`);
+      
+      if (response.success && response.data) {
+        setAssignedTechnicians(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading assigned technicians:', error);
+    } finally {
+      setAssignedTechsLoading(false);
+    }
+  };
+
   const handleAssignTechnician = async () => {
     if (!assignTechId) return;
     try {
-      console.log('Assigning technician:', assignTechId, 'to repair request:', id);
-      await apiService.assignTechnician(id, assignTechId);
-      notifications.success('تم إسناد الفني بنجاح');
-      setAssignOpen(false);
-      setAssignTechId('');
-      // حدّث بيانات الطلب محليًا
-      const tech = techOptions.find(t => String(t.id) === String(assignTechId));
-      setRepair(prev => prev ? { ...prev, technicianId: assignTechId, technicianName: tech?.name || `مستخدم #${assignTechId}` } : prev);
+      const techId = Number(assignTechId);
+      const repairId = Number(id);
+      console.log('Assigning technician:', techId, 'to repair request:', repairId, 'with role:', assignRole);
+      
+      // Use new API
+      const response = await technicianService.assignRepair(techId, repairId, assignRole);
+      console.log('Assign repair response:', response);
+      
+      if (response && response.success) {
+        notifications.success('تم إسناد الفني بنجاح');
+        setAssignOpen(false);
+        setAssignTechId('');
+        setAssignRole('primary');
+        
+        // Reload assigned technicians
+        loadAssignedTechnicians();
+        
+        // Update repair locally
+        const tech = techOptions.find(t => Number(t.id) === techId);
+        setRepair(prev => prev ? { ...prev, technicianId: techId, technicianName: tech?.name || `مستخدم #${techId}` } : prev);
+      } else {
+        throw new Error(response?.error || 'فشل في إسناد الفني');
+      }
     } catch (e) {
       console.error('Error assigning technician:', e);
-      notifications.error('تعذر إسناد الفني');
+      notifications.error(e.message || 'تعذر إسناد الفني');
+    }
+  };
+
+  const handleUnassignTechnician = async (technicianId) => {
+    if (!window.confirm('هل أنت متأكد من إلغاء تعيين هذا الفني؟')) {
+      return;
+    }
+    
+    try {
+      const techId = Number(technicianId);
+      const repairId = Number(id);
+      await technicianService.unassignRepair(techId, repairId);
+      notifications.success('تم إلغاء تعيين الفني بنجاح');
+      loadAssignedTechnicians();
+    } catch (error) {
+      console.error('Error unassigning technician:', error);
+      notifications.error('فشل في إلغاء تعيين الفني');
     }
   };
 
@@ -2310,7 +2388,32 @@ const RepairDetailsPage = () => {
               <UserPlus className="w-4 h-4 ml-2" />
               إسناد فني
             </SimpleButton>
-            {repair?.technicianName && (
+            {assignedTechnicians.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {assignedTechnicians.map((tech) => (
+                  <span 
+                    key={tech.id || tech.technicianId}
+                    className="text-sm text-gray-600 px-2 py-1 bg-white border border-gray-200 rounded-lg flex items-center gap-1"
+                  >
+                    <span className="font-medium">{tech.technicianName || tech.name || `مستخدم #${tech.technicianId || tech.id}`}</span>
+                    {tech.role === 'primary' && (
+                      <span className="text-xs text-purple-600">(رئيسي)</span>
+                    )}
+                    {tech.role === 'assistant' && (
+                      <span className="text-xs text-blue-600">(مساعد)</span>
+                    )}
+                    <button
+                      onClick={() => handleUnassignTechnician(tech.technicianId || tech.id)}
+                      className="text-red-600 hover:text-red-700 mr-1"
+                      title="إلغاء التعيين"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {repair?.technicianName && assignedTechnicians.length === 0 && (
               <span className="text-sm text-gray-600 px-2 py-1 bg-white border border-gray-200 rounded-lg mr-1">
                 الفني: <span className="font-medium">{repair.technicianName}</span>
               </span>
@@ -3899,6 +4002,17 @@ const RepairDetailsPage = () => {
                                 </div>
                               )}
 
+                              {/* Inspection Components */}
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <InspectionComponentsList 
+                                  reportId={report.id} 
+                                  onComponentUpdate={() => {
+                                    // Refresh reports if needed
+                                    loadInspectionReports();
+                                  }}
+                                />
+                              </div>
+
                               <div className="text-xs text-gray-500 mt-3">
                                 {report.createdAt && (
                                   <span>
@@ -4776,9 +4890,26 @@ const RepairDetailsPage = () => {
                   ))}
                 </select>
               )}
+              {assignTechId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
+                  <select
+                    value={assignRole}
+                    onChange={(e) => setAssignRole(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="primary">رئيسي</option>
+                    <option value="assistant">مساعد</option>
+                  </select>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end space-x-2 space-x-reverse mt-6">
-              <SimpleButton variant="ghost" onClick={() => setAssignOpen(false)}>إلغاء</SimpleButton>
+              <SimpleButton variant="ghost" onClick={() => {
+                setAssignOpen(false);
+                setAssignTechId('');
+                setAssignRole('primary');
+              }}>إلغاء</SimpleButton>
               <SimpleButton onClick={handleAssignTechnician} disabled={!assignTechId}>حفظ</SimpleButton>
             </div>
           </div>
@@ -5020,19 +5151,35 @@ const RepairDetailsPage = () => {
                     
                     try {
                       setInspectionSaving(true);
+                      // Convert reportDate to ISO 8601 format if it's in YYYY-MM-DD format
+                      let reportDateISO = inspectionForm.reportDate;
+                      if (reportDateISO && reportDateISO.length === 10) {
+                        // If it's YYYY-MM-DD, convert to ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
+                        reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
+                      }
+                      
                       const payload = {
                         repairRequestId: Number(id),
-                        inspectionTypeId: Number(inspectionForm.inspectionTypeId),
-                        technicianId: Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id || 1),
-                        reportDate: inspectionForm.reportDate,
+                        inspectionTypeId: inspectionForm.inspectionTypeId ? Number(inspectionForm.inspectionTypeId) : null,
+                        technicianId: inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id ? Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id) : null,
+                        reportDate: reportDateISO,
                         summary: inspectionForm.summary || null,
                         result: inspectionForm.result || null,
                         recommendations: inspectionForm.recommendations || null,
                         notes: inspectionForm.notes || null,
-                        branchId: repair?.branchId || 1,
+                        branchId: repair?.branchId || null,
                       };
                       
                       if (editingReport) {
+                        // Optimistic update - update in UI immediately
+                        const updatedReport = {
+                          ...editingReport,
+                          ...payload,
+                          inspectionTypeName: inspectionTypes.find(t => t.id === Number(payload.inspectionTypeId))?.name || editingReport.inspectionTypeName,
+                          updatedAt: new Date().toISOString()
+                        };
+                        setInspectionReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
+                        
                         // Update existing report
                         console.log('[InspectionReport] Updating report with payload:', payload);
                         const response = await apiService.request(`/inspectionreports/${editingReport.id}`, {
@@ -5040,13 +5187,13 @@ const RepairDetailsPage = () => {
                           body: JSON.stringify(payload)
                         });
                         console.log('[InspectionReport] Report updated successfully:', response);
-                        notifications.success('تم تحديث تقرير الفحص بنجاح');
+                        notifications.success('تم', { message: 'تم تحديث تقرير الفحص بنجاح' });
                       } else {
                         // Create new report
                         console.log('[InspectionReport] Creating report with payload:', payload);
                         const response = await apiService.createInspectionReport(payload);
                         console.log('[InspectionReport] Report created successfully:', response);
-                        notifications.success('تم حفظ تقرير الفحص بنجاح');
+                        notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
                       }
                       
                       setInspectionOpen(false);
@@ -5066,7 +5213,7 @@ const RepairDetailsPage = () => {
                       
                       // إعادة تحميل البيانات
                       await fetchRepairDetails();
-                      // Always reload reports after creating/updating
+                      // Always reload reports after creating/updating to get fresh data with all joins
                       await loadInspectionReports();
                       
                       // إعطاء وقت للـ WebSocket notification للوصول

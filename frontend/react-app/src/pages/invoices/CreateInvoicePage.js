@@ -14,6 +14,8 @@ const CreateInvoicePage = () => {
   const [searchParams] = useSearchParams();
   const { settings, formatMoney } = useSettings();
   const repairRequestId = searchParams.get('repairRequestId');
+  const customerIdFromParams = searchParams.get('customerId');
+  const vendorIdFromParams = searchParams.get('vendorId');
 
   const [formData, setFormData] = useState({
     repairRequestId: repairRequestId || '',
@@ -50,6 +52,40 @@ const CreateInvoicePage = () => {
     if (repairRequestId) {
       fetchRepairRequest();
     }
+    // Load customer from params
+    if (customerIdFromParams) {
+      const loadCustomer = async () => {
+        try {
+          const customer = await apiService.getCustomer(customerIdFromParams);
+          setSelectedCustomer(customer);
+          setFormData(prev => ({
+            ...prev,
+            customerId: customerIdFromParams,
+            invoiceType: 'sale'
+          }));
+        } catch (err) {
+          console.error('Error loading customer:', err);
+        }
+      };
+      loadCustomer();
+    }
+    // Load vendor from params
+    if (vendorIdFromParams) {
+      const loadVendor = async () => {
+        try {
+          const vendor = await apiService.request(`/vendors/${vendorIdFromParams}`);
+          setSelectedVendor(vendor);
+          setFormData(prev => ({
+            ...prev,
+            vendorId: vendorIdFromParams,
+            invoiceType: 'purchase'
+          }));
+        } catch (err) {
+          console.error('Error loading vendor:', err);
+        }
+      };
+      loadVendor();
+    }
     // Load print settings
     async function loadPrintSettings() {
       try {
@@ -83,9 +119,12 @@ const CreateInvoicePage = () => {
       }
     }
     loadPrintSettings();
-  }, [repairRequestId]);
+  }, [repairRequestId, customerIdFromParams, vendorIdFromParams]);
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:88',message:'customerSearch useEffect triggered',data:{customerSearch,hasSearch:!!customerSearch},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     if (customerSearch) {
       fetchCustomers(customerSearch);
     } else {
@@ -114,47 +153,122 @@ const CreateInvoicePage = () => {
   };
 
   const fetchInventoryItems = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:119',message:'fetchInventoryItems entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     try {
       const response = await apiService.getInventoryItems();
-      if (response.ok) {
-        const data = await response.json();
-        setInventoryItems(Array.isArray(data) ? data : []);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:124',message:'fetchInventoryItems response received',data:{hasResponse:!!response,responseType:typeof response,hasOk:!!response?.ok,isArray:Array.isArray(response),hasData:!!response?.data,dataType:typeof response?.data,isDataArray:Array.isArray(response?.data)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      // apiService.getInventoryItems() returns data directly, not a Response object
+      let data = response;
+      if (response && response.ok) {
+        // If it's a Response object, parse JSON
+        data = await response.json();
+      } else if (response && response.data) {
+        // If it has a data property, use it
+        data = response.data;
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:133',message:'fetchInventoryItems data processed',data:{isArray:Array.isArray(data),dataLength:Array.isArray(data)?data.length:0,dataKeys:data?Object.keys(data):[],firstItem:Array.isArray(data)&&data.length>0?data[0]:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      setInventoryItems(Array.isArray(data) ? data : []);
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:136',message:'fetchInventoryItems error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error('Error fetching inventory items:', err);
+      setInventoryItems([]);
     }
   };
 
   const fetchCustomers = async (search = '') => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:147',message:'fetchCustomers entry',data:{search,hasSearch:!!search},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     try {
-      const response = await apiService.getCustomers({ search, limit: 50 });
+      let response;
+      if (search && search.trim().length > 0) {
+        // Use searchCustomers API for search queries
+        const searchResponse = await apiService.searchCustomers(search.trim(), 1, 50);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:151',message:'fetchCustomers searchCustomers response',data:{hasResponse:!!searchResponse,responseOk:searchResponse?.ok,responseStatus:searchResponse?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        if (searchResponse && searchResponse.ok) {
+          const result = await searchResponse.json();
+          response = result?.data || result || [];
+        } else {
+          response = [];
+        }
+      } else {
+        // Use getCustomers for full list (with limit)
+        response = await apiService.getCustomers({ limit: 50 });
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:162',message:'fetchCustomers response received',data:{hasResponse:!!response,responseType:typeof response,isArray:Array.isArray(response),hasData:!!response?.data,dataType:typeof response?.data,isDataArray:Array.isArray(response?.data),responseLength:Array.isArray(response)?response.length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       if (response && Array.isArray(response)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:164',message:'fetchCustomers response is array',data:{arrayLength:response.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         setCustomers(response);
       } else if (response && response.data && Array.isArray(response.data)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:166',message:'fetchCustomers response.data is array',data:{arrayLength:response.data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         setCustomers(response.data);
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:168',message:'fetchCustomers no valid data found',data:{responseType:typeof response},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         setCustomers([]);
       }
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:171',message:'fetchCustomers error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       console.error('Error fetching customers:', err);
       setCustomers([]);
     }
   };
 
   const fetchVendors = async (search = '') => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:200',message:'fetchVendors entry',data:{search,hasSearch:!!search},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     try {
-      const params = search ? { search, limit: 50 } : { limit: 50 };
-      const response = await apiService.get('/vendors', params);
+      const params = search ? { search, limit: 50, page: 1 } : { limit: 50, page: 1 };
+      const queryString = new URLSearchParams(params).toString();
+      const response = await apiService.request(`/vendors?${queryString}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:203',message:'fetchVendors response received',data:{hasResponse:!!response,responseType:typeof response,isArray:Array.isArray(response),hasData:!!response?.data,hasDataVendors:!!response?.data?.vendors,isDataVendorsArray:Array.isArray(response?.data?.vendors)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       if (response && Array.isArray(response)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:205',message:'fetchVendors response is array',data:{arrayLength:response.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setVendors(response);
       } else if (response && response.data && Array.isArray(response.data)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:207',message:'fetchVendors response.data is array',data:{arrayLength:response.data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setVendors(response.data);
       } else if (response && response.data && response.data.vendors && Array.isArray(response.data.vendors)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:209',message:'fetchVendors response.data.vendors is array',data:{arrayLength:response.data.vendors.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setVendors(response.data.vendors);
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:211',message:'fetchVendors no valid data found',data:{responseType:typeof response,hasData:!!response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setVendors([]);
       }
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:214',message:'fetchVendors error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       console.error('Error fetching vendors:', err);
       setVendors([]);
     }
@@ -179,15 +293,31 @@ const CreateInvoicePage = () => {
     }
   };
 
-  const handleCustomerSelect = (customerId) => {
-    const customer = customers.find(c => c.id === parseInt(customerId));
-    setSelectedCustomer(customer);
-    setFormData(prev => ({
-      ...prev,
-      customerId: customerId || '',
-      repairRequestId: '' // إلغاء اختيار طلب الإصلاح عند اختيار عميل
-    }));
-    setRepairRequest(null);
+  const handleCustomerSelect = async (customerId) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:296',message:'handleCustomerSelect entry',data:{customerId,customersLength:customers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
+    let customer = customers.find(c => c.id === parseInt(customerId));
+    // If customer not found in local array, fetch from API
+    if (!customer) {
+      try {
+        customer = await apiService.getCustomer(customerId);
+      } catch (err) {
+        console.error('Error fetching customer:', err);
+      }
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:305',message:'handleCustomerSelect customer found',data:{found:!!customer,customerName:customer?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
+    if (customer) {
+      setSelectedCustomer(customer);
+      setFormData(prev => ({
+        ...prev,
+        customerId: customerId || '',
+        repairRequestId: '' // إلغاء اختيار طلب الإصلاح عند اختيار عميل
+      }));
+      setRepairRequest(null);
+    }
   };
 
   const handleInvoiceTypeChange = (type) => {
@@ -291,7 +421,13 @@ const CreateInvoicePage = () => {
       }
       // إذا تم اختيار inventoryItemId، جلب بيانات الصنف
       else if (field === 'inventoryItemId' && value) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:293',message:'updateInvoiceItem inventoryItemId selected',data:{value,valueParsed:parseInt(value),inventoryItemsLength:inventoryItems.length,inventoryItemsIds:inventoryItems.map(i=>i.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         const selectedItem = inventoryItems.find(item => item.id === parseInt(value));
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:294',message:'updateInvoiceItem selectedItem found',data:{found:!!selectedItem,selectedItemName:selectedItem?.name,selectedItemPrice:selectedItem?.sellingPrice},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         if (selectedItem) {
           updated[index] = {
             ...currentItem,
@@ -451,20 +587,43 @@ const CreateInvoicePage = () => {
         status: 'draft',
         amountPaid: 0
       };
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:576',message:'handleSubmit invoiceData prepared',data:{invoiceType:invoiceData.invoiceType,vendorId:invoiceData.vendorId,customerId:invoiceData.customerId,repairRequestId:invoiceData.repairRequestId,totalAmount:invoiceData.totalAmount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
 
       const createdInvoice = await apiService.createInvoice(invoiceData);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:591',message:'handleSubmit invoice created',data:{invoiceId:createdInvoice.data?.id||createdInvoice.id,vendorId:createdInvoice.data?.vendorId,vendorName:createdInvoice.data?.vendorName,customerId:createdInvoice.data?.customerId,customerName:createdInvoice.data?.customerName,invoiceType:createdInvoice.data?.invoiceType},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
         const invoiceId = createdInvoice.data?.id || createdInvoice.id;
         
         // Add invoice items
         for (const item of invoiceItems) {
+          // Get description from item, or from selected service/inventory item
+          let description = item.description;
+          if (!description || description.trim() === '') {
+            if (item.itemType === 'service' && item.serviceId) {
+              const selectedService = services.find(s => s.id === item.serviceId);
+              description = selectedService?.name || 'خدمة';
+            } else if (item.itemType === 'part' && item.inventoryItemId) {
+              const selectedItem = inventoryItems.find(i => i.id === item.inventoryItemId);
+              description = selectedItem?.name || 'صنف من المخزون';
+            } else {
+              description = item.itemType === 'service' ? 'خدمة' : 'صنف من المخزون';
+            }
+          }
+          
           const itemData = {
-            description: item.description,
+            description: description.trim(),
             quantity: parseInt(item.quantity) || 1,
             unitPrice: parseFloat(item.unitPrice) || 0,
             itemType: item.itemType,
             serviceId: item.serviceId || null,
             inventoryItemId: item.inventoryItemId || null
           };
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:551',message:'adding invoice item',data:{description:itemData.description,quantity:itemData.quantity,unitPrice:itemData.unitPrice,itemType:itemData.itemType},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
+          // #endregion
           await apiService.addInvoiceItem(invoiceId, itemData);
         }
 
@@ -590,9 +749,10 @@ const CreateInvoicePage = () => {
                                 ).map(customer => (
                                   <div
                                     key={customer.id}
-                                    onClick={() => {
-                                      handleCustomerSelect(customer.id);
-                                      setCustomerSearch(customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim());
+                                    onClick={async () => {
+                                      await handleCustomerSelect(customer.id);
+                                      const customerName = customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+                                      setCustomerSearch(customerName);
                                     }}
                                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
                                   >

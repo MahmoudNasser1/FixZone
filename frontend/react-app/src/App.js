@@ -121,6 +121,11 @@ import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPag
 // Technician Portal Pages
 import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
 import TechnicianSettingsPage from './pages/technician/TechnicianSettingsPage';
+// Technicians Management Pages (Admin)
+import TechniciansPage from './pages/technicians/TechniciansPage';
+import TechnicianDetailsPage from './pages/technicians/TechnicianDetailsPage';
+import TechnicianForm from './pages/technicians/TechnicianForm';
+import TechnicianAnalyticsPage from './pages/technicians/TechnicianAnalyticsPage';
 // Already imported above individually
 
 // Debug Page
@@ -451,6 +456,12 @@ function App() {
                       <Route path="users/new" element={<NewUserPage />} />
                       <Route path="users/:id" element={<UserDetailsPage />} />
                       <Route path="users/:id/edit" element={<EditUserPage />} />
+                      {/* Technicians Management Routes */}
+                      <Route path="technicians" element={<TechniciansPage />} />
+                      <Route path="technicians/new" element={<TechnicianForm />} />
+                      <Route path="technicians/:id" element={<TechnicianDetailsPage />} />
+                      <Route path="technicians/:id/edit" element={<TechnicianForm />} />
+                      <Route path="technicians/:id/analytics" element={<TechnicianAnalyticsPage />} />
                       {/* Admin / Roles & Permissions */}
                       <Route
                         path="admin/roles"

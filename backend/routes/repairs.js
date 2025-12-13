@@ -4,6 +4,7 @@ const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
 const { validate, repairSchemas } = require('../middleware/validation');
+const technicianRepairsController = require('../controllers/technicianRepairs');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -811,6 +812,30 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
 
 // Get repair request by ID
 // Note: Public tracking routes use /:id/track and /track/:token instead
+// Get technicians assigned to a repair - MUST be before /:id route
+router.get('/:repairId/technicians', authMiddleware, async (req, res) => {
+  try {
+    const { repairId } = req.params;
+    const [technicians] = await db.query(`
+      SELECT 
+        tr.*,
+        u.id as technicianId,
+        u.name as technicianName,
+        u.email as technicianEmail,
+        u.phone as technicianPhone
+      FROM TechnicianRepairs tr
+      INNER JOIN User u ON tr.technicianId = u.id
+      WHERE tr.repairId = ?
+      ORDER BY tr.role DESC, tr.assignedAt ASC
+    `, [repairId]);
+    
+    res.json({ success: true, data: technicians });
+  } catch (err) {
+    console.error('Error fetching repair technicians:', err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
 router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params'), async (req, res) => {
   const { id } = req.params;
   try {

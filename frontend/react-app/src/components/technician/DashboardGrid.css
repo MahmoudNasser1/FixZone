@@ -1,0 +1,108 @@
+/* Dashboard Grid Styles */
+.dashboard-grid {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.dashboard-grid .react-grid-layout {
+  position: relative;
+  min-height: 300px;
+}
+
+.dashboard-grid .react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.dashboard-grid .react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.dashboard-grid .react-grid-item.resizing {
+  transition: none;
+  z-index: 1;
+  will-change: width, height;
+}
+
+.dashboard-grid .react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 3;
+  will-change: transform;
+}
+
+.dashboard-grid .react-grid-item.dropping {
+  visibility: hidden;
+}
+
+.dashboard-grid .react-grid-item.react-grid-placeholder {
+  background: rgba(59, 130, 246, 0.2);
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+  border-radius: 8px;
+  opacity: 0.2;
+  transition-duration: 100ms;
+  z-index: 2;
+  user-select: none;
+}
+
+.dashboard-grid .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PHBhdGggZD0ibTMgMyAxIDEgMS0xIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iLjUiLz48L2c+PC9zdmc+');
+  background-position: bottom right;
+  padding: 0 3px 3px 0;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dashboard-grid .react-grid-item:hover .react-resizable-handle {
+  opacity: 1;
+}
+
+.dashboard-grid .react-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+}
+
+.dashboard-widget {
+  height: 100%;
+  min-height: 200px;
+  padding: 0;
+  margin: 0;
+}
+
+.dashboard-widget > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget .drag-handle {
+  cursor: move;
+  user-select: none;
+}
+
+.dashboard-widget .drag-handle:active {
+  cursor: grabbing;
+}
+
+/* RTL Support */
+[dir="rtl"] .dashboard-grid .react-resizable-handle {
+  right: auto;
+  left: 0;
+  transform: rotate(180deg);
+}
+
+/* Dark mode adjustments */
+.dark .dashboard-grid .react-grid-item.react-grid-placeholder {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+

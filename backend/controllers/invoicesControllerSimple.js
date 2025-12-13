@@ -65,10 +65,16 @@ class InvoicesControllerSimple {
           i.taxAmount,
           i.repairRequestId,
           i.customerId,
+          i.vendorId,
+          i.invoiceType,
           i.createdAt,
           COALESCE(c_direct.name, c_via_repair.name) as customerName,
           COALESCE(c_direct.phone, c_via_repair.phone) as customerPhone,
           COALESCE(c_direct.email, c_via_repair.email) as customerEmail,
+          v.name as vendorName,
+          v.contactPerson as vendorContact,
+          v.phone as vendorPhone,
+          v.email as vendorEmail,
           rr.deviceBrand,
           rr.deviceModel,
           rr.deviceType
@@ -76,6 +82,7 @@ class InvoicesControllerSimple {
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
         LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
         LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
+        LEFT JOIN Vendor v ON i.vendorId = v.id
         ${whereClause}
         ORDER BY i.createdAt DESC
         LIMIT ? OFFSET ?
@@ -158,12 +165,19 @@ class InvoicesControllerSimple {
             paymentStatusValue = 'pending';
           }
 
+          // For purchase invoices, show vendor info instead of customer
+          const isPurchaseInvoice = invoice.invoiceType === 'purchase';
+          
           return {
             id: invoice.id,
             repairId: invoice.repairRequestId,
             customerId: invoice.customerId,
-            customerName: invoice.customerName || 'غير محدد',
-            customerPhone: invoice.customerPhone || 'غير محدد',
+            vendorId: invoice.vendorId,
+            invoiceType: invoice.invoiceType || 'sale',
+            customerName: isPurchaseInvoice ? null : (invoice.customerName || 'غير محدد'),
+            customerPhone: isPurchaseInvoice ? null : (invoice.customerPhone || 'غير محدد'),
+            vendorName: isPurchaseInvoice ? (invoice.vendorName || 'غير محدد') : null,
+            vendorPhone: isPurchaseInvoice ? (invoice.vendorPhone || null) : null,
             totalAmount: parseFloat(invoice.totalAmount) || 0,
             paidAmount: actualAmountPaid,
             remainingAmount: Math.max(0, remainingAmount),

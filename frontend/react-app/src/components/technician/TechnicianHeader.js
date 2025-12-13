@@ -13,11 +13,15 @@ import {
     Circle,
     AlertTriangle,
     Sun,
-    Moon
+    Moon,
+    Search,
+    Command
 } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import { useNotifications } from '../notifications/NotificationSystem';
 import { useTheme } from '../ThemeProvider';
+import CommandPalette, { useCommandPalette } from './CommandPalette';
+import useTechnicianNotifications from '../../hooks/useTechnicianNotifications';
 
 /**
  * 🛠️ Technician Header Component
@@ -34,17 +38,24 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
     const logout = useAuthStore((state) => state.logout);
     const notifications = useNotifications();
     const { theme, setTheme } = useTheme();
+    const { isOpen: isCommandOpen, openPalette, closePalette } = useCommandPalette();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [status, setStatus] = useState('available'); // available, busy, offline
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-    // Mock Notifications
-    const techNotifications = [
-        { id: 1, title: 'مهمة جديدة', message: 'تم تعيين مهمة إصلاح جديدة #1024', time: 'منذ 10 دقائق', type: 'job' },
-        { id: 2, title: 'تنبيه مخزون', message: 'شاشة iPhone 13 Pro قاربت على النفاد', time: 'منذ ساعة', type: 'alert' },
-    ];
+    // Real Notifications Hook
+    const {
+        notifications: techNotifications,
+        unreadCount: realNotificationCount,
+        markAsRead,
+        markAllAsRead,
+        loading: notificationsLoading
+    } = useTechnicianNotifications();
+
+    // Use real count or prop
+    const displayNotificationCount = realNotificationCount || notificationCount;
 
     const handleLogout = () => {
         logout();
@@ -77,8 +88,28 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                     {/* Right Side Actions */}
                     <div className="flex items-center gap-4">
 
+                        {/* Search Button - Command Palette Trigger */}
+                        <button
+                            onClick={openPalette}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-500 dark:text-slate-400"
+                        >
+                            <Search className="w-4 h-4" />
+                            <span>بحث...</span>
+                            <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-900 text-xs rounded border border-slate-200 dark:border-slate-700">
+                                <Command className="w-3 h-3" />K
+                            </kbd>
+                        </button>
+                        
+                        {/* Mobile Search Button */}
+                        <button
+                            onClick={openPalette}
+                            className="sm:hidden p-2 hover:bg-muted rounded-full transition-colors"
+                        >
+                            <Search className="w-5 h-5 text-muted-foreground" />
+                        </button>
+
                         {/* Status Toggle */}
-                        <div className="relative">
+                        <div className="relative hidden sm:block">
                             <button
                                 onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:shadow-sm"
@@ -136,9 +167,9 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                 className={`relative p-2 rounded-full transition-colors ${isNotificationsOpen ? 'bg-muted' : 'hover:bg-muted'}`}
                             >
                                 <Bell className="w-6 h-6 text-muted-foreground" />
-                                {notificationCount > 0 && (
-                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-card">
-                                        {notificationCount}
+                                {displayNotificationCount > 0 && (
+                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-card animate-pulse">
+                                        {displayNotificationCount > 9 ? '9+' : displayNotificationCount}
                                     </span>
                                 )}
                             </button>
@@ -147,26 +178,54 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)} />
                                     <div className="absolute left-0 mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="p-3 border-b border-border bg-muted/50">
+                                        <div className="p-3 border-b border-border bg-muted/50 flex items-center justify-between">
                                             <h3 className="font-bold text-foreground text-sm">الإشعارات</h3>
+                                            {displayNotificationCount > 0 && (
+                                                <button
+                                                    onClick={markAllAsRead}
+                                                    className="text-xs text-primary hover:text-primary/80 font-medium"
+                                                >
+                                                    تحديد الكل كمقروء
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="max-h-80 overflow-y-auto">
-                                            {techNotifications.map((notif) => (
-                                                <div key={notif.id} className="p-3 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                                                    <div className="flex gap-3">
-                                                        <div className={`mt-1 p-1.5 rounded-full ${notif.type === 'alert' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                            {notif.type === 'alert' ? <AlertTriangle className="w-4 h-4" /> : <Wrench className="w-4 h-4" />}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-foreground">{notif.title}</p>
-                                                            <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
-                                                            <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
-                                                                <Clock className="w-3 h-3" /> {notif.time}
-                                                            </p>
+                                            {notificationsLoading ? (
+                                                <div className="p-8 text-center">
+                                                    <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                                                </div>
+                                            ) : techNotifications.length > 0 ? (
+                                                techNotifications.map((notif) => (
+                                                    <div 
+                                                        key={notif.id} 
+                                                        onClick={() => markAsRead(notif.id)}
+                                                        className={`p-3 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                                                    >
+                                                        <div className="flex gap-3">
+                                                            <div className={`mt-1 p-1.5 rounded-full ${notif.typeConfig?.color || 'bg-blue-100 text-blue-600'}`}>
+                                                                {notif.type === 'alert' || notif.type === 'urgent' ? <AlertTriangle className="w-4 h-4" /> : <Wrench className="w-4 h-4" />}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-sm font-bold text-foreground">{notif.title}</p>
+                                                                    {!notif.isRead && (
+                                                                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
+                                                                <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
+                                                                    <Clock className="w-3 h-3" /> {notif.timeAgo || notif.time}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                ))
+                                            ) : (
+                                                <div className="p-8 text-center">
+                                                    <Bell className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                                                    <p className="text-sm text-muted-foreground">لا توجد إشعارات</p>
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
                                 </>
@@ -237,6 +296,9 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                     </div>
                 </div>
             </div>
+            
+            {/* Command Palette */}
+            <CommandPalette isOpen={isCommandOpen} onClose={closePalette} />
         </header>
     );
 }
