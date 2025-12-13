@@ -18,20 +18,8 @@ const authorizeMiddleware = (allowedRoles) => {
 
             // Get user role
             const userRole = req.user.role || req.user.roleId;
-            // #region agent log
-            const fs = require('fs');
-            const logPath = '/opt/lampp/htdocs/FixZone/.cursor/debug.log';
-            try {
-              fs.appendFileSync(logPath, JSON.stringify({location:'authorizeMiddleware.js:20',message:'Checking user role',data:{userId:req.user?.id,userRole,hasRole:!!req.user?.role,hasRoleId:!!req.user?.roleId,allowedRoles,url:req.originalUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n');
-            } catch(e){}
-            // #endregion
             
             if (!userRole) {
-                // #region agent log
-                try {
-                  fs.appendFileSync(logPath, JSON.stringify({location:'authorizeMiddleware.js:25',message:'User role not found',data:{userId:req.user?.id,user:req.user,url:req.originalUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n');
-                } catch(e){}
-                // #endregion
                 console.warn('⚠️ [AUTH] User role not found:', {
                     userId: req.user.id,
                     user: req.user,
@@ -70,18 +58,8 @@ const authorizeMiddleware = (allowedRoles) => {
             const isAllowed = allowedRoles.includes(role.id) || 
                             allowedRoles.includes(role.name) || 
                             allowedRoles.includes(userRole);
-            // #region agent log
-            try {
-              fs.appendFileSync(logPath, JSON.stringify({location:'authorizeMiddleware.js:58',message:'Checking role authorization',data:{userId:req.user?.id,roleId:role.id,roleName:role.name,userRole,allowedRoles,isAllowedByRoleId:allowedRoles.includes(role.id),isAllowedByRoleName:allowedRoles.includes(role.name),isAllowedByUserRole:allowedRoles.includes(userRole),isAllowed,url:req.originalUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n');
-            } catch(e){}
-            // #endregion
 
             if (!isAllowed) {
-                // #region agent log
-                try {
-                  fs.appendFileSync(logPath, JSON.stringify({location:'authorizeMiddleware.js:63',message:'Access denied',data:{userId:req.user.id,userRole:role.name,roleId:role.id,allowedRoles,url:req.originalUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n');
-                } catch(e){}
-                // #endregion
                 console.warn('⚠️ [AUTH] Access denied:', {
                     userId: req.user.id,
                     userRole: role.name,

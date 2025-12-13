@@ -40,13 +40,6 @@ const authMiddleware = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
-        // #region agent log
-        const fs = require('fs');
-        const logPath = '/opt/lampp/htdocs/FixZone/.cursor/debug.log';
-        try {
-          fs.appendFileSync(logPath, JSON.stringify({location:'authMiddleware.js:42',message:'Token verified',data:{userId:decoded?.id,roleId:decoded?.roleId,role:decoded?.role,decodedKeys:Object.keys(decoded||{}),url:req.originalUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n');
-        } catch(e){}
-        // #endregion
         // console.log('✅ [AUTH] Token verified successfully for user:', { id: decoded.id, role: decoded.role });
         next();
     } catch (error) {

@@ -1,5 +1,25 @@
 const express = require('express');
 const router = express.Router();
+
+// Helper function to check if partsUsedId column exists
+let partsUsedIdColumnExists = null;
+async function checkPartsUsedIdColumn() {
+  if (partsUsedIdColumnExists !== null) return partsUsedIdColumnExists;
+  try {
+    const [columns] = await db.query(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'InspectionComponent' 
+      AND COLUMN_NAME = 'partsUsedId'
+    `);
+    partsUsedIdColumnExists = columns[0]?.count > 0;
+    return partsUsedIdColumnExists;
+  } catch (e) {
+    partsUsedIdColumnExists = false;
+    return false;
+  }
+}
 const { body, validationResult, param, query } = require('express-validator');
 const db = require('../db');
 const websocketService = require('../services/websocketService');
@@ -58,26 +78,34 @@ const checkValidation = (req, res, next) => {
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { reportId, componentType, status } = req.query;
-    // #region agent log
-    const fs = require('fs');
-    const logPath = '/opt/lampp/htdocs/FixZone/.cursor/debug.log';
-    try {
-      fs.appendFileSync(logPath, JSON.stringify({location:'inspectionComponents.js:60',message:'GET inspection components entry',data:{reportId,componentType,status,query:req.query},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');
-    } catch(e){}
-    // #endregion
+    
+    const hasPartsUsedId = await checkPartsUsedIdColumn();
     
     let query = `
       SELECT 
-        ic.*,
+        ic.*
+    `;
+    
+    if (hasPartsUsedId) {
+      query += `,
         pu.inventoryItemId,
         pu.quantity,
         ii.name as partName,
-        ii.sku as partSku
+        ii.sku as partSku`;
+    }
+    
+    query += `
       FROM InspectionComponent ic
+    `;
+    
+    if (hasPartsUsedId) {
+      query += `
       LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
       LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
-      WHERE 1=1
-    `;
+      `;
+    }
+    
+    query += `WHERE 1=1`;
     const params = [];
     
     if (reportId) {
@@ -95,27 +123,9 @@ router.get('/', authMiddleware, async (req, res) => {
     
     query += ' ORDER BY ic.priority DESC, ic.createdAt ASC';
     
-    // #region agent log
-    try {
-      fs.appendFileSync(logPath, JSON.stringify({location:'inspectionComponents.js:89',message:'Before executing query',data:{query,params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');
-    } catch(e){}
-    // #endregion
-    
     const [rows] = await db.query(query, params);
-    // #region agent log
-    try {
-      fs.appendFileSync(logPath, JSON.stringify({location:'inspectionComponents.js:92',message:'Query executed successfully',data:{rowsCount:rows?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');
-    } catch(e){}
-    // #endregion
     res.json({ success: true, data: rows });
   } catch (err) {
-    // #region agent log
-    const fs = require('fs');
-    const logPath = '/opt/lampp/htdocs/FixZone/.cursor/debug.log';
-    try {
-      fs.appendFileSync(logPath, JSON.stringify({location:'inspectionComponents.js:95',message:'Error fetching inspection components',data:{error:err?.message,stack:err?.stack,reportId:req.query?.reportId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');
-    } catch(e){}
-    // #endregion
     console.error('Error fetching inspection components:', err);
     res.status(500).json({ success: false, error: 'Server Error', details: err.message });
   }
@@ -129,18 +139,35 @@ router.get('/:id',
   async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query(`
+    const hasPartsUsedId = await checkPartsUsedIdColumn();
+    
+    let query = `
       SELECT 
-        ic.*,
+        ic.*
+    `;
+    
+    if (hasPartsUsedId) {
+      query += `,
         pu.inventoryItemId,
         pu.quantity,
         ii.name as partName,
-        ii.sku as partSku
+        ii.sku as partSku`;
+    }
+    
+    query += `
       FROM InspectionComponent ic
+    `;
+    
+    if (hasPartsUsedId) {
+      query += `
       LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
       LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
-      WHERE ic.id = ?
-    `, [id]);
+      `;
+    }
+    
+    query += `WHERE ic.id = ?`;
+    
+    const [rows] = await db.query(query, [id]);
     
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Inspection component not found' });
@@ -209,39 +236,52 @@ router.post('/',
       finalPriority = 'MEDIUM';
     }
     
+    const hasPartsUsedId = await checkPartsUsedIdColumn();
+    
+    // Build INSERT query based on available columns
+    let insertColumns = ['inspectionReportId', 'name', 'status', 'notes', 'priority', 'photo'];
+    let insertValues = [inspectionReportId, name, finalStatus, notes || null, finalPriority, photo || null];
+    
+    if (hasPartsUsedId) {
+      insertColumns.push('componentType', 'condition', 'estimatedCost', 'partsUsedId', 'isReplaced', 'replacedAt');
+      insertValues.push(componentType || null, condition || null, estimatedCost || null, partsUsedId || null, isReplaced ? 1 : 0, replacedAt || null);
+    }
+    
     const [result] = await db.query(
-      `INSERT INTO InspectionComponent 
-       (inspectionReportId, name, componentType, status, condition, notes, priority, photo, estimatedCost, partsUsedId, isReplaced, replacedAt) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        inspectionReportId, 
-        name, 
-        componentType || null,
-        finalStatus, 
-        condition || null,
-        notes || null, 
-        finalPriority, 
-        photo || null,
-        estimatedCost || null,
-        partsUsedId || null,
-        isReplaced ? 1 : 0,
-        replacedAt || null
-      ]
+      `INSERT INTO InspectionComponent (${insertColumns.join(', ')}) VALUES (${insertColumns.map(() => '?').join(', ')})`,
+      insertValues
     );
     
     // Fetch created component with joins
-    const [created] = await db.query(`
+    const hasPartsUsedIdForSelect = await checkPartsUsedIdColumn();
+    
+    let selectQuery = `
       SELECT 
-        ic.*,
+        ic.*
+    `;
+    
+    if (hasPartsUsedIdForSelect) {
+      selectQuery += `,
         pu.inventoryItemId,
         pu.quantity,
         ii.name as partName,
-        ii.sku as partSku
+        ii.sku as partSku`;
+    }
+    
+    selectQuery += `
       FROM InspectionComponent ic
-      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id AND pu.deletedAt IS NULL
-      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND ii.deletedAt IS NULL
-      WHERE ic.id = ?
-    `, [result.insertId]);
+    `;
+    
+    if (hasPartsUsedIdForSelect) {
+      selectQuery += `
+      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
+      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
+      `;
+    }
+    
+    selectQuery += `WHERE ic.id = ?`;
+    
+    const [created] = await db.query(selectQuery, [result.insertId]);
     
     // Send WebSocket notification
     try {
@@ -320,27 +360,23 @@ router.put('/:id',
       finalPriority = 'MEDIUM';
     }
     
+    const hasPartsUsedId = await checkPartsUsedIdColumn();
+    
+    // Build UPDATE query based on available columns
+    let updateFields = ['inspectionReportId = ?', 'name = ?', 'status = ?', 'notes = ?', 'priority = ?', 'photo = ?'];
+    let updateValues = [inspectionReportId, name, finalStatus, notes || null, finalPriority, photo || null];
+    
+    if (hasPartsUsedId) {
+      updateFields.push('componentType = ?', 'condition = ?', 'estimatedCost = ?', 'partsUsedId = ?', 'isReplaced = ?', 'replacedAt = ?');
+      updateValues.push(componentType || null, condition || null, estimatedCost || null, partsUsedId || null, isReplaced ? 1 : 0, replacedAt || null);
+    }
+    
+    updateFields.push('updatedAt = CURRENT_TIMESTAMP');
+    updateValues.push(id);
+    
     const [result] = await db.query(
-      `UPDATE InspectionComponent 
-       SET inspectionReportId = ?, name = ?, componentType = ?, status = ?, condition = ?, notes = ?, priority = ?, 
-           photo = ?, estimatedCost = ?, partsUsedId = ?, isReplaced = ?, replacedAt = ?, 
-           updatedAt = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [
-        inspectionReportId, 
-        name, 
-        componentType || null,
-        finalStatus, 
-        condition || null,
-        notes || null, 
-        finalPriority, 
-        photo || null,
-        estimatedCost || null,
-        partsUsedId || null,
-        isReplaced ? 1 : 0,
-        replacedAt || null,
-        id
-      ]
+      `UPDATE InspectionComponent SET ${updateFields.join(', ')} WHERE id = ?`,
+      updateValues
     );
     
     if (result.affectedRows === 0) {
@@ -348,18 +384,35 @@ router.put('/:id',
     }
     
     // Fetch updated component with joins
-    const [updated] = await db.query(`
+    const hasPartsUsedIdForSelect = await checkPartsUsedIdColumn();
+    
+    let selectQuery = `
       SELECT 
-        ic.*,
+        ic.*
+    `;
+    
+    if (hasPartsUsedIdForSelect) {
+      selectQuery += `,
         pu.inventoryItemId,
         pu.quantity,
         ii.name as partName,
-        ii.sku as partSku
+        ii.sku as partSku`;
+    }
+    
+    selectQuery += `
       FROM InspectionComponent ic
-      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id AND pu.deletedAt IS NULL
-      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND ii.deletedAt IS NULL
-      WHERE ic.id = ?
-    `, [id]);
+    `;
+    
+    if (hasPartsUsedIdForSelect) {
+      selectQuery += `
+      LEFT JOIN PartsUsed pu ON ic.partsUsedId = pu.id
+      LEFT JOIN InventoryItem ii ON pu.inventoryItemId = ii.id AND (ii.deletedAt IS NULL OR ii.deletedAt = '0000-00-00 00:00:00')
+      `;
+    }
+    
+    selectQuery += `WHERE ic.id = ?`;
+    
+    const [updated] = await db.query(selectQuery, [id]);
     
     // Send WebSocket notification
     try {
