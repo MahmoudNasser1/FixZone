@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
 import api from '../../services/api';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import {
     HelpCircle,
     ChevronDown,
@@ -172,10 +171,8 @@ export default function CustomerHelpPage() {
         .filter(cat => cat.faqs.length > 0);
 
     return (
-        <div className="min-h-screen bg-background pb-12">
-            <CustomerHeader user={user} notificationCount={notificationCount} />
-
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="p-4 sm:p-6 lg:p-8 pb-12">
+            <div className="max-w-4xl mx-auto">
                 {/* Page Title */}
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-brand-blue to-brand-blue-light">

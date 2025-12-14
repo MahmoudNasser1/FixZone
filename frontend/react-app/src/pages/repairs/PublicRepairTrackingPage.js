@@ -599,7 +599,7 @@ const PublicRepairTrackingPage = () => {
                 <Moon className="absolute h-5 w-5 sm:h-6 sm:w-6 top-2 right-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground" />
               </button>
               <img 
-                src="/logo.png" 
+                src="/Fav.png" 
                 alt="FixZone Logo" 
                 className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 object-contain flex-shrink-0"
                 onError={(e) => {

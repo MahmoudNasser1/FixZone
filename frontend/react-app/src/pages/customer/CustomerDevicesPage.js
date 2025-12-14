@@ -5,7 +5,6 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import { Package, Smartphone, Laptop, Tablet, Watch, PackageOpen } from 'lucide-react';
 
 /**
@@ -81,10 +80,8 @@ export default function CustomerDevicesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <CustomerHeader user={user} notificationCount={3} />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
                 {/* Page Title */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">

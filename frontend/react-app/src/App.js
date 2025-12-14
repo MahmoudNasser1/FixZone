@@ -118,6 +118,7 @@ import CustomerInvoiceDetailsPage from './pages/customer/CustomerInvoiceDetailsP
 import CustomerSettingsPage from './pages/customer/CustomerSettingsPage';
 import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPage';
 import CustomerHelpPage from './pages/customer/CustomerHelpPage';
+import CustomerLayout from './components/customer/CustomerLayout';
 
 // Technician Portal Pages
 import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
@@ -309,19 +310,21 @@ function App() {
               path="/customer/*"
               element={
                 <CustomerRoute>
-                  <Routes>
-                    <Route path="dashboard" element={<CustomerDashboard />} />
-                    <Route path="repairs" element={<CustomerRepairsPage />} />
-                    <Route path="repairs/:id" element={<CustomerRepairDetailsPage />} />
-                    <Route path="invoices" element={<CustomerInvoicesPage />} />
-                    <Route path="invoices/:id" element={<CustomerInvoiceDetailsPage />} />
-                    <Route path="devices" element={<CustomerDevicesPage />} />
-                    <Route path="profile" element={<CustomerProfilePage />} />
-                    <Route path="settings" element={<CustomerSettingsPage />} />
-                    <Route path="notifications" element={<CustomerNotificationsPage />} />
-                    <Route path="help" element={<CustomerHelpPage />} />
-                    <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
-                  </Routes>
+                  <CustomerLayout>
+                    <Routes>
+                      <Route path="dashboard" element={<CustomerDashboard />} />
+                      <Route path="repairs" element={<CustomerRepairsPage />} />
+                      <Route path="repairs/:id" element={<CustomerRepairDetailsPage />} />
+                      <Route path="invoices" element={<CustomerInvoicesPage />} />
+                      <Route path="invoices/:id" element={<CustomerInvoiceDetailsPage />} />
+                      <Route path="devices" element={<CustomerDevicesPage />} />
+                      <Route path="profile" element={<CustomerProfilePage />} />
+                      <Route path="settings" element={<CustomerSettingsPage />} />
+                      <Route path="notifications" element={<CustomerNotificationsPage />} />
+                      <Route path="help" element={<CustomerHelpPage />} />
+                      <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
+                    </Routes>
+                  </CustomerLayout>
                 </CustomerRoute>
               }
             />

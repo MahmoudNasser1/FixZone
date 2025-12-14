@@ -62,7 +62,7 @@ export default function SettingsDashboard() {
     address: contextSettings.company?.address || '',
     phone: contextSettings.company?.phone || '',
     website: contextSettings.company?.website || '',
-    logoUrl: contextSettings.company?.logoUrl || '/logo.png',
+    logoUrl: contextSettings.company?.logoUrl || '/Fav.png',
     // Currency
     currencyCode: contextSettings.currency?.code || 'EGP',
     currencySymbol: contextSettings.currency?.symbol || 'ج.م',
@@ -186,7 +186,7 @@ export default function SettingsDashboard() {
           address: contextSettings.company?.address || '',
           phone: contextSettings.company?.phone || '',
           website: contextSettings.company?.website || '',
-          logoUrl: contextSettings.company?.logoUrl || '/logo.png',
+          logoUrl: contextSettings.company?.logoUrl || '/Fav.png',
           currencyCode: contextSettings.currency?.code || 'EGP',
           currencySymbol: contextSettings.currency?.symbol || 'ج.م',
           currencyName: contextSettings.currency?.name || 'الجنيه المصري',
@@ -280,7 +280,7 @@ export default function SettingsDashboard() {
             address: form.address || '',
             phone: form.phone || '',
             website: form.website || '',
-            logoUrl: form.logoUrl || '/logo.png',
+            logoUrl: form.logoUrl || '/Fav.png',
           });
 
           // Update local context

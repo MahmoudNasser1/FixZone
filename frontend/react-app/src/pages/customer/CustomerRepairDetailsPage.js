@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import RepairTrackingTimeline from '../../components/customer/RepairTrackingTimeline';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
 import ServiceRatingModal from '../../components/customer/ServiceRatingModal';
+import ImageLightbox from '../../components/customer/ImageLightbox';
+import RepairShareModal from '../../components/customer/RepairShareModal';
 import {
     ArrowRight,
     MessageCircle,
@@ -20,7 +21,10 @@ import {
     CheckCircle,
     FileText,
     AlertCircle,
-    Image
+    Image,
+    Share2,
+    Printer,
+    Download
 } from 'lucide-react';
 
 /**
@@ -47,6 +51,9 @@ export default function CustomerRepairDetailsPage() {
     const [error, setError] = useState(null);
     const [showRatingModal, setShowRatingModal] = useState(false);
     const [notificationCount, setNotificationCount] = useState(0);
+    const [showLightbox, setShowLightbox] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     // Fetch repair details from API
     useEffect(() => {
@@ -168,20 +175,16 @@ export default function CustomerRepairDetailsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background">
-                <CustomerHeader user={user} notificationCount={notificationCount} />
-                <div className="flex justify-center items-center h-[60vh]">
-                    <LoadingSpinner />
-                </div>
+            <div className="flex justify-center items-center h-[60vh]">
+                <LoadingSpinner />
             </div>
         );
     }
 
     if (error || !repair) {
         return (
-            <div className="min-h-screen bg-background">
-                <CustomerHeader user={user} notificationCount={notificationCount} />
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-4xl mx-auto">
                     <div className="text-center py-16">
                         <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                         <h2 className="text-xl font-bold text-foreground mb-2">حدث خطأ</h2>
@@ -198,8 +201,23 @@ export default function CustomerRepairDetailsPage() {
         );
     }
 
+    // All images for lightbox
+    const allImages = attachments.map(att => ({
+        ...att,
+        category: att.type || att.category
+    }));
+
+    const openLightbox = (index) => {
+        setLightboxIndex(index);
+        setShowLightbox(true);
+    };
+
+    const handlePrint = () => {
+        window.open(`/repairs/${id}/print`, '_blank');
+    };
+
     return (
-        <div className="min-h-screen bg-background pb-12">
+        <div className="p-4 sm:p-6 lg:p-8 pb-12">
             <ServiceRatingModal
                 isOpen={showRatingModal}
                 onClose={() => setShowRatingModal(false)}
@@ -210,9 +228,21 @@ export default function CustomerRepairDetailsPage() {
                 }}
             />
 
-            <CustomerHeader user={user} notificationCount={notificationCount} />
+            <ImageLightbox
+                images={allImages}
+                initialIndex={lightboxIndex}
+                isOpen={showLightbox}
+                onClose={() => setShowLightbox(false)}
+            />
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <RepairShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                repairId={repair.id}
+                repairInfo={{ device: repair.device }}
+            />
+
+            <div className="max-w-4xl mx-auto">
 
                 {/* Back Button */}
                 <button
@@ -231,7 +261,21 @@ export default function CustomerRepairDetailsPage() {
                             تم الاستلام في {repair.receivedDate ? new Date(repair.receivedDate).toLocaleDateString('ar-EG') : 'غير محدد'}
                         </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setShowShareModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-light transition-colors shadow-sm font-bold"
+                        >
+                            <Share2 className="w-5 h-5" />
+                            <span className="hidden sm:inline">مشاركة</span>
+                        </button>
+                        <button
+                            onClick={handlePrint}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-bold"
+                        >
+                            <Printer className="w-5 h-5" />
+                            <span className="hidden sm:inline">طباعة</span>
+                        </button>
                         <button
                             onClick={handleContactSupport}
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm font-bold"
@@ -366,30 +410,32 @@ export default function CustomerRepairDetailsPage() {
                                 </span>
                                 {beforeImages.length > 0 ? (
                                     <div className="grid gap-3">
-                                        {beforeImages.map((img, index) => (
-                                            <div 
-                                                key={img.id || index}
-                                                className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
-                                                onClick={() => window.open(img.url || img.path, '_blank')}
-                                            >
-                                                <img 
-                                                    src={img.url || img.path} 
-                                                    alt={`قبل الإصلاح ${index + 1}`}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'flex';
-                                                    }}
-                                                />
-                                                <div className="hidden items-center justify-center absolute inset-0 bg-muted">
-                                                    <Smartphone className="w-12 h-12 text-muted-foreground" />
+                                        {beforeImages.map((img, index) => {
+                                            const globalIndex = allImages.findIndex(a => a.id === img.id || (a.url === img.url && a.path === img.path));
+                                            return (
+                                                <div 
+                                                    key={img.id || index}
+                                                    className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
+                                                    onClick={() => openLightbox(globalIndex >= 0 ? globalIndex : index)}
+                                                >
+                                                    <img 
+                                                        src={img.url || img.path} 
+                                                        alt={`قبل الإصلاح ${index + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                    <div className="hidden items-center justify-center absolute inset-0 bg-muted">
+                                                        <Smartphone className="w-12 h-12 text-muted-foreground" />
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity flex items-center justify-center">
+                                                        <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-sm">اضغط للتكبير</span>
+                                                    </div>
                                                 </div>
-                                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
-                                                <p className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-                                                    اضغط للتكبير
-                                                </p>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center">
@@ -411,30 +457,32 @@ export default function CustomerRepairDetailsPage() {
                                 </span>
                                 {afterImages.length > 0 ? (
                                     <div className="grid gap-3">
-                                        {afterImages.map((img, index) => (
-                                            <div 
-                                                key={img.id || index}
-                                                className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
-                                                onClick={() => window.open(img.url || img.path, '_blank')}
-                                            >
-                                                <img 
-                                                    src={img.url || img.path} 
-                                                    alt={`بعد الإصلاح ${index + 1}`}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'flex';
-                                                    }}
-                                                />
-                                                <div className="hidden items-center justify-center absolute inset-0 bg-muted">
-                                                    <CheckCircle className="w-12 h-12 text-green-500" />
+                                        {afterImages.map((img, index) => {
+                                            const globalIndex = allImages.findIndex(a => a.id === img.id || (a.url === img.url && a.path === img.path));
+                                            return (
+                                                <div 
+                                                    key={img.id || index}
+                                                    className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
+                                                    onClick={() => openLightbox(globalIndex >= 0 ? globalIndex : index)}
+                                                >
+                                                    <img 
+                                                        src={img.url || img.path} 
+                                                        alt={`بعد الإصلاح ${index + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                    <div className="hidden items-center justify-center absolute inset-0 bg-muted">
+                                                        <CheckCircle className="w-12 h-12 text-green-500" />
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity flex items-center justify-center">
+                                                        <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-sm">اضغط للتكبير</span>
+                                                    </div>
                                                 </div>
-                                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
-                                                <p className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-                                                    اضغط للتكبير
-                                                </p>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center">

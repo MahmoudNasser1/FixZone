@@ -10,7 +10,7 @@ export const defaultSettings = {
     country: 'مصر',
     phone: '01270388043',
     website: '',
-    logoUrl: '/logo.png',
+    logoUrl: '/Fav.png',
   },
   currency: {
     code: 'EGP',

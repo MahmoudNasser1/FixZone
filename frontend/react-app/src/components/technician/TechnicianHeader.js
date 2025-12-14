@@ -78,7 +78,7 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
 
                     {/* Logo & Brand */}
                     <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="FixZone Logo" className="h-10 w-auto" />
+                        <img src="/Fav.png" alt="FixZone Logo" className="h-10 w-auto" />
                         <div className="hidden md:block">
                             <h1 className="text-xl font-bold text-foreground">FixZone</h1>
                             <p className="text-xs text-muted-foreground font-medium">بوابة الفنيين</p>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import api from '../../services/api';
 import { useTheme } from '../../components/ThemeProvider';
 import { Settings as SettingsIcon, Lock, Bell, Globe, Trash2, Save } from 'lucide-react';
@@ -95,10 +94,8 @@ export default function CustomerSettingsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-background">
-            <CustomerHeader user={user} notificationCount={3} />
-
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto">
                 {/* Page Title */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">

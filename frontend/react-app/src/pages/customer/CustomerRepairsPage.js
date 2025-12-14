@@ -1,35 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import RepairCard from '../../components/customer/RepairCard';
-import RepairFilters from '../../components/customer/RepairFilters';
-import { Wrench, PackageOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import RepairFiltersAdvanced from '../../components/customer/RepairFiltersAdvanced';
+import RepairViewToggle from '../../components/customer/RepairViewToggle';
+import { SkeletonCard } from '../../components/customer/SkeletonDashboard';
+import { 
+    Wrench, PackageOpen, ChevronLeft, ChevronRight,
+    Calendar, Clock, CheckCircle, AlertCircle
+} from 'lucide-react';
 
 /**
- * 📋 Customer Repairs Page
+ * CustomerRepairsPage - Enhanced Repairs List
  * 
- * المميزات:
- * - قائمة بجميع طلبات الإصلاح
- * - فلترة حسب الحالة
- * - بحث
- * - Pagination
- * - Brand colors
+ * Features:
+ * - Advanced filtering with date range
+ * - Multiple view modes (grid, list, timeline)
+ * - Skeleton loading states
+ * - URL-based filter state
  */
 
 export default function CustomerRepairsPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const notifications = useNotifications();
     const user = useAuthStore((state) => state.user);
 
     const [repairs, setRepairs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState(searchParams.get('status') || 'all');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+    const [sortBy, setSortBy] = useState('newest');
+    const [viewMode, setViewMode] = useState(localStorage.getItem('repairViewMode') || 'grid');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
@@ -40,9 +45,8 @@ export default function CustomerRepairsPage() {
         completedRepairs: 0,
         cancelledRepairs: 0
     });
-    const [notificationCount, setNotificationCount] = useState(0);
 
-    const itemsPerPage = 9;
+    const itemsPerPage = viewMode === 'list' ? 10 : 9;
 
     // Initial load - check auth and load stats
     useEffect(() => {
@@ -58,7 +62,6 @@ export default function CustomerRepairsPage() {
 
         // Load stats once
         loadStats();
-        loadNotificationCount();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -68,7 +71,20 @@ export default function CustomerRepairsPage() {
             loadRepairs();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, activeFilter, searchQuery]);
+    }, [currentPage, activeFilter, searchQuery, sortBy]);
+
+    // Save view mode preference
+    useEffect(() => {
+        localStorage.setItem('repairViewMode', viewMode);
+    }, [viewMode]);
+
+    // Update URL params when filter changes
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (activeFilter !== 'all') params.set('status', activeFilter);
+        if (searchQuery) params.set('search', searchQuery);
+        setSearchParams(params, { replace: true });
+    }, [activeFilter, searchQuery, setSearchParams]);
 
     const loadStats = async () => {
         try {
@@ -84,17 +100,6 @@ export default function CustomerRepairsPage() {
             }
         } catch (error) {
             console.warn('Failed to load stats:', error);
-        }
-    };
-
-    const loadNotificationCount = async () => {
-        try {
-            const response = await api.getCustomerNotifications({ unreadOnly: 'true', limit: 1 });
-            if (response.success && response.data) {
-                setNotificationCount(response.data.unreadCount || 0);
-            }
-        } catch (error) {
-            console.warn('Failed to load notification count:', error);
         }
     };
 
@@ -119,12 +124,26 @@ export default function CustomerRepairsPage() {
                 params.search = searchQuery.trim();
             }
 
+            // Add sort parameter
+            if (sortBy === 'oldest') {
+                params.sort = 'asc';
+            }
+
             const response = await api.getCustomerRepairs(params);
 
             if (response.success) {
-                const { repairs, pagination } = response.data;
+                let repairsList = response.data.repairs || [];
+                const pagination = response.data.pagination;
                 
-                setRepairs(repairs || []);
+                // Client-side sort if API doesn't support it
+                if (sortBy === 'status') {
+                    const statusOrder = ['pending', 'in_progress', 'waiting-parts', 'ready-for-pickup', 'completed', 'delivered', 'cancelled'];
+                    repairsList = [...repairsList].sort((a, b) => {
+                        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+                    });
+                }
+                
+                setRepairs(repairsList);
                 setTotalPages(pagination?.totalPages || 1);
                 setTotalItems(pagination?.totalItems || 0);
             } else {
@@ -139,6 +158,16 @@ export default function CustomerRepairsPage() {
         }
     };
 
+    const handleFilterChange = (filter) => {
+        setActiveFilter(filter);
+        setCurrentPage(1);
+    };
+
+    const handleSearchChange = (query) => {
+        setSearchQuery(query);
+        setCurrentPage(1);
+    };
+
     const goToPage = (page) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page);
@@ -146,26 +175,51 @@ export default function CustomerRepairsPage() {
         }
     };
 
-    if (loading) {
+    // Skeleton loading state
+    if (loading && repairs.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <LoadingSpinner />
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto">
+                    {/* Page Title Skeleton */}
+                    <div className="mb-6 flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-muted animate-pulse" />
+                        <div>
+                            <div className="h-6 w-40 bg-muted rounded animate-pulse mb-2" />
+                            <div className="h-4 w-60 bg-muted rounded animate-pulse" />
+                        </div>
+                    </div>
+
+                    {/* Filter Skeleton */}
+                    <div className="mb-6 h-12 bg-muted rounded-xl animate-pulse" />
+
+                    {/* Grid Skeleton */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <SkeletonCard key={i} />
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            <CustomerHeader user={user} notificationCount={notificationCount} />
+    // Get status badge for timeline view
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'pending': return <Clock className="w-4 h-4 text-amber-500" />;
+            case 'in_progress': return <Wrench className="w-4 h-4 text-blue-500" />;
+            case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
+            default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
+        }
+    };
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    return (
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
                 {/* Page Title */}
-                <div className="mb-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-blue to-brand-blue-light"
-                        >
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-blue to-brand-blue-light">
                             <Wrench className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -173,31 +227,37 @@ export default function CustomerRepairsPage() {
                             <p className="text-sm text-muted-foreground">إدارة ومتابعة طلبات إصلاح الأجهزة</p>
                         </div>
                     </div>
+                    
+                    {/* View Toggle */}
+                    <RepairViewToggle activeView={viewMode} onViewChange={setViewMode} />
                 </div>
 
-                {/* Filters */}
-                <RepairFilters
+                {/* Advanced Filters */}
+                <RepairFiltersAdvanced
                     activeFilter={activeFilter}
-                    onFilterChange={setActiveFilter}
+                    onFilterChange={handleFilterChange}
                     searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
+                    onSearchChange={handleSearchChange}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
                     stats={stats}
                 />
 
                 {/* Results Count */}
-                <div className="mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
                         عرض <span className="font-semibold">{repairs.length}</span> من{' '}
                         <span className="font-semibold">{totalItems}</span> طلب
                     </p>
+                    {loading && (
+                        <div className="w-4 h-4 border-2 border-brand-blue border-t-transparent rounded-full animate-spin" />
+                    )}
                 </div>
 
-                {/* Repairs Grid */}
+                {/* Repairs Display */}
                 {repairs.length === 0 ? (
                     <div className="text-center py-16">
-                        <div
-                            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted"
-                        >
+                        <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted">
                             <PackageOpen className="w-10 h-10 text-gray-400" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -211,25 +271,117 @@ export default function CustomerRepairsPage() {
                                     : 'لم تقم بإضافة أي طلبات إصلاح بعد'
                             }
                         </p>
-                        {activeFilter !== 'all' || searchQuery ? (
+                        {(activeFilter !== 'all' || searchQuery) && (
                             <button
                                 onClick={() => {
-                                    setActiveFilter('all');
-                                    setSearchQuery('');
+                                    handleFilterChange('all');
+                                    handleSearchChange('');
                                 }}
                                 className="px-6 py-2 rounded-lg font-medium transition-colors bg-gradient-to-r from-brand-blue to-brand-blue-light text-white hover:from-brand-blue-light hover:to-brand-blue"
                             >
                                 إظهار الكل
                             </button>
-                        ) : null}
+                        )}
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                            {repairs.map((repair) => (
-                                <RepairCard key={repair.id} repair={repair} />
-                            ))}
-                        </div>
+                        {/* Grid View */}
+                        {viewMode === 'grid' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                {repairs.map((repair) => (
+                                    <RepairCard key={repair.id} repair={repair} />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* List View */}
+                        {viewMode === 'list' && (
+                            <div className="space-y-3 mb-8">
+                                {repairs.map((repair) => (
+                                    <div
+                                        key={repair.id}
+                                        onClick={() => navigate(`/customer/repairs/${repair.id}`)}
+                                        className="bg-card rounded-xl p-4 border border-border hover:border-brand-blue hover:shadow-md transition-all cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-blue to-brand-blue-light flex items-center justify-center flex-shrink-0">
+                                                <Wrench className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-bold text-foreground">طلب #{repair.id}</span>
+                                                    <span className="text-sm text-muted-foreground">•</span>
+                                                    <span className="text-sm text-muted-foreground">{repair.deviceType || 'جهاز'}</span>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground truncate">
+                                                    {repair.issueDescription || 'لا يوجد وصف'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {repair.estimatedCost && (
+                                                    <span className="text-sm font-bold text-brand-blue hidden sm:block">
+                                                        {repair.estimatedCost} جنيه
+                                                    </span>
+                                                )}
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                    repair.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    repair.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    repair.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                                }`}>
+                                                    {repair.status === 'completed' ? 'مكتمل' :
+                                                     repair.status === 'in_progress' ? 'قيد التنفيذ' :
+                                                     repair.status === 'pending' ? 'قيد الانتظار' :
+                                                     repair.status}
+                                                </span>
+                                                <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Timeline View */}
+                        {viewMode === 'timeline' && (
+                            <div className="relative mb-8">
+                                {/* Timeline line */}
+                                <div className="absolute top-0 bottom-0 right-6 w-0.5 bg-border" />
+                                
+                                <div className="space-y-6">
+                                    {repairs.map((repair, index) => (
+                                        <div key={repair.id} className="relative flex gap-4">
+                                            {/* Timeline dot */}
+                                            <div className="relative z-10 w-12 h-12 rounded-full bg-card border-2 border-brand-blue flex items-center justify-center flex-shrink-0">
+                                                {getStatusIcon(repair.status)}
+                                            </div>
+                                            
+                                            {/* Content */}
+                                            <div 
+                                                onClick={() => navigate(`/customer/repairs/${repair.id}`)}
+                                                className="flex-1 bg-card rounded-xl p-4 border border-border hover:border-brand-blue hover:shadow-md transition-all cursor-pointer"
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div>
+                                                        <span className="font-bold text-foreground">طلب #{repair.id}</span>
+                                                        <span className="text-sm text-muted-foreground mr-2">
+                                                            {repair.deviceType || 'جهاز'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        {new Date(repair.createdAt).toLocaleDateString('ar-EG')}
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                                    {repair.issueDescription || 'لا يوجد وصف'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Pagination */}
                         {totalPages > 1 && (
@@ -242,16 +394,27 @@ export default function CustomerRepairsPage() {
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
 
-                                {[...Array(totalPages)].map((_, index) => {
-                                    const page = index + 1;
+                                {[...Array(Math.min(totalPages, 5))].map((_, index) => {
+                                    let page;
+                                    if (totalPages <= 5) {
+                                        page = index + 1;
+                                    } else if (currentPage <= 3) {
+                                        page = index + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        page = totalPages - 4 + index;
+                                    } else {
+                                        page = currentPage - 2 + index;
+                                    }
+
                                     return (
                                         <button
                                             key={page}
                                             onClick={() => goToPage(page)}
-                                            className={`w-10 h-10 rounded-lg font-medium transition-all ${currentPage === page
+                                            className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                                                currentPage === page
                                                     ? 'bg-gradient-to-r from-brand-blue to-brand-blue-light text-white border-brand-blue'
                                                     : 'bg-card text-foreground border-border hover:border-brand-blue'
-                                                } border`}
+                                            } border`}
                                         >
                                             {page}
                                         </button>

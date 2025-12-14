@@ -5,7 +5,6 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import { User, Mail, Phone, MapPin, Save, X } from 'lucide-react';
 
 /**
@@ -128,10 +127,8 @@ export default function CustomerProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <CustomerHeader user={user} notificationCount={3} />
-
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto">
                 {/* Page Title */}
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-foreground mb-2">الملف الشخصي</h1>

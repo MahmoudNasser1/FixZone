@@ -194,7 +194,7 @@ const EnhancedLoginPage = () => {
                     {/* Logo الحقيقي */}
                     <div className="mx-auto mb-4 flex items-center justify-center">
                         <img
-                            src="/logo.png"
+                            src="/Fav.png"
                             alt="FixZone Logo"
                             className="h-20 w-auto object-contain"
                             onError={(e) => {

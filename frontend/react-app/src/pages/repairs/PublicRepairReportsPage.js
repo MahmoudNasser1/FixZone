@@ -147,7 +147,7 @@ const PublicRepairReportsPage = () => {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-3 space-x-reverse flex-shrink-0">
               <img 
-                src="/logo.png" 
+                src="/Fav.png" 
                 alt="FixZone Logo" 
                 className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 object-contain flex-shrink-0"
                 onError={(e) => {

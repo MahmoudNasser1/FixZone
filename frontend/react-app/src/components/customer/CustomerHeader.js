@@ -181,7 +181,7 @@ export default function CustomerHeader({ user, notificationCount: initialCount =
                         {/* Logo */}
                         <div className="flex items-center">
                             <img
-                                src="/logo.png"
+                                src="/Fav.png"
                                 alt="FixZone"
                                 className="h-10 w-auto object-contain"
                                 onError={(e) => {

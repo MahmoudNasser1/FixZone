@@ -16,7 +16,7 @@ export default function RepairQRPrintPage() {
   const BRAND = useMemo(() => ({
     name: settings.company?.name || 'FixZone',
     subtitle: 'نظام إدارة الإصلاحات',
-    logo: settings.company?.logoUrl || '/logo.png',
+    logo: settings.company?.logoUrl || '/Fav.png',
     contact: {
       address: settings.company?.address || '',
       phone: settings.company?.phone || '',

@@ -5,17 +5,17 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
 import { isCustomerRole } from '../../constants/roles';
-import CustomerHeader from '../../components/customer/CustomerHeader';
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 import EnhancedStatsCard from '../../components/customer/EnhancedStatsCard';
 import QuickActionCard from '../../components/customer/QuickActionCard';
+import SkeletonDashboard from '../../components/customer/SkeletonDashboard';
+import DashboardAlertBanner from '../../components/customer/DashboardAlertBanner';
 import {
   Wrench, FileText, CreditCard, Package,
   Clock, CheckCircle, XCircle, AlertCircle,
-  Plus, Search, Phone
+  Plus, Search, Phone, MessageCircle
 } from 'lucide-react';
 
 export default function CustomerDashboard() {
@@ -32,12 +32,14 @@ export default function CustomerDashboard() {
     totalRepairs: 0,
     activeRepairs: 0,
     completedRepairs: 0,
+    readyForPickup: 0,
     totalInvoices: 0,
     pendingInvoices: 0,
     paidInvoices: 0,
     totalDevices: 0
   });
   const [showPasswordReminder, setShowPasswordReminder] = useState(false);
+  const [showAlertBanner, setShowAlertBanner] = useState(true);
 
   // Use ref to prevent multiple calls
   const loadingRef = useRef(false);
@@ -173,12 +175,16 @@ export default function CustomerDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
+
+  // Get personalized greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 18) return 'مساء الخير';
+    return 'مساء الخير';
+  };
 
   return (
     <>
@@ -190,11 +196,11 @@ export default function CustomerDashboard() {
               سعيدين بانضمامك! لتأمين حسابك، نقترح تغيير كلمة المرور المؤقتة الآن من الإعدادات.
             </ModalDescription>
           </ModalHeader>
-          <div className="text-sm text-gray-700 space-y-2 py-2">
+          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2 py-2">
             <p>
               الكلمة الحالية مُنشأة تلقائيًا ومربوطة ببياناتك لتسهيل الدخول الأول. اضغط على "تغيير كلمة المرور الآن" وهنوديك مباشرة للإعدادات.
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               لو حبيت تأجل، اضغط "أذكرني لاحقاً"؛ التنبيه هيظهر مرة ثانية في الزيارة القادمة لغاية ما تغيرها.
             </p>
           </div>
@@ -218,11 +224,27 @@ export default function CustomerDashboard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      <div className="min-h-screen bg-background">
-        {/* Enhanced Header */}
-        <CustomerHeader user={user} notificationCount={3} />
+      
+      <div className="p-4 sm:p-6 lg:p-8">
+        {/* Welcome Banner */}
+        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-l from-brand-blue to-brand-blue-light text-white">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">
+            {getGreeting()}، {user?.name?.split(' ')[0] || 'عميلنا العزيز'} 👋
+          </h1>
+          <p className="text-white/90">
+            مرحباً بك في بوابة Fix Zone. يمكنك متابعة طلبات الإصلاح والفواتير من هنا.
+          </p>
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Alert Banner */}
+          {showAlertBanner && (
+            <DashboardAlertBanner 
+              stats={stats} 
+              onDismiss={() => setShowAlertBanner(false)} 
+            />
+          )}
+
           {/* Stats Cards - Enhanced */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <EnhancedStatsCard
@@ -291,10 +313,10 @@ export default function CustomerDashboard() {
                 badge={stats.pendingInvoices > 0 ? stats.pendingInvoices : null}
               />
               <QuickActionCard
-                icon={Phone}
+                icon={MessageCircle}
                 label="تواصل معنا"
                 gradient="linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
-                onClick={() => window.open('tel:+201234567890')}
+                onClick={() => window.open('https://api.whatsapp.com/send/?phone=%2B201270388043', '_blank')}
               />
             </div>
           </div>

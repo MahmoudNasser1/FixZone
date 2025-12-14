@@ -23,13 +23,19 @@ router.use(ensureCustomer);
 router.get('/', async (req, res) => {
     try {
         const userId = req.user.id;
-        const { page = 1, limit = 20, unreadOnly } = req.query;
+        const { page = 1, limit = 20, unreadOnly, type } = req.query;
 
         let query = 'SELECT * FROM Notification WHERE userId = ?';
         const params = [userId];
 
         if (unreadOnly === 'true') {
             query += ' AND isRead = 0';
+        }
+
+        // Filter by notification type
+        if (type && type !== 'all') {
+            query += ' AND type = ?';
+            params.push(type);
         }
 
         query += ' ORDER BY createdAt DESC';
@@ -50,6 +56,11 @@ router.get('/', async (req, res) => {
 
         if (unreadOnly === 'true') {
             countQuery += ' AND isRead = 0';
+        }
+
+        if (type && type !== 'all') {
+            countQuery += ' AND type = ?';
+            countParams.push(type);
         }
 
         const [countResult] = await db.execute(countQuery, countParams);
@@ -135,6 +146,39 @@ router.put('/read-all', async (req, res) => {
 
     } catch (error) {
         console.error('Error marking all notifications as read:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            code: 'SERVER_ERROR'
+        });
+    }
+});
+
+// DELETE /api/customer/notifications/:id
+router.delete('/:id', async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const notificationId = req.params.id;
+
+        const [result] = await db.execute(
+            'DELETE FROM Notification WHERE id = ? AND userId = ?',
+            [notificationId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Notification not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Notification deleted'
+        });
+
+    } catch (error) {
+        console.error('Error deleting notification:', error);
         res.status(500).json({
             success: false,
             message: 'Server Error',

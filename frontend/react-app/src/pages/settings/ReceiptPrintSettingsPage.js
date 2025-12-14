@@ -11,7 +11,7 @@ export default function ReceiptPrintSettingsPage() {
     const [print, setPrint] = useState({
         title: 'إيصال استلام',
         showLogo: true,
-        logoUrl: '/assets/logo.png',
+        logoUrl: '/Fav.png',
         showQr: true,
         qrSize: 180,
         showDevicePassword: false,
