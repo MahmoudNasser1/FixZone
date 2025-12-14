@@ -5,12 +5,25 @@ const db = require('../db');
 // Get all inspection types (excluding soft-deleted ones)
 router.get('/', async (req, res) => {
   try {
-    // Get all non-deleted types, ordered by name
-    // Note: We don't filter by isActive here to show all available types
+    // Get all non-deleted types, ordered by display order (مبدئي -> أثناء الإصلاح -> نهائي)
+    // Remove duplicates by selecting only the first occurrence of each name
     const [rows] = await db.query(`
-      SELECT * FROM InspectionType 
-      WHERE deletedAt IS NULL 
-      ORDER BY name ASC
+      SELECT t1.* FROM InspectionType t1
+      INNER JOIN (
+        SELECT name, MIN(id) as min_id
+        FROM InspectionType 
+        WHERE deletedAt IS NULL
+        GROUP BY name
+      ) t2 ON t1.name = t2.name AND t1.id = t2.min_id
+      WHERE t1.deletedAt IS NULL
+      ORDER BY 
+        CASE t1.name
+          WHEN 'فحص مبدئي' THEN 1
+          WHEN 'فحص أثناء الإصلاح' THEN 2
+          WHEN 'فحص نهائي' THEN 3
+          ELSE 4
+        END,
+        t1.name ASC
     `);
     res.json(rows);
   } catch (err) {

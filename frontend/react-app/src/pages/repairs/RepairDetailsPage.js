@@ -4008,6 +4008,44 @@ const RepairDetailsPage = () => {
 
                               {/* Inspection Components */}
                               <div className="mt-4 pt-4 border-t border-gray-200">
+                                {report.inspectionTypeName === 'فحص نهائي' && (
+                                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-sm text-blue-800 mb-2">
+                                      يمكنك تحميل قائمة المكونات الافتراضية للفحص النهائي
+                                    </p>
+                                    <SimpleButton 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={async () => {
+                                        try {
+                                          // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
+                                          const deviceType = repair?.deviceType?.toLowerCase() || 'all';
+                                          console.log('[RepairDetails] Device type:', deviceType);
+                                          
+                                          // تحويل LAPTOP -> laptop, PHONE -> phone, إلخ
+                                          const deviceCategory = deviceType === 'laptop' ? 'laptop' : 
+                                                                 deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
+                                                                 deviceType === 'tablet' ? 'tablet' : 'all';
+                                          console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
+                                          
+                                          const response = await apiService.loadFinalInspectionComponents(report.id, deviceCategory);
+                                          console.log('[RepairDetails] Load components response:', response);
+                                          
+                                          notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية' });
+                                          // إعادة تحميل المكونات
+                                          await loadInspectionReports();
+                                        } catch (error) {
+                                          console.error('Error loading templates:', error);
+                                          const errorMessage = error?.response?.data?.error || error?.message || 'فشل تحميل القوالب';
+                                          notifications.error('خطأ', { message: errorMessage });
+                                        }
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4 ml-1" />
+                                      تحميل قائمة المكونات الافتراضية
+                                    </SimpleButton>
+                                  </div>
+                                )}
                                 <InspectionComponentsList 
                                   reportId={report.id} 
                                   onComponentUpdate={() => {
@@ -4983,7 +5021,7 @@ const RepairDetailsPage = () => {
                       <option value="">{inspectionTypesLoading ? 'جاري التحميل...' : 'اختر النوع...'}</option>
                       {inspectionTypes.map((type) => (
                         <option key={type.id} value={type.id}>
-                          {type.name}
+                          {type.name} {type.description ? `- ${type.description}` : ''}
                         </option>
                       ))}
                     </select>
@@ -5026,6 +5064,24 @@ const RepairDetailsPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* زر تحميل المكونات الجاهزة للفحص النهائي */}
+              {inspectionForm.inspectionTypeId && 
+               inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId))?.name === 'فحص نهائي' && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h5 className="text-sm font-semibold text-blue-900 mb-1">قائمة المكونات الجاهزة</h5>
+                      <p className="text-xs text-blue-700 mb-3">
+                        بعد حفظ التقرير، يمكنك تحميل قائمة المكونات الافتراضية (الكاميرا، WiFi، الشاشة، إلخ)
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Wrench className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* تفاصيل التقرير */}
               <div className="space-y-4">
@@ -5186,39 +5242,95 @@ const RepairDetailsPage = () => {
                         
                         // Update existing report
                         console.log('[InspectionReport] Updating report with payload:', payload);
-                        const response = await apiService.request(`/inspectionreports/${editingReport.id}`, {
+                        await apiService.request(`/inspectionreports/${editingReport.id}`, {
                           method: 'PUT',
                           body: JSON.stringify(payload)
                         });
-                        console.log('[InspectionReport] Report updated successfully:', response);
+                        console.log('[InspectionReport] Report updated successfully');
+                        
+                        setInspectionOpen(false);
+                        setEditingReport(null);
+                        
+                        // إعادة تعيين النموذج
+                        setInspectionForm({
+                          inspectionTypeId: '',
+                          technicianId: '',
+                          reportDate: new Date().toISOString().slice(0, 10),
+                          summary: '',
+                          result: '',
+                          recommendations: '',
+                          notes: '',
+                        });
+                        setInspectionError('');
+                        
+                        // إعادة تحميل البيانات
+                        await fetchRepairDetails();
+                        await loadInspectionReports();
+                        
                         notifications.success('تم', { message: 'تم تحديث تقرير الفحص بنجاح' });
                       } else {
                         // Create new report
                         console.log('[InspectionReport] Creating report with payload:', payload);
                         const response = await apiService.createInspectionReport(payload);
                         console.log('[InspectionReport] Report created successfully:', response);
-                        notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
+                        
+                        // حفظ ID التقرير الجديد
+                        const createdReportId = response?.id || response?.data?.id;
+                        const selectedType = inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId));
+                        
+                        setInspectionOpen(false);
+                        setEditingReport(null);
+                        
+                        // إعادة تعيين النموذج
+                        setInspectionForm({
+                          inspectionTypeId: '',
+                          technicianId: '',
+                          reportDate: new Date().toISOString().slice(0, 10),
+                          summary: '',
+                          result: '',
+                          recommendations: '',
+                          notes: '',
+                        });
+                        setInspectionError('');
+                        
+                        // إعادة تحميل البيانات
+                        await fetchRepairDetails();
+                        // Always reload reports after creating/updating to get fresh data with all joins
+                        await loadInspectionReports();
+                        
+                        // إذا كان نوع الفحص "فحص نهائي"، عرض خيار تحميل القوالب
+                        if (selectedType?.name === 'فحص نهائي' && createdReportId) {
+                          // عرض رسالة مع خيار تحميل القوالب
+                          setTimeout(() => {
+                            if (window.confirm('تم حفظ تقرير الفحص النهائي بنجاح!\n\nهل تريد تحميل قائمة المكونات الافتراضية الآن؟')) {
+                              (async () => {
+                                try {
+                                  // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
+                                  const deviceType = repair?.deviceType?.toLowerCase() || 'all';
+                                  console.log('[RepairDetails] Device type:', deviceType);
+                                  
+                                  const deviceCategory = deviceType === 'laptop' ? 'laptop' : 
+                                                         deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
+                                                         deviceType === 'tablet' ? 'tablet' : 'all';
+                                  console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
+                                  
+                                  const response = await apiService.loadFinalInspectionComponents(createdReportId, deviceCategory);
+                                  console.log('[RepairDetails] Load components response:', response);
+                                  
+                                  notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية بنجاح' });
+                                  await loadInspectionReports();
+                                } catch (error) {
+                                  console.error('Error loading templates:', error);
+                                  const errorMessage = error?.response?.data?.error || error?.message || 'فشل تحميل القوالب';
+                                  notifications.error('خطأ', { message: errorMessage });
+                                }
+                              })();
+                            }
+                          }, 500);
+                        } else {
+                          notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
+                        }
                       }
-                      
-                      setInspectionOpen(false);
-                      setEditingReport(null);
-                      
-                      // إعادة تعيين النموذج
-                      setInspectionForm({
-                        inspectionTypeId: '',
-                        technicianId: '',
-                        reportDate: new Date().toISOString().slice(0, 10),
-                        summary: '',
-                        result: '',
-                        recommendations: '',
-                        notes: '',
-                      });
-                      setInspectionError('');
-                      
-                      // إعادة تحميل البيانات
-                      await fetchRepairDetails();
-                      // Always reload reports after creating/updating to get fresh data with all joins
-                      await loadInspectionReports();
                       
                       // إعطاء وقت للـ WebSocket notification للوصول
                       setTimeout(() => {

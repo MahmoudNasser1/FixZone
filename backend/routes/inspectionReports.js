@@ -553,6 +553,122 @@ router.delete('/:id',
   }
 });
 
+// Load final inspection components from templates
+router.post('/:id/load-final-inspection-components', authMiddleware, authorizeMiddleware([1, 2, 3, 4]), async (req, res) => {
+  const { id } = req.params;
+  const { deviceCategory = 'all' } = req.body;
+  
+  try {
+    // التحقق من أن التقرير موجود ونوعه "فحص نهائي"
+    const [report] = await db.query(`
+      SELECT ir.*, it.name as inspectionTypeName 
+      FROM InspectionReport ir
+      LEFT JOIN InspectionType it ON ir.inspectionTypeId = it.id AND (it.deletedAt IS NULL OR it.deletedAt = '0000-00-00 00:00:00')
+      WHERE ir.id = ? AND ir.deletedAt IS NULL
+    `, [id]);
+    
+    if (!report || report.length === 0) {
+      return res.status(404).json({ success: false, error: 'Report not found' });
+    }
+    
+    const reportData = report[0];
+    
+    // التحقق من وجود جدول القوالب
+    const [tableCheck] = await db.query(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'FinalInspectionComponentTemplate'
+    `);
+    
+    if (tableCheck[0].count === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'FinalInspectionComponentTemplate table not found. Please run migrations first.' 
+      });
+    }
+    
+    // جلب قوالب المكونات (case-insensitive matching)
+    console.log(`[InspectionReports] Loading components for report ${id}, deviceCategory: ${deviceCategory}`);
+    const [templates] = await db.query(`
+      SELECT * FROM FinalInspectionComponentTemplate 
+      WHERE (LOWER(deviceCategory) = LOWER(?) OR deviceCategory = 'all' OR deviceCategory IS NULL)
+      ORDER BY displayOrder ASC
+    `, [deviceCategory || 'all']);
+    
+    console.log(`[InspectionReports] Found ${templates.length} templates for deviceCategory: ${deviceCategory}`);
+    
+    if (!templates || templates.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: `لا توجد قوالب متاحة لهذا النوع من الأجهزة (${deviceCategory})`,
+        componentIds: [] 
+      });
+    }
+    
+    // التحقق من أن التقرير موجود
+    const [reportCheck] = await db.query('SELECT id FROM InspectionReport WHERE id = ?', [id]);
+    if (reportCheck.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'التقرير غير موجود' 
+      });
+    }
+    
+    // إنشاء مكونات فحص من القوالب
+    const components = [];
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const template of templates) {
+      try {
+        // استخدام القيم الافتراضية (WORKING للمكونات الجديدة، MEDIUM للأولوية)
+        const [component] = await db.query(
+          `INSERT INTO InspectionComponent 
+           (inspectionReportId, name, status, notes, priority, createdAt)
+           VALUES (?, ?, 'WORKING', ?, 'MEDIUM', CURRENT_TIMESTAMP)`,
+          [id, template.name, template.description || null]
+        );
+        components.push(component.insertId);
+        successCount++;
+        console.log(`[InspectionReports] ✅ Created component: ${template.name} (ID: ${component.insertId})`);
+      } catch (err) {
+        errorCount++;
+        console.error(`[InspectionReports] ❌ Error creating component from template ${template.id} (${template.name}):`, err.message);
+        // Continue with other components even if one fails
+      }
+    }
+    
+    console.log(`[InspectionReports] Summary: ${successCount} created, ${errorCount} failed out of ${templates.length} templates`);
+    
+    // إرسال WebSocket notification
+    try {
+      const [reportData] = await db.query('SELECT repairRequestId FROM InspectionReport WHERE id = ?', [id]);
+      if (reportData && reportData.length > 0 && reportData[0].repairRequestId) {
+        const [repairRows] = await db.query(
+          'SELECT * FROM RepairRequest WHERE id = ? AND deletedAt IS NULL',
+          [reportData[0].repairRequestId]
+        );
+        if (repairRows && repairRows.length > 0) {
+          websocketService.sendRepairUpdate('component_created', repairRows[0]);
+          console.log(`[InspectionReports] WebSocket notification sent for repair ${reportData[0].repairRequestId}`);
+        }
+      }
+    } catch (wsError) {
+      console.warn('[InspectionReports] Failed to send WebSocket notification:', wsError);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `تم إنشاء ${components.length} مكون فحص من القوالب`,
+      componentIds: components 
+    });
+  } catch (err) {
+    console.error('Error loading final inspection components:', err);
+    res.status(500).json({ success: false, error: 'Server Error', details: err.message });
+  }
+});
+
 // Export report to PDF (Placeholder - to be implemented in phase 6)
 router.get('/:id/export/pdf', authMiddleware, async (req, res) => {
   const { id } = req.params;

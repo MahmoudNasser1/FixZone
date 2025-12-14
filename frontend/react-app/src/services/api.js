@@ -397,6 +397,18 @@ class ApiService {
     });
   }
 
+  // Final Inspection Templates APIs
+  async getFinalInspectionTemplates(deviceCategory = 'all') {
+    return this.request(`/finalinspectiontemplates?deviceCategory=${deviceCategory}`);
+  }
+
+  async loadFinalInspectionComponents(reportId, deviceCategory = 'all') {
+    return this.request(`/inspectionreports/${reportId}/load-final-inspection-components`, {
+      method: 'POST',
+      body: JSON.stringify({ deviceCategory }),
+    });
+  }
+
   // المرفقات: قائمة/رفع/حذف
   async listAttachments(id) {
     return this.request(`/repairs/${id}/attachments`);

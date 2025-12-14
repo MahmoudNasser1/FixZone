@@ -99,6 +99,7 @@ const repairRequestServicesRouter = require('./routes/repairRequestServices');
 const inspectionTypesRouter = require('./routes/inspectionTypes');
 const inspectionReportsRouter = require('./routes/inspectionReports');
 const inspectionComponentsRouter = require('./routes/inspectionComponents');
+const finalInspectionTemplatesRouter = require('./routes/finalInspectionTemplates');
 const notificationsRouter = require('./routes/notifications');
 const notificationTemplatesRouter = require('./routes/notificationTemplates');
 const systemSettingsRouter = require('./routes/systemSettings');
@@ -188,6 +189,7 @@ router.use('/repairrequestservices', repairRequestServicesRouter);
 router.use('/inspectiontypes', inspectionTypesRouter);
 router.use('/inspectionreports', inspectionReportsRouter);
 router.use('/inspectioncomponents', inspectionComponentsRouter);
+router.use('/finalinspectiontemplates', finalInspectionTemplatesRouter);
 router.use('/notifications', notificationsRouter);
 router.use('/navigation', navigationRouter); // Navigation routes for sidebar and navigation system
 
