@@ -280,6 +280,18 @@ function App() {
     restoreSession();
   }, [restoreSession]);
 
+  // #region agent log
+  useEffect(() => {
+    // Check document metadata for branding
+    const title = document.title;
+    const favicon = document.querySelector('link[rel="icon"]')?.href || 'not found';
+    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]')?.href || 'not found';
+    const manifest = document.querySelector('link[rel="manifest"]')?.href || 'not found';
+    
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:282',message:'Document metadata check',data:{title,favicon,appleTouchIcon,manifest},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  }, []);
+  // #endregion
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <NotificationProvider position="top-right" maxNotifications={5}>
