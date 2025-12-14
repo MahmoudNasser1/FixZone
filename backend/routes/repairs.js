@@ -134,13 +134,12 @@ function mapFrontendStatusToDb(frontStatus) {
 // Get all repair requests with improved pagination and filters
 router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), async (req, res) => {
   try {
-    // Log incoming query for debugging (only in production for troubleshooting)
-    if (process.env.NODE_ENV === 'production') {
-      console.log('[REPAIRS API] Incoming query params:', JSON.stringify(req.query));
-    }
+    // Log incoming query for debugging
+    console.log('[REPAIRS API] Incoming query params:', JSON.stringify(req.query));
+    console.log('[REPAIRS API] req.user:', { id: req.user?.id, customerId: req.user?.customerId, roleId: req.user?.roleId });
 
     const {
-      customerId,
+      customerId: queryCustomerId,
       status,
       priority,
       page,
@@ -150,6 +149,42 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       q, // Support both 'search' and 'q' for backward compatibility
       searchField // نوع البحث المحدد (nameOrPhone, customerName, customerPhone, requestNumber, etc.)
     } = req.query;
+    
+    // For customer role, get the correct customerId from database instead of trusting query parameter
+    let customerId = queryCustomerId;
+    const userRoleId = req.user?.roleId || req.user?.role;
+    const isCustomer = userRoleId === 6 || userRoleId === 8 || userRoleId === '6' || userRoleId === '8';
+    
+    if (isCustomer && req.user?.id) {
+      // Get customerId from database to ensure accuracy
+      const [userRows] = await db.execute(
+        'SELECT customerId FROM User WHERE id = ? AND deletedAt IS NULL',
+        [req.user.id]
+      );
+      if (userRows.length > 0 && userRows[0].customerId) {
+        customerId = userRows[0].customerId;
+      } else {
+        // Try to find Customer record by userId
+        const [customerRows] = await db.execute(
+          'SELECT id FROM Customer WHERE userId = ? AND deletedAt IS NULL',
+          [req.user.id]
+        );
+        if (customerRows.length > 0) {
+          customerId = customerRows[0].id;
+        } else {
+          // Check if userId itself is the customerId
+          const [customerByIdRows] = await db.execute(
+            'SELECT id FROM Customer WHERE id = ? AND deletedAt IS NULL',
+            [req.user.id]
+          );
+          if (customerByIdRows.length > 0) {
+            customerId = req.user.id;
+          }
+        }
+      }
+    }
+    
+    console.log('[REPAIRS API] Extracted customerId from query:', queryCustomerId, 'Resolved customerId:', customerId, 'type:', typeof customerId);
 
     // Use 'search' if provided, otherwise fall back to 'q'
     const searchTerm = (search || q || '').trim();
@@ -191,6 +226,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
         whereConditions.push('rr.customerId = ?');
         queryParams.push(safeCustomerId);
+        console.log(`[REPAIRS API] Filtering by customerId: ${safeCustomerId}`);
       } else {
         console.warn('⚠️ Invalid customerId:', customerId);
       }
@@ -402,6 +438,15 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     
     const [rows] = await db.query(query, queryParams);
     
+    // Log query results for debugging
+    console.log(`[REPAIRS API] Query returned ${rows.length} rows for customerId: ${customerId || 'N/A'}, status: ${status || 'all'}, page: ${pageNum}, limit: ${parsedLimit}`);
+    console.log(`[REPAIRS API] WHERE conditions: ${whereConditions.join(' AND ')}`);
+    console.log(`[REPAIRS API] Query params: ${JSON.stringify(queryParams)}`);
+    console.log(`[REPAIRS API] Full SQL query: ${query.replace(/\s+/g, ' ').substring(0, 500)}`);
+    if (rows.length > 0 && rows.length < 5) {
+      console.log(`[REPAIRS API] Returned repair IDs: ${rows.map(r => r.id).join(', ')}`);
+    }
+    
     // Log للتصحيح
     if (searchTerm && searchTerm.trim()) {
       // Found rows.length results
@@ -428,6 +473,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // Remove limit and offset params for count query
     const countParams = queryParams.slice(0, -2);
 
+    // Log total count for debugging
+    console.log(`[REPAIRS API] Total count query will use ${countParams.length} params`);
+    console.log(`[REPAIRS API] Count WHERE conditions: ${whereConditions.join(' AND ')}`);
+    
     // Log count query params in production
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Count query params:', countParams.length, 'params');
@@ -863,10 +912,75 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
     `, [id]);
 
     if (rows.length === 0) {
-      return res.status(404).send('Repair request not found');
+      return res.status(404).json({ success: false, message: 'Repair request not found' });
     }
 
     const repair = rows[0];
+
+    // Check if user is a customer and verify they own this repair
+    const userRoleId = req.user?.roleId || req.user?.role;
+    const isCustomer = userRoleId === 6 || userRoleId === 8 || userRoleId === '6' || userRoleId === '8';
+    
+    if (isCustomer) {
+      // Get customerId from database - try multiple methods
+      let userCustomerId = null;
+      
+      if (req.user?.id) {
+        // Method 1: Check if customerId is stored directly in User table
+        const [userRows] = await db.execute(
+          'SELECT customerId FROM User WHERE id = ? AND deletedAt IS NULL',
+          [req.user.id]
+        );
+        
+        if (userRows.length > 0 && userRows[0].customerId) {
+          userCustomerId = userRows[0].customerId;
+        }
+        
+        // Method 2: If not found, try to find Customer record by userId
+        if (!userCustomerId) {
+          const [customerRows] = await db.execute(
+            'SELECT id FROM Customer WHERE userId = ? AND deletedAt IS NULL',
+            [req.user.id]
+          );
+          
+          if (customerRows.length > 0) {
+            userCustomerId = customerRows[0].id;
+          }
+        }
+        
+        // Method 3: If userId itself might be the customerId (for legacy data)
+        // Check if there's a Customer record with id = userId
+        if (!userCustomerId) {
+          const [customerByIdRows] = await db.execute(
+            'SELECT id FROM Customer WHERE id = ? AND deletedAt IS NULL',
+            [req.user.id]
+          );
+          
+          if (customerByIdRows.length > 0) {
+            userCustomerId = customerByIdRows[0].id;
+          }
+        }
+      }
+      
+      // Check if user's customerId matches repair's customerId
+      // Also check if userId itself matches repair's customerId (for legacy data where userId = customerId)
+      const userIdMatches = req.user?.id && repair.customerId === req.user.id;
+      const customerIdMatches = userCustomerId && repair.customerId === userCustomerId;
+      
+      if (!userCustomerId && !userIdMatches) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'You do not have permission to view this repair request' 
+        });
+      }
+      
+      if (!customerIdMatches && !userIdMatches) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'You do not have permission to view this repair request' 
+        });
+      }
+    }
 
     // Debug: Check what's in the database
     console.log('🔍 [GET /:id] Repair ID:', id);
@@ -933,10 +1047,10 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
       accessories: repair.accessories ? JSON.parse(repair.accessories).filter(a => a != null) : []
     };
 
-    res.json(response);
+    res.json({ success: true, data: response });
   } catch (err) {
     console.error(`Error fetching repair request with ID ${id}:`, err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 

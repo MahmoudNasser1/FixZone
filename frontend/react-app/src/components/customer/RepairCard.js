@@ -21,6 +21,7 @@ import {
  * - Status badge ملون
  * - Hover effects
  * - Navigation للتفاصيل
+ * - Dark Mode Support
  */
 
 export default function RepairCard({ repair, onClick }) {
@@ -58,6 +59,12 @@ export default function RepairCard({ repair, onClick }) {
                 icon: CheckCircle,
                 color: '#10B981'
             },
+            delivered: {
+                label: 'تم التسليم',
+                variant: 'success',
+                icon: CheckCircle,
+                color: '#059669'
+            },
             cancelled: {
                 label: 'ملغي',
                 variant: 'destructive',
@@ -77,31 +84,20 @@ export default function RepairCard({ repair, onClick }) {
     const statusConfig = getStatusConfig(repair.status);
     const StatusIcon = statusConfig.icon;
 
-    const handleClick = () => {
+    const handleClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (onClick) {
             onClick(repair);
         } else {
-            navigate(`/repairs/${repair.id}`);
+            navigate(`/customer/repairs/${repair.id}`);
         }
     };
 
     return (
         <div
             onClick={handleClick}
-            className="relative overflow-hidden rounded-xl shadow-md transition-all duration-300 cursor-pointer bg-white"
-            style={{
-                border: '1px solid #E5E7EB'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-                e.currentTarget.style.borderColor = statusConfig.color;
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-                e.currentTarget.style.borderColor = '#E5E7EB';
-            }}
+            className="relative overflow-hidden rounded-xl shadow-md transition-all duration-300 cursor-pointer bg-card border border-border hover:-translate-y-1 hover:shadow-xl group"
         >
             {/* Top colored stripe */}
             <div
@@ -114,10 +110,10 @@ export default function RepairCard({ repair, onClick }) {
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                            <Wrench className="w-4 h-4" style={{ color: '#053887' }} />
-                            <p className="font-bold text-gray-900">طلب #{repair.id}</p>
+                            <Wrench className="w-4 h-4 text-brand-blue" />
+                            <p className="font-bold text-foreground">طلب #{repair.id}</p>
                         </div>
-                        <p className="text-sm font-semibold text-gray-700">
+                        <p className="text-sm font-semibold text-muted-foreground">
                             {repair.deviceType || 'جهاز'}
                             {repair.brand && ` - ${repair.brand}`}
                         </p>
@@ -130,14 +126,14 @@ export default function RepairCard({ repair, onClick }) {
 
                 {/* Description */}
                 {repair.issueDescription && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                         {repair.issueDescription}
                     </p>
                 )}
 
                 {/* Footer Info */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         {/* Date */}
                         <div className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5" />
@@ -159,13 +155,24 @@ export default function RepairCard({ repair, onClick }) {
                     </div>
 
                     {/* Cost */}
-                    {repair.estimatedCost && (
-                        <div className="text-sm font-bold" style={{ color: '#053887' }}>
-                            {repair.actualCost || repair.estimatedCost} جنيه
+                    {(repair.estimatedCost || repair.actualCost) && (
+                        <div className="text-sm font-bold text-brand-blue">
+                            {(repair.actualCost || repair.estimatedCost || 0).toLocaleString('ar-EG')} جنيه
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Hover border effect */}
+            <div 
+                className="absolute inset-0 border-2 border-transparent rounded-xl transition-colors duration-300 pointer-events-none group-hover:border-current"
+                style={{ borderColor: 'transparent' }}
+            />
+            <style>{`
+                .group:hover > div:last-child {
+                    border-color: ${statusConfig.color} !important;
+                }
+            `}</style>
         </div>
     );
 }

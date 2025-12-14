@@ -7,7 +7,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
-import { ROLE_CUSTOMER } from '../../constants/roles';
+import { isCustomerRole } from '../../constants/roles';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 import EnhancedStatsCard from '../../components/customer/EnhancedStatsCard';
@@ -45,7 +45,7 @@ export default function CustomerDashboard() {
   useEffect(() => {
     const roleId = user?.roleId || user?.role;
     const numericRoleId = Number(roleId);
-    const isCustomer = user && (user.type === 'customer' || numericRoleId === ROLE_CUSTOMER);
+    const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
 
     if (!user || !isCustomer) {
       notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });

@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import PageTransition from '../ui/PageTransition';
 import useAuthStore from '../../stores/authStore';
-import { ROLE_CUSTOMER } from '../../constants/roles';
+import { isCustomerRole } from '../../constants/roles';
 
 const MainLayout = ({
   showBreadcrumb = true,
@@ -15,7 +15,7 @@ const MainLayout = ({
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const roleId = user?.roleId || user?.role;
-  const isCustomer = roleId === ROLE_CUSTOMER || user?.type === 'customer';
+  const isCustomer = isCustomerRole(Number(roleId)) || user?.type === 'customer';
   // Only hide sidebar for /customer/* routes (customer portal), not /customers/* (admin customer management)
   const isCustomerRoute = location.pathname.startsWith('/customer/') || location.pathname === '/customer';
 

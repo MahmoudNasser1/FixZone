@@ -55,7 +55,11 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Incorrect password' });
         }
 
-        // Check if user is Customer (roleId === 8) and get customerId
+        // Check if user is Customer (roleId === 6 or legacy roleId === 8) and get customerId
+        // ROLE_CUSTOMER = 6 (primary), LEGACY_ROLE_CUSTOMER = 8
+        const CUSTOMER_ROLE_IDS = [6, 8];
+        const isCustomer = CUSTOMER_ROLE_IDS.includes(Number(user.roleId)) || CUSTOMER_ROLE_IDS.includes(Number(user.role));
+        
         let customerId = null;
         let customerData = null;
         
@@ -74,7 +78,7 @@ exports.login = async (req, res) => {
             } catch (error) {
                 console.error('Error fetching customer data by customerId:', error);
             }
-        } else if (user.roleId === 6 || user.role === 6) {
+        } else if (isCustomer) {
             // If customerId not in User table, find by userId
             try {
                 const [customers] = await db.execute(

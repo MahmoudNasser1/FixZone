@@ -153,8 +153,12 @@ exports.getCustomerProfile = async (req, res) => {
     const userId = req.user.id;
     const roleId = req.user.roleId || req.user.role;
     
-    // Only allow customers (roleId === 6) to access this endpoint
-    if (roleId !== 6 && roleId !== '6') {
+    // Only allow customers (roleId === 6 or legacy roleId === 8) to access this endpoint
+    // ROLE_CUSTOMER = 6 (primary), LEGACY_ROLE_CUSTOMER = 8
+    const CUSTOMER_ROLE_IDS = [6, 8];
+    const numericRoleId = Number(roleId);
+    
+    if (!CUSTOMER_ROLE_IDS.includes(numericRoleId)) {
       return res.status(403).json({ 
         success: false,
         message: 'غير مصرح بالوصول - هذا المسار مخصص للعملاء فقط' 

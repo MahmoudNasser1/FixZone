@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import useAuthStore from '../../stores/authStore';
-import { ROLE_CUSTOMER } from '../../constants/roles';
+import { isCustomerRole } from '../../constants/roles';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import RepairCard from '../../components/customer/RepairCard';
 import RepairFilters from '../../components/customer/RepairFilters';
@@ -40,13 +40,15 @@ export default function CustomerRepairsPage() {
         completedRepairs: 0,
         cancelledRepairs: 0
     });
+    const [notificationCount, setNotificationCount] = useState(0);
 
     const itemsPerPage = 9;
 
+    // Initial load - check auth and load stats
     useEffect(() => {
         const roleId = user?.roleId || user?.role;
         const numericRoleId = Number(roleId);
-        const isCustomer = user && (user.type === 'customer' || numericRoleId === ROLE_CUSTOMER);
+        const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
 
         if (!user || !isCustomer) {
             notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });
@@ -54,9 +56,47 @@ export default function CustomerRepairsPage() {
             return;
         }
 
-        loadRepairs();
+        // Load stats once
+        loadStats();
+        loadNotificationCount();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, activeFilter, searchQuery]); // Reload when these change
+    }, []);
+
+    // Reload repairs when filters change
+    useEffect(() => {
+        if (user) {
+            loadRepairs();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, activeFilter, searchQuery]);
+
+    const loadStats = async () => {
+        try {
+            const response = await api.getCustomerDashboardStats();
+            if (response.success && response.data) {
+                setStats({
+                    totalRepairs: response.data.totalRepairs || 0,
+                    pendingRepairs: response.data.pendingRepairs || 0,
+                    activeRepairs: response.data.activeRepairs || 0,
+                    completedRepairs: response.data.completedRepairs || 0,
+                    cancelledRepairs: response.data.cancelledRepairs || 0
+                });
+            }
+        } catch (error) {
+            console.warn('Failed to load stats:', error);
+        }
+    };
+
+    const loadNotificationCount = async () => {
+        try {
+            const response = await api.getCustomerNotifications({ unreadOnly: 'true', limit: 1 });
+            if (response.success && response.data) {
+                setNotificationCount(response.data.unreadCount || 0);
+            }
+        } catch (error) {
+            console.warn('Failed to load notification count:', error);
+        }
+    };
 
     const loadRepairs = async () => {
         try {
@@ -66,22 +106,27 @@ export default function CustomerRepairsPage() {
             const params = {
                 customerId,
                 page: currentPage,
-                limit: itemsPerPage,
-                status: activeFilter !== 'all' ? activeFilter : undefined,
-                search: searchQuery || undefined
+                limit: itemsPerPage
             };
+
+            // Only add status if it's not 'all'
+            if (activeFilter !== 'all') {
+                params.status = activeFilter;
+            }
+
+            // Only add search if it has a value
+            if (searchQuery && searchQuery.trim()) {
+                params.search = searchQuery.trim();
+            }
 
             const response = await api.getCustomerRepairs(params);
 
             if (response.success) {
                 const { repairs, pagination } = response.data;
+                
                 setRepairs(repairs || []);
                 setTotalPages(pagination?.totalPages || 1);
                 setTotalItems(pagination?.totalItems || 0);
-
-                // Update stats if available in response, otherwise we might need a separate call
-                // For now, we'll keep the stats zero or fetch them separately if critical
-                // Ideally, the API should return stats or we call getCustomerDashboardStats
             } else {
                 setRepairs([]);
             }
@@ -112,7 +157,7 @@ export default function CustomerRepairsPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <CustomerHeader user={user} notificationCount={3} />
+            <CustomerHeader user={user} notificationCount={notificationCount} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Page Title */}

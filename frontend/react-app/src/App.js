@@ -117,6 +117,7 @@ import CustomerRepairDetailsPage from './pages/customer/CustomerRepairDetailsPag
 import CustomerInvoiceDetailsPage from './pages/customer/CustomerInvoiceDetailsPage';
 import CustomerSettingsPage from './pages/customer/CustomerSettingsPage';
 import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPage';
+import CustomerHelpPage from './pages/customer/CustomerHelpPage';
 
 // Technician Portal Pages
 import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
@@ -252,7 +253,7 @@ const AdminRoute = ({ children }) => {
   }
 
   // Check if user is customer - redirect to customer dashboard
-  const isCustomer = numericRoleId === ROLE_CUSTOMER || user?.type === 'customer';
+  const isCustomer = isCustomerRole(numericRoleId) || user?.type === 'customer';
   if (isCustomer) {
     return <Navigate to="/customer/dashboard" replace />;
   }
@@ -279,35 +280,6 @@ function App() {
     }
     restoreSession();
   }, [restoreSession]);
-
-  // #region agent log
-  useEffect(() => {
-    // Check document metadata for branding
-    const title = document.title;
-    const favicon = document.querySelector('link[rel="icon"]')?.href || 'not found';
-    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]')?.href || 'not found';
-    const manifest = document.querySelector('link[rel="manifest"]')?.href || 'not found';
-    
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:286',message:'Document metadata check',data:{title,favicon,appleTouchIcon,manifest},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    
-    // Fetch and check manifest.json content
-    if (manifest && manifest !== 'not found') {
-      fetch(manifest)
-        .then(res => res.json())
-        .then(manifestData => {
-          fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:295',message:'Manifest content check',data:manifestData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        })
-        .catch(err => {
-          fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:299',message:'Manifest fetch error',data:{error:err.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        });
-    }
-    
-    // Check Open Graph meta tags
-    const ogTitle = document.querySelector('meta[property="og:title"]')?.content || 'not found';
-    const ogImage = document.querySelector('meta[property="og:image"]')?.content || 'not found';
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:305',message:'Open Graph meta check',data:{ogTitle,ogImage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  }, []);
-  // #endregion
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -347,6 +319,7 @@ function App() {
                     <Route path="profile" element={<CustomerProfilePage />} />
                     <Route path="settings" element={<CustomerSettingsPage />} />
                     <Route path="notifications" element={<CustomerNotificationsPage />} />
+                    <Route path="help" element={<CustomerHelpPage />} />
                     <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
                   </Routes>
                 </CustomerRoute>

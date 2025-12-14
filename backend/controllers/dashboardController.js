@@ -373,17 +373,19 @@ exports.getCustomerStats = async (req, res) => {
         
         // Using customerId: safeCustomerId
 
-        // Get repair statistics
+        // Get repair statistics - use database status values
         const [repairStats] = await db.execute(`
             SELECT 
                 COUNT(*) as totalRepairs,
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingRepairs,
-                COUNT(CASE WHEN status IN ('in_progress', 'DIAGNOSED', 'RECEIVED') THEN 1 END) as activeRepairs,
-                COUNT(CASE WHEN status IN ('completed', 'COMPLETED', 'delivered', 'DELIVERED') THEN 1 END) as completedRepairs,
-                COUNT(CASE WHEN status IN ('cancelled', 'CANCELLED', 'rejected', 'REJECTED') THEN 1 END) as cancelledRepairs
+                COUNT(CASE WHEN status IN ('RECEIVED', 'INSPECTION', 'AWAITING_APPROVAL') THEN 1 END) as pendingRepairs,
+                COUNT(CASE WHEN status IN ('UNDER_REPAIR', 'WAITING_PARTS', 'ON_HOLD') THEN 1 END) as activeRepairs,
+                COUNT(CASE WHEN status IN ('DELIVERED', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY') THEN 1 END) as completedRepairs,
+                COUNT(CASE WHEN status = 'REJECTED' THEN 1 END) as cancelledRepairs
             FROM RepairRequest
             WHERE customerId = ? AND deletedAt IS NULL
         `, [safeCustomerId]);
+        
+        console.log(`[CUSTOMER STATS] Customer ${safeCustomerId} stats:`, repairStats[0]);
 
         // Get invoice statistics
         const [invoiceStats] = await db.execute(`

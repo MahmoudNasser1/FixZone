@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import RepairTrackingTimeline from '../../components/customer/RepairTrackingTimeline';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
+import { isCustomerRole } from '../../constants/roles';
 import ServiceRatingModal from '../../components/customer/ServiceRatingModal';
 import {
     ArrowRight,
@@ -16,7 +18,9 @@ import {
     CreditCard,
     ShieldCheck,
     CheckCircle,
-    FileText
+    FileText,
+    AlertCircle,
+    Image
 } from 'lucide-react';
 
 /**
@@ -28,6 +32,7 @@ import {
  * - زر تواصل مع الدعم الفني
  * - تفاصيل الجهاز والتكلفة
  * - تقييم الخدمة
+ * - صور الجهاز قبل وبعد
  */
 
 export default function CustomerRepairDetailsPage() {
@@ -37,34 +42,110 @@ export default function CustomerRepairDetailsPage() {
     const user = useAuthStore((state) => state.user);
 
     const [repair, setRepair] = useState(null);
+    const [attachments, setAttachments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showRatingModal, setShowRatingModal] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
 
-    // Mock Data (Replace with API call)
+    // Fetch repair details from API
     useEffect(() => {
-        setTimeout(() => {
-            setRepair({
-                id: id,
-                device: 'iPhone 13 Pro Max',
-                issue: 'كسر في الشاشة الأمامية',
-                status: 'in_progress', // received, diagnosing, in_progress, testing, ready
-                cost: 4500,
-                technician: 'Eng. Ahmed', // Just for internal info, maybe hide from customer if requested
-                receivedDate: '2024-01-20',
-                expectedDate: '2024-01-22',
-                notes: 'تم استلام الجهاز وجاري العمل على تغيير الشاشة.',
-                warranty: '6 شهور على الشاشة'
-            });
-            setLoading(false);
-        }, 1000);
+        const roleId = user?.roleId || user?.role;
+        const numericRoleId = Number(roleId);
+        const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
+
+        if (!user || !isCustomer) {
+            notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });
+            navigate('/login');
+            return;
+        }
+
+        loadRepairDetails();
+        loadNotificationCount();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
+
+        const loadRepairDetails = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Fetch repair details
+            const response = await api.getRepairRequest(id);
+            
+            if (response.success && response.data) {
+                const repairData = response.data;
+                
+                // Transform API response to component format
+                setRepair({
+                    id: repairData.id,
+                    device: `${repairData.deviceBrand || ''} ${repairData.deviceModel || repairData.deviceType || 'جهاز'}`.trim(),
+                    deviceType: repairData.deviceType,
+                    deviceBrand: repairData.deviceBrand,
+                    deviceModel: repairData.deviceModel,
+                    serialNumber: repairData.serialNumber,
+                    issue: repairData.issueDescription || repairData.problemDescription || repairData.reportedProblem || 'لا يوجد وصف',
+                    status: repairData.status || 'pending',
+                    cost: repairData.estimatedCost || repairData.actualCost || 0,
+                    actualCost: repairData.actualCost,
+                    estimatedCost: repairData.estimatedCost,
+                    technician: repairData.technicianName || repairData.assignedTechnicianId,
+                    receivedDate: repairData.createdAt,
+                    expectedDate: repairData.expectedCompletionDate,
+                    completedDate: repairData.completedAt,
+                    notes: repairData.customerNotes || repairData.technicianNotes || 'لا توجد ملاحظات',
+                    technicianNotes: repairData.technicianNotes,
+                    customerNotes: repairData.customerNotes,
+                    warranty: repairData.warrantyPeriod || '3 شهور',
+                    priority: repairData.priority,
+                    invoiceId: repairData.invoiceId
+                });
+
+                // Fetch attachments
+                try {
+                    const attachmentsResponse = await api.listAttachments(id);
+                    if (attachmentsResponse.success && attachmentsResponse.data) {
+                        setAttachments(attachmentsResponse.data || []);
+                    }
+                } catch (attachErr) {
+                    console.warn('Failed to load attachments:', attachErr);
+                }
+            } else {
+                setError('لم يتم العثور على طلب الإصلاح');
+            }
+        } catch (err) {
+            console.error('Error loading repair details:', err);
+            setError(err.message || 'فشل تحميل تفاصيل الطلب');
+            notifications.error('خطأ', { message: 'فشل تحميل تفاصيل الطلب' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadNotificationCount = async () => {
+        try {
+            const response = await api.getCustomerNotifications({ unreadOnly: 'true', limit: 1 });
+            if (response.success && response.data) {
+                setNotificationCount(response.data.unreadCount || 0);
+            }
+        } catch (err) {
+            console.warn('Failed to load notification count:', err);
+        }
+    };
 
     // Check if repair is completed to show rating
     useEffect(() => {
-        if (repair?.status === 'ready' || repair?.status === 'completed') {
-            // Show modal after a delay if not rated yet (mock logic)
+        // Only show rating modal if repair is completed/delivered and user hasn't rated it yet
+        // Check if repair has been rated (you may need to add a rating field to the repair object)
+        const isCompleted = repair?.status === 'ready' || repair?.status === 'completed' || repair?.status === 'delivered';
+        const hasBeenRated = repair?.ratingId || repair?.hasRating; // Adjust based on your data structure
+        
+        if (isCompleted && !hasBeenRated) {
+            // Show modal after a delay only if repair is completed and not rated
             const timer = setTimeout(() => setShowRatingModal(true), 3000);
             return () => clearTimeout(timer);
+        } else {
+            setShowRatingModal(false);
         }
     }, [repair]);
 
@@ -73,35 +154,82 @@ export default function CustomerRepairDetailsPage() {
         window.open('https://api.whatsapp.com/send/?phone=%2B201270388043&text&type=phone_number&app_absent=0', '_blank');
     };
 
-    if (loading) return <div className="flex justify-center min-h-screen items-center"><LoadingSpinner /></div>;
-    if (!repair) return null;
+    const handleViewInvoice = () => {
+        if (repair?.invoiceId) {
+            navigate(`/customer/invoices/${repair.invoiceId}`);
+        } else {
+            notifications.info('تنبيه', { message: 'لم يتم إنشاء فاتورة لهذا الطلب بعد' });
+        }
+    };
+
+    // Get before/after images from attachments
+    const beforeImages = attachments.filter(att => att.type === 'before' || att.category === 'before');
+    const afterImages = attachments.filter(att => att.type === 'after' || att.category === 'after');
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <CustomerHeader user={user} notificationCount={notificationCount} />
+                <div className="flex justify-center items-center h-[60vh]">
+                    <LoadingSpinner />
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !repair) {
+        return (
+            <div className="min-h-screen bg-background">
+                <CustomerHeader user={user} notificationCount={notificationCount} />
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="text-center py-16">
+                        <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-foreground mb-2">حدث خطأ</h2>
+                        <p className="text-muted-foreground mb-6">{error || 'لم يتم العثور على طلب الإصلاح'}</p>
+                        <button
+                            onClick={() => navigate('/customer/repairs')}
+                            className="px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-light transition-colors"
+                        >
+                            العودة لقائمة الطلبات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-background pb-12">
             <ServiceRatingModal
                 isOpen={showRatingModal}
                 onClose={() => setShowRatingModal(false)}
-                onSubmit={(data) => console.log('Rating:', data)}
+                onSubmit={(data) => {
+                    console.log('Rating:', data);
+                    notifications.success('شكراً', { message: 'تم إرسال تقييمك بنجاح' });
+                    setShowRatingModal(false);
+                }}
             />
 
-            <CustomerHeader user={user} notificationCount={2} />
+            <CustomerHeader user={user} notificationCount={notificationCount} />
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
                 {/* Back Button */}
                 <button
                     onClick={() => navigate('/customer/repairs')}
-                    className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors mb-6"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
                 >
                     <ArrowRight className="w-5 h-5" />
                     <span>عودة لقائمة الطلبات</span>
                 </button>
 
                 {/* Header Section */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">تفاصيل الطلب #{repair.id}</h1>
-                        <p className="text-gray-600">تم الاستلام في {new Date(repair.receivedDate).toLocaleDateString('ar-EG')}</p>
+                        <h1 className="text-2xl font-bold text-foreground">تفاصيل الطلب #{repair.id}</h1>
+                        <p className="text-muted-foreground">
+                            تم الاستلام في {repair.receivedDate ? new Date(repair.receivedDate).toLocaleDateString('ar-EG') : 'غير محدد'}
+                        </p>
                     </div>
                     <div className="flex gap-3">
                         <button
@@ -109,76 +237,106 @@ export default function CustomerRepairDetailsPage() {
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm font-bold"
                         >
                             <MessageCircle className="w-5 h-5" />
-                            <span>تحدث مع الدعم الفني</span>
+                            <span className="hidden sm:inline">تحدث مع الدعم الفني</span>
+                            <span className="sm:hidden">تواصل</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Timeline Section */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-                    <h2 className="text-lg font-bold text-gray-900 mb-6">تتبع حالة الإصلاح</h2>
+                <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8 mb-8">
+                    <h2 className="text-lg font-bold text-foreground mb-6">تتبع حالة الإصلاح</h2>
                     <RepairTrackingTimeline currentStatus={repair.status} />
 
-                    <div className="mt-8 bg-blue-50 rounded-xl p-4 flex items-start gap-3">
-                        <div className="p-2 bg-blue-100 rounded-full">
-                            <MessageCircle className="w-5 h-5 text-blue-600" />
+                    {repair.notes && (
+                        <div className="mt-8 bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 flex items-start gap-3">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                                <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-blue-900 dark:text-blue-100">آخر تحديث</h3>
+                                <p className="text-blue-700 dark:text-blue-300 text-sm mt-1">{repair.notes}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-blue-900">آخر تحديث</h3>
-                            <p className="text-blue-700 text-sm mt-1">{repair.notes}</p>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* Device Info */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <Smartphone className="w-5 h-5 text-gray-500" />
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+                        <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                            <Smartphone className="w-5 h-5 text-muted-foreground" />
                             معلومات الجهاز
                         </h3>
                         <div className="space-y-4">
-                            <div className="flex justify-between border-b border-gray-50 pb-2">
-                                <span className="text-gray-500">الجهاز</span>
-                                <span className="font-medium text-gray-900">{repair.device}</span>
+                            <div className="flex justify-between border-b border-border pb-2">
+                                <span className="text-muted-foreground">الجهاز</span>
+                                <span className="font-medium text-foreground">{repair.device}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-50 pb-2">
-                                <span className="text-gray-500">المشكلة</span>
-                                <span className="font-medium text-gray-900">{repair.issue}</span>
+                            {repair.serialNumber && (
+                                <div className="flex justify-between border-b border-border pb-2">
+                                    <span className="text-muted-foreground">الرقم التسلسلي</span>
+                                    <span className="font-medium text-foreground font-mono text-sm">{repair.serialNumber}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between border-b border-border pb-2">
+                                <span className="text-muted-foreground">المشكلة</span>
+                                <span className="font-medium text-foreground text-left max-w-[60%]">{repair.issue}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-50 pb-2">
-                                <span className="text-gray-500">الضمان</span>
-                                <span className="font-medium text-green-600 flex items-center gap-1">
+                            <div className="flex justify-between border-b border-border pb-2">
+                                <span className="text-muted-foreground">الضمان</span>
+                                <span className="font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
                                     <ShieldCheck className="w-4 h-4" />
                                     {repair.warranty}
                                 </span>
                             </div>
+                            {repair.priority && (
+                                <div className="flex justify-between pb-2">
+                                    <span className="text-muted-foreground">الأولوية</span>
+                                    <span className={`font-medium ${
+                                        repair.priority === 'high' ? 'text-red-600 dark:text-red-400' :
+                                        repair.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                        'text-green-600 dark:text-green-400'
+                                    }`}>
+                                        {repair.priority === 'high' ? 'عالية' : repair.priority === 'medium' ? 'متوسطة' : 'عادية'}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Cost Info */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <CreditCard className="w-5 h-5 text-gray-500" />
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+                        <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                            <CreditCard className="w-5 h-5 text-muted-foreground" />
                             التكلفة والفاتورة
                         </h3>
                         <div className="space-y-4">
-                            <div className="flex justify-between border-b border-gray-50 pb-2">
-                                <span className="text-gray-500">تكلفة الإصلاح</span>
-                                <span className="font-medium text-gray-900">{repair.cost} ج.م</span>
+                            {repair.estimatedCost > 0 && (
+                                <div className="flex justify-between border-b border-border pb-2">
+                                    <span className="text-muted-foreground">التكلفة المقدرة</span>
+                                    <span className="font-medium text-foreground">{repair.estimatedCost.toLocaleString('ar-EG')} ج.م</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between border-b border-border pb-2">
+                                <span className="text-muted-foreground">تكلفة الإصلاح</span>
+                                <span className="font-medium text-foreground">{(repair.actualCost || repair.cost || 0).toLocaleString('ar-EG')} ج.م</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-50 pb-2">
-                                <span className="text-gray-500">الضريبة (14%)</span>
-                                <span className="font-medium text-gray-900">{repair.cost * 0.14} ج.م</span>
+                            <div className="flex justify-between border-b border-border pb-2">
+                                <span className="text-muted-foreground">الضريبة (14%)</span>
+                                <span className="font-medium text-foreground">{((repair.actualCost || repair.cost || 0) * 0.14).toLocaleString('ar-EG')} ج.م</span>
                             </div>
                             <div className="flex justify-between pt-2">
-                                <span className="font-bold text-lg text-gray-900">الإجمالي</span>
-                                <span className="font-bold text-lg text-blue-600">{repair.cost * 1.14} ج.م</span>
+                                <span className="font-bold text-lg text-foreground">الإجمالي</span>
+                                <span className="font-bold text-lg text-brand-blue">{((repair.actualCost || repair.cost || 0) * 1.14).toLocaleString('ar-EG')} ج.م</span>
                             </div>
 
-                            <button className="w-full mt-4 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-bold flex items-center justify-center gap-2">
+                            <button 
+                                onClick={handleViewInvoice}
+                                className="w-full mt-4 py-2.5 border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue/10 transition-colors font-bold flex items-center justify-center gap-2"
+                            >
                                 <FileText className="w-4 h-4" />
                                 عرض الفاتورة
                             </button>
@@ -188,42 +346,149 @@ export default function CustomerRepairDetailsPage() {
                 </div>
 
                 {/* Before & After Photos Section */}
-                <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                    <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <Smartphone className="w-5 h-5 text-gray-500" />
-                        صور الجهاز (قبل وبعد)
+                <div className="mt-8 bg-card rounded-xl shadow-sm border border-border p-6 sm:p-8">
+                    <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+                        <Image className="w-5 h-5 text-muted-foreground" />
+                        صور الجهاز
                     </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Before Photo */}
-                        <div className="space-y-3">
-                            <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
-                                قبل الإصلاح
-                            </span>
-                            <div className="aspect-video bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group cursor-pointer">
-                                {/* Placeholder for image */}
-                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                                <Smartphone className="w-12 h-12 text-gray-300" />
-                                <p className="absolute bottom-4 text-sm text-gray-500 font-medium">اضغط للتكبير</p>
-                            </div>
-                            <p className="text-sm text-gray-500">تم التقاطها: {new Date(repair.receivedDate).toLocaleDateString('ar-EG')}</p>
+                    {attachments.length === 0 ? (
+                        <div className="text-center py-8">
+                            <Image className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                            <p className="text-muted-foreground">لا توجد صور مرفقة لهذا الطلب</p>
                         </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Before Photos */}
+                            <div className="space-y-3">
+                                <span className="inline-block px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-bold rounded-full">
+                                    قبل الإصلاح ({beforeImages.length})
+                                </span>
+                                {beforeImages.length > 0 ? (
+                                    <div className="grid gap-3">
+                                        {beforeImages.map((img, index) => (
+                                            <div 
+                                                key={img.id || index}
+                                                className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
+                                                onClick={() => window.open(img.url || img.path, '_blank')}
+                                            >
+                                                <img 
+                                                    src={img.url || img.path} 
+                                                    alt={`قبل الإصلاح ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                                <div className="hidden items-center justify-center absolute inset-0 bg-muted">
+                                                    <Smartphone className="w-12 h-12 text-muted-foreground" />
+                                                </div>
+                                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
+                                                <p className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                                                    اضغط للتكبير
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center">
+                                        <Smartphone className="w-12 h-12 text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">لا توجد صور</p>
+                                    </div>
+                                )}
+                                {beforeImages.length > 0 && beforeImages[0].createdAt && (
+                                    <p className="text-sm text-muted-foreground">
+                                        تم التقاطها: {new Date(beforeImages[0].createdAt).toLocaleDateString('ar-EG')}
+                                    </p>
+                                )}
+                            </div>
 
-                        {/* After Photo */}
-                        <div className="space-y-3">
-                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                                بعد الإصلاح
-                            </span>
-                            <div className="aspect-video bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group cursor-pointer">
-                                {/* Placeholder for image */}
-                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                                <CheckCircle className="w-12 h-12 text-green-500" />
-                                <p className="absolute bottom-4 text-sm text-gray-500 font-medium">اضغط للتكبير</p>
+                            {/* After Photos */}
+                            <div className="space-y-3">
+                                <span className="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-bold rounded-full">
+                                    بعد الإصلاح ({afterImages.length})
+                                </span>
+                                {afterImages.length > 0 ? (
+                                    <div className="grid gap-3">
+                                        {afterImages.map((img, index) => (
+                                            <div 
+                                                key={img.id || index}
+                                                className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
+                                                onClick={() => window.open(img.url || img.path, '_blank')}
+                                            >
+                                                <img 
+                                                    src={img.url || img.path} 
+                                                    alt={`بعد الإصلاح ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                                <div className="hidden items-center justify-center absolute inset-0 bg-muted">
+                                                    <CheckCircle className="w-12 h-12 text-green-500" />
+                                                </div>
+                                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
+                                                <p className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                                                    اضغط للتكبير
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center">
+                                        <CheckCircle className="w-12 h-12 text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">
+                                            {repair.status === 'completed' || repair.status === 'delivered' 
+                                                ? 'لم تتم إضافة صور بعد الإصلاح' 
+                                                : 'سيتم إضافتها بعد إتمام الإصلاح'}
+                                        </p>
+                                    </div>
+                                )}
+                                {afterImages.length > 0 && afterImages[0].createdAt && (
+                                    <p className="text-sm text-muted-foreground">
+                                        تم التقاطها: {new Date(afterImages[0].createdAt).toLocaleDateString('ar-EG')}
+                                    </p>
+                                )}
                             </div>
-                            <p className="text-sm text-gray-500">تم التقاطها: {new Date().toLocaleDateString('ar-EG')}</p>
                         </div>
-                    </div>
+                    )}
+
+                    {/* All Attachments if no before/after categorization */}
+                    {attachments.length > 0 && beforeImages.length === 0 && afterImages.length === 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                            {attachments.map((img, index) => (
+                                <div 
+                                    key={img.id || index}
+                                    className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group cursor-pointer"
+                                    onClick={() => window.open(img.url || img.path, '_blank')}
+                                >
+                                    <img 
+                                        src={img.url || img.path} 
+                                        alt={`صورة ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
+
+                {/* Technician Notes (if available) */}
+                {repair.technicianNotes && (
+                    <div className="mt-6 bg-card rounded-xl shadow-sm border border-border p-6">
+                        <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-muted-foreground" />
+                            ملاحظات الفني
+                        </h3>
+                        <p className="text-muted-foreground">{repair.technicianNotes}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
