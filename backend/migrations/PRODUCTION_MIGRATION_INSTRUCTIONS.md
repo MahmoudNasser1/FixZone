@@ -125,7 +125,21 @@ FROM FinalInspectionComponentTemplate;
    tail -f /var/log/mysql/error.log
    ```
 
----
+---mysql -u root -p FZ -e "
+SELECT 'Inspection Types' as 'Table', COUNT(*) as 'Count' 
+FROM InspectionType 
+WHERE deletedAt IS NULL
+UNION ALL
+SELECT 'FinalInspectionComponentTemplate' as 'Table', COUNT(*) as 'Count' 
+FROM FinalInspectionComponentTemplate;
+"mysql -u root -p FZ -e "
+SELECT 'Inspection Types' as 'Table', COUNT(*) as 'Count' 
+FROM InspectionType 
+WHERE deletedAt IS NULL
+UNION ALL
+SELECT 'FinalInspectionComponentTemplate' as 'Table', COUNT(*) as 'Count' 
+FROM FinalInspectionComponentTemplate;
+"
 
 ## الأوامر السريعة (Quick Commands)
 
