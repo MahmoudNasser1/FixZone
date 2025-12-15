@@ -137,16 +137,72 @@ class InvoicesRepository extends BaseRepository {
         rr.repairNumber,
         rr.deviceBrand,
         rr.deviceModel,
+        rr.deviceType,
+        rr.trackingToken as repairTrackingToken,
+        rr.createdAt as repairCreatedAt,
+        d.cpu, d.gpu, d.ram, d.storage,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = i.id AND deletedAt IS NULL) as amountPaid,
         (i.totalAmount - (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = i.id AND deletedAt IS NULL)) as amountRemaining
        FROM Invoice i
        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
        LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
        LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
+       LEFT JOIN Device d ON rr.deviceId = d.id
        WHERE i.id = ? AND i.deletedAt IS NULL`,
       [id]
     );
-    return rows[0] || null;
+    
+    const invoice = rows[0] || null;
+    
+    // جلب الملحقات من RepairRequestAccessory إذا كان هناك repairRequestId
+    if (invoice && invoice.repairRequestId) {
+      try {
+        const [accRows] = await db.query(`
+          SELECT rra.accessoryOptionId as id, vo.label, vo.value
+          FROM RepairRequestAccessory rra
+          LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+          WHERE rra.repairRequestId = ?
+        `, [invoice.repairRequestId]);
+        
+        let accessories = [];
+        if (accRows && accRows.length > 0) {
+          accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+        } else {
+          // محاولة جلب من عمود accessories في RepairRequest كبديل
+          const [repairRows] = await db.query(
+            `SELECT accessories FROM RepairRequest WHERE id = ?`,
+            [invoice.repairRequestId]
+          );
+          if (repairRows.length > 0 && repairRows[0].accessories) {
+            try {
+              accessories = typeof repairRows[0].accessories === 'string' 
+                ? JSON.parse(repairRows[0].accessories).filter(a => a != null)
+                : (Array.isArray(repairRows[0].accessories) ? repairRows[0].accessories.filter(a => a != null) : []);
+            } catch (e) {
+              accessories = [];
+            }
+          }
+        }
+
+        // إضافة بيانات الإصلاح للفاتورة
+        invoice.repair = {
+          accessories: accessories,
+          deviceSpecs: (invoice.cpu || invoice.gpu || invoice.ram || invoice.storage) ? {
+            cpu: invoice.cpu || null,
+            gpu: invoice.gpu || null,
+            ram: invoice.ram || null,
+            storage: invoice.storage || null,
+          } : null,
+          trackingToken: invoice.repairTrackingToken || null,
+          createdAt: invoice.repairCreatedAt || null
+        };
+      } catch (accErr) {
+        console.error('❌ [invoicesRepository.findById] Error fetching accessories:', accErr);
+        invoice.repair = null;
+      }
+    }
+    
+    return invoice;
   }
 
   /**

@@ -260,8 +260,12 @@ class InvoicesController {
           v.address as vendorAddress,
           rr.deviceModel as deviceModel,
           rr.deviceBrand as deviceBrand,
+          rr.deviceType as deviceType,
           rr.reportedProblem as problemDescription,
+          rr.trackingToken as trackingToken,
+          rr.createdAt as repairCreatedAt,
           d.serialNumber as deviceSerial,
+          d.cpu, d.gpu, d.ram, d.storage,
           u.name as technicianName,
           COALESCE(i.customerId, rr.customerId) as effectiveCustomerId
         FROM Invoice i
@@ -279,6 +283,47 @@ class InvoicesController {
       }
 
       const invoice = invoiceRows[0];
+
+      // جلب الملحقات من RepairRequestAccessory إذا كان هناك repairRequestId
+      let accessories = [];
+      let deviceSpecs = null;
+      if (invoice.repairRequestId) {
+        try {
+          // جلب الملحقات من RepairRequestAccessory
+          const [accRows] = await db.query(`
+            SELECT rra.accessoryOptionId as id, vo.label, vo.value
+            FROM RepairRequestAccessory rra
+            LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+            WHERE rra.repairRequestId = ?
+          `, [invoice.repairRequestId]);
+          
+          if (accRows && accRows.length > 0) {
+            accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+          } else if (invoice.accessories) {
+            // استخدام البيانات من عمود accessories كبديل (للتوافق مع البيانات القديمة)
+            try {
+              accessories = typeof invoice.accessories === 'string' 
+                ? JSON.parse(invoice.accessories).filter(a => a != null)
+                : (Array.isArray(invoice.accessories) ? invoice.accessories.filter(a => a != null) : []);
+            } catch (e) {
+              accessories = [];
+            }
+          }
+
+          // جلب deviceSpecs من Device
+          if (invoice.cpu || invoice.gpu || invoice.ram || invoice.storage) {
+            deviceSpecs = {
+              cpu: invoice.cpu || null,
+              gpu: invoice.gpu || null,
+              ram: invoice.ram || null,
+              storage: invoice.storage || null,
+            };
+          }
+        } catch (accErr) {
+          console.error('❌ [getInvoiceById] Error fetching accessories:', accErr);
+          accessories = [];
+        }
+      }
 
       // Get invoice items (parts and services) - include manual services
       // Note: InvoiceItem table doesn't have deletedAt column
@@ -340,6 +385,13 @@ class InvoicesController {
           items,
           payments,
           itemsCount: items.length,
+          // إضافة بيانات الإصلاح
+          repair: invoice.repairRequestId ? {
+            accessories: accessories,
+            deviceSpecs: deviceSpecs,
+            trackingToken: invoice.trackingToken || null,
+            createdAt: invoice.repairCreatedAt || null
+          } : null,
           calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0),
           // Include settings for frontend
           settings: {
@@ -1311,10 +1363,15 @@ class InvoicesController {
           c.email as customerEmail,
           rr.deviceModel as deviceModel,
           rr.deviceBrand as deviceBrand,
-          rr.reportedProblem as problemDescription
+          rr.deviceType as deviceType,
+          rr.reportedProblem as problemDescription,
+          rr.trackingToken as trackingToken,
+          rr.createdAt as repairCreatedAt,
+          d.cpu, d.gpu, d.ram, d.storage
         FROM Invoice i
         LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
         LEFT JOIN Customer c ON rr.customerId = c.id
+        LEFT JOIN Device d ON rr.deviceId = d.id
         WHERE rr.id = ? AND i.deletedAt IS NULL
       `, [repairId]);
 
@@ -1323,6 +1380,45 @@ class InvoicesController {
       }
 
       const invoice = invoices[0];
+
+      // جلب الملحقات من RepairRequestAccessory
+      let accessories = [];
+      let deviceSpecs = null;
+      try {
+        // جلب الملحقات من RepairRequestAccessory
+        const [accRows] = await db.query(`
+          SELECT rra.accessoryOptionId as id, vo.label, vo.value
+          FROM RepairRequestAccessory rra
+          LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+          WHERE rra.repairRequestId = ?
+        `, [repairId]);
+        
+        if (accRows && accRows.length > 0) {
+          accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+        } else if (invoice.accessories) {
+          // استخدام البيانات من عمود accessories كبديل
+          try {
+            accessories = typeof invoice.accessories === 'string' 
+              ? JSON.parse(invoice.accessories).filter(a => a != null)
+              : (Array.isArray(invoice.accessories) ? invoice.accessories.filter(a => a != null) : []);
+          } catch (e) {
+            accessories = [];
+          }
+        }
+
+        // جلب deviceSpecs من Device
+        if (invoice.cpu || invoice.gpu || invoice.ram || invoice.storage) {
+          deviceSpecs = {
+            cpu: invoice.cpu || null,
+            gpu: invoice.gpu || null,
+            ram: invoice.ram || null,
+            storage: invoice.storage || null,
+          };
+        }
+      } catch (accErr) {
+        console.error('❌ [getInvoiceByRepairId] Error fetching accessories:', accErr);
+        accessories = [];
+      }
 
       // Get invoice items
       const [items] = await db.query(`
@@ -1353,7 +1449,14 @@ class InvoicesController {
           items,
           payments,
           itemsCount: items.length,
-          calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+          calculatedTotal: items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0),
+          // إضافة بيانات الإصلاح
+          repair: {
+            accessories: accessories,
+            deviceSpecs: deviceSpecs,
+            trackingToken: invoice.trackingToken || null,
+            createdAt: invoice.repairCreatedAt || null
+          }
         }
       });
     } catch (error) {

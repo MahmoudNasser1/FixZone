@@ -8,11 +8,12 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import { 
   ArrowRight, FileText, DollarSign, Calendar, User, Building2,
   CheckCircle, XCircle, Clock, AlertCircle, Download, Edit, 
-  Plus, Eye, Printer, Send, CreditCard, Receipt
+  Plus, Eye, Printer, Send, CreditCard, Receipt, Wrench, 
+  Paperclip, Copy, Check
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
-import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import { getDefaultApiBaseUrl, getFrontendBaseUrl } from '../../lib/apiConfig';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -31,6 +32,7 @@ const InvoiceDetailsPage = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [trackingLinkCopied, setTrackingLinkCopied] = useState(false);
 
   useEffect(() => {
     if (effectiveId) {
@@ -464,22 +466,127 @@ const InvoiceDetailsPage = () => {
             <SimpleCard>
               <SimpleCardHeader>
                 <SimpleCardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 ml-2" />
+                  <Wrench className="w-5 h-5 ml-2" />
                   طلب الإصلاح المرتبط
                 </SimpleCardTitle>
               </SimpleCardHeader>
               <SimpleCardContent>
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">طلب الإصلاح</p>
-                    <p className="font-medium text-gray-900">#{invoice.repairRequestId}</p>
+                    <div>
+                      <p className="text-sm text-gray-600">طلب الإصلاح</p>
+                      <p className="font-medium text-gray-900">#{invoice.repairRequestId}</p>
+                    </div>
+                    <Link to={`/repairs/${invoice.repairRequestId}`}>
+                      <SimpleButton variant="outline" size="sm">
+                        <Eye className="w-4 h-4 ml-2" />
+                        عرض الطلب
+                      </SimpleButton>
+                    </Link>
                   </div>
-                  <Link to={`/repairs/${invoice.repairRequestId}`}>
-                    <SimpleButton variant="outline" size="sm">
-                      <Eye className="w-4 h-4 ml-2" />
-                      عرض الطلب
-                    </SimpleButton>
-                  </Link>
+
+                  {/* تاريخ الاستلام */}
+                  {invoice.repair?.createdAt && (
+                    <div className="border-t pt-3">
+                      <label className="text-sm font-medium text-gray-500">تاريخ الاستلام:</label>
+                      <p className="text-sm text-gray-900 mt-1">{formatDate(invoice.repair.createdAt)}</p>
+                    </div>
+                  )}
+
+                  {/* مواصفات الجهاز */}
+                  {invoice.repair?.deviceSpecs && (invoice.repair.deviceSpecs.cpu || invoice.repair.deviceSpecs.gpu || invoice.repair.deviceSpecs.ram || invoice.repair.deviceSpecs.storage) && (
+                    <div className="border-t pt-3">
+                      <label className="text-sm font-medium text-gray-500 mb-2 block">مواصفات الجهاز:</label>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        {invoice.repair.deviceSpecs.cpu && (
+                          <div>
+                            <span className="text-gray-600">المعالج:</span>
+                            <p className="text-gray-900 font-medium">{invoice.repair.deviceSpecs.cpu}</p>
+                          </div>
+                        )}
+                        {invoice.repair.deviceSpecs.gpu && (
+                          <div>
+                            <span className="text-gray-600">كارت الشاشة:</span>
+                            <p className="text-gray-900 font-medium">{invoice.repair.deviceSpecs.gpu}</p>
+                          </div>
+                        )}
+                        {invoice.repair.deviceSpecs.ram && (
+                          <div>
+                            <span className="text-gray-600">الذاكرة:</span>
+                            <p className="text-gray-900 font-medium">{invoice.repair.deviceSpecs.ram}</p>
+                          </div>
+                        )}
+                        {invoice.repair.deviceSpecs.storage && (
+                          <div>
+                            <span className="text-gray-600">التخزين:</span>
+                            <p className="text-gray-900 font-medium">{invoice.repair.deviceSpecs.storage}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* المتعلقات المستلمة */}
+                  {invoice.repair?.accessories && Array.isArray(invoice.repair.accessories) && invoice.repair.accessories.length > 0 && (
+                    <div className="border-t pt-3">
+                      <label className="text-sm font-medium text-gray-500 mb-2 block">المتعلقات المستلمة:</label>
+                      <div className="flex flex-wrap gap-2">
+                        {invoice.repair.accessories.filter(a => a != null).map((a, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                            {typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown')}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* رابط التتبع */}
+                  {invoice.repair?.trackingToken && (
+                    <div className="border-t pt-3">
+                      <label className="text-sm font-medium text-gray-500 mb-2 block">رابط التتبع:</label>
+                      <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5 max-w-md">
+                        <span className="text-sm text-blue-600 font-mono truncate flex-1">
+                          {getFrontendBaseUrl()}/track?trackingToken={invoice.repair.trackingToken}
+                        </span>
+                        <SimpleButton
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            const trackingUrl = `${getFrontendBaseUrl()}/track?trackingToken=${invoice.repair.trackingToken}`;
+                            try {
+                              await navigator.clipboard.writeText(trackingUrl);
+                              setTrackingLinkCopied(true);
+                              setTimeout(() => setTrackingLinkCopied(false), 2000);
+                            } catch (err) {
+                              // Fallback for older browsers
+                              const textArea = document.createElement('textarea');
+                              textArea.value = trackingUrl;
+                              textArea.style.position = 'fixed';
+                              textArea.style.opacity = '0';
+                              document.body.appendChild(textArea);
+                              textArea.select();
+                              try {
+                                document.execCommand('copy');
+                                setTrackingLinkCopied(true);
+                                setTimeout(() => setTrackingLinkCopied(false), 2000);
+                              } catch (fallbackErr) {
+                                console.error('Failed to copy tracking link');
+                              }
+                              document.body.removeChild(textArea);
+                            }
+                          }}
+                          className="p-1 h-auto"
+                          title="نسخ رابط التتبع"
+                        >
+                          {trackingLinkCopied ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-600" />
+                          )}
+                        </SimpleButton>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </SimpleCardContent>
             </SimpleCard>

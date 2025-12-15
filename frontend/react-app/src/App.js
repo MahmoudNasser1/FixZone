@@ -70,6 +70,7 @@ import TechnicianReportsPage from './pages/reports/TechnicianReportsPage';
 import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import JobsListPage from './pages/technician/JobsListPage';
 import JobDetailsPage from './pages/technician/JobDetailsPage';
+import NewInspectionReportPage from './pages/technician/NewInspectionReportPage';
 import TasksPage from './pages/technician/TasksPage';
 
 // Integration Pages
@@ -355,6 +356,8 @@ function App() {
             <Route path="/technician/dashboard" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
             <Route path="/technician/jobs" element={<TechnicianRoute><JobsListPage /></TechnicianRoute>} />
             <Route path="/technician/jobs/:id" element={<TechnicianRoute><JobDetailsPage /></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id/report/new" element={<TechnicianRoute><NewInspectionReportPage /></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id/report/edit/:reportId" element={<TechnicianRoute><NewInspectionReportPage /></TechnicianRoute>} />
             <Route path="/technician/tasks" element={<TechnicianRoute><TasksPage /></TechnicianRoute>} />
             <Route path="/technician/profile" element={<TechnicianRoute><TechnicianProfilePage /></TechnicianRoute>} />
             <Route path="/technician/settings" element={<TechnicianRoute><TechnicianSettingsPage /></TechnicianRoute>} />

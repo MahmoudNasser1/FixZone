@@ -171,8 +171,27 @@ router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (re
   try {
     await connection.beginTransaction();
     
-    const { inventoryItemId, warehouseId, quantity, notes } = req.body;
+    const { inventoryItemId, warehouseId, quantity, minLevel, notes } = req.body;
     const userId = req.user?.id;
+    
+    // التحقق من صحة البيانات
+    if (quantity !== undefined && quantity < 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({
+        success: false,
+        message: 'الكمية يجب أن تكون أكبر من أو تساوي 0'
+      });
+    }
+    
+    if (minLevel !== undefined && minLevel < 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({
+        success: false,
+        message: 'الحد الأدنى للمخزون يجب أن يكون أكبر من أو يساوي 0'
+      });
+    }
     
     // التحقق من وجود الصنف والمخزن
     const [itemResult] = await connection.execute(
@@ -182,6 +201,7 @@ router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (re
     
     if (itemResult.length === 0) {
       await connection.rollback();
+      connection.release();
       return res.status(404).json({
         success: false,
         message: 'الصنف غير موجود'
@@ -189,12 +209,13 @@ router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (re
     }
     
     const [warehouseResult] = await connection.execute(
-      'SELECT id, name FROM Warehouse WHERE id = ?',
+      'SELECT id, name FROM Warehouse WHERE id = ? AND deletedAt IS NULL',
       [warehouseId]
     );
     
     if (warehouseResult.length === 0) {
       await connection.rollback();
+      connection.release();
       return res.status(404).json({
         success: false,
         message: 'المخزن غير موجود'
@@ -209,27 +230,30 @@ router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (re
     
     let stockLevel;
     const oldQuantity = existing.length > 0 ? existing[0].quantity : 0;
-    const minLevel = existing.length > 0 ? existing[0].minLevel : 0;
-    const quantityDiff = quantity - oldQuantity;
+    const currentMinLevel = existing.length > 0 ? existing[0].minLevel : 0;
+    const newMinLevel = minLevel !== undefined ? minLevel : currentMinLevel;
+    const newQuantity = quantity !== undefined ? quantity : oldQuantity;
+    const quantityDiff = newQuantity - oldQuantity;
     
     if (existing.length > 0) {
       // تحديث الكمية الموجودة
-      const isLowStock = quantity <= minLevel;
+      const isLowStock = newQuantity <= newMinLevel;
       await connection.execute(
-        'UPDATE StockLevel SET quantity = ?, isLowStock = ?, updatedAt = NOW() WHERE id = ?',
-        [quantity, isLowStock ? 1 : 0, existing[0].id]
+        'UPDATE StockLevel SET quantity = ?, minLevel = ?, isLowStock = ?, updatedAt = NOW() WHERE id = ?',
+        [newQuantity, newMinLevel, isLowStock ? 1 : 0, existing[0].id]
       );
       
       stockLevel = existing[0];
-      stockLevel.quantity = quantity;
+      stockLevel.quantity = newQuantity;
+      stockLevel.minLevel = newMinLevel;
       stockLevel.isLowStock = isLowStock ? 1 : 0;
     } else {
       // إنشاء StockLevel جديد
-      const isLowStock = quantity <= 0;
+      const isLowStock = newQuantity <= newMinLevel;
       const [result] = await connection.execute(
         `INSERT INTO StockLevel (inventoryItemId, warehouseId, quantity, minLevel, isLowStock, createdAt, updatedAt)
-         VALUES (?, ?, ?, 0, ?, NOW(), NOW())`,
-        [inventoryItemId, warehouseId, quantity, isLowStock ? 1 : 0]
+         VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
+        [inventoryItemId, warehouseId, newQuantity, newMinLevel, isLowStock ? 1 : 0]
       );
       
       const [newLevel] = await connection.execute(
@@ -255,7 +279,7 @@ router.post('/', validate(stockLevelSchemas.createOrUpdateStockLevel), async (re
     }
     
     // تحديث StockAlert تلقائياً
-    await updateStockAlert(connection, inventoryItemId, warehouseId, quantity, minLevel, userId);
+    await updateStockAlert(connection, inventoryItemId, warehouseId, newQuantity, newMinLevel, userId);
     
     await connection.commit();
     

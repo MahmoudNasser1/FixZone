@@ -236,6 +236,16 @@ const vendorController = {
       });
     }
 
+    // التحقق من creditLimit
+    if (creditLimit !== undefined && creditLimit !== null) {
+      if (typeof creditLimit !== 'number' || creditLimit < 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'حد الائتمان يجب أن يكون رقماً موجباً' 
+        });
+      }
+    }
+
     try {
       // التحقق من عدم تكرار البريد الإلكتروني أو الهاتف
       const [existing] = await db.execute(
@@ -333,6 +343,16 @@ const vendorController = {
           success: false, 
           message: 'المورد غير موجود' 
         });
+      }
+
+      // التحقق من creditLimit
+      if (creditLimit !== undefined && creditLimit !== null) {
+        if (typeof creditLimit !== 'number' || creditLimit < 0) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'حد الائتمان يجب أن يكون رقماً موجباً' 
+          });
+        }
       }
 
       // التحقق من عدم تكرار البريد الإلكتروني أو الهاتف مع موردين آخرين

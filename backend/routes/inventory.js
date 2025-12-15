@@ -62,13 +62,134 @@ async function updateStockAlert(connection, inventoryItemId, warehouseId, quanti
   }
 }
 
-// Get all inventory items
+// Get all inventory items with pagination and search
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM InventoryItem WHERE deletedAt IS NULL ORDER BY createdAt DESC');
+    const {
+      page = 1,
+      limit = 20,
+      search = '',
+      category = '',
+      status = '',
+      lowStock = '',
+      warehouseId = '',
+      sortBy = 'createdAt',
+      sortOrder = 'DESC'
+    } = req.query;
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    let query = `
+      SELECT 
+        ii.*,
+        COALESCE(SUM(sl.quantity), 0) as totalStock,
+        COALESCE(SUM(CASE WHEN sl.quantity <= sl.minLevel OR sl.isLowStock = 1 THEN 1 ELSE 0 END), 0) as lowStockCount
+      FROM InventoryItem ii
+      LEFT JOIN StockLevel sl ON ii.id = sl.inventoryItemId AND sl.deletedAt IS NULL
+      WHERE ii.deletedAt IS NULL
+    `;
+
+    const params = [];
+
+    // Search functionality
+    if (search) {
+      query += ` AND (
+        ii.name LIKE ? OR
+        ii.sku LIKE ? OR
+        ii.description LIKE ? OR
+        ii.barcode LIKE ? OR
+        ii.partNumber LIKE ?
+      )`;
+      const searchPattern = `%${search}%`;
+      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+
+    // Filter by category/type
+    if (category) {
+      query += ` AND ii.type = ?`;
+      params.push(category);
+    }
+
+    // Filter by status (if status column exists)
+    if (status) {
+      query += ` AND ii.status = ?`;
+      params.push(status);
+    }
+
+    // Filter by warehouse
+    if (warehouseId) {
+      query += ` AND sl.warehouseId = ?`;
+      params.push(warehouseId);
+    }
+
+    query += ` GROUP BY ii.id`;
+
+    // Filter by low stock
+    if (lowStock === 'true') {
+      query += ` HAVING lowStockCount > 0`;
+    }
+
+    // Sorting
+    const allowedSortFields = ['name', 'sku', 'createdAt', 'updatedAt', 'purchasePrice', 'sellingPrice', 'totalStock'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const validSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    query += ` ORDER BY ${validSortBy} ${validSortOrder}`;
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit), offset);
+
+    // Use db.query for queries with LIMIT/OFFSET
+    const [rows] = await db.query(query, params);
+
+    // Get total count
+    let countQuery = `
+      SELECT COUNT(DISTINCT ii.id) as total
+      FROM InventoryItem ii
+      LEFT JOIN StockLevel sl ON ii.id = sl.inventoryItemId AND sl.deletedAt IS NULL
+      WHERE ii.deletedAt IS NULL
+    `;
+
+    const countParams = [];
+
+    if (search) {
+      countQuery += ` AND (
+        ii.name LIKE ? OR
+        ii.sku LIKE ? OR
+        ii.description LIKE ? OR
+        ii.barcode LIKE ? OR
+        ii.partNumber LIKE ?
+      )`;
+      const searchPattern = `%${search}%`;
+      countParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+
+    if (category) {
+      countQuery += ` AND ii.type = ?`;
+      countParams.push(category);
+    }
+
+    if (status) {
+      countQuery += ` AND ii.status = ?`;
+      countParams.push(status);
+    }
+
+    if (warehouseId) {
+      countQuery += ` AND sl.warehouseId = ?`;
+      countParams.push(warehouseId);
+    }
+
+    const [countResult] = await db.execute(countQuery, countParams);
+    const totalItems = countResult[0].total;
+
     res.json({
       success: true,
-      data: rows
+      data: rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalItems,
+        totalPages: Math.ceil(totalItems / parseInt(limit))
+      }
     });
   } catch (err) {
     console.error('Error fetching inventory items:', err);
@@ -267,9 +388,16 @@ router.put('/:id', validate(inventorySchemas.updateItem), async (req, res) => {
 
 // Adjust inventory quantity (add/subtract)
 router.post('/:id/adjust', async (req, res) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory.js:269',message:'POST /inventory/:id/adjust - Entry',data:{id:req.params.id,warehouseId:req.body.warehouseId,quantity:req.body.quantity,type:req.body.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory.js:272',message:'Transaction started',data:{hasTransaction:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     
     const { id } = req.params;
     const { warehouseId, quantity, type, reason, notes } = req.body;
@@ -416,7 +544,14 @@ router.post('/:id/adjust', async (req, res) => {
     // Update isLowStock and StockAlert
     await updateStockAlert(connection, id, warehouseId, newQuantity, stockLevel[0].minLevel, req.user?.id);
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory.js:417',message:'updateStockAlert called',data:{inventoryItemId:id,warehouseId,newQuantity,minLevel:stockLevel[0].minLevel},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    
     await connection.commit();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory.js:419',message:'Transaction committed',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     connection.release();
     
     res.json({ 
@@ -435,6 +570,9 @@ router.post('/:id/adjust', async (req, res) => {
     });
   } catch (err) {
     await connection.rollback();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory.js:437',message:'Transaction rolled back due to error',data:{error:err.message,stack:err.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     connection.release();
     console.error(`Error adjusting inventory quantity for item ${req.params.id}:`, err);
     res.status(500).json({ 

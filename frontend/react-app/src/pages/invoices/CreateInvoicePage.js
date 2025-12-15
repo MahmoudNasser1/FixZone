@@ -6,7 +6,7 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleButton from '../../components/ui/SimpleButton';
 import { 
   ArrowRight, FileText, Plus, Trash2, Save, X,
-  DollarSign, Calculator, User, Building2, Search
+  DollarSign, Calculator, User, Building2, Search, Wrench, Paperclip
 } from 'lucide-react';
 
 const CreateInvoicePage = () => {
@@ -279,15 +279,14 @@ const CreateInvoicePage = () => {
     
     try {
       const response = await apiService.getRepairRequest(repairRequestId);
-      if (response.ok) {
-        const data = await response.json();
-        setRepairRequest(data);
-        // Auto-populate some fields from repair request
-        setFormData(prev => ({
-          ...prev,
-          totalAmount: data.estimatedCost || 0
-        }));
-      }
+      // Handle both response object and direct data
+      const repairData = response.data || response;
+      setRepairRequest(repairData);
+      // Auto-populate some fields from repair request
+      setFormData(prev => ({
+        ...prev,
+        totalAmount: repairData.estimatedCost || 0
+      }));
     } catch (err) {
       console.error('Error fetching repair request:', err);
     }
@@ -1075,18 +1074,71 @@ const CreateInvoicePage = () => {
               <SimpleCard>
                 <SimpleCardHeader>
                   <SimpleCardTitle className="flex items-center">
-                    <FileText className="w-5 h-5 ml-2" />
+                    <Wrench className="w-5 h-5 ml-2" />
                     طلب الإصلاح
                   </SimpleCardTitle>
                 </SimpleCardHeader>
                 <SimpleCardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">رقم الطلب</p>
-                    <p className="font-semibold">#{repairRequest.id}</p>
-                    <p className="text-sm text-gray-600">التكلفة المقدرة</p>
-                    <p className="font-semibold">{formatCurrency(repairRequest.estimatedCost)}</p>
-                    <p className="text-sm text-gray-600">الحالة</p>
-                    <p className="font-semibold">{repairRequest.status}</p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-600">رقم الطلب</p>
+                      <p className="font-semibold">#{repairRequest.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">التكلفة المقدرة</p>
+                      <p className="font-semibold">{formatCurrency(repairRequest.estimatedCost)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">الحالة</p>
+                      <p className="font-semibold">{repairRequest.status}</p>
+                    </div>
+
+                    {/* مواصفات الجهاز */}
+                    {repairRequest.deviceSpecs && (repairRequest.deviceSpecs.cpu || repairRequest.deviceSpecs.gpu || repairRequest.deviceSpecs.ram || repairRequest.deviceSpecs.storage) && (
+                      <div className="border-t pt-3 mt-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">مواصفات الجهاز:</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {repairRequest.deviceSpecs.cpu && (
+                            <div>
+                              <span className="text-gray-600">المعالج:</span>
+                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.cpu}</p>
+                            </div>
+                          )}
+                          {repairRequest.deviceSpecs.gpu && (
+                            <div>
+                              <span className="text-gray-600">كارت الشاشة:</span>
+                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.gpu}</p>
+                            </div>
+                          )}
+                          {repairRequest.deviceSpecs.ram && (
+                            <div>
+                              <span className="text-gray-600">الذاكرة:</span>
+                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.ram}</p>
+                            </div>
+                          )}
+                          {repairRequest.deviceSpecs.storage && (
+                            <div>
+                              <span className="text-gray-600">التخزين:</span>
+                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.storage}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* المتعلقات المستلمة */}
+                    {repairRequest.accessories && Array.isArray(repairRequest.accessories) && repairRequest.accessories.length > 0 && (
+                      <div className="border-t pt-3 mt-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">المتعلقات المستلمة:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {repairRequest.accessories.filter(a => a != null).map((a, index) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                              {typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </SimpleCardContent>
               </SimpleCard>

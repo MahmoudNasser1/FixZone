@@ -63,10 +63,74 @@ class InvoicesService {
       // Get payments
       const payments = await paymentsRepository.findByInvoice(id);
 
+      // جلب بيانات الإصلاح (accessories, deviceSpecs, trackingToken) إذا كان هناك repairRequestId
+      let repairData = null;
+      if (invoice.repairRequestId) {
+        try {
+          // جلب الملحقات من RepairRequestAccessory
+          const [accRows] = await db.query(`
+            SELECT rra.accessoryOptionId as id, vo.label, vo.value
+            FROM RepairRequestAccessory rra
+            LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+            WHERE rra.repairRequestId = ?
+          `, [invoice.repairRequestId]);
+          
+          let accessories = [];
+          if (accRows && accRows.length > 0) {
+            accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+          } else {
+            // محاولة جلب من عمود accessories في RepairRequest كبديل
+            const [repairRows] = await db.query(
+              `SELECT accessories FROM RepairRequest WHERE id = ?`,
+              [invoice.repairRequestId]
+            );
+            if (repairRows.length > 0 && repairRows[0].accessories) {
+              try {
+                accessories = typeof repairRows[0].accessories === 'string' 
+                  ? JSON.parse(repairRows[0].accessories).filter(a => a != null)
+                  : (Array.isArray(repairRows[0].accessories) ? repairRows[0].accessories.filter(a => a != null) : []);
+              } catch (e) {
+                accessories = [];
+              }
+            }
+          }
+
+          // جلب deviceSpecs و trackingToken من RepairRequest و Device
+          const [repairDetails] = await db.query(`
+            SELECT 
+              rr.trackingToken,
+              rr.createdAt as repairCreatedAt,
+              d.cpu, d.gpu, d.ram, d.storage
+            FROM RepairRequest rr
+            LEFT JOIN Device d ON rr.deviceId = d.id
+            WHERE rr.id = ?
+          `, [invoice.repairRequestId]);
+
+          if (repairDetails.length > 0) {
+            const details = repairDetails[0];
+            repairData = {
+              accessories: accessories,
+              deviceSpecs: (details.cpu || details.gpu || details.ram || details.storage) ? {
+                cpu: details.cpu || null,
+                gpu: details.gpu || null,
+                ram: details.ram || null,
+                storage: details.storage || null,
+              } : null,
+              trackingToken: details.trackingToken || null,
+              createdAt: details.repairCreatedAt || null
+            };
+          }
+        } catch (repairErr) {
+          console.error('❌ [invoicesService.getById] Error fetching repair data:', repairErr);
+          repairData = null;
+        }
+      }
+
       return {
         ...invoice,
         items,
-        payments
+        payments,
+        repair: repairData
       };
     } catch (error) {
       console.error('Error in invoicesService.getById:', error);
@@ -166,9 +230,14 @@ class InvoicesService {
    */
   async createFromRepair(repairId, data, user) {
     try {
-      // Get repair request
+      // Get repair request with device details
       const [repairs] = await db.query(
-        `SELECT * FROM RepairRequest WHERE id = ? AND deletedAt IS NULL`,
+        `SELECT 
+          rr.*,
+          d.cpu, d.gpu, d.ram, d.storage
+        FROM RepairRequest rr
+        LEFT JOIN Device d ON rr.deviceId = d.id
+        WHERE rr.id = ? AND rr.deletedAt IS NULL`,
         [repairId]
       );
 
@@ -177,6 +246,41 @@ class InvoicesService {
       }
 
       const repair = repairs[0];
+
+      // جلب الملحقات من RepairRequestAccessory
+      let accessories = [];
+      try {
+        const [accRows] = await db.query(`
+          SELECT rra.accessoryOptionId as id, vo.label, vo.value
+          FROM RepairRequestAccessory rra
+          LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+          WHERE rra.repairRequestId = ?
+        `, [repairId]);
+        
+        if (accRows && accRows.length > 0) {
+          accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+        } else if (repair.accessories) {
+          // استخدام البيانات من عمود accessories كبديل
+          try {
+            accessories = typeof repair.accessories === 'string' 
+              ? JSON.parse(repair.accessories).filter(a => a != null)
+              : (Array.isArray(repair.accessories) ? repair.accessories.filter(a => a != null) : []);
+          } catch (e) {
+            accessories = [];
+          }
+        }
+      } catch (accErr) {
+        console.error('❌ [invoicesService.createFromRepair] Error fetching accessories:', accErr);
+        accessories = [];
+      }
+
+      // تحضير deviceSpecs
+      const deviceSpecs = (repair.cpu || repair.gpu || repair.ram || repair.storage) ? {
+        cpu: repair.cpu || null,
+        gpu: repair.gpu || null,
+        ram: repair.ram || null,
+        storage: repair.storage || null,
+      } : null;
 
       // Get customer to extract companyId and branchId
       let companyId = data.companyId || null;
@@ -229,7 +333,16 @@ class InvoicesService {
         });
       }
 
-      return invoice;
+      // إضافة بيانات الإصلاح للفاتورة المُنشأة
+      return {
+        ...invoice,
+        repair: {
+          accessories: accessories,
+          deviceSpecs: deviceSpecs,
+          trackingToken: repair.trackingToken || null,
+          createdAt: repair.createdAt || null
+        }
+      };
     } catch (error) {
       console.error('Error in invoicesService.createFromRepair:', error);
       throw error;

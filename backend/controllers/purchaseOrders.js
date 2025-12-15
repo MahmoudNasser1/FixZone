@@ -1,5 +1,54 @@
 const db = require('../db');
 
+// Helper function to update isLowStock and StockAlert
+async function updateStockAlert(connection, inventoryItemId, warehouseId, quantity, minLevel, userId) {
+  const isLowStock = quantity <= minLevel;
+  
+  // Update isLowStock
+  await connection.execute(
+    'UPDATE StockLevel SET isLowStock = ? WHERE inventoryItemId = ? AND warehouseId = ?',
+    [isLowStock ? 1 : 0, inventoryItemId, warehouseId]
+  );
+  
+  // Update or create StockAlert
+  if (quantity <= minLevel) {
+    const alertType = quantity <= 0 ? 'out_of_stock' : 'low_stock';
+    const severity = quantity <= 0 ? 'critical' : 'warning';
+    const message = quantity <= 0 
+      ? `الصنف منتهٍ تماماً (0 قطعة)`
+      : `المخزون منخفض: ${quantity} / ${minLevel}`;
+    
+    // Check if alert exists
+    const [existingAlert] = await connection.execute(
+      'SELECT id FROM StockAlert WHERE inventoryItemId = ? AND warehouseId = ? AND status = "active"',
+      [inventoryItemId, warehouseId]
+    );
+    
+    if (existingAlert.length > 0) {
+      // Update existing alert
+      await connection.execute(`
+        UPDATE StockAlert 
+        SET alertType = ?, currentQuantity = ?, threshold = ?, severity = ?, message = ?, createdAt = NOW()
+        WHERE id = ?
+      `, [alertType, quantity, minLevel, severity, message, existingAlert[0].id]);
+    } else {
+      // Create new alert
+      await connection.execute(`
+        INSERT INTO StockAlert 
+        (inventoryItemId, warehouseId, alertType, currentQuantity, threshold, severity, status, message, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, 'active', ?, NOW())
+      `, [inventoryItemId, warehouseId, alertType, quantity, minLevel, severity, message]);
+    }
+  } else {
+    // Resolve active alerts if stock is now above minLevel
+    await connection.execute(`
+      UPDATE StockAlert 
+      SET status = 'resolved', resolvedAt = NOW()
+      WHERE inventoryItemId = ? AND warehouseId = ? AND status = 'active'
+    `, [inventoryItemId, warehouseId]);
+  }
+}
+
 // إدارة طلبات الشراء
 const purchaseOrderController = {
   // الحصول على جميع طلبات الشراء مع البحث والفلترة والترقيم
@@ -318,28 +367,36 @@ const purchaseOrderController = {
       approvalStatus,
       approvedById,
       approvalDate,
-      items
+      items,
+      warehouseId,
+      receivedItems
     } = req.body;
 
+    const connection = await db.getConnection();
+    
     try {
+      await connection.beginTransaction();
+      
       // التحقق من وجود طلب الشراء
-      const [purchaseOrder] = await db.execute(
-        'SELECT id FROM PurchaseOrder WHERE id = ? AND deletedAt IS NULL',
+      const [purchaseOrder] = await connection.execute(
+        'SELECT id, status as currentStatus FROM PurchaseOrder WHERE id = ? AND deletedAt IS NULL',
         [id]
       );
 
       if (!purchaseOrder.length) {
+        await connection.rollback();
+        connection.release();
         return res.status(404).json({ 
           success: false, 
           message: 'طلب الشراء غير موجود' 
         });
       }
 
-      // بدء المعاملة
-      await db.execute('START TRANSACTION');
+      const currentStatus = purchaseOrder[0].currentStatus;
+      const isStatusChangedToReceived = status === 'received' && currentStatus !== 'received';
 
       // تحديث طلب الشراء
-      const [result] = await db.execute(
+      const [result] = await connection.execute(
         `UPDATE PurchaseOrder SET 
           status = COALESCE(?, status),
           vendorId = COALESCE(?, vendorId),
@@ -358,7 +415,7 @@ const purchaseOrderController = {
       // تحديث العناصر إذا تم توفيرها
       if (items && items.length > 0) {
         // حذف العناصر القديمة
-        await db.execute(
+        await connection.execute(
           'DELETE FROM PurchaseOrderItem WHERE purchaseOrderId = ?',
           [id]
         );
@@ -368,7 +425,7 @@ const purchaseOrderController = {
           const { inventoryItemId, quantity, unitPrice } = item;
           const totalPrice = quantity * unitPrice;
 
-          await db.execute(
+          await connection.execute(
             `INSERT INTO PurchaseOrderItem (
               quantity, unitPrice, totalPrice, purchaseOrderId, inventoryItemId, createdAt, updatedAt
             ) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
@@ -377,15 +434,105 @@ const purchaseOrderController = {
         }
       }
 
-      await db.execute('COMMIT');
+      // إذا تم تغيير الحالة إلى 'received'، تحديث المخزون
+      if (isStatusChangedToReceived) {
+        // الحصول على warehouseId - إما من body أو من PO أو افتراضي
+        let targetWarehouseId = warehouseId;
+        
+        if (!targetWarehouseId) {
+          // محاولة الحصول على warehouseId من PO أو استخدام المخزن الافتراضي
+          const [defaultWarehouse] = await connection.execute(
+            'SELECT id FROM Warehouse WHERE deletedAt IS NULL ORDER BY id LIMIT 1'
+          );
+          targetWarehouseId = defaultWarehouse.length > 0 ? defaultWarehouse[0].id : null;
+        }
+
+        if (!targetWarehouseId) {
+          await connection.rollback();
+          connection.release();
+          return res.status(400).json({ 
+            success: false, 
+            message: 'يجب تحديد المخزن لاستلام الطلب' 
+          });
+        }
+
+        // الحصول على عناصر PO
+        const [poItems] = await connection.execute(
+          'SELECT * FROM PurchaseOrderItem WHERE purchaseOrderId = ?',
+          [id]
+        );
+
+        if (poItems.length === 0) {
+          await connection.rollback();
+          connection.release();
+          return res.status(400).json({ 
+            success: false, 
+            message: 'لا توجد عناصر في طلب الشراء' 
+          });
+        }
+
+        const userId = req.user?.id;
+
+        // معالجة كل عنصر
+        for (const poItem of poItems) {
+          const receivedQuantity = receivedItems && receivedItems.find(ri => ri.purchaseOrderItemId === poItem.id)
+            ? receivedItems.find(ri => ri.purchaseOrderItemId === poItem.id).receivedQuantity
+            : poItem.quantity; // إذا لم يتم تحديد receivedQuantity، استخدم الكمية المطلوبة
+
+          // تحديث receivedQuantity في PurchaseOrderItem
+          await connection.execute(
+            'UPDATE PurchaseOrderItem SET receivedQuantity = ? WHERE id = ?',
+            [receivedQuantity, poItem.id]
+          );
+
+          // تحديث StockLevel
+          await connection.execute(
+            `INSERT INTO StockLevel (inventoryItemId, warehouseId, quantity, minLevel, createdAt, updatedAt)
+             VALUES (?, ?, ?, 0, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE
+             quantity = quantity + VALUES(quantity),
+             updatedAt = NOW()`,
+            [poItem.inventoryItemId, targetWarehouseId, receivedQuantity]
+          );
+
+          // إنشاء StockMovement
+          await connection.execute(
+            `INSERT INTO StockMovement (type, quantity, inventoryItemId, toWarehouseId, userId, notes, createdAt)
+             VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+            ['IN', receivedQuantity, poItem.inventoryItemId, targetWarehouseId, userId, `استلام من أمر شراء #${id}`]
+          );
+
+          // الحصول على minLevel الحالي
+          const [currentStock] = await connection.execute(
+            'SELECT quantity, minLevel FROM StockLevel WHERE inventoryItemId = ? AND warehouseId = ?',
+            [poItem.inventoryItemId, targetWarehouseId]
+          );
+          
+          if (currentStock.length > 0) {
+            // تحديث StockAlert
+            await updateStockAlert(
+              connection,
+              poItem.inventoryItemId,
+              targetWarehouseId,
+              currentStock[0].quantity,
+              currentStock[0].minLevel,
+              userId
+            );
+          }
+        }
+      }
+
+      await connection.commit();
+      connection.release();
 
       res.json({
         success: true,
-        message: 'تم تحديث طلب الشراء بنجاح'
+        message: isStatusChangedToReceived ? 'تم تحديث طلب الشراء واستلام المخزون بنجاح' : 'تم تحديث طلب الشراء بنجاح'
       });
 
     } catch (error) {
-      await db.execute('ROLLBACK');
+      await connection.rollback();
+      connection.release();
       console.error('Update purchase order error:', error);
       res.status(500).json({ 
         success: false, 
