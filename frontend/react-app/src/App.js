@@ -141,7 +141,7 @@ const CustomerNotificationsPage = React.lazy(() => import('./pages/customer/Cust
 const CustomerHelpPage = React.lazy(() => import('./pages/customer/CustomerHelpPage'));
 
 // Public Pages - Lazy Loaded
-const TrackRepairPage = React.lazy(() => import('./pages/public/TrackRepairPage'));
+// TrackRepairPage تم حذفها - تم استخدام PublicRepairTrackingPage بدلاً منها
 
 // Loading Fallback Component for Customer Portal
 const CustomerLoadingFallback = () => (
@@ -364,8 +364,9 @@ function App() {
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
 
             {/* Public Routes - لا تحتاج تسجيل دخول */}
-            <Route path="/track" element={<Suspense fallback={<CustomerLoadingFallback />}><TrackRepairPage /></Suspense>} />
-            <Route path="/track/:id" element={<Suspense fallback={<CustomerLoadingFallback />}><TrackRepairPage /></Suspense>} />
+            {/* صفحة التتبع الرئيسية - PublicRepairTrackingPage (الأكثر اكتمالاً) */}
+            <Route path="/track" element={<PublicRepairTrackingPage />} />
+            <Route path="/track/:id" element={<PublicRepairTrackingPage />} />
             <Route path="/track/reports" element={<PublicRepairReportsPage />} />
 
             {/* Staff/Admin Routes */}

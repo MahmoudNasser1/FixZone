@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { 
   Search, 
   QrCode, 
@@ -49,6 +49,7 @@ const PublicRepairTrackingPage = () => {
   const notifications = useNotifications();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { id: urlId } = useParams(); // دعم URL parameter مثل /track/:id
   const { theme, setTheme } = useTheme();
   const notify = (type, message) => {
     notifications.addNotification({ type, message });
@@ -222,15 +223,21 @@ const PublicRepairTrackingPage = () => {
   // Ref لتخزين آخر repairId تم تحميله
   const currentRepairIdRef = useRef(null);
   
-  // قراءة trackingToken من URL query parameters عند تحميل الصفحة
+  // قراءة trackingToken أو ID من URL query parameters أو URL parameter عند تحميل الصفحة
   useEffect(() => {
+    // أولوية لـ URL parameter (مثل /track/123)
+    if (urlId) {
+      handleAutoSearch(urlId, 'trackingToken');
+      return;
+    }
+    
+    // ثم query parameter (مثل /track?trackingToken=xxx)
     const tokenFromUrl = searchParams.get('trackingToken');
     if (tokenFromUrl) {
-      // البحث تلقائياً عن الطلب
       handleAutoSearch(tokenFromUrl, 'trackingToken');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, urlId]);
 
   // تحديث تلقائي للحالة كل 30 ثانية
   useEffect(() => {
