@@ -156,7 +156,7 @@ export default function CustomerProfilePage() {
                     <form onSubmit={handleSubmit} className="p-6">
                         {/* Name */}
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                                 <div className="flex items-center gap-2">
                                     <User className="w-4 h-4" />
                                     الاسم الكامل <span className="text-red-500">*</span>
@@ -174,7 +174,7 @@ export default function CustomerProfilePage() {
 
                         {/* Email */}
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                                 <div className="flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
                                     البريد الإلكتروني <span className="text-red-500">*</span>
@@ -192,7 +192,7 @@ export default function CustomerProfilePage() {
 
                         {/* Phone */}
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                                 <div className="flex items-center gap-2">
                                     <Phone className="w-4 h-4" />
                                     رقم الهاتف <span className="text-red-500">*</span>
@@ -210,7 +210,7 @@ export default function CustomerProfilePage() {
 
                         {/* Address */}
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                                 <div className="flex items-center gap-2">
                                     <MapPin className="w-4 h-4" />
                                     العنوان
@@ -261,18 +261,18 @@ export default function CustomerProfilePage() {
 
                     {/* Stats */}
                     {profile?.totalRepairs !== undefined && (
-                        <div className="border-t border-gray-200 p-6 bg-gray-50">
-                            <h3 className="font-semibold text-gray-900 mb-3">الإحصائيات</h3>
+                        <div className="border-t border-border p-6 bg-muted/50">
+                            <h3 className="font-semibold text-foreground mb-3">الإحصائيات</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-600">إجمالي الإصلاحات</p>
+                                    <p className="text-sm text-muted-foreground">إجمالي الإصلاحات</p>
                                     <p className="text-2xl font-bold text-brand-blue">
                                         {profile.totalRepairs || 0}
                                     </p>
                                 </div>
                                 {profile.totalSpent !== undefined && (
                                     <div>
-                                        <p className="text-sm text-gray-600">إجمالي المصروفات</p>
+                                        <p className="text-sm text-muted-foreground">إجمالي المصروفات</p>
                                         <p className="text-2xl font-bold text-brand-green">
                                             {profile.totalSpent?.toFixed(2) || '0.00'} جنيه
                                         </p>

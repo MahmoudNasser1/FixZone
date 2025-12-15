@@ -5,6 +5,7 @@ import { isCustomerRole } from '../../constants/roles';
 import api from '../../services/api';
 import CustomerSidebar from './CustomerSidebar';
 import CustomerBottomNav from './CustomerBottomNav';
+import { useTheme } from '../ThemeProvider';
 import {
     Menu,
     Bell,
@@ -12,7 +13,8 @@ import {
     LogOut,
     ChevronLeft,
     Home,
-    X
+    Sun,
+    Moon
 } from 'lucide-react';
 
 /**
@@ -47,11 +49,13 @@ export default function CustomerLayout({ children }) {
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [notificationCount, setNotificationCount] = useState(0);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [loadingNotifications, setLoadingNotifications] = useState(false);
+    
+    // Theme toggle
+    const { theme, setTheme } = useTheme();
 
     // Auth check
     useEffect(() => {
@@ -165,8 +169,12 @@ export default function CustomerLayout({ children }) {
             // Navigate to repairs with search query
             navigate(`/customer/repairs?search=${encodeURIComponent(searchQuery.trim())}`);
             setSearchQuery('');
-            setIsSearchOpen(false);
         }
+    };
+    
+    // Theme toggle handler
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
     };
 
     // Format time ago
@@ -203,7 +211,7 @@ export default function CustomerLayout({ children }) {
                     <div className="px-4 py-3">
                         <div className="flex items-center justify-between gap-4">
                             {/* Left Side - Menu Button (Mobile) & Breadcrumbs */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-shrink-0">
                                 {/* Mobile Menu Button */}
                                 <button
                                     onClick={() => setSidebarOpen(true)}
@@ -243,38 +251,34 @@ export default function CustomerLayout({ children }) {
                                 </h1>
                             </div>
 
-                            {/* Right Side - Search & Actions */}
-                            <div className="flex items-center gap-2">
-                                {/* Search Button / Input */}
-                                {isSearchOpen ? (
-                                    <form onSubmit={handleSearch} className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="ابحث عن طلب إصلاح..."
-                                            className="w-48 md:w-64 px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                                            autoFocus
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsSearchOpen(false);
-                                                setSearchQuery('');
-                                            }}
-                                            className="p-2 rounded-lg hover:bg-muted transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </form>
-                                ) : (
-                                    <button
-                                        onClick={() => setIsSearchOpen(true)}
-                                        className="p-2 rounded-lg hover:bg-muted transition-colors"
-                                    >
-                                        <Search className="w-5 h-5 text-muted-foreground" />
-                                    </button>
-                                )}
+                            {/* Center - Search Field */}
+                            <div className="flex-1 max-w-md mx-4">
+                                <form onSubmit={handleSearch} className="relative">
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="ابحث عن طلب إصلاح..."
+                                        className="w-full pr-10 pl-4 py-2 rounded-xl border border-input bg-muted/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue focus:bg-background transition-all"
+                                    />
+                                </form>
+                            </div>
+
+                            {/* Right Side - Theme Toggle, Notifications & Actions */}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                                {/* Dark Mode Toggle */}
+                                <button
+                                    onClick={toggleTheme}
+                                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                                    title={theme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
+                                >
+                                    {theme === 'dark' ? (
+                                        <Sun className="w-5 h-5 text-yellow-500" />
+                                    ) : (
+                                        <Moon className="w-5 h-5 text-muted-foreground" />
+                                    )}
+                                </button>
 
                                 {/* Notifications */}
                                 <div className="relative">

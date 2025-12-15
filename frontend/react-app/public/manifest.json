@@ -1,6 +1,7 @@
 {
-  "short_name": "Fix Zone System App",
-  "name": "Fix Zone System App",
+  "short_name": "Fix Zone",
+  "name": "Fix Zone - مركز صيانة الأجهزة",
+  "description": "تتبع طلبات الإصلاح وإدارة الفواتير والأجهزة",
   "icons": [
     {
       "src": "Fav.png",
@@ -15,8 +16,37 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/customer/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#000000"
+  "orientation": "portrait-primary",
+  "theme_color": "#053887",
+  "background_color": "#ffffff",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "utilities"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "تتبع الطلب",
+      "short_name": "تتبع",
+      "description": "تتبع حالة طلب الإصلاح",
+      "url": "/track",
+      "icons": [{ "src": "Fav.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "طلباتي",
+      "short_name": "الإصلاحات",
+      "description": "عرض طلبات الإصلاح",
+      "url": "/customer/repairs",
+      "icons": [{ "src": "Fav.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "الفواتير",
+      "short_name": "الفواتير",
+      "description": "عرض الفواتير",
+      "url": "/customer/invoices",
+      "icons": [{ "src": "Fav.png", "sizes": "192x192" }]
+    }
+  ]
 }

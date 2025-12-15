@@ -485,31 +485,86 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     const [countResult] = await db.execute(countQuery, countParams);
     const total = countResult[0]?.total || 0;
 
+    // جلب جميع الملحقات للطلبات المُرجعَة دفعة واحدة (تحسين الأداء)
+    const repairIds = rows.map(r => r.id);
+    let accessoriesMap = {};
+    if (repairIds.length > 0) {
+      try {
+        const placeholders = repairIds.map(() => '?').join(',');
+        const [accRows] = await db.execute(`
+          SELECT rra.repairRequestId, vo.label, vo.value
+          FROM RepairRequestAccessory rra
+          LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
+          WHERE rra.repairRequestId IN (${placeholders})
+        `, repairIds);
+        
+        // تجميع الملحقات حسب repairRequestId
+        accRows.forEach(acc => {
+          if (!accessoriesMap[acc.repairRequestId]) {
+            accessoriesMap[acc.repairRequestId] = [];
+          }
+          const label = acc.label || acc.value || acc.id;
+          if (label) {
+            accessoriesMap[acc.repairRequestId].push(label);
+          }
+        });
+      } catch (accErr) {
+        console.error('❌ [GET /] Error fetching accessories:', accErr);
+        // في حالة الخطأ، نستخدم البيانات من عمود accessories كبديل
+        rows.forEach(row => {
+          if (row.accessories) {
+            try {
+              const parsed = typeof row.accessories === 'string' 
+                ? JSON.parse(row.accessories) 
+                : (Array.isArray(row.accessories) ? row.accessories : []);
+              accessoriesMap[row.id] = parsed.filter(a => a != null);
+            } catch (e) {
+              accessoriesMap[row.id] = [];
+            }
+          }
+        });
+      }
+    }
+
     // Format data for frontend
-    const formattedData = rows.map(row => ({
-      id: row.id,
-      requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`,
-      customerId: row.customerId,
-      customerName: row.customerName || 'غير محدد',
-      customerPhone: row.customerPhone || 'غير محدد',
-      customerEmail: row.customerEmail || 'غير محدد',
-      deviceType: row.deviceType || 'غير محدد',
-      deviceBrand: row.deviceBrand || 'غير محدد',
-      deviceModel: row.deviceModel || 'غير محدد',
-      issueDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
-      problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
-      status: getStatusMapping(row.status),
-      priority: row.priority || 'MEDIUM',
-      estimatedCost: parseFloat(row.estimatedCost) || 0,
-      actualCost: row.actualCost ? parseFloat(row.actualCost) : null,
-      expectedDeliveryDate: row.expectedDeliveryDate || null,
-      estimatedCompletionDate: row.expectedDeliveryDate || null,
-      assignedTechnician: row.technicianId || null,
-      notes: row.customerNotes || row.technicianReport || null,
-      accessories: [], // Accessories are stored in RepairRequestAccessory table, fetch separately if needed
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt
-    }));
+    const formattedData = rows.map(row => {
+      // جلب الملحقات من accessoriesMap، أو من عمود accessories كبديل
+      let accessories = accessoriesMap[row.id] || [];
+      if (accessories.length === 0 && row.accessories) {
+        try {
+          accessories = typeof row.accessories === 'string' 
+            ? JSON.parse(row.accessories).filter(a => a != null)
+            : (Array.isArray(row.accessories) ? row.accessories.filter(a => a != null) : []);
+        } catch (e) {
+          accessories = [];
+        }
+      }
+
+      return {
+        id: row.id,
+        requestNumber: `REP-${new Date(row.createdAt).getFullYear()}${String(new Date(row.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(row.createdAt).getDate()).padStart(2, '0')}-${String(row.id).padStart(3, '0')}`,
+        customerId: row.customerId,
+        customerName: row.customerName || 'غير محدد',
+        customerPhone: row.customerPhone || 'غير محدد',
+        customerEmail: row.customerEmail || 'غير محدد',
+        deviceType: row.deviceType || 'غير محدد',
+        deviceBrand: row.deviceBrand || 'غير محدد',
+        deviceModel: row.deviceModel || 'غير محدد',
+        issueDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
+        problemDescription: row.reportedProblem || row.problemDescription || 'لا توجد تفاصيل',
+        status: getStatusMapping(row.status),
+        priority: row.priority || 'MEDIUM',
+        estimatedCost: parseFloat(row.estimatedCost) || 0,
+        actualCost: row.actualCost ? parseFloat(row.actualCost) : null,
+        expectedDeliveryDate: row.expectedDeliveryDate || null,
+        estimatedCompletionDate: row.expectedDeliveryDate || null,
+        assignedTechnician: row.technicianId || null,
+        notes: row.customerNotes || row.technicianReport || null,
+        accessories: accessories,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      };
+    });
 
     // Return response with pagination metadata
     res.json({
@@ -990,7 +1045,7 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
 
     // جلب الملحقات المرتبطة بالطلب
     const [accRows] = await db.execute(`
-      SELECT rra.accessoryOptionId as id, vo.label
+      SELECT rra.accessoryOptionId as id, vo.label, vo.value
       FROM RepairRequestAccessory rra
       LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
       WHERE rra.repairRequestId = ?
@@ -1010,6 +1065,27 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
     } catch (e) {
       console.error('❌ [GET /:id] Error parsing customFields:', e);
       parsedCustomFields = {};
+    }
+
+    // معالجة الملحقات: استخدام البيانات من RepairRequestAccessory أولاً، ثم من repair.accessories كبديل
+    let accessories = [];
+    try {
+      if (accRows && accRows.length > 0) {
+        // استخدام البيانات من جدول RepairRequestAccessory
+        accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
+        console.log('🔍 [GET /:id] Accessories from RepairRequestAccessory table:', accessories);
+      } else if (repair.accessories) {
+        // استخدام البيانات من عمود accessories في RepairRequest (للتوافق مع البيانات القديمة)
+        if (typeof repair.accessories === 'string') {
+          accessories = JSON.parse(repair.accessories).filter(a => a != null);
+        } else if (Array.isArray(repair.accessories)) {
+          accessories = repair.accessories.filter(a => a != null);
+        }
+        console.log('🔍 [GET /:id] Accessories from repair.accessories column:', accessories);
+      }
+    } catch (e) {
+      console.error('❌ [GET /:id] Error parsing accessories:', e);
+      accessories = [];
     }
 
     const response = {
@@ -1044,8 +1120,20 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
         storage: repair.storage || null,
       },
       customFields: parsedCustomFields,
-      accessories: repair.accessories ? JSON.parse(repair.accessories).filter(a => a != null) : []
+      accessories: accessories
     };
+
+    console.log('🔍 [GET /:id] Response data:', {
+      hasTrackingToken: !!response.trackingToken,
+      trackingToken: response.trackingToken,
+      hasDeviceSpecs: !!response.deviceSpecs,
+      deviceSpecsKeys: Object.keys(response.deviceSpecs),
+      hasAccessories: !!response.accessories,
+      accessoriesLength: response.accessories.length,
+      accessories: response.accessories,
+      hasCreatedAt: !!response.createdAt,
+      createdAt: response.createdAt
+    });
 
     res.json({ success: true, data: response });
   } catch (err) {
@@ -1300,13 +1388,38 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
     // رابعاً: حفظ الملحقات إن وجدت
     if (Array.isArray(accessories) && accessories.length > 0) {
-      // حفظ المتعلقات كـ JSON في حقل accessories
+      // حفظ المتعلقات كـ JSON في حقل accessories (للتوافق مع البيانات القديمة)
       const accessoriesJson = JSON.stringify(accessories);
       await connection.execute(
         'UPDATE RepairRequest SET accessories = ? WHERE id = ?',
         [accessoriesJson, result.insertId]
       );
-      console.log('Accessories saved:', accessories);
+      
+      // حفظ الملحقات في جدول RepairRequestAccessory (الطريقة الصحيحة)
+      // البحث عن accessoryOptionId من VariableOption بناءً على القيمة أو الاسم
+      for (const accessory of accessories) {
+        if (accessory) {
+          const accessoryValue = typeof accessory === 'string' ? accessory : (accessory.value || accessory.label || accessory.name);
+          if (accessoryValue) {
+            // البحث عن VariableOption الذي يطابق القيمة أو الاسم
+            const [optionRows] = await connection.execute(
+              'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
+              [accessoryValue, accessoryValue]
+            );
+            
+            if (optionRows.length > 0) {
+              // حفظ في RepairRequestAccessory
+              await connection.execute(
+                'INSERT INTO RepairRequestAccessory (repairRequestId, accessoryOptionId, quantity) VALUES (?, ?, ?)',
+                [result.insertId, optionRows[0].id, 1]
+              );
+            } else {
+              console.warn(`⚠️ [POST /] Accessory option not found for: ${accessoryValue}, saving as JSON only`);
+            }
+          }
+        }
+      }
+      console.log('✅ [POST /] Accessories saved in both JSON column and RepairRequestAccessory table:', accessories);
     }
 
     // حفظ نطاق التكلفة المقدرة في customFields
@@ -1939,6 +2052,37 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
     if (accessories !== undefined) {
       updates.push('accessories = ?');
       values.push(Array.isArray(accessories) ? JSON.stringify(accessories) : null);
+      
+      // تحديث جدول RepairRequestAccessory أيضاً
+      // حذف الملحقات القديمة أولاً
+      await db.execute('DELETE FROM RepairRequestAccessory WHERE repairRequestId = ?', [id]);
+      
+      // إضافة الملحقات الجديدة إذا كانت موجودة
+      if (Array.isArray(accessories) && accessories.length > 0) {
+        for (const accessory of accessories) {
+          if (accessory) {
+            const accessoryValue = typeof accessory === 'string' ? accessory : (accessory.value || accessory.label || accessory.name);
+            if (accessoryValue) {
+              // البحث عن VariableOption الذي يطابق القيمة أو الاسم
+              const [optionRows] = await db.execute(
+                'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
+                [accessoryValue, accessoryValue]
+              );
+              
+              if (optionRows.length > 0) {
+                // حفظ في RepairRequestAccessory
+                await db.execute(
+                  'INSERT INTO RepairRequestAccessory (repairRequestId, accessoryOptionId, quantity) VALUES (?, ?, ?)',
+                  [id, optionRows[0].id, 1]
+                );
+              } else {
+                console.warn(`⚠️ [PATCH /:id/details] Accessory option not found for: ${accessoryValue}, saving as JSON only`);
+              }
+            }
+          }
+        }
+        console.log('✅ [PATCH /:id/details] Accessories updated in both JSON column and RepairRequestAccessory table');
+      }
     }
 
     if (updates.length === 0 && estimatedCostMin === undefined && estimatedCostMax === undefined) {

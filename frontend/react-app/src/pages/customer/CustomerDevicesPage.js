@@ -103,7 +103,7 @@ export default function CustomerDevicesPage() {
                         <div
                             className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted"
                         >
-                            <PackageOpen className="w-10 h-10 text-gray-400" />
+                            <PackageOpen className="w-10 h-10 text-muted-foreground" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد أجهزة مسجلة</h3>
                         <p className="text-muted-foreground">لم تقم بإضافة أي أجهزة بعد</p>
@@ -129,23 +129,23 @@ export default function CustomerDevicesPage() {
 
                                     {/* Device Info */}
                                     <div className="text-center mb-4">
-                                        <h3 className="font-bold text-gray-900 mb-1">{device.deviceType}</h3>
-                                        <p className="text-sm text-gray-600">{device.brand} {device.model}</p>
+                                        <h3 className="font-bold text-foreground mb-1">{device.deviceType}</h3>
+                                        <p className="text-sm text-muted-foreground">{device.brand} {device.model}</p>
                                         {device.serialNumber && (
-                                            <p className="text-xs text-gray-500 mt-1">S/N: {device.serialNumber}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">S/N: {device.serialNumber}</p>
                                         )}
                                     </div>
 
                                     {/* Stats */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <div className="flex items-center justify-between pt-4 border-t border-border">
                                         <div className="text-center">
-                                            <p className="text-xs text-gray-500">عدد الإصلاحات</p>
+                                            <p className="text-xs text-muted-foreground">عدد الإصلاحات</p>
                                             <p className="text-lg font-bold text-brand-purple">
                                                 {device.totalRepairs || 0}
                                             </p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-xs text-gray-500">الحالة</p>
+                                            <p className="text-xs text-muted-foreground">الحالة</p>
                                             <p
                                                 className={`text-sm font-semibold ${statusColor}`}
                                             >
@@ -156,8 +156,8 @@ export default function CustomerDevicesPage() {
                                     </div>
 
                                     {device.lastRepairDate && (
-                                        <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-                                            <p className="text-xs text-gray-500">
+                                        <div className="mt-3 pt-3 border-t border-border text-center">
+                                            <p className="text-xs text-muted-foreground">
                                                 آخر إصلاح: {new Date(device.lastRepairDate).toLocaleDateString('ar-EG')}
                                             </p>
                                         </div>

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Wrench,
     FileText,
-    Package,
+    Bell,
     User
 } from 'lucide-react';
 
@@ -13,10 +13,11 @@ import {
  * 
  * Features:
  * - Fixed bottom navigation for mobile devices
- * - 5 main navigation items
+ * - 5 main navigation items with notification badge
  * - Active state with animation
  * - RTL support
  * - Safe area padding for notch devices
+ * - Haptic feedback support
  */
 
 const navItems = [
@@ -24,35 +25,40 @@ const navItems = [
         path: '/customer/dashboard',
         icon: LayoutDashboard,
         label: 'الرئيسية',
-        color: '#053887'
+        color: '#053887',
+        id: 'dashboard'
     },
     {
         path: '/customer/repairs',
         icon: Wrench,
         label: 'الإصلاحات',
-        color: '#3B82F6'
+        color: '#3B82F6',
+        id: 'repairs'
     },
     {
         path: '/customer/invoices',
         icon: FileText,
         label: 'الفواتير',
-        color: '#10B981'
+        color: '#10B981',
+        id: 'invoices'
     },
     {
-        path: '/customer/devices',
-        icon: Package,
-        label: 'أجهزتي',
-        color: '#8B5CF6'
+        path: '/customer/notifications',
+        icon: Bell,
+        label: 'الإشعارات',
+        color: '#F59E0B',
+        id: 'notifications'
     },
     {
         path: '/customer/profile',
         icon: User,
         label: 'حسابي',
-        color: '#F59E0B'
+        color: '#8B5CF6',
+        id: 'profile'
     }
 ];
 
-export default function CustomerBottomNav({ notificationCount = 0 }) {
+export default function CustomerBottomNav({ notificationCount = 0, pendingInvoices = 0 }) {
     const location = useLocation();
 
     const isActive = (path) => {
@@ -61,6 +67,25 @@ export default function CustomerBottomNav({ notificationCount = 0 }) {
             return location.pathname === path;
         }
         return location.pathname === path || location.pathname.startsWith(path + '/');
+    };
+
+    // Haptic feedback for supported devices
+    const triggerHaptic = useCallback(() => {
+        if (navigator.vibrate) {
+            navigator.vibrate(10);
+        }
+    }, []);
+
+    // Get badge count for specific items
+    const getBadgeCount = (itemId) => {
+        switch (itemId) {
+            case 'notifications':
+                return notificationCount;
+            case 'invoices':
+                return pendingInvoices;
+            default:
+                return 0;
+        }
     };
 
     return (
@@ -72,15 +97,17 @@ export default function CustomerBottomNav({ notificationCount = 0 }) {
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.path);
+                    const badgeCount = getBadgeCount(item.id);
 
                     return (
                         <NavLink
                             key={item.path}
                             to={item.path}
+                            onClick={triggerHaptic}
                             className={`
                                 flex flex-col items-center justify-center
                                 min-w-[56px] py-1.5 px-2 rounded-xl
-                                transition-all duration-200
+                                transition-all duration-200 active:scale-95
                                 ${active ? 'scale-105' : 'opacity-70 hover:opacity-100'}
                             `}
                         >
@@ -105,6 +132,16 @@ export default function CustomerBottomNav({ notificationCount = 0 }) {
                                         color: active ? 'white' : item.color 
                                     }}
                                 />
+
+                                {/* Notification Badge */}
+                                {badgeCount > 0 && (
+                                    <span 
+                                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full shadow-lg animate-pulse"
+                                        style={{ boxShadow: '0 2px 8px rgba(239, 68, 68, 0.5)' }}
+                                    >
+                                        {badgeCount > 99 ? '99+' : badgeCount}
+                                    </span>
+                                )}
 
                                 {/* Active Indicator Dot */}
                                 {active && (

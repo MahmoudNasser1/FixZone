@@ -1651,10 +1651,17 @@ const RepairDetailsPage = () => {
       console.log('Fetching repair details for ID:', id);
       // محاولة الجلب من API أولاً
       try {
-        const rep = await apiService.getRepairRequest(id);
-        console.log('Repair response:', rep);
+        const response = await apiService.getRepairRequest(id);
+        // Extract data from response if it's wrapped in { success: true, data: {...} }
+        const rep = response?.data || response;
+        console.log('Repair response:', response);
+        console.log('Repair data (extracted):', rep);
         console.log('🔍 Repair customFields:', rep?.customFields);
         console.log('🔍 Repair customFields type:', typeof rep?.customFields);
+        console.log('🔍 Repair accessories:', rep?.accessories);
+        console.log('🔍 Repair deviceSpecs:', rep?.deviceSpecs);
+        console.log('🔍 Repair trackingToken:', rep?.trackingToken);
+        console.log('🔍 Repair createdAt:', rep?.createdAt);
         console.log('🔍 Repair problem data:', {
           reportedProblem: rep?.reportedProblem,
           problemDescription: rep?.problemDescription,

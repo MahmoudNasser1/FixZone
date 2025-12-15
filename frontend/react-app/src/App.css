@@ -82,51 +82,78 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* 🌙 Improved Dark Mode for Eye Comfort */
+    
+    /* Background - Softer dark gray instead of pure black */
+    --background: 220 20% 10%;
+    /* #161a1f - easier on eyes than pure black */
+    --foreground: 210 20% 93%;
+    /* Slightly warm white for better readability */
+    
+    /* Cards - Slightly elevated from background for visual hierarchy */
+    --card: 220 18% 13%;
+    /* #1c2127 - distinct from background */
+    --card-foreground: 210 20% 93%;
+    
+    /* Popover - Same as card for consistency */
+    --popover: 220 18% 13%;
+    --popover-foreground: 210 20% 93%;
+    
+    /* Primary & Secondary */
+    --primary: 213 90% 60%;
+    /* Brighter blue for dark mode */
+    --primary-foreground: 220 20% 10%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 210 20% 93%;
+    
+    /* Muted - Improved contrast for better readability */
+    --muted: 220 15% 18%;
+    /* Slightly lighter for better distinction */
+    --muted-foreground: 215 15% 65%;
+    /* Brighter for better readability */
+    
+    /* Accent */
+    --accent: 220 15% 20%;
+    --accent-foreground: 210 20% 93%;
+    
+    /* Destructive */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 20% 93%;
+    
+    /* Border - More visible but subtle */
+    --border: 220 15% 22%;
+    /* Lighter border for better visibility */
+    --input: 220 15% 18%;
+    --ring: 213 90% 60%;
 
-    /* Brand Colors - Dark Mode Adjusted */
-    --brand-blue: 213 94% 45%;
-    /* Lighter for dark mode */
-    --brand-blue-light: 213 94% 55%;
-    --brand-green: 142 71% 50%;
-    --brand-purple: 258 90% 70%;
-    --brand-orange: 25 95% 60%;
+    /* Brand Colors - Dark Mode Optimized for eye comfort */
+    --brand-blue: 213 90% 55%;
+    /* Softer, easier on eyes */
+    --brand-blue-light: 213 90% 65%;
+    --brand-green: 142 65% 48%;
+    /* Slightly desaturated */
+    --brand-purple: 258 80% 68%;
+    /* Softer purple */
+    --brand-orange: 25 90% 58%;
+    /* Softer orange */
 
-    /* Semantic Colors - Dark Mode */
-    --success: 142 71% 50%;
-    --success-foreground: 222.2 84% 4.9%;
-    --warning: 38 92% 55%;
-    --warning-foreground: 222.2 84% 4.9%;
-    --error: 0 84% 65%;
-    --error-foreground: 222.2 84% 4.9%;
-    --info: 199 89% 55%;
-    --info-foreground: 222.2 84% 4.9%;
+    /* Semantic Colors - Dark Mode - Softer variants */
+    --success: 142 65% 48%;
+    --success-foreground: 220 20% 10%;
+    --warning: 38 85% 52%;
+    --warning-foreground: 220 20% 10%;
+    --error: 0 75% 58%;
+    --error-foreground: 210 20% 93%;
+    --info: 199 85% 52%;
+    --info-foreground: 220 20% 10%;
 
-    /* Surface Colors - Dark Mode */
-    --surface-1: 217.2 32.6% 17.5%;
-    /* Dark cards */
-    --surface-2: 217.2 32.6% 12%;
-    /* Darker surfaces */
-    --surface-3: 222.2 84% 4.9%;
-    /* Darkest */
+    /* Surface Colors - Dark Mode - Better hierarchy */
+    --surface-1: 220 18% 15%;
+    /* Elevated cards */
+    --surface-2: 220 18% 12%;
+    /* Secondary surfaces */
+    --surface-3: 220 20% 10%;
+    /* Background level */
 
     /* Glassmorphism - Dark Mode */
     --glass-bg: 222.2 84% 4.9%;

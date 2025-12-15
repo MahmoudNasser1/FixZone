@@ -183,7 +183,7 @@ export default function CustomerNotificationsPage() {
             case 'alert':
                 return <AlertCircle className="w-5 h-5 text-orange-500" />;
             default:
-                return <Bell className="w-5 h-5 text-gray-500" />;
+                return <Bell className="w-5 h-5 text-muted-foreground" />;
         }
     };
 
@@ -296,7 +296,7 @@ export default function CustomerNotificationsPage() {
                 {notificationsList.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted">
-                            <Bell className="w-10 h-10 text-gray-400" />
+                            <Bell className="w-10 h-10 text-muted-foreground" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد إشعارات</h3>
                         <p className="text-muted-foreground">

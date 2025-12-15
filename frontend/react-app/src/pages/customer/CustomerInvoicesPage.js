@@ -286,7 +286,7 @@ export default function CustomerInvoicesPage() {
                 {/* Search & Filters */}
                 <div className="space-y-4 mb-6">
                     <div className="relative">
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="ابحث برقم الفاتورة..."
@@ -297,7 +297,7 @@ export default function CustomerInvoicesPage() {
                     </div>
 
                     <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                        <Filter className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <Filter className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                         <div className="flex gap-2">
                             {filters.map((filter) => (
                                 <button
@@ -342,7 +342,7 @@ export default function CustomerInvoicesPage() {
                 {currentInvoices.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted">
-                            <Receipt className="w-10 h-10 text-gray-400" />
+                            <Receipt className="w-10 h-10 text-muted-foreground" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد فواتير</h3>
                         <p className="text-muted-foreground mb-6">
@@ -372,7 +372,7 @@ export default function CustomerInvoicesPage() {
                                             e.stopPropagation();
                                             handleDownloadPDF(invoice.id);
                                         }}
-                                        className="absolute top-3 left-3 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        className="absolute top-3 left-3 p-2 bg-card rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-muted"
                                         title="تحميل PDF"
                                     >
                                         <Download className="w-4 h-4 text-brand-green" />

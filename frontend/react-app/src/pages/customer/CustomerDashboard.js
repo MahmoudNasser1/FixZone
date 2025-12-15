@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import useAuthStore from '../../stores/authStore';
-import { isCustomerRole } from '../../constants/roles';
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 import EnhancedStatsCard from '../../components/customer/EnhancedStatsCard';
 import QuickActionCard from '../../components/customer/QuickActionCard';
 import SkeletonDashboard from '../../components/customer/SkeletonDashboard';
 import DashboardAlertBanner from '../../components/customer/DashboardAlertBanner';
+import OnboardingTour, { useOnboarding } from '../../components/customer/OnboardingTour';
+import ActivityChart from '../../components/customer/ActivityChart';
+import LatestRepairWidget from '../../components/customer/LatestRepairWidget';
+import useCustomerAuth from '../../hooks/useCustomerAuth';
 import {
   Wrench, FileText, CreditCard, Package,
   Clock, CheckCircle, XCircle, AlertCircle,
@@ -19,10 +20,12 @@ import {
 } from 'lucide-react';
 
 export default function CustomerDashboard() {
-  const navigate = useNavigate();
+  // Use centralized auth hook
+  const { user, customerId, isValidated, needsPasswordReset, navigate } = useCustomerAuth();
   const notifications = useNotifications();
-  const user = useAuthStore((state) => state.user);
-  const forcePasswordReset = useAuthStore((state) => state.forcePasswordReset);
+  
+  // Onboarding tour for new users
+  const { showOnboarding, hasCompleted: onboardingCompleted, completeTour } = useOnboarding();
 
   const [profile, setProfile] = useState(null);
   const [repairs, setRepairs] = useState([]);
@@ -40,20 +43,14 @@ export default function CustomerDashboard() {
   });
   const [showPasswordReminder, setShowPasswordReminder] = useState(false);
   const [showAlertBanner, setShowAlertBanner] = useState(true);
+  const [showOnboardingTour, setShowOnboardingTour] = useState(false);
 
   // Use ref to prevent multiple calls
   const loadingRef = useRef(false);
 
+  // Load dashboard data when auth is validated
   useEffect(() => {
-    const roleId = user?.roleId || user?.role;
-    const numericRoleId = Number(roleId);
-    const isCustomer = user && (user.type === 'customer' || isCustomerRole(numericRoleId));
-
-    if (!user || !isCustomer) {
-      notifications.error('خطأ', { message: 'يجب تسجيل الدخول كعميل للوصول لهذه الصفحة' });
-      navigate('/login');
-      return;
-    }
+    if (!isValidated) return;
 
     // Load dashboard data when user is available
     // Use ref to prevent multiple simultaneous calls
@@ -64,11 +61,22 @@ export default function CustomerDashboard() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Only depend on user.id to prevent loops
+  }, [isValidated, user?.id]);
 
   useEffect(() => {
-    setShowPasswordReminder(forcePasswordReset);
-  }, [forcePasswordReset]);
+    setShowPasswordReminder(needsPasswordReset);
+  }, [needsPasswordReset]);
+
+  // Show onboarding for new users (only after loading and if not completed)
+  useEffect(() => {
+    if (!loading && isValidated && !onboardingCompleted) {
+      // Small delay to let dashboard render first
+      const timer = setTimeout(() => {
+        setShowOnboardingTour(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isValidated, onboardingCompleted]);
 
   const loadDashboardData = async () => {
     try {
@@ -224,6 +232,16 @@ export default function CustomerDashboard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Onboarding Tour for New Users */}
+      {showOnboardingTour && (
+        <OnboardingTour 
+          onComplete={() => {
+            setShowOnboardingTour(false);
+            completeTour();
+          }} 
+        />
+      )}
       
       <div className="p-4 sm:p-6 lg:p-8">
         {/* Welcome Banner */}
@@ -321,6 +339,22 @@ export default function CustomerDashboard() {
             </div>
           </div>
 
+          {/* Activity Overview & Latest Repair */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Activity Chart */}
+            <ActivityChart 
+              title="نشاط الإصلاحات"
+              subtitle="آخر 7 أيام"
+              color="#3B82F6"
+            />
+            
+            {/* Latest Repair Widget */}
+            <LatestRepairWidget 
+              repair={repairs[0]} 
+              onViewDetails={(repair) => navigate(`/customer/repairs/${repair.id}`)}
+            />
+          </div>
+
           {/* Repairs & Invoices Lists */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Repairs */}
@@ -333,7 +367,7 @@ export default function CustomerDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent>
                 {repairs.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Wrench className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>لا توجد طلبات إصلاح حالياً</p>
                   </div>
@@ -380,7 +414,7 @@ export default function CustomerDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent>
                 {invoices.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>لا توجد فواتير حالياً</p>
                   </div>

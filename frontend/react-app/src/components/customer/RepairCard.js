@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleBadge from '../ui/SimpleBadge';
+import { MiniProgressBar } from './RepairProgressBar';
 import {
     Wrench,
     Clock,
@@ -130,6 +131,11 @@ export default function RepairCard({ repair, onClick }) {
                         {repair.issueDescription}
                     </p>
                 )}
+
+                {/* Progress Bar */}
+                <div className="mb-3">
+                    <MiniProgressBar status={repair.status} />
+                </div>
 
                 {/* Footer Info */}
                 <div className="flex items-center justify-between pt-3 border-t border-border">

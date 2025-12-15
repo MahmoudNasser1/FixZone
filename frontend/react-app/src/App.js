@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './stores/authStore';
 import { ROLE_ADMIN, ROLE_TECHNICIAN, ROLE_CUSTOMER, isCustomerRole, isTechnicianRole } from './constants/roles';
@@ -106,32 +106,51 @@ import { QuotationsPage } from './pages/quotations';
 import MessagingCenterPage from './pages/messaging/MessagingCenterPage';
 import MessagingReportsPage from './pages/messaging/MessagingReportsPage';
 
-// Customer Portal Pages
-import CustomerLoginPage from './pages/customer/CustomerLoginPage';
-import CustomerDashboard from './pages/customer/CustomerDashboard';
-import CustomerRepairsPage from './pages/customer/CustomerRepairsPage';
-import CustomerInvoicesPage from './pages/customer/CustomerInvoicesPage';
-import CustomerDevicesPage from './pages/customer/CustomerDevicesPage';
-import CustomerProfilePage from './pages/customer/CustomerProfilePage';
-import CustomerRepairDetailsPage from './pages/customer/CustomerRepairDetailsPage';
-import CustomerInvoiceDetailsPage from './pages/customer/CustomerInvoiceDetailsPage';
-import CustomerSettingsPage from './pages/customer/CustomerSettingsPage';
-import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPage';
-import CustomerHelpPage from './pages/customer/CustomerHelpPage';
+// Customer Portal Layout
 import CustomerLayout from './components/customer/CustomerLayout';
 
 // Technician Portal Pages
 import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
 import TechnicianSettingsPage from './pages/technician/TechnicianSettingsPage';
+
 // Technicians Management Pages (Admin)
 import TechniciansPage from './pages/technicians/TechniciansPage';
 import TechnicianDetailsPage from './pages/technicians/TechnicianDetailsPage';
 import TechnicianForm from './pages/technicians/TechnicianForm';
 import TechnicianAnalyticsPage from './pages/technicians/TechnicianAnalyticsPage';
-// Already imported above individually
 
 // Debug Page
 import DebugPage from './pages/DebugPage';
+
+// ============================================
+// Lazy Loaded Components for Performance
+// ============================================
+
+// Customer Portal Pages - Lazy Loaded
+const CustomerLoginPage = React.lazy(() => import('./pages/customer/CustomerLoginPage'));
+const CustomerDashboard = React.lazy(() => import('./pages/customer/CustomerDashboard'));
+const CustomerRepairsPage = React.lazy(() => import('./pages/customer/CustomerRepairsPage'));
+const CustomerInvoicesPage = React.lazy(() => import('./pages/customer/CustomerInvoicesPage'));
+const CustomerDevicesPage = React.lazy(() => import('./pages/customer/CustomerDevicesPage'));
+const CustomerProfilePage = React.lazy(() => import('./pages/customer/CustomerProfilePage'));
+const CustomerRepairDetailsPage = React.lazy(() => import('./pages/customer/CustomerRepairDetailsPage'));
+const CustomerInvoiceDetailsPage = React.lazy(() => import('./pages/customer/CustomerInvoiceDetailsPage'));
+const CustomerSettingsPage = React.lazy(() => import('./pages/customer/CustomerSettingsPage'));
+const CustomerNotificationsPage = React.lazy(() => import('./pages/customer/CustomerNotificationsPage'));
+const CustomerHelpPage = React.lazy(() => import('./pages/customer/CustomerHelpPage'));
+
+// Public Pages - Lazy Loaded
+const TrackRepairPage = React.lazy(() => import('./pages/public/TrackRepairPage'));
+
+// Loading Fallback Component for Customer Portal
+const CustomerLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
+    <div className="text-center">
+      <div className="w-12 h-12 mx-auto mb-4 border-4 border-muted border-t-brand-blue rounded-full animate-spin" />
+      <p className="text-muted-foreground">جاري التحميل...</p>
+    </div>
+  </div>
+);
 
 // Placeholder components removed; using real pages instead
 
@@ -311,19 +330,21 @@ function App() {
               element={
                 <CustomerRoute>
                   <CustomerLayout>
-                    <Routes>
-                      <Route path="dashboard" element={<CustomerDashboard />} />
-                      <Route path="repairs" element={<CustomerRepairsPage />} />
-                      <Route path="repairs/:id" element={<CustomerRepairDetailsPage />} />
-                      <Route path="invoices" element={<CustomerInvoicesPage />} />
-                      <Route path="invoices/:id" element={<CustomerInvoiceDetailsPage />} />
-                      <Route path="devices" element={<CustomerDevicesPage />} />
-                      <Route path="profile" element={<CustomerProfilePage />} />
-                      <Route path="settings" element={<CustomerSettingsPage />} />
-                      <Route path="notifications" element={<CustomerNotificationsPage />} />
-                      <Route path="help" element={<CustomerHelpPage />} />
-                      <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
-                    </Routes>
+                    <Suspense fallback={<CustomerLoadingFallback />}>
+                      <Routes>
+                        <Route path="dashboard" element={<CustomerDashboard />} />
+                        <Route path="repairs" element={<CustomerRepairsPage />} />
+                        <Route path="repairs/:id" element={<CustomerRepairDetailsPage />} />
+                        <Route path="invoices" element={<CustomerInvoicesPage />} />
+                        <Route path="invoices/:id" element={<CustomerInvoiceDetailsPage />} />
+                        <Route path="devices" element={<CustomerDevicesPage />} />
+                        <Route path="profile" element={<CustomerProfilePage />} />
+                        <Route path="settings" element={<CustomerSettingsPage />} />
+                        <Route path="notifications" element={<CustomerNotificationsPage />} />
+                        <Route path="help" element={<CustomerHelpPage />} />
+                        <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
+                      </Routes>
+                    </Suspense>
                   </CustomerLayout>
                 </CustomerRoute>
               }
@@ -340,7 +361,8 @@ function App() {
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
 
             {/* Public Routes - لا تحتاج تسجيل دخول */}
-            <Route path="/track" element={<PublicRepairTrackingPage />} />
+            <Route path="/track" element={<Suspense fallback={<CustomerLoadingFallback />}><TrackRepairPage /></Suspense>} />
+            <Route path="/track/:id" element={<Suspense fallback={<CustomerLoadingFallback />}><TrackRepairPage /></Suspense>} />
             <Route path="/track/reports" element={<PublicRepairReportsPage />} />
 
             {/* Staff/Admin Routes */}

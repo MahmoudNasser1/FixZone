@@ -75,7 +75,7 @@ export default function CustomerInvoiceDetailsPage() {
     if (!invoice) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12 print:bg-white">
+        <div className="min-h-screen bg-background pb-12 print:bg-white">
             <div className="print:hidden">
                 <CustomerHeader user={user} notificationCount={2} />
             </div>
@@ -86,7 +86,7 @@ export default function CustomerInvoiceDetailsPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 print:hidden">
                     <button
                         onClick={() => navigate('/customer/invoices')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <ArrowRight className="w-5 h-5" />
                         <span>عودة للفواتير</span>
@@ -95,13 +95,13 @@ export default function CustomerInvoiceDetailsPage() {
                     <div className="flex gap-3">
                         <button
                             onClick={handlePrint}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium"
+                            className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors shadow-sm font-medium"
                         >
                             <Printer className="w-4 h-4" />
                             <span>طباعة</span>
                         </button>
                         <button
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium"
+                            className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors shadow-sm font-medium"
                         >
                             <Download className="w-4 h-4" />
                             <span>تحميل PDF</span>
@@ -126,22 +126,22 @@ export default function CustomerInvoiceDetailsPage() {
                 </div>
 
                 {/* Invoice Paper */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden print:shadow-none print:border-none">
+                <div className="bg-card rounded-2xl shadow-lg border border-border overflow-hidden print:shadow-none print:border-none print:bg-white">
 
                     {/* Invoice Header */}
-                    <div className="p-8 border-b border-gray-100 bg-gray-50 print:bg-white">
+                    <div className="p-8 border-b border-border bg-muted/50 print:bg-white">
                         <div className="flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <FileText className="w-6 h-6 text-blue-600" />
-                                    <h1 className="text-2xl font-bold text-gray-900">فاتورة ضريبية</h1>
+                                    <FileText className="w-6 h-6 text-brand-blue" />
+                                    <h1 className="text-2xl font-bold text-foreground">فاتورة ضريبية</h1>
                                 </div>
-                                <p className="text-gray-500">#{invoice.number}</p>
+                                <p className="text-muted-foreground">#{invoice.number}</p>
                             </div>
                             <div className="text-left">
-                                <h2 className="text-xl font-bold text-gray-900">FixZone ERP</h2>
-                                <p className="text-gray-500 text-sm">123 شارع التكنولوجيا، المعادي</p>
-                                <p className="text-gray-500 text-sm">القاهرة، مصر</p>
+                                <h2 className="text-xl font-bold text-foreground">FixZone ERP</h2>
+                                <p className="text-muted-foreground text-sm">123 شارع التكنولوجيا، المعادي</p>
+                                <p className="text-muted-foreground text-sm">القاهرة، مصر</p>
                             </div>
                         </div>
                     </div>
@@ -149,23 +149,23 @@ export default function CustomerInvoiceDetailsPage() {
                     {/* Invoice Info */}
                     <div className="p-8 grid grid-cols-2 gap-8">
                         <div>
-                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">فوترة إلى</h3>
-                            <p className="font-bold text-gray-900">{invoice.customerName}</p>
-                            <p className="text-gray-600">{invoice.customerAddress}</p>
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">فوترة إلى</h3>
+                            <p className="font-bold text-foreground">{invoice.customerName}</p>
+                            <p className="text-muted-foreground">{invoice.customerAddress}</p>
                         </div>
                         <div className="text-left">
                             <div className="mb-2">
-                                <span className="text-gray-500 text-sm">تاريخ الفاتورة: </span>
-                                <span className="font-medium text-gray-900">{new Date(invoice.date).toLocaleDateString('ar-EG')}</span>
+                                <span className="text-muted-foreground text-sm">تاريخ الفاتورة: </span>
+                                <span className="font-medium text-foreground">{new Date(invoice.date).toLocaleDateString('ar-EG')}</span>
                             </div>
                             <div className="mb-2">
-                                <span className="text-gray-500 text-sm">تاريخ الاستحقاق: </span>
-                                <span className="font-medium text-gray-900">{new Date(invoice.dueDate).toLocaleDateString('ar-EG')}</span>
+                                <span className="text-muted-foreground text-sm">تاريخ الاستحقاق: </span>
+                                <span className="font-medium text-foreground">{new Date(invoice.dueDate).toLocaleDateString('ar-EG')}</span>
                             </div>
                             <div className="mt-4">
-                                <span className={`px-3 py-1 rounded-full text-sm font-bold ${invoice.status === 'paid' ? 'bg-green-100 text-green-700' :
-                                        invoice.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                                            'bg-yellow-100 text-yellow-700'
+                                <span className={`px-3 py-1 rounded-full text-sm font-bold ${invoice.status === 'paid' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                                        invoice.status === 'overdue' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                                     }`}>
                                     {invoice.status === 'paid' ? 'مدفوعة' : invoice.status === 'overdue' ? 'متأخرة' : 'معلقة'}
                                 </span>
@@ -176,21 +176,21 @@ export default function CustomerInvoiceDetailsPage() {
                     {/* Items Table */}
                     <div className="px-8">
                         <table className="w-full text-right">
-                            <thead className="bg-gray-50 border-y border-gray-200">
+                            <thead className="bg-muted/50 border-y border-border">
                                 <tr>
-                                    <th className="py-3 px-4 text-sm font-bold text-gray-900">الوصف</th>
-                                    <th className="py-3 px-4 text-sm font-bold text-gray-900 text-center">الكمية</th>
-                                    <th className="py-3 px-4 text-sm font-bold text-gray-900 text-center">السعر</th>
-                                    <th className="py-3 px-4 text-sm font-bold text-gray-900 text-left">الإجمالي</th>
+                                    <th className="py-3 px-4 text-sm font-bold text-foreground">الوصف</th>
+                                    <th className="py-3 px-4 text-sm font-bold text-foreground text-center">الكمية</th>
+                                    <th className="py-3 px-4 text-sm font-bold text-foreground text-center">السعر</th>
+                                    <th className="py-3 px-4 text-sm font-bold text-foreground text-left">الإجمالي</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-border">
                                 {invoice.items.map((item, index) => (
                                     <tr key={index}>
-                                        <td className="py-4 px-4 text-gray-900">{item.description}</td>
-                                        <td className="py-4 px-4 text-gray-600 text-center">{item.quantity}</td>
-                                        <td className="py-4 px-4 text-gray-600 text-center">{item.price} ج.م</td>
-                                        <td className="py-4 px-4 text-gray-900 font-medium text-left">{item.price * item.quantity} ج.م</td>
+                                        <td className="py-4 px-4 text-foreground">{item.description}</td>
+                                        <td className="py-4 px-4 text-muted-foreground text-center">{item.quantity}</td>
+                                        <td className="py-4 px-4 text-muted-foreground text-center">{item.price} ج.م</td>
+                                        <td className="py-4 px-4 text-foreground font-medium text-left">{item.price * item.quantity} ج.م</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -198,25 +198,25 @@ export default function CustomerInvoiceDetailsPage() {
                     </div>
 
                     {/* Totals */}
-                    <div className="p-8 bg-gray-50 print:bg-white border-t border-gray-200 mt-8">
+                    <div className="p-8 bg-muted/50 print:bg-white border-t border-border mt-8">
                         <div className="w-full md:w-1/2 mr-auto">
                             <div className="flex justify-between mb-2">
-                                <span className="text-gray-600">المجموع الفرعي</span>
-                                <span className="font-medium text-gray-900">{invoice.subtotal} ج.م</span>
+                                <span className="text-muted-foreground">المجموع الفرعي</span>
+                                <span className="font-medium text-foreground">{invoice.subtotal} ج.م</span>
                             </div>
                             <div className="flex justify-between mb-2">
-                                <span className="text-gray-600">الضريبة (14%)</span>
-                                <span className="font-medium text-gray-900">{invoice.tax} ج.م</span>
+                                <span className="text-muted-foreground">الضريبة (14%)</span>
+                                <span className="font-medium text-foreground">{invoice.tax} ج.م</span>
                             </div>
-                            <div className="flex justify-between pt-4 border-t border-gray-200 mt-4">
-                                <span className="text-xl font-bold text-gray-900">الإجمالي الكلي</span>
-                                <span className="text-xl font-bold text-blue-600">{invoice.total} ج.م</span>
+                            <div className="flex justify-between pt-4 border-t border-border mt-4">
+                                <span className="text-xl font-bold text-foreground">الإجمالي الكلي</span>
+                                <span className="text-xl font-bold text-brand-blue">{invoice.total} ج.م</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="p-8 text-center text-gray-500 text-sm border-t border-gray-100">
+                    <div className="p-8 text-center text-muted-foreground text-sm border-t border-border">
                         <p>شكراً لتعاملك مع FixZone ERP</p>
                         <p className="mt-1">لأي استفسارات، يرجى التواصل مع الدعم الفني</p>
                     </div>

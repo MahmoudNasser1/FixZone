@@ -209,7 +209,7 @@ export default function CustomerRepairsPage() {
             case 'pending': return <Clock className="w-4 h-4 text-amber-500" />;
             case 'in_progress': return <Wrench className="w-4 h-4 text-blue-500" />;
             case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
-            default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
+            default: return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
         }
     };
 
@@ -258,7 +258,7 @@ export default function CustomerRepairsPage() {
                 {repairs.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-muted">
-                            <PackageOpen className="w-10 h-10 text-gray-400" />
+                            <PackageOpen className="w-10 h-10 text-muted-foreground" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground mb-2">
                             لا توجد طلبات إصلاح
@@ -327,7 +327,7 @@ export default function CustomerRepairsPage() {
                                                     repair.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                                     repair.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                                     repair.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                                    'bg-muted text-muted-foreground'
                                                 }`}>
                                                     {repair.status === 'completed' ? 'مكتمل' :
                                                      repair.status === 'in_progress' ? 'قيد التنفيذ' :

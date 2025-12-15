@@ -177,7 +177,7 @@ export default function RepairShareModal({ isOpen, onClose, repairId, repairInfo
                                 alt="QR Code"
                                 className="w-48 h-48"
                             />
-                            <p className="text-xs text-gray-500 mt-2 text-center">
+                            <p className="text-xs text-muted-foreground mt-2 text-center">
                                 امسح الرمز للوصول لصفحة التتبع
                             </p>
                         </div>

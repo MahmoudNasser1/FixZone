@@ -9,6 +9,9 @@ import { isCustomerRole } from '../../constants/roles';
 import ServiceRatingModal from '../../components/customer/ServiceRatingModal';
 import ImageLightbox from '../../components/customer/ImageLightbox';
 import RepairShareModal from '../../components/customer/RepairShareModal';
+import QRCodeDisplay from '../../components/customer/QRCodeDisplay';
+import ChatWidget from '../../components/customer/ChatWidget';
+import RepairProgressBar from '../../components/customer/RepairProgressBar';
 import {
     ArrowRight,
     MessageCircle,
@@ -24,7 +27,8 @@ import {
     Image,
     Share2,
     Printer,
-    Download
+    Download,
+    QrCode
 } from 'lucide-react';
 
 /**
@@ -54,6 +58,7 @@ export default function CustomerRepairDetailsPage() {
     const [showLightbox, setShowLightbox] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [showQRCode, setShowQRCode] = useState(false);
 
     // Fetch repair details from API
     useEffect(() => {
@@ -263,6 +268,13 @@ export default function CustomerRepairDetailsPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <button
+                            onClick={() => setShowQRCode(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm font-bold"
+                        >
+                            <QrCode className="w-5 h-5" />
+                            <span className="hidden sm:inline">رمز التتبع</span>
+                        </button>
+                        <button
                             onClick={() => setShowShareModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-light transition-colors shadow-sm font-bold"
                         >
@@ -271,7 +283,7 @@ export default function CustomerRepairDetailsPage() {
                         </button>
                         <button
                             onClick={handlePrint}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-bold"
+                            className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors shadow-sm font-bold border border-border"
                         >
                             <Printer className="w-5 h-5" />
                             <span className="hidden sm:inline">طباعة</span>
@@ -537,7 +549,46 @@ export default function CustomerRepairDetailsPage() {
                         <p className="text-muted-foreground">{repair.technicianNotes}</p>
                     </div>
                 )}
+
+                {/* Progress Bar Section */}
+                <div className="mt-6 bg-card rounded-xl shadow-sm border border-border p-6">
+                    <h3 className="text-lg font-bold text-foreground mb-4">تقدم الإصلاح</h3>
+                    <RepairProgressBar 
+                        status={repair.status}
+                        createdAt={repair.receivedDate}
+                        expectedDate={repair.expectedDate}
+                        showDetails={true}
+                    />
+                </div>
             </div>
+
+            {/* QR Code Modal */}
+            {showQRCode && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setShowQRCode(false)}
+                    />
+                    <div className="relative z-10 w-full max-w-sm animate-in zoom-in-95 duration-200">
+                        <QRCodeDisplay 
+                            repairId={repair.id}
+                            showActions={true}
+                        />
+                        <button
+                            onClick={() => setShowQRCode(false)}
+                            className="w-full mt-3 py-3 bg-muted text-foreground rounded-xl font-medium hover:bg-muted/80 transition-colors"
+                        >
+                            إغلاق
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Chat Widget */}
+            <ChatWidget 
+                repairId={repair.id}
+                customerName={user?.name}
+            />
         </div>
     );
 }

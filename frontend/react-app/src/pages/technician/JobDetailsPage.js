@@ -136,6 +136,39 @@ export default function JobDetailsPage() {
     }
   }, [job?.id]);
 
+  // Debug: Log modal and button positions when modal opens
+  useEffect(() => {
+    if (!inspectionOpen) return;
+    
+    const checkLayout = () => {
+      const modalEl = document.querySelector('[data-modal="inspection-report"]');
+      const saveBtn = document.querySelector('[data-save-btn="inspection"]');
+      const navBar = document.querySelector('nav[aria-label="التنقل السفلي"]');
+      
+      if (modalEl && saveBtn && navBar) {
+        const modalRect = modalEl.getBoundingClientRect();
+        const btnRect = saveBtn.getBoundingClientRect();
+        const navRect = navBar.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:138',message:'Modal layout check on open',data:{modalBottom:modalRect.bottom,btnBottom:btnRect.bottom,btnTop:btnRect.top,navTop:navRect.top,windowHeight,btnVisible:btnRect.top >= 0 && btnRect.bottom <= windowHeight,btnBehindNav:btnRect.bottom > navRect.top,modalZIndex:window.getComputedStyle(modalEl.parentElement).zIndex,navZIndex:window.getComputedStyle(navBar).zIndex,btnDisabled:saveBtn.disabled},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      }
+    };
+    
+    // Check after a short delay to ensure DOM is updated
+    const timeout = setTimeout(checkLayout, 100);
+    
+    // Also check on scroll
+    window.addEventListener('scroll', checkLayout);
+    window.addEventListener('resize', checkLayout);
+    
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('scroll', checkLayout);
+      window.removeEventListener('resize', checkLayout);
+    };
+  }, [inspectionOpen]);
+
   const loadJobDetails = async () => {
     try {
       setLoading(true);
@@ -300,6 +333,9 @@ export default function JobDetailsPage() {
   };
 
   const handleSaveInspectionReport = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:302',message:'handleSaveInspectionReport called',data:{jobId:job?.id,hasDate:!!inspectionForm.reportDate,inspectionSaving},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (!job?.id) {
       setInspectionError('لا يوجد طلب إصلاح مرتبط');
       return;
@@ -450,7 +486,7 @@ export default function JobDetailsPage() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-24 md:pb-8">
+    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-28 md:pb-8">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -942,8 +978,11 @@ export default function JobDetailsPage() {
 
       {/* Inspection Report Modal */}
       {inspectionOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-300">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-0 sm:p-4 md:p-4">
+          <div 
+            data-modal="inspection-report"
+            className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[calc(100vh-88px)] sm:max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 absolute bottom-[88px] left-0 right-0 sm:relative sm:bottom-auto sm:left-auto sm:right-auto"
+          >
             <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200/50 dark:border-slate-800 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -1027,9 +1066,15 @@ export default function JobDetailsPage() {
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 pb-[100px] sm:pb-6">
                 <button
-                  onClick={handleSaveInspectionReport}
+                  data-save-btn="inspection"
+                  onClick={() => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:1032',message:'Save button clicked',data:{saving:inspectionSaving,hasDate:!!inspectionForm.reportDate,formData:Object.keys(inspectionForm)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
+                    handleSaveInspectionReport();
+                  }}
                   disabled={inspectionSaving || !inspectionForm.reportDate}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl hover:from-teal-600 hover:to-emerald-600 transition-all font-medium shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

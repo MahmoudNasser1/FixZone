@@ -29,7 +29,7 @@ export default function RepairFilters({
         <div className="space-y-4 mb-6">
             {/* Search Bar */}
             <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                     type="text"
                     placeholder="ابحث برقم الطلب أو نوع الجهاز..."
@@ -46,7 +46,7 @@ export default function RepairFilters({
 
             {/* Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                <Filter className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <Filter className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                 <div className="flex gap-2">
                     {filters.map((filter) => (
                         <button

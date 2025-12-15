@@ -44,7 +44,7 @@ code {
   display: inline-block;
 }
 
-/* Custom scrollbar for RTL */
+/* Custom scrollbar - Light Mode */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -62,6 +62,19 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Custom scrollbar - Dark Mode */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(220 18% 15%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 30%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 15% 40%);
 }
 
 /* RTL specific adjustments */

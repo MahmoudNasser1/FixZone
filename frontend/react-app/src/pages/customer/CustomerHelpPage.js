@@ -294,7 +294,7 @@ export default function CustomerHelpPage() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
                             onClick={handleContactSupport}
-                            className="flex items-center gap-2 px-6 py-3 bg-white text-brand-blue rounded-lg font-bold hover:bg-gray-100 transition-colors"
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-brand-blue rounded-lg font-bold hover:bg-white/90 transition-colors"
                         >
                             <MessageCircle className="w-5 h-5" />
                             تواصل عبر واتساب

@@ -27,32 +27,32 @@ export default function ServiceRatingModal({ isOpen, onClose, onSubmit }) {
 
     if (isSubmitted) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-2xl w-full max-w-md p-8 text-center animate-in zoom-in duration-300">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ThumbsUp className="w-10 h-10 text-green-600" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+                <div className="bg-card rounded-2xl w-full max-w-md p-8 text-center animate-in zoom-in duration-300">
+                    <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ThumbsUp className="w-10 h-10 text-green-600 dark:text-green-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">شكراً لتقييمك!</h3>
-                    <p className="text-gray-600">رأيك يهمنا ويساعدنا على تحسين خدماتنا.</p>
+                    <h3 className="text-2xl font-bold text-foreground mb-2">شكراً لتقييمك!</h3>
+                    <p className="text-muted-foreground">رأيك يهمنا ويساعدنا على تحسين خدماتنا.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+            <div className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
 
-                <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-900">تقييم الخدمة</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                        <X className="w-5 h-5 text-gray-500" />
+                <div className="flex justify-between items-center p-4 border-b border-border">
+                    <h3 className="text-lg font-bold text-foreground">تقييم الخدمة</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-muted rounded-full transition-colors">
+                        <X className="w-5 h-5 text-muted-foreground" />
                     </button>
                 </div>
 
                 <div className="p-6">
                     <div className="text-center mb-8">
-                        <p className="text-gray-600 mb-4">كيف كانت تجربتك معنا؟</p>
+                        <p className="text-muted-foreground mb-4">كيف كانت تجربتك معنا؟</p>
                         <div className="flex justify-center gap-2">
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <button
@@ -65,13 +65,13 @@ export default function ServiceRatingModal({ isOpen, onClose, onSubmit }) {
                                     <Star
                                         className={`w-10 h-10 ${star <= (hoverRating || rating)
                                                 ? 'text-yellow-400 fill-yellow-400'
-                                                : 'text-gray-300'
+                                                : 'text-muted-foreground/30'
                                             }`}
                                     />
                                 </button>
                             ))}
                         </div>
-                        <p className="text-sm font-medium text-blue-600 mt-2 h-5">
+                        <p className="text-sm font-medium text-brand-blue mt-2 h-5">
                             {rating === 5 ? 'ممتاز! 🤩' :
                                 rating === 4 ? 'جيد جداً 😄' :
                                     rating === 3 ? 'جيد 🙂' :
@@ -82,7 +82,7 @@ export default function ServiceRatingModal({ isOpen, onClose, onSubmit }) {
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                                 <MessageSquare className="w-4 h-4" />
                                 ملاحظات إضافية (اختياري)
                             </label>
@@ -90,7 +90,7 @@ export default function ServiceRatingModal({ isOpen, onClose, onSubmit }) {
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 rows="3"
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand-blue resize-none"
                                 placeholder="أخبرنا المزيد عن تجربتك..."
                             ></textarea>
                         </div>
@@ -98,7 +98,7 @@ export default function ServiceRatingModal({ isOpen, onClose, onSubmit }) {
                         <button
                             type="submit"
                             disabled={rating === 0}
-                            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
+                            className="w-full py-3 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-blue-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                         >
                             إرسال التقييم
                         </button>
