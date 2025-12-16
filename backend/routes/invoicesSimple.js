@@ -415,10 +415,16 @@ router.get('/:id/print', async (req, res) => {
       SELECT 
         ii.*,
         COALESCE(inv.name, s.name, ii.description, 'عنصر غير محدد') as itemName,
-        COALESCE(inv.sku, CONCAT('SVC-', s.id), '') as itemCode
+        COALESCE(inv.sku, CONCAT('SVC-', s.id), '') as itemCode,
+        rrs.notes as serviceNotes
       FROM InvoiceItem ii
       LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
       LEFT JOIN Service s ON ii.serviceId = s.id
+      LEFT JOIN Invoice i ON ii.invoiceId = i.id
+      LEFT JOIN RepairRequestService rrs ON (
+        (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
+        OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
+      )
       WHERE ii.invoiceId = ?
       ORDER BY ii.createdAt
     `, [id]);
@@ -907,7 +913,7 @@ router.get('/:id/print', async (req, res) => {
               const itemTax = getSetting('showItemTax', true) && showTax ? itemTotal * taxPercent : 0;
               return `
               <tr>
-                ${getSetting('showItemDescription', true) ? `<td style="font-weight: 400; color: ${systemColors.textPrimary}; font-size: ${getSetting('tableFontSize', 13)}px;">${item.itemName || item.description || 'عنصر غير محدد'}${item.itemCode ? ` <span style="color: ${systemColors.textSecondary}; font-size: 11px;">(${item.itemCode})</span>` : ''}</td>` : ''}
+                ${getSetting('showItemDescription', true) ? `<td style="font-weight: 400; color: ${systemColors.textPrimary}; font-size: ${getSetting('tableFontSize', 13)}px;">${item.itemName || item.description || 'عنصر غير محدد'}${item.itemCode ? ` <span style="color: ${systemColors.textSecondary}; font-size: 11px;">(${item.itemCode})</span>` : ''}${item.serviceNotes ? `<br/><small style="color: ${systemColors.textSecondary}; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}</td>` : ''}
                 ${getSetting('showItemQuantity', true) ? `<td class="number">${Number(item.quantity) || 1}</td>` : ''}
                 ${getSetting('showItemPrice', true) ? `<td class="number">${(Number(item.unitPrice) || 0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
                 ${getSetting('showItemDiscount', true) ? `<td class="number">-</td>` : ''}

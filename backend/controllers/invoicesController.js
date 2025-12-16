@@ -997,10 +997,16 @@ class InvoicesController {
       const [items] = await db.query(`
         SELECT ii.*, 
           COALESCE(inv.name, s.name) as itemName,
-          COALESCE(inv.sku, s.id) as itemCode
+          COALESCE(inv.sku, s.id) as itemCode,
+          rrs.notes as serviceNotes
         FROM InvoiceItem ii
         LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
         LEFT JOIN Service s ON ii.serviceId = s.id
+        LEFT JOIN Invoice i ON ii.invoiceId = i.id
+        LEFT JOIN RepairRequestService rrs ON (
+          (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
+          OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
+        )
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt
       `, [id]);
@@ -1064,10 +1070,17 @@ class InvoicesController {
           -- Service details (for services)
           s.id as serviceId_full,
           s.name as serviceName,
-          s.description as serviceDescription
+          s.description as serviceDescription,
+          -- Service notes from RepairRequestService
+          rrs.notes as serviceNotes
         FROM InvoiceItem ii
         LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
         LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
+        LEFT JOIN Invoice i ON ii.invoiceId = i.id
+        LEFT JOIN RepairRequestService rrs ON (
+          (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
+          OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
+        )
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);

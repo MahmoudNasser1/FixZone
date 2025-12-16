@@ -683,10 +683,17 @@ class InvoicesControllerSimple {
           -- Service details (for services)
           s.id as serviceId_full,
           s.name as serviceName,
-          s.description as serviceDescription
+          s.description as serviceDescription,
+          -- Service notes from RepairRequestService
+          rrs.notes as serviceNotes
         FROM InvoiceItem ii
         LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
         LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
+        LEFT JOIN Invoice i ON ii.invoiceId = i.id
+        LEFT JOIN RepairRequestService rrs ON (
+          (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
+          OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
+        )
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);

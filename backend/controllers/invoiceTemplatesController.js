@@ -369,10 +369,16 @@ class InvoiceTemplatesController {
           const [items] = await db.query(`
             SELECT ii.*, 
               COALESCE(inv.name, s.name) as itemName,
-              COALESCE(inv.sku, s.id) as itemCode
+              COALESCE(inv.sku, s.id) as itemCode,
+              rrs.notes as serviceNotes
             FROM InvoiceItem ii
             LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id
             LEFT JOIN Service s ON ii.serviceId = s.id
+            LEFT JOIN Invoice i ON ii.invoiceId = i.id
+            LEFT JOIN RepairRequestService rrs ON (
+              (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
+              OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
+            )
             WHERE ii.invoiceId = ?
           `, [invoiceId]);
           invoice.items = items;
@@ -476,7 +482,10 @@ class InvoiceTemplatesController {
             <tbody>
               ${(invoice.items || []).map(item => `
                 <tr>
-                  <td>${item.itemName || 'بند غير محدد'}</td>
+                  <td>
+                    ${item.itemName || 'بند غير محدد'}
+                    ${item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}
+                  </td>
                   <td>${item.quantity || 1}</td>
                   <td>${Number(item.unitPrice || 0).toFixed(2)}</td>
                   <td>${Number(item.totalPrice || 0).toFixed(2)}</td>

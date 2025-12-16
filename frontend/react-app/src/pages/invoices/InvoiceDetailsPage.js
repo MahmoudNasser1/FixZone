@@ -397,6 +397,13 @@ const InvoiceDetailsPage = () => {
                             <p className="text-sm text-gray-600 mt-2">{item.serviceDescription}</p>
                           )}
                           
+                          {/* Service Additional Notes */}
+                          {item.itemType === 'service' && item.serviceNotes && (
+                            <p className="text-sm text-gray-600 mt-2">
+                              <span className="font-medium">ملاحظات إضافية:</span> {item.serviceNotes}
+                            </p>
+                          )}
+                          
                           {/* Common Details */}
                           <div className="mt-2 space-y-1">
                           <p className="text-sm text-gray-600">
