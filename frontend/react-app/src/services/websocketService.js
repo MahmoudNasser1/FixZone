@@ -255,8 +255,9 @@ class WebSocketService {
 // Create singleton instance
 const websocketService = new WebSocketService();
 
-// Auto-connect when the service is imported
-websocketService.connect();
+// Note: Auto-connect removed to prevent multiple connections
+// Connection should be initiated explicitly by components that need it
+// This prevents CPU overhead from multiple auto-connections
 
 export default websocketService;
 

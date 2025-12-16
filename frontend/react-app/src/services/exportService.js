@@ -7,7 +7,7 @@
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 
 class ExportService {
   constructor() {
@@ -179,25 +179,21 @@ class ExportService {
   async exportPaymentsToExcel(payments, options = {}) {
     try {
       const {
-        title = 'تقرير المدفوعات',
         includeCharts = false
       } = options;
 
       // إنشاء مصنف جديد
-      this.workbook = XLSX.utils.book_new();
+      this.workbook = new ExcelJS.Workbook();
 
       // إضافة ورقة المدفوعات
-      const paymentsSheet = this.createPaymentsSheet(payments);
-      XLSX.utils.book_append_sheet(this.workbook, paymentsSheet, 'المدفوعات');
+      await this.createPaymentsSheet(payments, this.workbook);
 
       // إضافة ورقة الإحصائيات
-      const statsSheet = this.createStatisticsSheet(payments);
-      XLSX.utils.book_append_sheet(this.workbook, statsSheet, 'الإحصائيات');
+      await this.createStatisticsSheet(payments, this.workbook);
 
       // إضافة الرسوم البيانية إذا طُلب
       if (includeCharts) {
-        const chartsSheet = this.createChartsSheet(payments);
-        XLSX.utils.book_append_sheet(this.workbook, chartsSheet, 'الرسوم البيانية');
+        await this.createChartsSheet(payments, this.workbook);
       }
 
       return this.workbook;
@@ -208,72 +204,112 @@ class ExportService {
   }
 
   // إنشاء ورقة المدفوعات
-  createPaymentsSheet(payments) {
-    const headers = [
-      'رقم المدفوعة',
-      'اسم العميل',
-      'المبلغ',
-      'طريقة الدفع',
-      'تاريخ الدفع',
-      'الحالة',
-      'رقم المرجع',
-      'ملاحظات'
+  async createPaymentsSheet(payments, workbook) {
+    const worksheet = workbook.addWorksheet('المدفوعات');
+    
+    // Define columns
+    worksheet.columns = [
+      { header: 'رقم المدفوعة', key: 'id', width: 15 },
+      { header: 'اسم العميل', key: 'customerName', width: 30 },
+      { header: 'المبلغ', key: 'amount', width: 15 },
+      { header: 'طريقة الدفع', key: 'paymentMethod', width: 20 },
+      { header: 'تاريخ الدفع', key: 'paymentDate', width: 20 },
+      { header: 'الحالة', key: 'status', width: 15 },
+      { header: 'رقم المرجع', key: 'referenceNumber', width: 20 },
+      { header: 'ملاحظات', key: 'notes', width: 40 }
     ];
-
-    const data = payments.map(payment => [
-      payment.id,
-      `${payment.customerFirstName} ${payment.customerLastName}`,
-      payment.amount,
-      this.getPaymentMethodText(payment.paymentMethod),
-      payment.paymentDate,
-      this.getStatusText(payment.status),
-      payment.referenceNumber || '',
-      payment.notes || ''
-    ]);
-
-    return XLSX.utils.aoa_to_sheet([headers, ...data]);
+    
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF3B82F6' }
+    };
+    worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+    
+    // Add data
+    payments.forEach(payment => {
+      worksheet.addRow({
+        id: payment.id,
+        customerName: `${payment.customerFirstName || ''} ${payment.customerLastName || ''}`.trim(),
+        amount: payment.amount,
+        paymentMethod: this.getPaymentMethodText(payment.paymentMethod),
+        paymentDate: payment.paymentDate,
+        status: this.getStatusText(payment.status),
+        referenceNumber: payment.referenceNumber || '',
+        notes: payment.notes || ''
+      });
+    });
   }
 
   // إنشاء ورقة الإحصائيات
-  createStatisticsSheet(payments) {
+  async createStatisticsSheet(payments, workbook) {
+    const worksheet = workbook.addWorksheet('الإحصائيات');
+    
     const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
     const completedPayments = payments.filter(p => p.status === 'completed').length;
     const pendingPayments = payments.filter(p => p.status === 'pending').length;
+    const averageAmount = payments.length > 0 ? totalAmount / payments.length : 0;
 
-    const stats = [
-      ['الإحصائيات', 'القيمة'],
-      ['إجمالي المدفوعات', payments.length],
-      ['إجمالي المبلغ', totalAmount],
-      ['المدفوعات المكتملة', completedPayments],
-      ['المدفوعات المعلقة', pendingPayments],
-      ['متوسط المبلغ', totalAmount / payments.length]
+    // Define columns
+    worksheet.columns = [
+      { header: 'الإحصائيات', key: 'stat', width: 30 },
+      { header: 'القيمة', key: 'value', width: 20 }
     ];
-
-    return XLSX.utils.aoa_to_sheet(stats);
+    
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF3B82F6' }
+    };
+    worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+    
+    // Add data
+    worksheet.addRow({ stat: 'إجمالي المدفوعات', value: payments.length });
+    worksheet.addRow({ stat: 'إجمالي المبلغ', value: totalAmount });
+    worksheet.addRow({ stat: 'المدفوعات المكتملة', value: completedPayments });
+    worksheet.addRow({ stat: 'المدفوعات المعلقة', value: pendingPayments });
+    worksheet.addRow({ stat: 'متوسط المبلغ', value: averageAmount });
   }
 
   // إنشاء ورقة الرسوم البيانية
-  createChartsSheet(payments) {
+  async createChartsSheet(payments, workbook) {
+    const worksheet = workbook.addWorksheet('الرسوم البيانية');
+    
     // حساب توزيع طرق الدفع
     const methodCounts = {};
     payments.forEach(payment => {
       methodCounts[payment.paymentMethod] = (methodCounts[payment.paymentMethod] || 0) + 1;
     });
 
-    const chartData = [
-      ['طريقة الدفع', 'العدد', 'النسبة المئوية']
+    // Define columns
+    worksheet.columns = [
+      { header: 'طريقة الدفع', key: 'method', width: 25 },
+      { header: 'العدد', key: 'count', width: 15 },
+      { header: 'النسبة المئوية', key: 'percentage', width: 20 }
     ];
-
+    
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF3B82F6' }
+    };
+    worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+    
+    // Add data
     Object.entries(methodCounts).forEach(([method, count]) => {
-      const percentage = ((count / payments.length) * 100).toFixed(1);
-      chartData.push([
-        this.getPaymentMethodText(method),
-        count,
-        `${percentage}%`
-      ]);
+      const percentage = payments.length > 0 ? ((count / payments.length) * 100).toFixed(1) : 0;
+      worksheet.addRow({
+        method: this.getPaymentMethodText(method),
+        count: count,
+        percentage: `${percentage}%`
+      });
     });
-
-    return XLSX.utils.aoa_to_sheet(chartData);
   }
 
   // تحميل ملف PDF
@@ -284,9 +320,18 @@ class ExportService {
   }
 
   // تحميل ملف Excel
-  downloadExcel(filename = 'payments-report.xlsx') {
+  async downloadExcel(filename = 'payments-report.xlsx') {
     if (this.workbook) {
-      XLSX.writeFile(this.workbook, filename);
+      const buffer = await this.workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     }
   }
 
@@ -324,7 +369,7 @@ class ExportService {
         this.downloadPDF(`selected-payments-${Date.now()}.pdf`);
       } else if (format === 'excel') {
         await this.exportPaymentsToExcel(payments);
-        this.downloadExcel(`selected-payments-${Date.now()}.xlsx`);
+        await this.downloadExcel(`selected-payments-${Date.now()}.xlsx`);
       }
     } catch (error) {
       console.error('خطأ في تصدير المدفوعات المحددة:', error);
@@ -333,4 +378,5 @@ class ExportService {
   }
 }
 
-export default new ExportService();
+const exportService = new ExportService();
+export default exportService;

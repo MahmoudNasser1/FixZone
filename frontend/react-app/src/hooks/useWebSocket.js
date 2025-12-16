@@ -19,8 +19,8 @@ export const useWebSocketStatus = () => {
     websocketService.on('connected', updateStatus);
     websocketService.on('disconnected', updateStatus);
 
-    // Update status periodically
-    const interval = setInterval(updateStatus, 5000);
+    // Update status periodically (reduced from 5s to 30s to reduce CPU usage)
+    const interval = setInterval(updateStatus, 30000);
 
     return () => {
       websocketService.off('connected', updateStatus);
@@ -167,6 +167,7 @@ export const useCustomerUpdatesById = (customerId, onUpdate) => {
 export const useWebSocket = () => {
   const [status, setStatus] = useState('disconnected');
   const [notifications, setNotifications] = useState([]);
+  const hasConnectedRef = useRef(false);
 
   useEffect(() => {
     const updateStatus = () => {
@@ -179,6 +180,12 @@ export const useWebSocket = () => {
 
     // Initial status
     updateStatus();
+
+    // Auto-connect on first use (only once per session)
+    if (!hasConnectedRef.current && websocketService.getStatus() === 'disconnected') {
+      hasConnectedRef.current = true;
+      websocketService.connect();
+    }
 
     // Listen for connection changes
     websocketService.on('connected', updateStatus);
