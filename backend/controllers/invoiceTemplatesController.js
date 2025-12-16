@@ -6,6 +6,53 @@ const db = require('../db');
  */
 class InvoiceTemplatesController {
   
+  /**
+   * تنظيف HTML من المحتوى الضار (XSS Protection)
+   * @param {string} html - HTML المراد تنظيفه
+   * @returns {string} - HTML نظيف
+   */
+  sanitizeHTML(html) {
+    if (!html || typeof html !== 'string') return '';
+    
+    // إزالة scripts
+    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    // إزالة event handlers (onclick, onerror, etc.)
+    html = html.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    html = html.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+    
+    // إزالة javascript: في الروابط
+    html = html.replace(/javascript\s*:/gi, '');
+    
+    // إزالة data: URLs في src/href (قد تحتوي على scripts)
+    html = html.replace(/\s*(src|href)\s*=\s*["']data:[^"']*["']/gi, '');
+    
+    // إزالة iframes (قد تحتوي على محتوى ضار)
+    html = html.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+    
+    // إزالة object/embed tags
+    html = html.replace(/<(object|embed)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '');
+    
+    return html;
+  }
+  
+  /**
+   * تنظيف نص عادي من HTML (للحقول النصية)
+   * @param {string} text - النص المراد تنظيفه
+   * @returns {string} - نص نظيف
+   */
+  escapeHTML(text) {
+    if (!text || typeof text !== 'string') return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+  
   // جلب جميع قوالب الفواتير
   async getAllTemplates(req, res) {
     try {
@@ -430,13 +477,32 @@ class InvoiceTemplatesController {
   generateInvoiceHTML(template, invoice) {
     const settings = template.settings || {};
     
+    // تنظيف HTML من القالب
+    const sanitizedHeaderHTML = this.sanitizeHTML(template.headerHTML || '');
+    const sanitizedFooterHTML = this.sanitizeHTML(template.footerHTML || '');
+    const sanitizedStylesCSS = this.sanitizeHTML(template.stylesCSS || '');
+    
+    // تنظيف بيانات الإعدادات
+    const safeCompanyName = this.escapeHTML(settings.companyName || 'شركة فيكس زون');
+    const safeCompanyAddress = this.escapeHTML(settings.companyAddress || 'العنوان غير محدد');
+    const safeCompanyPhone = this.escapeHTML(settings.companyPhone || 'غير محدد');
+    const safeCompanyEmail = this.escapeHTML(settings.companyEmail || 'غير محدد');
+    const safeCurrency = this.escapeHTML(settings.currency || 'جنية');
+    const safeFooterText = this.escapeHTML(settings.footerText || 'جميع الحقوق محفوظة');
+    
+    // تنظيف بيانات الفاتورة
+    const safeCustomerName = this.escapeHTML(invoice.customerName || 'غير محدد');
+    const safeCustomerPhone = this.escapeHTML(invoice.customerPhone || 'غير محدد');
+    const safeCustomerEmail = this.escapeHTML(invoice.customerEmail || 'غير محدد');
+    const safeInvoiceId = this.escapeHTML(String(invoice.id || ''));
+    
     let html = `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>فاتورة #${invoice.id}</title>
+        <title>فاتورة #${safeInvoiceId}</title>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
           .invoice-container { max-width: 800px; margin: 0 auto; background: white; }
@@ -449,17 +515,17 @@ class InvoiceTemplatesController {
           .items-table th { background-color: #f5f5f5; }
           .totals { text-align: left; margin-bottom: 30px; }
           .footer { border-top: 1px solid #ddd; padding-top: 20px; text-align: center; }
-          ${template.stylesCSS || ''}
+          ${sanitizedStylesCSS}
         </style>
       </head>
       <body>
         <div class="invoice-container">
           <div class="header">
-            ${template.headerHTML || `
+            ${sanitizedHeaderHTML || `
               <div class="company-info">
-                <h1>${settings.companyName || 'شركة فيكس زون'}</h1>
-                <p>${settings.companyAddress || 'العنوان غير محدد'}</p>
-                <p>هاتف: ${settings.companyPhone || 'غير محدد'} | إيميل: ${settings.companyEmail || 'غير محدد'}</p>
+                <h1>${safeCompanyName}</h1>
+                <p>${safeCompanyAddress}</p>
+                <p>هاتف: ${safeCompanyPhone} | إيميل: ${safeCompanyEmail}</p>
               </div>
             `}
           </div>
@@ -467,15 +533,15 @@ class InvoiceTemplatesController {
           <div class="invoice-details">
             <div class="customer-info">
               <h3>بيانات العميل</h3>
-              <p><strong>الاسم:</strong> ${invoice.customerName || 'غير محدد'}</p>
-              <p><strong>الهاتف:</strong> ${invoice.customerPhone || 'غير محدد'}</p>
-              <p><strong>الإيميل:</strong> ${invoice.customerEmail || 'غير محدد'}</p>
+              <p><strong>الاسم:</strong> ${safeCustomerName}</p>
+              <p><strong>الهاتف:</strong> ${safeCustomerPhone}</p>
+              <p><strong>الإيميل:</strong> ${safeCustomerEmail}</p>
             </div>
             <div class="invoice-info">
               <h3>بيانات الفاتورة</h3>
-              <p><strong>رقم الفاتورة:</strong> #${invoice.id}</p>
-              <p><strong>التاريخ:</strong> ${new Date(invoice.createdAt).toLocaleDateString('ar-SA')}</p>
-              <p><strong>الحالة:</strong> ${this.getStatusText(invoice.status)}</p>
+              <p><strong>رقم الفاتورة:</strong> #${safeInvoiceId}</p>
+              <p><strong>التاريخ:</strong> ${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('ar-SA') : 'غير محدد'}</p>
+              <p><strong>الحالة:</strong> ${this.escapeHTML(this.getStatusText(invoice.status))}</p>
             </div>
           </div>
 
@@ -489,30 +555,35 @@ class InvoiceTemplatesController {
               </tr>
             </thead>
             <tbody>
-              ${(invoice.items || []).map(item => `
+              ${(invoice.items || []).map(item => {
+                const safeItemName = this.escapeHTML(item.itemName || 'بند غير محدد');
+                const safeServiceNotes = item.serviceNotes ? this.escapeHTML(item.serviceNotes) : '';
+                const serviceNotesLabel = this.escapeHTML(settings.serviceNotesLabel || 'ملاحظات');
+                const serviceNotesHTML = (settings.showServiceNotes !== false) && safeServiceNotes 
+                  ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>${serviceNotesLabel}:</strong> ${safeServiceNotes}</small>`
+                  : '';
+                return `
                 <tr>
-                  <td>
-                    ${item.itemName || 'بند غير محدد'}
-                    ${(settings.showServiceNotes !== false) && item.serviceNotes ? (() => { const label = settings.serviceNotesLabel || 'ملاحظات'; return `<br/><small style="color: #666; font-size: 0.9em;">${label ? `<strong>${label}:</strong> ` : ''}${item.serviceNotes}</small>`; })() : ''}
-                  </td>
+                  <td>${safeItemName}${serviceNotesHTML}</td>
                   <td>${item.quantity || 1}</td>
                   <td>${Number(item.unitPrice || 0).toFixed(2)}</td>
                   <td>${Number(item.totalPrice || 0).toFixed(2)}</td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
 
           <div class="totals">
-            <p><strong>الإجمالي: ${Number(invoice.totalAmount || 0).toFixed(2)} ${settings.currency || 'جنية'}</strong></p>
-            <p>المدفوع: ${Number(invoice.amountPaid || 0).toFixed(2)} ${settings.currency || 'جنية'}</p>
-            <p>المتبقي: ${Number((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)} ${settings.currency || 'جنية'}</p>
+            <p><strong>الإجمالي: ${Number(invoice.totalAmount || 0).toFixed(2)} ${safeCurrency}</strong></p>
+            <p>المدفوع: ${Number(invoice.amountPaid || 0).toFixed(2)} ${safeCurrency}</p>
+            <p>المتبقي: ${Number((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)} ${safeCurrency}</p>
           </div>
 
           <div class="footer">
-            ${template.footerHTML || `
+            ${sanitizedFooterHTML || `
               <p>شكرًا لتعاملكم معنا</p>
-              <p>${settings.footerText || 'جميع الحقوق محفوظة'}</p>
+              <p>${safeFooterText}</p>
             `}
           </div>
         </div>

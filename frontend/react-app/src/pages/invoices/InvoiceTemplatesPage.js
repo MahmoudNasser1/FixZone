@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import invoiceTemplatesService from '../../services/invoiceTemplatesService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { Plus, Edit, Eye, Trash2, Star, Copy } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const InvoiceTemplatesPage = () => {
   const notifications = useNotifications();
@@ -504,9 +505,16 @@ const InvoiceTemplatesPage = () => {
                   إغلاق
                 </SimpleButton>
               </div>
-              <div 
-                className="border rounded-lg p-4 bg-gray-50"
-                dangerouslySetInnerHTML={{ __html: previewData.previewHTML }}
+              {/* استخدام iframe مع DOMPurify لعزل المحتوى ومنع XSS */}
+              <iframe
+                title="معاينة القالب"
+                className="border rounded-lg w-full min-h-[600px] bg-white"
+                sandbox="allow-same-origin allow-scripts"
+                srcDoc={DOMPurify.sanitize(previewData.previewHTML, {
+                  ALLOWED_TAGS: ['html', 'head', 'body', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'strong', 'em', 'br', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'style', 'meta', 'title'],
+                  ALLOWED_ATTR: ['class', 'dir', 'lang', 'charset', 'name', 'content', 'style', 'colspan', 'rowspan'],
+                  ALLOW_DATA_ATTR: false
+                })}
               />
             </div>
           </div>

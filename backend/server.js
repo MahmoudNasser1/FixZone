@@ -44,6 +44,40 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie']
 }));
 
+// Security Headers Middleware
+app.use((req, res, next) => {
+  // Content Security Policy - يمنع XSS و injection attacks
+  // ملاحظة: قد نحتاج لتعديل CSP حسب احتياجات التطبيق
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' " + corsOrigins.join(' ') + ";"
+    );
+  }
+  
+  // X-Frame-Options - يمنع clickjacking
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  
+  // X-Content-Type-Options - يمنع MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // X-XSS-Protection - حماية إضافية من XSS (legacy browsers)
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer-Policy - يتحكم في معلومات referrer
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Permissions-Policy - يتحكم في APIs المتاحة
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // Strict-Transport-Security - HTTPS only في production
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  
+  next();
+});
+
 // Parse JSON bodies
 app.use(express.json());
 

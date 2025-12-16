@@ -73,7 +73,7 @@ class MessagingService {
       }
 
       // تحديد القنوات
-      const channels = options.channels || ['whatsapp'];
+      let channels = options.channels || ['whatsapp'];
       if (!Array.isArray(channels)) {
         channels = [channels];
       }
@@ -158,7 +158,7 @@ class MessagingService {
       }
 
       // تحديد القنوات
-      const channels = options.channels || ['whatsapp'];
+      let channels = options.channels || ['whatsapp'];
       if (!Array.isArray(channels)) {
         channels = [channels];
       }
@@ -261,7 +261,7 @@ class MessagingService {
       }
 
       // تحديد القنوات
-      const channels = options.channels || ['whatsapp'];
+      let channels = options.channels || ['whatsapp'];
       if (!Array.isArray(channels)) {
         channels = [channels];
       }

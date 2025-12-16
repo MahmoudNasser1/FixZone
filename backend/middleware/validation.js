@@ -62,7 +62,40 @@ const commonSchemas = {
   price: Joi.number().min(0).precision(2),
 
   // Quantity
-  quantity: Joi.number().integer().min(0)
+  quantity: Joi.number().integer().min(0),
+  
+  // HTML validation - يمنع scripts و event handlers
+  html: Joi.string().custom((value, helpers) => {
+    if (!value || typeof value !== 'string') return value;
+    
+    // منع scripts
+    if (/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(value)) {
+      return helpers.error('string.noScripts');
+    }
+    
+    // منع event handlers (onclick, onerror, etc.)
+    if (/\s*on\w+\s*=\s*["'][^"']*["']/gi.test(value)) {
+      return helpers.error('string.noEventHandlers');
+    }
+    
+    // منع javascript: في الروابط
+    if (/javascript\s*:/gi.test(value)) {
+      return helpers.error('string.noJavascript');
+    }
+    
+    // منع iframes
+    if (/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi.test(value)) {
+      return helpers.error('string.noIframes');
+    }
+    
+    return value;
+  }, 'HTML sanitization')
+    .messages({
+      'string.noScripts': 'لا يُسمح بوجود scripts في HTML',
+      'string.noEventHandlers': 'لا يُسمح بوجود event handlers في HTML',
+      'string.noJavascript': 'لا يُسمح بوجود javascript: في الروابط',
+      'string.noIframes': 'لا يُسمح بوجود iframes في HTML'
+    })
 };
 
 /**
