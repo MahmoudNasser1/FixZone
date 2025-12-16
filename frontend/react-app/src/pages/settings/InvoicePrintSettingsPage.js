@@ -35,6 +35,7 @@ export default function InvoicePrintSettingsPage() {
         showItemDiscount: true,
         showItemTax: true,
         showItemTotal: true,
+        showServiceNotes: true,
         showSubtotal: true,
         showDiscount: true,
         showTax: true,
@@ -142,7 +143,7 @@ export default function InvoicePrintSettingsPage() {
             'showItemQuantity', 'showItemPrice', 'showItemDiscount', 'showItemTax',
             'showItemTotal', 'showSubtotal', 'showDiscount', 'showTax', 'showShipping',
             'showTotal', 'showPaymentMethod', 'showPaymentStatus', 'showNotes', 'showTerms',
-            'showSignature', 'showFooter', 'showBarcode', 'showQrCode'
+            'showSignature', 'showFooter', 'showBarcode', 'showQrCode', 'showServiceNotes'
         ]);
         const nums = new Set([
             'logoHeight', 'headerFontSize', 'fontSize', 'titleFontSize', 'sectionTitleFontSize',
@@ -404,6 +405,7 @@ export default function InvoicePrintSettingsPage() {
                                 { key: 'showItemDiscount', label: 'الخصم' },
                                 { key: 'showItemTax', label: 'الضريبة' },
                                 { key: 'showItemTotal', label: 'الإجمالي' },
+                                { key: 'showServiceNotes', label: 'ملاحظات إضافية للخدمات' },
                             ].map(opt => (
                                 <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
                                     <input

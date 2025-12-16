@@ -70,7 +70,8 @@ router.delete('/:id/items/:itemId', invoicesController.removeInvoiceItem);
 router.get('/:id/print', async (req, res) => {
   const { id } = req.params;
   try {
-    const settings = loadPrintSettings();
+    const allSettings = loadPrintSettings();
+    const settings = allSettings.invoice || allSettings || {};
     
     // Get invoice with customer and repair details
     const [invoiceRows] = await db.query(`
@@ -230,7 +231,7 @@ router.get('/:id/print', async (req, res) => {
               <tr>
                 <td>
                   ${item.itemName || 'عنصر غير محدد'}${item.itemCode ? ` (${item.itemCode})` : ''}
-                  ${item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات:</strong> ${item.serviceNotes}</small>` : ''}
+                  ${settings.showServiceNotes !== false && item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات:</strong> ${item.serviceNotes}</small>` : ''}
                 </td>
                 <td class="number">${Number(item.quantity) || 1}</td>
                 <td class="number">${(Number(item.unitPrice) || 0).toFixed(2)} ${invoice.currency || 'ج.م'}</td>

@@ -484,7 +484,7 @@ class InvoiceTemplatesController {
                 <tr>
                   <td>
                     ${item.itemName || 'بند غير محدد'}
-                    ${item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}
+                    ${(settings.showServiceNotes !== false) && item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}
                   </td>
                   <td>${item.quantity || 1}</td>
                   <td>${Number(item.unitPrice || 0).toFixed(2)}</td>
