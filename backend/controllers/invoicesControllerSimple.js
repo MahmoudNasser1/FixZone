@@ -698,6 +698,14 @@ class InvoicesControllerSimple {
         ORDER BY ii.createdAt ASC
       `, [id]);
       
+      // تنظيف serviceNotes من رابط invoiceItemId
+      items.forEach(item => {
+        if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
+          item.serviceNotes = item.serviceNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+          if (item.serviceNotes === '') item.serviceNotes = null;
+        }
+      });
+      
       console.log('✅ Found', items.length, 'invoice items for invoice', id);
       res.json({ success: true, data: items });
     } catch (error) {

@@ -136,6 +136,7 @@
       "defaultTaxPercent": 13,
       "defaultShippingAmount": 150
     },
-    "showServiceNotes": true
+    "showServiceNotes": true,
+    "serviceNotesLabel": ""
   }
 }

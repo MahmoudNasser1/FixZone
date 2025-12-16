@@ -119,6 +119,14 @@ router.get('/:id/print', async (req, res) => {
       WHERE ii.invoiceId = ?
       ORDER BY ii.createdAt
     `, [id]);
+    
+    // تنظيف serviceNotes من رابط invoiceItemId
+    items.forEach(item => {
+      if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
+        item.serviceNotes = item.serviceNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+        if (item.serviceNotes === '') item.serviceNotes = null;
+      }
+    });
 
     // Calculate totals
     let subtotal = 0;
@@ -231,7 +239,7 @@ router.get('/:id/print', async (req, res) => {
               <tr>
                 <td>
                   ${item.itemName || 'عنصر غير محدد'}${item.itemCode ? ` (${item.itemCode})` : ''}
-                  ${settings.showServiceNotes !== false && item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات:</strong> ${item.serviceNotes}</small>` : ''}
+                  ${settings.showServiceNotes !== false && item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;">${settings.serviceNotesLabel ? `<strong>${settings.serviceNotesLabel}:</strong> ` : ''}${item.serviceNotes}</small>` : ''}
                 </td>
                 <td class="number">${Number(item.quantity) || 1}</td>
                 <td class="number">${(Number(item.unitPrice) || 0).toFixed(2)} ${invoice.currency || 'ج.م'}</td>

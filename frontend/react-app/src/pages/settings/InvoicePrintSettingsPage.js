@@ -36,6 +36,7 @@ export default function InvoicePrintSettingsPage() {
         showItemTax: true,
         showItemTotal: true,
         showServiceNotes: true,
+        serviceNotesLabel: 'ملاحظات',
         showSubtotal: true,
         showDiscount: true,
         showTax: true,
@@ -419,6 +420,19 @@ export default function InvoicePrintSettingsPage() {
                                 </label>
                             ))}
                         </div>
+                        {invoicePrint.showServiceNotes && (
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">مسمى الملاحظات</label>
+                                <input
+                                    name="serviceNotesLabel"
+                                    value={invoicePrint.serviceNotesLabel || 'ملاحظات'}
+                                    onChange={handleInvoicePrintChange}
+                                    placeholder="ملاحظات"
+                                    className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لإخفاء المسمى</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Formatting */}

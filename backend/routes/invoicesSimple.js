@@ -429,6 +429,14 @@ router.get('/:id/print', async (req, res) => {
       ORDER BY ii.createdAt
     `, [id]);
     
+    // تنظيف serviceNotes من رابط invoiceItemId
+    items.forEach(item => {
+      if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
+        item.serviceNotes = item.serviceNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+        if (item.serviceNotes === '') item.serviceNotes = null;
+      }
+    });
+    
     console.log(`[INVOICE PRINT] Invoice ID: ${id}, Items found: ${items.length}`);
     if (items.length > 0) {
       console.log(`[INVOICE PRINT] First item:`, items[0]);
@@ -913,7 +921,7 @@ router.get('/:id/print', async (req, res) => {
               const itemTax = getSetting('showItemTax', true) && showTax ? itemTotal * taxPercent : 0;
               return `
               <tr>
-                ${getSetting('showItemDescription', true) ? `<td style="font-weight: 400; color: ${systemColors.textPrimary}; font-size: ${getSetting('tableFontSize', 13)}px;">${item.itemName || item.description || 'عنصر غير محدد'}${item.itemCode ? ` <span style="color: ${systemColors.textSecondary}; font-size: 11px;">(${item.itemCode})</span>` : ''}${getSetting('showServiceNotes', true) && item.serviceNotes ? `<br/><small style="color: ${systemColors.textSecondary}; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}</td>` : ''}
+                ${getSetting('showItemDescription', true) ? `<td style="font-weight: 400; color: ${systemColors.textPrimary}; font-size: ${getSetting('tableFontSize', 13)}px;">${item.itemName || item.description || 'عنصر غير محدد'}${item.itemCode ? ` <span style="color: ${systemColors.textSecondary}; font-size: 11px;">(${item.itemCode})</span>` : ''}${getSetting('showServiceNotes', true) && item.serviceNotes ? (() => { const label = getSetting('serviceNotesLabel', 'ملاحظات'); return `<br/><small style="color: ${systemColors.textSecondary}; font-size: 0.9em;">${label ? `<strong>${label}:</strong> ` : ''}${item.serviceNotes}</small>`; })() : ''}</td>` : ''}
                 ${getSetting('showItemQuantity', true) ? `<td class="number">${Number(item.quantity) || 1}</td>` : ''}
                 ${getSetting('showItemPrice', true) ? `<td class="number">${(Number(item.unitPrice) || 0).toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
                 ${getSetting('showItemDiscount', true) ? `<td class="number">-</td>` : ''}

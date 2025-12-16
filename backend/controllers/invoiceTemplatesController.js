@@ -381,6 +381,15 @@ class InvoiceTemplatesController {
             )
             WHERE ii.invoiceId = ?
           `, [invoiceId]);
+          
+          // تنظيف serviceNotes من رابط invoiceItemId
+          items.forEach(item => {
+            if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
+              item.serviceNotes = item.serviceNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+              if (item.serviceNotes === '') item.serviceNotes = null;
+            }
+          });
+          
           invoice.items = items;
         }
       }
@@ -484,7 +493,7 @@ class InvoiceTemplatesController {
                 <tr>
                   <td>
                     ${item.itemName || 'بند غير محدد'}
-                    ${(settings.showServiceNotes !== false) && item.serviceNotes ? `<br/><small style="color: #666; font-size: 0.9em;"><strong>ملاحظات إضافية:</strong> ${item.serviceNotes}</small>` : ''}
+                    ${(settings.showServiceNotes !== false) && item.serviceNotes ? (() => { const label = settings.serviceNotesLabel || 'ملاحظات'; return `<br/><small style="color: #666; font-size: 0.9em;">${label ? `<strong>${label}:</strong> ` : ''}${item.serviceNotes}</small>`; })() : ''}
                   </td>
                   <td>${item.quantity || 1}</td>
                   <td>${Number(item.unitPrice || 0).toFixed(2)}</td>

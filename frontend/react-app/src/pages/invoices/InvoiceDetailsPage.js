@@ -398,11 +398,18 @@ const InvoiceDetailsPage = () => {
                           )}
                           
                           {/* Service Additional Notes */}
-                          {item.itemType === 'service' && item.serviceNotes && (
-                            <p className="text-sm text-gray-600 mt-2">
-                              <span className="font-medium">ملاحظات إضافية:</span> {item.serviceNotes}
-                            </p>
-                          )}
+                          {item.itemType === 'service' && item.serviceNotes && (() => {
+                            // تنظيف serviceNotes من رابط invoiceItemId
+                            let cleanNotes = item.serviceNotes;
+                            if (cleanNotes && cleanNotes.includes('[invoiceItemId:')) {
+                              cleanNotes = cleanNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
+                            }
+                            return cleanNotes ? (
+                              <p className="text-sm text-gray-600 mt-2">
+                                <span className="font-medium">ملاحظات:</span> {cleanNotes}
+                              </p>
+                            ) : null;
+                          })()}
                           
                           {/* Common Details */}
                           <div className="mt-2 space-y-1">
