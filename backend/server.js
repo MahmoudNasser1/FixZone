@@ -1,10 +1,11 @@
 // Load environment variables
-require('dotenv').config();
+// Use explicit path to ensure .env is loaded correctly
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const path = require('path');
 const http = require('http');
 const websocketService = require('./services/websocketService');
 // TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
