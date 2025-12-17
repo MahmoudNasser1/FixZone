@@ -1,7 +1,6 @@
 const db = require('../db');
-const XLSX = require('xlsx');
-// PDF generation will use HTML template approach for now
-// Can be enhanced with pdfkit or puppeteer later
+// ExcelJS is optional - loaded only when needed to prevent startup errors
+let ExcelJS = null;
 
 class TechnicianReportsController {
   /**
@@ -332,30 +331,78 @@ class TechnicianReportsController {
    */
   async exportToExcel(data, title) {
     try {
-      const workbook = XLSX.utils.book_new();
+      // Load ExcelJS only when needed (lazy loading)
+      if (!ExcelJS) {
+        try {
+          ExcelJS = require('exceljs');
+        } catch (error) {
+          throw new Error('exceljs module is not installed. Please run: npm install exceljs --save');
+        }
+      }
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(title);
       
       // تحويل البيانات إلى ورقة عمل
-      let worksheet;
       if (Array.isArray(data)) {
         if (data.length === 0) {
-          worksheet = XLSX.utils.aoa_to_sheet([['لا توجد بيانات']]);
+          worksheet.addRow(['لا توجد بيانات']);
         } else {
           // تحويل المفاتيح إلى رؤوس الأعمدة
           const headers = Object.keys(data[0]);
-          const rows = data.map(row => headers.map(key => row[key] || ''));
-          worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+          
+          // Define columns
+          worksheet.columns = headers.map(header => ({
+            header: header,
+            key: header,
+            width: 20
+          }));
+          
+          // Style header row
+          worksheet.getRow(1).font = { bold: true };
+          worksheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF3B82F6' }
+          };
+          worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+          
+          // Add data rows
+          data.forEach(row => {
+            const rowData = {};
+            headers.forEach(header => {
+              rowData[header] = row[header] || '';
+            });
+            worksheet.addRow(rowData);
+          });
         }
       } else {
         // بيانات مفردة
         const headers = Object.keys(data);
         const values = Object.values(data);
-        worksheet = XLSX.utils.aoa_to_sheet([headers, values]);
+        
+        // Define columns
+        worksheet.columns = [
+          { header: 'المفتاح', key: 'key', width: 30 },
+          { header: 'القيمة', key: 'value', width: 30 }
+        ];
+        
+        // Style header row
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF3B82F6' }
+        };
+        worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+        
+        // Add data
+        headers.forEach((header, index) => {
+          worksheet.addRow({ key: header, value: values[index] || '' });
+        });
       }
 
-      XLSX.utils.book_append_sheet(workbook, worksheet, title);
-
       // توليد buffer
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (error) {
       console.error('Error exporting to Excel:', error);

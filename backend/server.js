@@ -7,8 +7,8 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const http = require('http');
 const websocketService = require('./services/websocketService');
-// TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
-// const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
+// Rate limiting middleware (ENABLED for production security)
+const { applyEndpointRateLimit, ipBasedRateLimit } = require('./middleware/rateLimitMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -85,8 +85,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Apply rate limiting middleware
-// TEMPORARILY DISABLED FOR DEVELOPMENT AND TESTING - RE-ENABLE AFTER COMPLETION
-// app.use('/api', applyEndpointRateLimit);
+// Enable rate limiting in production, optional in development
+if (process.env.NODE_ENV === 'production' || process.env.ENABLE_RATE_LIMIT === 'true') {
+  app.use('/api', applyEndpointRateLimit);
+  console.log('✅ Rate limiting enabled');
+} else {
+  console.log('⚠️ Rate limiting disabled (development mode)');
+}
 
 // Import the main router
 const apiRouter = require('./app');

@@ -8,10 +8,17 @@ class WebSocketService extends EventEmitter {
     this.rooms = new Map(); // Map to store room subscriptions
     this.heartbeatInterval = 30000; // 30 seconds heartbeat
     this.maxClients = 1000; // Maximum concurrent connections
+    this.heartbeatTimer = null; // Store heartbeat interval timer
   }
 
   // Initialize WebSocket server
   initialize(server) {
+    // Prevent re-initialization
+    if (this.wss) {
+      console.log('⚠️ WebSocket service already initialized');
+      return;
+    }
+
     this.wss = new WebSocket.Server({ 
       server,
       path: '/ws',
@@ -240,7 +247,12 @@ class WebSocketService extends EventEmitter {
 
   // Start heartbeat to detect dead connections
   startHeartbeat() {
-    setInterval(() => {
+    // Prevent multiple heartbeat timers
+    if (this.heartbeatTimer) {
+      return;
+    }
+
+    this.heartbeatTimer = setInterval(() => {
       this.clients.forEach((client, clientId) => {
         if (client.ws.readyState === WebSocket.OPEN) {
           const timeSinceLastPing = Date.now() - client.lastPing;
@@ -254,6 +266,14 @@ class WebSocketService extends EventEmitter {
         }
       });
     }, this.heartbeatInterval);
+  }
+
+  // Stop heartbeat
+  stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   // Get connection statistics

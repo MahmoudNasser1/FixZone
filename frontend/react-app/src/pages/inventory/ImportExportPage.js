@@ -30,7 +30,7 @@ import {
   Warning as WarningIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import inventoryService from '../../services/inventoryService';
 
@@ -46,28 +46,71 @@ const ImportExportPage = () => {
   const { showSuccess, showError } = useNotifications();
 
   // رفع الملف
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
 
+    // Validation: Check file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (uploadedFile.size > MAX_FILE_SIZE) {
+      showError('حجم الملف كبير جداً. الحد الأقصى 10MB');
+      return;
+    }
+
     setFile(uploadedFile);
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        setPreviewData(jsonData.slice(0, 10)); // أول 10 صفوف للمعاينة
-        validateData(jsonData);
-      } catch (error) {
-        showError('فشل قراءة الملف');
-      }
-    };
-    reader.readAsArrayBuffer(uploadedFile);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(arrayBuffer);
+          
+          // Get first worksheet
+          const worksheet = workbook.getWorksheet(1);
+          if (!worksheet) {
+            showError('الملف لا يحتوي على أوراق عمل');
+            return;
+          }
+
+          // Convert to JSON (first row as headers)
+          const jsonData = [];
+          let headers = [];
+          let isFirstRow = true;
+
+          worksheet.eachRow((row, rowNumber) => {
+            if (isFirstRow) {
+              // First row is headers
+              headers = row.values.slice(1); // Remove first empty value
+              isFirstRow = false;
+            } else {
+              // Data rows
+              const rowData = {};
+              row.values.slice(1).forEach((value, index) => {
+                const header = headers[index];
+                if (header) {
+                  rowData[header] = value || '';
+                }
+              });
+              if (Object.keys(rowData).length > 0) {
+                jsonData.push(rowData);
+              }
+            }
+          });
+          
+          setPreviewData(jsonData.slice(0, 10)); // أول 10 صفوف للمعاينة
+          validateData(jsonData);
+        } catch (error) {
+          console.error('Error reading file:', error);
+          showError('فشل قراءة الملف: ' + (error.message || 'خطأ غير معروف'));
+        }
+      };
+      reader.readAsArrayBuffer(uploadedFile);
+    } catch (error) {
+      console.error('Error handling file upload:', error);
+      showError('فشل معالجة الملف');
+    }
   };
 
   // التحقق من البيانات
@@ -101,41 +144,77 @@ const ImportExportPage = () => {
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        let successCount = 0;
-        let failCount = 0;
-        
-        for (const item of jsonData) {
-          try {
-            await inventoryService.createItem({
-              name: item.name,
-              sku: item.sku,
-              category: item.category || null,
-              purchasePrice: parseFloat(item.purchasePrice) || 0,
-              sellingPrice: parseFloat(item.sellingPrice) || 0,
-              minStockLevel: parseInt(item.minStockLevel) || 0,
-              maxStockLevel: parseInt(item.maxStockLevel) || 1000,
-              unit: item.unit || 'قطعة',
-              description: item.description || ''
-            });
-            successCount++;
-          } catch (error) {
-            failCount++;
+        try {
+          const arrayBuffer = e.target.result;
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(arrayBuffer);
+          
+          const worksheet = workbook.getWorksheet(1);
+          if (!worksheet) {
+            showError('الملف لا يحتوي على أوراق عمل');
+            setImporting(false);
+            return;
           }
+
+          // Convert to JSON
+          const jsonData = [];
+          let headers = [];
+          let isFirstRow = true;
+
+          worksheet.eachRow((row, rowNumber) => {
+            if (isFirstRow) {
+              headers = row.values.slice(1);
+              isFirstRow = false;
+            } else {
+              const rowData = {};
+              row.values.slice(1).forEach((value, index) => {
+                const header = headers[index];
+                if (header) {
+                  rowData[header] = value || '';
+                }
+              });
+              if (Object.keys(rowData).length > 0) {
+                jsonData.push(rowData);
+              }
+            }
+          });
+          
+          let successCount = 0;
+          let failCount = 0;
+          
+          for (const item of jsonData) {
+            try {
+              await inventoryService.createItem({
+                name: item.name,
+                sku: item.sku,
+                category: item.category || null,
+                purchasePrice: parseFloat(item.purchasePrice) || 0,
+                sellingPrice: parseFloat(item.sellingPrice) || 0,
+                minStockLevel: parseInt(item.minStockLevel) || 0,
+                maxStockLevel: parseInt(item.maxStockLevel) || 1000,
+                unit: item.unit || 'قطعة',
+                description: item.description || ''
+              });
+              successCount++;
+            } catch (error) {
+              console.error('Error importing item:', error);
+              failCount++;
+            }
+          }
+          
+          setImportResults({ successCount, failCount, total: jsonData.length });
+          showSuccess(`تم استيراد ${successCount} صنف بنجاح`);
+        } catch (error) {
+          console.error('Error processing file:', error);
+          showError('فشل معالجة الملف: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+          setImporting(false);
         }
-        
-        setImportResults({ successCount, failCount, total: jsonData.length });
-        showSuccess(`تم استيراد ${successCount} صنف بنجاح`);
       };
       reader.readAsArrayBuffer(file);
     } catch (error) {
+      console.error('Error importing:', error);
       showError('فشل الاستيراد');
-    } finally {
       setImporting(false);
     }
   };
@@ -147,53 +226,126 @@ const ImportExportPage = () => {
       const response = await inventoryService.listItems({ limit: 10000 });
       const items = response.data.data.items;
       
-      const exportData = items.map(item => ({
-        'الاسم': item.name,
-        'رمز الصنف': item.sku,
-        'الفئة': item.category || '',
-        'سعر الشراء': item.purchasePrice || 0,
-        'سعر البيع': item.sellingPrice || 0,
-        'الحد الأدنى': item.minStockLevel || 0,
-        'الحد الأقصى': item.maxStockLevel || 0,
-        'الوحدة': item.unit || '',
-        'الوصف': item.description || ''
-      }));
+      // Create workbook
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('الأصناف');
       
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'الأصناف');
+      // Define columns
+      worksheet.columns = [
+        { header: 'الاسم', key: 'name', width: 30 },
+        { header: 'رمز الصنف', key: 'sku', width: 15 },
+        { header: 'الفئة', key: 'category', width: 20 },
+        { header: 'سعر الشراء', key: 'purchasePrice', width: 15 },
+        { header: 'سعر البيع', key: 'sellingPrice', width: 15 },
+        { header: 'الحد الأدنى', key: 'minStockLevel', width: 12 },
+        { header: 'الحد الأقصى', key: 'maxStockLevel', width: 12 },
+        { header: 'الوحدة', key: 'unit', width: 10 },
+        { header: 'الوصف', key: 'description', width: 40 }
+      ];
       
-      XLSX.writeFile(workbook, `inventory_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      // Style header row
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF3B82F6' }
+      };
+      worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+      
+      // Add data
+      items.forEach(item => {
+        worksheet.addRow({
+          name: item.name,
+          sku: item.sku,
+          category: item.category || '',
+          purchasePrice: item.purchasePrice || 0,
+          sellingPrice: item.sellingPrice || 0,
+          minStockLevel: item.minStockLevel || 0,
+          maxStockLevel: item.maxStockLevel || 0,
+          unit: item.unit || '',
+          description: item.description || ''
+        });
+      });
+      
+      // Generate buffer and download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inventory_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       showSuccess('تم التصدير بنجاح');
     } catch (error) {
-      showError('فشل التصدير');
+      console.error('Error exporting:', error);
+      showError('فشل التصدير: ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setExporting(false);
     }
   };
 
   // تحميل قالب
-  const handleDownloadTemplate = () => {
-    const template = [
-      {
-        name: 'صنف تجريبي',
-        sku: 'ITEM001',
-        category: 'إلكترونيات',
-        purchasePrice: 100,
-        sellingPrice: 150,
-        minStockLevel: 10,
-        maxStockLevel: 100,
-        unit: 'قطعة',
-        description: 'وصف الصنف'
-      }
-    ];
-    
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    
-    XLSX.writeFile(workbook, 'inventory_template.xlsx');
-    showSuccess('تم تحميل القالب');
+  const handleDownloadTemplate = async () => {
+    try {
+      const template = [
+        {
+          name: 'صنف تجريبي',
+          sku: 'ITEM001',
+          category: 'إلكترونيات',
+          purchasePrice: 100,
+          sellingPrice: 150,
+          minStockLevel: 10,
+          maxStockLevel: 100,
+          unit: 'قطعة',
+          description: 'وصف الصنف'
+        }
+      ];
+      
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Template');
+      
+      // Define columns
+      worksheet.columns = [
+        { header: 'name', key: 'name', width: 30 },
+        { header: 'sku', key: 'sku', width: 15 },
+        { header: 'category', key: 'category', width: 20 },
+        { header: 'purchasePrice', key: 'purchasePrice', width: 15 },
+        { header: 'sellingPrice', key: 'sellingPrice', width: 15 },
+        { header: 'minStockLevel', key: 'minStockLevel', width: 12 },
+        { header: 'maxStockLevel', key: 'maxStockLevel', width: 12 },
+        { header: 'unit', key: 'unit', width: 10 },
+        { header: 'description', key: 'description', width: 40 }
+      ];
+      
+      // Style header row
+      worksheet.getRow(1).font = { bold: true };
+      
+      // Add template data
+      template.forEach(item => {
+        worksheet.addRow(item);
+      });
+      
+      // Generate buffer and download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'inventory_template.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showSuccess('تم تحميل القالب');
+    } catch (error) {
+      console.error('Error generating template:', error);
+      showError('فشل تحميل القالب');
+    }
   };
 
   return (
