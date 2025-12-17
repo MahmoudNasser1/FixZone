@@ -62,13 +62,13 @@ echo ""
 
 # Step 5: Restart PM2 with fresh process
 echo "🚀 Step 5: Starting PM2 with fresh process..."
-cd /home/deploy/FixZone
 
 # Start PM2 daemon (it will start automatically if not running)
 pm2 ping || sleep 1
 
-# Start the application
-pm2 start backend/server.js \
+# Start the application (we're already in backend directory)
+cd /home/deploy/FixZone/backend
+pm2 start server.js \
     --name fixzone-api \
     --cwd /home/deploy/FixZone/backend \
     --env production \

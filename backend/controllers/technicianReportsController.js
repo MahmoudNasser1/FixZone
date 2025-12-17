@@ -1,7 +1,6 @@
 const db = require('../db');
-const ExcelJS = require('exceljs');
-// PDF generation will use HTML template approach for now
-// Can be enhanced with pdfkit or puppeteer later
+// ExcelJS is optional - loaded only when needed to prevent startup errors
+let ExcelJS = null;
 
 class TechnicianReportsController {
   /**
@@ -332,6 +331,14 @@ class TechnicianReportsController {
    */
   async exportToExcel(data, title) {
     try {
+      // Load ExcelJS only when needed (lazy loading)
+      if (!ExcelJS) {
+        try {
+          ExcelJS = require('exceljs');
+        } catch (error) {
+          throw new Error('exceljs module is not installed. Please run: npm install exceljs --save');
+        }
+      }
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet(title);
       
