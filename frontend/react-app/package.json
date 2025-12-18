@@ -52,11 +52,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:prod": "NODE_ENV=production react-scripts build",
+    "build": "node scripts/build-optimized.js",
+    "build:prod": "NODE_ENV=production node scripts/build-optimized.js",
+    "build:with-lint": "NODE_OPTIONS='--max-old-space-size=4096' npm run lint:quiet && NODE_OPTIONS='--max-old-space-size=4096' GENERATE_SOURCEMAP=false react-scripts build",
     "build:vps": "NODE_OPTIONS='--max-old-space-size=4096' npm run lint:quiet && NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production react-scripts build",
-    "build:fast": "NODE_OPTIONS='--max-old-space-size=4096' GENERATE_SOURCEMAP=false react-scripts build",
-    "build:prod:vps": "NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production GENERATE_SOURCEMAP=false react-scripts build",
+    "build:fast": "SKIP_PREBUILD=true NODE_OPTIONS='--max-old-space-size=4096' DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build:prod:vps": "SKIP_PREBUILD=true NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build:instrumented": "node scripts/instrument-build.js && SKIP_PREBUILD=true NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
     "test:watch": "react-scripts test --watch",
     "test:coverage": "react-scripts test --coverage",
@@ -69,7 +71,7 @@
     "type-check": "tsc --noEmit",
     "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
     "clean": "rm -rf build node_modules/.cache",
-    "prebuild": "npm run lint:quiet",
+    "prebuild": "node scripts/prebuild.js",
     "precommit": "npm run lint:fix && npm run format"
   },
   "eslintConfig": {

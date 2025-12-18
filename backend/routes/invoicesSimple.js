@@ -192,13 +192,28 @@ router.get('/public/verify', async (req, res) => {
 });
 
 // Load print settings helper (needed for print route)
+// CRITICAL: Cache settings to prevent repeated file reads that could cause performance issues
+let cachedPrintSettings = null;
+let settingsCacheTime = 0;
+const SETTINGS_CACHE_TTL = 60000; // Cache for 60 seconds
+
 function loadPrintSettings() {
+  const now = Date.now();
+  // Return cached settings if still valid
+  if (cachedPrintSettings && (now - settingsCacheTime) < SETTINGS_CACHE_TTL) {
+    return cachedPrintSettings;
+  }
+  
   try {
     const p = path.join(__dirname, '..', 'config', 'print-settings.json');
     const raw = fs.readFileSync(p, 'utf8');
-    return JSON.parse(raw);
+    const settings = JSON.parse(raw);
+    // Cache the settings
+    cachedPrintSettings = settings;
+    settingsCacheTime = now;
+    return settings;
   } catch (e) {
-    return {
+    const defaultSettings = {
       title: 'فاتورة',
       showLogo: false,
       logoUrl: '',
@@ -206,6 +221,9 @@ function loadPrintSettings() {
       dateDisplay: 'both',
       companyName: 'FixZone'
     };
+    cachedPrintSettings = defaultSettings;
+    settingsCacheTime = now;
+    return defaultSettings;
   }
 }
 
@@ -237,43 +255,6 @@ router.get('/', validate(invoiceSchemas.getInvoices, 'query'), invoicesControlle
 
 // GET /api/invoices/stats - Get invoice statistics
 router.get('/stats', invoicesController.getInvoiceStats);
-
-// Load print settings helper
-function loadPrintSettings() {
-  try {
-    const p = path.join(__dirname, '..', 'config', 'print-settings.json');
-    const raw = fs.readFileSync(p, 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return {
-      title: 'فاتورة',
-      showLogo: false,
-      logoUrl: '',
-      margins: { top: 16, right: 16, bottom: 16, left: 16 },
-      dateDisplay: 'both',
-      companyName: 'FixZone'
-    };
-  }
-}
-
-// Format dates helper
-function formatDates(dateObj, mode) {
-  const formats = { gregorian: '', hijri: '' };
-  try {
-    formats.gregorian = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'full', timeStyle: 'short' }).format(dateObj);
-  } catch (_) {
-    formats.gregorian = dateObj.toLocaleString('ar-EG');
-  }
-  try {
-    formats.hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { dateStyle: 'full' }).format(dateObj);
-  } catch (_) {
-    formats.hijri = '';
-  }
-  const selected = (mode || 'both').toLowerCase();
-  if (selected === 'gregorian') return { primary: formats.gregorian, secondary: '' };
-  if (selected === 'hijri') return { primary: formats.hijri || formats.gregorian, secondary: '' };
-  return { primary: formats.gregorian, secondary: formats.hijri };
-}
 
 // Print invoice route (MUST come before /:id route)
 router.get('/:id/print', async (req, res) => {
@@ -322,42 +303,67 @@ router.get('/:id/print', async (req, res) => {
     
     // Helper function to get settings with fallback
     // Priority: invoiceSettings > settings (root) > defaultValue
+    // CRITICAL: Added circular reference protection and depth limit to prevent infinite loops
     const getSetting = (key, defaultValue) => {
-      if (key.includes('.')) {
-        const parts = key.split('.');
-        let value = invoiceSettings;
+      const MAX_DEPTH = 10; // Maximum depth to prevent infinite loops
+      const visited = new WeakSet(); // Track visited objects to detect circular references
+      
+      const traverse = (obj, parts, depth = 0) => {
+        // Safety check: prevent infinite loops
+        if (depth > MAX_DEPTH) {
+          console.warn(`[getSetting] Maximum depth (${MAX_DEPTH}) reached for key: ${key}`);
+          return { found: false, value: undefined };
+        }
+        
+        // Check for circular references
+        if (obj && typeof obj === 'object') {
+          if (visited.has(obj)) {
+            console.warn(`[getSetting] Circular reference detected for key: ${key}`);
+            return { found: false, value: undefined };
+          }
+          visited.add(obj);
+        }
+        
+        let value = obj;
         let found = true;
         
-        // Try invoiceSettings first
         for (let i = 0; i < parts.length; i++) {
           if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
             value = value[parts[i]];
+            // Check for circular reference at each level
+            if (value && typeof value === 'object' && visited.has(value)) {
+              console.warn(`[getSetting] Circular reference detected at level ${i} for key: ${key}`);
+              found = false;
+              break;
+            }
+            if (value && typeof value === 'object') {
+              visited.add(value);
+            }
           } else {
             found = false;
             break;
           }
         }
         
-        if (found && value !== undefined) {
-          if (typeof value === 'boolean') return value;
-          if (value !== null && value !== '') return value;
+        return { found, value };
+      };
+      
+      if (key.includes('.')) {
+        const parts = key.split('.');
+        
+        // Try invoiceSettings first
+        const result1 = traverse(invoiceSettings, parts);
+        if (result1.found && result1.value !== undefined) {
+          if (typeof result1.value === 'boolean') return result1.value;
+          if (result1.value !== null && result1.value !== '') return result1.value;
         }
         
         // Try settings (root level) as fallback
-        value = settings;
-        found = true;
-        for (let i = 0; i < parts.length; i++) {
-          if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
-            value = value[parts[i]];
-          } else {
-            found = false;
-            break;
-          }
-        }
-        
-        if (found && value !== undefined) {
-          if (typeof value === 'boolean') return value;
-          if (value !== null && value !== '') return value;
+        visited.clear(); // Reset visited set for second traversal
+        const result2 = traverse(settings, parts);
+        if (result2.found && result2.value !== undefined) {
+          if (typeof result2.value === 'boolean') return result2.value;
+          if (result2.value !== null && result2.value !== '') return result2.value;
         }
         
         return defaultValue;
@@ -837,8 +843,21 @@ router.get('/:id/print', async (req, res) => {
           <div class="header-bottom">
             ${getSetting('showCompanyInfo', true) ? `
             <div class="company-info">
-              ${getSetting('branchAddress', getSetting('address', settings.branchAddress || settings.address || 'العنوان غير محدد'))}<br>
-              ${getSetting('branchPhone', getSetting('phone', settings.branchPhone || settings.phone || '')) ? `هاتف: ${getSetting('branchPhone', getSetting('phone', settings.branchPhone || settings.phone || ''))}` : ''} ${getSetting('email', settings.email || '') ? `| بريد إلكتروني: ${getSetting('email', settings.email || '')}` : ''}
+              ${(() => {
+                const branchAddr = getSetting('branchAddress', null);
+                const addr = getSetting('address', null);
+                const branchAddress = branchAddr || addr || settings.branchAddress || settings.address || 'العنوان غير محدد';
+                return branchAddress;
+              })()}<br>
+              ${(() => {
+                const branchPh = getSetting('branchPhone', null);
+                const ph = getSetting('phone', null);
+                const branchPhone = branchPh || ph || settings.branchPhone || settings.phone || '';
+                return branchPhone ? `هاتف: ${branchPhone}` : '';
+              })()} ${(() => {
+                const email = getSetting('email', null) || settings.email || '';
+                return email ? `| بريد إلكتروني: ${email}` : '';
+              })()}
             </div>
             ` : '<div></div>'}
             ${getSetting('showInvoiceNumber', true) ? `

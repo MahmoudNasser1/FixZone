@@ -11,117 +11,134 @@ import './App.css';
 
 // Layout and Route Protection
 import MainLayout from './components/layout/MainLayout';
+import CustomerLayout from './components/customer/CustomerLayout';
+import { SettingsProvider } from './context/SettingsContext';
 
 // Pages and Components
 import EnhancedLoginPage from './pages/EnhancedLoginPage';
 import DashboardPage from './pages/DashboardPage'; // Using the new DashboardPage
 
-// Customer Pages
-import { CustomersPage, NewCustomerPage } from './pages/customers';
-import CustomerDetailsPage from './pages/customers/CustomerDetailsPage';
-import EditCustomerPage from './pages/customers/EditCustomerPage';
+// Customer Pages - Lazy Loaded (CustomersPage is large - 1550 lines)
+const CustomersPage = React.lazy(() => import('./pages/customers').then(m => ({ default: m.CustomersPage })));
+const NewCustomerPage = React.lazy(() => import('./pages/customers').then(m => ({ default: m.NewCustomerPage })));
+const CustomerDetailsPage = React.lazy(() => import('./pages/customers/CustomerDetailsPage'));
+const EditCustomerPage = React.lazy(() => import('./pages/customers/EditCustomerPage'));
 
-// Company Pages
-import { CompaniesPage, NewCompanyPage } from './pages/companies';
-import CompanyDetailsPage from './pages/companies/CompanyDetailsPage';
-import EditCompanyPage from './pages/companies/EditCompanyPage';
+// Company Pages - Lazy Loaded
+const CompaniesPage = React.lazy(() => import('./pages/companies').then(m => ({ default: m.CompaniesPage })));
+const NewCompanyPage = React.lazy(() => import('./pages/companies').then(m => ({ default: m.NewCompanyPage })));
+const CompanyDetailsPage = React.lazy(() => import('./pages/companies/CompanyDetailsPage'));
+const EditCompanyPage = React.lazy(() => import('./pages/companies/EditCompanyPage'));
 
-// Repair Pages
-import { RepairsPage } from './pages/repairs';
-import NewRepairPage from './pages/repairs/NewRepairPage';
-import NewRepairPageEnhanced from './pages/repairs/NewRepairPageEnhanced';
-import RepairDetailsPage from './pages/repairs/RepairDetailsPage';
-import RepairTrackingPage from './pages/repairs/RepairTrackingPage';
-import PublicRepairTrackingPage from './pages/repairs/PublicRepairTrackingPage';
-import PublicRepairReportsPage from './pages/repairs/PublicRepairReportsPage';
-import RepairPrintPage from './pages/repairs/RepairPrintPage';
-import RepairQRPrintPage from './pages/repairs/RepairQRPrintPage';
-import { SettingsProvider } from './context/SettingsContext';
-import SettingsDashboard from './pages/settings/SettingsDashboard';
-import UsersPage from './pages/users/UsersPage';
-import UsersPageEnhanced from './pages/users/UsersPageEnhanced';
-import UserDetailsPage from './pages/users/UserDetailsPage';
-import EditUserPage from './pages/users/EditUserPage';
-import NewUserPage from './pages/users/NewUserPage';
+// Repair Pages - Lazy Loaded (large files)
+const RepairsPage = React.lazy(() => import('./pages/repairs').then(m => ({ default: m.RepairsPage })));
+const NewRepairPage = React.lazy(() => import('./pages/repairs/NewRepairPage'));
+const NewRepairPageEnhanced = React.lazy(() => import('./pages/repairs/NewRepairPageEnhanced'));
+const RepairDetailsPage = React.lazy(() => import('./pages/repairs/RepairDetailsPage')); // 5600 lines - huge file!
+const RepairTrackingPage = React.lazy(() => import('./pages/repairs/RepairTrackingPage'));
+const PublicRepairTrackingPage = React.lazy(() => import('./pages/repairs/PublicRepairTrackingPage'));
+const PublicRepairReportsPage = React.lazy(() => import('./pages/repairs/PublicRepairReportsPage'));
+const RepairPrintPage = React.lazy(() => import('./pages/repairs/RepairPrintPage'));
+const RepairQRPrintPage = React.lazy(() => import('./pages/repairs/RepairQRPrintPage'));
 
-// Layout Demo Page
-import LayoutDemo from './pages/LayoutDemo';
-import NotificationDemoPage from './pages/NotificationDemoPage';
-import InventoryPage from './pages/inventory/InventoryPage';
-import InventoryPageEnhanced from './pages/inventory/InventoryPageEnhanced';
-import NewInventoryItemPage from './pages/inventory/NewInventoryItemPage';
-import EditInventoryItemPage from './pages/inventory/EditInventoryItemPage';
-import InventoryItemDetailsPage from './pages/inventory/InventoryItemDetailsPage';
-import InventoryTransferPage from './pages/inventory/InventoryTransferPage';
-import InventoryReportsPage from './pages/inventory/InventoryReportsPage';
-import WarehouseManagementPage from './pages/inventory/WarehouseManagementPage';
-import StockMovementPage from './pages/inventory/StockMovementPage';
-import StockAlertsPage from './pages/inventory/StockAlertsPage';
-import StockCountPage from './pages/inventory/StockCountPage';
-import StockTransferPage from './pages/inventory/StockTransferPage';
-import BarcodeScannerPage from './pages/inventory/BarcodeScannerPage';
-import ImportExportPage from './pages/inventory/ImportExportPage';
-import AnalyticsPage from './pages/inventory/AnalyticsPage';
+// Settings and Users - Lazy Loaded
+const SettingsDashboard = React.lazy(() => import('./pages/settings/SettingsDashboard')); // Large file - 2210 lines
+const UsersPage = React.lazy(() => import('./pages/users/UsersPage'));
+const UsersPageEnhanced = React.lazy(() => import('./pages/users/UsersPageEnhanced'));
+const UserDetailsPage = React.lazy(() => import('./pages/users/UserDetailsPage'));
+const EditUserPage = React.lazy(() => import('./pages/users/EditUserPage'));
+const NewUserPage = React.lazy(() => import('./pages/users/NewUserPage'));
 
-// Reports Pages
-import FinancialReportsPage from './pages/reports/FinancialReportsPage';
-import DailyReportsPage from './pages/reports/DailyReportsPage';
-import TechnicianReportsPage from './pages/reports/TechnicianReportsPage';
-import TechnicianDashboard from './pages/technician/TechnicianDashboard';
-import JobsListPage from './pages/technician/JobsListPage';
-import JobDetailsPage from './pages/technician/JobDetailsPage';
-import NewInspectionReportPage from './pages/technician/NewInspectionReportPage';
-import TasksPage from './pages/technician/TasksPage';
+// Layout Demo Page - Lazy Loaded
+const LayoutDemo = React.lazy(() => import('./pages/LayoutDemo'));
+const NotificationDemoPage = React.lazy(() => import('./pages/NotificationDemoPage'));
+// Inventory Pages - Lazy Loaded (heavy with ExcelJS imports)
+const InventoryPage = React.lazy(() => import('./pages/inventory/InventoryPage'));
+const InventoryPageEnhanced = React.lazy(() => import('./pages/inventory/InventoryPageEnhanced'));
+const NewInventoryItemPage = React.lazy(() => import('./pages/inventory/NewInventoryItemPage'));
+const EditInventoryItemPage = React.lazy(() => import('./pages/inventory/EditInventoryItemPage'));
+const InventoryItemDetailsPage = React.lazy(() => import('./pages/inventory/InventoryItemDetailsPage'));
+const InventoryTransferPage = React.lazy(() => import('./pages/inventory/InventoryTransferPage'));
+const InventoryReportsPage = React.lazy(() => import('./pages/inventory/InventoryReportsPage'));
+const WarehouseManagementPage = React.lazy(() => import('./pages/inventory/WarehouseManagementPage'));
+const StockMovementPage = React.lazy(() => import('./pages/inventory/StockMovementPage'));
+const StockAlertsPage = React.lazy(() => import('./pages/inventory/StockAlertsPage'));
+const StockCountPage = React.lazy(() => import('./pages/inventory/StockCountPage'));
+const StockTransferPage = React.lazy(() => import('./pages/inventory/StockTransferPage'));
+const BarcodeScannerPage = React.lazy(() => import('./pages/inventory/BarcodeScannerPage'));
+const ImportExportPage = React.lazy(() => import('./pages/inventory/ImportExportPage')); // Has ExcelJS
+const AnalyticsPage = React.lazy(() => import('./pages/inventory/AnalyticsPage')); // Has Recharts
 
-// Integration Pages
-import WorkflowDashboardPage from './pages/integration/WorkflowDashboardPage';
+// Reports Pages - Lazy Loaded (heavy with chart libraries)
+const FinancialReportsPage = React.lazy(() => import('./pages/reports/FinancialReportsPage'));
+const DailyReportsPage = React.lazy(() => import('./pages/reports/DailyReportsPage'));
+const TechnicianReportsPage = React.lazy(() => import('./pages/reports/TechnicianReportsPage'));
+const TechnicianDashboard = React.lazy(() => import('./pages/technician/TechnicianDashboard'));
+const JobsListPage = React.lazy(() => import('./pages/technician/JobsListPage'));
+const JobDetailsPage = React.lazy(() => import('./pages/technician/JobDetailsPage'));
+const NewInspectionReportPage = React.lazy(() => import('./pages/technician/NewInspectionReportPage'));
+const TasksPage = React.lazy(() => import('./pages/technician/TasksPage'));
 
-import InvoicesPage from './pages/invoices/InvoicesPage';
-import InvoiceDetailsPageOld from './pages/invoices/InvoiceDetailsPage';
-import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
-import EditInvoicePage from './pages/invoices/EditInvoicePage';
-// Temporarily commented out missing pages:
-// import DeliveryPage from './pages/Delivery/DeliveryPage';
-import { PaymentsPage, PaymentDetailsPage, CreatePaymentPage, EditPaymentPage, PaymentReportsPage, OverduePaymentsPage } from './pages/payments';
-import VendorsPage from './pages/vendors/VendorsPage';
-import VendorDetailsPage from './pages/vendors/VendorDetailsPage';
-import PurchaseOrdersPage from './pages/PurchaseOrders/PurchaseOrdersPage';
-import ServicesCatalogPage from './pages/services/ServicesCatalog';
-import ServiceForm from './pages/services/ServiceForm';
-import ServiceDetails from './pages/services/ServiceDetails';
-import RolesPermissionsPage from './pages/admin/RolesPermissionsPage';
+// Integration Pages - Lazy Loaded
+const WorkflowDashboardPage = React.lazy(() => import('./pages/integration/WorkflowDashboardPage'));
 
-// Expenses Pages
-import { ExpensesPage } from './pages/expenses';
+// Invoices - Lazy Loaded
+const InvoicesPage = React.lazy(() => import('./pages/invoices/InvoicesPage'));
+const InvoiceDetailsPageOld = React.lazy(() => import('./pages/invoices/InvoiceDetailsPage'));
+const CreateInvoicePage = React.lazy(() => import('./pages/invoices/CreateInvoicePage')); // Large file
+const EditInvoicePage = React.lazy(() => import('./pages/invoices/EditInvoicePage'));
 
-// Financial Module Pages (v2 - new architecture)
-import FinancialDashboardPage from './pages/financial/FinancialDashboardPage';
-import { ExpensesListPage, ExpenseCreatePage, ExpenseEditPage, ExpenseDetailsPage } from './pages/financial/expenses';
-import { PaymentsListPage, PaymentCreatePage } from './pages/financial/payments';
-import { InvoicesListPage, InvoiceDetailsPage, InvoiceCreatePage } from './pages/financial/invoices';
+// Payments - Lazy Loaded (has chart imports)
+const PaymentsPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.PaymentsPage })));
+const PaymentDetailsPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.PaymentDetailsPage })));
+const CreatePaymentPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.CreatePaymentPage })));
+const EditPaymentPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.EditPaymentPage })));
+const PaymentReportsPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.PaymentReportsPage })));
+const OverduePaymentsPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.OverduePaymentsPage })));
 
-// Quotations Pages
-import { QuotationsPage } from './pages/quotations';
+// Vendors & Services - Lazy Loaded
+const VendorsPage = React.lazy(() => import('./pages/vendors/VendorsPage'));
+const VendorDetailsPage = React.lazy(() => import('./pages/vendors/VendorDetailsPage'));
+const PurchaseOrdersPage = React.lazy(() => import('./pages/PurchaseOrders/PurchaseOrdersPage'));
+const ServicesCatalogPage = React.lazy(() => import('./pages/services/ServicesCatalog'));
+const ServiceForm = React.lazy(() => import('./pages/services/ServiceForm'));
+const ServiceDetails = React.lazy(() => import('./pages/services/ServiceDetails'));
+const RolesPermissionsPage = React.lazy(() => import('./pages/admin/RolesPermissionsPage'));
 
-// Messaging Pages
-import MessagingCenterPage from './pages/messaging/MessagingCenterPage';
-import MessagingReportsPage from './pages/messaging/MessagingReportsPage';
+// Expenses - Lazy Loaded
+const ExpensesPage = React.lazy(() => import('./pages/expenses').then(m => ({ default: m.ExpensesPage })));
 
-// Customer Portal Layout
-import CustomerLayout from './components/customer/CustomerLayout';
+// Financial Module Pages (v2) - Lazy Loaded (heavy with chart libraries)
+const FinancialDashboardPage = React.lazy(() => import('./pages/financial/FinancialDashboardPage'));
+const ExpensesListPage = React.lazy(() => import('./pages/financial/expenses').then(m => ({ default: m.ExpensesListPage })));
+const ExpenseCreatePage = React.lazy(() => import('./pages/financial/expenses').then(m => ({ default: m.ExpenseCreatePage })));
+const ExpenseEditPage = React.lazy(() => import('./pages/financial/expenses').then(m => ({ default: m.ExpenseEditPage })));
+const ExpenseDetailsPage = React.lazy(() => import('./pages/financial/expenses').then(m => ({ default: m.ExpenseDetailsPage })));
+const PaymentsListPage = React.lazy(() => import('./pages/financial/payments').then(m => ({ default: m.PaymentsListPage })));
+const PaymentCreatePageFinancial = React.lazy(() => import('./pages/financial/payments').then(m => ({ default: m.PaymentCreatePage })));
+const InvoicesListPage = React.lazy(() => import('./pages/financial/invoices').then(m => ({ default: m.InvoicesListPage })));
+const InvoiceDetailsPageFinancial = React.lazy(() => import('./pages/financial/invoices').then(m => ({ default: m.InvoiceDetailsPage })));
+const InvoiceCreatePageFinancial = React.lazy(() => import('./pages/financial/invoices').then(m => ({ default: m.InvoiceCreatePage })));
 
-// Technician Portal Pages
-import TechnicianProfilePage from './pages/technician/TechnicianProfilePage';
-import TechnicianSettingsPage from './pages/technician/TechnicianSettingsPage';
+// Quotations - Lazy Loaded
+const QuotationsPage = React.lazy(() => import('./pages/quotations').then(m => ({ default: m.QuotationsPage })));
 
-// Technicians Management Pages (Admin)
-import TechniciansPage from './pages/technicians/TechniciansPage';
-import TechnicianDetailsPage from './pages/technicians/TechnicianDetailsPage';
-import TechnicianForm from './pages/technicians/TechnicianForm';
-import TechnicianAnalyticsPage from './pages/technicians/TechnicianAnalyticsPage';
+// Messaging - Lazy Loaded
+const MessagingCenterPage = React.lazy(() => import('./pages/messaging/MessagingCenterPage'));
+const MessagingReportsPage = React.lazy(() => import('./pages/messaging/MessagingReportsPage'));
 
-// Debug Page
-import DebugPage from './pages/DebugPage';
+// Technician Portal Pages - Lazy Loaded
+const TechnicianProfilePage = React.lazy(() => import('./pages/technician/TechnicianProfilePage'));
+const TechnicianSettingsPage = React.lazy(() => import('./pages/technician/TechnicianSettingsPage'));
+
+// Technicians Management Pages (Admin) - Lazy Loaded
+const TechniciansPage = React.lazy(() => import('./pages/technicians/TechniciansPage'));
+const TechnicianDetailsPage = React.lazy(() => import('./pages/technicians/TechnicianDetailsPage'));
+const TechnicianForm = React.lazy(() => import('./pages/technicians/TechnicianForm'));
+const TechnicianAnalyticsPage = React.lazy(() => import('./pages/technicians/TechnicianAnalyticsPage')); // Has chart libraries
+
+// Debug Page - Lazy Loaded
+const DebugPage = React.lazy(() => import('./pages/DebugPage'));
 
 // ============================================
 // Lazy Loaded Components for Performance
@@ -145,6 +162,16 @@ const CustomerHelpPage = React.lazy(() => import('./pages/customer/CustomerHelpP
 
 // Loading Fallback Component for Customer Portal
 const CustomerLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
+    <div className="text-center">
+      <div className="w-12 h-12 mx-auto mb-4 border-4 border-muted border-t-brand-blue rounded-full animate-spin" />
+      <p className="text-muted-foreground">جاري التحميل...</p>
+    </div>
+  </div>
+);
+
+// Loading Fallback Component for Main App Routes
+const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
     <div className="text-center">
       <div className="w-12 h-12 mx-auto mb-4 border-4 border-muted border-t-brand-blue rounded-full animate-spin" />
@@ -319,7 +346,7 @@ function App() {
             />
 
             {/* Debug Page - للمطورين */}
-            <Route path="/debug" element={<DebugPage />} />
+            <Route path="/debug" element={<Suspense fallback={<LoadingFallback />}><DebugPage /></Suspense>} />
 
             {/* Customer Portal Routes - Login redirects to unified login */}
             <Route
@@ -352,22 +379,22 @@ function App() {
             />
 
             {/* Technician Portal Routes */}
-            <Route path="/technician" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
-            <Route path="/technician/dashboard" element={<TechnicianRoute><TechnicianDashboard /></TechnicianRoute>} />
-            <Route path="/technician/jobs" element={<TechnicianRoute><JobsListPage /></TechnicianRoute>} />
-            <Route path="/technician/jobs/:id" element={<TechnicianRoute><JobDetailsPage /></TechnicianRoute>} />
-            <Route path="/technician/jobs/:id/report/new" element={<TechnicianRoute><NewInspectionReportPage /></TechnicianRoute>} />
-            <Route path="/technician/jobs/:id/report/edit/:reportId" element={<TechnicianRoute><NewInspectionReportPage /></TechnicianRoute>} />
-            <Route path="/technician/tasks" element={<TechnicianRoute><TasksPage /></TechnicianRoute>} />
-            <Route path="/technician/profile" element={<TechnicianRoute><TechnicianProfilePage /></TechnicianRoute>} />
-            <Route path="/technician/settings" element={<TechnicianRoute><TechnicianSettingsPage /></TechnicianRoute>} />
+            <Route path="/technician" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><TechnicianDashboard /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/dashboard" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><TechnicianDashboard /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/jobs" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><JobsListPage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><JobDetailsPage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id/report/new" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><NewInspectionReportPage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/jobs/:id/report/edit/:reportId" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><NewInspectionReportPage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/tasks" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><TasksPage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/profile" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><TechnicianProfilePage /></Suspense></TechnicianRoute>} />
+            <Route path="/technician/settings" element={<TechnicianRoute><Suspense fallback={<LoadingFallback />}><TechnicianSettingsPage /></Suspense></TechnicianRoute>} />
             <Route path="/tech/*" element={<Navigate to="/technician/dashboard" replace />} /> {/* Redirect old /tech routes */}
 
             {/* Public Routes - لا تحتاج تسجيل دخول */}
             {/* صفحة التتبع الرئيسية - PublicRepairTrackingPage (الأكثر اكتمالاً) */}
-            <Route path="/track" element={<PublicRepairTrackingPage />} />
-            <Route path="/track/:id" element={<PublicRepairTrackingPage />} />
-            <Route path="/track/reports" element={<PublicRepairReportsPage />} />
+            <Route path="/track" element={<Suspense fallback={<LoadingFallback />}><PublicRepairTrackingPage /></Suspense>} />
+            <Route path="/track/:id" element={<Suspense fallback={<LoadingFallback />}><PublicRepairTrackingPage /></Suspense>} />
+            <Route path="/track/reports" element={<Suspense fallback={<LoadingFallback />}><PublicRepairReportsPage /></Suspense>} />
 
             {/* Staff/Admin Routes */}
             <Route
@@ -377,135 +404,137 @@ function App() {
                   <Routes>
 
                     {/* Print routes outside layout to produce clean print pages */}
-                    <Route path="repairs/:id/print" element={<RepairPrintPage />} />
-                    <Route path="repairs/:id/print-qr" element={<RepairQRPrintPage />} />
+                    <Route path="repairs/:id/print" element={<Suspense fallback={<LoadingFallback />}><RepairPrintPage /></Suspense>} />
+                    <Route path="repairs/:id/print-qr" element={<Suspense fallback={<LoadingFallback />}><RepairQRPrintPage /></Suspense>} />
 
                     {/* App routes under main layout */}
                     <Route path="/*" element={<MainLayout />}>
-                      <Route index element={<WorkflowDashboardPage />} />
+                      <Route index element={<Suspense fallback={<LoadingFallback />}><WorkflowDashboardPage /></Suspense>} />
                       <Route path="dashboard" element={<DashboardPage />} />
 
                       {/* Repairs */}
-                      <Route path="repairs" element={<RepairsPage />} />
-                      <Route path="repairs/new" element={<NewRepairPageEnhanced />} />
-                      <Route path="repairs/new-old" element={<NewRepairPage />} />
-                      <Route path="repairs/tracking" element={<RepairTrackingPage />} />
-                      <Route path="repairs/:id" element={<RepairDetailsPage />} />
+                      <Route path="repairs" element={<Suspense fallback={<LoadingFallback />}><RepairsPage /></Suspense>} />
+                      <Route path="repairs/new" element={<Suspense fallback={<LoadingFallback />}><NewRepairPageEnhanced /></Suspense>} />
+                      <Route path="repairs/new-old" element={<Suspense fallback={<LoadingFallback />}><NewRepairPage /></Suspense>} />
+                      <Route path="repairs/tracking" element={<Suspense fallback={<LoadingFallback />}><RepairTrackingPage /></Suspense>} />
+                      <Route path="repairs/:id" element={<Suspense fallback={<LoadingFallback />}><RepairDetailsPage /></Suspense>} />
 
                       {/* Services Catalog */}
-                      <Route path="services" element={<ServicesCatalogPage />} />
-                      <Route path="services/new" element={<ServiceForm />} />
-                      <Route path="services/:id" element={<ServiceDetails />} />
-                      <Route path="services/:id/edit" element={<ServiceForm />} />
+                      <Route path="services" element={<Suspense fallback={<LoadingFallback />}><ServicesCatalogPage /></Suspense>} />
+                      <Route path="services/new" element={<Suspense fallback={<LoadingFallback />}><ServiceForm /></Suspense>} />
+                      <Route path="services/:id" element={<Suspense fallback={<LoadingFallback />}><ServiceDetails /></Suspense>} />
+                      <Route path="services/:id/edit" element={<Suspense fallback={<LoadingFallback />}><ServiceForm /></Suspense>} />
 
                       {/* Expenses */}
-                      <Route path="expenses" element={<ExpensesPage />} />
+                      <Route path="expenses" element={<Suspense fallback={<LoadingFallback />}><ExpensesPage /></Suspense>} />
 
                       {/* Quotations */}
-                      <Route path="quotations" element={<QuotationsPage />} />
+                      <Route path="quotations" element={<Suspense fallback={<LoadingFallback />}><QuotationsPage /></Suspense>} />
                       
                       {/* Messaging Center */}
-                      <Route path="messaging" element={<MessagingCenterPage />} />
-                      <Route path="messaging/reports" element={<MessagingReportsPage />} />
+                      <Route path="messaging" element={<Suspense fallback={<LoadingFallback />}><MessagingCenterPage /></Suspense>} />
+                      <Route path="messaging/reports" element={<Suspense fallback={<LoadingFallback />}><MessagingReportsPage /></Suspense>} />
 
                       {/* Customers */}
-                      <Route path="customers" element={<CustomersPage />} />
-                      <Route path="customers/new" element={<NewCustomerPage />} />
-                      <Route path="customers/:id" element={<CustomerDetailsPage />} />
-                      <Route path="customers/:id/edit" element={<EditCustomerPage />} />
+                      <Route path="customers" element={<Suspense fallback={<LoadingFallback />}><CustomersPage /></Suspense>} />
+                      <Route path="customers/new" element={<Suspense fallback={<LoadingFallback />}><NewCustomerPage /></Suspense>} />
+                      <Route path="customers/:id" element={<Suspense fallback={<LoadingFallback />}><CustomerDetailsPage /></Suspense>} />
+                      <Route path="customers/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditCustomerPage /></Suspense>} />
 
                       {/* Companies */}
-                      <Route path="companies" element={<CompaniesPage />} />
-                      <Route path="companies/new" element={<NewCompanyPage />} />
-                      <Route path="companies/:id" element={<CompanyDetailsPage />} />
-                      <Route path="companies/:id/edit" element={<EditCompanyPage />} />
+                      <Route path="companies" element={<Suspense fallback={<LoadingFallback />}><CompaniesPage /></Suspense>} />
+                      <Route path="companies/new" element={<Suspense fallback={<LoadingFallback />}><NewCompanyPage /></Suspense>} />
+                      <Route path="companies/:id" element={<Suspense fallback={<LoadingFallback />}><CompanyDetailsPage /></Suspense>} />
+                      <Route path="companies/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditCompanyPage /></Suspense>} />
 
                       {/* Inventory, Settings, Payments */}
-                      <Route path="inventory" element={<InventoryPageEnhanced />} />
-                      <Route path="inventory/new" element={<NewInventoryItemPage />} />
+                      <Route path="inventory" element={<Suspense fallback={<LoadingFallback />}><InventoryPageEnhanced /></Suspense>} />
+                      <Route path="inventory/new" element={<Suspense fallback={<LoadingFallback />}><NewInventoryItemPage /></Suspense>} />
                       <Route path="inventory/parts" element={<Navigate to="/inventory" replace />} />
-                      <Route path="inventory/transfer" element={<InventoryTransferPage />} />
-                      <Route path="inventory/reports" element={<InventoryReportsPage />} />
-                      <Route path="inventory/warehouses" element={<WarehouseManagementPage />} />
-                      <Route path="inventory/stock-movements" element={<StockMovementPage />} />
-                      <Route path="inventory/stock-alerts" element={<StockAlertsPage />} />
-                      <Route path="inventory/:id/edit" element={<EditInventoryItemPage />} />
-                      <Route path="inventory/:id" element={<InventoryItemDetailsPage />} />
-                      <Route path="inventory-old" element={<InventoryPage />} />
-                      <Route path="stock-count" element={<StockCountPage />} />
-                      <Route path="stock-transfer" element={<StockTransferPage />} />
-                      <Route path="barcode-scanner" element={<BarcodeScannerPage />} />
-                      <Route path="import-export" element={<ImportExportPage />} />
-                      <Route path="analytics" element={<AnalyticsPage />} />
-                      <Route path="inventory/analytics" element={<AnalyticsPage />} />
+                      <Route path="inventory/transfer" element={<Suspense fallback={<LoadingFallback />}><InventoryTransferPage /></Suspense>} />
+                      <Route path="inventory/reports" element={<Suspense fallback={<LoadingFallback />}><InventoryReportsPage /></Suspense>} />
+                      <Route path="inventory/warehouses" element={<Suspense fallback={<LoadingFallback />}><WarehouseManagementPage /></Suspense>} />
+                      <Route path="inventory/stock-movements" element={<Suspense fallback={<LoadingFallback />}><StockMovementPage /></Suspense>} />
+                      <Route path="inventory/stock-alerts" element={<Suspense fallback={<LoadingFallback />}><StockAlertsPage /></Suspense>} />
+                      <Route path="inventory/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditInventoryItemPage /></Suspense>} />
+                      <Route path="inventory/:id" element={<Suspense fallback={<LoadingFallback />}><InventoryItemDetailsPage /></Suspense>} />
+                      <Route path="inventory-old" element={<Suspense fallback={<LoadingFallback />}><InventoryPage /></Suspense>} />
+                      <Route path="stock-count" element={<Suspense fallback={<LoadingFallback />}><StockCountPage /></Suspense>} />
+                      <Route path="stock-transfer" element={<Suspense fallback={<LoadingFallback />}><StockTransferPage /></Suspense>} />
+                      <Route path="barcode-scanner" element={<Suspense fallback={<LoadingFallback />}><BarcodeScannerPage /></Suspense>} />
+                      <Route path="import-export" element={<Suspense fallback={<LoadingFallback />}><ImportExportPage /></Suspense>} />
+                      <Route path="analytics" element={<Suspense fallback={<LoadingFallback />}><AnalyticsPage /></Suspense>} />
+                      <Route path="inventory/analytics" element={<Suspense fallback={<LoadingFallback />}><AnalyticsPage /></Suspense>} />
                       {/* Invoices */}
-                      <Route path="invoices" element={<InvoicesPage />} />
-                      <Route path="invoices/new" element={<CreateInvoicePage />} />
-                      <Route path="invoices/create" element={<CreateInvoicePage />} />
-                      <Route path="invoices/:id/edit" element={<EditInvoicePage />} />
-                      <Route path="invoices/:id" element={<InvoiceDetailsPageOld />} />
+                      <Route path="invoices" element={<Suspense fallback={<LoadingFallback />}><InvoicesPage /></Suspense>} />
+                      <Route path="invoices/new" element={<Suspense fallback={<LoadingFallback />}><CreateInvoicePage /></Suspense>} />
+                      <Route path="invoices/create" element={<Suspense fallback={<LoadingFallback />}><CreateInvoicePage /></Suspense>} />
+                      <Route path="invoices/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditInvoicePage /></Suspense>} />
+                      <Route path="invoices/:id" element={<Suspense fallback={<LoadingFallback />}><InvoiceDetailsPageOld /></Suspense>} />
                       {/* Payments */}
-                      <Route path="payments" element={<PaymentsPage />} />
-                      <Route path="payments/new" element={<CreatePaymentPage />} />
-                      <Route path="payments/:id" element={<PaymentDetailsPage />} />
-                      <Route path="payments/:id/edit" element={<EditPaymentPage />} />
-                      <Route path="payments/reports" element={<PaymentReportsPage />} />
-                      <Route path="payments/overdue" element={<OverduePaymentsPage />} />
+                      <Route path="payments" element={<Suspense fallback={<LoadingFallback />}><PaymentsPage /></Suspense>} />
+                      <Route path="payments/new" element={<Suspense fallback={<LoadingFallback />}><CreatePaymentPage /></Suspense>} />
+                      <Route path="payments/:id" element={<Suspense fallback={<LoadingFallback />}><PaymentDetailsPage /></Suspense>} />
+                      <Route path="payments/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditPaymentPage /></Suspense>} />
+                      <Route path="payments/reports" element={<Suspense fallback={<LoadingFallback />}><PaymentReportsPage /></Suspense>} />
+                      <Route path="payments/overdue" element={<Suspense fallback={<LoadingFallback />}><OverduePaymentsPage /></Suspense>} />
 
                       {/* Financial Module (v2 - new architecture) */}
-                      <Route path="financial" element={<FinancialDashboardPage />} />
-                      <Route path="financial/dashboard" element={<FinancialDashboardPage />} />
-                      <Route path="financial/expenses" element={<ExpensesListPage />} />
-                      <Route path="financial/expenses/create" element={<ExpenseCreatePage />} />
-                      <Route path="financial/expenses/:id" element={<ExpenseDetailsPage />} />
-                      <Route path="financial/expenses/:id/edit" element={<ExpenseEditPage />} />
-                      <Route path="financial/payments" element={<PaymentsListPage />} />
-                      <Route path="financial/payments/create" element={<PaymentCreatePage />} />
-                      <Route path="financial/invoices" element={<InvoicesListPage />} />
-                      <Route path="financial/invoices/create" element={<InvoiceCreatePage />} />
-                      <Route path="financial/invoices/:id" element={<InvoiceDetailsPage />} />
+                      <Route path="financial" element={<Suspense fallback={<LoadingFallback />}><FinancialDashboardPage /></Suspense>} />
+                      <Route path="financial/dashboard" element={<Suspense fallback={<LoadingFallback />}><FinancialDashboardPage /></Suspense>} />
+                      <Route path="financial/expenses" element={<Suspense fallback={<LoadingFallback />}><ExpensesListPage /></Suspense>} />
+                      <Route path="financial/expenses/create" element={<Suspense fallback={<LoadingFallback />}><ExpenseCreatePage /></Suspense>} />
+                      <Route path="financial/expenses/:id" element={<Suspense fallback={<LoadingFallback />}><ExpenseDetailsPage /></Suspense>} />
+                      <Route path="financial/expenses/:id/edit" element={<Suspense fallback={<LoadingFallback />}><ExpenseEditPage /></Suspense>} />
+                      <Route path="financial/payments" element={<Suspense fallback={<LoadingFallback />}><PaymentsListPage /></Suspense>} />
+                      <Route path="financial/payments/create" element={<Suspense fallback={<LoadingFallback />}><PaymentCreatePageFinancial /></Suspense>} />
+                      <Route path="financial/invoices" element={<Suspense fallback={<LoadingFallback />}><InvoicesListPage /></Suspense>} />
+                      <Route path="financial/invoices/create" element={<Suspense fallback={<LoadingFallback />}><InvoiceCreatePageFinancial /></Suspense>} />
+                      <Route path="financial/invoices/:id" element={<Suspense fallback={<LoadingFallback />}><InvoiceDetailsPageFinancial /></Suspense>} />
 
                       {/* Reports */}
-                      <Route path="reports/financial" element={<FinancialReportsPage />} />
-                      <Route path="reports/daily" element={<DailyReportsPage />} />
-                      <Route path="reports/technician" element={<TechnicianReportsPage />} />
+                      <Route path="reports/financial" element={<Suspense fallback={<LoadingFallback />}><FinancialReportsPage /></Suspense>} />
+                      <Route path="reports/daily" element={<Suspense fallback={<LoadingFallback />}><DailyReportsPage /></Suspense>} />
+                      <Route path="reports/technician" element={<Suspense fallback={<LoadingFallback />}><TechnicianReportsPage /></Suspense>} />
 
                       {/* Integration */}
-                      <Route path="integration/workflow" element={<WorkflowDashboardPage />} />
+                      <Route path="integration/workflow" element={<Suspense fallback={<LoadingFallback />}><WorkflowDashboardPage /></Suspense>} />
 
                       {/* Delivery - Temporarily disabled */}
                       {/* <Route path="delivery" element={<DeliveryPage />} /> */}
 
                       {/* Vendors & Purchase Orders */}
-                      <Route path="vendors" element={<VendorsPage />} />
-                      <Route path="vendors/:id" element={<VendorDetailsPage />} />
-                      <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
+                      <Route path="vendors" element={<Suspense fallback={<LoadingFallback />}><VendorsPage /></Suspense>} />
+                      <Route path="vendors/:id" element={<Suspense fallback={<LoadingFallback />}><VendorDetailsPage /></Suspense>} />
+                      <Route path="purchase-orders" element={<Suspense fallback={<LoadingFallback />}><PurchaseOrdersPage /></Suspense>} />
 
-                      <Route path="settings" element={<SettingsDashboard />} />
-                      <Route path="users" element={<UsersPageEnhanced />} />
-                      <Route path="users-old" element={<UsersPage />} />
-                      <Route path="users/new" element={<NewUserPage />} />
-                      <Route path="users/:id" element={<UserDetailsPage />} />
-                      <Route path="users/:id/edit" element={<EditUserPage />} />
+                      <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><SettingsDashboard /></Suspense>} />
+                      <Route path="users" element={<Suspense fallback={<LoadingFallback />}><UsersPageEnhanced /></Suspense>} />
+                      <Route path="users-old" element={<Suspense fallback={<LoadingFallback />}><UsersPage /></Suspense>} />
+                      <Route path="users/new" element={<Suspense fallback={<LoadingFallback />}><NewUserPage /></Suspense>} />
+                      <Route path="users/:id" element={<Suspense fallback={<LoadingFallback />}><UserDetailsPage /></Suspense>} />
+                      <Route path="users/:id/edit" element={<Suspense fallback={<LoadingFallback />}><EditUserPage /></Suspense>} />
                       {/* Technicians Management Routes */}
-                      <Route path="technicians" element={<TechniciansPage />} />
-                      <Route path="technicians/new" element={<TechnicianForm />} />
-                      <Route path="technicians/:id" element={<TechnicianDetailsPage />} />
-                      <Route path="technicians/:id/edit" element={<TechnicianForm />} />
-                      <Route path="technicians/:id/analytics" element={<TechnicianAnalyticsPage />} />
+                      <Route path="technicians" element={<Suspense fallback={<LoadingFallback />}><TechniciansPage /></Suspense>} />
+                      <Route path="technicians/new" element={<Suspense fallback={<LoadingFallback />}><TechnicianForm /></Suspense>} />
+                      <Route path="technicians/:id" element={<Suspense fallback={<LoadingFallback />}><TechnicianDetailsPage /></Suspense>} />
+                      <Route path="technicians/:id/edit" element={<Suspense fallback={<LoadingFallback />}><TechnicianForm /></Suspense>} />
+                      <Route path="technicians/:id/analytics" element={<Suspense fallback={<LoadingFallback />}><TechnicianAnalyticsPage /></Suspense>} />
                       {/* Admin / Roles & Permissions */}
                       <Route
                         path="admin/roles"
                         element={
                           <AdminRoute>
-                            <RolesPermissionsPage />
+                            <Suspense fallback={<LoadingFallback />}>
+                              <RolesPermissionsPage />
+                            </Suspense>
                           </AdminRoute>
                         }
                       />
 
                       {/* Demo */}
-                      <Route path="demo" element={<LayoutDemo />} />
-                      <Route path="notifications-demo" element={<NotificationDemoPage />} />
+                      <Route path="demo" element={<Suspense fallback={<LoadingFallback />}><LayoutDemo /></Suspense>} />
+                      <Route path="notifications-demo" element={<Suspense fallback={<LoadingFallback />}><NotificationDemoPage /></Suspense>} />
 
                       {/* Fallback */}
                       <Route path="*" element={<Navigate to="/" replace />} />

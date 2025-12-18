@@ -1,10 +1,12 @@
 import React from 'react';
-import { Alert, AlertTitle, Button, Box } from '@mui/material';
 import { RefreshCw, AlertCircle } from 'lucide-react';
+import { ErrorAlert } from '../ui/Alert';
+import SimpleButton from '../ui/SimpleButton';
 
 /**
  * ErrorHandler Component
  * Displays error messages with optional retry functionality
+ * Replaced MUI with lightweight components for better build performance
  */
 const ErrorHandler = ({ 
   error, 
@@ -12,7 +14,7 @@ const ErrorHandler = ({
   title = 'خطأ',
   message = 'حدث خطأ غير متوقع',
   showRetry = true,
-  variant = 'outlined'
+  variant = 'destructive'
 }) => {
   const handleRetry = () => {
     if (onRetry && typeof onRetry === 'function') {
@@ -23,28 +25,28 @@ const ErrorHandler = ({
   const errorMessage = error?.message || message;
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
-      <Alert 
-        severity="error" 
-        variant={variant}
-        icon={<AlertCircle size={20} />}
-        action={
-          showRetry && onRetry && (
-            <Button
-              color="inherit"
-              size="small"
-              onClick={handleRetry}
-              startIcon={<RefreshCw size={16} />}
-            >
-              إعادة المحاولة
-            </Button>
-          )
-        }
+    <div className="w-full p-2">
+      <ErrorAlert
+        title={title}
+        description={errorMessage}
+        dismissible={false}
+        className="relative"
       >
-        <AlertTitle>{title}</AlertTitle>
-        {errorMessage}
-      </Alert>
-    </Box>
+        {showRetry && onRetry && (
+          <div className="mt-4">
+            <SimpleButton
+              onClick={handleRetry}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw size={16} />
+              إعادة المحاولة
+            </SimpleButton>
+          </div>
+        )}
+      </ErrorAlert>
+    </div>
   );
 };
 

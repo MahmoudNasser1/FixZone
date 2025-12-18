@@ -1,9 +1,9 @@
 import React from 'react';
-import { CircularProgress, Box, Typography } from '@mui/material';
 
 /**
  * LoadingSpinner Component
  * Displays a loading spinner with optional message
+ * Replaced MUI with lightweight CSS-based spinner for better build performance
  */
 const LoadingSpinner = ({ 
   message = 'جاري التحميل...', 
@@ -11,40 +11,36 @@ const LoadingSpinner = ({
   color = 'primary',
   fullScreen = false 
 }) => {
+  const spinnerSize = size;
+  const borderWidth = Math.max(2, Math.floor(size / 20));
+  
   const content = (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      gap={2}
-      py={4}
+    <div
+      className="flex flex-col items-center justify-center gap-2 py-4"
     >
-      <CircularProgress size={size} color={color} />
+      <div
+        className="border-4 border-muted border-t-brand-blue rounded-full animate-spin"
+        style={{
+          width: `${spinnerSize}px`,
+          height: `${spinnerSize}px`,
+          borderWidth: `${borderWidth}px`
+        }}
+      />
       {message && (
-        <Typography variant="body2" color="textSecondary">
+        <p className="text-sm text-muted-foreground">
           {message}
-        </Typography>
+        </p>
       )}
-    </Box>
+    </div>
   );
 
   if (fullScreen) {
     return (
-      <Box
-        position="fixed"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        bgcolor="rgba(255, 255, 255, 0.8)"
-        zIndex={9999}
+      <div
+        className="fixed inset-0 flex items-center justify-center bg-white/80 z-[9999]"
       >
         {content}
-      </Box>
+      </div>
     );
   }
 
