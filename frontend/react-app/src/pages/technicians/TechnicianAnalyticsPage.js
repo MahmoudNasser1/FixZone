@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  TrendingUp, Activity, BarChart3, PieChart, Target, AlertTriangle,
-  RefreshCw, Calendar, Users, Award
+  TrendingUp, Activity, Target,
+  RefreshCw, Users, Award
 } from 'lucide-react';
 import {
-  BarChart, Bar, LineChart, Line, PieChart as RechartsPie, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
 import technicianAnalyticsService from '../../services/technicianAnalyticsService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import PageTransition from '../../components/ui/PageTransition';
@@ -15,7 +23,16 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleButton from '../../components/ui/SimpleButton';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const TechnicianAnalyticsPage = () => {
   const { id } = useParams();
@@ -35,6 +52,7 @@ const TechnicianAnalyticsPage = () => {
     if (id) {
       loadAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, period, selectedTab]);
 
   const loadAnalytics = async () => {
@@ -72,6 +90,8 @@ const TechnicianAnalyticsPage = () => {
           if (skillGapsRes.success) {
             setData(prev => ({ ...prev, skillGaps: skillGapsRes.data }));
           }
+          break;
+        default:
           break;
       }
     } catch (error) {
@@ -185,17 +205,40 @@ const TechnicianAnalyticsPage = () => {
                 <SimpleCardTitle>اتجاهات الأداء</SimpleCardTitle>
               </SimpleCardHeader>
               <SimpleCardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={data.trends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="repairsCount" stroke="#3b82f6" name="إجمالي الإصلاحات" />
-                    <Line type="monotone" dataKey="completedCount" stroke="#10b981" name="مكتملة" />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div style={{ height: '400px' }}>
+                  <Line
+                    data={{
+                      labels: (data.trends || []).map(item => item.date),
+                      datasets: [
+                        {
+                          label: 'إجمالي الإصلاحات',
+                          data: (data.trends || []).map(item => item.repairsCount),
+                          borderColor: '#3b82f6',
+                          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        },
+                        {
+                          label: 'مكتملة',
+                          data: (data.trends || []).map(item => item.completedCount),
+                          borderColor: '#10b981',
+                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        }
+                      ]
+                    }}
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                        }
+                      }
+                    }}
+                  />
+                </div>
               </SimpleCardContent>
             </SimpleCard>
           </div>
@@ -258,17 +301,33 @@ const TechnicianAnalyticsPage = () => {
                 <SimpleCardTitle>مقارنة بين الفنيين</SimpleCardTitle>
               </SimpleCardHeader>
               <SimpleCardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={data.comparative}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="technicianName" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="totalRepairs" fill="#3b82f6" name="إجمالي الإصلاحات" />
-                    <Bar dataKey="completedRepairs" fill="#10b981" name="مكتملة" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div style={{ height: '400px' }}>
+                  <Bar
+                    data={{
+                      labels: (data.comparative || []).map(item => item.technicianName),
+                      datasets: [
+                        {
+                          label: 'إجمالي الإصلاحات',
+                          data: (data.comparative || []).map(item => item.totalRepairs),
+                          backgroundColor: '#3b82f6',
+                        },
+                        {
+                          label: 'مكتملة',
+                          data: (data.comparative || []).map(item => item.completedRepairs),
+                          backgroundColor: '#10b981',
+                        }
+                      ]
+                    }}
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                        },
+                      },
+                    }}
+                  />
+                </div>
               </SimpleCardContent>
             </SimpleCard>
           </div>
@@ -298,16 +357,32 @@ const TechnicianAnalyticsPage = () => {
                     <p className="text-2xl font-bold">{data.predictions.predictedNextMonth || 0}</p>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={data.predictions.historicalData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="completedRepairs" stroke="#10b981" name="إصلاحات مكتملة" />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div style={{ height: '300px' }}>
+                  <Line
+                    data={{
+                      labels: (data.predictions.historicalData || []).map(item => item.date),
+                      datasets: [{
+                        label: 'إصلاحات مكتملة',
+                        data: (data.predictions.historicalData || []).map(item => item.completedRepairs),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      }]
+                    }}
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                        }
+                      }
+                    }}
+                  />
+                </div>
               </SimpleCardContent>
             </SimpleCard>
           </div>

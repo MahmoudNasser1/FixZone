@@ -20,18 +20,32 @@ import {
   MenuItem
 } from '@mui/material';
 import {
-  Build as RepairIcon,
   Inventory as InventoryIcon,
-  TrendingUp as TrendingIcon,
   Assessment as ReportIcon
 } from '@mui/icons-material';
 import { format, subDays, subMonths } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import apiService from '../../services/apiService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorHandler from '../../components/common/ErrorHandler';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const PartsUsageReportPage = () => {
   const [partsUsage, setPartsUsage] = useState([]);
@@ -44,6 +58,7 @@ const PartsUsageReportPage = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const loadData = async () => {
@@ -142,11 +157,44 @@ const PartsUsageReportPage = () => {
   }
 
   // بيانات الرسم البياني - أعلى 10 أصناف
-  const chartData = partsUsage.slice(0, 10).map(item => ({
-    name: item.name.substring(0, 20) + (item.name.length > 20 ? '...' : ''),
-    quantity: item.totalQuantity,
-    repairs: item.repairsCount
-  }));
+  const chartData = {
+    labels: partsUsage.slice(0, 10).map(item => 
+      item.name.substring(0, 20) + (item.name.length > 20 ? '...' : '')
+    ),
+    datasets: [
+      {
+        label: 'الكمية',
+        data: partsUsage.slice(0, 10).map(item => item.totalQuantity),
+        backgroundColor: '#8884d8',
+      },
+      {
+        label: 'عدد الصيانات',
+        data: partsUsage.slice(0, 10).map(item => item.repairsCount),
+        backgroundColor: '#82ca9d',
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45,
+        }
+      }
+    }
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -261,17 +309,9 @@ const PartsUsageReportPage = () => {
             <Typography variant="h6" gutterBottom>
               أكثر 10 أصناف استخداماً
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="quantity" fill="#8884d8" name="الكمية" />
-                <Bar dataKey="repairs" fill="#82ca9d" name="عدد الصيانات" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ height: '300px' }}>
+              <Bar data={chartData} options={chartOptions} />
+            </div>
           </CardContent>
         </Card>
       )}

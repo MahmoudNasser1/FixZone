@@ -4,11 +4,33 @@ import {
   Activity, AlertTriangle, RefreshCw 
 } from 'lucide-react';
 import {
-  BarChart, Bar, LineChart, Line, PieChart as RechartsPie, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
 import analyticsService from '../../services/analyticsService';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement
+);
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -157,41 +179,59 @@ const AnalyticsPage = () => {
             {/* Category Breakdown */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">التوزيع حسب الفئة</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPie>
-                  <Pie
-                    data={inventoryValue?.categoryBreakdown || []}
-                    dataKey="purchaseValue"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label
-                  >
-                    {(inventoryValue?.categoryBreakdown || []).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </RechartsPie>
-              </ResponsiveContainer>
+              <div style={{ height: '300px' }}>
+                <Doughnut
+                  data={{
+                    labels: (inventoryValue?.categoryBreakdown || []).map(item => item.category),
+                    datasets: [{
+                      data: (inventoryValue?.categoryBreakdown || []).map(item => item.purchaseValue),
+                      backgroundColor: (inventoryValue?.categoryBreakdown || []).map((_, index) => 
+                        COLORS[index % COLORS.length]
+                      ),
+                    }]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                      },
+                    },
+                  }}
+                />
+              </div>
             </div>
 
             {/* Warehouse Breakdown */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">التوزيع حسب المستودع</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={inventoryValue?.warehouseBreakdown || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="purchaseValue" fill="#3b82f6" name="قيمة الشراء" />
-                  <Bar dataKey="sellingValue" fill="#10b981" name="قيمة البيع" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: '300px' }}>
+                <Bar
+                  data={{
+                    labels: (inventoryValue?.warehouseBreakdown || []).map(item => item.name),
+                    datasets: [
+                      {
+                        label: 'قيمة الشراء',
+                        data: (inventoryValue?.warehouseBreakdown || []).map(item => item.purchaseValue),
+                        backgroundColor: '#3b82f6',
+                      },
+                      {
+                        label: 'قيمة البيع',
+                        data: (inventoryValue?.warehouseBreakdown || []).map(item => item.sellingValue),
+                        backgroundColor: '#10b981',
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -228,24 +268,37 @@ const AnalyticsPage = () => {
             {/* ABC Chart */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">تحليل ABC - توزيع القيمة</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={abcAnalysis?.allItems?.slice(0, 15) || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="totalValue" name="القيمة الإجمالية">
-                    {(abcAnalysis?.allItems?.slice(0, 15) || []).map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.classification === 'A' ? '#10b981' : 
-                              entry.classification === 'B' ? '#3b82f6' : '#f59e0b'}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: '400px' }}>
+                <Bar
+                  data={{
+                    labels: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.name),
+                    datasets: [{
+                      label: 'القيمة الإجمالية',
+                      data: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.totalValue),
+                      backgroundColor: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item =>
+                        item.classification === 'A' ? '#10b981' : 
+                        item.classification === 'B' ? '#3b82f6' : '#f59e0b'
+                      ),
+                    }]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                    },
+                    scales: {
+                      x: {
+                        ticks: {
+                          maxRotation: 45,
+                          minRotation: 45,
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -272,16 +325,26 @@ const AnalyticsPage = () => {
             {/* Profit by Category */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">هامش الربح حسب الفئة</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={profitMargin?.byCategory || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="avgMarginPercent" fill="#10b981" name="هامش الربح %" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: '300px' }}>
+                <Bar
+                  data={{
+                    labels: (profitMargin?.byCategory || []).map(item => item.category),
+                    datasets: [{
+                      label: 'هامش الربح %',
+                      data: (profitMargin?.byCategory || []).map(item => item.avgMarginPercent),
+                      backgroundColor: '#10b981',
+                    }]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                    },
+                  }}
+                />
+              </div>
             </div>
 
             {/* Top Profitable Items */}
