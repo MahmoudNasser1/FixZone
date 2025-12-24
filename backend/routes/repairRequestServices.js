@@ -11,23 +11,26 @@ router.use(authMiddleware);
 router.get('/', validate(repairRequestServiceSchemas.getRepairRequestServices, 'query'), async (req, res) => {
   try {
     const { repairRequestId } = req.query;
-    
+
     let query = `
       SELECT 
         rrs.*,
         s.name as serviceName,
         u.name as technicianName,
-        ii.id as invoiceItemId,
+        COALESCE(rrs.invoiceItemId, ii.id) as invoiceItemId,
         ii.invoiceId as linkedInvoiceId
       FROM RepairRequestService rrs
       LEFT JOIN Service s ON rrs.serviceId = s.id
       LEFT JOIN User u ON rrs.technicianId = u.id
-      LEFT JOIN InvoiceItem ii ON ii.serviceId = rrs.serviceId AND ii.invoiceId IN (
+      LEFT JOIN InvoiceItem ii ON (
+        (ii.serviceId = rrs.serviceId AND ii.serviceId IS NOT NULL) OR 
+        (rrs.invoiceItemId = ii.id)
+      ) AND ii.invoiceId IN (
         SELECT id FROM Invoice WHERE repairRequestId = rrs.repairRequestId
       )
       WHERE 1=1
     `;
-    
+
     const params = [];
     // Check if RepairRequestService has deletedAt column and add filter
     try {
@@ -40,16 +43,16 @@ router.get('/', validate(repairRequestServiceSchemas.getRepairRequestServices, '
     } catch (e) {
       // Ignore if check fails
     }
-    
+
     if (repairRequestId) {
       query += ' AND rrs.repairRequestId = ?';
       params.push(parseInt(repairRequestId));
     }
-    
+
     query += ' ORDER BY rrs.createdAt DESC';
-    
+
     const [rows] = await db.execute(query, params);
-    
+
     // Log technician information for debugging
     console.log('🔍 Repair Request Services Query Result:', {
       repairRequestId: repairRequestId || 'all',
@@ -62,13 +65,13 @@ router.get('/', validate(repairRequestServiceSchemas.getRepairRequestServices, '
         technicianName: r.technicianName
       }))
     });
-    
+
     res.json(rows);
   } catch (err) {
     console.error('Error fetching repair request services:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Server Error',
-      details: err.message 
+      details: err.message
     });
   }
 });
@@ -90,13 +93,13 @@ router.get('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
 
 // Create a new repair request service
 router.post('/', validate(repairRequestServiceSchemas.createRepairRequestService), async (req, res) => {
-  const { repairRequestId, serviceId, technicianId, price, notes } = req.body;
+  const { repairRequestId, serviceId, technicianId, price, notes, invoiceItemId } = req.body;
   try {
     const [result] = await db.execute(
-      'INSERT INTO RepairRequestService (repairRequestId, serviceId, technicianId, price, notes) VALUES (?, ?, ?, ?, ?)',
-      [repairRequestId, serviceId, technicianId, price, notes]
+      'INSERT INTO RepairRequestService (repairRequestId, serviceId, technicianId, price, notes, invoiceItemId) VALUES (?, ?, ?, ?, ?, ?)',
+      [repairRequestId, serviceId, technicianId, price, notes, invoiceItemId]
     );
-    res.status(201).json({ success: true, id: result.insertId, repairRequestId, serviceId, technicianId, price, notes });
+    res.status(201).json({ success: true, id: result.insertId, repairRequestId, serviceId, technicianId, price, notes, invoiceItemId });
   } catch (err) {
     console.error('Error creating repair request service:', err);
     res.status(500).json({ success: false, error: 'Server Error', details: err.message });
@@ -107,7 +110,7 @@ router.post('/', validate(repairRequestServiceSchemas.createRepairRequestService
 router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceById, 'params'), validate(repairRequestServiceSchemas.updateRepairRequestService), async (req, res) => {
   const { id } = req.params;
   const { repairRequestId, serviceId, technicianId, price, notes, finalPrice } = req.body;
-  
+
   // Get existing service to use current values if not provided
   try {
     // Check if deletedAt column exists before using it
@@ -122,12 +125,12 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     } catch (e) {
       // Column doesn't exist, use basic query
     }
-    
+
     const [existing] = await db.execute(existingQuery, [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, error: 'Repair request service not found or deleted' });
     }
-    
+
     const current = existing[0];
     const updateRepairRequestId = repairRequestId !== undefined ? repairRequestId : current.repairRequestId;
     const updateServiceId = serviceId !== undefined ? serviceId : current.serviceId;
@@ -135,20 +138,21 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     const updatePrice = price !== undefined ? price : current.price;
     const updateFinalPrice = finalPrice !== undefined ? finalPrice : (current.finalPrice || current.price);
     const updateNotes = notes !== undefined ? notes : current.notes;
-    
+    const updateInvoiceItemId = req.body.invoiceItemId !== undefined ? req.body.invoiceItemId : current.invoiceItemId;
+
     if (!updateRepairRequestId || updatePrice === undefined) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        error: 'repairRequestId and price are required' 
+        error: 'repairRequestId and price are required'
       });
     }
     // Note: serviceId يمكن أن يكون null للخدمات اليدوية
-    
+
     // Build UPDATE query - include finalPrice if it exists in table
     // Always include technicianId to ensure it gets updated (even if null)
-    let updateQuery = 'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, technicianId = ?, price = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP';
-    const updateParams = [updateRepairRequestId, updateServiceId, updateTechnicianId, updatePrice, updateNotes];
-    
+    let updateQuery = 'UPDATE RepairRequestService SET repairRequestId = ?, serviceId = ?, technicianId = ?, price = ?, notes = ?, invoiceItemId = ?, updatedAt = CURRENT_TIMESTAMP';
+    const updateParams = [updateRepairRequestId, updateServiceId, updateTechnicianId, updatePrice, updateNotes, updateInvoiceItemId];
+
     // Check if finalPrice column exists and add it if provided
     try {
       const [finalPriceCheck] = await db.execute(
@@ -161,7 +165,7 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     } catch (e) {
       // Column doesn't exist, skip
     }
-    
+
     // Check if deletedAt exists for WHERE clause
     let whereClause = ' WHERE id = ?';
     try {
@@ -174,10 +178,10 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
     } catch (e) {
       // Column doesn't exist, use basic WHERE
     }
-    
+
     updateQuery += whereClause;
     updateParams.push(id);
-    
+
     const [result] = await db.execute(updateQuery, updateParams);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, error: 'Repair request service not found or deleted' });
@@ -193,10 +197,10 @@ router.put('/:id', validate(repairRequestServiceSchemas.getRepairRequestServiceB
 router.delete('/:id', validate(repairRequestServiceSchemas.deleteRepairRequestService, 'params'), async (req, res) => {
   const { id } = req.params;
   const connection = await db.getConnection();
-  
+
   try {
     await connection.beginTransaction();
-    
+
     // First, get the repair request service details before deleting
     let getServiceQuery = 'SELECT * FROM RepairRequestService WHERE id = ?';
     try {
@@ -209,17 +213,17 @@ router.delete('/:id', validate(repairRequestServiceSchemas.deleteRepairRequestSe
     } catch (e) {
       // Column doesn't exist, use basic query
     }
-    
+
     const [serviceRows] = await connection.execute(getServiceQuery, [id]);
-    
+
     if (serviceRows.length === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Repair request service not found or already deleted' });
     }
-    
+
     const service = serviceRows[0];
     const { serviceId, repairRequestId } = service;
-    
+
     // Check if this service exists in any invoice items
     // Find invoices linked to this repair request
     if (serviceId && repairRequestId) {
@@ -227,44 +231,44 @@ router.delete('/:id', validate(repairRequestServiceSchemas.deleteRepairRequestSe
         SELECT id FROM Invoice 
         WHERE repairRequestId = ? AND deletedAt IS NULL
       `, [repairRequestId]);
-      
+
       // For each invoice, check if there are invoice items with this serviceId
       for (const invoice of invoices) {
         const [invoiceItems] = await connection.execute(`
           SELECT id FROM InvoiceItem 
           WHERE invoiceId = ? AND serviceId = ?
         `, [invoice.id, serviceId]);
-        
+
         // Delete all invoice items with this serviceId
         if (invoiceItems.length > 0) {
           await connection.execute(`
             DELETE FROM InvoiceItem 
             WHERE invoiceId = ? AND serviceId = ?
           `, [invoice.id, serviceId]);
-          
+
           // Recalculate invoice total
           const [totalResult] = await connection.execute(`
             SELECT COALESCE(SUM(quantity * unitPrice), 0) as calculatedTotal
             FROM InvoiceItem WHERE invoiceId = ?
           `, [invoice.id]);
-          
+
           const newTotal = Number(totalResult[0].calculatedTotal);
-          
+
           await connection.execute(`
             UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
           `, [newTotal, invoice.id]);
-          
+
           console.log(`Deleted ${invoiceItems.length} invoice item(s) from invoice ${invoice.id} and updated total to ${newTotal}`);
         }
       }
     }
-    
+
     // Now delete the repair request service
     // Check if RepairRequestService table has deletedAt column
     const [checkResult] = await connection.execute(
       "SELECT COUNT(*) as count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RepairRequestService' AND COLUMN_NAME = 'deletedAt'"
     );
-    
+
     if (checkResult[0].count > 0) {
       // Use soft delete
       const [result] = await connection.execute(
@@ -283,7 +287,7 @@ router.delete('/:id', validate(repairRequestServiceSchemas.deleteRepairRequestSe
         return res.status(404).json({ error: 'Repair request service not found' });
       }
     }
-    
+
     await connection.commit();
     res.json({ success: true, message: 'Repair request service deleted successfully' });
   } catch (err) {

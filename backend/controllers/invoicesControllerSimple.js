@@ -691,7 +691,7 @@ class InvoicesControllerSimple {
         LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
         LEFT JOIN Invoice i ON ii.invoiceId = i.id
         LEFT JOIN RepairRequestService rrs ON rrs.invoiceItemId = ii.id
-        WHERE ii.invoiceId = ?
+        WHERE ii.invoiceId = ? AND (ii.deletedAt IS NULL)
         ORDER BY ii.createdAt ASC
       `, [id]);
 
@@ -1034,14 +1034,14 @@ class InvoicesControllerSimple {
 
       // Check if deletedAt column exists
       const [columnCheck] = await db.execute(`
-        SELECT COUNT(*) as exists 
+        SELECT COUNT(*) as col_exists 
         FROM INFORMATION_SCHEMA.COLUMNS 
         WHERE TABLE_SCHEMA = DATABASE() 
         AND TABLE_NAME = 'InvoiceItem' 
         AND COLUMN_NAME = 'deletedAt'
       `);
 
-      const hasSoftDelete = columnCheck[0].exists > 0;
+      const hasSoftDelete = columnCheck[0].col_exists > 0;
 
       if (hasSoftDelete) {
         // Use soft delete

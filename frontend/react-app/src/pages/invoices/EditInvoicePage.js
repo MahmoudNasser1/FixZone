@@ -12,7 +12,7 @@ export default function EditInvoicePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   // Form state
   const [form, setForm] = useState({
     totalAmount: 0,
@@ -21,6 +21,8 @@ export default function EditInvoicePage() {
     currency: 'EGP',
     taxAmount: 0,
     discountPercent: 0,
+    discountAmount: 0,
+    discountType: 'fixed', // 'fixed' or 'percent'
     shippingAmount: 0,
     notes: '',
     dueDate: ''
@@ -65,39 +67,44 @@ export default function EditInvoicePage() {
         navigate('/invoices');
         return;
       }
-      
+
       try {
         setLoading(true);
         console.log('Loading invoice with ID:', id);
         const responseData = await apiService.getInvoiceById(id);
-          console.log('API Response:', responseData);
-          const invoiceData = responseData.data || responseData;
-          setInvoice(invoiceData);
-          
-          // Ensure all numeric values are properly converted
-          const totalAmount = Number(invoiceData.totalAmount) || 0;
-          const amountPaid = Number(invoiceData.amountPaid) || 0;
-          const taxAmount = Number(invoiceData.taxAmount) || 0;
-          const discountAmount = Number(invoiceData.discountAmount) || 0;
-          const discountPercent = Number(invoiceData.discountPercent) || 0;
-          const shippingAmount = Number(invoiceData.shippingAmount) || 0;
-          
-          // If discountAmount exists but discountPercent doesn't, calculate percentage
-          const calculatedDiscountPercent = discountPercent || (totalAmount > 0 && discountAmount > 0 
-            ? (discountAmount / totalAmount) * 100 
-            : 0);
-          
-          setForm({
-            totalAmount,
-            amountPaid,
-            status: invoiceData.status || 'draft',
-            currency: invoiceData.currency || 'EGP',
-            taxAmount,
-            discountPercent: calculatedDiscountPercent,
-            shippingAmount,
-            notes: invoiceData.notes || '',
-            dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
-          });
+        console.log('API Response:', responseData);
+        const invoiceData = responseData.data || responseData;
+        setInvoice(invoiceData);
+
+        // Ensure all numeric values are properly converted
+        const totalAmount = Number(invoiceData.totalAmount) || 0;
+        const amountPaid = Number(invoiceData.amountPaid) || 0;
+        const taxAmount = Number(invoiceData.taxAmount) || 0;
+        const discountAmount = Number(invoiceData.discountAmount) || 0;
+        const discountPercent = Number(invoiceData.discountPercent) || 0;
+        const shippingAmount = Number(invoiceData.shippingAmount) || 0;
+
+        // Determine discount type and values based on loaded data
+        let initialDiscountType = 'fixed';
+        if (discountPercent > 0) {
+          initialDiscountType = 'percent';
+        } else if (discountAmount > 0) {
+          initialDiscountType = 'fixed';
+        }
+
+        setForm({
+          totalAmount,
+          amountPaid,
+          status: invoiceData.status || 'draft',
+          currency: invoiceData.currency || 'EGP',
+          taxAmount,
+          discountPercent,
+          discountAmount,
+          discountType: initialDiscountType,
+          shippingAmount,
+          notes: invoiceData.notes || '',
+          dueDate: invoiceData.dueDate ? invoiceData.dueDate.split('T')[0] : ''
+        });
       } catch (error) {
         console.error('Error loading invoice:', error);
         notifications.error('فشل في تحميل بيانات الفاتورة: ' + error.message);
@@ -115,11 +122,22 @@ export default function EditInvoicePage() {
   async function saveChanges() {
     try {
       setSaving(true);
-      
-      // Calculate discount amount from percentage
-      const discountAmount = form.totalAmount > 0 && form.discountPercent > 0
-        ? (form.totalAmount * form.discountPercent) / 100
-        : 0;
+
+      // Calculate discount based on type
+      let finalDiscountAmount = 0;
+      let finalDiscountPercent = 0;
+
+      if (form.discountType === 'percent') {
+        finalDiscountPercent = form.discountPercent;
+        finalDiscountAmount = form.totalAmount > 0
+          ? (form.totalAmount * form.discountPercent) / 100
+          : 0;
+      } else {
+        finalDiscountAmount = form.discountAmount;
+        finalDiscountPercent = form.totalAmount > 0
+          ? (finalDiscountAmount / form.totalAmount) * 100
+          : 0;
+      }
 
       const updateData = {
         totalAmount: form.totalAmount,
@@ -127,16 +145,16 @@ export default function EditInvoicePage() {
         status: form.status,
         currency: form.currency,
         taxAmount: form.taxAmount,
-        discountPercent: form.discountPercent,
-        discountAmount: discountAmount,
+        discountPercent: finalDiscountPercent,
+        discountAmount: finalDiscountAmount,
         shippingAmount: form.shippingAmount,
         notes: form.notes,
         dueDate: form.dueDate || null
       };
 
       await apiService.updateInvoice(id, updateData);
-        notifications.success('تم حفظ التغييرات بنجاح');
-        navigate(`/invoices/${id}`);
+      notifications.success('تم حفظ التغييرات بنجاح');
+      navigate(`/invoices/${id}`);
     } catch (error) {
       console.error('Error saving invoice:', error);
       notifications.error('فشل في حفظ التغييرات: ' + (error.message || 'خطأ غير معروف'));
@@ -283,21 +301,53 @@ export default function EditInvoicePage() {
                     </div>
                   )}
 
+
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الخصم (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={form.discountPercent}
-                      onChange={(e) => setForm(prev => ({ ...prev, discountPercent: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0.00"
-                    />
-                    {form.discountPercent > 0 && form.totalAmount > 0 && (
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الخصم</label>
+                    <div className="flex gap-2">
+                      <select
+                        value={form.discountType}
+                        onChange={(e) => setForm(prev => ({ ...prev, discountType: e.target.value }))}
+                        className="w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="fixed">مبلغ ثابت</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                      </select>
+
+                      {form.discountType === 'percent' ? (
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={form.discountPercent}
+                          onChange={(e) => setForm(prev => ({ ...prev, discountPercent: Number(e.target.value) }))}
+                          className="w-2/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      ) : (
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={form.totalAmount}
+                          value={form.discountAmount}
+                          onChange={(e) => setForm(prev => ({ ...prev, discountAmount: Number(e.target.value) }))}
+                          className="w-2/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      )}
+                    </div>
+
+                    {form.discountType === 'percent' && form.discountPercent > 0 && form.totalAmount > 0 && (
                       <p className="text-xs text-gray-500 mt-1">
-                        مبلغ الخصم: {formatCurrency((form.totalAmount * form.discountPercent) / 100, form.currency)}
+                        قيمة الخصم: {formatCurrency((form.totalAmount * form.discountPercent) / 100, form.currency)}
+                      </p>
+                    )}
+                    {form.discountType === 'fixed' && form.discountAmount > 0 && form.totalAmount > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        نسبة الخصم: {((form.discountAmount / form.totalAmount) * 100).toFixed(2)}%
                       </p>
                     )}
                   </div>
@@ -356,57 +406,61 @@ export default function EditInvoicePage() {
                   <span className="text-gray-600">المبلغ الأساسي:</span>
                   <span className="font-medium">{formatCurrency(form.totalAmount, form.currency)}</span>
                 </div>
-                
-                {form.discountPercent > 0 && form.totalAmount > 0 && (
+
+                {(form.discountType === 'percent' ? form.discountPercent > 0 : form.discountAmount > 0) && form.totalAmount > 0 && (
                   <div className="flex justify-between text-red-600">
-                    <span>- الخصم ({form.discountPercent}%):</span>
-                    <span>-{formatCurrency((form.totalAmount * form.discountPercent) / 100, form.currency)}</span>
+                    <span>- الخصم ({form.discountType === 'percent' ? `${form.discountPercent}%` : 'مبلغ ثابت'}):</span>
+                    <span>-{formatCurrency(
+                      form.discountType === 'percent'
+                        ? (form.totalAmount * form.discountPercent) / 100
+                        : form.discountAmount,
+                      form.currency
+                    )}</span>
                   </div>
                 )}
-                
+
                 {printSettings?.financial?.showTax !== false && form.taxAmount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>+ الضريبة:</span>
                     <span>+{formatCurrency(form.taxAmount, form.currency)}</span>
                   </div>
                 )}
-                
+
                 {printSettings?.financial?.showShipping !== false && form.shippingAmount > 0 && (
                   <div className="flex justify-between text-blue-600">
                     <span>+ الشحن:</span>
                     <span>+{formatCurrency(form.shippingAmount, form.currency)}</span>
                   </div>
                 )}
-                
+
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold">
                     <span>الإجمالي النهائي:</span>
                     <span>{formatCurrency((
-                      form.totalAmount - 
-                      (form.totalAmount * form.discountPercent / 100) + 
-                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + 
+                      form.totalAmount -
+                      (form.discountType === 'percent' ? (form.totalAmount * form.discountPercent / 100) : form.discountAmount) +
+                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) +
                       (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0)
                     ), form.currency)}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">المدفوع:</span>
                   <span className="font-medium text-green-600">{formatCurrency(form.amountPaid, form.currency)}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">المتبقي:</span>
-                  <span className={`font-medium ${
-                    (form.totalAmount - (form.totalAmount * form.discountPercent / 100) + (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) - form.amountPaid) > 0 
-                      ? 'text-red-600' 
-                      : 'text-green-600'
-                  }`}>
+                  <span className={`font-medium ${(form.totalAmount - (form.discountType === 'percent' ? (form.totalAmount * form.discountPercent / 100) : form.discountAmount) + (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) - form.amountPaid) > 0
+                    ? 'text-red-600'
+                    : 'text-green-600'
+                    }`}>
                     {formatCurrency((
-                      form.totalAmount - 
-                      (form.totalAmount * form.discountPercent / 100) + 
-                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) + 
-                      (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) - 
+                      form.totalAmount -
+                      (form.discountType === 'percent' ? (form.totalAmount * form.discountPercent / 100) : form.discountAmount) +
+                      (printSettings?.financial?.showTax !== false ? form.taxAmount : 0) +
+                      (printSettings?.financial?.showShipping !== false ? form.shippingAmount : 0) -
                       form.amountPaid
                     ), form.currency)}
                   </span>
@@ -424,20 +478,19 @@ export default function EditInvoicePage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">الحالة الحالية:</span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    form.status === 'paid' ? 'bg-green-100 text-green-700' :
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${form.status === 'paid' ? 'bg-green-100 text-green-700' :
                     form.status === 'sent' ? 'bg-blue-100 text-blue-700' :
-                    form.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
+                      form.status === 'overdue' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                    }`}>
                     {form.status === 'draft' ? 'مسودة' :
-                     form.status === 'sent' ? 'مرسلة' :
-                     form.status === 'paid' ? 'مدفوعة' :
-                     form.status === 'overdue' ? 'متأخرة' :
-                     form.status === 'cancelled' ? 'ملغية' : form.status}
+                      form.status === 'sent' ? 'مرسلة' :
+                        form.status === 'paid' ? 'مدفوعة' :
+                          form.status === 'overdue' ? 'متأخرة' :
+                            form.status === 'cancelled' ? 'ملغية' : form.status}
                   </span>
                 </div>
-                
+
                 {form.dueDate && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">تاريخ الاستحقاق:</span>
@@ -462,7 +515,7 @@ export default function EditInvoicePage() {
                   <Save className="w-4 h-4 ml-2" />
                   {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                 </SimpleButton>
-                
+
                 <SimpleButton
                   variant="outline"
                   onClick={() => navigate(`/invoices/${id}`)}
@@ -476,6 +529,6 @@ export default function EditInvoicePage() {
           </SimpleCard>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

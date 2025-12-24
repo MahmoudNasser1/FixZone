@@ -13,7 +13,7 @@ const fs = require('fs');
 router.get('/public/:id/print', async (req, res) => {
   const { id } = req.params;
   const { phoneNumber, repairRequestId } = req.query;
-  
+
   try {
     if (!phoneNumber || !repairRequestId) {
       return res.status(400).send(`
@@ -97,7 +97,7 @@ router.get('/public/:id/print', async (req, res) => {
 router.get('/public/verify', async (req, res) => {
   try {
     const { repairRequestId, phoneNumber } = req.query;
-    
+
     if (!repairRequestId || !phoneNumber) {
       return res.status(400).json({
         success: false,
@@ -161,11 +161,11 @@ router.get('/public/verify', async (req, res) => {
     }
 
     const invoice = invoiceRows[0];
-    
+
     // Use actual amount paid from payments if available, otherwise use amountPaid from invoice
     const actualPaid = parseFloat(invoice.actualAmountPaid || invoice.amountPaid || 0);
     const totalAmount = parseFloat(invoice.totalAmount || 0);
-    
+
     res.json({
       success: true,
       data: {
@@ -203,7 +203,7 @@ function loadPrintSettings() {
   if (cachedPrintSettings && (now - settingsCacheTime) < SETTINGS_CACHE_TTL) {
     return cachedPrintSettings;
   }
-  
+
   try {
     const p = path.join(__dirname, '..', 'config', 'print-settings.json');
     const raw = fs.readFileSync(p, 'utf8');
@@ -260,7 +260,7 @@ router.get('/stats', invoicesController.getInvoiceStats);
 router.get('/:id/print', async (req, res) => {
   const { id } = req.params;
   const { public, phoneNumber, repairRequestId } = req.query;
-  
+
   // If this is a public request, verify phone number
   if (public === 'true' && phoneNumber && repairRequestId) {
     try {
@@ -296,25 +296,25 @@ router.get('/:id/print', async (req, res) => {
       return res.status(500).send('خطأ في التحقق: ' + verifyError.message);
     }
   }
-  
+
   try {
     const settings = loadPrintSettings();
     const invoiceSettings = settings.invoice || {};
-    
+
     // Helper function to get settings with fallback
     // Priority: invoiceSettings > settings (root) > defaultValue
     // CRITICAL: Added circular reference protection and depth limit to prevent infinite loops
     const getSetting = (key, defaultValue) => {
       const MAX_DEPTH = 10; // Maximum depth to prevent infinite loops
       const visited = new WeakSet(); // Track visited objects to detect circular references
-      
+
       const traverse = (obj, parts, depth = 0) => {
         // Safety check: prevent infinite loops
         if (depth > MAX_DEPTH) {
           console.warn(`[getSetting] Maximum depth (${MAX_DEPTH}) reached for key: ${key}`);
           return { found: false, value: undefined };
         }
-        
+
         // Check for circular references
         if (obj && typeof obj === 'object') {
           if (visited.has(obj)) {
@@ -323,10 +323,10 @@ router.get('/:id/print', async (req, res) => {
           }
           visited.add(obj);
         }
-        
+
         let value = obj;
         let found = true;
-        
+
         for (let i = 0; i < parts.length; i++) {
           if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
             value = value[parts[i]];
@@ -344,20 +344,20 @@ router.get('/:id/print', async (req, res) => {
             break;
           }
         }
-        
+
         return { found, value };
       };
-      
+
       if (key.includes('.')) {
         const parts = key.split('.');
-        
+
         // Try invoiceSettings first
         const result1 = traverse(invoiceSettings, parts);
         if (result1.found && result1.value !== undefined) {
           if (typeof result1.value === 'boolean') return result1.value;
           if (result1.value !== null && result1.value !== '') return result1.value;
         }
-        
+
         // Try settings (root level) as fallback
         visited.clear(); // Reset visited set for second traversal
         const result2 = traverse(settings, parts);
@@ -365,10 +365,10 @@ router.get('/:id/print', async (req, res) => {
           if (typeof result2.value === 'boolean') return result2.value;
           if (result2.value !== null && result2.value !== '') return result2.value;
         }
-        
+
         return defaultValue;
       }
-      
+
       // Simple key (no dots)
       // Try invoiceSettings first
       if (invoiceSettings[key] !== undefined) {
@@ -382,7 +382,7 @@ router.get('/:id/print', async (req, res) => {
       }
       return defaultValue;
     };
-    
+
     // Get invoice with customer and repair details
     const [invoiceRows] = await db.execute(`
       SELECT 
@@ -431,10 +431,10 @@ router.get('/:id/print', async (req, res) => {
         (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
         OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
       )
-      WHERE ii.invoiceId = ?
+      WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
       ORDER BY ii.createdAt
     `, [id]);
-    
+
     // تنظيف serviceNotes من رابط invoiceItemId
     items.forEach(item => {
       if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
@@ -442,7 +442,7 @@ router.get('/:id/print', async (req, res) => {
         if (item.serviceNotes === '') item.serviceNotes = null;
       }
     });
-    
+
     console.log(`[INVOICE PRINT] Invoice ID: ${id}, Items found: ${items.length}`);
     if (items.length > 0) {
       console.log(`[INVOICE PRINT] First item:`, items[0]);
@@ -456,11 +456,11 @@ router.get('/:id/print', async (req, res) => {
         : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
       subtotal += itemTotal;
     });
-    
+
     // Calculate tax: use invoice taxAmount if available, otherwise calculate from items using settings
     const showTax = getSetting('financial.showTax', true);
     const taxPercent = getSetting('financial.defaultTaxPercent', 15) / 100; // Convert percentage to decimal
-    
+
     let taxAmount = Number(invoice.taxAmount) || 0;
     if (taxAmount === 0 && subtotal > 0 && showTax) {
       taxAmount = subtotal * taxPercent;
@@ -469,14 +469,14 @@ router.get('/:id/print', async (req, res) => {
     if (!showTax) {
       taxAmount = 0;
     }
-    
+
     const discountAmount = Number(invoice.discountAmount) || 0;
     const shippingAmount = Number(invoice.shippingAmount) || 0;
-    
+
     // Calculate final total based on settings
     const showShipping = getSetting('financial.showShipping', true);
     const total = subtotal - discountAmount + (showTax ? taxAmount : 0) + (showShipping ? shippingAmount : 0);
-    
+
     // Calculate amount paid: use totalPaid from query if available, otherwise use invoice.amountPaid
     const amountPaid = Number(invoice.totalPaid) || Number(invoice.amountPaid) || 0;
     const remaining = total - amountPaid;
@@ -493,14 +493,14 @@ router.get('/:id/print', async (req, res) => {
     const statusText = statusTextMap[invoice.status] || invoice.status;
 
     const invoiceDate = new Date(invoice.createdAt || Date.now());
-    
+
     // Generate repair request number if repair exists
     let repairRequestNumber = null;
     if (invoice.repairRequestId && invoice.repairCreatedAt) {
       const repairDate = new Date(invoice.repairCreatedAt);
       repairRequestNumber = `REP-${repairDate.getFullYear()}${String(repairDate.getMonth() + 1).padStart(2, '0')}${String(repairDate.getDate()).padStart(2, '0')}-${String(invoice.repairRequestId).padStart(3, '0')}`;
     }
-    
+
     // Generate invoice number: always use INV-YYYYMMDD-XXX format (independent of repair request)
     // Invoice number is separate from repair request number
     const invoiceNumber = `INV-${invoiceDate.getFullYear()}${String(invoiceDate.getMonth() + 1).padStart(2, '0')}${String(invoiceDate.getDate()).padStart(2, '0')}-${String(invoice.id).padStart(3, '0')}`;
@@ -844,20 +844,20 @@ router.get('/:id/print', async (req, res) => {
             ${getSetting('showCompanyInfo', true) ? `
             <div class="company-info">
               ${(() => {
-                const branchAddr = getSetting('branchAddress', null);
-                const addr = getSetting('address', null);
-                const branchAddress = branchAddr || addr || settings.branchAddress || settings.address || 'العنوان غير محدد';
-                return branchAddress;
-              })()}<br>
+          const branchAddr = getSetting('branchAddress', null);
+          const addr = getSetting('address', null);
+          const branchAddress = branchAddr || addr || settings.branchAddress || settings.address || 'العنوان غير محدد';
+          return branchAddress;
+        })()}<br>
               ${(() => {
-                const branchPh = getSetting('branchPhone', null);
-                const ph = getSetting('phone', null);
-                const branchPhone = branchPh || ph || settings.branchPhone || settings.phone || '';
-                return branchPhone ? `هاتف: ${branchPhone}` : '';
-              })()} ${(() => {
-                const email = getSetting('email', null) || settings.email || '';
-                return email ? `| بريد إلكتروني: ${email}` : '';
-              })()}
+          const branchPh = getSetting('branchPhone', null);
+          const ph = getSetting('phone', null);
+          const branchPhone = branchPh || ph || settings.branchPhone || settings.phone || '';
+          return branchPhone ? `هاتف: ${branchPhone}` : '';
+        })()} ${(() => {
+          const email = getSetting('email', null) || settings.email || '';
+          return email ? `| بريد إلكتروني: ${email}` : '';
+        })()}
             </div>
             ` : '<div></div>'}
             ${getSetting('showInvoiceNumber', true) ? `
@@ -932,13 +932,13 @@ router.get('/:id/print', async (req, res) => {
           </thead>
           <tbody>
             ${items.map(item => {
-              // Use totalPrice if available, otherwise calculate from quantity * unitPrice
-              const itemTotal = (item.totalPrice !== null && item.totalPrice !== undefined)
-                ? Number(item.totalPrice)
-                : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
-              // Calculate tax from itemTotal using settings tax percent
-              const itemTax = getSetting('showItemTax', true) && showTax ? itemTotal * taxPercent : 0;
-              return `
+          // Use totalPrice if available, otherwise calculate from quantity * unitPrice
+          const itemTotal = (item.totalPrice !== null && item.totalPrice !== undefined)
+            ? Number(item.totalPrice)
+            : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
+          // Calculate tax from itemTotal using settings tax percent
+          const itemTax = getSetting('showItemTax', true) && showTax ? itemTotal * taxPercent : 0;
+          return `
               <tr>
                 ${getSetting('showItemDescription', true) ? `<td style="font-weight: 400; color: ${systemColors.textPrimary}; font-size: ${getSetting('tableFontSize', 13)}px;">${item.itemName || item.description || 'عنصر غير محدد'}${item.itemCode ? ` <span style="color: ${systemColors.textSecondary}; font-size: 11px;">(${item.itemCode})</span>` : ''}${getSetting('showServiceNotes', true) && item.serviceNotes ? (() => { const label = getSetting('serviceNotesLabel', 'ملاحظات'); return `<br/><small style="color: ${systemColors.textSecondary}; font-size: 0.9em;">${label ? `<strong>${label}:</strong> ` : ''}${item.serviceNotes}</small>`; })() : ''}</td>` : ''}
                 ${getSetting('showItemQuantity', true) ? `<td class="number">${Number(item.quantity) || 1}</td>` : ''}
@@ -948,7 +948,7 @@ router.get('/:id/print', async (req, res) => {
                 ${getSetting('showItemTotal', true) ? `<td class="number" style="font-weight: 500;">${itemTotal.toFixed(getSetting('numberFormat', {}).decimalPlaces || 2)} ${getSetting('currency', {}).showSymbol ? (getSetting('currency', {}).symbolPosition === 'before' ? 'ج.م ' : '') : ''}${getSetting('currency', {}).showSymbol && getSetting('currency', {}).symbolPosition === 'after' ? ' ج.م' : ''}</td>` : ''}
               </tr>
             `;
-            }).join('')}
+        }).join('')}
             ${items.length === 0 ? `<tr><td colspan="${[getSetting('showItemDescription', true), getSetting('showItemQuantity', true), getSetting('showItemPrice', true), getSetting('showItemDiscount', true), getSetting('showItemTax', true), getSetting('showItemTotal', true)].filter(Boolean).length}" style="text-align:center; color:${systemColors.textSecondary};">لا توجد عناصر في الفاتورة</td></tr>` : ''}
           </tbody>
         </table>
@@ -1136,21 +1136,21 @@ router.post('/:id/recalculate', validate(Joi.object({ id: commonSchemas.id }), '
   try {
     const { id } = req.params;
     const db = require('../db');
-    
+
     // Recalculate totalAmount from InvoiceItems
     const [itemsTotal] = await db.execute(`
       SELECT COALESCE(SUM(totalPrice), 0) as calculatedTotal
       FROM InvoiceItem 
       WHERE invoiceId = ?
     `, [id]);
-    
+
     const calculatedTotal = Number(itemsTotal[0]?.calculatedTotal || 0);
-    
+
     // Update invoice totalAmount
     await db.execute(`
       UPDATE Invoice SET totalAmount = ?, updatedAt = NOW() WHERE id = ?
     `, [calculatedTotal, id]);
-    
+
     res.json({
       success: true,
       message: 'تم إعادة حساب المجموع بنجاح',

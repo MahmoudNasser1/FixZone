@@ -708,10 +708,10 @@ const RepairDetailsPage = () => {
 
             // Convert manual services to RepairRequestService format
             for (const manualService of manualServices) {
-              // البحث عن RepairRequestService مرتبط بهذا invoiceItemId (serviceId = null و notes يحتوي على invoiceItemId)
+              // البحث عن RepairRequestService مرتبط بهذا invoiceItemId
               const linkedRRS = manualServicesRRS.find(s =>
-                s.notes &&
-                s.notes.includes(`invoiceItemId:${manualService.id}`)
+                (s.invoiceItemId && s.invoiceItemId === manualService.id) ||
+                (s.notes && s.notes.includes(`invoiceItemId:${manualService.id}`))
               );
 
               // Check if this manual service is already in servicesData (by invoice item ID)
