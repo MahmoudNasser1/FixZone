@@ -92,7 +92,7 @@ class InvoicesControllerSimple {
       // Use parseInt() explicitly to convert to integer
       const finalLimit = parseInt(limitNum, 10) || 10;
       const finalOffset = parseInt(offset, 10) || 0;
-      
+
       // Final validation - ensure we have valid numbers
       if (isNaN(finalLimit) || finalLimit < 1 || finalLimit > 100) {
         console.error('❌ [ERROR] Invalid finalLimit:', finalLimit);
@@ -110,10 +110,10 @@ class InvoicesControllerSimple {
           error: 'PAGINATION_ERROR'
         });
       }
-      
+
       // CRITICAL: Ensure these are integers before pushing to queryParams
       queryParams.push(finalLimit, finalOffset);
-      
+
       // Query params prepared
 
       // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
@@ -144,7 +144,7 @@ class InvoicesControllerSimple {
             console.warn('⚠️ Invalid invoice object:', invoice);
             return null;
           }
-          
+
           const [payments] = await db.execute(`
             SELECT COALESCE(SUM(amount), 0) as totalPaid 
             FROM Payment 
@@ -167,7 +167,7 @@ class InvoicesControllerSimple {
 
           // For purchase invoices, show vendor info instead of customer
           const isPurchaseInvoice = invoice.invoiceType === 'purchase';
-          
+
           return {
             id: invoice.id,
             repairId: invoice.repairRequestId,
@@ -187,7 +187,7 @@ class InvoicesControllerSimple {
           };
         })
       );
-      
+
       // Filter out null values (invalid invoices)
       const validInvoices = invoicesWithCorrectAmounts.filter(inv => inv !== null);
 
@@ -218,7 +218,7 @@ class InvoicesControllerSimple {
       console.error('❌ [ERROR] Error code:', error.code);
       console.error('❌ [ERROR] SQL Message:', error.sqlMessage);
       console.error('❌ [ERROR] req.user:', req.user);
-      
+
       res.status(500).json({
         success: false,
         message: 'حصل خطأ في السيرفر',
@@ -433,9 +433,9 @@ class InvoicesControllerSimple {
         FROM InvoiceItem 
         WHERE invoiceId = ?
       `, [id]);
-      
+
       const calculatedTotalAmount = Number(itemsTotal[0]?.calculatedTotal || 0);
-      
+
       // Update invoice totalAmount if it's different from calculated (to keep it in sync)
       if (Math.abs(calculatedTotalAmount - parseFloat(invoice.totalAmount || 0)) > 0.01) {
         console.log('💰 Recalculating invoice totalAmount:', {
@@ -554,7 +554,7 @@ class InvoicesControllerSimple {
           // Column doesn't exist, skip it
           console.log('discountPercent column does not exist, skipping');
         }
-        
+
         // Calculate discountAmount from discountPercent
         // If totalAmount is being updated, use the new value; otherwise get current value
         if (totalAmount !== undefined && totalAmount > 0) {
@@ -574,7 +574,7 @@ class InvoicesControllerSimple {
         }
         // If discountAmount was also provided, it takes precedence
       }
-      
+
       // Update discountAmount if we have a value (either provided directly or calculated from discountPercent)
       if (discountAmount !== undefined || finalDiscountAmount !== undefined) {
         updates.push('discountAmount = ?');
@@ -658,7 +658,7 @@ class InvoicesControllerSimple {
     try {
       const { id } = req.params;
       console.log('🔍 getInvoiceItems (Simple) called for invoice ID:', id);
-      
+
       // Get invoice items with JOIN to InventoryItem and Service for full details
       // Only include columns that definitely exist in the database
       const [items] = await db.execute(`
@@ -690,14 +690,11 @@ class InvoicesControllerSimple {
         LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
         LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
         LEFT JOIN Invoice i ON ii.invoiceId = i.id
-        LEFT JOIN RepairRequestService rrs ON (
-          (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
-          OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
-        )
+        LEFT JOIN RepairRequestService rrs ON rrs.invoiceItemId = ii.id
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);
-      
+
       // تنظيف serviceNotes من رابط invoiceItemId
       items.forEach(item => {
         if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
@@ -705,7 +702,7 @@ class InvoicesControllerSimple {
           if (item.serviceNotes === '') item.serviceNotes = null;
         }
       });
-      
+
       console.log('✅ Found', items.length, 'invoice items for invoice', id);
       res.json({ success: true, data: items });
     } catch (error) {
@@ -713,9 +710,9 @@ class InvoicesControllerSimple {
       console.error('Error stack:', error.stack);
       console.error('Error code:', error.code);
       console.error('Error SQL state:', error.sqlState);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Server error', 
+      res.status(500).json({
+        success: false,
+        error: 'Server error',
         details: error.message,
         errorCode: error.code,
         sqlState: error.sqlState
@@ -727,6 +724,10 @@ class InvoicesControllerSimple {
     try {
       const { id } = req.params;
       const { description, quantity, unitPrice, itemType, serviceId, inventoryItemId } = req.body;
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:728', message: 'addInvoiceItem entry', data: { invoiceId: id, description, quantity, unitPrice, itemType, serviceId, inventoryItemId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,B,D' }) }).catch(() => { });
+      // #endregion
 
       console.log('addInvoiceItem called with:', {
         invoiceId: id,
@@ -746,6 +747,10 @@ class InvoicesControllerSimple {
       const safeServiceId = serviceId || null;
       const safeInventoryItemId = inventoryItemId || null;
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:747', message: 'safe parameters computed', data: { safeServiceId, safeDescription, safeItemType }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B,E' }) }).catch(() => { });
+      // #endregion
+
       console.log('Safe parameters:', {
         invoiceId: id,
         description: safeDescription,
@@ -762,6 +767,10 @@ class InvoicesControllerSimple {
           SELECT id FROM InvoiceItem WHERE invoiceId = ? AND serviceId = ?
         `, [id, safeServiceId]);
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:761', message: 'duplicate check with serviceId', data: { safeServiceId, existingCount: existingService.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
+        // #endregion
+
         if (existingService.length > 0) {
           console.log('Service already exists in invoice:', safeServiceId);
           return res.status(409).json({
@@ -769,6 +778,53 @@ class InvoicesControllerSimple {
             error: 'Service already exists in this invoice',
             duplicate: true
           });
+        }
+      } else if (safeItemType === 'service' && safeDescription) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:774', message: 'checking manual service duplicates', data: { safeDescription, safeItemType }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+        // #endregion
+        // Check for duplicate manual services by description (exact match)
+        const [existingManualService] = await db.execute(`
+          SELECT id, description FROM InvoiceItem 
+          WHERE invoiceId = ? AND itemType = 'service' AND serviceId IS NULL AND description = ?
+        `, [id, safeDescription]);
+
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:780', message: 'manual service duplicate check result', data: { existingCount: existingManualService.length, existingItems: existingManualService.map(i => ({ id: i.id, desc: i.description })) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+        // #endregion
+
+        if (existingManualService.length > 0) {
+          console.log('Manual service with same description already exists in invoice:', safeDescription);
+          return res.status(409).json({
+            success: false,
+            error: 'هذه الخدمة موجودة بالفعل في الفاتورة',
+            duplicate: true
+          });
+        }
+
+        // Also check for similar descriptions (normalized comparison) to catch minor variations
+        // Normalize description: trim, remove extra spaces, convert to lowercase for comparison
+        const normalizedDescription = safeDescription.trim().replace(/\s+/g, ' ').toLowerCase();
+        const [similarManualServices] = await db.execute(`
+          SELECT id, description FROM InvoiceItem 
+          WHERE invoiceId = ? AND itemType = 'service' AND serviceId IS NULL
+        `, [id]);
+
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:800', message: 'checking similar manual services', data: { normalizedDescription, similarCount: similarManualServices.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+        // #endregion
+
+        for (const existing of similarManualServices) {
+          const existingNormalized = existing.description.trim().replace(/\s+/g, ' ').toLowerCase();
+          // Check if descriptions are very similar (same after normalization)
+          if (existingNormalized === normalizedDescription) {
+            console.log('Manual service with similar description already exists in invoice:', existing.description);
+            return res.status(409).json({
+              success: false,
+              error: 'هذه الخدمة موجودة بالفعل في الفاتورة',
+              duplicate: true
+            });
+          }
         }
       }
 
@@ -787,10 +843,100 @@ class InvoicesControllerSimple {
         }
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:790', message: 'inserting invoice item', data: { invoiceId: id, description: safeDescription, serviceId: safeServiceId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+      // #endregion
+
       const [result] = await db.execute(`
         INSERT INTO InvoiceItem (invoiceId, description, quantity, unitPrice, totalPrice, itemType, serviceId, inventoryItemId, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `, [id, safeDescription, safeQuantity, safeUnitPrice, safeQuantity * safeUnitPrice, safeItemType, safeServiceId, safeInventoryItemId]);
+
+      const itemId = result.insertId;
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:795', message: 'invoice item inserted', data: { insertId: itemId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+      // #endregion
+
+      // Update RepairRequestService to link with invoice item
+      try {
+        // Get repairRequestId from invoice
+        const [invoiceRows] = await db.execute(`
+          SELECT repairRequestId FROM Invoice WHERE id = ?
+        `, [id]);
+
+        if (invoiceRows.length > 0 && invoiceRows[0].repairRequestId) {
+          const repairRequestId = invoiceRows[0].repairRequestId;
+
+          if (safeServiceId) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:802', message: 'updating RepairRequestService invoiceItemId for service', data: { itemId, safeServiceId, invoiceId: id, repairRequestId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+            // #endregion
+            // Update the most recent RepairRequestService for this serviceId and repairRequestId
+            await db.execute(`
+              UPDATE RepairRequestService 
+              SET invoiceItemId = ? 
+              WHERE serviceId = ? AND repairRequestId = ? AND invoiceItemId IS NULL
+              ORDER BY id DESC LIMIT 1
+            `, [itemId, safeServiceId, repairRequestId]);
+
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:816', message: 'RepairRequestService invoiceItemId updated for service', data: { itemId, repairRequestId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+            // #endregion
+          } else if (safeItemType === 'service' && safeDescription) {
+            // For manual services (serviceId is null), try to find and update RepairRequestService by description
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:820', message: 'updating RepairRequestService invoiceItemId for manual service', data: { itemId, safeDescription, invoiceId: id, repairRequestId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+            // #endregion
+
+            // Normalize description for matching (remove extra spaces, trim)
+            const normalizedDescription = safeDescription.trim().replace(/\s+/g, ' ');
+
+            // Try to find RepairRequestService with matching description in notes or by description
+            // First, try to find by notes containing the description
+            const [matchingRRS] = await db.execute(`
+              SELECT id FROM RepairRequestService 
+              WHERE repairRequestId = ? AND serviceId IS NULL AND invoiceItemId IS NULL
+              AND (notes LIKE ? OR notes LIKE ?)
+              ORDER BY id DESC LIMIT 1
+            `, [repairRequestId, `%${normalizedDescription}%`, `%${safeDescription.trim()}%`]);
+
+            if (matchingRRS.length > 0) {
+              await db.execute(`
+                UPDATE RepairRequestService 
+                SET invoiceItemId = ? 
+                WHERE id = ?
+              `, [itemId, matchingRRS[0].id]);
+
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:838', message: 'RepairRequestService invoiceItemId updated for manual service', data: { itemId, rrsId: matchingRRS[0].id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+              // #endregion
+            } else {
+              // If no matching RRS found, try to find the most recent manual service without invoiceItemId
+              const [recentManualRRS] = await db.execute(`
+                SELECT id FROM RepairRequestService 
+                WHERE repairRequestId = ? AND serviceId IS NULL AND invoiceItemId IS NULL
+                ORDER BY id DESC LIMIT 1
+              `, [repairRequestId]);
+
+              if (recentManualRRS.length > 0) {
+                await db.execute(`
+                  UPDATE RepairRequestService 
+                  SET invoiceItemId = ? 
+                  WHERE id = ?
+                `, [itemId, recentManualRRS[0].id]);
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'invoicesControllerSimple.js:852', message: 'RepairRequestService invoiceItemId updated for recent manual service', data: { itemId, rrsId: recentManualRRS[0].id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+                // #endregion
+              }
+            }
+          }
+        }
+      } catch (updateErr) {
+        console.error('Error updating RepairRequestService invoiceItemId:', updateErr);
+        // Don't fail the whole operation if this update fails
+      }
 
       // Recalculate and update invoice total
       const [totalResult] = await db.execute(`
@@ -806,7 +952,7 @@ class InvoicesControllerSimple {
 
       console.log('Updated invoice total to:', newTotal);
 
-      res.json({ success: true, data: { id: result.insertId, newTotal } });
+      res.json({ success: true, data: { id: itemId, newTotal } });
     } catch (error) {
       console.error('Error adding invoice item:', error);
       res.status(500).json({ success: false, error: 'Server error', details: error.message });
@@ -1166,13 +1312,13 @@ class InvoicesControllerSimple {
       `, [invoiceId]);
 
       const subtotal = Number(totalResult[0].calculatedTotal);
-      
+
       // Calculate discountAmount from discountPercent if needed
       let calculatedDiscountAmount = finalDiscountAmount;
       if (discountPercent > 0 && subtotal > 0) {
         calculatedDiscountAmount = (subtotal * discountPercent) / 100;
       }
-      
+
       // Calculate final total: subtotal - discount + tax + shipping
       const finalTotal = subtotal - calculatedDiscountAmount + Number(taxAmount) + Number(shippingAmount);
 

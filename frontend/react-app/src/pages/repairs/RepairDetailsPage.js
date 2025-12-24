@@ -205,14 +205,14 @@ const RepairDetailsPage = () => {
   // 🔧 Fix #1: Enhanced handleIssueChange to update selected item info
   const handleIssueChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Special handling for unitSellingPrice to allow manual editing
     if (name === 'unitSellingPrice') {
       // Allow empty value or numeric value
       setIssueForm((f) => ({ ...f, [name]: value === '' ? '' : value }));
       return;
     }
-    
+
     setIssueForm((f) => ({ ...f, [name]: value }));
 
     // Update selected item info when item changes
@@ -295,7 +295,7 @@ const RepairDetailsPage = () => {
         userId: Number(currentUserId || user?.id || 1),
         invoiceId: issueForm.invoiceId ? Number(issueForm.invoiceId) : null,
       };
-      
+
       // Add custom selling price if provided
       if (issueForm.unitSellingPrice && issueForm.unitSellingPrice.trim() !== '') {
         const customPrice = Number(issueForm.unitSellingPrice);
@@ -303,9 +303,9 @@ const RepairDetailsPage = () => {
           issuePayload.unitSellingPrice = customPrice;
         }
       }
-      
+
       console.log('Issuing part with data:', issuePayload);
-      
+
       const response = await inventoryService.issuePart(issuePayload);
 
       // Handle response data
@@ -344,7 +344,7 @@ const RepairDetailsPage = () => {
     } catch (e) {
       console.error('Error issuing part:', e);
       console.error('Error details:', e?.response?.data || e?.data || e);
-      
+
       // Extract error message from response
       let errorMessage = 'تعذر تنفيذ عملية الصرف';
       if (e?.response?.data) {
@@ -358,7 +358,7 @@ const RepairDetailsPage = () => {
       } else if (e?.message) {
         errorMessage = e.message;
       }
-      
+
       setIssueError(errorMessage);
       notifications.error(errorMessage);
     } finally {
@@ -455,7 +455,7 @@ const RepairDetailsPage = () => {
     try {
       setInspectionReportsLoading(true);
       const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${id}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         // Handle different response formats
@@ -469,7 +469,7 @@ const RepairDetailsPage = () => {
         } else if (Array.isArray(data)) {
           reportsList = data;
         }
-        
+
         setInspectionReports(reportsList);
         console.log('[InspectionReports] Loaded reports:', reportsList);
         console.log('[InspectionReports] Number of reports:', reportsList.length);
@@ -501,11 +501,11 @@ const RepairDetailsPage = () => {
   const handleDeleteReport = async (reportId) => {
     const confirmed = window.confirm('هل أنت متأكد من حذف هذا التقرير؟');
     if (!confirmed) return;
-    
+
     // Optimistic update - remove from UI immediately
     const reportToDelete = inspectionReports.find(r => r.id === reportId);
     setInspectionReports(prev => prev.filter(r => r.id !== reportId));
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/inspectionreports/${reportId}`, {
         method: 'DELETE',
@@ -519,7 +519,7 @@ const RepairDetailsPage = () => {
       } else {
         // Revert optimistic update on error
         if (reportToDelete) {
-          setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) => 
+          setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) =>
             new Date(b.createdAt) - new Date(a.createdAt)
           ));
         }
@@ -530,7 +530,7 @@ const RepairDetailsPage = () => {
       console.error('[InspectionReports] Error deleting report:', error);
       // Revert optimistic update on error
       if (reportToDelete) {
-        setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) => 
+        setInspectionReports(prev => [...prev, reportToDelete].sort((a, b) =>
           new Date(b.createdAt) - new Date(a.createdAt)
         ));
       }
@@ -627,7 +627,7 @@ const RepairDetailsPage = () => {
       setServicesLoading(true);
       setServicesError('');
       console.log('Loading services for repair request:', id);
-      
+
       // Load services from RepairRequestService
       const data = await repairService.getRepairRequestServices(id);
       console.log('Services response:', data);
@@ -641,7 +641,7 @@ const RepairDetailsPage = () => {
       } else if (data && data.services && Array.isArray(data.services)) {
         servicesData = data.services;
       }
-      
+
       // تصفية RepairRequestService التي لها serviceId = null (الخدمات اليدوية)
       // سنربطها مع الخدمات اليدوية من InvoiceItem لاحقاً
       const manualServicesRRS = servicesData.filter(s => s.serviceId === null);
@@ -657,14 +657,14 @@ const RepairDetailsPage = () => {
         if (process.env.NODE_ENV === 'development') {
           console.log('📄 Invoices data response:', invoicesData);
         }
-        
+
         // Use normalizeInvoicesResponse to handle different response formats
         const invoicesArray = normalizeInvoicesResponse(invoicesData);
         if (process.env.NODE_ENV === 'development') {
           console.log('📋 Normalized invoices array:', invoicesArray);
           console.log('📋 Number of invoices found:', invoicesArray.length);
         }
-        
+
         // Get manual services from all invoices (itemType='service' without serviceId)
         for (const invoice of invoicesArray) {
           try {
@@ -673,7 +673,7 @@ const RepairDetailsPage = () => {
               console.warn('⚠️ Invoice without ID:', invoice);
               continue;
             }
-            
+
             // Silent loading - remove console logs in production
             if (process.env.NODE_ENV === 'development') {
               console.log(`🔍 Loading items for invoice ${invoiceId}...`);
@@ -682,43 +682,43 @@ const RepairDetailsPage = () => {
             if (process.env.NODE_ENV === 'development') {
               console.log(`📦 Invoice ${invoiceId} items response:`, itemsData);
             }
-            
+
             const items = Array.isArray(itemsData.data) ? itemsData.data : (Array.isArray(itemsData) ? itemsData : []);
             if (process.env.NODE_ENV === 'development') {
               console.log(`📦 Invoice ${invoiceId} items array:`, items);
             }
-            
+
             // Filter manual services (itemType='service' without serviceId)
             const manualServices = items.filter(item => {
               const isService = item.itemType === 'service' || item.type === 'service';
               const hasNoServiceId = !item.serviceId || item.serviceId === null;
               const hasDescription = item.description && item.description.trim();
-              
+
               // Only log in development
               if (process.env.NODE_ENV === 'development') {
                 console.log(`🔍 Item ${item.id}: isService=${isService}, hasNoServiceId=${hasNoServiceId}, hasDescription=${!!hasDescription}`, item);
               }
-              
+
               return isService && hasNoServiceId && hasDescription;
             });
-            
+
             if (process.env.NODE_ENV === 'development') {
               console.log(`✅ Found ${manualServices.length} manual services in invoice ${invoiceId}:`, manualServices);
             }
-            
+
             // Convert manual services to RepairRequestService format
             for (const manualService of manualServices) {
               // البحث عن RepairRequestService مرتبط بهذا invoiceItemId (serviceId = null و notes يحتوي على invoiceItemId)
-              const linkedRRS = manualServicesRRS.find(s => 
-                s.notes && 
+              const linkedRRS = manualServicesRRS.find(s =>
+                s.notes &&
                 s.notes.includes(`invoiceItemId:${manualService.id}`)
               );
-              
+
               // Check if this manual service is already in servicesData (by invoice item ID)
-              const exists = servicesData.some(s => 
+              const exists = servicesData.some(s =>
                 s.invoiceItemId === manualService.id
               );
-              
+
               if (!exists) {
                 // تنظيف الملاحظات لإزالة رابط invoiceItemId من العرض
                 let cleanNotes = linkedRRS?.notes || null;
@@ -726,7 +726,7 @@ const RepairDetailsPage = () => {
                   cleanNotes = cleanNotes.replace(/\s*\[invoiceItemId:\d+\]\s*/g, '').trim();
                   if (cleanNotes === '') cleanNotes = null;
                 }
-                
+
                 const manualServiceData = {
                   id: `manual-${manualService.id}`, // Use a unique ID
                   repairRequestId: Number(id),
@@ -745,7 +745,7 @@ const RepairDetailsPage = () => {
                   isManual: true, // Flag to identify manual services
                   rrsId: linkedRRS ? linkedRRS.id : null // Store RepairRequestService ID for updates
                 };
-                
+
                 console.log('➕ Adding manual service to services list:', manualServiceData);
                 servicesData.push(manualServiceData);
               } else {
@@ -756,7 +756,7 @@ const RepairDetailsPage = () => {
             console.error(`❌ Error loading invoice items for invoice ${invoice.id}:`, itemErr);
           }
         }
-        
+
         console.log(`✅ Total services after loading manual services: ${servicesData.length}`);
       } catch (invoiceErr) {
         console.error('❌ Error loading invoices for manual services:', invoiceErr);
@@ -768,7 +768,7 @@ const RepairDetailsPage = () => {
         manualServices: servicesData.filter(s => s.isManual).length,
         total: servicesData.length
       });
-      
+
       // Log technician information for debugging
       servicesData.forEach((service, index) => {
         console.log(`🔍 Service ${index + 1}:`, {
@@ -779,7 +779,7 @@ const RepairDetailsPage = () => {
           isManual: service.isManual
         });
       });
-      
+
       setServices(servicesData);
     } catch (e) {
       console.error('Error loading services:', e);
@@ -974,13 +974,13 @@ const RepairDetailsPage = () => {
       // Update customFields with the range
       let updatedCustomFields = {};
       try {
-        updatedCustomFields = typeof repair.customFields === 'string' 
-          ? JSON.parse(repair.customFields) 
+        updatedCustomFields = typeof repair.customFields === 'string'
+          ? JSON.parse(repair.customFields)
           : (repair.customFields || {});
       } catch (e) {
         updatedCustomFields = {};
       }
-      
+
       if (repairDetails.estimatedCostMin !== undefined) {
         updatedCustomFields.estimatedCostMin = repairDetails.estimatedCostMin;
       }
@@ -999,7 +999,7 @@ const RepairDetailsPage = () => {
 
       notifications.success('تم تحديث تفاصيل الطلب بنجاح');
       setEditingDetails(false);
-      
+
       // Refresh repair data to ensure we have the latest from the server
       await fetchRepairDetails();
     } catch (e) {
@@ -1433,12 +1433,12 @@ const RepairDetailsPage = () => {
       });
 
       const invoiceItemId = invoiceItemResponse?.data?.id || invoiceItemResponse?.id;
-      
+
       // إنشاء RepairRequestService للخدمة اليدوية لحفظ technicianId
       if (invoiceItemId && svcForm.technicianId) {
         try {
           const notesWithLink = `${svcForm.notes || ''} [invoiceItemId:${invoiceItemId}]`.trim();
-          
+
           await repairService.addRepairRequestService({
             repairRequestId: Number(id),
             serviceId: null, // null للخدمات اليدوية
@@ -1453,10 +1453,10 @@ const RepairDetailsPage = () => {
       }
 
       notifications.success('تمت إضافة الخدمة اليدوية إلى الفاتورة');
-      
+
       // Wait a bit to ensure the invoice is updated in the database
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       await loadInvoices(); // تحديث الفواتير لعرض البنود الجديدة
       await loadServices(); // تحديث الخدمات لعرض الخدمة اليدوية
 
@@ -1516,6 +1516,7 @@ const RepairDetailsPage = () => {
         }
 
         // If still no invoice, create one automatically
+        let isNewInvoice = false;
         if (!targetInvoiceId) {
           try {
             console.log('No invoice found, creating one automatically...');
@@ -1529,6 +1530,7 @@ const RepairDetailsPage = () => {
               })
             });
             targetInvoiceId = createInvoiceResponse.id || createInvoiceResponse.invoiceId || createInvoiceResponse.data?.id;
+            isNewInvoice = true;
             console.log('✅ Created invoice automatically:', targetInvoiceId);
           } catch (createErr) {
             console.error('Error creating invoice:', createErr);
@@ -1541,21 +1543,36 @@ const RepairDetailsPage = () => {
           const serviceName = selectedService?.name || selectedService?.serviceName || 'خدمة غير محددة';
 
           // Add service to invoice
-          try {
-            await apiService.addInvoiceItem(targetInvoiceId, {
-              serviceId: Number(serviceId),
-              repairRequestServiceId: repairRequestServiceId, // Link to RepairRequestService
-              quantity: 1,
-              unitPrice: Number(price) || 0,
-              totalPrice: Number(price) || 0,
-              description: `${serviceName}${notes ? ` - ${notes}` : ''}`.trim(),
-              itemType: 'service'
-            });
+          // IMPORTANT: If we just created the invoice (isNewInvoice = true), the backend
+          // automatically adds all existing RepairRequestServices to the invoice.
+          // Since we added the service to RepairRequestService above (lines 1491-1497),
+          // it is already included in the new invoice.
+          // We should ONLY manually add to invoice if we are using an EXISTING invoice.
+          if (!isNewInvoice) {
+            try {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:1545', message: 'auto-adding service to invoice on create', data: { targetInvoiceId, serviceId: Number(serviceId), description: `${serviceName}${notes ? ` - ${notes}` : ''}`.trim() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+              // #endregion
+              await apiService.addInvoiceItem(targetInvoiceId, {
+                serviceId: Number(serviceId),
+                repairRequestServiceId: repairRequestServiceId, // Link to RepairRequestService
+                quantity: 1,
+                unitPrice: Number(price) || 0,
+                totalPrice: Number(price) || 0,
+                description: `${serviceName}${notes ? ` - ${notes}` : ''}`.trim(),
+                itemType: 'service'
+              });
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:1555', message: 'auto-add service to invoice completed', data: { targetInvoiceId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+              // #endregion
 
-            console.log('✅ Service automatically linked to invoice:', targetInvoiceId);
-          } catch (itemErr) {
-            console.error('Error adding service to invoice:', itemErr);
-            // Don't fail the whole operation if invoice linking fails
+              console.log('✅ Service automatically linked to invoice:', targetInvoiceId);
+            } catch (itemErr) {
+              console.error('Error adding service to invoice:', itemErr);
+              // Don't fail the whole operation if invoice linking fails
+            }
+          } else {
+            console.log('ℹ️ Skipped manual invoice item addition because invoice is new and backend auto-populated it');
           }
         }
       } catch (e) {
@@ -1893,7 +1910,7 @@ const RepairDetailsPage = () => {
       setAssignedTechsLoading(true);
       // Use API to get technicians assigned to this repair
       const response = await apiService.request(`/repairs/${id}/technicians`);
-      
+
       if (response.success && response.data) {
         setAssignedTechnicians(response.data);
       }
@@ -1910,20 +1927,20 @@ const RepairDetailsPage = () => {
       const techId = Number(assignTechId);
       const repairId = Number(id);
       console.log('Assigning technician:', techId, 'to repair request:', repairId, 'with role:', assignRole);
-      
+
       // Use new API
       const response = await technicianService.assignRepair(techId, repairId, assignRole);
       console.log('Assign repair response:', response);
-      
+
       if (response && response.success) {
         notifications.success('تم إسناد الفني بنجاح');
         setAssignOpen(false);
         setAssignTechId('');
         setAssignRole('primary');
-        
+
         // Reload assigned technicians
         loadAssignedTechnicians();
-        
+
         // Update repair locally
         const tech = techOptions.find(t => Number(t.id) === techId);
         setRepair(prev => prev ? { ...prev, technicianId: techId, technicianName: tech?.name || `مستخدم #${techId}` } : prev);
@@ -1940,7 +1957,7 @@ const RepairDetailsPage = () => {
     if (!window.confirm('هل أنت متأكد من إلغاء تعيين هذا الفني؟')) {
       return;
     }
-    
+
     try {
       const techId = Number(technicianId);
       const repairId = Number(id);
@@ -1957,32 +1974,32 @@ const RepairDetailsPage = () => {
     try {
       // التحقق إذا كانت الخدمة يدوية (ID يبدأ بـ "manual-")
       const isManual = String(serviceId).startsWith('manual-');
-      
+
       if (isManual) {
         // للخدمات اليدوية: نحتاج تحديث InvoiceItem وإنشاء/تحديث RepairRequestService لحفظ technicianId
         const invoiceItemId = String(serviceId).replace('manual-', '');
         const service = services.find(s => s.id === serviceId);
-        
+
         if (!service || !service.linkedInvoiceId) {
           throw new Error('لا يمكن تحديث الخدمة اليدوية: معلومات الفاتورة غير موجودة');
         }
-        
+
         // تحديث InvoiceItem للوصف والسعر
         const updateData = {
-          description: serviceData.notes 
+          description: serviceData.notes
             ? `${service.serviceName || service.description} - ${serviceData.notes}`.trim()
             : service.serviceName || service.description,
           unitPrice: serviceData.price || service.price,
           totalPrice: serviceData.price || service.price
         };
-        
+
         await apiService.updateInvoiceItem(service.linkedInvoiceId, invoiceItemId, updateData);
-        
+
         // إنشاء أو تحديث RepairRequestService للخدمة اليدوية لحفظ technicianId
         // نحفظ invoiceItemId في notes للربط
         try {
           const notesWithLink = `${serviceData.notes || ''} [invoiceItemId:${invoiceItemId}]`.trim();
-          
+
           // استخدام rrsId إذا كان موجوداً (من service object)
           if (service.rrsId) {
             // تحديث RepairRequestService الموجود
@@ -1997,13 +2014,13 @@ const RepairDetailsPage = () => {
             // البحث عن RepairRequestService موجود أولاً
             const existingServices = await repairService.getRepairRequestServices(id);
             const existingServicesArray = Array.isArray(existingServices) ? existingServices : [];
-            
-            const existingService = existingServicesArray.find(s => 
-              s.serviceId === null && 
-              s.notes && 
+
+            const existingService = existingServicesArray.find(s =>
+              s.serviceId === null &&
+              s.notes &&
               s.notes.includes(`invoiceItemId:${invoiceItemId}`)
             );
-            
+
             if (existingService && existingService.id) {
               // تحديث RepairRequestService الموجود
               await apiService.updateRepairRequestService(existingService.id, {
@@ -2028,7 +2045,7 @@ const RepairDetailsPage = () => {
           console.error('Error creating/updating RepairRequestService for manual service:', rrsError);
           // نستمر حتى لو فشل إنشاء RepairRequestService
         }
-        
+
         notifications.success('تم تحديث الخدمة اليدوية بنجاح');
       } else {
         // للخدمات العادية من القائمة
@@ -2038,7 +2055,7 @@ const RepairDetailsPage = () => {
         });
         notifications.success('تم تحديث الخدمة بنجاح');
       }
-      
+
       setEditingService(null);
       await loadServices();
     } catch (e) {
@@ -2051,13 +2068,46 @@ const RepairDetailsPage = () => {
     const confirmed = window.confirm('هل أنت متأكد من حذف هذه الخدمة؟');
     if (!confirmed) return;
     try {
-      await apiService.deleteRepairRequestService(serviceId);
+      // Find the service object to check if it's a manual service
+      const service = services.find(s => s.id === serviceId);
+
+      if (service && service.isManual) {
+        // For manual services, check if we have rrsId or invoiceItemId
+        if (service.rrsId) {
+          // If there's a RepairRequestService ID, delete it (this will also delete the invoice item)
+          await apiService.deleteRepairRequestService(service.rrsId);
+        } else if (service.invoiceItemId && service.linkedInvoiceId) {
+          // If no rrsId but we have invoiceItemId, delete the invoice item directly
+          await apiService.removeInvoiceItem(service.linkedInvoiceId, service.invoiceItemId);
+        } else {
+          throw new Error('لا يمكن حذف الخدمة: لا توجد معلومات كافية');
+        }
+      } else {
+        // For regular services, use the serviceId directly
+        // Check if serviceId is a number (regular service) or a string starting with "manual-" (manual service)
+        if (typeof serviceId === 'string' && serviceId.startsWith('manual-')) {
+          // Extract the invoiceItemId from the manual service ID
+          const invoiceItemId = parseInt(serviceId.replace('manual-', ''));
+          // Find the service to get linkedInvoiceId
+          const manualService = services.find(s => s.id === serviceId);
+          if (manualService && manualService.linkedInvoiceId) {
+            await apiService.removeInvoiceItem(manualService.linkedInvoiceId, invoiceItemId);
+          } else {
+            throw new Error('لا يمكن حذف الخدمة: لا توجد معلومات الفاتورة');
+          }
+        } else {
+          // Regular service - use the ID as is
+          await apiService.deleteRepairRequestService(serviceId);
+        }
+      }
+
       notifications.success('تم حذف الخدمة بنجاح');
       setDeletingService(null);
       await loadServices();
+      await loadInvoices(); // Refresh invoices to update totals
     } catch (e) {
       console.error('Error deleting service:', e);
-      notifications.error('تعذر حذف الخدمة');
+      notifications.error(`تعذر حذف الخدمة: ${e.message || 'خطأ غير معروف'}`);
     }
   };
 
@@ -2171,7 +2221,7 @@ const RepairDetailsPage = () => {
       console.log('Using userId:', currentUserId, 'from user:', user);
       const res = await apiService.addRepairNote(id, optimistic.content, currentUserId);
       console.log('Note added response:', res);
-      
+
       // إعادة تحميل الملاحظات من API للحصول على الأسماء الصحيحة
       try {
         const logs = await apiService.getRepairLogs(id);
@@ -2189,7 +2239,7 @@ const RepairDetailsPage = () => {
         };
         setNotes(prev => prev.map(n => (n.id === optimistic.id ? saved : n)));
       }
-      
+
       notifications.success('تم حفظ الملاحظة بنجاح');
     } catch (e) {
       console.error('Error adding note:', e);
@@ -2402,7 +2452,7 @@ const RepairDetailsPage = () => {
             {assignedTechnicians.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {assignedTechnicians.map((tech) => (
-                  <span 
+                  <span
                     key={tech.id || tech.technicianId}
                     className="text-sm text-gray-600 px-2 py-1 bg-white border border-gray-200 rounded-lg flex items-center gap-1"
                   >
@@ -2764,17 +2814,17 @@ const RepairDetailsPage = () => {
                           let customFields = {};
                           try {
                             if (repair.customFields) {
-                              customFields = typeof repair.customFields === 'string' 
-                                ? JSON.parse(repair.customFields) 
+                              customFields = typeof repair.customFields === 'string'
+                                ? JSON.parse(repair.customFields)
                                 : (repair.customFields || {});
                             }
                           } catch (e) {
                             customFields = {};
                           }
-                          
+
                           const minCost = customFields?.estimatedCostMin;
                           const maxCost = customFields?.estimatedCostMax;
-                          
+
                           if (minCost !== undefined && maxCost !== undefined && minCost !== null && maxCost !== null) {
                             return (
                               <p className="text-gray-900 font-semibold">
@@ -2812,8 +2862,8 @@ const RepairDetailsPage = () => {
                               value={repairDetails.estimatedCostMin !== null && repairDetails.estimatedCostMin !== undefined ? repairDetails.estimatedCostMin : ''}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                setRepairDetails(prev => ({ 
-                                  ...prev, 
+                                setRepairDetails(prev => ({
+                                  ...prev,
                                   estimatedCostMin: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
                                 }));
                               }}
@@ -2830,8 +2880,8 @@ const RepairDetailsPage = () => {
                               value={repairDetails.estimatedCostMax !== null && repairDetails.estimatedCostMax !== undefined ? repairDetails.estimatedCostMax : ''}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                setRepairDetails(prev => ({ 
-                                  ...prev, 
+                                setRepairDetails(prev => ({
+                                  ...prev,
                                   estimatedCostMax: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
                                 }));
                               }}
@@ -2894,8 +2944,8 @@ const RepairDetailsPage = () => {
                             // Reset to current repair values including customFields
                             let customFields = {};
                             try {
-                              customFields = typeof repair.customFields === 'string' 
-                                ? JSON.parse(repair.customFields) 
+                              customFields = typeof repair.customFields === 'string'
+                                ? JSON.parse(repair.customFields)
                                 : (repair.customFields || {});
                             } catch (e) {
                               customFields = {};
@@ -3015,7 +3065,8 @@ const RepairDetailsPage = () => {
                   ) : (
                     <div className="space-y-3">
                       {getSortedPagedServices().items.map((service) => {
-                        const invoiced = !!service.invoiceItemId;
+                        // Use same logic as getSortedPagedServices: manual services are always invoiced
+                        const invoiced = !!service.invoiceItemId || service.isManual;
                         const isEditing = editingService?.id === service.id;
                         return (
                           <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
@@ -3173,13 +3224,13 @@ const RepairDetailsPage = () => {
                                           try {
                                             const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
                                             const freshInvoices = normalizeInvoicesResponse(freshInvoicesData);
-                                            
+
                                             console.log('Debug - Fresh invoices:', freshInvoices);
                                             console.log('Debug - Looking for repairRequestId:', parseInt(id));
-                                            
+
                                             targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
                                             targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
-                                            
+
                                             // Update invoices state if we found one
                                             if (targetInvoiceId && invoices.length === 0) {
                                               setInvoices(freshInvoices);
@@ -3205,6 +3256,9 @@ const RepairDetailsPage = () => {
                                             itemType: 'service'
                                           }
                                         });
+                                        // #region agent log
+                                        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:3215', message: 'calling addInvoiceItem API from button', data: { targetInvoiceId, serviceId: service.serviceId || service.id || null, description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+                                        // #endregion
                                         // إضافة عنصر فاتورة للخدمة
                                         const addData = await apiService.addInvoiceItem(targetInvoiceId, {
                                           serviceId: service.serviceId || service.id || null,
@@ -3213,6 +3267,9 @@ const RepairDetailsPage = () => {
                                           description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
                                           itemType: 'service'
                                         });
+                                        // #region agent log
+                                        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:3223', message: 'addInvoiceItem API response from button', data: { success: addData.success, duplicate: addData.duplicate, error: addData.error }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
+                                        // #endregion
 
                                         if (addData.success) {
                                           notifications.success('تم إضافة الخدمة إلى الفاتورة');
@@ -3571,7 +3628,8 @@ const RepairDetailsPage = () => {
                   ) : (
                     <div className="space-y-3">
                       {getSortedPagedServices().items.map((service) => {
-                        const invoiced = !!service.invoiceItemId;
+                        // Use same logic as getSortedPagedServices: manual services are always invoiced
+                        const invoiced = !!service.invoiceItemId || service.isManual;
                         const isEditing = editingService?.id === service.id;
                         return (
                           <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
@@ -3729,13 +3787,13 @@ const RepairDetailsPage = () => {
                                           try {
                                             const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
                                             const freshInvoices = normalizeInvoicesResponse(freshInvoicesData);
-                                            
+
                                             console.log('Debug - Fresh invoices:', freshInvoices);
                                             console.log('Debug - Looking for repairRequestId:', parseInt(id));
-                                            
+
                                             targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
                                             targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
-                                            
+
                                             // Update invoices state if we found one
                                             if (targetInvoiceId && invoices.length === 0) {
                                               setInvoices(freshInvoices);
@@ -4020,24 +4078,24 @@ const RepairDetailsPage = () => {
                                     <p className="text-sm text-blue-800 mb-2">
                                       يمكنك تحميل قائمة المكونات الافتراضية للفحص النهائي
                                     </p>
-                                    <SimpleButton 
-                                      size="sm" 
+                                    <SimpleButton
+                                      size="sm"
                                       variant="outline"
                                       onClick={async () => {
                                         try {
                                           // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
                                           const deviceType = repair?.deviceType?.toLowerCase() || 'all';
                                           console.log('[RepairDetails] Device type:', deviceType);
-                                          
+
                                           // تحويل LAPTOP -> laptop, PHONE -> phone, إلخ
-                                          const deviceCategory = deviceType === 'laptop' ? 'laptop' : 
-                                                                 deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
-                                                                 deviceType === 'tablet' ? 'tablet' : 'all';
+                                          const deviceCategory = deviceType === 'laptop' ? 'laptop' :
+                                            deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
+                                              deviceType === 'tablet' ? 'tablet' : 'all';
                                           console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
-                                          
+
                                           const response = await apiService.loadFinalInspectionComponents(report.id, deviceCategory);
                                           console.log('[RepairDetails] Load components response:', response);
-                                          
+
                                           notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية' });
                                           // إعادة تحميل المكونات
                                           await loadInspectionReports();
@@ -4053,8 +4111,8 @@ const RepairDetailsPage = () => {
                                     </SimpleButton>
                                   </div>
                                 )}
-                                <InspectionComponentsList 
-                                  reportId={report.id} 
+                                <InspectionComponentsList
+                                  reportId={report.id}
                                   onComponentUpdate={() => {
                                     // Refresh reports if needed
                                     loadInspectionReports();
@@ -4158,7 +4216,7 @@ const RepairDetailsPage = () => {
                                 <p className="text-sm text-gray-600">المبلغ: {formatMoney(inv.totalAmount || inv.amount || 0, inv.currency || 'EGP')}</p>
                                 {inv.amountPaid !== undefined && inv.amountPaid !== null && (
                                   <p className="text-xs text-gray-500">
-                                    المدفوع: {formatMoney(inv.amountPaid || 0, inv.currency || 'EGP')} | 
+                                    المدفوع: {formatMoney(inv.amountPaid || 0, inv.currency || 'EGP')} |
                                     المتبقي: {formatMoney((parseFloat(inv.totalAmount || inv.amount || 0) - parseFloat(inv.amountPaid || 0)), inv.currency || 'EGP')}
                                   </p>
                                 )}
@@ -4452,9 +4510,9 @@ const RepairDetailsPage = () => {
                                   <div className="flex items-center space-x-2 space-x-reverse">
                                     <p className="text-sm font-medium text-gray-900">{note.author}</p>
                                     <SimpleBadge className={`text-xs ${note.type === 'system' ? 'bg-blue-100 text-blue-800' :
-                                        note.type === 'technician' ? 'bg-green-100 text-green-800' :
-                                          note.type === 'customer' ? 'bg-purple-100 text-purple-800' :
-                                            'bg-gray-100 text-gray-800'
+                                      note.type === 'technician' ? 'bg-green-100 text-green-800' :
+                                        note.type === 'customer' ? 'bg-purple-100 text-purple-800' :
+                                          'bg-gray-100 text-gray-800'
                                       }`}>
                                       {note.type === 'system' ? 'نظام' :
                                         note.type === 'technician' ? 'فني' :
@@ -5012,7 +5070,7 @@ const RepairDetailsPage = () => {
                   <span>{inspectionError}</span>
                 </div>
               )}
-              
+
               {/* معلومات أساسية */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">المعلومات الأساسية</h4>
@@ -5073,22 +5131,22 @@ const RepairDetailsPage = () => {
               </div>
 
               {/* زر تحميل المكونات الجاهزة للفحص النهائي */}
-              {inspectionForm.inspectionTypeId && 
-               inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId))?.name === 'فحص نهائي' && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h5 className="text-sm font-semibold text-blue-900 mb-1">قائمة المكونات الجاهزة</h5>
-                      <p className="text-xs text-blue-700 mb-3">
-                        بعد حفظ التقرير، يمكنك تحميل قائمة المكونات الافتراضية (الكاميرا، WiFi، الشاشة، إلخ)
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Wrench className="w-5 h-5 text-blue-600" />
+              {inspectionForm.inspectionTypeId &&
+                inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId))?.name === 'فحص نهائي' && (
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h5 className="text-sm font-semibold text-blue-900 mb-1">قائمة المكونات الجاهزة</h5>
+                        <p className="text-xs text-blue-700 mb-3">
+                          بعد حفظ التقرير، يمكنك تحميل قائمة المكونات الافتراضية (الكاميرا، WiFi، الشاشة، إلخ)
+                        </p>
+                      </div>
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Wrench className="w-5 h-5 text-blue-600" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* تفاصيل التقرير */}
               <div className="space-y-4">
@@ -5172,8 +5230,8 @@ const RepairDetailsPage = () => {
 
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl">
               <div className="flex items-center justify-end gap-3">
-                <SimpleButton 
-                  variant="ghost" 
+                <SimpleButton
+                  variant="ghost"
                   onClick={() => {
                     setInspectionOpen(false);
                     // Reset form and error when closing
@@ -5196,7 +5254,7 @@ const RepairDetailsPage = () => {
                   onClick={async () => {
                     // Reset error
                     setInspectionError('');
-                    
+
                     // Validation
                     if (!inspectionForm.inspectionTypeId) {
                       setInspectionError('يرجى اختيار نوع الفحص');
@@ -5208,14 +5266,14 @@ const RepairDetailsPage = () => {
                       notifications.error('يرجى تحديد تاريخ التقرير');
                       return;
                     }
-                    
+
                     // Check if at least one field is filled (summary, result, recommendations, or notes)
                     if (!inspectionForm.summary && !inspectionForm.result && !inspectionForm.recommendations && !inspectionForm.notes) {
                       setInspectionError('يرجى ملء حقل واحد على الأقل من (الملخص، النتيجة، التوصيات، أو الملاحظات)');
                       notifications.warning('يرجى ملء حقل واحد على الأقل من تفاصيل التقرير');
                       return;
                     }
-                    
+
                     try {
                       setInspectionSaving(true);
                       // Convert reportDate to ISO 8601 format if it's in YYYY-MM-DD format
@@ -5224,7 +5282,7 @@ const RepairDetailsPage = () => {
                         // If it's YYYY-MM-DD, convert to ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
                         reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
                       }
-                      
+
                       const payload = {
                         repairRequestId: Number(id),
                         inspectionTypeId: inspectionForm.inspectionTypeId ? Number(inspectionForm.inspectionTypeId) : null,
@@ -5236,7 +5294,7 @@ const RepairDetailsPage = () => {
                         notes: inspectionForm.notes || null,
                         branchId: repair?.branchId || null,
                       };
-                      
+
                       if (editingReport) {
                         // Optimistic update - update in UI immediately
                         const updatedReport = {
@@ -5246,7 +5304,7 @@ const RepairDetailsPage = () => {
                           updatedAt: new Date().toISOString()
                         };
                         setInspectionReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
-                        
+
                         // Update existing report
                         console.log('[InspectionReport] Updating report with payload:', payload);
                         await apiService.request(`/inspectionreports/${editingReport.id}`, {
@@ -5254,10 +5312,10 @@ const RepairDetailsPage = () => {
                           body: JSON.stringify(payload)
                         });
                         console.log('[InspectionReport] Report updated successfully');
-                        
+
                         setInspectionOpen(false);
                         setEditingReport(null);
-                        
+
                         // إعادة تعيين النموذج
                         setInspectionForm({
                           inspectionTypeId: '',
@@ -5269,25 +5327,25 @@ const RepairDetailsPage = () => {
                           notes: '',
                         });
                         setInspectionError('');
-                        
+
                         // إعادة تحميل البيانات
                         await fetchRepairDetails();
                         await loadInspectionReports();
-                        
+
                         notifications.success('تم', { message: 'تم تحديث تقرير الفحص بنجاح' });
                       } else {
                         // Create new report
                         console.log('[InspectionReport] Creating report with payload:', payload);
                         const response = await apiService.createInspectionReport(payload);
                         console.log('[InspectionReport] Report created successfully:', response);
-                        
+
                         // حفظ ID التقرير الجديد
                         const createdReportId = response?.id || response?.data?.id;
                         const selectedType = inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId));
-                        
+
                         setInspectionOpen(false);
                         setEditingReport(null);
-                        
+
                         // إعادة تعيين النموذج
                         setInspectionForm({
                           inspectionTypeId: '',
@@ -5299,12 +5357,12 @@ const RepairDetailsPage = () => {
                           notes: '',
                         });
                         setInspectionError('');
-                        
+
                         // إعادة تحميل البيانات
                         await fetchRepairDetails();
                         // Always reload reports after creating/updating to get fresh data with all joins
                         await loadInspectionReports();
-                        
+
                         // إذا كان نوع الفحص "فحص نهائي"، عرض خيار تحميل القوالب
                         if (selectedType?.name === 'فحص نهائي' && createdReportId) {
                           // عرض رسالة مع خيار تحميل القوالب
@@ -5315,15 +5373,15 @@ const RepairDetailsPage = () => {
                                   // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
                                   const deviceType = repair?.deviceType?.toLowerCase() || 'all';
                                   console.log('[RepairDetails] Device type:', deviceType);
-                                  
-                                  const deviceCategory = deviceType === 'laptop' ? 'laptop' : 
-                                                         deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
-                                                         deviceType === 'tablet' ? 'tablet' : 'all';
+
+                                  const deviceCategory = deviceType === 'laptop' ? 'laptop' :
+                                    deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
+                                      deviceType === 'tablet' ? 'tablet' : 'all';
                                   console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
-                                  
+
                                   const response = await apiService.loadFinalInspectionComponents(createdReportId, deviceCategory);
                                   console.log('[RepairDetails] Load components response:', response);
-                                  
+
                                   notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية بنجاح' });
                                   await loadInspectionReports();
                                 } catch (error) {
@@ -5338,7 +5396,7 @@ const RepairDetailsPage = () => {
                           notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
                         }
                       }
-                      
+
                       // إعطاء وقت للـ WebSocket notification للوصول
                       setTimeout(() => {
                         console.log('[InspectionReport] Report should be visible now via WebSocket');
@@ -5452,8 +5510,8 @@ const RepairDetailsPage = () => {
                       value={issueForm.quantity}
                       onChange={handleIssueChange}
                       className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow ${availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300'
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300'
                         }`}
                     />
                   </div>
@@ -5512,8 +5570,8 @@ const RepairDetailsPage = () => {
 
                 {isLowStock && availableQty !== null && (
                   <div className={`p-3 rounded-lg border flex items-start gap-2 text-sm ${availableQty === 0
-                      ? 'bg-red-50 text-red-700 border-red-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                    ? 'bg-red-50 text-red-700 border-red-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
                     }`}>
                     <AlertTriangle className="w-4 h-4 mt-0.5" />
                     <div>
