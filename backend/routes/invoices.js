@@ -72,7 +72,7 @@ router.get('/:id/print', async (req, res) => {
   try {
     const allSettings = loadPrintSettings();
     const settings = allSettings.invoice || allSettings || {};
-    
+
     // Get invoice with customer and repair details
     const [invoiceRows] = await db.query(`
       SELECT 
@@ -116,10 +116,10 @@ router.get('/:id/print', async (req, res) => {
         (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
         OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
       )
-      WHERE ii.invoiceId = ?
+      WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
       ORDER BY ii.createdAt
     `, [id]);
-    
+
     // تنظيف serviceNotes من رابط invoiceItemId
     items.forEach(item => {
       if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
@@ -135,7 +135,7 @@ router.get('/:id/print', async (req, res) => {
       const price = Number(item.unitPrice) || 0;
       subtotal += qty * price;
     });
-    
+
     const taxAmount = Number(invoice.taxAmount) || 0;
     const discountAmount = Number(invoice.discountAmount) || 0;
     const total = Number(invoice.totalAmount) || (subtotal + taxAmount - discountAmount);

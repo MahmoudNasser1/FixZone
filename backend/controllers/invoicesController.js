@@ -7,14 +7,14 @@ const SettingsIntegration = require('../utils/settingsIntegration');
  * Supports: CRUD operations, bulk actions, search, filtering, pagination
  */
 class InvoicesController {
-  
+
   // Get new invoice page data
   async getNewInvoicePage(req, res) {
     try {
       // Get currency settings from Settings Integration
       const currencySettings = await SettingsIntegration.getCurrencySettings();
       const companySettings = await SettingsIntegration.getCompanySettings();
-      
+
       // Return empty invoice data for new invoice creation
       res.json({
         success: true,
@@ -46,7 +46,7 @@ class InvoicesController {
       });
     }
   }
-  
+
   // Get all invoices with advanced filtering and pagination
   async getAllInvoices(req, res) {
     try {
@@ -160,10 +160,10 @@ class InvoicesController {
             FROM Payment 
             WHERE invoiceId = ?
           `, [invoice.id]);
-          
+
           const actualAmountPaid = parseFloat(payments[0].totalPaid || 0);
           const totalAmount = parseFloat(invoice.totalAmount || 0);
-          
+
           // Determine correct status based on actual payments
           let correctStatus = invoice.status;
           if (actualAmountPaid >= totalAmount && totalAmount > 0) {
@@ -173,7 +173,7 @@ class InvoicesController {
           } else {
             correctStatus = 'draft';
           }
-          
+
           return {
             ...invoice,
             amountPaid: actualAmountPaid,
@@ -192,7 +192,7 @@ class InvoicesController {
         LEFT JOIN Customer c ON COALESCE(i.customerId, rr.customerId) = c.id
         ${whereClause}
       `;
-      
+
       const [countResult] = await db.query(countQuery, queryParams.slice(0, -2));
       const totalCount = countResult[0].total;
 
@@ -210,7 +210,7 @@ class InvoicesController {
         FROM Invoice 
         WHERE deletedAt IS NULL
       `;
-      
+
       const [stats] = await db.query(statsQuery);
 
       // Get settings for invoices display
@@ -296,13 +296,13 @@ class InvoicesController {
             LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
             WHERE rra.repairRequestId = ?
           `, [invoice.repairRequestId]);
-          
+
           if (accRows && accRows.length > 0) {
             accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
           } else if (invoice.accessories) {
             // استخدام البيانات من عمود accessories كبديل (للتوافق مع البيانات القديمة)
             try {
-              accessories = typeof invoice.accessories === 'string' 
+              accessories = typeof invoice.accessories === 'string'
                 ? JSON.parse(invoice.accessories).filter(a => a != null)
                 : (Array.isArray(invoice.accessories) ? invoice.accessories.filter(a => a != null) : []);
             } catch (e) {
@@ -358,7 +358,7 @@ class InvoicesController {
 
       // Calculate actual amount paid from payments
       const actualAmountPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0);
-      
+
       // Determine correct status based on actual payments
       let correctStatus = invoice.status;
       if (actualAmountPaid >= parseFloat(invoice.totalAmount || 0)) {
@@ -437,8 +437,8 @@ class InvoicesController {
 
       // Validate: يجب تحديد إما repairRequestId أو customerId (لفواتير البيع) أو vendorId (لفواتير الشراء)
       if (invoiceType === 'sale') {
-        if ((!repairRequestId || repairRequestId === '' || repairRequestId === null) && 
-            (!customerId || customerId === '' || customerId === null)) {
+        if ((!repairRequestId || repairRequestId === '' || repairRequestId === null) &&
+          (!customerId || customerId === '' || customerId === null)) {
           return res.status(400).json({
             success: false,
             error: 'لفواتير البيع: يجب تحديد إما طلب إصلاح (repairRequestId) أو عميل (customerId)'
@@ -503,7 +503,7 @@ class InvoicesController {
         const currencySettings = await SettingsIntegration.getCurrencySettings();
         invoiceCurrency = currencySettings.code || 'EGP';
       }
-      
+
       // إذا كان customerId محدد وليس repairRequestId، استخدم customerId مباشرة
       // إذا كان repairRequestId محدد، احصل على customerId من RepairRequest
       let finalCustomerId = customerId;
@@ -516,7 +516,7 @@ class InvoicesController {
           finalCustomerId = repair[0].customerId;
         }
       }
-      
+
       // Calculate discountAmount from discountPercent if provided
       let finalDiscountAmount = discountAmount;
       if (discountPercent > 0 && totalAmount > 0 && discountAmount === 0) {
@@ -703,7 +703,7 @@ class InvoicesController {
         notes,
         dueDate
       } = req.body;
-      
+
       // Get currency from settings if not provided
       let invoiceCurrency = currency;
       if (!invoiceCurrency) {
@@ -1007,7 +1007,7 @@ class InvoicesController {
           (rrs.serviceId = ii.serviceId AND rrs.repairRequestId = i.repairRequestId)
           OR (rrs.serviceId IS NULL AND ii.serviceId IS NULL AND rrs.repairRequestId = i.repairRequestId AND rrs.notes IS NOT NULL)
         )
-        WHERE ii.invoiceId = ?
+        WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
         ORDER BY ii.createdAt
       `, [id]);
 
@@ -1084,7 +1084,7 @@ class InvoicesController {
         WHERE ii.invoiceId = ?
         ORDER BY ii.createdAt ASC
       `, [id]);
-      
+
       // تنظيف serviceNotes من رابط invoiceItemId
       items.forEach(item => {
         if (item.serviceNotes && item.serviceNotes.includes('[invoiceItemId:')) {
@@ -1103,9 +1103,9 @@ class InvoicesController {
       console.error('Error stack:', error.stack);
       console.error('Error code:', error.code);
       console.error('Error SQL state:', error.sqlState);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Server error', 
+      res.status(500).json({
+        success: false,
+        error: 'Server error',
         details: error.message,
         errorCode: error.code,
         sqlState: error.sqlState
@@ -1127,9 +1127,9 @@ class InvoicesController {
 
       // Validate payload - Allow manual services (itemType='service' with description but no serviceId)
       if (!inventoryItemId && !serviceId && !(itemType === 'service' && description)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Either inventoryItemId, serviceId, or manual service (itemType=service with description) is required' 
+        return res.status(400).json({
+          success: false,
+          error: 'Either inventoryItemId, serviceId, or manual service (itemType=service with description) is required'
         });
       }
 
@@ -1177,9 +1177,9 @@ class InvoicesController {
           unitPrice = rows.length ? (rows[0].basePrice || 0) : 0;
         } else {
           // Manual service - require unitPrice
-          return res.status(400).json({ 
-            success: false, 
-            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)' 
+          return res.status(400).json({
+            success: false,
+            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)'
           });
         }
       }
@@ -1187,9 +1187,9 @@ class InvoicesController {
       // Validate unitPrice for manual services
       if (!inventoryItemId && !serviceId && itemType === 'service') {
         if (unitPrice == null || unitPrice === undefined || unitPrice === '') {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)' 
+          return res.status(400).json({
+            success: false,
+            error: 'لعناصر الخدمة اليدوية: يجب تحديد السعر (unitPrice)'
           });
         }
       }
@@ -1197,9 +1197,9 @@ class InvoicesController {
       // Ensure unitPrice is a valid number
       unitPrice = Number(unitPrice);
       if (isNaN(unitPrice) || unitPrice < 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'السعر يجب أن يكون رقماً صحيحاً أكبر من أو يساوي الصفر' 
+        return res.status(400).json({
+          success: false,
+          error: 'السعر يجب أن يكون رقماً صحيحاً أكبر من أو يساوي الصفر'
         });
       }
 
@@ -1302,7 +1302,7 @@ class InvoicesController {
         const newQuantity = quantity !== undefined ? Number(quantity) : Number(currentItem.quantity);
         const newUnitPrice = unitPrice !== undefined ? Number(unitPrice) : Number(currentItem.unitPrice);
         const newTotalPrice = newQuantity * newUnitPrice;
-        
+
         updates.push('totalPrice = ?');
         values.push(newTotalPrice);
       }
@@ -1345,7 +1345,7 @@ class InvoicesController {
       }
 
       // Note: No need to clear PartsUsed links as we're not using partsUsedId field anymore
-      
+
 
       // Delete invoice item
       const [delRes] = await db.query(`DELETE FROM InvoiceItem WHERE id = ? AND invoiceId = ?`, [itemId, id]);
@@ -1413,13 +1413,13 @@ class InvoicesController {
           LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
           WHERE rra.repairRequestId = ?
         `, [repairId]);
-        
+
         if (accRows && accRows.length > 0) {
           accessories = accRows.map(acc => acc.label || acc.value || acc.id).filter(a => a != null);
         } else if (invoice.accessories) {
           // استخدام البيانات من عمود accessories كبديل
           try {
-            accessories = typeof invoice.accessories === 'string' 
+            accessories = typeof invoice.accessories === 'string'
               ? JSON.parse(invoice.accessories).filter(a => a != null)
               : (Array.isArray(invoice.accessories) ? invoice.accessories.filter(a => a != null) : []);
           } catch (e) {
@@ -1649,13 +1649,13 @@ class InvoicesController {
         `, [invoiceId]);
 
         const subtotal = Number(totalResult[0].calculatedTotal);
-        
+
         // Calculate discountAmount from discountPercent if needed
         let calculatedDiscountAmount = finalDiscountAmount;
         if (discountPercent > 0 && subtotal > 0) {
           calculatedDiscountAmount = (subtotal * discountPercent) / 100;
         }
-        
+
         // Calculate final total: subtotal - discount + tax + shipping
         const finalTotal = subtotal - calculatedDiscountAmount + Number(taxAmount) + Number(shippingAmount);
 
