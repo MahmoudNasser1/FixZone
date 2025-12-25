@@ -50,13 +50,17 @@ router.get('/public/:id/print', async (req, res) => {
     const repair = repairRows[0];
     const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
 
-    // Verify phone number matches
-    if (normalizedCustomerPhone !== normalizedPhone) {
+    // Verify phone number matches (allow full match or last 4 digits)
+    const matchesFull = normalizedCustomerPhone === normalizedPhone;
+    const isLast4 = normalizedPhone.length === 4;
+    const matchesLast4 = isLast4 && normalizedCustomerPhone.endsWith(normalizedPhone);
+
+    if (!matchesFull && !matchesLast4) {
       return res.status(403).send(`
         <html dir="rtl">
           <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
             <h1>غير مصرح</h1>
-            <p>رقم الهاتف غير صحيح</p>
+            <p>${isLast4 ? 'آخر 4 أرقام غير متطابقة' : 'رقم الهاتف غير صحيح'}</p>
           </body>
         </html>
       `);
@@ -126,11 +130,16 @@ router.get('/public/verify', async (req, res) => {
     const repair = repairRows[0];
     const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
 
-    // Verify phone number matches
-    if (normalizedCustomerPhone !== normalizedPhone) {
+    // Verify phone number matches (allow full match or last 4 digits)
+    const matchesFull = normalizedCustomerPhone === normalizedPhone;
+    const isLast4 = normalizedPhone.length === 4;
+    const matchesLast4 = isLast4 && normalizedCustomerPhone.endsWith(normalizedPhone);
+
+
+    if (!matchesFull && !matchesLast4) {
       return res.status(403).json({
         success: false,
-        error: 'Phone number does not match'
+        error: isLast4 ? 'آخر 4 أرقام غير متطابقة' : 'رقم الهاتف غير مطابق'
       });
     }
 
@@ -313,8 +322,12 @@ router.get('/:id/print', async (req, res) => {
         const repair = repairRows[0];
         const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
 
-        if (normalizedCustomerPhone !== normalizedPhone) {
-          return res.status(403).send('رقم الهاتف غير صحيح');
+        const matchesFull = normalizedCustomerPhone === normalizedPhone;
+        const isLast4 = normalizedPhone.length === 4;
+        const matchesLast4 = isLast4 && normalizedCustomerPhone.endsWith(normalizedPhone);
+
+        if (!matchesFull && !matchesLast4) {
+          return res.status(403).send(isLast4 ? 'آخر 4 أرقام غير متطابقة' : 'رقم الهاتف غير صحيح');
         }
 
         // Verify invoice belongs to this repair

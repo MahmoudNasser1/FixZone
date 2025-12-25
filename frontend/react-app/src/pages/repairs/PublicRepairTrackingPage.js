@@ -499,7 +499,7 @@ const PublicRepairTrackingPage = () => {
   // Handle invoice authentication and open print page
   const handleInvoiceAuth = async () => {
     if (!invoicePhone.trim()) {
-      setInvoiceError('يرجى إدخال رقم الهاتف');
+      setInvoiceError('يرجى إدخال آخر 4 أرقام من الهاتف');
       return;
     }
 
@@ -541,7 +541,7 @@ const PublicRepairTrackingPage = () => {
       } else {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 403) {
-          setInvoiceError('رقم الهاتف غير صحيح');
+          setInvoiceError(errorData.error || 'رقم الهاتف غير صحيح');
         } else if (response.status === 404) {
           setInvoiceError(errorData.error || 'لا توجد فواتير لهذا الطلب');
         } else {
@@ -1042,7 +1042,8 @@ const PublicRepairTrackingPage = () => {
                           </div>
                           <input
                             type="tel"
-                            placeholder="أدخل رقم الهاتف (المسجل في الطلب)"
+                            maxLength={4}
+                            placeholder="أدخل آخر 4 أرقام من رقم الهاتف"
                             className={`w-full pr-12 pl-4 py-4 rounded-xl border-2 bg-background font-bold text-center text-lg transition-all duration-300 focus:outline-none focus:ring-4 ${invoiceError
                               ? 'border-red-500 ring-red-500/10'
                               : 'border-border focus:border-blue-600 focus:ring-blue-600/10 hover:border-blue-300'
