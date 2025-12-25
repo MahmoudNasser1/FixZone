@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
-import { 
-  Search, 
-  QrCode, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Search,
+  QrCode,
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   Package,
   User,
@@ -40,7 +40,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { useRepairUpdatesById } from '../../hooks/useWebSocket';
-import { ZoomIn, Receipt, Lock } from 'lucide-react';
+import { ZoomIn, Receipt, Lock, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useTheme } from '../../components/ThemeProvider';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
@@ -173,7 +173,7 @@ const PublicRepairTrackingPage = () => {
 
     try {
       setLoading(true);
-      
+
       const params = new URLSearchParams();
       if (type === 'trackingToken') {
         // إذا كان trackingToken رقم فقط، نستخدم id بدلاً منه
@@ -194,7 +194,7 @@ const PublicRepairTrackingPage = () => {
         // لا نضيف Cache-Control header لأنه يسبب CORS error
         // cache: 'no-cache' في fetch options كافٍ لمنع cache
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setRepairData(data);
@@ -222,7 +222,7 @@ const PublicRepairTrackingPage = () => {
 
   // Ref لتخزين آخر repairId تم تحميله
   const currentRepairIdRef = useRef(null);
-  
+
   // قراءة trackingToken أو ID من URL query parameters أو URL parameter عند تحميل الصفحة
   useEffect(() => {
     // أولوية لـ URL parameter (مثل /track/123)
@@ -230,7 +230,7 @@ const PublicRepairTrackingPage = () => {
       handleAutoSearch(urlId, 'trackingToken');
       return;
     }
-    
+
     // ثم query parameter (مثل /track?trackingToken=xxx)
     const tokenFromUrl = searchParams.get('trackingToken');
     if (tokenFromUrl) {
@@ -244,7 +244,7 @@ const PublicRepairTrackingPage = () => {
     if (!repairData || !repairData.id) return;
 
     currentRepairIdRef.current = repairData.id;
-    
+
     // تحديث تلقائي كل 30 ثانية
     const intervalId = setInterval(() => {
       if (currentRepairIdRef.current) {
@@ -341,10 +341,10 @@ const PublicRepairTrackingPage = () => {
       'مكتمل': 'COMPLETED'
     };
     const englishStatus = statusMap[status] || status;
-    
+
     const statusOrder = [
       'RECEIVED', 'INSPECTION', 'QUOTATION_SENT', 'QUOTATION_APPROVED',
-      'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY', 
+      'UNDER_REPAIR', 'WAITING_PARTS', 'READY_FOR_PICKUP', 'READY_FOR_DELIVERY',
       'DELIVERED', 'COMPLETED'
     ];
     const currentIndex = statusOrder.indexOf(englishStatus);
@@ -359,19 +359,19 @@ const PublicRepairTrackingPage = () => {
       setInspectionReports([]);
       return;
     }
-    
+
     const repairId = repairData.id;
     console.log('[Reports] Loading reports for repair ID:', repairId);
-    
+
     try {
       setInspectionReportsLoading(true);
       const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairId}`);
       console.log('[Reports] API Response status:', response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('[Reports] API Response data:', data);
-        
+
         // Handle different response formats
         // API returns: { success: true, data: [...] }
         let reportsList = [];
@@ -384,10 +384,10 @@ const PublicRepairTrackingPage = () => {
         } else if (Array.isArray(data)) {
           reportsList = data;
         }
-        
+
         console.log('[Reports] Parsed reports list:', reportsList);
         console.log('[Reports] Number of reports:', reportsList.length);
-        
+
         setInspectionReports(reportsList);
         setHasReports(reportsList.length > 0);
       } else if (response.status === 404) {
@@ -452,20 +452,20 @@ const PublicRepairTrackingPage = () => {
       console.log('No repair data ID, skipping attachments load');
       return;
     }
-    
+
     try {
       setAttachmentsLoading(true);
       console.log('Loading attachments for repair ID:', repairData.id);
       const response = await fetch(`${API_BASE_URL}/repairsSimple/${repairData.id}/attachments`);
       console.log('Attachments API response status:', response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         const attachmentsList = data.data || [];
         console.log('Attachments loaded successfully:', attachmentsList.length, 'items');
         console.log('Attachments details:', attachmentsList);
         console.log('Debug info:', data.debug);
-        
+
         if (attachmentsList.length === 0 && data.debug) {
           console.warn('No attachments found. Debug info:', {
             hasAttachmentsField: data.debug.hasAttachmentsField,
@@ -473,7 +473,7 @@ const PublicRepairTrackingPage = () => {
             uploadRoot: data.debug.uploadRoot
           });
         }
-        
+
         setAttachments(attachmentsList);
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -516,15 +516,21 @@ const PublicRepairTrackingPage = () => {
       const response = await fetch(
         `${API_BASE_URL}/invoices/public/verify?repairRequestId=${repairData.id}&phoneNumber=${encodeURIComponent(invoicePhone)}`
       );
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
-          // Open the print-ready invoice page in a new window with phone verification
-          const invoiceId = result.data.id;
-          const printUrl = `${API_BASE_URL}/invoices/public/${invoiceId}/print?phoneNumber=${encodeURIComponent(invoicePhone)}&repairRequestId=${repairData.id}`;
-          window.open(printUrl, '_blank');
-          
+          // Navigate to the new public invoice page using the trackingToken
+          const trackingToken = result.data.trackingToken;
+          if (trackingToken) {
+            navigate(`/invoice/view/${trackingToken}`);
+          } else {
+            // Fallback to print if token is missing
+            const invoiceId = result.data.id;
+            const printUrl = `${API_BASE_URL}/invoices/public/${invoiceId}/print?phoneNumber=${encodeURIComponent(invoicePhone)}&repairRequestId=${repairData.id}`;
+            window.open(printUrl, '_blank');
+          }
+
           // Reset form
           setShowInvoiceAuth(false);
           setInvoicePhone('');
@@ -568,7 +574,7 @@ const PublicRepairTrackingPage = () => {
       // For 'system', check the actual system preference
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       setIsDarkMode(mediaQuery.matches);
-      
+
       // Listen for system theme changes
       const handleChange = (e) => setIsDarkMode(e.matches);
       mediaQuery.addEventListener('change', handleChange);
@@ -576,10 +582,16 @@ const PublicRepairTrackingPage = () => {
     }
   }, [theme]);
 
+  // Animation state
+  const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-background">
+    <div className={`min-h-screen bg-muted/30 dark:bg-background transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Header */}
-      <div className="bg-background border-b border-border shadow-sm">
+      <div className="bg-background/80 backdrop-blur-md border-b border-border shadow-sm sticky top-0 z-10 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 space-x-reverse flex-1 min-w-0">
@@ -605,9 +617,9 @@ const PublicRepairTrackingPage = () => {
                 <Sun className="h-5 w-5 sm:h-6 sm:w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-foreground" />
                 <Moon className="absolute h-5 w-5 sm:h-6 sm:w-6 top-2 right-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground" />
               </button>
-              <img 
-                src="/Fav.png" 
-                alt="FixZone Logo" 
+              <img
+                src="/Fav.png"
+                alt="FixZone Logo"
                 className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 object-contain flex-shrink-0"
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -621,19 +633,22 @@ const PublicRepairTrackingPage = () => {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Welcome Section */}
-        <SimpleCard className="mb-4 sm:mb-6 md:mb-8">
-          <SimpleCardContent className="p-4 sm:p-6 md:p-8">
+        <SimpleCard className="mb-6 sm:mb-8 border-none bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-700 dark:to-indigo-900 text-white overflow-hidden relative group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+          <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+
+          <SimpleCardContent className="p-6 sm:p-8 md:p-10 relative z-10">
             <div className="text-center">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 drop-shadow-md">
                 {repairData?.customerName ? (
                   <>
-                    اهلاً <span className="text-blue-600 dark:text-blue-400">{repairData.customerName}</span>
+                    <span className="opacity-90 font-light">اهلاً</span> <span className="text-white">{repairData.customerName}</span>
                   </>
                 ) : (
                   'تتبع طلب الإصلاح'
                 )}
               </h2>
-              <p className="text-sm sm:text-base md:text-lg text-foreground/80 dark:text-foreground px-2 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base md:text-lg text-blue-50/90 max-w-2xl mx-auto leading-relaxed">
                 {repairData ? (
                   'يمكنك من خلال هذه الصفحة متابعة حالة طلب الإصلاح الخاص بك، عرض التقارير، ومتابعة التحديثات الفورية'
                 ) : (
@@ -653,122 +668,118 @@ const PublicRepairTrackingPage = () => {
 
         {/* Repair Data Display */}
         {repairData && (
-          <div className="space-y-4 sm:space-y-6 md:space-y-8">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
             {/* Status Progress */}
-            <SimpleCard>
-              <SimpleCardContent className="p-4 sm:p-6 md:p-8">
-                <div className="text-center mb-4 sm:mb-6">
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-1 sm:mb-2">حالة الطلب</h2>
-                  <p className="text-xs sm:text-sm md:text-base text-foreground/80 dark:text-foreground">
+            <SimpleCard className="border border-border/50 dark:border-border/20 shadow-xl shadow-blue-500/5 bg-background/50 backdrop-blur-sm overflow-hidden">
+              <SimpleCardContent className="p-6 sm:p-8 md:p-10">
+                <div className="text-center mb-8 sm:mb-10">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-3">حالة الطلب</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground bg-muted/50 inline-block px-5 py-1.5 rounded-full border border-border/30">
                     تم إنشاء الطلب في {formatDate(repairData.createdAt)}
                   </p>
                 </div>
 
-              {/* Progress Bar */}
-              <div className="mb-4 sm:mb-6">
-                <div className="flex justify-center items-center text-xs sm:text-sm text-foreground/80 dark:text-foreground mb-4">
-                  <span className="font-bold text-lg sm:text-xl text-blue-600 dark:text-blue-400">{Math.round(getStatusProgress(repairData.status))}% مكتمل</span>
-                </div>
-                <div className="relative w-full bg-muted dark:bg-muted/60 rounded-full h-4 sm:h-5">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 via-blue-400 to-green-500 dark:from-blue-600 dark:via-blue-500 dark:to-green-600 h-4 sm:h-5 rounded-full transition-all duration-700 relative shadow-md"
-                    style={{ width: `${getStatusProgress(repairData.status)}%` }}
-                  >
-                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-background border-2 border-blue-600 dark:border-blue-400 rounded-full shadow-xl flex items-center justify-center">
-                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                {/* Progress Bar Container */}
+                <div className="mb-10 sm:mb-14 relative px-2 sm:px-4">
+                  <div className="flex justify-between items-end mb-4">
+                    <span className="text-sm font-medium text-muted-foreground">التقدم المحرز</span>
+                    <span className="font-black text-3xl sm:text-4xl text-blue-600 dark:text-blue-400 drop-shadow-sm tracking-tighter">
+                      {Math.round(getStatusProgress(repairData.status))}%
+                      <span className="text-sm sm:text-base font-normal text-muted-foreground mr-2 opacity-70">مكتمل</span>
+                    </span>
+                  </div>
+                  <div className="relative w-full bg-muted/50 dark:bg-muted/20 rounded-full h-4 sm:h-6 shadow-inner overflow-hidden border border-border/20">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000 ease-out relative shadow-lg"
+                      style={{
+                        width: `${getStatusProgress(repairData.status)}%`,
+                        background: 'linear-gradient(90deg, #3b82f6, #6366f1, #10b981)'
+                      }}
+                    >
+                      {/* Pulsing light effect on the progress tip */}
+                      <div className="absolute right-0 top-0 h-full w-4 bg-white/30 blur-sm animate-pulse"></div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Current Status and Reports Button */}
-              <div className="flex items-center justify-center gap-3 sm:gap-4">
-                {(() => {
-                  // استخدام الحالة الإنجليزية من Backend أو statusLabel العربية
-                  const statusKey = repairData.status || 'RECEIVED';
-                  // تحويل الحالة العربية إلى إنجليزية إذا لزم الأمر
-                  const statusMap = {
-                    'تم الاستلام': 'RECEIVED',
-                    'قيد الفحص': 'INSPECTION',
-                    'في انتظار الموافقة': 'AWAITING_APPROVAL',
-                    'قيد الإصلاح': 'UNDER_REPAIR',
-                    'جاهز للتسليم': 'READY_FOR_DELIVERY',
-                    'جاهز للاستلام': 'READY_FOR_PICKUP',
-                    'تم التسليم': 'DELIVERED',
-                    'مرفوض': 'REJECTED',
-                    'في انتظار القطع': 'WAITING_PARTS',
-                    'معلق': 'ON_HOLD',
-                    'مكتمل': 'COMPLETED'
-                  };
-                  const englishStatus = statusMap[statusKey] || statusKey;
-                  const config = statusConfig[englishStatus] || statusConfig['RECEIVED'];
-                  const Icon = config.icon;
-                  return (
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-                        <div className={`inline-flex items-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-full text-sm sm:text-base md:text-lg font-medium ${config.color}`}>
-                          <div className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-background/20 dark:bg-background/30 rounded-full mr-3 sm:mr-4">
-                            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-current" />
+                {/* Status Display Block */}
+                <div className="flex flex-col items-center">
+                  {(() => {
+                    const statusKey = repairData.status || 'RECEIVED';
+                    const statusMap = {
+                      'تم الاستلام': 'RECEIVED',
+                      'قيد الفحص': 'INSPECTION',
+                      'في انتظار الموافقة': 'AWAITING_APPROVAL',
+                      'قيد الإصلاح': 'UNDER_REPAIR',
+                      'جاهز للتسليم': 'READY_FOR_DELIVERY',
+                      'جاهز للاستلام': 'READY_FOR_PICKUP',
+                      'تم التسليم': 'DELIVERED',
+                      'مرفوض': 'REJECTED',
+                      'في انتظار القطع': 'WAITING_PARTS',
+                      'معلق': 'ON_HOLD',
+                      'مكتمل': 'COMPLETED'
+                    };
+                    const englishStatus = statusMap[statusKey] || statusKey;
+                    const config = statusConfig[englishStatus] || statusConfig['RECEIVED'];
+                    const Icon = config.icon;
+                    return (
+                      <div className="w-full max-w-lg mx-auto">
+                        <div className={`flex items-center justify-between p-4 sm:p-6 rounded-2xl ${config.color} border border-current/10 shadow-lg mb-4`}>
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-background/30 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-sm">
+                              <Icon className="w-7 h-7 sm:w-8 sm:h-8" />
+                            </div>
+                            <div>
+                              <span className="text-xs sm:text-sm font-bold opacity-70 uppercase tracking-widest block mb-0.5">الحالة الحالية</span>
+                              <span className="text-xl sm:text-2xl font-black">{repairData.statusLabel || config.label}</span>
+                            </div>
                           </div>
-                          {repairData.statusLabel || config.label}
+                          <CheckCircle className="w-8 h-8 opacity-20" />
                         </div>
-                        
+                        <p className="text-center text-sm sm:text-base text-muted-foreground leading-relaxed px-4">
+                          {config.description}
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm md:text-base text-foreground/80 dark:text-foreground px-2 mt-2 sm:mt-3">{config.description}</p>
-                    </div>
-                  );
-                })()}
-              </div>
+                    );
+                  })()}
+                </div>
 
-              {/* Quick Actions - Reports & Invoice Buttons */}
-              <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-border">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                  {/* Reports Button */}
-                  {hasReports ? (
+                {/* Quick Actions - Reports & Invoice Buttons */}
+                <div className="mt-10 sm:mt-12 pt-8 sm:pt-10 border-t border-border/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    {/* Reports Button */}
                     <button
                       onClick={() => {
                         const token = searchParams.get('trackingToken');
                         const id = repairData?.id;
-                        
-                        // Always prefer repairId if available, as it's more reliable
-                        // Also pass trackingToken if available for fallback
                         if (id) {
-                          if (token) {
-                            navigate(`/track/reports?repairId=${id}&trackingToken=${encodeURIComponent(token)}`);
-                          } else {
-                            navigate(`/track/reports?repairId=${id}`);
-                          }
+                          navigate(token ? `/track/reports?repairId=${id}&trackingToken=${encodeURIComponent(token)}` : `/track/reports?repairId=${id}`);
                         } else if (token) {
                           navigate(`/track/reports?trackingToken=${encodeURIComponent(token)}`);
                         } else {
-                          console.error('No repair ID or tracking token available');
                           notify('error', 'لا يمكن عرض التقارير: بيانات الطلب غير متوفرة');
                         }
                       }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-background active:scale-95 gap-2 sm:gap-3 font-semibold text-base sm:text-lg"
-                      aria-label="عرض التقارير"
+                      disabled={!hasReports}
+                      className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 ${hasReports
+                        ? 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 text-white'
+                        : 'bg-muted dark:bg-muted/50 text-muted-foreground cursor-not-allowed'
+                        }`}
                     >
-                      <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                      <span>عرض التقارير</span>
+                      <FileCheck className={`w-6 h-6 ${hasReports ? 'animate-bounce-slow' : ''}`} />
+                      <span>{hasReports ? 'عرض التقارير الفنية' : 'لا توجد تقارير حالياً'}</span>
                     </button>
-                  ) : (
-                    <div className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 bg-muted dark:bg-muted/50 text-muted-foreground rounded-lg gap-2 sm:gap-3 font-semibold text-base sm:text-lg cursor-not-allowed">
-                      <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                      <span>لا توجد تقارير متاحة</span>
-                    </div>
-                  )}
 
-                  {/* Invoice Button */}
-                  <button
-                    onClick={() => setShowInvoiceAuth(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-background active:scale-95 gap-2 sm:gap-3 font-semibold text-base sm:text-lg"
-                    aria-label="عرض الفاتورة"
-                  >
-                    <Receipt className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                    <span>عرض الفاتورة</span>
-                  </button>
+                    {/* Invoice Button */}
+                    <button
+                      onClick={() => setShowInvoiceAuth(true)}
+                      className="group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400 text-white transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
+                    >
+                      <Receipt className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                      <span>عرض وتحميل الفاتورة</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
               </SimpleCardContent>
             </SimpleCard>
 
@@ -825,10 +836,10 @@ const PublicRepairTrackingPage = () => {
                                   <div className="text-xs sm:text-sm text-muted-foreground">
                                     {report.reportDate
                                       ? new Date(report.reportDate).toLocaleDateString('ar-SA', {
-                                          year: 'numeric',
-                                          month: 'long',
-                                          day: 'numeric'
-                                        })
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                      })
                                       : 'تاريخ غير محدد'}
                                   </div>
                                 </div>
@@ -899,226 +910,227 @@ const PublicRepairTrackingPage = () => {
             {/* Repair Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               {/* Device Information */}
-              <SimpleCard className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-                  <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
-                      <Package className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+              <SimpleCard className="border border-border/50 dark:border-border/20 shadow-lg bg-background/50 backdrop-blur-sm group hover:border-blue-500/30 transition-all duration-300">
+                <SimpleCardHeader className="p-6 pb-4 border-b border-border/30">
+                  <SimpleCardTitle className="text-xl font-bold flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="font-semibold text-foreground">معلومات الجهاز</span>
+                    <span>معلومات الجهاز</span>
                   </SimpleCardTitle>
                 </SimpleCardHeader>
-                <SimpleCardContent className="p-4 sm:p-5 md:p-6">
-                <div className="space-y-4 sm:space-y-5">
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                <SimpleCardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/20 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Monitor className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase">الموديل</span>
+                      </div>
+                      <p className="text-lg font-semibold text-foreground break-words">{repairData.deviceModel || 'غير محدد'}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">الموديل</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">{repairData.deviceModel || 'غير محدد'}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">وصف المشكلة</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words leading-relaxed">{repairData.problemDescription || 'لا توجد تفاصيل'}</p>
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/20 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <AlertCircle className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase">وصف المشكلة</span>
+                      </div>
+                      <p className="text-base text-foreground/90 break-words leading-relaxed">{repairData.problemDescription || 'لا توجد تفاصيل إضافية'}</p>
                     </div>
                   </div>
-                </div>
                 </SimpleCardContent>
               </SimpleCard>
 
-              {/* Repair Information */}
-              <SimpleCard className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-                  <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
-                      <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+              {/* Repair Progress & Costs */}
+              <SimpleCard className="border border-border/50 dark:border-border/20 shadow-lg bg-background/50 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-300">
+                <SimpleCardHeader className="p-6 pb-4 border-b border-border/30">
+                  <SimpleCardTitle className="text-xl font-bold flex items-center gap-3">
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Wrench className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="font-semibold text-foreground">معلومات الإصلاح</span>
+                    <span>تفاصيل الإصلاح</span>
                   </SimpleCardTitle>
                 </SimpleCardHeader>
-                <SimpleCardContent className="p-4 sm:p-5 md:p-6">
-                <div className="space-y-4 sm:space-y-5">
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                <SimpleCardContent className="p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/20">
+                      <Calendar className="w-4 h-4 text-emerald-600 mb-2" />
+                      <span className="text-xs font-bold text-muted-foreground block mb-1">تاريخ الاستلام</span>
+                      <p className="text-sm font-semibold">{formatDate(repairData.createdAt)}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">تاريخ الاستلام</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">{formatDate(repairData.createdAt)}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التسليم المتوقع</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">{formatDate(repairData.estimatedCompletionDate)}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/20">
+                      <Clock className="w-4 h-4 text-emerald-600 mb-2" />
+                      <span className="text-xs font-bold text-muted-foreground block mb-1">التسليم المتوقع</span>
+                      <p className="text-sm font-semibold">{formatDate(repairData.estimatedCompletionDate)}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التكلفة الفعلية</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">
-                        {repairData.actualCost ? `${repairData.actualCost} ج.م` : 'غير محدد'}
+
+                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30">
+                      <DollarSign className="w-4 h-4 text-emerald-600 mb-2" />
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1">التكلفة الفعلية</span>
+                      <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">
+                        {repairData.actualCost ? `${repairData.actualCost} ج.م` : 'قيد التقدير'}
                       </p>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التكلفة المقدرة</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">
-                        {repairData.estimatedCost ? `${repairData.estimatedCost} ج.م` : 'غير محدد'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start space-x-5 sm:space-x-6 space-x-reverse p-4 sm:p-5 rounded-lg bg-muted/30 dark:bg-muted/50 hover:bg-muted/50 dark:hover:bg-muted/70 transition-colors border border-border/50 dark:border-border/30">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted dark:bg-muted/80 rounded-full flex-shrink-0">
-                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">الفرع</h4>
-                      <p className="text-sm sm:text-base text-foreground/90 dark:text-foreground break-words">{repairData.branchName || 'غير محدد'}</p>
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/20">
+                      <MapPin className="w-4 h-4 text-muted-foreground mb-2" />
+                      <span className="text-xs font-bold text-muted-foreground block mb-1">الفرع</span>
+                      <p className="text-sm font-semibold">{repairData.branchName || 'غير محدد'}</p>
                     </div>
                   </div>
-                </div>
                 </SimpleCardContent>
               </SimpleCard>
             </div>
 
-            {/* Invoice Authentication Modal - Security Verification */}
+            {/* Invoice Authentication Modal - Security Verification Pop-up */}
             {showInvoiceAuth && (
-              <SimpleCard className="mt-4 sm:mt-6 md:mt-8 border-2 border-green-200 dark:border-green-800 shadow-xl">
-                <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b bg-gradient-to-l from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
-                  <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-green-100 dark:bg-green-900/40 rounded-full">
-                        <Lock className="w-6 h-6 sm:w-7 sm:h-7 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-foreground block">التحقق من الهوية</span>
-                        <span className="text-xs sm:text-sm text-muted-foreground">لحماية بياناتك الحساسة</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowInvoiceAuth(false);
-                        setInvoicePhone('');
-                        setInvoiceError('');
-                      }}
-                      className="p-2 hover:bg-muted rounded-lg transition-colors"
-                      aria-label="إغلاق"
-                    >
-                      <X className="w-5 h-5 text-foreground" />
-                    </button>
-                  </SimpleCardTitle>
-                </SimpleCardHeader>
-                <SimpleCardContent className="p-4 sm:p-5 md:p-6">
-                  <div className="space-y-5">
-                    {/* Security Notice */}
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-300"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setShowInvoiceAuth(false);
+                    setInvoicePhone('');
+                    setInvoiceError('');
+                  }
+                }}
+              >
+                <SimpleCard className="w-full max-w-xl border-2 border-green-200 dark:border-green-800 shadow-[0_0_50px_-12px_rgba(34,197,94,0.3)] relative overflow-hidden bg-background animate-in zoom-in-95 duration-300 slide-in-from-bottom-5">
+                  {/* Decorative background element */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+                  <SimpleCardHeader className="p-6 pb-4 border-b bg-gradient-to-l from-green-50/50 to-blue-50/50 dark:from-green-900/10 dark:to-blue-900/10">
+                    <SimpleCardTitle className="text-xl mb-0 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-green-600 dark:bg-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                          <Lock className="w-7 h-7 text-white" />
+                        </div>
                         <div>
-                          <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                            حماية البيانات الحساسة
-                          </p>
-                          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300">
-                            يرجى إدخال <strong>رقم الهاتف المسجل في النظام</strong> للتحقق من هويتك قبل عرض الفاتورة. 
-                            هذه الخطوة ضرورية لحماية معلوماتك الشخصية والمالية.
-                          </p>
+                          <span className="font-extrabold text-foreground text-xl block">تحقق أمني مطلوب</span>
+                          <span className="text-sm text-muted-foreground font-medium">الرجاء تأكيد هويتك للعرض</span>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Phone Input */}
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        رقم الهاتف المسجل في النظام
-                      </label>
-                      <Input
-                        type="tel"
-                        value={invoicePhone}
-                        onChange={(e) => {
-                          setInvoicePhone(e.target.value);
-                          setInvoiceError('');
-                        }}
-                        placeholder="مثال: 01012345678"
-                        className="w-full text-lg py-3"
-                        autoFocus
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && invoicePhone.trim() && !invoiceLoading) {
-                            handleInvoiceAuth();
-                          }
-                        }}
-                      />
-                      {invoiceError && (
-                        <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                          <p className="text-sm text-red-800 dark:text-red-300 flex items-center gap-2">
-                            <XCircle className="w-4 h-4" />
-                            {invoiceError}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                      <SimpleButton
-                        onClick={handleInvoiceAuth}
-                        disabled={invoiceLoading || !invoicePhone.trim()}
-                        className="flex-1 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                      >
-                        {invoiceLoading ? (
-                          <>
-                            <RefreshCw className="w-5 h-5 ml-2 animate-spin" />
-                            جاري التحقق من الهوية...
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-5 h-5 ml-2" />
-                            التحقق وعرض الفاتورة
-                          </>
-                        )}
-                      </SimpleButton>
-                      <SimpleButton
+                      <button
                         onClick={() => {
                           setShowInvoiceAuth(false);
                           setInvoicePhone('');
                           setInvoiceError('');
                         }}
-                        variant="ghost"
-                        className="sm:w-auto py-3"
+                        className="p-2 sm:p-3 hover:bg-muted rounded-xl transition-all duration-200 hover:rotate-90"
+                        aria-label="إغلاق"
                       >
-                        إلغاء
-                      </SimpleButton>
-                    </div>
-                  </div>
-                </SimpleCardContent>
-              </SimpleCard>
-            )}
+                        <X className="w-6 h-6 text-foreground" />
+                      </button>
+                    </SimpleCardTitle>
+                  </SimpleCardHeader>
+                  <SimpleCardContent className="p-6 sm:p-8">
+                    <div className="max-w-md mx-auto space-y-6">
+                      {/* Security Notice */}
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-800/30 rounded-2xl p-5 flex items-start gap-4">
+                        <ShieldCheck className="w-8 h-8 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <div>
+                          <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-1">خصوصيتك أولويتنا</h4>
+                          <p className="text-sm text-blue-800/70 dark:text-blue-400/70 leading-relaxed font-medium">
+                            لضمان عدم اطلاع أي شخص غير مخول على فواتيرك، نطلب منك إدخال آخر 4 أرقام من رقم الهاتف المسجل لدينا.
+                          </p>
+                        </div>
+                      </div>
 
+                      <div className="space-y-4">
+                        <div className="relative group">
+                          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-600">
+                            <Phone className="h-6 w-6" />
+                          </div>
+                          <input
+                            type="tel"
+                            placeholder="أدخل رقم الهاتف (المسجل في الطلب)"
+                            className={`w-full pr-12 pl-4 py-4 rounded-xl border-2 bg-background font-bold text-center text-lg transition-all duration-300 focus:outline-none focus:ring-4 ${invoiceError
+                              ? 'border-red-500 ring-red-500/10'
+                              : 'border-border focus:border-blue-600 focus:ring-blue-600/10 hover:border-blue-300'
+                              }`}
+                            value={invoicePhone}
+                            onChange={(e) => {
+                              setInvoicePhone(e.target.value);
+                              setInvoiceError('');
+                            }}
+                            onKeyPress={(e) => e.key === 'Enter' && handleInvoiceAuth()}
+                            dir="ltr"
+                          />
+                        </div>
+
+                        {invoiceError && (
+                          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm font-bold bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-lg animate-shake">
+                            <AlertCircle className="h-4 w-4" />
+                            <span>{invoiceError}</span>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={handleInvoiceAuth}
+                          disabled={invoiceLoading || !invoicePhone}
+                          className={`w-full py-4 rounded-xl font-black text-lg transition-all duration-300 shadow-xl active:scale-95 flex items-center justify-center gap-3 ${invoiceLoading || !invoicePhone
+                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-700 text-white hover:shadow-green-500/20'
+                            }`}
+                        >
+                          {invoiceLoading ? (
+                            <>
+                              <Loading size="sm" />
+                              <span>جاري التحقق...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-6 h-6" />
+                              <span>تأكيد وعرض الفاتورة</span>
+                            </>
+                          )}
+                        </button>
+
+                        <p className="text-center text-xs text-muted-foreground font-medium">
+                          في حال واجهت مشكلة، يرجى التواصل مع الدعم الفني للفرع.
+                        </p>
+                      </div>
+                    </div>
+                  </SimpleCardContent>
+                </SimpleCard>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Adding custom keyframes using a style tag */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @keyframes shine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shine {
+          animation: shine 2.5s infinite linear;
+        }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 2s infinite ease-in-out;
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out 0s 2;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}} />
     </div>
   );
 };

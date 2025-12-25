@@ -145,6 +145,7 @@ router.get('/public/verify', async (req, res) => {
         i.currency,
         i.taxAmount,
         i.createdAt,
+        i.trackingToken,
         (SELECT paymentMethod FROM Payment WHERE invoiceId = i.id ORDER BY createdAt DESC LIMIT 1) as paymentMethod,
         (SELECT COALESCE(SUM(amount), 0) FROM Payment WHERE invoiceId = i.id) as actualAmountPaid
       FROM Invoice i
