@@ -311,7 +311,7 @@ class MessagingService {
   async getMessageLogs(filters = {}, pagination = {}) {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.entityType) params.append('entityType', filters.entityType);
       if (filters.entityId) params.append('entityId', filters.entityId);
       if (filters.customerId) params.append('customerId', filters.customerId);
@@ -320,7 +320,7 @@ class MessagingService {
       if (filters.recipient) params.append('recipient', filters.recipient);
       if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
       if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      
+
       if (pagination.limit) params.append('limit', pagination.limit);
       if (pagination.offset) params.append('offset', pagination.offset);
 
@@ -392,16 +392,16 @@ class MessagingService {
     const calculatedTotal = invoiceItems.reduce((sum, item) => {
       return sum + (parseFloat(item.totalPrice) || 0);
     }, 0);
-    
-    const subtotal = invoiceItems.length > 0 && calculatedTotal > 0 
-      ? calculatedTotal 
+
+    const subtotal = invoiceItems.length > 0 && calculatedTotal > 0
+      ? calculatedTotal
       : (parseFloat(invoice.totalAmount) || 0);
-    
+
     const discountPercent = parseFloat(invoice.discountPercent) || 0;
-    const discountAmount = discountPercent > 0 && subtotal > 0 
-      ? (subtotal * discountPercent) / 100 
+    const discountAmount = discountPercent > 0 && subtotal > 0
+      ? (subtotal * discountPercent) / 100
       : (parseFloat(invoice.discountAmount) || 0);
-    
+
     const taxAmount = parseFloat(invoice.taxAmount) || 0;
     const shippingAmount = parseFloat(invoice.shippingAmount) || 0;
     const finalTotal = subtotal - discountAmount + taxAmount + shippingAmount;
@@ -430,7 +430,9 @@ class MessagingService {
       remainingAmount: formatMoney(remainingAmount, invoice.currency || 'EGP'),
       currency: invoice.currency || 'EGP',
       dueDate: formatDate(invoice.dueDate),
-      invoiceLink: `${window.location.origin}/invoices/${invoice.id}`,
+      invoiceLink: invoice.trackingToken
+        ? `${window.location.origin}/invoice/view/${invoice.trackingToken}`
+        : `${window.location.origin}/invoices/${invoice.id}`,
       status: this.getInvoiceStatusLabel(invoice.status)
     };
   }
@@ -451,7 +453,7 @@ class MessagingService {
     const deviceInfo = `${repair.deviceBrand || ''} ${repair.deviceModel || ''}`.trim() || 'غير محدد';
     // استخدام reportedProblem أو problemDescription (الحقول الفعلية من API)
     const problem = repair.reportedProblem || repair.problemDescription || repair.problem || repair.description || 'غير محدد';
-    
+
     // تسجيل للمساعدة في التصحيح
     if (!problem || problem === 'غير محدد') {
       console.warn('[MESSAGING] ⚠️ Problem statement is missing or undefined:', {
@@ -462,7 +464,7 @@ class MessagingService {
         problemDescription: repair.problemDescription ? `${String(repair.problemDescription).substring(0, 50)}...` : 'NULL'
       });
     }
-    
+
     // استخدام trackingToken بدلاً من ID في رابط التتبع
     const trackingToken = repair.trackingToken || repair.id;
     const trackingUrl = `${window.location.origin}/track?trackingToken=${trackingToken}`;

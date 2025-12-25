@@ -122,7 +122,7 @@ export default function SettingsDashboard() {
     const loadSettingsFromAPI = async () => {
       try {
         setLoading(true);
-        
+
         // Load company settings
         if (activeCategory === 'general') {
           const companyRes = await api.getCompanySettings();
@@ -137,7 +137,7 @@ export default function SettingsDashboard() {
             }));
           }
         }
-        
+
         // Load currency settings
         if (activeCategory === 'currency') {
           const currencyRes = await api.getCurrencySettings();
@@ -152,7 +152,7 @@ export default function SettingsDashboard() {
             }));
           }
         }
-        
+
         // Load printing settings
         if (activeCategory === 'printing') {
           const printingRes = await api.getPrintingSettings();
@@ -166,7 +166,7 @@ export default function SettingsDashboard() {
             }));
           }
         }
-        
+
         // Load locale settings
         if (activeCategory === 'locale') {
           const localeRes = await api.getLocaleSettings();
@@ -204,7 +204,7 @@ export default function SettingsDashboard() {
         setLoading(false);
       }
     };
-    
+
     loadSettingsFromAPI();
   }, [activeCategory]); // Reload when category changes
 
@@ -603,8 +603,13 @@ export default function SettingsDashboard() {
                   <input
                     type="number"
                     value={form.minimumFractionDigits}
-                    onChange={(e) => handleFormChange('minimumFractionDigits', parseInt(e.target.value) || 2)}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+                      handleFormChange('minimumFractionDigits', isNaN(val) ? 0 : val);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    min="0"
+                    max="10"
                   />
                 </div>
               </SimpleCardContent>

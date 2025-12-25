@@ -4,12 +4,12 @@ import SimpleButton from '../ui/SimpleButton';
 import paymentService from '../../services/paymentService';
 import apiService from '../../services/api';
 
-const PaymentForm = ({ 
-  payment = null, 
-  invoice = null, 
-  onSubmit, 
-  onCancel, 
-  loading = false 
+const PaymentForm = ({
+  payment = null,
+  invoice = null,
+  onSubmit,
+  onCancel,
+  loading = false
 }) => {
   const [formData, setFormData] = useState({
     amount: '',
@@ -19,7 +19,7 @@ const PaymentForm = ({
     notes: '',
     invoiceId: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [remainingAmount, setRemainingAmount] = useState(0);
   const [availableInvoices, setAvailableInvoices] = useState([]);
@@ -29,26 +29,26 @@ const PaymentForm = ({
   // Helper function to convert date to YYYY-MM-DD format
   const formatDateForInput = (date) => {
     if (!date) return new Date().toISOString().split('T')[0];
-    
+
     try {
       // If already in YYYY-MM-DD format, return as is
       if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return date;
       }
-      
+
       // Try to parse the date
       const dateObj = new Date(date);
-      
+
       // Check if valid date
       if (isNaN(dateObj.getTime())) {
         return new Date().toISOString().split('T')[0];
       }
-      
+
       // Convert to YYYY-MM-DD format
       const year = dateObj.getFullYear();
       const month = String(dateObj.getMonth() + 1).padStart(2, '0');
       const day = String(dateObj.getDate()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}`;
     } catch (error) {
       console.error('Error formatting date:', error, 'Date:', date);
@@ -66,17 +66,22 @@ const PaymentForm = ({
         notes: payment.notes || '',
         invoiceId: payment.invoiceId || ''
       });
-      
+
       // Load invoice data if invoiceId exists
       if (payment.invoiceId) {
         loadInvoiceForPayment(payment.invoiceId);
       }
     } else if (invoice) {
-      // Calculate remaining amount from backend data
-      const totalAmount = invoice.totalAmount || invoice.finalAmount || 0;
-      const amountPaid = invoice.amountPaid || 0;
-      const remaining = totalAmount - amountPaid;
-      
+      // Calculate remaining amount from backend data properly
+      const subtotal = Number(invoice.totalAmount || 0);
+      const discount = Number(invoice.discountAmount || 0);
+      const tax = Number(invoice.taxAmount || 0);
+      const shipping = Number(invoice.shippingAmount || 0);
+
+      const finalTotal = subtotal - discount + tax + shipping;
+      const amountPaid = Number(invoice.amountPaid || 0);
+      const remaining = finalTotal - amountPaid;
+
       setFormData(prev => ({
         ...prev,
         amount: remaining > 0 ? remaining.toString() : '',
@@ -96,10 +101,16 @@ const PaymentForm = ({
       const response = await apiService.getInvoiceById(invoiceId);
       const invoice = response.data || response;
       setSelectedInvoice(invoice);
-      
+
       // Calculate remaining amount
-      const totalPaid = invoice.amountPaid || 0;
-      const remaining = (invoice.totalAmount || 0) - totalPaid;
+      const subtotal = Number(invoice.totalAmount || 0);
+      const discount = Number(invoice.discountAmount || 0);
+      const tax = Number(invoice.taxAmount || 0);
+      const shipping = Number(invoice.shippingAmount || 0);
+
+      const finalTotal = subtotal - discount + tax + shipping;
+      const amountPaid = Number(invoice.amountPaid || 0);
+      const remaining = finalTotal - amountPaid;
       setRemainingAmount(remaining);
     } catch (error) {
       console.error('Error loading invoice for payment:', error);
@@ -112,7 +123,7 @@ const PaymentForm = ({
       console.log('Loading available invoices...');
       const response = await apiService.getInvoices({ limit: 100 });
       console.log('Invoices response:', response);
-      
+
       // Handle different response structures
       const invoices = response.invoices || response.data || response || [];
       setAvailableInvoices(Array.isArray(invoices) ? invoices : []);
@@ -130,7 +141,7 @@ const PaymentForm = ({
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -151,16 +162,22 @@ const PaymentForm = ({
       console.log('Loading invoice details for ID:', invoiceId);
       const response = await apiService.getInvoiceById(invoiceId);
       console.log('Invoice details response:', response);
-      
+
       // Handle different response structures
       const invoice = response.data || response;
       setSelectedInvoice(invoice);
-      
+
       // Calculate remaining amount
-      const totalPaid = invoice.amountPaid || 0;
-      const remaining = (invoice.totalAmount || 0) - totalPaid;
+      const subtotal = Number(invoice.totalAmount || 0);
+      const discount = Number(invoice.discountAmount || 0);
+      const tax = Number(invoice.taxAmount || 0);
+      const shipping = Number(invoice.shippingAmount || 0);
+
+      const finalTotal = subtotal - discount + tax + shipping;
+      const amountPaid = Number(invoice.amountPaid || 0);
+      const remaining = finalTotal - amountPaid;
       setRemainingAmount(remaining);
-      
+
       // Auto-fill amount with remaining balance
       setFormData(prev => ({
         ...prev,
@@ -174,12 +191,12 @@ const PaymentForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const validation = paymentService.validatePaymentData({
       ...formData,
       invoiceId: formData.invoiceId || invoice?.id || payment?.invoiceId
     });
-    
+
     if (!validation.isValid) {
       setErrors(validation.errors);
       return;
@@ -191,7 +208,7 @@ const PaymentForm = ({
       const invoiceTotalAmount = inv?.totalAmount || inv?.finalAmount || 0;
       const invoiceAmountPaid = inv?.amountPaid || 0;
       const invoiceRemaining = invoiceTotalAmount - invoiceAmountPaid;
-      
+
       if (inv && invoiceRemaining <= 0) {
         setErrors({
           amount: 'الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة'
@@ -239,9 +256,8 @@ const PaymentForm = ({
                   handleInputChange(e);
                   handleInvoiceSelect(e.target.value);
                 }}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.invoiceId ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.invoiceId ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 disabled={loadingInvoices}
               >
                 <option value="">اختر الفاتورة...</option>
@@ -263,11 +279,16 @@ const PaymentForm = ({
           {/* Invoice Information */}
           {(invoice || selectedInvoice) && (() => {
             const inv = selectedInvoice || invoice;
-            const totalAmount = inv?.totalAmount || inv?.finalAmount || 0;
-            const amountPaid = inv?.amountPaid || 0;
-            const remaining = totalAmount - amountPaid;
+            const subtotal = Number(inv?.totalAmount || 0);
+            const discount = Number(inv?.discountAmount || 0);
+            const tax = Number(inv?.taxAmount || 0);
+            const shipping = Number(inv?.shippingAmount || 0);
+
+            const finalTotal = subtotal - discount + tax + shipping;
+            const amountPaid = Number(inv?.amountPaid || 0);
+            const remaining = finalTotal - amountPaid;
             const isFullyPaid = remaining <= 0;
-            
+
             return (
               <div className={`p-4 rounded-lg mb-4 ${isFullyPaid ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -290,34 +311,51 @@ const PaymentForm = ({
                   </div>
                   <div>
                     <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>إجمالي الفاتورة:</span>
-                    <span className="font-medium mr-2">
-                      {paymentService.formatAmount(totalAmount, inv?.currency || 'EGP')}
-                    </span>
+                    <div>
+                      <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>المجموع الفرعي:</span>
+                      <span className="font-medium mr-2">
+                        {paymentService.formatAmount(subtotal, inv?.currency || 'EGP')}
+                      </span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="text-red-600">
+                        <span>الخصم:</span>
+                        <span className="font-medium mr-2">
+                          -{paymentService.formatAmount(discount, inv?.currency || 'EGP')}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-bold">الإجمالي النهائي:</span>
+                      <span className="font-bold mr-2">
+                        {paymentService.formatAmount(finalTotal, inv?.currency || 'EGP')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>المدفوع:</span>
+                      <span className="font-medium mr-2 text-green-600">
+                        {paymentService.formatAmount(amountPaid, inv?.currency || 'EGP')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>المتبقي:</span>
+                      <span className={`font-medium mr-2 ${isFullyPaid ? 'text-green-600' : 'text-red-600'}`}>
+                        {paymentService.formatAmount(remaining, inv?.currency || 'EGP')}
+                      </span>
+                    </div>
+                    {inv?.customerName && (
+                      <div className="col-span-2">
+                        <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>العميل:</span>
+                        <span className="font-medium mr-2">{inv.customerName}</span>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>المدفوع:</span>
-                    <span className="font-medium mr-2 text-green-600">
-                      {paymentService.formatAmount(amountPaid, inv?.currency || 'EGP')}
-                    </span>
-                  </div>
-                  <div>
-                    <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>المتبقي:</span>
-                    <span className={`font-medium mr-2 ${isFullyPaid ? 'text-green-600' : 'text-red-600'}`}>
-                      {paymentService.formatAmount(remaining, inv?.currency || 'EGP')}
-                    </span>
-                  </div>
-                  {inv?.customerName && (
-                    <div className="col-span-2">
-                      <span className={isFullyPaid ? 'text-green-700' : 'text-blue-700'}>العميل:</span>
-                      <span className="font-medium mr-2">{inv.customerName}</span>
+                  {isFullyPaid && (
+                    <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-800">
+                      <strong>تنبيه:</strong> هذه الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة.
                     </div>
                   )}
                 </div>
-                {isFullyPaid && (
-                  <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-800">
-                    <strong>تنبيه:</strong> هذه الفاتورة مدفوعة بالكامل ولا يمكن إضافة دفعات جديدة.
-                  </div>
-                )}
               </div>
             );
           })()}
@@ -332,9 +370,8 @@ const PaymentForm = ({
               name="amount"
               value={formData.amount}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.amount ? 'border-red-500' : 'border-gray-300'
-              } ${!payment && isFullyPaid ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.amount ? 'border-red-500' : 'border-gray-300'
+                } ${!payment && isFullyPaid ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="أدخل المبلغ"
               step="0.01"
               min="0"
@@ -358,9 +395,8 @@ const PaymentForm = ({
               name="paymentMethod"
               value={formData.paymentMethod}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.paymentMethod ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.paymentMethod ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               {paymentMethods.map(method => (
                 <option key={method.value} value={method.value}>
@@ -383,9 +419,8 @@ const PaymentForm = ({
               name="paymentDate"
               value={formData.paymentDate}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.paymentDate ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.paymentDate ? 'border-red-500' : 'border-gray-300'
+                }`}
               max="2025-12-31"
               min="2020-01-01"
             />

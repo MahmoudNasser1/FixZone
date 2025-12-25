@@ -87,6 +87,7 @@ const InvoicesPage = React.lazy(() => import('./pages/invoices/InvoicesPage'));
 const InvoiceDetailsPageOld = React.lazy(() => import('./pages/invoices/InvoiceDetailsPage'));
 const CreateInvoicePage = React.lazy(() => import('./pages/invoices/CreateInvoicePage')); // Large file
 const EditInvoicePage = React.lazy(() => import('./pages/invoices/EditInvoicePage'));
+const PublicInvoicePage = React.lazy(() => import('./pages/invoices/PublicInvoicePage'));
 
 // Payments - Lazy Loaded (has chart imports)
 const PaymentsPage = React.lazy(() => import('./pages/payments').then(m => ({ default: m.PaymentsPage })));
@@ -395,6 +396,7 @@ function App() {
             <Route path="/track" element={<Suspense fallback={<LoadingFallback />}><PublicRepairTrackingPage /></Suspense>} />
             <Route path="/track/:id" element={<Suspense fallback={<LoadingFallback />}><PublicRepairTrackingPage /></Suspense>} />
             <Route path="/track/reports" element={<Suspense fallback={<LoadingFallback />}><PublicRepairReportsPage /></Suspense>} />
+            <Route path="/invoice/view/:token" element={<Suspense fallback={<LoadingFallback />}><PublicInvoicePage /></Suspense>} />
 
             {/* Staff/Admin Routes */}
             <Route
@@ -430,7 +432,7 @@ function App() {
 
                       {/* Quotations */}
                       <Route path="quotations" element={<Suspense fallback={<LoadingFallback />}><QuotationsPage /></Suspense>} />
-                      
+
                       {/* Messaging Center */}
                       <Route path="messaging" element={<Suspense fallback={<LoadingFallback />}><MessagingCenterPage /></Suspense>} />
                       <Route path="messaging/reports" element={<Suspense fallback={<LoadingFallback />}><MessagingReportsPage /></Suspense>} />

@@ -5,10 +5,10 @@ import { useSettings } from '../../context/SettingsContext';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
-import { 
+import {
   ArrowRight, FileText, DollarSign, Calendar, User, Building2,
-  CheckCircle, XCircle, Clock, AlertCircle, Download, Edit, 
-  Plus, Eye, Printer, Send, CreditCard, Receipt, Wrench, 
+  CheckCircle, XCircle, Clock, AlertCircle, Download, Edit,
+  Plus, Eye, Printer, Send, CreditCard, Receipt, Wrench,
   Paperclip, Copy, Check
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
@@ -20,13 +20,13 @@ const API_BASE_URL = getDefaultApiBaseUrl();
 const InvoiceDetailsPage = () => {
   const { id } = useParams();
   const location = useLocation();
-  
+
   // Check if this is the new invoice route
   const isNewInvoice = location.pathname === '/invoices/new';
   const effectiveId = isNewInvoice ? 'new' : id;
-  
+
   const { formatMoney } = useSettings();
-  
+
   const [invoice, setInvoice] = useState(null);
   const [invoiceItems, setInvoiceItems] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -46,7 +46,7 @@ const InvoiceDetailsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Check if this is a new invoice
       if (effectiveId === 'new') {
         // For new invoice, set default values
@@ -68,7 +68,7 @@ const InvoiceDetailsPage = () => {
         setLoading(false);
         return;
       }
-      
+
       // Fetch invoice details
       console.log('Fetching invoice with ID:', effectiveId);
       const invoiceData = await apiService.getInvoiceById(effectiveId);
@@ -76,7 +76,7 @@ const InvoiceDetailsPage = () => {
       const invoice = invoiceData.data || invoiceData;
       console.log('Processed invoice data:', invoice);
       setInvoice(invoice);
-      
+
       // Fetch invoice items (with error handling)
       try {
         const itemsData = await apiService.getInvoiceItems(effectiveId);
@@ -87,7 +87,7 @@ const InvoiceDetailsPage = () => {
         console.warn('Could not fetch invoice items:', itemsErr.message);
         setInvoiceItems([]);
       }
-      
+
       // Fetch payments (with error handling)
       try {
         const paymentsData = await apiService.getInvoicePayments(effectiveId);
@@ -157,22 +157,22 @@ const InvoiceDetailsPage = () => {
   const handlePrintInvoice = () => {
     // Use invoice.id if available, otherwise fall back to id from params
     const invoiceId = invoice?.id || id;
-    
+
     console.log('Print invoice clicked:', { invoiceId, invoice: invoice?.id, id });
-    
+
     if (!invoiceId || invoiceId === 'new') {
       console.error('Cannot print: Invoice ID is missing or invalid', { invoiceId, invoice: invoice?.id, id });
       alert('لا يمكن طباعة الفاتورة: رقم الفاتورة غير صحيح');
       return;
     }
-    
+
     try {
       const base = `${API_BASE_URL}/invoices`;
       const url = `${base}/${invoiceId}/print`;
       console.log('Opening print URL:', url, 'API_BASE_URL:', API_BASE_URL);
-      
+
       const printWindow = window.open(url, '_blank');
-      
+
       if (!printWindow) {
         console.error('Failed to open print window - popup blocked');
         alert('فشل فتح نافذة الطباعة. يرجى التحقق من إعدادات منع النوافذ المنبثقة.');
@@ -228,23 +228,23 @@ const InvoiceDetailsPage = () => {
   const calculatedTotalFromItems = invoiceItems.reduce((sum, item) => {
     return sum + (parseFloat(item.totalPrice) || 0);
   }, 0);
-  
+
   // Use calculated total if items exist, otherwise use stored totalAmount
-  const subtotal = invoiceItems.length > 0 && calculatedTotalFromItems > 0 
-    ? calculatedTotalFromItems 
+  const subtotal = invoiceItems.length > 0 && calculatedTotalFromItems > 0
+    ? calculatedTotalFromItems
     : (invoice.totalAmount || 0);
-  
+
   // Calculate discount, tax, and shipping
   const discountPercent = Number(invoice.discountPercent) || 0;
-  const discountAmount = discountPercent > 0 && subtotal > 0 
-    ? (subtotal * discountPercent) / 100 
+  const discountAmount = discountPercent > 0 && subtotal > 0
+    ? (subtotal * discountPercent) / 100
     : (Number(invoice.discountAmount) || 0);
   const taxAmount = Number(invoice.taxAmount) || 0;
   const shippingAmount = Number(invoice.shippingAmount) || 0;
-  
+
   // Calculate final total
   const effectiveTotalAmount = subtotal - discountAmount + taxAmount + shippingAmount;
-  
+
   const remainingAmount = effectiveTotalAmount - (invoice.amountPaid || 0);
 
   return (
@@ -267,7 +267,7 @@ const InvoiceDetailsPage = () => {
             تاريخ الإنشاء: {formatDate(invoice.createdAt)}
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to={`/invoices/${invoice.id}/edit`}>
             <SimpleButton variant="outline">
@@ -304,14 +304,14 @@ const InvoiceDetailsPage = () => {
         {/* Invoice Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Invoice Information */}
-        <SimpleCard>
+          <SimpleCard>
             <SimpleCardHeader>
               <SimpleCardTitle className="flex items-center">
                 <FileText className="w-5 h-5 ml-2" />
                 معلومات الفاتورة
               </SimpleCardTitle>
             </SimpleCardHeader>
-          <SimpleCardContent>
+            <SimpleCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">رقم الفاتورة</label>
@@ -352,15 +352,15 @@ const InvoiceDetailsPage = () => {
                   </div>
                 )}
               </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            </SimpleCardContent>
+          </SimpleCard>
 
           {/* Invoice Items */}
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>عناصر الفاتورة</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
+          <SimpleCard>
+            <SimpleCardHeader>
+              <SimpleCardTitle>عناصر الفاتورة</SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent>
               {invoiceItems.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -375,7 +375,7 @@ const InvoiceDetailsPage = () => {
                           <h4 className="font-medium text-gray-900">
                             {item.itemType === 'part' && item.partName ? item.partName : (item.itemType === 'service' && item.serviceName ? item.serviceName : item.description)}
                           </h4>
-                          
+
                           {/* Part Details */}
                           {item.itemType === 'part' && item.partName && (
                             <div className="mt-2 space-y-1">
@@ -391,12 +391,12 @@ const InvoiceDetailsPage = () => {
                               )}
                             </div>
                           )}
-                          
+
                           {/* Service Details */}
                           {item.itemType === 'service' && item.serviceName && item.serviceDescription && (
                             <p className="text-sm text-gray-600 mt-2">{item.serviceDescription}</p>
                           )}
-                          
+
                           {/* Service Additional Notes */}
                           {item.itemType === 'service' && item.serviceNotes && (() => {
                             // تنظيف serviceNotes من رابط invoiceItemId
@@ -410,15 +410,15 @@ const InvoiceDetailsPage = () => {
                               </p>
                             ) : null;
                           })()}
-                          
+
                           {/* Common Details */}
                           <div className="mt-2 space-y-1">
-                          <p className="text-sm text-gray-600">
-                            الكمية: {item.quantity} × {formatCurrency(item.unitPrice, invoice.currency)}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            النوع: {item.itemType === 'service' ? 'خدمة' : 'قطعة'}
-                          </p>
+                            <p className="text-sm text-gray-600">
+                              الكمية: {item.quantity} × {formatCurrency(item.unitPrice, invoice.currency)}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              النوع: {item.itemType === 'service' ? 'خدمة' : 'قطعة'}
+                            </p>
                             {item.description && (!item.partName && !item.serviceName) && (
                               <p className="text-sm text-gray-500 italic">{item.description}</p>
                             )}
@@ -434,7 +434,7 @@ const InvoiceDetailsPage = () => {
                   ))}
                 </div>
               )}
-              
+
               {/* Invoice Summary - Discount, Tax, Shipping */}
               {(discountPercent > 0 || discountAmount > 0 || taxAmount > 0 || shippingAmount > 0) && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
@@ -443,28 +443,28 @@ const InvoiceDetailsPage = () => {
                       <span className="text-gray-600">المجموع الفرعي:</span>
                       <span className="font-medium">{formatCurrency(subtotal, invoice.currency)}</span>
                     </div>
-                    
+
                     {(discountPercent > 0 || discountAmount > 0) && (
                       <div className="flex justify-between text-sm text-red-600">
                         <span>الخصم {discountPercent > 0 ? `(${discountPercent}%)` : ''}:</span>
                         <span className="font-medium">-{formatCurrency(discountAmount, invoice.currency)}</span>
                       </div>
                     )}
-                    
+
                     {taxAmount > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
                         <span>الضريبة:</span>
                         <span className="font-medium">+{formatCurrency(taxAmount, invoice.currency)}</span>
                       </div>
                     )}
-                    
+
                     {shippingAmount > 0 && (
                       <div className="flex justify-between text-sm text-blue-600">
                         <span>الشحن:</span>
                         <span className="font-medium">+{formatCurrency(shippingAmount, invoice.currency)}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-between text-lg font-semibold pt-3 border-t border-gray-300">
                       <span>الإجمالي النهائي:</span>
                       <span>{formatCurrency(effectiveTotalAmount, invoice.currency)}</span>
@@ -472,8 +472,8 @@ const InvoiceDetailsPage = () => {
                   </div>
                 </div>
               )}
-              </SimpleCardContent>
-            </SimpleCard>
+            </SimpleCardContent>
+          </SimpleCard>
 
           {/* Related Repair Request */}
           {invoice.repairRequestId && (
@@ -619,10 +619,39 @@ const InvoiceDetailsPage = () => {
             </SimpleCardHeader>
             <SimpleCardContent>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">المبلغ الإجمالي:</span>
-                  <span className="font-semibold">{formatCurrency(effectiveTotalAmount, invoice.currency)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">المجموع الفرعي:</span>
+                  <span className="font-medium text-gray-700">{formatCurrency(subtotal, invoice.currency)}</span>
                 </div>
+
+                {(discountPercent > 0 || discountAmount > 0) && (
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>الخصم:</span>
+                    <span className="font-medium">-{formatCurrency(discountAmount, invoice.currency)}</span>
+                  </div>
+                )}
+
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>الضريبة:</span>
+                    <span className="font-medium">+{formatCurrency(taxAmount, invoice.currency)}</span>
+                  </div>
+                )}
+
+                {shippingAmount > 0 && (
+                  <div className="flex justify-between text-sm text-blue-600">
+                    <span>الشحن:</span>
+                    <span className="font-medium">+{formatCurrency(shippingAmount, invoice.currency)}</span>
+                  </div>
+                )}
+
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-600 font-medium">المبلغ الإجمالي:</span>
+                    <span className="font-bold text-lg">{formatCurrency(effectiveTotalAmount, invoice.currency)}</span>
+                  </div>
+                </div>
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">المدفوع:</span>
                   <span className="font-semibold text-green-600">{formatCurrency(invoice.amountPaid, invoice.currency)}</span>
@@ -635,7 +664,7 @@ const InvoiceDetailsPage = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-600">نسبة الدفع:</span>
                     <span className="font-semibold">
-                      {effectiveTotalAmount > 0 ? 
+                      {effectiveTotalAmount > 0 ?
                         Math.round((invoice.amountPaid / effectiveTotalAmount) * 100) : 0}%
                     </span>
                   </div>
@@ -796,7 +825,7 @@ const InvoiceDetailsPage = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.00"
                       />
-                  </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         نوع العنصر
@@ -861,7 +890,7 @@ const InvoiceDetailsPage = () => {
                     </p>
                   </div>
                 )}
-          </div>
+              </div>
             </SimpleCardContent>
           </SimpleCard>
 

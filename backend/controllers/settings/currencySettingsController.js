@@ -114,6 +114,8 @@ exports.updateCurrencySettings = async (req, res) => {
 
     // Update all settings
     const results = [];
+    const userId = req.user?.id || 1; // Default to admin user ID if not provided
+
     for (const update of updates) {
       try {
         const existing = await settingsService.getSettingByKey(update.key);
@@ -121,7 +123,7 @@ exports.updateCurrencySettings = async (req, res) => {
           await settingsService.updateSetting(update.key, {
             value: update.value,
             reason: 'Currency settings update'
-          });
+          }, userId);
         } else {
           await settingsService.createSetting({
             key: update.key,
@@ -131,7 +133,7 @@ exports.updateCurrencySettings = async (req, res) => {
             description: `Currency ${update.key.split('.').pop()}`,
             isSystem: false,
             isPublic: true
-          });
+          }, userId);
         }
         results.push({ key: update.key, success: true });
       } catch (err) {

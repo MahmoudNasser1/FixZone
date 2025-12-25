@@ -48,11 +48,11 @@ export function loadSettings() {
     return {
       ...defaultSettings,
       ...parsed,
-      company: { ...defaultSettings.company, ...(parsed.company||{}) },
-      currency: { ...defaultSettings.currency, ...(parsed.currency||{}) },
-      printing: { ...defaultSettings.printing, ...(parsed.printing||{}) },
-      locale: { ...defaultSettings.locale, ...(parsed.locale||{}) },
-      receipt: { ...defaultSettings.receipt, ...(parsed.receipt||{}) },
+      company: { ...defaultSettings.company, ...(parsed.company || {}) },
+      currency: { ...defaultSettings.currency, ...(parsed.currency || {}) },
+      printing: { ...defaultSettings.printing, ...(parsed.printing || {}) },
+      locale: { ...defaultSettings.locale, ...(parsed.locale || {}) },
+      receipt: { ...defaultSettings.receipt, ...(parsed.receipt || {}) },
     };
   } catch {
     return defaultSettings;
@@ -62,7 +62,7 @@ export function loadSettings() {
 export function saveSettings(next) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {}
+  } catch { }
 }
 
 // Helper function to remove trailing zeros from number string
@@ -76,24 +76,27 @@ export function formatMoney(amount, settings) {
   const cfg = (settings && settings.currency) || defaultSettings.currency;
   try {
     const numAmount = Number(amount || 0);
-    
-    // Format with currency, but we'll remove trailing zeros
+
+    // Use fraction digits from settings or default to 2
+    const fractionDigits = cfg.minimumFractionDigits !== undefined ? parseInt(cfg.minimumFractionDigits) : 2;
+
+    // Format with currency, but we'll remove trailing zeros only if fractionDigits is 0 or not set
     const formatted = new Intl.NumberFormat(cfg.locale || 'ar-EG', {
       style: 'currency',
       currency: cfg.code || 'EGP',
-      minimumFractionDigits: 0, // Start with 0, we'll add decimals only if needed
-      maximumFractionDigits: 2, // Max 2 decimals
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
     }).format(numAmount);
-    
+
     // Remove trailing zeros from the formatted string
     const cleaned = removeTrailingZeros(formatted);
-    
+
     // Apply position if specified (before/after)
     if (cfg.position === 'before' && cfg.symbol) {
       const numStr = parseFloat(numAmount.toString()).toString();
       return `${cfg.symbol} ${numStr}`;
     }
-    
+
     return cleaned;
   } catch {
     const numStr = parseFloat(Number(amount || 0).toString()).toString();
@@ -107,18 +110,18 @@ export function formatMoney(amount, settings) {
 export function formatDate(date, settings) {
   const cfg = (settings && settings.locale) || defaultSettings.locale;
   const dateFormat = cfg.dateFormat || 'yyyy/MM/dd';
-  
+
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) {
       return date || '';
     }
-    
+
     // Simple date formatting (can be enhanced with date-fns or moment.js)
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    
+
     return dateFormat
       .replace('yyyy', year)
       .replace('MM', month)

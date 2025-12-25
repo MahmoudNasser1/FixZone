@@ -1,4 +1,5 @@
 const db = require('../db');
+const crypto = require('crypto');
 const websocketService = require('../services/websocketService');
 
 // Simplified Invoice Controller - Basic functionality only
@@ -286,7 +287,8 @@ class InvoicesControllerSimple {
         shippingAmount = 0,
         discountAmount = 0,
         discountPercent = 0,
-        amountPaid = 0
+        amountPaid = 0,
+        trackingToken = crypto.randomUUID()
       } = req.body;
 
       // Validation is done by Joi middleware, but keeping basic checks for safety
@@ -338,11 +340,11 @@ class InvoicesControllerSimple {
       // محاولة إدراج shippingAmount و discountAmount إذا كانا موجودين في قاعدة البيانات
       let result;
       try {
-        // محاولة مع shippingAmount و discountAmount و discountPercent
+        // محاولة مع shippingAmount و discountAmount و discountPercent و trackingToken
         [result] = await connection.execute(
-          `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, discountPercent)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, finalDiscountAmount, discountPercent]
+          `INSERT INTO Invoice (repairRequestId, customerId, vendorId, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, discountAmount, discountPercent, trackingToken)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [repairRequestId || null, finalCustomerId || null, vendorId || null, invoiceType, totalAmount, amountPaid, status, currency, taxAmount, shippingAmount, finalDiscountAmount, discountPercent, trackingToken]
         );
       } catch (error) {
         // إذا فشل بسبب عدم وجود العمود، نستخدم الاستعلام بدون الأعمدة المفقودة
@@ -1376,6 +1378,90 @@ class InvoicesControllerSimple {
       connection.release();
     }
   }
+
+  // Get public invoice details by token
+  async getPublicInvoiceByToken(req, res) {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token is required'
+        });
+      }
+
+      // 1. Get invoice details
+      const [rows] = await db.execute(`
+        SELECT 
+          i.id, i.totalAmount, i.amountPaid, i.status, i.currency, i.taxAmount, 
+          i.shippingAmount, i.discountAmount, i.discountPercent, i.createdAt, i.dueDate, i.notes,
+          i.repairRequestId, i.customerId,
+          COALESCE(c_direct.name, c_via_repair.name) as customerName,
+          COALESCE(c_direct.phone, c_via_repair.phone) as customerPhone,
+          COALESCE(rr.deviceBrand, d.brand) as deviceBrand,
+          COALESCE(rr.deviceModel, d.model) as deviceModel,
+          COALESCE(rr.deviceType, d.deviceType) as deviceType
+        FROM Invoice i
+        LEFT JOIN RepairRequest rr ON i.repairRequestId = rr.id
+        LEFT JOIN Device d ON rr.deviceId = d.id
+        LEFT JOIN Customer c_direct ON i.customerId = c_direct.id
+        LEFT JOIN Customer c_via_repair ON rr.customerId = c_via_repair.id
+        WHERE i.trackingToken = ? AND i.deletedAt IS NULL
+      `, [token]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Invoice not found or invalid token'
+        });
+      }
+
+      const invoice = rows[0];
+
+      // 2. Get invoice items
+      const [items] = await db.execute(`
+        SELECT 
+          ii.id, ii.quantity, ii.unitPrice, ii.totalPrice, ii.description, ii.itemType,
+          inv.name as partName, s.name as serviceName
+        FROM InvoiceItem ii
+        LEFT JOIN InventoryItem inv ON ii.inventoryItemId = inv.id AND ii.itemType = 'part'
+        LEFT JOIN Service s ON ii.serviceId = s.id AND ii.itemType = 'service'
+        WHERE ii.invoiceId = ? AND ii.deletedAt IS NULL
+      `, [invoice.id]);
+
+      // 3. Get payments
+      const [paymentsRows] = await db.execute(`
+        SELECT amount, paymentDate, paymentMethod
+        FROM Payment 
+        WHERE invoiceId = ?
+      `, [invoice.id]);
+
+      // Calculate actual paid from payments
+      const actualAmountPaid = paymentsRows.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+      // Return simplified data
+      return res.json({
+        success: true,
+        data: {
+          ...invoice,
+          items,
+          payments: paymentsRows,
+          amountPaid: actualAmountPaid,
+          remainingAmount: Math.max(0, (parseFloat(invoice.totalAmount) || 0) - actualAmountPaid)
+        }
+      });
+
+    } catch (error) {
+      console.error('Error in getPublicInvoiceByToken:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error',
+        details: error.message
+      });
+    }
+  }
+
 }
 
 module.exports = new InvoicesControllerSimple();

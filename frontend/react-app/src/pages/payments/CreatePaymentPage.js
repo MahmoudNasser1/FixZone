@@ -11,7 +11,7 @@ export default function CreatePaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addNotification } = useNotifications();
-  
+
   const [loading, setLoading] = useState(false);
   const [invoice, setInvoice] = useState(null);
   const [invoices, setInvoices] = useState([]);
@@ -32,7 +32,7 @@ export default function CreatePaymentPage() {
       // The backend doesn't support comma-separated status values
       const response = await apiService.getInvoices({ limit: 100 });
       let invoicesArray = [];
-      
+
       if (response && response.success && response.data && response.data.invoices) {
         invoicesArray = response.data.invoices;
       } else if (response && Array.isArray(response.data)) {
@@ -42,12 +42,12 @@ export default function CreatePaymentPage() {
       } else if (Array.isArray(response)) {
         invoicesArray = response;
       }
-      
+
       // Filter invoices on frontend for status: sent, partially_paid, or paid
-      const filteredInvoices = invoicesArray.filter(inv => 
+      const filteredInvoices = invoicesArray.filter(inv =>
         inv.status === 'sent' || inv.status === 'partially_paid' || inv.status === 'paid'
       );
-      
+
       setInvoices(filteredInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
@@ -82,7 +82,7 @@ export default function CreatePaymentPage() {
   const handleSubmit = async (paymentData) => {
     try {
       setLoading(true);
-      
+
       // Check if invoice is fully paid before submitting
       if (invoice) {
         const isFullyPaid = (invoice.amountPaid || 0) >= (invoice.totalAmount || invoice.finalAmount || 0);
@@ -92,13 +92,13 @@ export default function CreatePaymentPage() {
           return;
         }
       }
-      
+
       console.log('Payment data being sent:', {
         ...paymentData,
         invoiceId: selectedInvoiceId || paymentData.invoiceId,
         createdBy: 2
       });
-      
+
       // Get current user ID from auth context or local storage
       let currentUserId = null;
       try {
@@ -108,7 +108,7 @@ export default function CreatePaymentPage() {
         console.warn('Could not get current user, using default:', e);
         currentUserId = 2; // Default fallback
       }
-      
+
       const response = await paymentService.createPayment({
         ...paymentData,
         invoiceId: selectedInvoiceId || paymentData.invoiceId,
@@ -123,10 +123,10 @@ export default function CreatePaymentPage() {
       }
     } catch (error) {
       console.error('Error creating payment:', error);
-      
+
       // Parse error message from backend
       let errorMessage = 'خطأ في إضافة الدفعة';
-      
+
       if (error.message) {
         if (error.message.includes('already fully paid')) {
           errorMessage = 'الفاتورة مدفوعة بالكامل - لا يمكن إضافة دفعة جديدة';
@@ -138,7 +138,7 @@ export default function CreatePaymentPage() {
           errorMessage = error.message;
         }
       }
-      
+
       addNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
@@ -168,7 +168,7 @@ export default function CreatePaymentPage() {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">اختيار الفاتورة</h2>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   الفاتورة
@@ -181,7 +181,7 @@ export default function CreatePaymentPage() {
                   <option value="">اختر الفاتورة</option>
                   {invoices.map(inv => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber || inv.id} - {inv.customerName || 'عميل غير محدد'} - 
+                      {inv.invoiceNumber || inv.id} - {inv.customerName || 'عميل غير محدد'} -
                       {paymentService.formatAmount(inv.totalAmount || inv.finalAmount || 0, inv.currency)}
                     </option>
                   ))}
@@ -189,11 +189,21 @@ export default function CreatePaymentPage() {
               </div>
 
               {invoice && (() => {
-                const isFullyPaid = (invoice.amountPaid || 0) >= (invoice.totalAmount || invoice.finalAmount || 0);
+                // Calculate final totals ensuring all values are numbers
+                const subtotal = Number(invoice.totalAmount || 0);
+                const discount = Number(invoice.discountAmount || 0);
+                const tax = Number(invoice.taxAmount || 0);
+                const shipping = Number(invoice.shippingAmount || 0);
+
+                const finalTotal = subtotal - discount + tax + shipping;
+                const paid = Number(invoice.amountPaid || 0);
+                const remaining = finalTotal - paid;
+
+                const isFullyPaid = remaining <= 0;
                 const bgColor = isFullyPaid ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200';
                 const titleColor = isFullyPaid ? 'text-green-900' : 'text-blue-900';
                 const labelColor = isFullyPaid ? 'text-green-700' : 'text-blue-700';
-                
+
                 return (
                   <div className={`${bgColor} p-4 rounded-lg`}>
                     <div className="flex items-center gap-2 mb-2">
@@ -219,21 +229,49 @@ export default function CreatePaymentPage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className={labelColor}>إجمالي الفاتورة:</span>
+                        <span className={labelColor}>المجموع الفرعي:</span>
                         <span className="font-medium">
-                          {paymentService.formatAmount(invoice.totalAmount || invoice.finalAmount || 0, invoice.currency)}
+                          {paymentService.formatAmount(subtotal, invoice.currency)}
+                        </span>
+                      </div>
+                      {(discount > 0 || tax > 0 || shipping > 0) && (
+                        <>
+                          {discount > 0 && (
+                            <div className="flex justify-between text-red-600">
+                              <span>الخصم:</span>
+                              <span>-{paymentService.formatAmount(discount, invoice.currency)}</span>
+                            </div>
+                          )}
+                          {tax > 0 && (
+                            <div className="flex justify-between">
+                              <span className={labelColor}>الضريبة:</span>
+                              <span className="font-medium">{paymentService.formatAmount(tax, invoice.currency)}</span>
+                            </div>
+                          )}
+                          {shipping > 0 && (
+                            <div className="flex justify-between">
+                              <span className={labelColor}>الشحن:</span>
+                              <span className="font-medium">{paymentService.formatAmount(shipping, invoice.currency)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                        <span className={`font-bold ${labelColor}`}>الإجمالي النهائي:</span>
+                        <span className="font-bold">
+                          {paymentService.formatAmount(finalTotal, invoice.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className={labelColor}>المدفوع:</span>
                         <span className="font-medium text-green-600">
-                          {paymentService.formatAmount(invoice.amountPaid || 0, invoice.currency)}
+                          {paymentService.formatAmount(paid, invoice.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className={labelColor}>المتبقي:</span>
                         <span className={`font-medium ${isFullyPaid ? 'text-green-600' : 'text-red-600'}`}>
-                          {paymentService.formatAmount((invoice.totalAmount || invoice.finalAmount || 0) - (invoice.amountPaid || 0), invoice.currency)}
+                          {paymentService.formatAmount(remaining, invoice.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between">

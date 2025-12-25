@@ -191,6 +191,32 @@ router.get('/public/verify', async (req, res) => {
   }
 });
 
+// Public invoice access by token (must be before authMiddleware)
+router.get('/public/view/:token', invoicesController.getPublicInvoiceByToken);
+
+// Public invoice print by token (must be before authMiddleware)
+router.get('/public/print/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const [rows] = await db.execute('SELECT id FROM Invoice WHERE trackingToken = ? AND deletedAt IS NULL', [token]);
+    if (rows.length === 0) {
+      return res.status(404).send(`
+        <html dir="rtl">
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h1>الفاتورة غير موجودة</h1>
+          </body>
+        </html>
+      `);
+    }
+    const invoiceId = rows[0].id;
+    // Redirect to internal print route with a flag
+    return res.redirect(`/api/invoices/${invoiceId}/print?public=true&token=${token}`);
+  } catch (error) {
+    console.error('Error in public print by token:', error);
+    return res.status(500).send('خطأ في الخادم');
+  }
+});
+
 // Load print settings helper (needed for print route)
 // CRITICAL: Cache settings to prevent repeated file reads that could cause performance issues
 let cachedPrintSettings = null;
@@ -259,38 +285,48 @@ router.get('/stats', invoicesController.getInvoiceStats);
 // Print invoice route (MUST come before /:id route)
 router.get('/:id/print', async (req, res) => {
   const { id } = req.params;
-  const { public, phoneNumber, repairRequestId } = req.query;
+  const { public, phoneNumber, repairRequestId, token } = req.query;
 
-  // If this is a public request, verify phone number
-  if (public === 'true' && phoneNumber && repairRequestId) {
+  // If this is a public request, verify phone number OR token
+  if (public === 'true') {
     try {
-      const normalizedPhone = phoneNumber.replace(/\D/g, '');
-      const [repairRows] = await db.query(`
-        SELECT rr.id, c.phone as customerPhone
-        FROM RepairRequest rr
-        LEFT JOIN Customer c ON rr.customerId = c.id
-        WHERE rr.id = ? AND rr.deletedAt IS NULL
-      `, [repairRequestId]);
+      if (token) {
+        // Verify token matches invoice ID
+        const [tokenRows] = await db.execute('SELECT id FROM Invoice WHERE id = ? AND trackingToken = ? AND deletedAt IS NULL', [id, token]);
+        if (tokenRows.length === 0) {
+          return res.status(403).send('غير مصرح - رمز غير صحيح');
+        }
+      } else if (phoneNumber && repairRequestId) {
+        const normalizedPhone = phoneNumber.replace(/\D/g, '');
+        const [repairRows] = await db.query(`
+          SELECT rr.id, c.phone as customerPhone
+          FROM RepairRequest rr
+          LEFT JOIN Customer c ON rr.customerId = c.id
+          WHERE rr.id = ? AND rr.deletedAt IS NULL
+        `, [repairRequestId]);
 
-      if (repairRows.length === 0) {
-        return res.status(404).send('طلب الإصلاح غير موجود');
-      }
+        if (repairRows.length === 0) {
+          return res.status(404).send('طلب الإصلاح غير موجود');
+        }
 
-      const repair = repairRows[0];
-      const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
+        const repair = repairRows[0];
+        const normalizedCustomerPhone = (repair.customerPhone || '').replace(/\D/g, '');
 
-      if (normalizedCustomerPhone !== normalizedPhone) {
-        return res.status(403).send('رقم الهاتف غير صحيح');
-      }
+        if (normalizedCustomerPhone !== normalizedPhone) {
+          return res.status(403).send('رقم الهاتف غير صحيح');
+        }
 
-      // Verify invoice belongs to this repair
-      const [invoiceCheck] = await db.query(`
-        SELECT id FROM Invoice 
-        WHERE id = ? AND repairRequestId = ? AND deletedAt IS NULL
-      `, [id, repairRequestId]);
+        // Verify invoice belongs to this repair
+        const [invoiceCheck] = await db.query(`
+          SELECT id FROM Invoice 
+          WHERE id = ? AND repairRequestId = ? AND deletedAt IS NULL
+        `, [id, repairRequestId]);
 
-      if (invoiceCheck.length === 0) {
-        return res.status(404).send('الفاتورة غير موجودة');
+        if (invoiceCheck.length === 0) {
+          return res.status(404).send('الفاتورة غير موجودة');
+        }
+      } else {
+        return res.status(403).send('غير مصرح - بيانات التحقق ناقصة');
       }
     } catch (verifyError) {
       return res.status(500).send('خطأ في التحقق: ' + verifyError.message);

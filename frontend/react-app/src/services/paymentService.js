@@ -1,16 +1,17 @@
 import apiService from './api';
+import { loadSettings } from '../config/settings';
 
 class PaymentService {
   // Get all payments with filters and pagination
   async getAllPayments(params = {}) {
     const queryParams = new URLSearchParams();
-    
+
     Object.keys(params).forEach(key => {
       if (params[key] !== undefined && params[key] !== '') {
         queryParams.append(key, params[key]);
       }
     });
-    
+
     return await apiService.request(`/payments?${queryParams.toString()}`);
   }
 
@@ -52,13 +53,13 @@ class PaymentService {
   // Get payment statistics
   async getPaymentStats(params = {}) {
     const queryParams = new URLSearchParams();
-    
+
     Object.keys(params).forEach(key => {
       if (params[key] !== undefined && params[key] !== '') {
         queryParams.append(key, params[key]);
       }
     });
-    
+
     return await apiService.request(`/payments/stats/summary?${queryParams.toString()}`);
   }
 
@@ -78,24 +79,27 @@ class PaymentService {
     ];
   }
 
-  // Format payment amount (without trailing zeros)
+  // Format payment amount (respecting currency settings)
   formatAmount(amount, currency = 'EGP') {
     if (!amount && amount !== 0) {
-      return '0 ج.م';
+      return `0 ${currency}`;
     }
     try {
+      const settings = loadSettings();
+      const cfg = settings.currency || {};
       const numAmount = Number(amount);
-      const formatted = new Intl.NumberFormat('ar-EG', {
+
+      const fractionDigits = cfg.minimumFractionDigits !== undefined ? cfg.minimumFractionDigits : 2;
+
+      return new Intl.NumberFormat(cfg.locale || 'ar-EG', {
         style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
+        currency: currency || cfg.code || 'EGP',
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
       }).format(numAmount);
-      // Remove trailing zeros
-      return formatted.replace(/\.0+$/, '').replace(/(\d+\.\d*?)0+$/, '$1');
     } catch (error) {
       console.error('Error formatting amount:', error, 'Amount:', amount);
-      const numStr = parseFloat(Number(amount || 0).toString()).toString();
+      const numStr = Number(amount || 0).toLocaleString();
       return `${numStr} ${currency}`;
     }
   }
@@ -105,15 +109,15 @@ class PaymentService {
     if (!date) {
       return 'غير محدد';
     }
-    
+
     try {
       const dateObj = new Date(date);
-      
+
       // Check if the date is valid
       if (isNaN(dateObj.getTime())) {
         return 'تاريخ غير صحيح';
       }
-      
+
       return new Intl.DateTimeFormat('ar-EG', {
         year: 'numeric',
         month: 'long',
@@ -181,4 +185,5 @@ class PaymentService {
   }
 }
 
-export default new PaymentService();
+const paymentServiceInstance = new PaymentService();
+export default paymentServiceInstance;
