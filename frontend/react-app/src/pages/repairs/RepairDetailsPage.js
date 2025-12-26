@@ -910,7 +910,7 @@ const RepairDetailsPage = () => {
 
       try {
         console.log('Updating device specs with data:', deviceSpecs);
-        await apiService.updateRepairRequest(id, { deviceSpecs });
+        await apiService.updateRepairRequest(id, { ...deviceSpecs });
         setRepair(prev => ({ ...prev, deviceSpecs }));
       } catch (e) {
         console.error('Error updating device specs:', e);

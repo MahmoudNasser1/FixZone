@@ -37,7 +37,8 @@ import {
   Image,
   Download,
   Sun,
-  Moon
+  Moon,
+  ShoppingBag
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import SimpleButton from '../../components/ui/SimpleButton';
@@ -1010,6 +1011,26 @@ const PublicRepairTrackingPage = () => {
                   </SimpleCardTitle>
                 </SimpleCardHeader>
                 <SimpleCardContent className="p-6">
+                  {/* Accessories Section */}
+                  {repairData.accessories && repairData.accessories.length > 0 && (
+                    <div className="mb-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ShoppingBag className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">المتعلقات المستلمة</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {repairData.accessories.map((acc, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm"
+                          >
+                            {acc}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="p-4 rounded-xl bg-muted/30 border border-border/20">
                       <Calendar className="w-4 h-4 text-emerald-600 mb-2" />
@@ -1057,22 +1078,33 @@ const PublicRepairTrackingPage = () => {
                           <div>
                             <span className="text-[10px] text-yellow-600 dark:text-yellow-500 block mb-0.5">التكلفة التقديرية</span>
                             <p className="text-2xl font-black text-yellow-700 dark:text-yellow-400">
-                              {repairData.estimatedCost && parseFloat(repairData.estimatedCost) > 0
-                                ? `${Math.floor(parseFloat(repairData.estimatedCost))} ج.م`
-                                : 'قيد التقدير'}
+                              {repairData.estimatedCostMin && repairData.estimatedCostMax && parseFloat(repairData.estimatedCostMin) !== parseFloat(repairData.estimatedCostMax)
+                                ? `${Math.floor(parseFloat(repairData.estimatedCostMin))} - ${Math.floor(parseFloat(repairData.estimatedCostMax))} ج.م`
+                                : (repairData.estimatedCost && parseFloat(repairData.estimatedCost) > 0
+                                  ? `${Math.floor(parseFloat(repairData.estimatedCost))} ج.م`
+                                  : 'قيد التقدير')}
                             </p>
                           </div>
                         )}
 
                         {/* Show estimated cost as reference if actual cost exists */}
-                        {repairData.actualCost && repairData.estimatedCost && parseFloat(repairData.estimatedCost) > 0 && (
-                          <div className="pt-2 border-t border-emerald-200/30">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">التكلفة التقديرية الأولية:</span>
-                              <span className="font-semibold text-foreground">{Math.floor(parseFloat(repairData.estimatedCost))} ج.م</span>
+                        {/* Show estimated cost as reference if actual cost exists */}
+                        {repairData.actualCost && (
+                          (repairData.estimatedCostMin && repairData.estimatedCostMax && parseFloat(repairData.estimatedCostMin) !== parseFloat(repairData.estimatedCostMax)) ||
+                          (repairData.estimatedCost && parseFloat(repairData.estimatedCost) > 0)
+                        ) && (
+                            <div className="pt-2 border-t border-emerald-200/30">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">التكلفة التقديرية الأولية:</span>
+                                <span className="font-semibold text-foreground">
+                                  {repairData.estimatedCostMin && repairData.estimatedCostMax && parseFloat(repairData.estimatedCostMin) !== parseFloat(repairData.estimatedCostMax)
+                                    ? `${Math.floor(parseFloat(repairData.estimatedCostMin))} - ${Math.floor(parseFloat(repairData.estimatedCostMax))} ج.م`
+                                    : `${Math.floor(parseFloat(repairData.estimatedCost))} ج.م`
+                                  }
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     </div>
 

@@ -1988,6 +1988,12 @@ const repairSchemas = {
         'string.max': 'الملاحظات يجب ألا تزيد عن 2000 حرف'
       }),
 
+    cpu: Joi.string().max(100).allow('', null).optional(),
+    ram: Joi.string().max(50).allow('', null).optional(),
+    storage: Joi.string().max(100).allow('', null).optional(),
+    gpu: Joi.string().max(100).allow('', null).optional(),
+    devicePassword: Joi.string().max(100).allow('', null).optional(),
+
     accessories: Joi.array().items(Joi.alternatives().try(
       Joi.string(),
       Joi.object().unknown()

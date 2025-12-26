@@ -2064,26 +2064,31 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
 
       // إضافة الملحقات الجديدة إذا كانت موجودة
       if (Array.isArray(accessories) && accessories.length > 0) {
-        for (const accessory of accessories) {
-          if (accessory) {
-            const accessoryValue = typeof accessory === 'string' ? accessory : (accessory.value || accessory.label || accessory.name);
-            if (accessoryValue) {
-              // البحث عن VariableOption الذي يطابق القيمة أو الاسم
-              const [optionRows] = await db.execute(
-                'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
-                [accessoryValue, accessoryValue]
-              );
+        // تصفية التكرار لتجنب أخطاء قاعدة البيانات
+        const uniqueAccessories = [...new Set(accessories.map(a =>
+          typeof a === 'string' ? a : (a?.value || a?.label || a?.name)
+        ))].filter(Boolean);
 
-              if (optionRows.length > 0) {
-                // حفظ في RepairRequestAccessory
-                await db.execute(
-                  'INSERT INTO RepairRequestAccessory (repairRequestId, accessoryOptionId, quantity) VALUES (?, ?, ?)',
-                  [id, optionRows[0].id, 1]
-                );
-              } else {
-                console.warn(`⚠️ [PATCH /:id/details] Accessory option not found for: ${accessoryValue}, saving as JSON only`);
-              }
+        for (const accessoryValue of uniqueAccessories) {
+          try {
+            // البحث عن VariableOption الذي يطابق القيمة أو الاسم
+            const [optionRows] = await db.execute(
+              'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
+              [accessoryValue, accessoryValue]
+            );
+
+            if (optionRows.length > 0) {
+              // حفظ في RepairRequestAccessory
+              await db.execute(
+                'INSERT INTO RepairRequestAccessory (repairRequestId, accessoryOptionId, quantity) VALUES (?, ?, ?)',
+                [id, optionRows[0].id, 1]
+              );
+            } else {
+              console.warn(`⚠️ [PATCH /:id/details] Accessory option not found for: ${accessoryValue}, saving as JSON only`);
             }
+          } catch (accError) {
+            console.error(`❌ [PATCH /:id/details] Error processing accessory ${accessoryValue}:`, accError);
+            // Continue to next accessory
           }
         }
         console.log('✅ [PATCH /:id/details] Accessories updated in both JSON column and RepairRequestAccessory table');

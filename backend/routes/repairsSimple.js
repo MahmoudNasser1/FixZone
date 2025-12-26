@@ -111,6 +111,8 @@ router.get('/tracking', async (req, res) => {
         rr.updatedAt,
         rr.estimatedCost,
         rr.expectedDeliveryDate,
+        rr.customFields,
+        rr.accessories as accessoriesJSON,
         c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
@@ -131,7 +133,7 @@ router.get('/tracking', async (req, res) => {
         (SELECT GROUP_CONCAT(COALESCE(vo_acc.label, vo_acc.value) SEPARATOR ', ')
          FROM RepairRequestAccessory rra
          LEFT JOIN VariableOption vo_acc ON rra.accessoryOptionId = vo_acc.id
-         WHERE rra.repairRequestId = rr.id) as accessories
+         WHERE rra.repairRequestId = rr.id) as accessoriesFromRel
       FROM RepairRequest rr
       LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
       LEFT JOIN Device d ON rr.deviceId = d.id
@@ -226,6 +228,36 @@ router.get('/tracking', async (req, res) => {
     // التسمية العربية
     const arabicStatusLabel = statusMap[englishStatus] || statusMap[dbStatus] || dbStatus;
 
+    // Parse customFields safely
+    let customFields = {};
+    try {
+      if (repair.customFields) {
+        customFields = typeof repair.customFields === 'string'
+          ? JSON.parse(repair.customFields)
+          : (repair.customFields || {});
+      }
+    } catch (e) {
+      console.error('Error parsing customFields:', e);
+      customFields = {};
+    }
+
+    // Parse accessories safely
+    let accessoriesList = [];
+    if (repair.accessoriesFromRel) {
+      accessoriesList = repair.accessoriesFromRel.split(', ');
+    } else if (repair.accessoriesJSON) {
+      try {
+        const parsed = typeof repair.accessoriesJSON === 'string'
+          ? JSON.parse(repair.accessoriesJSON)
+          : (Array.isArray(repair.accessoriesJSON) ? repair.accessoriesJSON : []);
+        // تصفية القيم الفارغة واستخراج الأسماء إذا كانت كائنات
+        accessoriesList = parsed.map(a => typeof a === 'string' ? a : (a?.label || a?.value || a)).filter(Boolean);
+      } catch (e) {
+        console.error('Error parsing accessoriesJSON:', e);
+        accessoriesList = [];
+      }
+    }
+
     res.json({
       id: repair.id,
       requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
@@ -237,6 +269,8 @@ router.get('/tracking', async (req, res) => {
       deviceModel: repair.deviceModel || 'غير محدد',
       problemDescription: repair.reportedProblem || 'لا توجد تفاصيل',
       estimatedCost: repair.estimatedCost ? parseFloat(repair.estimatedCost).toFixed(2) : '0.00',
+      estimatedCostMin: customFields.estimatedCostMin ? parseFloat(customFields.estimatedCostMin).toFixed(2) : null,
+      estimatedCostMax: customFields.estimatedCostMax ? parseFloat(customFields.estimatedCostMax).toFixed(2) : null,
       actualCost: repair.invoiceTotal ? parseFloat(repair.invoiceTotal).toFixed(2) : null,
       amountPaid: repair.invoicePaid ? parseFloat(repair.invoicePaid).toFixed(2) : '0.00',
       priority: 'normal',
@@ -256,7 +290,7 @@ router.get('/tracking', async (req, res) => {
       gpu: repair.gpu,
       devicePassword: repair.devicePassword,
       // Accessories
-      accessories: repair.accessories ? repair.accessories.split(', ') : []
+      accessories: accessoriesList
     });
 
   } catch (error) {
