@@ -16,7 +16,7 @@ import {
   ArrowRight, User, Phone, Mail, Settings, Edit, Save, X,
   Wrench, Clock, CheckCircle, Play, XCircle, AlertTriangle,
   FileText, Paperclip, MessageSquare, Plus, Printer, QrCode,
-  UserPlus, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw, Copy, Check, Building2
+  UserPlus, Users, UserX, Trash2, Eye, ShoppingCart, Package, DollarSign, RefreshCw, Copy, Check, Building2
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
@@ -2354,26 +2354,28 @@ const RepairDetailsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center space-x-2 space-x-reverse mb-2">
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+        <div className="w-full lg:max-w-2xl">
+          <div className="flex items-center flex-wrap gap-2 mb-2">
             <Link to="/repairs">
-              <SimpleButton variant="ghost" size="sm">
+              <SimpleButton variant="ghost" size="sm" className="p-1 h-8 w-8">
                 <ArrowRight className="w-4 h-4" />
               </SimpleButton>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate max-w-[200px] xs:max-w-none">
               تفاصيل الطلب: {repair.requestNumber}
             </h1>
-            <SimpleBadge className={statusInfo.color}>
-              <StatusIcon className="w-3 h-3 ml-1" />
-              {statusInfo.text}
-            </SimpleBadge>
-            <SimpleBadge className={priorityInfo.color}>
-              {priorityInfo.text}
-            </SimpleBadge>
+            <div className="flex items-center gap-2">
+              <SimpleBadge className={statusInfo.color}>
+                <StatusIcon className="w-3 h-3 ml-1" />
+                {statusInfo.text}
+              </SimpleBadge>
+              <SimpleBadge className={priorityInfo.color}>
+                {priorityInfo.text}
+              </SimpleBadge>
+            </div>
           </div>
-          <p className="text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             تاريخ الإنشاء: {repair.createdAt ? (() => {
               try {
                 const date = new Date(repair.createdAt);
@@ -2385,10 +2387,10 @@ const RepairDetailsPage = () => {
           </p>
           {/* Tracking Link */}
           {repair.trackingToken || repair.id ? (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-sm text-gray-600">رابط التتبع:</span>
-              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5 max-w-md">
-                <span className="text-sm text-blue-600 font-mono truncate">
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 shrink-0">رابط التتبع:</span>
+              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5 w-full sm:max-w-md overflow-hidden">
+                <span className="text-xs sm:text-sm text-blue-600 font-mono truncate flex-1">
                   {getFrontendBaseUrl()}/track?trackingToken={repair.trackingToken || repair.id}
                 </span>
                 <SimpleButton
@@ -2420,7 +2422,7 @@ const RepairDetailsPage = () => {
                       document.body.removeChild(textArea);
                     }
                   }}
-                  className="p-1 h-auto"
+                  className="p-1 h-auto shrink-0"
                   title="نسخ رابط التتبع"
                 >
                   {trackingLinkCopied ? (
@@ -2441,89 +2443,34 @@ const RepairDetailsPage = () => {
               variant="outline"
               onClick={() => setEditingStatus(!editingStatus)}
               className="rounded-lg"
+              title="تحديث الحالة"
             >
-              <Edit className="w-4 h-4 ml-2" />
-              تحديث الحالة
+              <Edit className="w-4 h-4 ml-0 sm:ml-2" />
+              <span className="hidden sm:inline">تحديث الحالة</span>
             </SimpleButton>
-            <SimpleButton size="sm" onClick={() => setAssignOpen(true)} className="rounded-lg">
-              <UserPlus className="w-4 h-4 ml-2" />
-              إسناد فني
+            <SimpleButton size="sm" onClick={() => setAssignOpen(true)} className="rounded-lg" title="إسناد فني">
+              <UserPlus className="w-4 h-4 ml-0 sm:ml-2" />
+              <span className="hidden sm:inline">إسناد فني</span>
             </SimpleButton>
-            {assignedTechnicians.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {assignedTechnicians.map((tech) => (
-                  <span
-                    key={tech.id || tech.technicianId}
-                    className="text-sm text-gray-600 px-2 py-1 bg-white border border-gray-200 rounded-lg flex items-center gap-1"
-                  >
-                    <span className="font-medium">{tech.technicianName || tech.name || `مستخدم #${tech.technicianId || tech.id}`}</span>
-                    {tech.role === 'primary' && (
-                      <span className="text-xs text-purple-600">(رئيسي)</span>
-                    )}
-                    {tech.role === 'assistant' && (
-                      <span className="text-xs text-blue-600">(مساعد)</span>
-                    )}
-                    <button
-                      onClick={() => handleUnassignTechnician(tech.technicianId || tech.id)}
-                      className="text-red-600 hover:text-red-700 mr-1"
-                      title="إلغاء التعيين"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            {repair?.technicianName && assignedTechnicians.length === 0 && (
-              <span className="text-sm text-gray-600 px-2 py-1 bg-white border border-gray-200 rounded-lg mr-1">
-                الفني: <span className="font-medium">{repair.technicianName}</span>
-              </span>
-            )}
-            <span className="w-px h-6 bg-gray-200 mx-1 hidden md:block" />
-            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('receipt')} className="rounded-lg">
-              <Printer className="w-4 h-4 ml-2" />
-              طباعة إيصال
+            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('receipt')} className="rounded-lg" title="طباعة إيصال">
+              <Printer className="w-4 h-4 ml-0 sm:ml-2" />
+              <span className="hidden sm:inline">طباعة إيصال</span>
             </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('sticker')} className="rounded-lg">
-              <QrCode className="w-4 h-4 ml-2" />
-              طباعة استيكر
+            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('sticker')} className="rounded-lg" title="طباعة استيكر">
+              <QrCode className="w-4 h-4 ml-0 sm:ml-2" />
+              <span className="hidden sm:inline">طباعة استيكر</span>
             </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('inspection')} className="rounded-lg">
-              <Printer className="w-4 h-4 ml-2" />
-              طباعة تقرير فحص
-            </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => {
-              setEditingReport(null);
-              setInspectionForm({
-                inspectionTypeId: '',
-                technicianId: '',
-                reportDate: new Date().toISOString().slice(0, 10),
-                summary: '',
-                result: '',
-                recommendations: '',
-                notes: '',
-              });
-              setInspectionError('');
-              setInspectionOpen(true);
-            }} className="rounded-lg">
-              <Plus className="w-4 h-4 ml-2" />
-              إنشاء تقرير فحص
-            </SimpleButton>
-            <SimpleButton size="sm" variant="outline" onClick={() => handlePrint('delivery')} className="rounded-lg">
-              <Printer className="w-4 h-4 ml-2" />
-              طباعة التسليم
-            </SimpleButton>
-            <SimpleButton size="sm" variant="ghost" onClick={handleDelete} className="rounded-lg text-red-600">
-              <Trash2 className="w-4 h-4 ml-2" />
-              حذف
+            <SimpleButton size="sm" variant="ghost" onClick={handleDelete} className="rounded-lg text-red-600" title="حذف">
+              <Trash2 className="w-4 h-4 ml-0 sm:ml-2" />
+              <span className="hidden sm:inline">حذف</span>
             </SimpleButton>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-6 space-x-reverse" aria-label="Tabs">
+      <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
+        <nav className="-mb-px flex space-x-6 space-x-reverse min-w-max px-1" aria-label="Tabs">
           {[
             { key: 'status', label: 'الحالة والتفاصيل', icon: Wrench },
             { key: 'timeline', label: 'المخطط الزمني', icon: Clock },
@@ -2539,7 +2486,7 @@ const RepairDetailsPage = () => {
               <button
                 key={t.key}
                 onClick={() => setActiveTab(t.key)}
-                className={`${active ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={`${active ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors`}
               >
                 <Icon className="w-4 h-4 ml-2" />{t.label}
               </button>
@@ -2556,8 +2503,8 @@ const RepairDetailsPage = () => {
 
       {/* حوار إضافة خدمة - تصميم جديد */}
       {addServiceOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto transform transition-all overflow-hidden border border-gray-100">
             {/* Header */}
             <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
               <div>
@@ -2789,6 +2736,7 @@ const RepairDetailsPage = () => {
           {activeTab === 'status' && (
             <>
               <StatusFlow currentStatus={repair.status} compact={false} />
+
               <SimpleCard>
                 <SimpleCardHeader>
                   <SimpleCardTitle className="flex items-center">
@@ -2849,130 +2797,12 @@ const RepairDetailsPage = () => {
                     </div>
 
                     {/* نموذج تعديل تفاصيل طلب الإصلاح */}
-                    {editingDetails ? (
-                      <div className="mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <h4 className="text-lg font-medium text-gray-900 mb-4">تعديل تفاصيل الطلب</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (من)</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={repairDetails.estimatedCostMin !== null && repairDetails.estimatedCostMin !== undefined ? repairDetails.estimatedCostMin : ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setRepairDetails(prev => ({
-                                  ...prev,
-                                  estimatedCostMin: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
-                                }));
-                              }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (إلى)</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={repairDetails.estimatedCostMax !== null && repairDetails.estimatedCostMax !== undefined ? repairDetails.estimatedCostMax : ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setRepairDetails(prev => ({
-                                  ...prev,
-                                  estimatedCostMax: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
-                                }));
-                              }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة الفعلية</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={repairDetails.actualCost || ''}
-                              onChange={(e) => setRepairDetails(prev => ({ ...prev, actualCost: e.target.value ? parseFloat(e.target.value) : null }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
-                            <select
-                              value={repairDetails.priority}
-                              onChange={(e) => setRepairDetails(prev => ({ ...prev, priority: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="LOW">منخفضة</option>
-                              <option value="MEDIUM">متوسطة</option>
-                              <option value="HIGH">عالية</option>
-                              <option value="URGENT">عاجلة</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
-                            <input
-                              type="datetime-local"
-                              value={repairDetails.expectedDeliveryDate ? new Date(repairDetails.expectedDeliveryDate).toISOString().slice(0, 16) : ''}
-                              onChange={(e) => setRepairDetails(prev => ({ ...prev, expectedDeliveryDate: e.target.value ? new Date(e.target.value).toISOString() : null }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات إضافية</label>
-                          <textarea
-                            value={repairDetails.notes}
-                            onChange={(e) => setRepairDetails(prev => ({ ...prev, notes: e.target.value }))}
-                            rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="أي ملاحظات إضافية..."
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t mt-4">
-                          <SimpleButton size="sm" onClick={handleUpdateRepairDetails}>
-                            <Save className="w-4 h-4 ml-1" />
-                            حفظ التغييرات
-                          </SimpleButton>
-                          <SimpleButton size="sm" variant="ghost" onClick={() => {
-                            setEditingDetails(false);
-                            // Reset to current repair values including customFields
-                            let customFields = {};
-                            try {
-                              customFields = typeof repair.customFields === 'string'
-                                ? JSON.parse(repair.customFields)
-                                : (repair.customFields || {});
-                            } catch (e) {
-                              customFields = {};
-                            }
-                            setRepairDetails({
-                              estimatedCost: repair.estimatedCost || 0,
-                              estimatedCostMin: customFields.estimatedCostMin || null,
-                              estimatedCostMax: customFields.estimatedCostMax || null,
-                              actualCost: repair.actualCost || null,
-                              priority: repair.priority || 'MEDIUM',
-                              expectedDeliveryDate: repair.expectedDeliveryDate || null,
-                              notes: repair.notes || ''
-                            });
-                          }}>
-                            <X className="w-4 h-4 ml-1" />
-                            إلغاء
-                          </SimpleButton>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
-                        <SimpleButton size="sm" variant="outline" onClick={() => setEditingDetails(true)}>
-                          <Edit className="w-4 h-4 ml-1" />
-                          تعديل التفاصيل
-                        </SimpleButton>
-                      </div>
-                    )}
+                    <div className="mt-4">
+                      <SimpleButton size="sm" variant="outline" onClick={() => setEditingDetails(true)}>
+                        <Edit className="w-4 h-4 ml-1" />
+                        تعديل التفاصيل
+                      </SimpleButton>
+                    </div>
                   </div>
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشكلة</label>
@@ -3256,9 +3086,6 @@ const RepairDetailsPage = () => {
                                             itemType: 'service'
                                           }
                                         });
-                                        // #region agent log
-                                        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:3215', message: 'calling addInvoiceItem API from button', data: { targetInvoiceId, serviceId: service.serviceId || service.id || null, description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
-                                        // #endregion
                                         // إضافة عنصر فاتورة للخدمة
                                         const addData = await apiService.addInvoiceItem(targetInvoiceId, {
                                           serviceId: service.serviceId || service.id || null,
@@ -3267,9 +3094,6 @@ const RepairDetailsPage = () => {
                                           description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
                                           itemType: 'service'
                                         });
-                                        // #region agent log
-                                        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RepairDetailsPage.js:3223', message: 'addInvoiceItem API response from button', data: { success: addData.success, duplicate: addData.duplicate, error: addData.error }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,D' }) }).catch(() => { });
-                                        // #endregion
 
                                         if (addData.success) {
                                           notifications.success('تم إضافة الخدمة إلى الفاتورة');
@@ -3306,7 +3130,8 @@ const RepairDetailsPage = () => {
                 </SimpleCardContent>
               </SimpleCard>
 
-              {/* القطع المصروفة (Parts Used) */}
+
+              {/* أزرار العمليات المباشرة (واتساب وإشعار) */}
               <SimpleCard>
                 <SimpleCardHeader>
                   <div className="flex items-center justify-between">
@@ -3554,313 +3379,6 @@ const RepairDetailsPage = () => {
                 </SimpleCardContent>
               </SimpleCard>
 
-              {/* خدمات الإصلاح (Services) */}
-              <SimpleCard>
-                <SimpleCardHeader>
-                  <div className="flex items-center justify-between">
-                    <SimpleCardTitle className="flex items-center">
-                      <Settings className="w-5 h-5 ml-2" />
-                      خدمات الإصلاح
-                    </SimpleCardTitle>
-                    <SimpleButton size="sm" variant="outline" onClick={() => setAddServiceOpen(true)}>
-                      <Plus className="w-4 h-4 ml-1" /> إضافة خدمة
-                    </SimpleButton>
-                  </div>
-                </SimpleCardHeader>
-                <SimpleCardContent>
-                  {/* أدوات التحكم: فرز وترقيم لخدمات الإصلاح */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <label>ترتيب حسب:</label>
-                      <select
-                        value={svcSortBy}
-                        onChange={(e) => { setSvcSortBy(e.target.value); setSvcPage(1); }}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value="name">الاسم</option>
-                        <option value="price">السعر</option>
-                        <option value="invoiced">حالة الفوترة</option>
-                      </select>
-                      <select
-                        value={svcSortDir}
-                        onChange={(e) => { setSvcSortDir(e.target.value); setSvcPage(1); }}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value="asc">تصاعدي</option>
-                        <option value="desc">تنازلي</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <button
-                        className="px-2 py-1 border rounded disabled:opacity-50"
-                        disabled={svcPage <= 1}
-                        onClick={() => setSvcPage(p => Math.max(1, p - 1))}
-                      >السابق</button>
-                      <span className="px-2">صفحة {svcPage}</span>
-                      <button
-                        className="px-2 py-1 border rounded"
-                        onClick={() => setSvcPage(p => p + 1)}
-                      >التالي</button>
-                      <select
-                        value={svcPageSize}
-                        onChange={(e) => { setSvcPageSize(Number(e.target.value)); setSvcPage(1); }}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                      </select>
-                    </div>
-                  </div>
-                  {servicesLoading ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                    </div>
-                  ) : servicesError ? (
-                    <div className="text-red-600 text-sm">{servicesError}</div>
-                  ) : services.length === 0 ? (
-                    <div className="text-center py-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
-                      <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <div className="text-gray-600 text-lg font-medium">لا توجد خدمات مسجلة</div>
-                      <div className="text-gray-500 text-sm mt-2">لم يتم تسجيل أي خدمات إصلاح لهذا الطلب بعد</div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {getSortedPagedServices().items.map((service) => {
-                        // Use same logic as getSortedPagedServices: manual services are always invoiced
-                        const invoiced = !!service.invoiceItemId || service.isManual;
-                        const isEditing = editingService?.id === service.id;
-                        return (
-                          <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                {isEditing ? (
-                                  <div className="space-y-3">
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        value={editingService.price || service.price || ''}
-                                        onChange={(e) => setEditingService({ ...editingService, price: e.target.value })}
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">الفني</label>
-                                      <select
-                                        value={editingService.technicianId !== undefined ? editingService.technicianId : (service.technicianId || '')}
-                                        onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value || null })}
-                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                                      >
-                                        <option value="">اختر الفني...</option>
-                                        {techOptions.map((tech) => (
-                                          <option key={tech.id} value={tech.id}>
-                                            {tech.name || `مستخدم #${tech.id}`}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
-                                      <textarea
-                                        value={editingService.notes || service.notes || ''}
-                                        onChange={(e) => setEditingService({ ...editingService, notes: e.target.value })}
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
-                                        rows={3}
-                                      />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="flex items-center gap-3 mb-3">
-                                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                        <Settings className="w-5 h-5 text-purple-600" />
-                                      </div>
-                                      <div>
-                                        <div className="font-semibold text-gray-900 text-lg">
-                                          {service.serviceName || service.description || `خدمة إصلاح #${service.serviceId || 'يدوية'}`}
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                          {service.isManual ? (
-                                            <span className="text-purple-600">خدمة يدوية</span>
-                                          ) : (
-                                            <>كود الخدمة: {service.serviceId || 'غير محدد'}</>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 text-sm mb-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="text-gray-600">السعر:</span>
-                                        <span className="font-medium text-gray-900">{formatCurrency(service.finalPrice || service.price || 0)}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                        <span className="text-gray-600">الفني:</span>
-                                        <span className="font-medium text-gray-900">
-                                          {service.technicianName || (service.technicianId ? `مستخدم #${service.technicianId}` : 'غير محدد')}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    {service.notes && (
-                                      <div className="bg-white/70 rounded-lg p-3 mt-2">
-                                        <div className="text-xs text-gray-500 mb-1">ملاحظات:</div>
-                                        <div className="text-sm text-gray-700">{service.notes}</div>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col items-end gap-3">
-                                <SimpleBadge className={invoiced ? 'bg-green-100 text-green-800 border border-green-200 px-3 py-1' : 'bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1'}>
-                                  {invoiced ? '✓ تم الاضافة' : '⏳ غير تم الاضافة'}
-                                </SimpleBadge>
-                                <div className="flex gap-2">
-                                  {editingService?.id === service.id ? (
-                                    <>
-                                      <SimpleButton
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          handleUpdateService(service.id, {
-                                            serviceId: editingService.serviceId || service.serviceId,
-                                            technicianId: editingService.technicianId !== undefined ? editingService.technicianId : service.technicianId,
-                                            price: editingService.price || service.price,
-                                            notes: editingService.notes !== undefined ? editingService.notes : service.notes
-                                          });
-                                        }}
-                                        className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                                      >
-                                        <Save className="w-4 h-4 ml-1" />
-                                        حفظ
-                                      </SimpleButton>
-                                      <SimpleButton
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEditingService(null)}
-                                        className="bg-gray-50 hover:bg-gray-100 text-gray-700"
-                                      >
-                                        <X className="w-4 h-4 ml-1" />
-                                        إلغاء
-                                      </SimpleButton>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <SimpleButton
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEditingService(service)}
-                                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                                      >
-                                        <Edit className="w-4 h-4 ml-1" />
-                                        تعديل
-                                      </SimpleButton>
-                                      <SimpleButton
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleDeleteService(service.id)}
-                                        className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-                                      >
-                                        <Trash2 className="w-4 h-4 ml-1" />
-                                        حذف
-                                      </SimpleButton>
-                                    </>
-                                  )}
-                                </div>
-                                {!invoiced && (
-                                  <SimpleButton
-                                    size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        // First check the invoices state (already loaded and normalized)
-                                        let targetInvoice = invoices.find(inv => invoiceBelongsToRepair(inv, id));
-                                        let targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
-
-                                        // If not found in state, fetch fresh from API (same logic as ensureInvoiceForRepair)
-                                        if (!targetInvoiceId) {
-                                          try {
-                                            const freshInvoicesData = await apiService.request(`/invoices?repairRequestId=${id}&limit=50`);
-                                            const freshInvoices = normalizeInvoicesResponse(freshInvoicesData);
-
-                                            console.log('Debug - Fresh invoices:', freshInvoices);
-                                            console.log('Debug - Looking for repairRequestId:', parseInt(id));
-
-                                            targetInvoice = freshInvoices.find(inv => invoiceBelongsToRepair(inv, id));
-                                            targetInvoiceId = targetInvoice?.id || targetInvoice?.invoiceId;
-
-                                            // Update invoices state if we found one
-                                            if (targetInvoiceId && invoices.length === 0) {
-                                              setInvoices(freshInvoices);
-                                            }
-                                          } catch (fetchErr) {
-                                            console.error('Error fetching invoices:', fetchErr);
-                                          }
-                                        }
-
-                                        if (!targetInvoiceId) {
-                                          notifications.warning('لا توجد فواتير لهذا الطلب. يرجى إنشاء فاتورة أولاً');
-                                          return;
-                                        }
-                                        console.log('Adding service to invoice:', {
-                                          targetInvoiceId,
-                                          service,
-                                          serviceKeys: Object.keys(service),
-                                          payload: {
-                                            serviceId: service.serviceId || service.id,
-                                            quantity: 1,
-                                            unitPrice: Number(service.price || 0),
-                                            description: service.notes || service.serviceName || '',
-                                            itemType: 'service'
-                                          }
-                                        });
-                                        // إضافة عنصر فاتورة للخدمة
-                                        const addData = await apiService.addInvoiceItem(targetInvoiceId, {
-                                          serviceId: service.serviceId || service.id || null,
-                                          quantity: 1,
-                                          unitPrice: Number(service.price || 0),
-                                          description: `${service.serviceName || 'خدمة إصلاح'} - ${service.notes || ''}`.trim(),
-                                          itemType: 'service'
-                                        });
-
-                                        if (addData.success) {
-                                          notifications.success('تم إضافة الخدمة إلى الفاتورة');
-                                          await loadServices();
-                                          await loadInvoices();
-                                        } else if (addData.duplicate) {
-                                          notifications.warning('هذه الخدمة موجودة بالفعل في الفاتورة');
-                                          await loadServices(); // Refresh to update button state
-                                        } else {
-                                          throw new Error(addData.error || 'Failed to add service to invoice');
-                                        }
-                                      } catch (e) {
-                                        console.error('Error adding service to invoice:', e);
-                                        notifications.error(`تعذر إضافة الخدمة إلى الفاتورة: ${e.message}`);
-                                      }
-                                    }}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                    إضافة للفاتورة
-                                  </SimpleButton>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="flex justify-end items-center gap-2 mt-3 text-sm text-gray-600">
-                    <span>إجمالي العناصر: {getSortedPagedServices().total}</span>
-                  </div>
-                </SimpleCardContent>
-              </SimpleCard>
             </>
           )}
 
@@ -4297,66 +3815,7 @@ const RepairDetailsPage = () => {
                   </div>
 
                   {/* نموذج إضافة دفعة */}
-                  {addingPayment && (
-                    <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">المبلغ</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={paymentForm.amount}
-                            onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-lg"
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">طريقة الدفع</label>
-                          <select
-                            value={paymentForm.method}
-                            onChange={(e) => setPaymentForm(prev => ({ ...prev, method: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                          >
-                            <option value="cash">نقدي</option>
-                            <option value="card">بطاقة ائتمان</option>
-                            <option value="bank_transfer">تحويل بنكي</option>
-                            <option value="check">شيك</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">رقم المرجع</label>
-                          <input
-                            type="text"
-                            value={paymentForm.reference}
-                            onChange={(e) => setPaymentForm(prev => ({ ...prev, reference: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-lg"
-                            placeholder="اختياري"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
-                          <input
-                            type="text"
-                            value={paymentForm.notes}
-                            onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-lg"
-                            placeholder="ملاحظات إضافية"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <SimpleButton size="sm" onClick={handleAddPayment} disabled={!paymentForm.amount}>
-                          <Save className="w-4 h-4 ml-1" />
-                          حفظ الدفعة
-                        </SimpleButton>
-                        <SimpleButton size="sm" variant="ghost" onClick={() => { setAddingPayment(false); setPaymentForm({ amount: '', method: 'cash', reference: '', notes: '' }); }}>
-                          <X className="w-4 h-4 ml-1" />
-                          إلغاء
-                        </SimpleButton>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* قائمة المدفوعات */}
                   {paymentsLoading ? (
@@ -4451,27 +3910,6 @@ const RepairDetailsPage = () => {
                 </SimpleCardHeader>
                 <SimpleCardContent>
                   {/* نموذج إضافة ملاحظة */}
-                  {addingNote && (
-                    <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                      <textarea
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder="اكتب ملاحظتك هنا..."
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none mb-3"
-                        rows={3}
-                      />
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <SimpleButton size="sm" onClick={handleAddNote} disabled={!newNote.trim()}>
-                          <Save className="w-4 h-4 ml-1" />
-                          حفظ
-                        </SimpleButton>
-                        <SimpleButton size="sm" variant="ghost" onClick={() => { setAddingNote(false); setNewNote(''); }}>
-                          <X className="w-4 h-4 ml-1" />
-                          إلغاء
-                        </SimpleButton>
-                      </div>
-                    </div>
-                  )}
 
                   {/* قائمة الأنشطة المفلترة */}
                   <div className="space-y-4">
@@ -4542,84 +3980,59 @@ const RepairDetailsPage = () => {
 
         {/* الشريط الجانبي */}
         <div className="space-y-6">
-          {editingStatus && (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle>تحديث حالة الطلب</SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="space-y-4">
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  >
-                    <option value="pending">في الانتظار</option>
-                    <option value="in-progress">قيد الإصلاح</option>
-                    <option value="waiting-parts">بانتظار قطع غيار</option>
-                    <option value="ready-for-pickup">جاهز للاستلام</option>
-                    <option value="on-hold">معلق</option>
-                    <option value="completed">مكتمل</option>
-                    <option value="cancelled">ملغي</option>
-                  </select>
-                  <div className="flex space-x-2 space-x-reverse">
-                    <SimpleButton size="sm" onClick={async () => {
-                      try {
-                        await handleStatusUpdate();
-                      } catch (_) { }
-                    }}>
-                      <Save className="w-4 h-4 ml-1" />
-                      حفظ
-                    </SimpleButton>
-                    <SimpleButton size="sm" variant="ghost" onClick={() => setEditingStatus(false)}>
-                      <X className="w-4 h-4 ml-1" />
-                      إلغاء
-                    </SimpleButton>
-                  </div>
-                </div>
-              </SimpleCardContent>
-            </SimpleCard>
-          )}
-
-          {customer && (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center">
-                  <User className="w-5 h-5 ml-2" />
-                  معلومات العميل
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
+          {/* الفريق المسؤول */}
+          <SimpleCard>
+            <SimpleCardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 bg-gray-50/50">
+              <SimpleCardTitle className="flex items-center text-purple-700">
+                <Users className="w-5 h-5 ml-2" />
+                الفريق المسؤول
+              </SimpleCardTitle>
+              <SimpleButton size="sm" variant="outline" onClick={() => setAssignOpen(true)} className="rounded-lg border-purple-200 hover:bg-purple-50 text-purple-700">
+                <UserPlus className="w-4 h-4 ml-1" />
+                إسناد فني
+              </SimpleButton>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-4">
+              {assignedTechnicians.length > 0 ? (
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">الاسم</label>
-                    <p className="text-gray-900">{customer.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">الهاتف</label>
-                    <p className="text-gray-900 en-text">{customer.phone}</p>
-                  </div>
-                  {customer.email && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-                      <p className="text-gray-900 en-text">{customer.email}</p>
+                  {assignedTechnicians.map((tech) => (
+                    <div key={tech.id || tech.technicianId} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {(tech.technicianName || tech.name || 'U')[0]}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-900 truncate max-w-[100px]">{tech.technicianName || tech.name || `مستخدم #${tech.technicianId || tech.id}`}</p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${tech.role === 'primary' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {tech.role === 'primary' ? 'فني رئيسي' : 'فني مساعد'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleUnassignTechnician(tech.technicianId || tech.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="إلغاء الإسناد"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  )}
+                  ))}
                 </div>
-                <div className="mt-4 space-y-2">
-                  <Link to={`/customers/${customer.id}`}>
-                    <SimpleButton variant="outline" size="sm" className="w-full">
-                      <User className="w-4 h-4 ml-1" />
-                      عرض ملف العميل
-                    </SimpleButton>
-                  </Link>
+              ) : (
+                <div className="text-center py-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <UserX className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 italic">لم يتم إسناد فنيين</p>
+                  <button onClick={() => setAssignOpen(true)} className="mt-2 text-purple-600 hover:text-purple-700 font-bold text-[10px] flex items-center justify-center mx-auto gap-1">
+                    <Plus className="w-3 h-3" />
+                    إسناد الآن
+                  </button>
                 </div>
-              </SimpleCardContent>
-            </SimpleCard>
-          )}
+              )}
+            </SimpleCardContent>
+          </SimpleCard>
 
           {/* إرسال إشعار للعميل */}
-          {customer && customer.phone && repair && (
+          {customer && (
             <SimpleCard>
               <SimpleCardHeader>
                 <SimpleCardTitle className="flex items-center">
@@ -4636,8 +4049,6 @@ const RepairDetailsPage = () => {
                     recipient={customer.phone}
                     template="repairReceivedMessage"
                     variables={{}}
-                    // لا نرسل variables - دع backend يجلبها تلقائياً من قاعدة البيانات
-                    // هذا يضمن أن البيانات دائماً محدثة وصحيحة
                     onSuccess={() => notifications.success('تم إرسال إشعار الإصلاح بنجاح!')}
                     onError={(err) => notifications.error(`فشل إرسال إشعار الإصلاح: ${err.message}`)}
                     showChannelSelector={true}
@@ -4655,157 +4066,81 @@ const RepairDetailsPage = () => {
           )}
 
           {/* معلومات العميل (محدث) */}
-          {customer && (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <SimpleCardTitle className="flex items-center">
-                  <User className="w-5 h-5 ml-2" />
-                  معلومات العميل
-                </SimpleCardTitle>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">الاسم</label>
-                    <p className="text-gray-900">{customer.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">الهاتف</label>
-                    <p className="text-gray-900 en-text">{customer.phone}</p>
-                  </div>
-                  {customer.email && (
+          {
+            customer && (
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle className="flex items-center">
+                    <User className="w-5 h-5 ml-2" />
+                    معلومات العميل
+                  </SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-                      <p className="text-gray-900 en-text">{customer.email}</p>
+                      <label className="block text-sm font-medium text-gray-700">الاسم</label>
+                      <p className="text-gray-900">{customer.name}</p>
                     </div>
-                  )}
-                </div>
-                <div className="mt-4 space-y-2">
-                  <Link to={`/customers/${customer.id}`}>
-                    <SimpleButton variant="outline" size="sm" className="w-full">
-                      <User className="w-4 h-4 ml-1" />
-                      عرض ملف العميل
-                    </SimpleButton>
-                  </Link>
-                </div>
-              </SimpleCardContent>
-            </SimpleCard>
-          )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">الهاتف</label>
+                      <p className="text-gray-900 en-text">{customer.phone}</p>
+                    </div>
+                    {customer.email && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
+                        <p className="text-gray-900 en-text">{customer.email}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Link to={`/customers/${customer.id}`}>
+                      <SimpleButton variant="outline" size="sm" className="w-full">
+                        <User className="w-4 h-4 ml-1" />
+                        عرض ملف العميل
+                      </SimpleButton>
+                    </Link>
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
+            )
+          }
 
           {/* مواصفات الجهاز المحسنة */}
-          {repair && (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <div className="flex items-center justify-between">
-                  <SimpleCardTitle className="flex items-center">
-                    <Wrench className="w-5 h-5 ml-2" />
-                    مواصفات الجهاز
-                  </SimpleCardTitle>
-                  <SimpleButton size="sm" variant="outline" onClick={() => setEditingSpecs(!editingSpecs)}>
-                    <Edit className="w-4 h-4 ml-1" />
-                    {editingSpecs ? 'إلغاء' : 'تعديل'}
-                  </SimpleButton>
-                </div>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                {/* المعلومات الأساسية */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">نوع الجهاز</label>
-                    <p className="text-gray-900">{repair.deviceType || 'غير محدد'}</p>
+          {
+            repair && (
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <div className="flex items-center justify-between">
+                    <SimpleCardTitle className="flex items-center">
+                      <Wrench className="w-5 h-5 ml-2" />
+                      مواصفات الجهاز
+                    </SimpleCardTitle>
+                    <SimpleButton size="sm" variant="outline" onClick={() => setEditingSpecs(!editingSpecs)}>
+                      <Edit className="w-4 h-4 ml-1" />
+                      {editingSpecs ? 'إلغاء' : 'تعديل'}
+                    </SimpleButton>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">الماركة والموديل</label>
-                    <p className="text-gray-900">{repair.deviceBrand} {repair.deviceModel}</p>
-                  </div>
-                  {repair.serialNumber && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">الرقم التسلسلي</label>
-                      <p className="text-gray-900 en-text">{repair.serialNumber}</p>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  {/* المعلومات الأساسية */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">نوع الجهاز</label>
+                      <p className="text-gray-900">{repair.deviceType || 'غير محدد'}</p>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">الماركة والموديل</label>
+                      <p className="text-gray-900">{repair.deviceBrand} {repair.deviceModel}</p>
+                    </div>
+                    {repair.serialNumber && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">الرقم التسلسلي</label>
+                        <p className="text-gray-900 en-text">{repair.serialNumber}</p>
+                      </div>
+                    )}
+                  </div>
 
-                {/* المواصفات التفصيلية */}
-                {editingSpecs ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">المعالج (CPU)</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.cpu || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, cpu: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: Intel Core i7-10750H"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">كرت الشاشة (GPU)</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.gpu || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, gpu: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: NVIDIA GTX 1650"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">الذاكرة (RAM)</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.ram || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, ram: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: 16GB DDR4"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">التخزين (Storage)</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.storage || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, storage: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: 512GB SSD"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">حجم الشاشة</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.screenSize || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, screenSize: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: 15.6 بوصة"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">نظام التشغيل</label>
-                        <input
-                          type="text"
-                          value={deviceSpecs.os || ''}
-                          onChange={(e) => setDeviceSpecs(prev => ({ ...prev, os: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="مثال: Windows 11"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t">
-                      <SimpleButton size="sm" onClick={handleUpdateDeviceSpecs}>
-                        <Save className="w-4 h-4 ml-1" />
-                        حفظ التغييرات
-                      </SimpleButton>
-                      <SimpleButton size="sm" variant="ghost" onClick={() => {
-                        setEditingSpecs(false);
-                        setDeviceSpecs(repair.deviceSpecs || {});
-                      }}>
-                        <X className="w-4 h-4 ml-1" />
-                        إلغاء
-                      </SimpleButton>
-                    </div>
-                  </div>
-                ) : (
+                  {/* المواصفات التفصيلية */}
                   <div className="space-y-3">
                     {[
                       { key: 'cpu', label: 'المعالج (CPU)', value: deviceSpecs.cpu },
@@ -4824,100 +4159,24 @@ const RepairDetailsPage = () => {
                       <p className="text-gray-500 text-sm text-center py-4">لم يتم إدخال مواصفات تفصيلية بعد</p>
                     )}
                   </div>
-                )}
-              </SimpleCardContent>
-            </SimpleCard>
-          )}
+                </SimpleCardContent>
+              </SimpleCard>
+            )
+          }
 
           {/* المتعلقات المستلمة */}
-          {repair && (
-            <SimpleCard>
-              <SimpleCardHeader>
-                <div className="flex items-center justify-between">
-                  <SimpleCardTitle className="flex items-center">
-                    <Paperclip className="w-5 h-5 ml-2" />
-                    المتعلقات المستلمة
-                  </SimpleCardTitle>
-                  <SimpleButton size="sm" variant="outline" onClick={() => {
-                    setEditingAccessories(!editingAccessories);
-                    if (!editingAccessories) {
-                      // Convert accessories data to proper form format
-                      const accessoriesData = repair.accessories || [];
-                      const formattedAccessories = accessoriesData
-                        .filter(item => item != null)
-                        .map((item, index) => {
-                          if (typeof item === 'string') {
-                            // It's already a string (manual entry)
-                            return { id: index, value: item, label: item };
-                          } else if (typeof item === 'number') {
-                            // It's an ID, find the corresponding option
-                            const option = accessoryOptions.find(opt => opt.id === item);
-                            if (option) {
-                              return { id: option.id, value: option.value, label: option.label };
-                            } else {
-                              // If option not found, treat as manual entry
-                              return { id: index, value: `Item ${item}`, label: getAccessoryLabel(`Item ${item}`) };
-                            }
-                          } else if (typeof item === 'object' && item.label) {
-                            // It's already an object with label
-                            return item;
-                          } else {
-                            // Fallback
-                            return { id: index, value: String(item), label: getAccessoryLabel(String(item)) };
-                          }
-                        });
-                      setAccessoriesForm(formattedAccessories);
-                    }
-                  }}>
-                    <Edit className="w-4 h-4 ml-1" />
-                    {editingAccessories ? 'إلغاء' : 'تعديل'}
-                  </SimpleButton>
-                </div>
-              </SimpleCardHeader>
-              <SimpleCardContent>
-                {editingAccessories ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {accessoryOptions.map((option) => (
-                        <label key={option.id} className="flex items-center space-x-2 space-x-reverse">
-                          <input
-                            type="checkbox"
-                            checked={accessoriesForm.some(a => a.id === option.id || a.label === option.label)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setAccessoriesForm(prev => [...prev, { id: option.id, label: option.label, value: option.value }]);
-                              } else {
-                                setAccessoriesForm(prev => prev.filter(a => a.id !== option.id && a.label !== option.label));
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <span className="text-sm">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t">
-                      <SimpleButton size="sm" onClick={async () => {
-                        try {
-                          // إرسال المتعلقات المحدثة للخادم
-                          const updatedRepair = await apiService.updateRepairRequest(repair.id, {
-                            accessories: accessoriesForm.filter(a => a != null).map(a => a.label || a.value || a.name || a)
-                          });
-
-                          // تحديث البيانات محلياً
-                          setRepair(prev => ({ ...prev, accessories: accessoriesForm }));
-                          setEditingAccessories(false);
-                          notifications.success('تم تحديث المتعلقات المستلمة');
-                        } catch (error) {
-                          console.error('Error updating accessories:', error);
-                          notifications.error('حدث خطأ في تحديث المتعلقات');
-                        }
-                      }}>
-                        <Save className="w-4 h-4 ml-1" />
-                        حفظ التغييرات
-                      </SimpleButton>
-                      <SimpleButton size="sm" variant="ghost" onClick={() => {
-                        setEditingAccessories(false);
+          {
+            repair && (
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <div className="flex items-center justify-between">
+                    <SimpleCardTitle className="flex items-center">
+                      <Paperclip className="w-5 h-5 ml-2" />
+                      المتعلقات المستلمة
+                    </SimpleCardTitle>
+                    <SimpleButton size="sm" variant="outline" onClick={() => {
+                      setEditingAccessories(!editingAccessories);
+                      if (!editingAccessories) {
                         // Convert accessories data to proper form format
                         const accessoriesData = repair.accessories || [];
                         const formattedAccessories = accessoriesData
@@ -4933,7 +4192,7 @@ const RepairDetailsPage = () => {
                                 return { id: option.id, value: option.value, label: option.label };
                               } else {
                                 // If option not found, treat as manual entry
-                                return { id: index, value: `Item ${item}`, label: `Item ${item}` };
+                                return { id: index, value: `Item ${item}`, label: getAccessoryLabel(`Item ${item}`) };
                               }
                             } else if (typeof item === 'object' && item.label) {
                               // It's already an object with label
@@ -4944,713 +4203,1208 @@ const RepairDetailsPage = () => {
                             }
                           });
                         setAccessoriesForm(formattedAccessories);
-                      }}>
-                        <X className="w-4 h-4 ml-1" />
-                        إلغاء
-                      </SimpleButton>
-                    </div>
+                      }
+                    }}>
+                      <Edit className="w-4 h-4 ml-1" />
+                      {editingAccessories ? 'إلغاء' : 'تعديل'}
+                    </SimpleButton>
                   </div>
-                ) : (
-                  <div>
-                    {Array.isArray(repair.accessories) && repair.accessories.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {repair.accessories.filter(a => a != null).map((a, index) => (
-                          <span key={a?.id || index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                            {getAccessoryLabel(typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown'))}
-                          </span>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  {editingAccessories ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {accessoryOptions.map((option) => (
+                          <label key={option.id} className="flex items-center space-x-2 space-x-reverse">
+                            <input
+                              type="checkbox"
+                              checked={accessoriesForm.some(a => a.id === option.id || a.label === option.label)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAccessoriesForm(prev => [...prev, { id: option.id, label: option.label, value: option.value }]);
+                                } else {
+                                  setAccessoriesForm(prev => prev.filter(a => a.id !== option.id && a.label !== option.label));
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <span className="text-sm">{option.label}</span>
+                          </label>
                         ))}
                       </div>
-                    ) : (
-                      <div className="text-sm text-gray-500">لا توجد متعلقات مستلمة</div>
-                    )}
-                  </div>
-                )}
-              </SimpleCardContent>
-            </SimpleCard>
-          )}
-        </div>
-      </div>
+                      <div className="flex items-center space-x-2 space-x-reverse pt-3 border-t">
+                        <SimpleButton size="sm" onClick={async () => {
+                          try {
+                            // إرسال المتعلقات المحدثة للخادم
+                            const updatedRepair = await apiService.updateRepairRequest(repair.id, {
+                              accessories: accessoriesForm.filter(a => a != null).map(a => a.label || a.value || a.name || a)
+                            });
+
+                            // تحديث البيانات محلياً
+                            setRepair(prev => ({ ...prev, accessories: accessoriesForm }));
+                            setEditingAccessories(false);
+                            notifications.success('تم تحديث المتعلقات المستلمة');
+                          } catch (error) {
+                            console.error('Error updating accessories:', error);
+                            notifications.error('حدث خطأ في تحديث المتعلقات');
+                          }
+                        }}>
+                          <Save className="w-4 h-4 ml-1" />
+                          حفظ التغييرات
+                        </SimpleButton>
+                        <SimpleButton size="sm" variant="ghost" onClick={() => {
+                          setEditingAccessories(false);
+                          // Convert accessories data to proper form format
+                          const accessoriesData = repair.accessories || [];
+                          const formattedAccessories = accessoriesData
+                            .filter(item => item != null)
+                            .map((item, index) => {
+                              if (typeof item === 'string') {
+                                // It's already a string (manual entry)
+                                return { id: index, value: item, label: item };
+                              } else if (typeof item === 'number') {
+                                // It's an ID, find the corresponding option
+                                const option = accessoryOptions.find(opt => opt.id === item);
+                                if (option) {
+                                  return { id: option.id, value: option.value, label: option.label };
+                                } else {
+                                  // If option not found, treat as manual entry
+                                  return { id: index, value: `Item ${item}`, label: `Item ${item}` };
+                                }
+                              } else if (typeof item === 'object' && item.label) {
+                                // It's already an object with label
+                                return item;
+                              } else {
+                                // Fallback
+                                return { id: index, value: String(item), label: getAccessoryLabel(String(item)) };
+                              }
+                            });
+                          setAccessoriesForm(formattedAccessories);
+                        }}>
+                          <X className="w-4 h-4 ml-1" />
+                          إلغاء
+                        </SimpleButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      {Array.isArray(repair.accessories) && repair.accessories.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {repair.accessories.filter(a => a != null).map((a, index) => (
+                            <span key={a?.id || index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                              {getAccessoryLabel(typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown'))}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">لا توجد متعلقات مستلمة</div>
+                      )}
+                    </div>
+                  )}
+                </SimpleCardContent>
+              </SimpleCard>
+            )
+          }
+        </div >
+      </div >
 
       {/* حوار إسناد فني */}
-      {assignOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">إسناد فني</h3>
-              <button onClick={() => setAssignOpen(false)} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">اختر الفني</label>
-              {techLoading ? (
-                <div className="text-sm text-gray-500">جاري تحميل قائمة الفنيين...</div>
-              ) : (
-                <select
-                  value={assignTechId}
-                  onChange={(e) => setAssignTechId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                >
-                  <option value="">اختر الفني...</option>
-                  {techOptions.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name || `مستخدم #${u.id}`} {u.phone ? `- ${u.phone}` : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {assignTechId && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
-                  <select
-                    value={assignRole}
-                    onChange={(e) => setAssignRole(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg bg-white"
-                  >
-                    <option value="primary">رئيسي</option>
-                    <option value="assistant">مساعد</option>
-                  </select>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center justify-end space-x-2 space-x-reverse mt-6">
-              <SimpleButton variant="ghost" onClick={() => {
-                setAssignOpen(false);
-                setAssignTechId('');
-                setAssignRole('primary');
-              }}>إلغاء</SimpleButton>
-              <SimpleButton onClick={handleAssignTechnician} disabled={!assignTechId}>حفظ</SimpleButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* حوار تقرير الفحص */}
-      {inspectionOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
-              <div className="flex items-center justify-between">
+      {/* حوار إسناد فني - تصميم جديد */}
+      {
+        assignOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-auto transform transition-all overflow-hidden border border-gray-100">
+              {/* Header */}
+              <div className="bg-purple-600 px-6 py-4 flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <UserPlus className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {editingReport ? 'تعديل تقرير الفحص' : 'تقرير فحص جديد'}
-                    </h3>
-                    <p className="text-sm text-gray-500">طلب #{id} - {repair?.customerName}</p>
+                    <h3 className="text-xl font-bold">إسناد فني للطلب</h3>
+                    <p className="text-purple-100 text-xs">تعيين المسؤول عن عملية الإصلاح</p>
                   </div>
                 </div>
                 <button
                   onClick={() => {
-                    setInspectionOpen(false);
-                    // Reset form and error when closing
-                    setInspectionForm({
-                      inspectionTypeId: '',
-                      technicianId: '',
-                      reportDate: new Date().toISOString().slice(0, 10),
-                      summary: '',
-                      result: '',
-                      recommendations: '',
-                      notes: '',
-                    });
-                    setInspectionError('');
+                    setAssignOpen(false);
+                    setAssignTechId('');
+                    setAssignRole('primary');
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="hover:bg-white/10 p-2 rounded-xl transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-            </div>
 
-            <div className="p-6 space-y-6">
-              {/* Error Message */}
-              {inspectionError && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  <span>{inspectionError}</span>
-                </div>
-              )}
-
-              {/* معلومات أساسية */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">المعلومات الأساسية</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-6 space-y-6">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">نوع الفحص</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">اختر الفني المتاح</label>
+                    <div className="relative">
+                      {techLoading ? (
+                        <div className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                          <span className="text-sm text-gray-500">جاري التحميل...</span>
+                        </div>
+                      ) : (
+                        <select
+                          value={assignTechId}
+                          onChange={(e) => setAssignTechId(e.target.value)}
+                          className="w-full p-4 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none transition-shadow"
+                        >
+                          <option value="">اختر الفني من القائمة...</option>
+                          {techOptions.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.name || `مستخدم #${u.id}`} {u.phone ? `(${u.phone})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {assignTechId && (
+                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 animate-in fade-in slide-in-from-top-2">
+                      <label className="block text-sm font-bold text-purple-900 mb-3">دور الفني في هذا الطلب</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setAssignRole('primary')}
+                          className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${assignRole === 'primary'
+                            ? 'bg-white border-purple-500 text-purple-700 shadow-sm'
+                            : 'bg-white/50 border-transparent text-gray-500 hover:bg-white'
+                            }`}
+                        >
+                          <span className="font-bold">فني رئيسي</span>
+                          <span className="text-[10px] opacity-70">المسؤول عن التشخيص</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssignRole('assistant')}
+                          className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${assignRole === 'assistant'
+                            ? 'bg-white border-blue-500 text-blue-700 shadow-sm'
+                            : 'bg-white/50 border-transparent text-gray-500 hover:bg-white'
+                            }`}
+                        >
+                          <span className="font-bold">فني مساعد</span>
+                          <span className="text-[10px] opacity-70">يقدم الدعم والقطع</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <SimpleButton
+                    variant="ghost"
+                    onClick={() => {
+                      setAssignOpen(false);
+                      setAssignTechId('');
+                      setAssignRole('primary');
+                    }}
+                    className="flex-1 rounded-xl py-3"
+                  >
+                    إلغاء
+                  </SimpleButton>
+                  <SimpleButton
+                    onClick={handleAssignTechnician}
+                    disabled={!assignTechId}
+                    className="flex-1 rounded-xl py-3 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-200 disabled:opacity-50 disabled:shadow-none"
+                  >
+                    تأكيد الإسناد
+                  </SimpleButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* حوار تقرير الفحص */}
+      {
+        inspectionOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 my-auto transform transition-all flex flex-col">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {editingReport ? 'تعديل تقرير الفحص' : 'تقرير فحص جديد'}
+                      </h3>
+                      <p className="text-sm text-gray-500">طلب #{id} - {repair?.customerName}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setInspectionOpen(false);
+                      // Reset form and error when closing
+                      setInspectionForm({
+                        inspectionTypeId: '',
+                        technicianId: '',
+                        reportDate: new Date().toISOString().slice(0, 10),
+                        summary: '',
+                        result: '',
+                        recommendations: '',
+                        notes: '',
+                      });
+                      setInspectionError('');
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Error Message */}
+                {inspectionError && (
+                  <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>{inspectionError}</span>
+                  </div>
+                )}
+
+                {/* معلومات أساسية */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">المعلومات الأساسية</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">نوع الفحص</label>
+                      <select
+                        value={inspectionForm.inspectionTypeId}
+                        onChange={(e) => setInspectionForm(f => ({ ...f, inspectionTypeId: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={inspectionTypesLoading}
+                      >
+                        <option value="">{inspectionTypesLoading ? 'جاري التحميل...' : 'اختر النوع...'}</option>
+                        {inspectionTypes.map((type) => (
+                          <option key={type.id} value={type.id}>
+                            {type.name} {type.description ? `- ${type.description}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        الفني المسؤول
+                        {!inspectionForm.technicianId && (
+                          <span className="text-xs text-gray-500 mr-1">(سيتم تعيين الفني الحالي تلقائياً)</span>
+                        )}
+                      </label>
+                      <select
+                        value={inspectionForm.technicianId}
+                        onChange={(e) => setInspectionForm(f => ({ ...f, technicianId: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={techLoading}
+                      >
+                        <option value="">
+                          {techLoading ? 'جاري التحميل...' : (assignTechId || repair?.technicianId ? 'استخدام الفني المحدد' : 'اختر الفني...')}
+                        </option>
+                        {techOptions.map((u) => (
+                          <option key={u.id} value={u.id}>{u.name || `مستخدم #${u.id}`}</option>
+                        ))}
+                      </select>
+                      {techLoading && <p className="text-sm text-gray-500 mt-1">جاري تحميل الفنيين...</p>}
+                      {!techLoading && !inspectionForm.technicianId && (assignTechId || repair?.technicianId) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          سيتم استخدام: {techOptions.find(t => t.id === (assignTechId || repair?.technicianId))?.name || 'الفني المحدد'}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ التقرير</label>
+                      <input
+                        type="date"
+                        value={inspectionForm.reportDate}
+                        onChange={(e) => setInspectionForm(f => ({ ...f, reportDate: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* زر تحميل المكونات الجاهزة للفحص النهائي */}
+                {inspectionForm.inspectionTypeId &&
+                  inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId))?.name === 'فحص نهائي' && (
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h5 className="text-sm font-semibold text-blue-900 mb-1">قائمة المكونات الجاهزة</h5>
+                          <p className="text-xs text-blue-700 mb-3">
+                            بعد حفظ التقرير، يمكنك تحميل قائمة المكونات الافتراضية (الكاميرا، WiFi، الشاشة، إلخ)
+                          </p>
+                        </div>
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Wrench className="w-5 h-5 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* تفاصيل التقرير */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700">تفاصيل التقرير</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ملخص الفحص
+                        <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                      </label>
+                      <textarea
+                        value={inspectionForm.summary}
+                        onChange={(e) => {
+                          setInspectionForm(f => ({ ...f, summary: e.target.value }));
+                          setInspectionError(''); // Clear error when user types
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        rows={4}
+                        placeholder="وصف مختصر لنتائج الفحص..."
+                        maxLength={2000}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{inspectionForm.summary.length}/2000</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        النتيجة والتشخيص
+                        <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                      </label>
+                      <textarea
+                        value={inspectionForm.result}
+                        onChange={(e) => {
+                          setInspectionForm(f => ({ ...f, result: e.target.value }));
+                          setInspectionError(''); // Clear error when user types
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        rows={4}
+                        placeholder="التشخيص النهائي والمشاكل المكتشفة..."
+                        maxLength={2000}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{inspectionForm.result.length}/2000</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        التوصيات
+                        <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                      </label>
+                      <textarea
+                        value={inspectionForm.recommendations}
+                        onChange={(e) => {
+                          setInspectionForm(f => ({ ...f, recommendations: e.target.value }));
+                          setInspectionError(''); // Clear error when user types
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        rows={4}
+                        placeholder="الخطوات المقترحة للإصلاح..."
+                        maxLength={2000}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{inspectionForm.recommendations.length}/2000</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ملاحظات إضافية
+                        <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
+                      </label>
+                      <textarea
+                        value={inspectionForm.notes}
+                        onChange={(e) => {
+                          setInspectionForm(f => ({ ...f, notes: e.target.value }));
+                          setInspectionError(''); // Clear error when user types
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        rows={4}
+                        placeholder="أي ملاحظات أخرى..."
+                        maxLength={2000}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{inspectionForm.notes.length}/2000</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl">
+                <div className="flex items-center justify-end gap-3">
+                  <SimpleButton
+                    variant="ghost"
+                    onClick={() => {
+                      setInspectionOpen(false);
+                      // Reset form and error when closing
+                      setInspectionForm({
+                        inspectionTypeId: '',
+                        technicianId: '',
+                        reportDate: new Date().toISOString().slice(0, 10),
+                        summary: '',
+                        result: '',
+                        recommendations: '',
+                        notes: '',
+                      });
+                      setInspectionError('');
+                    }}
+                    disabled={inspectionSaving}
+                  >
+                    إلغاء
+                  </SimpleButton>
+                  <SimpleButton
+                    onClick={async () => {
+                      // Reset error
+                      setInspectionError('');
+
+                      // Validation
+                      if (!inspectionForm.inspectionTypeId) {
+                        setInspectionError('يرجى اختيار نوع الفحص');
+                        notifications.error('يرجى اختيار نوع الفحص');
+                        return;
+                      }
+                      if (!inspectionForm.reportDate) {
+                        setInspectionError('يرجى تحديد تاريخ التقرير');
+                        notifications.error('يرجى تحديد تاريخ التقرير');
+                        return;
+                      }
+
+                      // Check if at least one field is filled (summary, result, recommendations, or notes)
+                      if (!inspectionForm.summary && !inspectionForm.result && !inspectionForm.recommendations && !inspectionForm.notes) {
+                        setInspectionError('يرجى ملء حقل واحد على الأقل من (الملخص، النتيجة، التوصيات، أو الملاحظات)');
+                        notifications.warning('يرجى ملء حقل واحد على الأقل من تفاصيل التقرير');
+                        return;
+                      }
+
+                      try {
+                        setInspectionSaving(true);
+                        // Convert reportDate to ISO 8601 format if it's in YYYY-MM-DD format
+                        let reportDateISO = inspectionForm.reportDate;
+                        if (reportDateISO && reportDateISO.length === 10) {
+                          // If it's YYYY-MM-DD, convert to ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
+                          reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
+                        }
+
+                        const payload = {
+                          repairRequestId: Number(id),
+                          inspectionTypeId: inspectionForm.inspectionTypeId ? Number(inspectionForm.inspectionTypeId) : null,
+                          technicianId: inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id ? Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id) : null,
+                          reportDate: reportDateISO,
+                          summary: inspectionForm.summary || null,
+                          result: inspectionForm.result || null,
+                          recommendations: inspectionForm.recommendations || null,
+                          notes: inspectionForm.notes || null,
+                          branchId: repair?.branchId || null,
+                        };
+
+                        if (editingReport) {
+                          // Optimistic update - update in UI immediately
+                          const updatedReport = {
+                            ...editingReport,
+                            ...payload,
+                            inspectionTypeName: inspectionTypes.find(t => t.id === Number(payload.inspectionTypeId))?.name || editingReport.inspectionTypeName,
+                            updatedAt: new Date().toISOString()
+                          };
+                          setInspectionReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
+
+                          // Update existing report
+                          console.log('[InspectionReport] Updating report with payload:', payload);
+                          await apiService.request(`/inspectionreports/${editingReport.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(payload)
+                          });
+                          console.log('[InspectionReport] Report updated successfully');
+
+                          setInspectionOpen(false);
+                          setEditingReport(null);
+
+                          // إعادة تعيين النموذج
+                          setInspectionForm({
+                            inspectionTypeId: '',
+                            technicianId: '',
+                            reportDate: new Date().toISOString().slice(0, 10),
+                            summary: '',
+                            result: '',
+                            recommendations: '',
+                            notes: '',
+                          });
+                          setInspectionError('');
+
+                          // إعادة تحميل البيانات
+                          await fetchRepairDetails();
+                          await loadInspectionReports();
+
+                          notifications.success('تم', { message: 'تم تحديث تقرير الفحص بنجاح' });
+                        } else {
+                          // Create new report
+                          console.log('[InspectionReport] Creating report with payload:', payload);
+                          const response = await apiService.createInspectionReport(payload);
+                          console.log('[InspectionReport] Report created successfully:', response);
+
+                          // حفظ ID التقرير الجديد
+                          const createdReportId = response?.id || response?.data?.id;
+                          const selectedType = inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId));
+
+                          setInspectionOpen(false);
+                          setEditingReport(null);
+
+                          // إعادة تعيين النموذج
+                          setInspectionForm({
+                            inspectionTypeId: '',
+                            technicianId: '',
+                            reportDate: new Date().toISOString().slice(0, 10),
+                            summary: '',
+                            result: '',
+                            recommendations: '',
+                            notes: '',
+                          });
+                          setInspectionError('');
+
+                          // إعادة تحميل البيانات
+                          await fetchRepairDetails();
+                          // Always reload reports after creating/updating to get fresh data with all joins
+                          await loadInspectionReports();
+
+                          // إذا كان نوع الفحص "فحص نهائي"، عرض خيار تحميل القوالب
+                          if (selectedType?.name === 'فحص نهائي' && createdReportId) {
+                            // عرض رسالة مع خيار تحميل القوالب
+                            setTimeout(() => {
+                              if (window.confirm('تم حفظ تقرير الفحص النهائي بنجاح!\n\nهل تريد تحميل قائمة المكونات الافتراضية الآن؟')) {
+                                (async () => {
+                                  try {
+                                    // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
+                                    const deviceType = repair?.deviceType?.toLowerCase() || 'all';
+                                    console.log('[RepairDetails] Device type:', deviceType);
+
+                                    const deviceCategory = deviceType === 'laptop' ? 'laptop' :
+                                      deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
+                                        deviceType === 'tablet' ? 'tablet' : 'all';
+                                    console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
+
+                                    const response = await apiService.loadFinalInspectionComponents(createdReportId, deviceCategory);
+                                    console.log('[RepairDetails] Load components response:', response);
+
+                                    notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية بنجاح' });
+                                    await loadInspectionReports();
+                                  } catch (error) {
+                                    console.error('Error loading templates:', error);
+                                    const errorMessage = error?.response?.data?.error || error?.message || 'فشل تحميل القوالب';
+                                    notifications.error('خطأ', { message: errorMessage });
+                                  }
+                                })();
+                              }
+                            }, 500);
+                          } else {
+                            notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
+                          }
+                        }
+
+                        // إعطاء وقت للـ WebSocket notification للوصول
+                        setTimeout(() => {
+                          console.log('[InspectionReport] Report should be visible now via WebSocket');
+                        }, 1000);
+                      } catch (e) {
+                        console.error('[InspectionReport] Error creating report:', e);
+                        const errorMessage = e?.message || e?.error || 'تعذر حفظ تقرير الفحص';
+                        setInspectionError(errorMessage);
+                        notifications.error(errorMessage);
+                      } finally {
+                        setInspectionSaving(false);
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!inspectionForm.inspectionTypeId || !inspectionForm.reportDate || inspectionSaving}
+                  >
+                    {inspectionSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin ml-2" />
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 ml-2" />
+                        حفظ التقرير
+                      </>
+                    )}
+                  </SimpleButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* حوار صرف قطعة - تصميم جديد */}
+      {
+        issueOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto transform transition-all overflow-hidden border border-gray-100">
+              {/* Header */}
+              <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-white">صرف قطعة غيار</h3>
+                  <p className="text-blue-100 text-sm mt-1">اختر القطعة والمخزن لإضافتها للطلب</p>
+                </div>
+                <button
+                  onClick={() => setIssueOpen(false)}
+                  className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {issueError && (
+                  <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    {issueError}
+                  </div>
+                )}
+                {Array.isArray(warehouses) && warehouses.length === 0 && (
+                  <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
+                    لا توجد مخازن متاحة. يرجى إنشاء مخزن من إعدادات المخزون أولاً.
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">المخزن <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        name="warehouseId"
+                        value={issueForm.warehouseId}
+                        onChange={handleIssueChange}
+                        className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                      >
+                        <option value="">-- اختر المخزن --</option>
+                        {warehouses.map((wh) => (
+                          <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
+                        ))}
+                      </select>
+                      <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">العنصر <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        name="inventoryItemId"
+                        value={issueForm.inventoryItemId}
+                        onChange={handleIssueChange}
+                        className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                      >
+                        <option value="">-- اختر العنصر --</option>
+                        {items.map((it) => (
+                          <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
+                        ))}
+                      </select>
+                      <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">الكمية <span className="text-red-500">*</span></label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={availableQty !== null ? availableQty : undefined}
+                        name="quantity"
+                        value={issueForm.quantity}
+                        onChange={handleIssueChange}
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow ${availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300'
+                          }`}
+                      />
+                    </div>
+
+                    {/* Stock Info Box */}
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 flex flex-col justify-center">
+                      {availableQty !== null ? (
+                        <>
+                          <span className="text-xs text-gray-500 mb-1">المخزون المتاح</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-lg font-bold ${availableQty === 0 ? 'text-red-600' : availableQty <= (minLevel || 0) ? 'text-amber-600' : 'text-green-600'}`}>
+                              {availableQty}
+                            </span>
+                            <span className="text-xs text-gray-400">قطعة</span>
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400 text-center">اختر مخزن وعنصر لعرض المخزون</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Custom Selling Price Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      سعر البيع (اختياري)
+                      {selectedItemInfo?.sellingPrice && (
+                        <span className="text-xs text-gray-500 font-normal mr-2">
+                          (السعر الافتراضي: {formatMoney(selectedItemInfo.sellingPrice)})
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="unitSellingPrice"
+                        value={issueForm.unitSellingPrice}
+                        onChange={handleIssueChange}
+                        placeholder={selectedItemInfo?.sellingPrice ? formatMoney(selectedItemInfo.sellingPrice) : "اتركه فارغاً لاستخدام السعر الافتراضي"}
+                        className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                      />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لاستخدام السعر الافتراضي من بيانات القطعة</p>
+                  </div>
+
+                  {/* Warnings */}
+                  {availableQty !== null && Number(issueForm.quantity) > Number(availableQty) && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      الكمية المطلوبة أكبر من المخزون المتاح!
+                    </div>
+                  )}
+
+                  {isLowStock && availableQty !== null && (
+                    <div className={`p-3 rounded-lg border flex items-start gap-2 text-sm ${availableQty === 0
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                      <AlertTriangle className="w-4 h-4 mt-0.5" />
+                      <div>
+                        {availableQty === 0
+                          ? 'المخزون منتهٍ تماماً!'
+                          : `المخزون منخفض! (الحد الأدنى: ${minLevel || 0})`}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Invoice Link Section */}
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <label className="flex items-center gap-2 text-sm font-medium text-blue-800 mb-2">
+                      <FileText className="w-4 h-4" />
+                      ربط بفاتورة (اختياري)
+                    </label>
                     <select
-                      value={inspectionForm.inspectionTypeId}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, inspectionTypeId: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      disabled={inspectionTypesLoading}
+                      name="invoiceId"
+                      value={issueForm.invoiceId}
+                      onChange={handleIssueChange}
+                      className="w-full px-4 py-2.5 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     >
-                      <option value="">{inspectionTypesLoading ? 'جاري التحميل...' : 'اختر النوع...'}</option>
-                      {inspectionTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name} {type.description ? `- ${type.description}` : ''}
+                      <option value="">بدون ربط - سيتم الربط تلقائياً بالفاتورة الأولى</option>
+                      {invoices.map((inv) => (
+                        <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
+                          {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      الفني المسؤول
-                      {!inspectionForm.technicianId && (
-                        <span className="text-xs text-gray-500 mr-1">(سيتم تعيين الفني الحالي تلقائياً)</span>
-                      )}
-                    </label>
-                    <select
-                      value={inspectionForm.technicianId}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, technicianId: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      disabled={techLoading}
-                    >
-                      <option value="">
-                        {techLoading ? 'جاري التحميل...' : (assignTechId || repair?.technicianId ? 'استخدام الفني المحدد' : 'اختر الفني...')}
-                      </option>
-                      {techOptions.map((u) => (
-                        <option key={u.id} value={u.id}>{u.name || `مستخدم #${u.id}`}</option>
-                      ))}
-                    </select>
-                    {techLoading && <p className="text-sm text-gray-500 mt-1">جاري تحميل الفنيين...</p>}
-                    {!techLoading && !inspectionForm.technicianId && (assignTechId || repair?.technicianId) && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        سيتم استخدام: {techOptions.find(t => t.id === (assignTechId || repair?.technicianId))?.name || 'الفني المحدد'}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ التقرير</label>
-                    <input
-                      type="date"
-                      value={inspectionForm.reportDate}
-                      onChange={(e) => setInspectionForm(f => ({ ...f, reportDate: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
                 </div>
               </div>
 
-              {/* زر تحميل المكونات الجاهزة للفحص النهائي */}
-              {inspectionForm.inspectionTypeId &&
-                inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId))?.name === 'فحص نهائي' && (
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h5 className="text-sm font-semibold text-blue-900 mb-1">قائمة المكونات الجاهزة</h5>
-                        <p className="text-xs text-blue-700 mb-3">
-                          بعد حفظ التقرير، يمكنك تحميل قائمة المكونات الافتراضية (الكاميرا، WiFi، الشاشة، إلخ)
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Wrench className="w-5 h-5 text-blue-600" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              {/* تفاصيل التقرير */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700">تفاصيل التقرير</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ملخص الفحص
-                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
-                    </label>
-                    <textarea
-                      value={inspectionForm.summary}
-                      onChange={(e) => {
-                        setInspectionForm(f => ({ ...f, summary: e.target.value }));
-                        setInspectionError(''); // Clear error when user types
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      rows={4}
-                      placeholder="وصف مختصر لنتائج الفحص..."
-                      maxLength={2000}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.summary.length}/2000</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      النتيجة والتشخيص
-                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
-                    </label>
-                    <textarea
-                      value={inspectionForm.result}
-                      onChange={(e) => {
-                        setInspectionForm(f => ({ ...f, result: e.target.value }));
-                        setInspectionError(''); // Clear error when user types
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      rows={4}
-                      placeholder="التشخيص النهائي والمشاكل المكتشفة..."
-                      maxLength={2000}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.result.length}/2000</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      التوصيات
-                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
-                    </label>
-                    <textarea
-                      value={inspectionForm.recommendations}
-                      onChange={(e) => {
-                        setInspectionForm(f => ({ ...f, recommendations: e.target.value }));
-                        setInspectionError(''); // Clear error when user types
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      rows={4}
-                      placeholder="الخطوات المقترحة للإصلاح..."
-                      maxLength={2000}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.recommendations.length}/2000</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ملاحظات إضافية
-                      <span className="text-xs text-gray-500 font-normal mr-1">(اختياري)</span>
-                    </label>
-                    <textarea
-                      value={inspectionForm.notes}
-                      onChange={(e) => {
-                        setInspectionForm(f => ({ ...f, notes: e.target.value }));
-                        setInspectionError(''); // Clear error when user types
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      rows={4}
-                      placeholder="أي ملاحظات أخرى..."
-                      maxLength={2000}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{inspectionForm.notes.length}/2000</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl">
-              <div className="flex items-center justify-end gap-3">
-                <SimpleButton
-                  variant="ghost"
-                  onClick={() => {
-                    setInspectionOpen(false);
-                    // Reset form and error when closing
-                    setInspectionForm({
-                      inspectionTypeId: '',
-                      technicianId: '',
-                      reportDate: new Date().toISOString().slice(0, 10),
-                      summary: '',
-                      result: '',
-                      recommendations: '',
-                      notes: '',
-                    });
-                    setInspectionError('');
-                  }}
-                  disabled={inspectionSaving}
+              {/* Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <button
+                  onClick={() => setIssueOpen(false)}
+                  className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  disabled={issueLoading}
                 >
                   إلغاء
-                </SimpleButton>
-                <SimpleButton
-                  onClick={async () => {
-                    // Reset error
-                    setInspectionError('');
-
-                    // Validation
-                    if (!inspectionForm.inspectionTypeId) {
-                      setInspectionError('يرجى اختيار نوع الفحص');
-                      notifications.error('يرجى اختيار نوع الفحص');
-                      return;
-                    }
-                    if (!inspectionForm.reportDate) {
-                      setInspectionError('يرجى تحديد تاريخ التقرير');
-                      notifications.error('يرجى تحديد تاريخ التقرير');
-                      return;
-                    }
-
-                    // Check if at least one field is filled (summary, result, recommendations, or notes)
-                    if (!inspectionForm.summary && !inspectionForm.result && !inspectionForm.recommendations && !inspectionForm.notes) {
-                      setInspectionError('يرجى ملء حقل واحد على الأقل من (الملخص، النتيجة، التوصيات، أو الملاحظات)');
-                      notifications.warning('يرجى ملء حقل واحد على الأقل من تفاصيل التقرير');
-                      return;
-                    }
-
-                    try {
-                      setInspectionSaving(true);
-                      // Convert reportDate to ISO 8601 format if it's in YYYY-MM-DD format
-                      let reportDateISO = inspectionForm.reportDate;
-                      if (reportDateISO && reportDateISO.length === 10) {
-                        // If it's YYYY-MM-DD, convert to ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
-                        reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
-                      }
-
-                      const payload = {
-                        repairRequestId: Number(id),
-                        inspectionTypeId: inspectionForm.inspectionTypeId ? Number(inspectionForm.inspectionTypeId) : null,
-                        technicianId: inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id ? Number(inspectionForm.technicianId || assignTechId || techOptions[0]?.id || user?.id) : null,
-                        reportDate: reportDateISO,
-                        summary: inspectionForm.summary || null,
-                        result: inspectionForm.result || null,
-                        recommendations: inspectionForm.recommendations || null,
-                        notes: inspectionForm.notes || null,
-                        branchId: repair?.branchId || null,
-                      };
-
-                      if (editingReport) {
-                        // Optimistic update - update in UI immediately
-                        const updatedReport = {
-                          ...editingReport,
-                          ...payload,
-                          inspectionTypeName: inspectionTypes.find(t => t.id === Number(payload.inspectionTypeId))?.name || editingReport.inspectionTypeName,
-                          updatedAt: new Date().toISOString()
-                        };
-                        setInspectionReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
-
-                        // Update existing report
-                        console.log('[InspectionReport] Updating report with payload:', payload);
-                        await apiService.request(`/inspectionreports/${editingReport.id}`, {
-                          method: 'PUT',
-                          body: JSON.stringify(payload)
-                        });
-                        console.log('[InspectionReport] Report updated successfully');
-
-                        setInspectionOpen(false);
-                        setEditingReport(null);
-
-                        // إعادة تعيين النموذج
-                        setInspectionForm({
-                          inspectionTypeId: '',
-                          technicianId: '',
-                          reportDate: new Date().toISOString().slice(0, 10),
-                          summary: '',
-                          result: '',
-                          recommendations: '',
-                          notes: '',
-                        });
-                        setInspectionError('');
-
-                        // إعادة تحميل البيانات
-                        await fetchRepairDetails();
-                        await loadInspectionReports();
-
-                        notifications.success('تم', { message: 'تم تحديث تقرير الفحص بنجاح' });
-                      } else {
-                        // Create new report
-                        console.log('[InspectionReport] Creating report with payload:', payload);
-                        const response = await apiService.createInspectionReport(payload);
-                        console.log('[InspectionReport] Report created successfully:', response);
-
-                        // حفظ ID التقرير الجديد
-                        const createdReportId = response?.id || response?.data?.id;
-                        const selectedType = inspectionTypes.find(t => t.id === Number(inspectionForm.inspectionTypeId));
-
-                        setInspectionOpen(false);
-                        setEditingReport(null);
-
-                        // إعادة تعيين النموذج
-                        setInspectionForm({
-                          inspectionTypeId: '',
-                          technicianId: '',
-                          reportDate: new Date().toISOString().slice(0, 10),
-                          summary: '',
-                          result: '',
-                          recommendations: '',
-                          notes: '',
-                        });
-                        setInspectionError('');
-
-                        // إعادة تحميل البيانات
-                        await fetchRepairDetails();
-                        // Always reload reports after creating/updating to get fresh data with all joins
-                        await loadInspectionReports();
-
-                        // إذا كان نوع الفحص "فحص نهائي"، عرض خيار تحميل القوالب
-                        if (selectedType?.name === 'فحص نهائي' && createdReportId) {
-                          // عرض رسالة مع خيار تحميل القوالب
-                          setTimeout(() => {
-                            if (window.confirm('تم حفظ تقرير الفحص النهائي بنجاح!\n\nهل تريد تحميل قائمة المكونات الافتراضية الآن؟')) {
-                              (async () => {
-                                try {
-                                  // تحويل deviceType إلى lowercase لمطابقة deviceCategory في القوالب
-                                  const deviceType = repair?.deviceType?.toLowerCase() || 'all';
-                                  console.log('[RepairDetails] Device type:', deviceType);
-
-                                  const deviceCategory = deviceType === 'laptop' ? 'laptop' :
-                                    deviceType === 'phone' || deviceType === 'smartphone' ? 'phone' :
-                                      deviceType === 'tablet' ? 'tablet' : 'all';
-                                  console.log('[RepairDetails] Loading components for deviceCategory:', deviceCategory);
-
-                                  const response = await apiService.loadFinalInspectionComponents(createdReportId, deviceCategory);
-                                  console.log('[RepairDetails] Load components response:', response);
-
-                                  notifications.success('تم', { message: response?.message || 'تم تحميل قائمة المكونات الافتراضية بنجاح' });
-                                  await loadInspectionReports();
-                                } catch (error) {
-                                  console.error('Error loading templates:', error);
-                                  const errorMessage = error?.response?.data?.error || error?.message || 'فشل تحميل القوالب';
-                                  notifications.error('خطأ', { message: errorMessage });
-                                }
-                              })();
-                            }
-                          }, 500);
-                        } else {
-                          notifications.success('تم', { message: 'تم حفظ تقرير الفحص بنجاح' });
-                        }
-                      }
-
-                      // إعطاء وقت للـ WebSocket notification للوصول
-                      setTimeout(() => {
-                        console.log('[InspectionReport] Report should be visible now via WebSocket');
-                      }, 1000);
-                    } catch (e) {
-                      console.error('[InspectionReport] Error creating report:', e);
-                      const errorMessage = e?.message || e?.error || 'تعذر حفظ تقرير الفحص';
-                      setInspectionError(errorMessage);
-                      notifications.error(errorMessage);
-                    } finally {
-                      setInspectionSaving(false);
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!inspectionForm.inspectionTypeId || !inspectionForm.reportDate || inspectionSaving}
-                >
-                  {inspectionSaving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin ml-2" />
-                      جاري الحفظ...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 ml-2" />
-                      حفظ التقرير
-                    </>
-                  )}
-                </SimpleButton>
+                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-red-500">* حقول مطلوبة</span>
+                  <button
+                    onClick={handleIssueSubmit}
+                    disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:shadow-none"
+                  >
+                    {issueLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        جاري الصرف...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        صرف القطعة
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {/* حوار صرف قطعة - تصميم جديد */}
-      {issueOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all">
-            {/* Header */}
-            <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-white">صرف قطعة غيار</h3>
-                <p className="text-blue-100 text-sm mt-1">اختر القطعة والمخزن لإضافتها للطلب</p>
+      {/* Message Log */}
+      {
+        repair && (
+          <div className="mt-6">
+            <MessageLogViewer
+              entityType="repair"
+              entityId={repair.id}
+              customerId={repair.customerId}
+              limit={5}
+            />
+          </div>
+        )
+      }
+
+      {/* --- Modals --- */}
+
+      {/* Update Status Modal */}
+      {
+        editingStatus && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-auto transform transition-all overflow-hidden border border-gray-100">
+              <div className="bg-blue-600 px-6 py-4 flex items-center justify-between text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <RefreshCw className="w-5 h-5 ml-2" />
+                  تحديث حالة الطلب
+                </h3>
+                <button onClick={() => setEditingStatus(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-              <button
-                onClick={() => setIssueOpen(false)}
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الحالة الجديدة</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="pending">في الانتظار</option>
+                    <option value="in-progress">قيد الإصلاح</option>
+                    <option value="waiting-parts">بانتظار قطع غيار</option>
+                    <option value="ready-for-pickup">جاهز للاستلام</option>
+                    <option value="on-hold">معلق</option>
+                    <option value="completed">مكتمل</option>
+                    <option value="cancelled">ملغي</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t mt-4">
+                  <SimpleButton variant="ghost" onClick={() => setEditingStatus(false)}>إلغاء</SimpleButton>
+                  <SimpleButton onClick={handleStatusUpdate}>حفظ التغييرات</SimpleButton>
+                </div>
+              </div>
             </div>
+          </div>
+        )
+      }
 
-            <div className="p-6 space-y-5">
-              {issueError && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  {issueError}
-                </div>
-              )}
-              {Array.isArray(warehouses) && warehouses.length === 0 && (
-                <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
-                  لا توجد مخازن متاحة. يرجى إنشاء مخزن من إعدادات المخزون أولاً.
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">المخزن <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <select
-                      name="warehouseId"
-                      value={issueForm.warehouseId}
-                      onChange={handleIssueChange}
-                      className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
-                    >
-                      <option value="">-- اختر المخزن --</option>
-                      {warehouses.map((wh) => (
-                        <option key={wh.id} value={wh.id}>{wh.name || `مخزن #${wh.id}`}</option>
-                      ))}
-                    </select>
-                    <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">العنصر <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <select
-                      name="inventoryItemId"
-                      value={issueForm.inventoryItemId}
-                      onChange={handleIssueChange}
-                      className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
-                    >
-                      <option value="">-- اختر العنصر --</option>
-                      {items.map((it) => (
-                        <option key={it.id} value={it.id}>{it.name || it.itemName || `عنصر #${it.id}`}</option>
-                      ))}
-                    </select>
-                    <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+      {/* Add Payment Modal */}
+      {
+        addingPayment && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto transform transition-all overflow-hidden border border-gray-100">
+              <div className="bg-green-600 px-6 py-4 flex items-center justify-between text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <DollarSign className="w-5 h-5 ml-2" />
+                  إضافة دفعة مالية
+                </h3>
+                <button onClick={() => setAddingPayment(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الكمية <span className="text-red-500">*</span></label>
-                    <input
-                      type="number"
-                      min="1"
-                      max={availableQty !== null ? availableQty : undefined}
-                      name="quantity"
-                      value={issueForm.quantity}
-                      onChange={handleIssueChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow ${availableQty !== null && Number(issueForm.quantity) > Number(availableQty)
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300'
-                        }`}
-                    />
-                  </div>
-
-                  {/* Stock Info Box */}
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 flex flex-col justify-center">
-                    {availableQty !== null ? (
-                      <>
-                        <span className="text-xs text-gray-500 mb-1">المخزون المتاح</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-lg font-bold ${availableQty === 0 ? 'text-red-600' : availableQty <= (minLevel || 0) ? 'text-amber-600' : 'text-green-600'}`}>
-                            {availableQty}
-                          </span>
-                          <span className="text-xs text-gray-400">قطعة</span>
-                        </div>
-                      </>
-                    ) : (
-                      <span className="text-xs text-gray-400 text-center">اختر مخزن وعنصر لعرض المخزون</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Custom Selling Price Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    سعر البيع (اختياري)
-                    {selectedItemInfo?.sellingPrice && (
-                      <span className="text-xs text-gray-500 font-normal mr-2">
-                        (السعر الافتراضي: {formatMoney(selectedItemInfo.sellingPrice)})
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">المبلغ</label>
                     <input
                       type="number"
                       step="0.01"
-                      min="0"
-                      name="unitSellingPrice"
-                      value={issueForm.unitSellingPrice}
-                      onChange={handleIssueChange}
-                      placeholder={selectedItemInfo?.sellingPrice ? formatMoney(selectedItemInfo.sellingPrice) : "اتركه فارغاً لاستخدام السعر الافتراضي"}
-                      className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                      value={paymentForm.amount}
+                      onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
                     />
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لاستخدام السعر الافتراضي من بيانات القطعة</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">طريقة الدفع</label>
+                    <select
+                      value={paymentForm.method}
+                      onChange={(e) => setPaymentForm(prev => ({ ...prev, method: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="cash">نقدي</option>
+                      <option value="card">بطاقة ائتمان</option>
+                      <option value="bank_transfer">تحويل بنكي</option>
+                      <option value="check">شيك</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">رقم المرجع</label>
+                    <input
+                      type="text"
+                      value={paymentForm.reference}
+                      onChange={(e) => setPaymentForm(prev => ({ ...prev, reference: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      placeholder="رقم العملية أو المرجع"
+                    />
+                  </div>
                 </div>
-
-                {/* Warnings */}
-                {availableQty !== null && Number(issueForm.quantity) > Number(availableQty) && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    الكمية المطلوبة أكبر من المخزون المتاح!
-                  </div>
-                )}
-
-                {isLowStock && availableQty !== null && (
-                  <div className={`p-3 rounded-lg border flex items-start gap-2 text-sm ${availableQty === 0
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                    <AlertTriangle className="w-4 h-4 mt-0.5" />
-                    <div>
-                      {availableQty === 0
-                        ? 'المخزون منتهٍ تماماً!'
-                        : `المخزون منخفض! (الحد الأدنى: ${minLevel || 0})`}
-                    </div>
-                  </div>
-                )}
-
-                {/* Invoice Link Section */}
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <label className="flex items-center gap-2 text-sm font-medium text-blue-800 mb-2">
-                    <FileText className="w-4 h-4" />
-                    ربط بفاتورة (اختياري)
-                  </label>
-                  <select
-                    name="invoiceId"
-                    value={issueForm.invoiceId}
-                    onChange={handleIssueChange}
-                    className="w-full px-4 py-2.5 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  >
-                    <option value="">بدون ربط - سيتم الربط تلقائياً بالفاتورة الأولى</option>
-                    {invoices.map((inv) => (
-                      <option key={inv.id || inv.invoiceId} value={inv.id || inv.invoiceId}>
-                        {inv.title || `فاتورة #${inv.id || inv.invoiceId}`} — {formatMoney(inv.totalAmount || inv.amount || 0)}
-                      </option>
-                    ))}
-                  </select>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
+                  <textarea
+                    value={paymentForm.notes}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={2}
+                    placeholder="ملاحظات إضافية حول الدفعة"
+                  />
                 </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <button
-                onClick={() => setIssueOpen(false)}
-                className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                disabled={issueLoading}
-              >
-                إلغاء
-              </button>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-red-500">* حقول مطلوبة</span>
-                <button
-                  onClick={handleIssueSubmit}
-                  disabled={issueLoading || (availableQty !== null && Number(issueForm.quantity) > Number(availableQty))}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:shadow-none"
-                >
-                  {issueLoading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      جاري الصرف...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      صرف القطعة
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <SimpleButton variant="ghost" onClick={() => setAddingPayment(false)}>إلغاء</SimpleButton>
+                  <SimpleButton onClick={handleAddPayment} disabled={!paymentForm.amount || parseFloat(paymentForm.amount) <= 0}>
+                    حفظ الدفعة
+                  </SimpleButton>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {/* Message Log */}
-      {repair && (
-        <div className="mt-6">
-          <MessageLogViewer
-            entityType="repair"
-            entityId={repair.id}
-            customerId={repair.customerId}
-            limit={5}
-          />
-        </div>
-      )}
-    </div>
+      {/* Add Note Modal */}
+      {
+        addingNote && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-auto transform transition-all overflow-hidden border border-gray-100">
+              <div className="bg-amber-600 px-6 py-4 flex items-center justify-between text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <MessageSquare className="w-5 h-5 ml-2" />
+                  إضافة ملاحظة فنية
+                </h3>
+                <button onClick={() => setAddingNote(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6">
+                <textarea
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="اكتب ملاحظتك هنا..."
+                  className="w-full p-4 border border-gray-300 rounded-2xl bg-gray-50 focus:ring-2 focus:ring-amber-500 resize-none mb-4 shadow-inner"
+                  rows={4}
+                />
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <SimpleButton variant="ghost" onClick={() => { setAddingNote(false); setNewNote(''); }}>إلغاء</SimpleButton>
+                  <SimpleButton onClick={handleAddNote} disabled={!newNote.trim()} className="bg-amber-600 hover:bg-amber-700 text-white">
+                    حفظ الملاحظة
+                  </SimpleButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Edit Repair Details Modal */}
+      {
+        editingDetails && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto transform transition-all overflow-hidden border border-gray-100">
+              <div className="bg-blue-600 px-6 py-4 flex items-center justify-between text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <Edit className="w-5 h-5 ml-2" />
+                  تعديل تفاصيل الطلب
+                </h3>
+                <button onClick={() => setEditingDetails(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[70vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (من)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={repairDetails.estimatedCostMin !== null && repairDetails.estimatedCostMin !== undefined ? repairDetails.estimatedCostMin : ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setRepairDetails(prev => ({
+                          ...prev,
+                          estimatedCostMin: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                        }));
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة (إلى)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={repairDetails.estimatedCostMax !== null && repairDetails.estimatedCostMax !== undefined ? repairDetails.estimatedCostMax : ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setRepairDetails(prev => ({
+                          ...prev,
+                          estimatedCostMax: value === '' ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value))
+                        }));
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة الفعلية</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={repairDetails.actualCost || ''}
+                      onChange={(e) => setRepairDetails(prev => ({ ...prev, actualCost: e.target.value ? parseFloat(e.target.value) : null }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                    <select
+                      value={repairDetails.priority}
+                      onChange={(e) => setRepairDetails(prev => ({ ...prev, priority: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="LOW">منخفضة</option>
+                      <option value="MEDIUM">متوسطة</option>
+                      <option value="HIGH">عالية</option>
+                      <option value="URGENT">عاجلة</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
+                    <input
+                      type="datetime-local"
+                      value={repairDetails.expectedDeliveryDate ? new Date(repairDetails.expectedDeliveryDate).toISOString().slice(0, 16) : ''}
+                      onChange={(e) => setRepairDetails(prev => ({ ...prev, expectedDeliveryDate: e.target.value ? new Date(e.target.value).toISOString() : null }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات إضافية</label>
+                  <textarea
+                    value={repairDetails.notes}
+                    onChange={(e) => setRepairDetails(prev => ({ ...prev, notes: e.target.value }))}
+                    rows="3"
+                    className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 resize-none"
+                    placeholder="أي ملاحظات إضافية..."
+                  />
+                </div>
+              </div>
+              <div className="p-6 bg-gray-50 border-t flex items-center justify-end gap-3">
+                <SimpleButton variant="ghost" onClick={() => setEditingDetails(false)}>إلغاء</SimpleButton>
+                <SimpleButton onClick={handleUpdateRepairDetails}>حفظ التغييرات</SimpleButton>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Edit Device Specs Modal */}
+      {
+        editingSpecs && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto transform transition-all overflow-hidden border border-gray-100">
+              <div className="bg-purple-600 px-6 py-4 flex items-center justify-between text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <Wrench className="w-5 h-5 ml-2" />
+                  تعديل مواصفات الجهاز
+                </h3>
+                <button onClick={() => setEditingSpecs(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">المعالج (CPU)</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.cpu || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, cpu: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: Intel Core i7-10750H"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">كرت الشاشة (GPU)</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.gpu || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, gpu: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: NVIDIA GTX 1650"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الذاكرة (RAM)</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.ram || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, ram: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: 16GB DDR4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">التخزين (Storage)</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.storage || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, storage: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: 512GB SSD"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">حجم الشاشة</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.screenSize || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, screenSize: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: 15.6 بوصة"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">نظام التشغيل</label>
+                    <input
+                      type="text"
+                      value={deviceSpecs.os || ''}
+                      onChange={(e) => setDeviceSpecs(prev => ({ ...prev, os: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      placeholder="مثال: Windows 11"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-6 border-t mt-6">
+                  <SimpleButton variant="ghost" onClick={() => {
+                    setEditingSpecs(false);
+                    setDeviceSpecs(repair.deviceSpecs || {});
+                  }}>إلغاء</SimpleButton>
+                  <SimpleButton onClick={handleUpdateDeviceSpecs} className="bg-purple-600 hover:bg-purple-700 text-white">
+                    حفظ التغييرات
+                  </SimpleButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 };
 

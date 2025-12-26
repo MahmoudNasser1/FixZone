@@ -6,7 +6,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import { useSettings } from '../../context/SettingsContext';
-import { 
+import {
   Package, Warehouse, TrendingUp, TrendingDown, AlertTriangle,
   Search, Plus, Edit, Trash2, Eye, RefreshCw, Download,
   ArrowUpDown, ArrowUp, ArrowDown, Filter, Box, DollarSign
@@ -20,13 +20,13 @@ const InventoryPageEnhanced = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const { formatMoney } = useSettings();
-  
+
   const [items, setItems] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [stockLevels, setStockLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State للبحث والفلترة
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -34,12 +34,12 @@ const InventoryPageEnhanced = () => {
   const [stockFilter, setStockFilter] = useState('all'); // all | low | normal | high
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-  
+
   // State للـ Multi-Select و Pagination
   const [selectedItems, setSelectedItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // State للإحصائيات
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -64,14 +64,14 @@ const InventoryPageEnhanced = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [itemsRes, warehousesRes, stockLevelsRes, statsRes] = await Promise.all([
         inventoryService.listItems(),
         inventoryService.listWarehouses(),
         inventoryService.listStockLevels(),
         inventoryService.getStatistics()
       ]);
-      
+
       // Parse Enhanced APIs responses
       let itemsData = [];
       if (itemsRes && itemsRes.success) {
@@ -79,9 +79,9 @@ const InventoryPageEnhanced = () => {
       } else if (Array.isArray(itemsRes)) {
         itemsData = itemsRes;
       }
-      
+
       console.log('Items data loaded:', itemsData.length, 'items');
-      
+
       let warehousesData = [];
       if (warehousesRes) {
         if (Array.isArray(warehousesRes)) {
@@ -91,7 +91,7 @@ const InventoryPageEnhanced = () => {
         }
       }
       console.log('Warehouses loaded:', warehousesData.length, 'warehouses');
-      
+
       let stockData = [];
       if (stockLevelsRes) {
         if (Array.isArray(stockLevelsRes)) {
@@ -101,11 +101,11 @@ const InventoryPageEnhanced = () => {
         }
       }
       console.log('Stock levels loaded:', stockData.length, 'levels');
-      
+
       setItems(itemsData);
       setWarehouses(warehousesData);
       setStockLevels(stockData);
-      
+
       // Use Enhanced Stats API
       if (statsRes && statsRes.success) {
         const enhancedStats = statsRes.data;
@@ -122,7 +122,7 @@ const InventoryPageEnhanced = () => {
         // Fallback to manual calculation
         calculateStats(itemsData, stockData);
       }
-      
+
     } catch (err) {
       console.error('Error loading inventory data:', err);
       setError('حدث خطأ في تحميل البيانات');
@@ -134,13 +134,13 @@ const InventoryPageEnhanced = () => {
 
   const calculateStats = (itemsData, stockData) => {
     const totalItems = itemsData.length;
-    
+
     let totalValue = 0;
     let totalQuantity = 0;
     let potentialProfit = 0;
     let lowStockItems = 0;
     let outOfStockItems = 0;
-    
+
     stockData.forEach(stock => {
       const item = itemsData.find(i => i.id === stock.inventoryItemId);
       if (item) {
@@ -148,7 +148,7 @@ const InventoryPageEnhanced = () => {
         totalQuantity += qty;
         totalValue += qty * (item.purchasePrice || 0);
         potentialProfit += qty * ((item.sellingPrice || 0) - (item.purchasePrice || 0));
-        
+
         if (qty <= (stock.minLevel || 0)) {
           lowStockItems++;
         }
@@ -157,7 +157,7 @@ const InventoryPageEnhanced = () => {
         }
       }
     });
-    
+
     setStats({
       totalItems,
       totalValue,
@@ -182,7 +182,7 @@ const InventoryPageEnhanced = () => {
         };
       }
     }
-    
+
     // Fallback to StockLevel aggregation across all warehouses
     const stockData = stockLevels.filter(s => s.inventoryItemId === itemId);
     if (stockData.length > 0) {
@@ -197,10 +197,10 @@ const InventoryPageEnhanced = () => {
         }))
       };
     }
-    
+
     // No stock level found - return error state
-    return { 
-      quantity: 0, 
+    return {
+      quantity: 0,
       error: 'No stock level found. Please add stock to warehouses.',
       warehouses: []
     };
@@ -209,29 +209,29 @@ const InventoryPageEnhanced = () => {
   const getFilteredAndSortedItems = () => {
     console.log('getFilteredAndSortedItems - items:', items.length, items);
     let filtered = [...items];
-    
+
     // البحث
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         (item.name || '').toLowerCase().includes(search) ||
         (item.sku || '').toLowerCase().includes(search) ||
         (item.description || '').toLowerCase().includes(search) ||
         (item.category || '').toLowerCase().includes(search)
       );
     }
-    
+
     // فلترة حسب الفئة
     if (selectedCategory) {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
-    
+
     // فلترة حسب حالة المخزون
     if (stockFilter !== 'all') {
       filtered = filtered.filter(item => {
         const stock = getStockForItem(item.id);
         const available = stock.quantity || 0;
-        
+
         if (stockFilter === 'low') {
           return available > 0 && available <= (stock.minLevel || 5); // Consider low if at or below min level
         } else if (stockFilter === 'out') {
@@ -242,27 +242,27 @@ const InventoryPageEnhanced = () => {
         return true;
       });
     }
-    
+
     // الترتيب
     filtered.sort((a, b) => {
       let aValue, bValue;
-      
+
       if (sortField === 'name') {
         aValue = (a.name || '').toLowerCase();
         bValue = (b.name || '').toLowerCase();
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue, 'ar')
           : bValue.localeCompare(aValue, 'ar');
       } else if (sortField === 'sku') {
         aValue = (a.sku || '').toLowerCase();
         bValue = (b.sku || '').toLowerCase();
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       } else if (sortField === 'category') {
         aValue = (a.category || '').toLowerCase();
         bValue = (b.category || '').toLowerCase();
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue, 'ar')
           : bValue.localeCompare(aValue, 'ar');
       } else if (sortField === 'price') {
@@ -278,7 +278,7 @@ const InventoryPageEnhanced = () => {
       }
       return 0;
     });
-    
+
     return filtered;
   };
 
@@ -306,10 +306,10 @@ const InventoryPageEnhanced = () => {
     }
 
     try {
-      await Promise.all(selectedItems.map(id => 
+      await Promise.all(selectedItems.map(id =>
         apiService.request(`/inventory/${id}`, { method: 'DELETE' })
       ));
-      
+
       notifications.success(`تم حذف ${selectedItems.length} صنف بنجاح`);
       setSelectedItems([]);
       loadData();
@@ -345,7 +345,7 @@ const InventoryPageEnhanced = () => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
     }
-    return sortDirection === 'asc' 
+    return sortDirection === 'asc'
       ? <ArrowUp className="w-4 h-4 text-blue-600" />
       : <ArrowDown className="w-4 h-4 text-blue-600" />;
   };
@@ -353,7 +353,7 @@ const InventoryPageEnhanced = () => {
   const getStockStatusBadge = (item) => {
     const stock = getStockForItem(item.id);
     const available = stock.quantity || 0;
-    
+
     if (available === 0) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
         نفذ
@@ -390,7 +390,7 @@ const InventoryPageEnhanced = () => {
 
     try {
       setSavingStock(true);
-      
+
       const payload = {
         inventoryItemId: selectedItem.id,
         warehouseId: parseInt(stockForm.warehouseId),
@@ -400,7 +400,7 @@ const InventoryPageEnhanced = () => {
       };
 
       const response = await inventoryService.createStockLevel(payload);
-      
+
       if (response.success || response.data) {
         notifications.success('تم تحديث المخزون بنجاح');
         await loadData(); // إعادة تحميل البيانات
@@ -427,44 +427,47 @@ const InventoryPageEnhanced = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Package className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Package className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
             إدارة المخزون
           </h1>
-          <p className="text-gray-600 mt-1">إدارة الأصناف والمستودعات ومستويات المخزون</p>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">إدارة الأصناف والمستودعات ومستويات المخزون</p>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
           <SimpleButton
             variant="outline"
+            size="sm"
             onClick={loadData}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
           >
             <RefreshCw className="w-4 h-4" />
-            تحديث
+            <span className="hidden xs:inline">تحديث</span>
           </SimpleButton>
           <SimpleButton
             variant="outline"
+            size="sm"
             onClick={() => navigate('/inventory/warehouses')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 h-9"
           >
             <Warehouse className="w-4 h-4" />
-            المخازن
+            <span>المخازن</span>
           </SimpleButton>
           <SimpleButton
+            size="sm"
             onClick={() => navigate('/inventory/new')}
-            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-1 h-9"
           >
             <Plus className="w-4 h-4" />
-            إضافة صنف جديد
+            <span>إضافة صنف</span>
           </SimpleButton>
         </div>
       </div>
 
       {/* Stats Dashboard */}
-      <StatsDashboard 
+      <StatsDashboard
         stats={{
           overview: {
             totalItems: stats.totalItems,
@@ -475,82 +478,17 @@ const InventoryPageEnhanced = () => {
             lowStockItems: stats.lowStockItems,
             outOfStockItems: stats.outOfStockItems
           }
-        }} 
-        loading={loading} 
+        }}
+        loading={loading}
       />
-
-      {/* Old Stats Section (Fallback) */}
-      {false && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SimpleCard className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-600">إجمالي الأصناف</p>
-                  <p className="text-3xl font-bold text-blue-900 mt-2">{stats.totalItems}</p>
-                  <p className="text-xs text-blue-700 mt-1">{stats.totalQuantity} قطعة</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-                  <Box className="w-6 h-6 text-blue-700" />
-                </div>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600">قيمة المخزون</p>
-                  <p className="text-2xl font-bold text-green-900 mt-2">{formatMoney(stats.totalValue)}</p>
-                  <p className="text-xs text-green-700 mt-1">سعر الشراء</p>
-                </div>
-                <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-700" />
-                </div>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-600">الربح المتوقع</p>
-                  <p className="text-2xl font-bold text-purple-900 mt-2">{formatMoney(stats.potentialProfit)}</p>
-                  <p className="text-xs text-purple-700 mt-1">من المخزون الحالي</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-purple-700" />
-                </div>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-
-          <SimpleCard className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-            <SimpleCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600">تنبيهات المخزون</p>
-                  <p className="text-3xl font-bold text-red-900 mt-2">{stats.lowStockItems}</p>
-                  <p className="text-xs text-red-700 mt-1">أصناف منخفضة</p>
-                </div>
-                <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-700" />
-                </div>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-        </div>
-      )}
 
       {/* الفلاتر والبحث */}
       <SimpleCard>
-        <SimpleCardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Search className="w-4 h-4 inline ml-1" />
+        <SimpleCardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <Search className="w-3.5 h-3.5 inline ml-1" />
                 البحث
               </label>
               <Input
@@ -558,18 +496,19 @@ const InventoryPageEnhanced = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="ابحث بالاسم، SKU، أو الوصف..."
+                className="h-9 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Filter className="w-4 h-4 inline ml-1" />
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <Filter className="w-3.5 h-3.5 inline ml-1" />
                 الفئة
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-9 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
               >
                 <option value="">الكل</option>
                 {categories.map(cat => (
@@ -579,14 +518,14 @@ const InventoryPageEnhanced = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <AlertTriangle className="w-4 h-4 inline ml-1" />
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 inline ml-1" />
                 حالة المخزون
               </label>
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-9 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
               >
                 <option value="all">الكل</option>
                 <option value="normal">متوفر</option>
@@ -600,265 +539,347 @@ const InventoryPageEnhanced = () => {
 
       {/* جدول المخزون */}
       <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span>قائمة الأصناف ({getFilteredAndSortedItems().length})</span>
+        <SimpleCardHeader className="px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-sm sm:text-base">قائمة الأصناف ({getFilteredAndSortedItems().length})</span>
               {selectedItems.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">({selectedItems.length} محدد)</span>
+                  <span className="text-[10px] sm:text-xs text-gray-600">({selectedItems.length} محدد)</span>
                   <SimpleButton
                     variant="danger"
                     size="sm"
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 h-7 px-2 text-[10px] sm:text-xs"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3 h-3" />
                     حذف المحدد
                   </SimpleButton>
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="h-8 px-2 py-0 border border-gray-300 rounded-md text-xs bg-background"
               >
-                <option value="10">10 صفوف</option>
-                <option value="25">25 صف</option>
-                <option value="50">50 صف</option>
-                <option value="100">100 صف</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
               </select>
               <SimpleButton
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/inventory/movements')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 h-8 px-2 text-xs"
               >
-                <TrendingUp className="w-4 h-4" />
-                الحركات
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>الحركات</span>
               </SimpleButton>
               <SimpleButton
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/inventory/alerts')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 h-8 px-2 text-xs"
               >
-                <AlertTriangle className="w-4 h-4" />
-                التنبيهات
+                <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
+                <span>التنبيهات</span>
               </SimpleButton>
             </div>
-          </SimpleCardTitle>
+          </div>
         </SimpleCardHeader>
         <SimpleCardContent className="p-0">
           {loading ? (
-            <TableLoadingSkeleton />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.length === getCurrentPageItems().length && getCurrentPageItems().length > 0}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('name')}
-                        className="flex items-center gap-1 hover:text-gray-700"
-                      >
-                        الاسم
-                        {renderSortIcon('name')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('sku')}
-                        className="flex items-center gap-1 hover:text-gray-700"
-                      >
-                        SKU
-                        {renderSortIcon('sku')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('category')}
-                        className="flex items-center gap-1 hover:text-gray-700"
-                      >
-                        الفئة
-                        {renderSortIcon('category')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('stock')}
-                        className="flex items-center gap-1 hover:text-gray-700"
-                      >
-                        المخزون
-                        {renderSortIcon('stock')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('price')}
-                        className="flex items-center gap-1 hover:text-gray-700"
-                      >
-                        السعر
-                        {renderSortIcon('price')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الحالة
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getCurrentPageItems().length === 0 ? (
-                    <tr>
-                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                        <p>لا توجد أصناف</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    getCurrentPageItems().map((item, index) => {
-                      const stock = getStockForItem(item.id);
-                      const available = stock.quantity || 0;
-                      const warehouses = stock.warehouses || [];
-                      
-                      return (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              {item.id}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                            {item.description && (
-                              <div className="text-xs text-gray-500">{item.description}</div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <code className="text-xs bg-gray-100 px-2 py-1 rounded">{item.sku}</code>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              {item.category || '-'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {stock.error ? (
-                              <div className="text-sm text-red-600">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  لا يوجد مخزون
-                                </span>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="text-sm text-gray-900">
-                                  <span className="font-medium">{available}</span> {item.unit || 'قطعة'}
-                                </div>
-                                {warehouses.length > 0 && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {warehouses.length} مخزن{warehouses.length > 1 ? 'ات' : ''}
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{formatMoney(item.sellingPrice)}</div>
-                            <div className="text-xs text-gray-500">شراء: {formatMoney(item.purchasePrice)}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStockStatusBadge(item)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                              <SimpleButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/inventory/${item.id}`)}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="عرض التفاصيل"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </SimpleButton>
-                              <SimpleButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleManageStock(item)}
-                                className="text-purple-600 hover:text-purple-800"
-                                title="إدارة المخزون"
-                              >
-                                <Warehouse className="w-4 h-4" />
-                              </SimpleButton>
-                              <SimpleButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                                className="text-green-600 hover:text-green-800"
-                                title="تعديل"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </SimpleButton>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+            <div className="p-6">
+              <TableLoadingSkeleton className="hidden sm:block" />
+              <CardLoadingSkeleton className="sm:hidden" />
             </div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.length === getCurrentPageItems().length && getCurrentPageItems().length > 0}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                        >
+                          الاسم
+                          {renderSortIcon('name')}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('sku')}
+                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                        >
+                          SKU
+                          {renderSortIcon('sku')}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('category')}
+                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                        >
+                          الفئة
+                          {renderSortIcon('category')}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('stock')}
+                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                        >
+                          المخزون
+                          {renderSortIcon('stock')}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('price')}
+                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                        >
+                          السعر
+                          {renderSortIcon('price')}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                        الحالة
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                        الإجراءات
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getCurrentPageItems().length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p className="text-lg">لا توجد أصناف تطابق معايير البحث</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      getCurrentPageItems().map((item) => {
+                        const stock = getStockForItem(item.id);
+                        const available = stock.quantity || 0;
+                        const warehousesCount = (stock.warehouses || []).length;
+
+                        return (
+                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-4 whitespace-nowrap text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.includes(item.id)}
+                                onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                              />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-xs font-mono text-gray-500">#{item.id}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-bold text-gray-900">{item.name}</div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500 truncate max-w-xs">{item.description}</div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{item.sku || 'N/A'}</code>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                {item.category || 'غير مصنف'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {stock.error ? (
+                                <span className="text-[10px] text-red-500 bg-red-50 px-2 py-1 rounded border border-red-100">غير مضاف للمخازن</span>
+                              ) : (
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-gray-900">{available} {item.unit || 'قطعة'}</span>
+                                  {warehousesCount > 0 && <span className="text-[10px] text-gray-400">{warehousesCount} مخازن</span>}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-bold text-blue-700">{formatMoney(item.sellingPrice)}</div>
+                              <div className="text-[10px] text-gray-400">التكلفة: {formatMoney(item.purchasePrice)}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {getStockStatusBadge(item)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <SimpleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => navigate(`/inventory/${item.id}`)}
+                                  className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                                  title="عرض"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </SimpleButton>
+                                <SimpleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleManageStock(item)}
+                                  className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
+                                  title="تعديل المخزون"
+                                >
+                                  <Warehouse className="w-4 h-4" />
+                                </SimpleButton>
+                                <SimpleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => navigate(`/inventory/${item.id}/edit`)}
+                                  className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                                  title="تعديل البيانات"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </SimpleButton>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {getCurrentPageItems().length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">لا توجد أصناف</p>
+                  </div>
+                ) : (
+                  getCurrentPageItems().map((item) => {
+                    const stock = getStockForItem(item.id);
+                    const available = stock.quantity || 0;
+
+                    return (
+                      <div key={item.id} className="p-4 active:bg-gray-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(item.id)}
+                              onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded"
+                            />
+                            <div>
+                              <h3 className="text-sm font-bold text-gray-900 leading-tight">{item.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">#{item.id}</span>
+                                <span className="text-[10px] text-gray-400">{item.sku}</span>
+                              </div>
+                            </div>
+                          </div>
+                          {getStockStatusBadge(item)}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mt-3 bg-gray-50/50 rounded-lg p-2 border border-gray-100">
+                          <div>
+                            <span className="text-[10px] text-gray-500 block mb-0.5">المخزون</span>
+                            <span className="text-sm font-bold text-gray-900">{available} {item.unit || 'قطعة'}</span>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[10px] text-gray-500 block mb-0.5">السعر</span>
+                            <span className="text-sm font-bold text-blue-600">{formatMoney(item.sellingPrice)}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="text-[10px] text-white bg-indigo-500 px-2 py-0.5 rounded-full">{item.category || 'عام'}</span>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => navigate(`/inventory/${item.id}`)}
+                              className="text-blue-600 text-xs font-medium flex items-center gap-1"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              عرض
+                            </button>
+                            <button
+                              onClick={() => handleManageStock(item)}
+                              className="text-purple-600 text-xs font-medium flex items-center gap-1"
+                            >
+                              <Warehouse className="w-3.5 h-3.5" />
+                              المخزون
+                            </button>
+                            <button
+                              onClick={() => navigate(`/inventory/${item.id}/edit`)}
+                              className="text-green-600 text-xs font-medium flex items-center gap-1"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                              تعديل
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </>
           )}
-          
+
           {/* Pagination */}
           {getTotalPages() > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-              <div className="text-sm text-gray-700">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 sm:px-6 border-t border-gray-200 bg-gray-50/30">
+              <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
                 عرض {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, getFilteredAndSortedItems().length)} من {getFilteredAndSortedItems().length}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
                 <SimpleButton
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
+                  className="h-8 px-2 text-[10px] sm:text-xs"
                 >
-                  الأولى
+                  <span className="sm:hidden">&laquo;</span>
+                  <span className="hidden sm:inline">الأولى</span>
                 </SimpleButton>
                 <SimpleButton
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
+                  className="h-8 px-2 text-[10px] sm:text-xs"
                 >
                   السابق
                 </SimpleButton>
-                <span className="px-3 py-1 text-sm text-gray-700">
-                  صفحة {currentPage} من {getTotalPages()}
+                <span className="px-2 py-1 text-[10px] sm:text-xs text-gray-600 font-medium">
+                  {currentPage} / {getTotalPages()}
                 </span>
                 <SimpleButton
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(getTotalPages(), prev + 1))}
                   disabled={currentPage === getTotalPages()}
+                  className="h-8 px-2 text-[10px] sm:text-xs"
                 >
                   التالي
                 </SimpleButton>
@@ -867,8 +888,10 @@ const InventoryPageEnhanced = () => {
                   size="sm"
                   onClick={() => setCurrentPage(getTotalPages())}
                   disabled={currentPage === getTotalPages()}
+                  className="h-8 px-2 text-[10px] sm:text-xs"
                 >
-                  الأخيرة
+                  <span className="sm:hidden">&raquo;</span>
+                  <span className="hidden sm:inline">الأخيرة</span>
                 </SimpleButton>
               </div>
             </div>
@@ -878,7 +901,7 @@ const InventoryPageEnhanced = () => {
 
       {/* روابط سريعة */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SimpleCard 
+        <SimpleCard
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate('/inventory/warehouses')}
         >
@@ -895,7 +918,7 @@ const InventoryPageEnhanced = () => {
           </SimpleCardContent>
         </SimpleCard>
 
-        <SimpleCard 
+        <SimpleCard
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate('/inventory/movements')}
         >
@@ -912,7 +935,7 @@ const InventoryPageEnhanced = () => {
           </SimpleCardContent>
         </SimpleCard>
 
-        <SimpleCard 
+        <SimpleCard
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate('/inventory/alerts')}
         >
@@ -939,7 +962,7 @@ const InventoryPageEnhanced = () => {
               إضافة أو تحديث الكمية في المخازن المختلفة
             </ModalDescription>
           </ModalHeader>
-          
+
           <div className="space-y-4 py-4">
             {/* المخازن الموجودة */}
             {getItemStockLevels().length > 0 && (
@@ -983,7 +1006,7 @@ const InventoryPageEnhanced = () => {
                 <select
                   value={stockForm.warehouseId}
                   onChange={(e) => setStockForm({ ...stockForm, warehouseId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
                   required
                 >
                   <option value="">اختر المخزن</option>

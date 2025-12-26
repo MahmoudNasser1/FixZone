@@ -124,17 +124,17 @@ const Sidebar = () => {
   const { isSidebarOpen, toggleSidebar } = useUIStore();
   const user = useAuthStore((s) => s.user);
   const sidebarRef = useRef(null);
-  
+
   // Navigation Hooks
   const { navItems: apiNavItems, loading: navLoading } = useNavigation();
   const { stats } = useNavigationStats();
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Check for Admin using permission utility
   const isAdmin = checkIsAdmin(user);
   const [openMenus, setOpenMenus] = useState(new Set());
   const [openSections, setOpenSections] = useState(new Set());
-  
+
   // Close sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -154,14 +154,14 @@ const Sidebar = () => {
       const timeoutId = setTimeout(() => {
         document.addEventListener('mousedown', handleClickOutside);
       }, 100);
-      
+
       return () => {
         clearTimeout(timeoutId);
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
   }, [isSidebarOpen, toggleSidebar]);
-  
+
   // Use API navigation items or fallback to static items
   const navigationItems = useMemo(() => {
     let items = [];
@@ -170,7 +170,7 @@ const Sidebar = () => {
     } else {
       items = navItems; // Fallback to static items
     }
-    
+
     // Ensure messaging center is always present in "إدارة العملاء" section
     const customersSection = items.find(section => section.section === 'إدارة العملاء');
     if (customersSection) {
@@ -189,10 +189,10 @@ const Sidebar = () => {
         ]
       });
     }
-    
+
     return items;
   }, [apiNavItems]);
-  
+
   // Filter navigation items based on search
   const filteredNavItems = useNavigationSearch(navigationItems, searchQuery);
 
@@ -223,25 +223,25 @@ const Sidebar = () => {
             foundSection = section.section;
             break;
           }
-          
+
           // Check if pathname starts with item.href (for nested routes like /repairs/123)
           // But avoid matching /customers with /customer (different routes)
           if (item.href && item.href !== '/' && pathname.startsWith(item.href + '/')) {
             foundSection = section.section;
             break;
           }
-          
+
           // Also check exact match for /customers (without trailing slash)
           if (item.href === pathname) {
             foundSection = section.section;
             break;
           }
-          
+
           // Check subItems
           if (item.subItems && Array.isArray(item.subItems)) {
             for (const subItem of item.subItems) {
               if (!subItem || !subItem.href) continue;
-              
+
               if (subItem.href === pathname || (subItem.href !== '/' && pathname.startsWith(subItem.href + '/'))) {
                 foundSection = section.section;
                 foundMenuItem = item.label;
@@ -276,11 +276,11 @@ const Sidebar = () => {
     if (isInitialMount.current || lastPathnameRef.current !== location.pathname) {
       lastPathnameRef.current = location.pathname;
       isInitialMount.current = false;
-      
+
       try {
         // Find the section containing the current page
         const currentSection = findSectionForCurrentPage(navigationItems, location.pathname);
-        
+
         if (currentSection) {
           // Open only the section containing the current page, close all others
           setOpenSections(new Set([currentSection]));
@@ -296,17 +296,17 @@ const Sidebar = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigationItems]); // Include navigationItems to update when they load
 
-  
+
   // Helper to get badge value from stats or static value
   const getItemBadge = (item) => {
     if (!item) return null;
-    
+
     // If badgeKey exists, get from stats
     if (item.badgeKey && stats) {
       const count = getBadgeCount(stats, item.badgeKey);
       if (count) return count;
     }
-    
+
     // Otherwise use static badge
     return item.badge || null;
   };
@@ -321,7 +321,7 @@ const Sidebar = () => {
       }, 100);
       return;
     }
-    
+
     const newOpenMenus = new Set(openMenus);
     if (newOpenMenus.has(label)) {
       newOpenMenus.delete(label);
@@ -436,7 +436,7 @@ const Sidebar = () => {
             {(() => {
               const badgeValue = getItemBadge(item);
               if (!badgeValue) return null;
-              
+
               return (
                 <Badge
                   variant={badgeValue === 'نقص' ? 'destructive' : badgeValue === 'جديد' ? 'success' : 'default'}
@@ -457,110 +457,123 @@ const Sidebar = () => {
   };
 
   return (
-    <aside
-      ref={sidebarRef}
-      className={cn(
-        "flex-shrink-0 bg-card text-card-foreground flex flex-col transition-all duration-300 ease-in-out border-l border-border shadow-xl",
-        isSidebarOpen ? "w-72" : "w-16"
+    <>
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity duration-300"
+          onClick={toggleSidebar}
+        />
       )}
-    >
-      {/* Header */}
-      <div className="h-16 flex items-center justify-center border-b border-border bg-card/50 backdrop-blur-sm">
-        {isSidebarOpen ? (
-          <div className="flex items-center space-x-2 space-x-reverse">
+
+      <aside
+        ref={sidebarRef}
+        className={cn(
+          "bg-card text-card-foreground flex flex-col transition-all duration-300 ease-in-out border-l border-border shadow-2xl z-50",
+          "fixed inset-y-0 right-0 lg:relative lg:flex-shrink-0",
+          isSidebarOpen
+            ? "w-72 translate-x-0 shadow-2xl"
+            : "w-0 lg:w-16 translate-x-full lg:translate-x-0 overflow-hidden lg:overflow-visible"
+        )}
+      >
+        {/* Header */}
+        <div className="h-16 flex items-center justify-center border-b border-border bg-card/50 backdrop-blur-sm">
+          {isSidebarOpen ? (
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Wrench className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">FixZone</h1>
+                <p className="text-xs text-muted-foreground">نظام إدارة الإصلاحات</p>
+              </div>
+            </div>
+          ) : (
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Wrench className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">FixZone</h1>
-              <p className="text-xs text-muted-foreground">نظام إدارة الإصلاحات</p>
-            </div>
-          </div>
-        ) : (
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Wrench className="w-5 h-5 text-white" />
-          </div>
-        )}
-      </div>
-
-      {/* Search inside Sidebar */}
-      {isSidebarOpen && (
-        <div className="px-3 py-2 border-b border-border">
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="بحث في القائمة..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10 bg-muted/50 border-input text-foreground placeholder:text-muted-foreground"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        {navLoading && isSidebarOpen && (
-          <div className="px-3 py-2 text-sm text-muted-foreground">جاري التحميل...</div>
+        {/* Search inside Sidebar */}
+        {isSidebarOpen && (
+          <div className="px-3 py-2 border-b border-border">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="بحث في القائمة..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10 bg-muted/50 border-input text-foreground placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
-        {filteredNavItems.map((section) => (
-          <div key={section.section} className="mb-6">
-            {isSidebarOpen && (
-              <button
-                onClick={() => handleSectionToggle(section.section)}
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
-              >
-                <span>{section.section}</span>
-                <ChevronDown
-                  className={cn(
-                    "w-4 h-4 transition-transform",
-                    openSections.has(section.section) ? "rotate-0" : "-rotate-90"
-                  )}
-                />
-              </button>
-            )}
-            {(isSidebarOpen ? openSections.has(section.section) : true) && (
-              <div className="space-y-1">
-                {section.items.map((item) => renderMenuItem(item))}
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          {navLoading && isSidebarOpen && (
+            <div className="px-3 py-2 text-sm text-muted-foreground">جاري التحميل...</div>
+          )}
+          {filteredNavItems.map((section) => (
+            <div key={section.section} className="mb-6">
+              {isSidebarOpen && (
+                <button
+                  onClick={() => handleSectionToggle(section.section)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                >
+                  <span>{section.section}</span>
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 transition-transform",
+                      openSections.has(section.section) ? "rotate-0" : "-rotate-90"
+                    )}
+                  />
+                </button>
+              )}
+              {(isSidebarOpen ? openSections.has(section.section) : true) && (
+                <div className="space-y-1">
+                  {section.items.map((item) => renderMenuItem(item))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-border bg-muted/30">
+          {isSidebarOpen ? (
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
               </div>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-border bg-muted/30">
-        {isSidebarOpen ? (
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">محمود ناصر</p>
+                <p className="text-xs text-muted-foreground truncate">مدير النظام</p>
+              </div>
+              <Link to="/settings">
+                <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">محمود ناصر</p>
-              <p className="text-xs text-muted-foreground truncate">مدير النظام</p>
+          ) : (
+            <div className="flex justify-center">
+              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-white" />
+              </div>
             </div>
-            <Link to="/settings">
-              <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
-            </Link>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
-            </div>
-          </div>
-        )}
-      </div>
-    </aside>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };
 

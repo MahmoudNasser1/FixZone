@@ -23,22 +23,21 @@ const MainLayout = ({
   const showSidebar = !isCustomer && !isCustomerRoute;
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      {/* Sidebar - Desktop and Mobile Drawer */}
       {showSidebar && <Sidebar />}
-      <div className="flex-1 flex flex-col overflow-hidden">
+
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Topbar />
 
-        {/* منطقة المحتوى الرئيسية */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* المحتوى */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/30 p-6">
-            <div className="max-w-7xl mx-auto">
-              <PageTransition key={location.pathname}>
-                <Outlet />
-              </PageTransition>
-            </div>
-          </main>
-        </div>
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/30 p-4 lg:p-6 pb-20 lg:pb-6">
+          <div className="max-w-7xl mx-auto h-full">
+            <PageTransition key={location.pathname}>
+              <Outlet />
+            </PageTransition>
+          </div>
+        </main>
       </div>
     </div>
   );

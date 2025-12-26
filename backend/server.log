@@ -2211,3 +2211,1508 @@ Final query:
       WHERE rr.deletedAt IS NULL
      AND rr.id = ?
 Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+Final query: 
+      SELECT 
+        rr.id,
+        rr.reportedProblem,
+        rr.status,
+        rr.trackingToken,
+        rr.createdAt,
+        rr.updatedAt,
+        rr.estimatedCost,
+        rr.expectedDeliveryDate,
+        c.name as customerName,
+        c.phone as customerPhone,
+        c.email as customerEmail,
+        d.deviceType,
+        COALESCE(vo.label, d.brand) as deviceBrand,
+        d.model as deviceModel,
+        b.name as branchName
+      FROM RepairRequest rr
+      LEFT JOIN Customer c ON rr.customerId = c.id AND c.deletedAt IS NULL
+      LEFT JOIN Device d ON rr.deviceId = d.id
+      LEFT JOIN VariableOption vo ON d.brandId = vo.id
+      LEFT JOIN Branch b ON rr.branchId = b.id AND b.deletedAt IS NULL
+      WHERE rr.deletedAt IS NULL
+     AND rr.id = ?
+Query params: [ 1428 ]
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20
+getAllInvoices called with: {
+  repairRequestId: undefined,
+  customerId: undefined,
+  paymentStatus: undefined,
+  page: 1,
+  limit: 20
+}
+Query executed, found invoices: 20

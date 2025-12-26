@@ -1151,7 +1151,8 @@ class InvoicesControllerSimple {
         taxAmount = 0,
         shippingAmount = 0,
         discountAmount = 0,
-        discountPercent = 0
+        discountPercent = 0,
+        trackingToken = crypto.randomUUID()
       } = req.body;
 
       // Extract fields that don't exist in Invoice table
@@ -1199,8 +1200,8 @@ class InvoicesControllerSimple {
         [result] = await connection.execute(`
           INSERT INTO Invoice (
             repairRequestId, totalAmount, amountPaid, status, 
-            currency, taxAmount, shippingAmount, discountAmount, discountPercent, createdAt, updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            currency, taxAmount, shippingAmount, discountAmount, discountPercent, trackingToken, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `, [
           repairId,
           0, // Will be calculated after adding items
@@ -1210,7 +1211,8 @@ class InvoicesControllerSimple {
           taxAmount,
           shippingAmount,
           finalDiscountAmount,
-          discountPercent
+          discountPercent,
+          trackingToken
         ]);
       } catch (error) {
         // Fallback if columns don't exist
@@ -1219,8 +1221,8 @@ class InvoicesControllerSimple {
             [result] = await connection.execute(`
               INSERT INTO Invoice (
                 repairRequestId, totalAmount, amountPaid, status, 
-                currency, taxAmount, shippingAmount, discountAmount, createdAt, updatedAt
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                currency, taxAmount, shippingAmount, discountAmount, trackingToken, createdAt, updatedAt
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             `, [
               repairId,
               0,
@@ -1229,7 +1231,8 @@ class InvoicesControllerSimple {
               currency,
               taxAmount,
               shippingAmount,
-              finalDiscountAmount
+              finalDiscountAmount,
+              trackingToken
             ]);
           } catch (error2) {
             if (error2.message && error2.message.includes('shippingAmount')) {

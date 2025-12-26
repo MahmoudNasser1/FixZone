@@ -5,8 +5,8 @@ import { useSettings } from '../../context/SettingsContext';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
-import { 
-  Plus, Search, Filter, Download, Eye, Edit, Trash2, 
+import {
+  Plus, Search, Filter, Download, Eye, Edit, Trash2,
   FileText, DollarSign, Calendar, User, Building2,
   CheckCircle, XCircle, Clock, AlertCircle
 } from 'lucide-react';
@@ -65,14 +65,14 @@ const InvoicesPage = () => {
   const getStatusBadge = (status) => {
     // Normalize status - handle both paymentStatus and status
     let normalizedStatus = status?.toLowerCase() || 'unpaid';
-    
+
     // Map backend statuses to frontend statuses
     if (normalizedStatus === 'partially_paid') {
       normalizedStatus = 'partial';
     } else if (normalizedStatus === 'sent' || normalizedStatus === 'draft') {
       normalizedStatus = 'unpaid';
     }
-    
+
     const statusConfig = {
       'paid': { variant: 'default', icon: CheckCircle, text: 'مدفوعة', color: 'text-green-600' },
       'unpaid': { variant: 'destructive', icon: XCircle, text: 'غير مدفوعة', color: 'text-red-600' },
@@ -158,44 +158,41 @@ const InvoicesPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center gap-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">إدارة الفواتير</h1>
-          <p className="text-gray-600 mt-1">إدارة فواتير طلبات الإصلاح والمدفوعات</p>
-          </div>
-        <div className="flex items-center gap-3">
-          <Link to="/invoices/new">
-            <SimpleButton className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="w-4 h-4 ml-2" />
-              فاتورة جديدة
-            </SimpleButton>
-          </Link>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">إدارة الفواتير</h1>
+          <p className="text-[10px] sm:text-sm text-gray-600 mt-0.5">إدارة فواتير طلبات الإصلاح والمدفوعات</p>
         </div>
+        <Link to="/invoices/new" className="shrink-0">
+          <SimpleButton size="sm" className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 sm:gap-2">
+            <Plus className="w-4 h-4" />
+            <span className="hidden xs:inline">فاتورة جديدة</span>
+            <span className="xs:hidden">جديدة</span>
+          </SimpleButton>
+        </Link>
       </div>
 
       {/* Filters and Search */}
-        <SimpleCard>
-          <SimpleCardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="البحث في الفواتير..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+      <SimpleCard>
+        <SimpleCardContent className="p-3 sm:p-6">
+          <div className="flex flex-col gap-3">
+            <div className="relative w-full">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="البحث في الفواتير..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pr-10 pl-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background"
+              />
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <select
                 value={invoiceTypeFilter}
                 onChange={(e) => setInvoiceTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-9 px-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background appearance-none cursor-pointer"
               >
                 <option value="all">جميع الأنواع</option>
                 <option value="sale">فاتورة بيع</option>
@@ -204,7 +201,7 @@ const InvoicesPage = () => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-9 px-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background appearance-none cursor-pointer"
               >
                 <option value="all">جميع الحالات</option>
                 <option value="paid">مدفوعة</option>
@@ -214,7 +211,7 @@ const InvoicesPage = () => {
                 <option value="cancelled">ملغاة</option>
               </select>
             </div>
-                </div>
+          </div>
         </SimpleCardContent>
       </SimpleCard>
 
@@ -229,8 +226,8 @@ const InvoicesPage = () => {
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <FileText className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </div>
+              </div>
+            </div>
           </SimpleCardContent>
         </SimpleCard>
 
@@ -242,14 +239,14 @@ const InvoicesPage = () => {
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency((invoices || []).reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0), 'EGP')}
                 </p>
-                </div>
+              </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>
-              
+
         <SimpleCard className="hover:shadow-lg transition-shadow">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -265,7 +262,7 @@ const InvoicesPage = () => {
             </div>
           </SimpleCardContent>
         </SimpleCard>
-              
+
         <SimpleCard className="hover:shadow-lg transition-shadow">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -281,8 +278,8 @@ const InvoicesPage = () => {
             </div>
           </SimpleCardContent>
         </SimpleCard>
-            </div>
-            
+      </div>
+
       {/* Invoices List */}
       <SimpleCard>
         <SimpleCardHeader>
@@ -298,7 +295,7 @@ const InvoicesPage = () => {
                 <SimpleButton>
                   <Plus className="w-4 h-4 ml-2" />
                   إنشاء فاتورة جديدة
-              </SimpleButton>
+                </SimpleButton>
               </Link>
             </div>
           ) : (
@@ -312,8 +309,8 @@ const InvoicesPage = () => {
                           فاتورة #{invoice.id}
                         </h3>
                         {getStatusBadge(invoice.paymentStatus || invoice.status)}
-              </div>
-              
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4" />
@@ -364,8 +361,8 @@ const InvoicesPage = () => {
                         </Link>
                       )}
                       {invoice.id && (
-                        <SimpleButton 
-                          variant="outline" 
+                        <SimpleButton
+                          variant="outline"
                           size="sm"
                           onClick={() => handleDeleteInvoice(invoice.id)}
                           className="text-red-600 hover:text-red-700"
@@ -377,8 +374,8 @@ const InvoicesPage = () => {
                   </div>
                 </div>
               ))}
-        </div>
-      )}
+            </div>
+          )}
         </SimpleCardContent>
       </SimpleCard>
     </div>

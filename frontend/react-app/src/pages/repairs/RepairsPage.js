@@ -89,7 +89,7 @@ const RepairsPage = () => {
   // State للبحث والفلترة
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || 'pending');
-  
+
   // State لفلتر نوع البحث - الافتراضي: الاسم أو رقم الموبايل
   const [searchField, setSearchField] = useState(() => {
     const saved = localStorage.getItem('repairs_search_field');
@@ -179,7 +179,7 @@ const RepairsPage = () => {
     setPage(1);
     // لا نعيد تعيين searchField - يبقى كما اختاره المستخدم
   };
-  
+
   // حفظ searchField في localStorage عند التغيير
   useEffect(() => {
     localStorage.setItem('repairs_search_field', searchField);
@@ -438,7 +438,7 @@ const RepairsPage = () => {
       // بناء معاملات الفلترة والصفحات لإرسالها للخادم
       const params = {};
       const hasSearch = debouncedSearch && debouncedSearch.trim();
-      
+
       // عند البحث، نبحث في جميع الطلبات بدون فلاتر (إلا إذا كان هناك فلتر محدد)
       if (hasSearch) {
         params.search = debouncedSearch.trim();
@@ -454,13 +454,13 @@ const RepairsPage = () => {
         if (page && page > 1) params.page = page;
         if (pageSize && pageSize !== 10) params.limit = pageSize;
       }
-      
+
       // هذه المعاملات تعمل دائماً (مع أو بدون بحث)
       if (sortBy && sortBy !== 'createdAt') params.sort = sortBy;
       if (sortOrder && sortOrder !== 'desc') params.order = sortOrder;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
-      
+
       // الفلاتر التالية تطبق فقط بدون بحث
       if (!hasSearch) {
         if (technicianId) params.technicianId = technicianId;
@@ -925,7 +925,7 @@ const RepairsPage = () => {
   // عند عدم وجود بحث، نستخدم search للبحث الفوري في البيانات المحلية
   const filteredRepairs = useMemo(() => {
     const hasDebouncedSearch = debouncedSearch && debouncedSearch.trim();
-    
+
     // عند وجود debouncedSearch، السيرفر قام بالبحث في جميع الطلبات بالفعل
     // نعرض نتائج السيرفر مباشرة بدون أي فلترة محلية - السيرفر قام بالبحث بالفعل
     if (hasDebouncedSearch) {
@@ -933,19 +933,19 @@ const RepairsPage = () => {
       // نعرضها مباشرة بدون فلترة محلية - البحث تم في السيرفر
       return repairs;
     }
-    
+
     // بدون debouncedSearch - البحث الفوري في البيانات المحلية فقط
     const searchLower = (search || '').toLowerCase();
     const hasSearch = search && search.trim();
-    
+
     // الحصول على الحقول التي يجب البحث فيها حسب searchField
     const currentSearchField = searchFieldOptions.find(opt => opt.key === searchField) || searchFieldOptions[0];
     const fieldsToSearch = currentSearchField.fields;
-    
+
     return repairs.filter(repair => {
       // البحث الفوري - يعمل على الحقول المحددة في searchField
       let matchesSearch = !hasSearch;
-      
+
       if (hasSearch) {
         matchesSearch = fieldsToSearch.some(field => {
           const value = repair[field] || '';
@@ -979,13 +979,13 @@ const RepairsPage = () => {
 
   // فرز Client-side مؤقتًا (حتى تفعيل الفرز الخادمي بالكامل)
   const priorityRank = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-  const statusRank = { 
-    pending: 1, 
-    'in-progress': 2, 
-    'waiting-parts': 2.5, 
-    'ready-for-pickup': 3, 
-    completed: 4, 
-    'on-hold': 1.5 
+  const statusRank = {
+    pending: 1,
+    'in-progress': 2,
+    'waiting-parts': 2.5,
+    'ready-for-pickup': 3,
+    completed: 4,
+    'on-hold': 1.5
   };
   const sortedRepairs = [...filteredRepairs].sort((a, b) => {
     const dir = sortOrder === 'asc' ? 1 : -1;
@@ -1013,7 +1013,7 @@ const RepairsPage = () => {
   const effectiveTotal = Number.isFinite(serverTotal) && serverTotal != null ? serverTotal : clientTotal;
   const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
-  
+
   // تقسيم النتائج إلى صفحات - دائماً نستخدم sortedRepairs (التي تحتوي على filteredRepairs المفروزة)
   // البحث الفوري يعمل على filteredRepairs باستخدام search مباشرة
   const paginatedRepairs = sortedRepairs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -1277,21 +1277,22 @@ const RepairsPage = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">طلبات الإصلاح</h1>
+      <div className="flex justify-between items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">طلبات الإصلاح</h1>
         <Link to="/repairs/new">
-          <SimpleButton className="flex items-center space-x-2 space-x-reverse">
+          <SimpleButton size="sm" className="flex items-center gap-1 sm:gap-2">
             <Plus className="w-4 h-4" />
-            <span>طلب إصلاح جديد</span>
+            <span className="hidden xs:inline">طلب إصلاح جديد</span>
+            <span className="xs:hidden">جديد</span>
           </SimpleButton>
         </Link>
       </div>
 
       {/* رسالة الخطأ */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center justify-between">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center justify-between text-sm">
           <span>{error}</span>
           <SimpleButton
             variant="ghost"
@@ -1304,23 +1305,22 @@ const RepairsPage = () => {
         </div>
       )}
 
-
-
       {/* بطاقات الفلترة - QuickStatsCard كأزرار */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         {/* الكل */}
         <button
           onClick={() => setStatus('all')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'all' ? 'ring-2 ring-gray-600 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
           <QuickStatsCard
-            title="إجمالي الطلبات"
+            title="الكل"
             value={globalStats.totalRequests}
             icon={Wrench}
             color="blue"
+            compact={true}
           />
         </button>
 
@@ -1328,15 +1328,16 @@ const RepairsPage = () => {
         <button
           onClick={() => setStatus('pending')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'pending' ? 'ring-2 ring-yellow-500 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
           <QuickStatsCard
-            title="في الانتظار"
+            title="انتظار"
             value={globalStats.pendingRequests}
             icon={Clock}
             color="yellow"
+            compact={true}
           />
         </button>
 
@@ -1344,7 +1345,7 @@ const RepairsPage = () => {
         <button
           onClick={() => setStatus('in-progress')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'in-progress' ? 'ring-2 ring-blue-600 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
@@ -1353,6 +1354,7 @@ const RepairsPage = () => {
             value={globalStats.inProgressRequests}
             icon={Play}
             color="blue"
+            compact={true}
           />
         </button>
 
@@ -1360,15 +1362,16 @@ const RepairsPage = () => {
         <button
           onClick={() => setStatus('waiting-parts')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'waiting-parts' ? 'ring-2 ring-orange-500 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
           <QuickStatsCard
-            title="بانتظار قطع غيار"
+            title="قطع غيار"
             value={globalStats.waitingPartsRequests}
             icon={ShoppingCart}
             color="orange"
+            compact={true}
           />
         </button>
 
@@ -1376,15 +1379,16 @@ const RepairsPage = () => {
         <button
           onClick={() => setStatus('ready-for-pickup')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'ready-for-pickup' ? 'ring-2 ring-green-500 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
           <QuickStatsCard
-            title="جاهز للاستلام"
+            title="جاهز"
             value={globalStats.readyForPickupRequests}
             icon={Package}
             color="green"
+            compact={true}
           />
         </button>
 
@@ -1392,15 +1396,16 @@ const RepairsPage = () => {
         <button
           onClick={() => setStatus('completed')}
           className={`
-            text-right transition-all duration-200 transform hover:scale-105
+            text-right transition-all duration-200 transform active:scale-95
             ${status === 'completed' ? 'ring-2 ring-green-600 shadow-lg scale-105' : 'hover:shadow-md'}
           `}
         >
           <QuickStatsCard
-            title="مكتملة"
+            title="مكتمل"
             value={globalStats.completedRequests}
             icon={CheckCircle}
             color="green"
+            compact={true}
           />
         </button>
       </div>
@@ -1408,21 +1413,22 @@ const RepairsPage = () => {
       {/* عرض فلتر العميل */}
       {customerFilter && (
         <SimpleCard className="border-blue-200 bg-blue-50">
-          <SimpleCardContent className="p-4">
+          <SimpleCardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-2 sm:ml-3">
                   <User className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-blue-600 font-medium">عرض طلبات العميل:</p>
-                  <p className="text-blue-800 font-semibold">{customerName || 'جاري التحميل...'}</p>
+                  <p className="text-[10px] sm:text-sm text-blue-600 font-medium">عرض طلبات العميل:</p>
+                  <p className="text-xs sm:text-base text-blue-800 font-semibold truncate max-w-[150px] sm:max-w-none">{customerName || 'جاري التحميل...'}</p>
                 </div>
               </div>
               <Link to="/repairs">
-                <SimpleButton variant="outline" size="sm">
-                  <XCircle className="w-4 h-4 ml-2" />
-                  إزالة الفلتر
+                <SimpleButton variant="outline" size="sm" className="h-8 text-xs">
+                  <XCircle className="w-3.5 h-3.5 ml-1 sm:ml-2" />
+                  <span className="hidden xs:inline">إزالة الفلتر</span>
+                  <span className="xs:hidden">إلغاء</span>
                 </SimpleButton>
               </Link>
             </div>
@@ -1431,151 +1437,94 @@ const RepairsPage = () => {
       )}
 
       {/* شريط الأدوات */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          {/* فلتر نوع البحث */}
-          <div className="relative">
-            <select
-              value={searchField}
-              onChange={(e) => setSearchField(e.target.value)}
-              className="h-8 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 pr-8 appearance-none cursor-pointer hover:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              title="اختر نوع البحث"
-            >
-              {searchFieldOptions.map(option => (
-                <option key={option.key} value={option.key}>{option.label}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-          
-          <div className="relative flex-1 md:w-64">
-            <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder={(() => {
-                const current = searchFieldOptions.find(opt => opt.key === searchField);
-                if (current?.key === 'nameOrPhone') return 'ابحث بالاسم أو رقم الموبايل...';
-                if (current?.key === 'all') return 'ابحث في جميع الحقول...';
-                return `ابحث في ${current?.label || '...'}`;
-              })()}
-              className="pr-8 h-8 text-sm"
-              value={search}
-              onChange={handleSearchChange}
-              onKeyDown={(e) => {
-                // عند الضغط Enter، تحديث البحث فوراً
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (searchTimeoutRef.current) {
-                    clearTimeout(searchTimeoutRef.current);
-                  }
-                  const current = searchParams.get('q') || '';
-                  const searchValue = (search || '').trim();
-                  if (searchValue !== current) {
-                    const next = new URLSearchParams(searchParams);
-                    if (!searchValue) {
-                      next.delete('q');
-                    } else {
-                      next.set('q', searchValue);
-                    }
-                    // لا نحدث URL أثناء الكتابة - البحث محلي تماماً
-                  // setSearchParams(next, { replace: true });
-                  }
-                  // تحديث debouncedSearch فوراً - هذا يمنع reload
-                  const trimmedSearch = search.trim();
-                  isTypingRef.current = false;
-                  setDebouncedSearch(trimmedSearch);
-                }
-              }}
-            />
-          </div>
-          {/* WebSocket Status Indicator */}
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${wsStatus === 'connected'
-            ? 'bg-green-100 text-green-800'
-            : wsStatus === 'connecting'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-red-100 text-red-800'
-            }`}>
-            {wsStatus === 'connected' ? (
-              <Wifi className="w-3 h-3" />
-            ) : (
-              <WifiOff className="w-3 h-3" />
-            )}
-            <span className="hidden sm:inline">
-              {wsStatus === 'connected' ? 'متصل' :
-                wsStatus === 'connecting' ? 'جاري الاتصال' : 'غير متصل'}
-            </span>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* بحث */}
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative w-32 sm:w-40 shrink-0">
+              <select
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value)}
+                className="w-full h-9 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 pr-6 appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500"
+              >
+                {searchFieldOptions.map(option => (
+                  <option key={option.key} value={option.key}>{option.label}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="ابحث..."
+                className="pr-9 h-9 text-sm"
+                value={search}
+                onChange={handleSearchChange}
+              />
+            </div>
           </div>
 
-          <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="whitespace-nowrap">
-            <RefreshCw className="w-3.5 h-3.5 ml-2" /> تحديث
-          </SimpleButton>
-          {/* قائمة الفرز */}
-          <div className="relative" ref={sortMenuRef}>
-            <SimpleButton
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSortMenu(v => !v)}
-              aria-haspopup="menu"
-              aria-expanded={showSortMenu}
-              aria-controls="sort-menu"
-              className="flex items-center gap-1"
-              title="فرز"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 ml-1" />
-              <span className="truncate max-w-[8rem]">
-                {`${sortFields.find(f => f.key === sortBy)?.label || ''} • ${sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}`}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 justify-between sm:justify-end">
+            <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="h-9 px-2">
+              <RefreshCw className="w-4 h-4 sm:ml-1" />
+              <span className="hidden sm:inline">تحديث</span>
             </SimpleButton>
-            {showSortMenu && (
-              <div
-                id="sort-menu"
-                role="menu"
-                className="absolute right-0 mt-2 w-56 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1"
-                ref={sortMenuPanelRef}
+
+            <div className="relative" ref={sortMenuRef}>
+              <SimpleButton
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSortMenu(v => !v)}
+                className="h-9 px-2 flex items-center gap-1"
               >
-                <div className="px-3 py-2 text-xs text-gray-500 flex items-center justify-between">
-                  <span>ترتيب</span>
-                  <div className="flex items-center gap-1">
-                    <SimpleButton size="xs" variant={sortOrder === 'asc' ? 'primary' : 'ghost'} onClick={() => setSortOrder('asc')}>تصاعدي</SimpleButton>
-                    <SimpleButton size="xs" variant={sortOrder === 'desc' ? 'primary' : 'ghost'} onClick={() => setSortOrder('desc')}>تنازلي</SimpleButton>
-                  </div>
-                </div>
-                <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
-                {sortFields.map((f) => {
-                  const selected = sortBy === f.key;
-                  return (
+                <ArrowUpDown className="w-4 h-4 sm:ml-1" />
+                <span className="hidden sm:inline truncate max-w-[5rem]">
+                  {sortFields.find(f => f.key === sortBy)?.label}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </SimpleButton>
+              {showSortMenu && (
+                <div className="absolute left-0 sm:right-0 mt-2 w-48 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1">
+                  {sortFields.map((f) => (
                     <button
                       key={f.key}
-                      role="menuitemradio"
-                      aria-checked={selected}
-                      className={`w-full text-right px-3 py-1.5 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}
+                      className={`w-full text-right px-4 py-2 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${sortBy === f.key ? 'text-blue-600 bg-blue-50' : ''}`}
                       onClick={() => { setSortBy(f.key); setShowSortMenu(false); }}
                     >
                       <span>{f.label}</span>
-                      {selected && <Check className="w-4 h-4" />}
+                      {sortBy === f.key && <Check className="w-4 h-4" />}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAdvancedFilters(v => !v)}
+              className={`h-9 px-2 flex items-center gap-1 ${showAdvancedFilters ? 'bg-blue-50 text-blue-600 border-blue-200' : ''}`}
+            >
+              <Filter className="w-4 h-4 sm:ml-1" />
+              <span className="hidden sm:inline">فلاتر</span>
+              {showAdvancedFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </SimpleButton>
+
+            <div className="flex items-center gap-1 ml-auto sm:ml-0">
+              <div className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium ${wsStatus === 'connected' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {wsStatus === 'connected' ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
               </div>
-            )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <SimpleButton variant="outline" size="sm" onClick={handleExportFiltered}>
-            <Download className="w-3.5 h-3.5 ml-2" /> تصدير النتائج
+
+        <div className="flex items-center justify-between sm:justify-end gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <SimpleButton variant="outline" size="sm" onClick={handleExportFiltered} className="h-8 px-2 text-[10px] sm:text-xs">
+            <Download className="w-3.5 h-3.5 ml-1" /> تصدير
           </SimpleButton>
-          <SimpleButton variant="outline" size="sm" onClick={handleImportClick}>استيراد</SimpleButton>
-          <SimpleButton
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAdvancedFilters(v => !v)}
-            className="flex items-center gap-1"
-          >
-            <Filter className="w-3.5 h-3.5 ml-1" />
-            <span>فلاتر متقدمة</span>
-            {showAdvancedFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </SimpleButton>
+          <SimpleButton variant="outline" size="sm" onClick={handleImportClick} className="h-8 px-2 text-[10px] sm:text-xs">استيراد</SimpleButton>
         </div>
       </div>
 

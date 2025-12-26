@@ -4,7 +4,7 @@ import useAuthStore from '../../stores/authStore';
 import useUIStore from '../../stores/uiStore';
 import { useQuickStats, formatCurrency } from '../../hooks/useQuickStats';
 import {
-  LogOut, User, Settings, Menu, Sun, Moon, Bell, Search, Plus,
+  LogOut, User, Settings, Menu, Sun, Moon, Bell, Search, Plus, X,
   Wrench, Users, Package, FileText, MessageSquare,
   Clock, TrendingUp, AlertCircle, CheckCircle, Zap
 } from 'lucide-react';
@@ -68,7 +68,11 @@ const Topbar = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+
+  // Get quick stats from hook
+  const { stats: quickStats } = useQuickStats();
 
   const handleLogout = async () => {
     try {
@@ -79,9 +83,6 @@ const Topbar = () => {
     }
   };
 
-  // Get quick stats from hook
-  const { stats: quickStats } = useQuickStats();
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -90,189 +91,212 @@ const Topbar = () => {
   };
 
   return (
-    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 shadow-sm">
+    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-sm z-30">
       {/* Left Section */}
-      <div className="flex items-center space-x-4 space-x-reverse">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} data-sidebar-toggle>
+      <div className="flex items-center space-x-2 space-x-reverse">
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} data-sidebar-toggle className="lg:hidden">
+          <Menu className="w-5 h-5" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} data-sidebar-toggle className="hidden lg:flex">
           <Menu className="w-5 h-5" />
         </Button>
 
-        {/* Quick Stats */}
-        <div className="hidden lg:flex items-center space-x-6 space-x-reverse">
+        {/* Quick Stats - Desktop Only */}
+        <div className="hidden xl:flex items-center space-x-6 space-x-reverse">
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
             <div className="flex items-center space-x-1 space-x-reverse text-brand-orange">
               <Wrench className="w-4 h-4" />
               <span className="font-medium">{quickStats.pendingRepairs}</span>
             </div>
-            <span className="text-muted-foreground">طلبات معلقة</span>
+            <span className="text-muted-foreground whitespace-nowrap">معلقة</span>
           </div>
 
           <div className="flex items-center space-x-2 space-x-reverse text-sm">
             <div className="flex items-center space-x-1 space-x-reverse text-brand-green">
               <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">{formatCurrency(quickStats.todayRevenue || 0)} جنية</span>
+              <span className="font-medium text-xs sm:text-sm">{formatCurrency(quickStats.todayRevenue || 0)}</span>
             </div>
-            <span className="text-muted-foreground">اليوم</span>
+            <span className="text-muted-foreground whitespace-nowrap">اليوم</span>
           </div>
-          
-          {quickStats.lowStock > 0 && (
-            <div className="flex items-center space-x-2 space-x-reverse text-sm">
-              <div className="flex items-center space-x-1 space-x-reverse text-red-600">
-                <Package className="w-4 h-4" />
-                <span className="font-medium">{quickStats.lowStock}</span>
-              </div>
-              <span className="text-muted-foreground">نقص مخزون</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Center Section - Search */}
-      <div className="flex-1 max-w-md mx-4">
-        <form onSubmit={handleSearch} className="relative">
+      {/* Center Section - Search (Toggleable on Mobile) */}
+      <div className={cn(
+        "flex-1 max-w-md mx-2 transition-all duration-300",
+        "lg:block",
+        isSearchVisible ? "absolute inset-x-0 top-0 h-16 bg-background z-50 flex items-center px-4 md:relative md:h-auto md:bg-transparent md:px-0" : "hidden md:block"
+      )}>
+        <form onSubmit={handleSearch} className="relative w-full">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="text"
-            placeholder="بحث في الطلبات، العملاء، القطع..."
+            placeholder="بحث..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10 bg-muted/50 border-input focus:bg-background transition-colors"
+            className="pr-10 bg-muted/50 border-input focus:bg-background transition-colors w-full"
+            autoFocus={isSearchVisible}
           />
+          {isSearchVisible && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-1 top-1/2 -translate-y-1/2 md:hidden"
+              onClick={() => setIsSearchVisible(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </form>
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center space-x-2 space-x-reverse">
-        {/* Notification Center */}
-        <NotificationCenter />
+      <div className="flex items-center space-x-1 sm:space-x-2 space-x-reverse">
+        {/* Mobile Search Toggle */}
+        {!isSearchVisible && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsSearchVisible(true)}
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+        )}
 
-        {/* Quick Actions */}
-        <DropdownMenu open={showQuickActions} onOpenChange={setShowQuickActions}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Zap className="w-5 h-5" />
-              <span className="sr-only">الإجراءات السريعة</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuLabel className="text-right">الإجراءات السريعة</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {quickActions.map((action) => (
-              <DropdownMenuItem key={action.href} asChild>
-                <Link
-                  to={action.href}
-                  className="flex items-center justify-between w-full px-2 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                >
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <div className={cn("p-1.5 rounded-md text-white", action.color)}>
-                      <action.icon className="w-4 h-4" />
+        {/* Action Buttons - Consolidated on Mobile */}
+        <div className="flex items-center space-x-1 space-x-reverse sm:space-x-2">
+          {/* Notification Center */}
+          <NotificationCenter />
+
+          {/* Quick Actions - Hidden on very small screens, moved to dropdown */}
+          <div className="hidden sm:block">
+            <DropdownMenu open={showQuickActions} onOpenChange={setShowQuickActions}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Zap className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-right">الإجراءات السريعة</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {quickActions.map((action) => (
+                  <DropdownMenuItem key={action.href} asChild>
+                    <Link
+                      to={action.href}
+                      className="flex items-center justify-between w-full px-2 py-2 cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <div className={cn("p-1.5 rounded-md text-white", action.color)}>
+                          <action.icon className="w-4 h-4" />
+                        </div>
+                        <span>{action.label}</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Theme Toggle - Hidden on very small screens */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden xs:flex"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">تبديل المظهر</span>
+          </Button>
+        </div>
+
+        {/* Profile Notifications (Standard Dropdown) */}
+        {!isSearchVisible && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {((quickStats.newMessages && quickStats.newMessages > 0) || (quickStats.lowStock && quickStats.lowStock > 0)) && (
+                  <Badge
+                    variant="destructive"
+                    size="sm"
+                    className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
+                  >
+                    {(quickStats.newMessages || 0) + (quickStats.lowStock || 0)}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel className="text-right">الإشعارات</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              {/* إشعارات هامة */}
+              {quickStats.newMessages && quickStats.newMessages > 0 && (
+                <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-brand-blue" />
                     </div>
-                    <span>{action.label}</span>
                   </div>
-                  <kbd className="px-2 py-1 text-xs bg-muted rounded text-muted-foreground">
-                    {action.shortcut}
-                  </kbd>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">رسائل جديدة</p>
+                    <p className="text-sm text-muted-foreground">{quickStats.newMessages} رسائل غير مقروءة</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Badge variant="default" size="sm">{quickStats.newMessages}</Badge>
+                  </div>
+                </DropdownMenuItem>
+              )}
+
+              {quickStats.lowStock && quickStats.lowStock > 0 && (
+                <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                      <AlertCircle className="w-4 h-4 text-brand-orange" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">نقص في المخزون</p>
+                    <p className="text-sm text-muted-foreground">{quickStats.lowStock} قطع تحتاج إعادة طلب</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Badge variant="destructive" size="sm">{quickStats.lowStock}</Badge>
+                  </div>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-brand-green" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">تم إنجاز طلب إصلاح</p>
+                  <p className="text-sm text-muted-foreground">طلب #1234 - هاتف iPhone 12</p>
+                </div>
+                <div className="flex-shrink-0">
+                  <span className="text-xs text-muted-foreground">منذ 5 دقائق</span>
+                </div>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/notifications" className="w-full text-center py-2 text-sm text-primary hover:text-primary/80 cursor-pointer">
+                  عرض جميع الإشعارات
                 </Link>
               </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">تبديل المظهر</span>
-        </Button>
-
-        {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {((quickStats.newMessages && quickStats.newMessages > 0) || (quickStats.lowStock && quickStats.lowStock > 0)) && (
-                <Badge
-                  variant="destructive"
-                  size="sm"
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {(quickStats.newMessages || 0) + (quickStats.lowStock || 0)}
-                </Badge>
-              )}
-              <span className="sr-only">الإشعارات</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="text-right">الإشعارات</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            {/* إشعارات هامة */}
-            {quickStats.newMessages && quickStats.newMessages > 0 && (
-              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-brand-blue" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">رسائل جديدة</p>
-                  <p className="text-sm text-muted-foreground">{quickStats.newMessages} رسائل غير مقروءة</p>
-                </div>
-                <div className="flex-shrink-0">
-                  <Badge variant="default" size="sm">{quickStats.newMessages}</Badge>
-                </div>
-              </DropdownMenuItem>
-            )}
-
-            {quickStats.lowStock && quickStats.lowStock > 0 && (
-              <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-4 h-4 text-brand-orange" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">نقص في المخزون</p>
-                  <p className="text-sm text-muted-foreground">{quickStats.lowStock} قطع تحتاج إعادة طلب</p>
-                </div>
-                <div className="flex-shrink-0">
-                  <Badge variant="destructive" size="sm">{quickStats.lowStock}</Badge>
-                </div>
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuItem className="flex items-center space-x-3 space-x-reverse p-3 hover:bg-accent cursor-pointer">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-brand-green" />
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">تم إنجاز طلب إصلاح</p>
-                <p className="text-sm text-muted-foreground">طلب #1234 - هاتف iPhone 12</p>
-              </div>
-              <div className="flex-shrink-0">
-                <span className="text-xs text-muted-foreground">منذ 5 دقائق</span>
-              </div>
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/notifications" className="w-full text-center py-2 text-sm text-primary hover:text-primary/80 cursor-pointer">
-                عرض جميع الإشعارات
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-auto px-3 space-x-2 space-x-reverse">
+            <Button variant="ghost" className="relative h-8 w-auto px-1 sm:px-3 space-x-2 space-x-reverse">
               <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
                 {user ? user.name?.charAt(0).toUpperCase() : 'U'}
               </div>
@@ -331,11 +355,11 @@ const Topbar = () => {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center space-x-1 space-x-reverse">
                   <Wrench className="w-3 h-3 text-blue-500" />
-                  <span>8 طلبات</span>
+                  <span>{quickStats.todayRepairs || 0} طلبات</span>
                 </div>
                 <div className="flex items-center space-x-1 space-x-reverse">
                   <Clock className="w-3 h-3 text-orange-500" />
-                  <span>4 معلقة</span>
+                  <span>{quickStats.pendingRepairs || 0} معلقة</span>
                 </div>
               </div>
             </div>
