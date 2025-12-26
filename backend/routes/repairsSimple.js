@@ -113,6 +113,7 @@ router.get('/tracking', async (req, res) => {
         rr.expectedDeliveryDate,
         rr.customFields,
         rr.accessories as accessoriesJSON,
+        rr.attachments,
         c.name as customerName,
         c.phone as customerPhone,
         c.email as customerEmail,
@@ -258,6 +259,19 @@ router.get('/tracking', async (req, res) => {
       }
     }
 
+    // Parse attachments safely
+    let attachmentsList = [];
+    try {
+      if (repair.attachments) {
+        attachmentsList = typeof repair.attachments === 'string'
+          ? JSON.parse(repair.attachments)
+          : (Array.isArray(repair.attachments) ? repair.attachments : []);
+      }
+    } catch (e) {
+      console.error('Error parsing attachments:', e);
+      attachmentsList = [];
+    }
+
     res.json({
       id: repair.id,
       requestNumber: `REP-${new Date(repair.createdAt).getFullYear()}${String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}${String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-${String(repair.id).padStart(3, '0')}`,
@@ -290,7 +304,9 @@ router.get('/tracking', async (req, res) => {
       gpu: repair.gpu,
       devicePassword: repair.devicePassword,
       // Accessories
-      accessories: accessoriesList
+      accessories: accessoriesList,
+      // Attachments
+      attachments: attachmentsList
     });
 
   } catch (error) {

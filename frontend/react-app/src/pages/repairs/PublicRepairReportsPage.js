@@ -29,96 +29,129 @@ const PublicRepairReportsPage = () => {
   const trackingToken = searchParams.get('trackingToken');
   const repairId = searchParams.get('repairId');
 
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const [repairData, setRepairData] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(true);
-  const [repairData, setRepairData] = useState(null);
 
-  // Format date
+  // Format date helper
   const formatDate = (dateString) => {
-    if (!dateString) return 'غير محدد';
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    if (!dateString) return 'تاريخ غير محدد';
+    return new Date(dateString).toLocaleDateString('ar-SA', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
-  // Fetch repair data
+  // Fetch Repair Data & Reports
   useEffect(() => {
     const fetchRepairData = async () => {
-      if (!trackingToken && !repairId) return;
-
       try {
-        const params = new URLSearchParams();
-        if (repairId) {
-          params.append('id', repairId);
-        } else if (trackingToken) {
-          const isNumeric = /^\d+$/.test(trackingToken);
-          if (isNumeric) {
-            params.append('id', trackingToken);
-          } else {
-            params.append('trackingToken', trackingToken);
+        let data;
+
+        // 1. Fetch Repair Data
+        if (trackingToken) {
+          const response = await fetch(`${API_BASE_URL}/repairsSimple/tracking?trackingToken=${encodeURIComponent(trackingToken)}`);
+          if (!response.ok) throw new Error('Failed to fetch repair data');
+          // The backend returns the object directly for this endpoint
+          data = await response.json();
+        } else if (repairId) {
+          const response = await fetch(`${API_BASE_URL}/repairsSimple/${repairId}`);
+          if (!response.ok) throw new Error('Failed to fetch repair data');
+          const json = await response.json();
+          data = json.data;
+        } else {
+          setReportsLoading(false);
+          return;
+        }
+
+        if (data) {
+          setRepairData(data);
+
+          // Set attachments if they exist in the response
+          if (data.attachments) {
+            setAttachments(data.attachments);
+          } else if (data.id) {
+            // Fallback: try to fetch attachments specifically if not in main object
+            try {
+              const attResponse = await fetch(`${API_BASE_URL}/repairsSimple/${data.id}/attachments`);
+              if (attResponse.ok) {
+                const attData = await attResponse.json();
+                setAttachments(attData.data || []);
+              }
+            } catch (e) {
+              console.error('Error fetching separate attachments:', e);
+            }
+          }
+
+          // 2. Fetch Inspection Reports
+          try {
+            const reportsResponse = await fetch(`${API_BASE_URL}/inspectionreports/repair/${data.id}`);
+            if (reportsResponse.ok) {
+              const reportsData = await reportsResponse.json();
+              setReports(reportsData.data || []);
+            }
+          } catch (e) {
+            console.error('Error fetching reports:', e);
           }
         }
-
-        const response = await fetch(`${API_BASE_URL}/repairsSimple/tracking?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
-          setRepairData(data);
-        }
       } catch (error) {
-        console.error('Error fetching repair data:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setReportsLoading(false);
+        setAttachmentsLoading(false);
       }
     };
 
     fetchRepairData();
   }, [trackingToken, repairId]);
 
-  // Fetch reports
-  useEffect(() => {
-    const fetchReports = async () => {
-      const id = repairId || repairData?.id;
-      if (!id) {
-        setReportsLoading(false);
-        setReports([]);
-        return;
-      }
-
-      try {
-        setReportsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${id}`);
-
-        if (response.ok) {
-          const data = await response.json();
-          // Handle different response formats
-          const reportsList = data.data || data.reports || (Array.isArray(data) ? data : []);
-          setReports(Array.isArray(reportsList) ? reportsList : []);
-        } else if (response.status === 404) {
-          // No reports found - this is normal
-          setReports([]);
-        } else {
-          // Other error
-          console.warn('Error fetching reports:', response.status);
-          setReports([]);
-        }
-      } catch (error) {
-        console.error('Error fetching reports:', error);
-        setReports([]);
-      } finally {
-        setReportsLoading(false);
-      }
-    };
-
-    fetchReports();
-  }, [repairId, repairData?.id]);
-
-  const handleBack = () => {
-    // Use browser back to go to previous page (tracking page)
-    navigate(-1);
+  // Lightbox Handlers
+  const openLightbox = (index) => {
+    setSelectedImageIndex(index);
+    setLightboxOpen(true);
+    document.body.style.overflow = 'hidden';
   };
 
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    document.body.style.overflow = 'unset';
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    if (attachments.length) {
+      setSelectedImageIndex((prev) => (prev + 1) % attachments.length);
+    }
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    if (attachments.length) {
+      setSelectedImageIndex((prev) => (prev - 1 + attachments.length) % attachments.length);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextImage(e);
+      if (e.key === 'ArrowLeft') prevImage(e);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, attachments]);
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   return (
     <div className="min-h-screen bg-background text-right" dir="rtl">
@@ -135,10 +168,10 @@ const PublicRepairReportsPage = () => {
                 <ArrowRight className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">تقارير الفحص الفني</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">التقارير وصور الجهاز</h1>
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-md">
-                    {repairData?.customerName ? `عرض التقارير الخاصة بـ: ${repairData.customerName}` : 'تفاصيل الفحص والاختبار'}
+                    {repairData?.customerName ? `عرض التفاصيل الخاصة بـ: ${repairData.customerName}` : 'تفاصيل الفحص والاختبار'}
                   </p>
                   <SimpleBadge variant="outline" className="text-[10px] py-0 px-1.5 border-primary/20 bg-primary/5 text-primary">رسمي</SimpleBadge>
                 </div>
@@ -183,7 +216,41 @@ const PublicRepairReportsPage = () => {
           </div>
         )}
 
-        {/* Main Content Area */}
+        {/* Attachments Gallery Section */}
+        {attachments.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">صور الجهاز والمرفقات</h2>
+              <SimpleBadge variant="outline" className="font-bold bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
+                {attachments.length} صور
+              </SimpleBadge>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {attachments.map((att, idx) => (
+                <div
+                  key={idx}
+                  className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border/50 hover:shadow-xl transition-all duration-300"
+                  onClick={() => openLightbox(idx)}
+                >
+                  <img
+                    src={att.url}
+                    alt={att.title || `صورة ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                    <p className="text-white text-xs font-medium line-clamp-2">{att.title || 'عرض الصورة'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Main Reports Area */}
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-border pb-4">
             <div className="flex items-center gap-3">
@@ -326,6 +393,51 @@ const PublicRepairReportsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && attachments && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
+          onClick={(e) => e.target === e.currentTarget && closeLightbox()}
+        >
+          <div className="flex items-center justify-between p-4 sm:p-6 text-white bg-gradient-to-b from-black/50 to-transparent">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium opacity-80">
+                {selectedImageIndex + 1} / {attachments.length}
+              </span>
+              <h3 className="text-lg font-bold">
+                {attachments[selectedImageIndex]?.title || 'معرض الصور'}
+              </h3>
+            </div>
+            <button
+              onClick={closeLightbox}
+              className="p-3 rounded-full bg-white/10 hover:bg-red-500/80 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center relative p-4 overflow-hidden">
+            <button
+              onClick={prevImage}
+              className="absolute left-4 p-4 rounded-full bg-black/50 hover:bg-white/20 text-white transition-all hover:scale-110 z-10"
+            >
+              <div className="rotate-180">➜</div>
+            </button>
+            <img
+              src={attachments[selectedImageIndex]?.url}
+              alt={attachments[selectedImageIndex]?.title || 'Full view'}
+              className="max-h-full max-w-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300 select-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={nextImage}
+              className="absolute right-4 p-4 rounded-full bg-black/50 hover:bg-white/20 text-white transition-all hover:scale-110 z-10"
+            >
+              <div>➜</div>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

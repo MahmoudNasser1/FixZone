@@ -77,6 +77,8 @@ const PublicRepairTrackingPage = () => {
   const [invoicePhone, setInvoicePhone] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Repair status configuration
   const statusConfig = {
@@ -372,7 +374,7 @@ const PublicRepairTrackingPage = () => {
 
     try {
       setInspectionReportsLoading(true);
-      const response = await fetch(`${API_BASE_URL} /inspectionreports/repair / ${repairId} `);
+      const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairId}`);
       console.log('[Reports] API Response status:', response.status);
 
       if (response.ok) {
@@ -463,7 +465,7 @@ const PublicRepairTrackingPage = () => {
     try {
       setAttachmentsLoading(true);
       console.log('Loading attachments for repair ID:', repairData.id);
-      const response = await fetch(`${API_BASE_URL} /repairsSimple/${repairData.id}/attachments`);
+      const response = await fetch(`${API_BASE_URL}/repairsSimple/${repairData.id}/attachments`);
       console.log('Attachments API response status:', response.status);
 
       if (response.ok) {
@@ -502,6 +504,46 @@ const PublicRepairTrackingPage = () => {
   //     loadAttachments();
   //   }
   // }, [repairData?.id]);
+
+  // Lightbox Handlers
+  const openLightbox = (index) => {
+    setSelectedImageIndex(index);
+    setLightboxOpen(true);
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    document.body.style.overflow = 'unset';
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    if (repairData?.attachments?.length) {
+      setSelectedImageIndex((prev) => (prev + 1) % repairData.attachments.length);
+    }
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    if (repairData?.attachments?.length) {
+      setSelectedImageIndex((prev) => (prev - 1 + repairData.attachments.length) % repairData.attachments.length);
+    }
+  };
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextImage(e);
+      if (e.key === 'ArrowLeft') prevImage(e);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, repairData?.attachments]);
 
   // Handle invoice authentication and open print page
   const handleInvoiceAuth = async () => {
@@ -767,14 +809,26 @@ const PublicRepairTrackingPage = () => {
                           notify('error', 'لا يمكن عرض التقارير: بيانات الطلب غير متوفرة');
                         }
                       }}
-                      disabled={!hasReports}
-                      className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 ${hasReports
+                      disabled={!hasReports && (!repairData.attachments || repairData.attachments.length === 0)}
+                      className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 overflow-hidden ${hasReports || (repairData.attachments && repairData.attachments.length > 0)
                         ? 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 text-white'
                         : 'bg-muted dark:bg-muted/50 text-muted-foreground cursor-not-allowed'
                         }`}
                     >
-                      <FileCheck className={`w-6 h-6 ${hasReports ? 'animate-bounce-slow' : ''}`} />
-                      <span>{hasReports ? 'عرض التقارير الفنية' : 'لا توجد تقارير حالياً'}</span>
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                      <FileCheck className={`w-6 h-6 relative z-10 ${hasReports ? 'animate-bounce-slow' : ''}`} />
+                      <span className="relative z-10">
+                        {hasReports || (repairData.attachments && repairData.attachments.length > 0)
+                          ? 'عرض التقارير والمرفقات'
+                          : 'لا توجد تقارير حالياً'}
+                      </span>
+
+                      {/* Notification Badge */}
+                      {(hasReports || (repairData.attachments && repairData.attachments.length > 0)) && (
+                        <span className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full shadow-md animate-bounce z-20 border-2 border-white/20">
+                          {(inspectionReports.length || 0) + (repairData.attachments?.length || 0)}
+                        </span>
+                      )}
                     </button>
 
                     {/* Invoice Button */}
@@ -790,129 +844,7 @@ const PublicRepairTrackingPage = () => {
               </SimpleCardContent>
             </SimpleCard>
 
-            {/* Inspection Reports Section */}
-            {hasReports && (
-              <SimpleCard className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-                  <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full ml-3 sm:ml-4">
-                        <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                      </div>
-                      <span className="font-semibold text-foreground">التقارير الفنية</span>
-                    </div>
-                    <SimpleButton
-                      size="sm"
-                      variant="outline"
-                      onClick={loadInspectionReports}
-                      disabled={inspectionReportsLoading}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${inspectionReportsLoading ? 'animate-spin' : ''}`} />
-                      تحديث
-                    </SimpleButton>
-                  </SimpleCardTitle>
-                </SimpleCardHeader>
-                <SimpleCardContent className="p-4 sm:p-5 md:p-6">
-                  {inspectionReportsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loading size="md" text="جاري تحميل التقارير..." />
-                    </div>
-                  ) : inspectionReports.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">لا توجد تقارير فنية متاحة</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {inspectionReports.map((report) => (
-                        <div
-                          key={report.id}
-                          className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 sm:p-5 border-l-4 border-blue-400 dark:border-blue-500 hover:shadow-md transition-all"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
-                                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground text-base sm:text-lg">
-                                    {report.inspectionTypeName || 'تقرير فحص'}
-                                  </div>
-                                  <div className="text-xs sm:text-sm text-muted-foreground">
-                                    {report.reportDate
-                                      ? new Date(report.reportDate).toLocaleDateString('ar-SA', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                      })
-                                      : 'تاريخ غير محدد'}
-                                  </div>
-                                </div>
-                              </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
-                                {report.technicianName && (
-                                  <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">الفني:</span>
-                                    <span className="font-medium text-foreground">{report.technicianName}</span>
-                                  </div>
-                                )}
-                                {report.branchName && (
-                                  <div className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">الفرع:</span>
-                                    <span className="font-medium text-foreground">{report.branchName}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {report.summary && (
-                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">الملخص:</div>
-                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.summary}</div>
-                                </div>
-                              )}
-
-                              {report.result && (
-                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">النتيجة والتشخيص:</div>
-                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.result}</div>
-                                </div>
-                              )}
-
-                              {report.recommendations && (
-                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3 mb-2">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">التوصيات:</div>
-                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.recommendations}</div>
-                                </div>
-                              )}
-
-                              {report.notes && (
-                                <div className="bg-white/70 dark:bg-background/50 rounded-lg p-3">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">ملاحظات إضافية:</div>
-                                  <div className="text-sm text-foreground whitespace-pre-wrap">{report.notes}</div>
-                                </div>
-                              )}
-
-                              <div className="text-xs text-muted-foreground mt-3">
-                                {report.createdAt && (
-                                  <span>
-                                    تم الإنشاء: {new Date(report.createdAt).toLocaleString('ar-SA')}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </SimpleCardContent>
-              </SimpleCard>
-            )}
 
             {/* Repair Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
@@ -999,6 +931,8 @@ const PublicRepairTrackingPage = () => {
                   </div>
                 </SimpleCardContent>
               </SimpleCard>
+
+
 
               {/* Repair Progress & Costs */}
               <SimpleCard className="border border-border/50 dark:border-border/20 shadow-lg bg-background/50 backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-300">
@@ -1229,6 +1163,87 @@ const PublicRepairTrackingPage = () => {
                     </div>
                   </SimpleCardContent>
                 </SimpleCard>
+              </div>
+            )}
+            {/* Lightbox Modal */}
+            {lightboxOpen && repairData?.attachments && (
+              <div
+                className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
+                onClick={(e) => e.target === e.currentTarget && closeLightbox()}
+              >
+                {/* Lightbox Header */}
+                <div className="flex items-center justify-between p-4 sm:p-6 text-white bg-gradient-to-b from-black/50 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium opacity-80">
+                      {selectedImageIndex + 1} / {repairData.attachments.length}
+                    </span>
+                    <h3 className="text-lg font-bold">
+                      {repairData.attachments[selectedImageIndex]?.title || 'معرض الصور'}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={repairData.attachments[selectedImageIndex]?.url}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                      title="تحميل الصورة"
+                    >
+                      <Download className="w-5 h-5" />
+                    </a>
+                    <button
+                      onClick={closeLightbox}
+                      className="p-3 rounded-full bg-white/10 hover:bg-red-500/80 transition-colors"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Image Area */}
+                <div className="flex-1 flex items-center justify-center relative p-4 overflow-hidden">
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 p-4 rounded-full bg-black/50 hover:bg-white/20 text-white transition-all hover:scale-110 z-10"
+                  >
+                    <div className="rotate-180">➜</div> {/* Simple arrow or use Lucide ArrowRight rotated */}
+                  </button>
+
+                  <img
+                    src={repairData.attachments[selectedImageIndex]?.url}
+                    alt={repairData.attachments[selectedImageIndex]?.title || 'Full view'}
+                    className="max-h-full max-w-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300 select-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 p-4 rounded-full bg-black/50 hover:bg-white/20 text-white transition-all hover:scale-110 z-10"
+                  >
+                    <div>➜</div>
+                  </button>
+                </div>
+
+                {/* Lightbox Footer (thumbnails) */}
+                <div className="p-4 bg-black/80 overflow-x-auto">
+                  <div className="flex justify-center gap-2 min-w-max px-4">
+                    {repairData.attachments.map((att, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex(idx); }}
+                        className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all duration-300 ${idx === selectedImageIndex ? 'ring-2 ring-blue-500 scale-110 z-10' : 'opacity-50 hover:opacity-100 hover:scale-105'
+                          }`}
+                      >
+                        <img
+                          src={att.url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
