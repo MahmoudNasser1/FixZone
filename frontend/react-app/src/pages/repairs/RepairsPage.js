@@ -18,6 +18,8 @@ import QuickStatsCard from '../../components/ui/QuickStatsCard';
 import { Input } from '../../components/ui/Input';
 import DataView from '../../components/ui/DataView';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
+import RepairCard from '../../components/repairs/RepairCard';
+import RepairsToolbar from '../../components/repairs/RepairsToolbar';
 
 // Helper function to open print pages with authentication
 const handlePrintRepair = (repairId, type = 'invoice') => {
@@ -1132,136 +1134,21 @@ const RepairsPage = () => {
 
 
 
-  // عرض كلاسيكي (الأول سابقاً) كبطاقة تفصيلية
+  // عرض كلاسيكي (تم تحديثه لاستخدام RepairCard الجديد)
   const renderClassicItem = (r, visibleKeys = [], selectedItems = [], onItemSelect = null) => {
     if (!r) return null;
-    const isVisible = (key) => (visibleKeys?.length ? visibleKeys.includes(key) : true);
-    const statusColor = getStatusColor(r.status);
-    const statusText = getStatusText(r.status);
-    const priorityColor = getPriorityColor(r.priority);
-    const priorityText = getPriorityText(r.priority);
-    const created = r.createdAt ? new Date(r.createdAt).toLocaleString('ar-EG') : '-';
-    const updated = r.updatedAt ? new Date(r.updatedAt).toLocaleString('ar-EG') : '-';
-    const onEditClick = (e) => { e.stopPropagation(); handleEditRepair(r.id); };
-    const onViewClick = (e) => { e.stopPropagation(); handleViewRepair(r.id); };
     const isSelected = selectedItems?.includes(r.id) || false;
 
     return (
-      <div className={`relative group bg-card border border-border rounded-xl p-5 hover:shadow-md transition duration-200 ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`}>
-        {/* Checkbox للتحديد المتعدد */}
-        {onItemSelect && (
-          <div className="absolute top-3 left-3 z-20" onClick={(e) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={(e) => {
-                e.stopPropagation();
-                onItemSelect?.(r.id, e.target.checked);
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-5 h-5 text-primary bg-card border-2 border-border rounded focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:border-primary/50"
-              title={isSelected ? 'إلغاء التحديد' : 'تحديد'}
-            />
-          </div>
-        )}
-
-        {/* أزرار العرض/التعديل */}
-        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-20">
-          <button onClick={onEditClick} className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:scale-105 shadow">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button onClick={onViewClick} className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:scale-105 shadow">
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePrintRepair(r.id, 'invoice');
-            }}
-            title="طباعة الفاتورة"
-            className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center hover:scale-105 shadow"
-          >
-            <Printer className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* العنوان */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold text-foreground">{(isVisible('requestNumber') && (r.requestNumber || `#${r.id}`)) || `#${r.id}`}</div>
-          {isVisible('status') && (
-            <SimpleBadge color={statusColor}>{statusText}</SimpleBadge>
-          )}
-        </div>
-
-        {/* معلومات أساسية */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-          {(isVisible('customerName') || isVisible('customerPhone')) && (
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-400" />
-              {isVisible('customerName') && (
-                <span className="text-muted-foreground">{r.customerName || '-'}</span>
-              )}
-              {isVisible('customerPhone') && (
-                <>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-500">{r.customerPhone || '-'}</span>
-                </>
-              )}
-            </div>
-          )}
-          {(isVisible('deviceType') || isVisible('deviceBrand') || isVisible('deviceModel')) && (
-            <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-gray-400" />
-              {isVisible('deviceType') && (
-                <span className="text-muted-foreground">{r.deviceType || '-'}</span>
-              )}
-              {isVisible('deviceBrand') && (
-                <>
-                  <span className="text-gray-400">/</span>
-                  <span className="text-muted-foreground">{r.deviceBrand || '-'}</span>
-                </>
-              )}
-              {isVisible('deviceModel') && (
-                <>
-                  <span className="text-gray-400">/</span>
-                  <span className="text-muted-foreground">{r.deviceModel || '-'}</span>
-                </>
-              )}
-            </div>
-          )}
-          {(isVisible('estimatedCost') || isVisible('priority')) && (
-            <div className="flex items-center gap-2">
-              {isVisible('estimatedCost') && (
-                <>
-                  <DollarSign className="w-4 h-4 text-gray-400" />
-                  <span className="text-foreground font-medium">{r.estimatedCost != null ? formatMoney(Number(r.estimatedCost) || 0) : '-'}</span>
-                </>
-              )}
-              {isVisible('priority') && (
-                <>
-                  <span className="text-gray-400">•</span>
-                  <SimpleBadge color={priorityColor}>{priorityText}</SimpleBadge>
-                </>
-              )}
-            </div>
-          )}
-          {(isVisible('createdAt')) && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Calendar className="w-4 h-4" />
-              <span>إنشاء: {created}</span>
-              <span className="text-gray-400">•</span>
-              <span>تحديث: {updated}</span>
-            </div>
-          )}
-        </div>
-
-        {/* وصف المشكلة */}
-        {r.problemDescription && (
-          <div className="mt-3 text-sm text-foreground/80 line-clamp-3">
-            {r.problemDescription}
-          </div>
-        )}
-      </div>
+      <RepairCard
+        key={r.id}
+        repair={r}
+        onEdit={(id) => handleEditRepair(id)}
+        onView={(id) => handleViewRepair(id)}
+        onPrint={(id) => handlePrintRepair(id, 'invoice')}
+        isSelected={isSelected}
+        onSelect={onItemSelect}
+      />
     );
   };
 
@@ -1436,97 +1323,23 @@ const RepairsPage = () => {
         </SimpleCard>
       )}
 
-      {/* شريط الأدوات */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-2">
-          {/* بحث */}
-          <div className="flex items-center gap-2 flex-1">
-            <div className="relative w-32 sm:w-40 shrink-0">
-              <select
-                value={searchField}
-                onChange={(e) => setSearchField(e.target.value)}
-                className="w-full h-9 text-xs sm:text-sm border border-input rounded-lg bg-background text-foreground px-2 pr-6 appearance-none cursor-pointer focus:ring-2 focus:ring-primary"
-              >
-                {searchFieldOptions.map(option => (
-                  <option key={option.key} value={option.key}>{option.label}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
-
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="ابحث..."
-                className="pr-9 h-9 text-sm"
-                value={search}
-                onChange={handleSearchChange}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 justify-between sm:justify-end">
-            <SimpleButton variant="outline" size="sm" onClick={handleRefresh} className="h-9 px-2">
-              <RefreshCw className="w-4 h-4 sm:ml-1" />
-              <span className="hidden sm:inline">تحديث</span>
-            </SimpleButton>
-
-            <div className="relative" ref={sortMenuRef}>
-              <SimpleButton
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSortMenu(v => !v)}
-                className="h-9 px-2 flex items-center gap-1"
-              >
-                <ArrowUpDown className="w-4 h-4 sm:ml-1" />
-                <span className="hidden sm:inline truncate max-w-[5rem]">
-                  {sortFields.find(f => f.key === sortBy)?.label}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </SimpleButton>
-              {showSortMenu && (
-                <div className="absolute left-0 sm:right-0 mt-2 w-48 z-40 bg-popover border border-border rounded-lg shadow-xl py-1">
-                  {sortFields.map((f) => (
-                    <button
-                      key={f.key}
-                      className={`w-full text-right px-4 py-2 text-sm flex items-center justify-between hover:bg-accent hover:text-accent-foreground ${sortBy === f.key ? 'text-primary bg-primary/10' : ''}`}
-                      onClick={() => { setSortBy(f.key); setShowSortMenu(false); }}
-                    >
-                      <span>{f.label}</span>
-                      {sortBy === f.key && <Check className="w-4 h-4" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <SimpleButton
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAdvancedFilters(v => !v)}
-              className={`h-9 px-2 flex items-center gap-1 ${showAdvancedFilters ? 'bg-blue-50 text-blue-600 border-blue-200' : ''}`}
-            >
-              <Filter className="w-4 h-4 sm:ml-1" />
-              <span className="hidden sm:inline">فلاتر</span>
-              {showAdvancedFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </SimpleButton>
-
-            <div className="flex items-center gap-1 ml-auto sm:ml-0">
-              <div className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium ${wsStatus === 'connected' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                {wsStatus === 'connected' ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between sm:justify-end gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <SimpleButton variant="outline" size="sm" onClick={handleExportFiltered} className="h-8 px-2 text-[10px] sm:text-xs">
-            <Download className="w-3.5 h-3.5 ml-1" /> تصدير
-          </SimpleButton>
-          <SimpleButton variant="outline" size="sm" onClick={handleImportClick} className="h-8 px-2 text-[10px] sm:text-xs">استيراد</SimpleButton>
-        </div>
-      </div>
+      {/* Toolbar */}
+      <RepairsToolbar
+        search={search}
+        setSearch={handleSearchChange}
+        searchField={searchField}
+        setSearchField={setSearchField}
+        searchFieldOptions={searchFieldOptions}
+        handleRefresh={handleRefresh}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        sortFields={sortFields}
+        showAdvancedFilters={showAdvancedFilters}
+        setShowAdvancedFilters={setShowAdvancedFilters}
+        wsStatus={wsStatus}
+        handleExportFiltered={handleExportFiltered}
+        handleImportClick={handleImportClick}
+      />
 
       {/* Advanced Filters Section */}
       {showAdvancedFilters && (

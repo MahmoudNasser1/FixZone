@@ -180,15 +180,16 @@ router.get('/public/verify', async (req, res) => {
       success: true,
       data: {
         id: invoice.id,
-        invoiceId: invoice.id, // Use id as invoiceId for consistency with frontend
-        title: `فاتورة #${invoice.id}`, // Generate title from id since title column doesn't exist
+        invoiceId: invoice.id,
+        title: `فاتورة #${invoice.id}`,
         totalAmount: totalAmount,
         amountPaid: actualPaid,
         status: invoice.status,
         currency: invoice.currency || 'EGP',
         taxAmount: parseFloat(invoice.taxAmount || 0),
         createdAt: invoice.createdAt,
-        paymentMethod: invoice.paymentMethod || null
+        paymentMethod: invoice.paymentMethod || null,
+        trackingToken: invoice.trackingToken // Add trackingToken for frontend redirection
       }
     });
   } catch (error) {

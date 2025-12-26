@@ -63,31 +63,31 @@ const commonSchemas = {
 
   // Quantity
   quantity: Joi.number().integer().min(0),
-  
+
   // HTML validation - يمنع scripts و event handlers
   html: Joi.string().custom((value, helpers) => {
     if (!value || typeof value !== 'string') return value;
-    
+
     // منع scripts
     if (/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(value)) {
       return helpers.error('string.noScripts');
     }
-    
+
     // منع event handlers (onclick, onerror, etc.)
     if (/\s*on\w+\s*=\s*["'][^"']*["']/gi.test(value)) {
       return helpers.error('string.noEventHandlers');
     }
-    
+
     // منع javascript: في الروابط
     if (/javascript\s*:/gi.test(value)) {
       return helpers.error('string.noJavascript');
     }
-    
+
     // منع iframes
     if (/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi.test(value)) {
       return helpers.error('string.noIframes');
     }
-    
+
     return value;
   }, 'HTML sanitization')
     .messages({
@@ -1823,7 +1823,7 @@ const repairSchemas = {
     // Support both problemDescription and reportedProblem (backwards compatibility)
     // Both are optional in schema, all validation happens in route handler
     problemDescription: Joi.any().optional(),
-    
+
     reportedProblem: Joi.any().optional(),
 
     priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'low', 'medium', 'high', 'urgent').default('MEDIUM').optional()

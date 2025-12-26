@@ -50,10 +50,10 @@ router.put('/print-settings', authMiddleware, async (req, res) => {
   try {
     // قراءة الإعدادات الحالية
     const current = JSON.parse(await fs.promises.readFile(PRINT_SETTINGS_PATH, 'utf-8'));
-    
+
     // دمج الإعدادات الجديدة مع الحالية (merge عميق)
     const merged = deepMerge(current, req.body);
-    
+
     // حفظ الإعدادات المحدثة
     await fs.promises.writeFile(PRINT_SETTINGS_PATH, JSON.stringify(merged, null, 2), 'utf-8');
     res.json({ message: 'تم حفظ إعدادات الطباعة', settings: merged });
@@ -149,12 +149,12 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       q, // Support both 'search' and 'q' for backward compatibility
       searchField // نوع البحث المحدد (nameOrPhone, customerName, customerPhone, requestNumber, etc.)
     } = req.query;
-    
+
     // For customer role, get the correct customerId from database instead of trusting query parameter
     let customerId = queryCustomerId;
     const userRoleId = req.user?.roleId || req.user?.role;
     const isCustomer = userRoleId === 6 || userRoleId === 8 || userRoleId === '6' || userRoleId === '8';
-    
+
     if (isCustomer && req.user?.id) {
       // Get customerId from database to ensure accuracy
       const [userRows] = await db.execute(
@@ -183,7 +183,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         }
       }
     }
-    
+
     console.log('[REPAIRS API] Extracted customerId from query:', queryCustomerId, 'Resolved customerId:', customerId, 'type:', typeof customerId);
 
     // Use 'search' if provided, otherwise fall back to 'q'
@@ -218,32 +218,32 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // Search filter - دعم البحث في جميع الحقول مع إمكانية تحديد نوع البحث
     // عند وجود بحث، نتجاهل فلاتر customerId و status و priority لأن البحث شامل
     const hasSearch = searchTerm && searchTerm.trim();
-    
+
     if (!hasSearch) {
       // Customer filter - فقط بدون بحث
-    if (customerId) {
-      const safeCustomerId = parseInt(customerId);
-      if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
-        whereConditions.push('rr.customerId = ?');
-        queryParams.push(safeCustomerId);
-        console.log(`[REPAIRS API] Filtering by customerId: ${safeCustomerId}`);
-      } else {
-        console.warn('⚠️ Invalid customerId:', customerId);
+      if (customerId) {
+        const safeCustomerId = parseInt(customerId);
+        if (!isNaN(safeCustomerId) && safeCustomerId > 0) {
+          whereConditions.push('rr.customerId = ?');
+          queryParams.push(safeCustomerId);
+          console.log(`[REPAIRS API] Filtering by customerId: ${safeCustomerId}`);
+        } else {
+          console.warn('⚠️ Invalid customerId:', customerId);
+        }
       }
-    }
 
       // Status filter - support both frontend and database statuses - فقط بدون بحث
-    if (status) {
-      const dbStatus = mapFrontendStatusToDb(status);
-      whereConditions.push('rr.status = ?');
-      queryParams.push(dbStatus || status);
-    }
+      if (status) {
+        const dbStatus = mapFrontendStatusToDb(status);
+        whereConditions.push('rr.status = ?');
+        queryParams.push(dbStatus || status);
+      }
 
       // Priority filter - فقط بدون بحث
-    if (priority) {
-      whereConditions.push('rr.priority = ?');
-      queryParams.push(priority.toUpperCase());
-    }
+      if (priority) {
+        whereConditions.push('rr.priority = ?');
+        queryParams.push(priority.toUpperCase());
+      }
     } else {
       // Search active - ignoring customerId, status, priority filters
     }
@@ -252,10 +252,10 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     if (hasSearch) {
       const searchPattern = `%${searchTerm.trim()}%`;
       const searchValue = searchTerm.trim();
-      
+
       // Log للتصحيح
       // Search term: searchTerm, searchField: searchField
-      
+
       // تحديد الحقول التي يجب البحث فيها حسب searchField
       if (searchField) {
         // البحث في حقل محدد
@@ -280,13 +280,13 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
             if (isNumericSearch) {
               const numericId = parseInt(searchValue, 10);
               // Searching for ID: numericId
-              
+
               // البحث في ID مباشرة فقط - هذا هو الأكثر دقة
               // مثلاً: البحث عن "88" يجد فقط ID = 88 (وليس 188 أو 880)
               // مثلاً: البحث عن "1460" يجد فقط ID = 1460 (وليس 11460 أو 14600)
               whereConditions.push('rr.id = ?');
               queryParams.push(numericId);
-              
+
               // Added exact ID search condition
             } else {
               // إذا كان الرقم يحتوي على حروف (مثلاً: "REP-20241120-850")، نبحث في التنسيق الكامل
@@ -319,7 +319,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
             if (isNumericAll) {
               const numericIdAll = parseInt(searchValue, 10);
               // إذا كان البحث أرقام فقط، نبحث أيضاً في ID ورقم الطلب الكامل
-      whereConditions.push(`(
+              whereConditions.push(`(
                 c.name LIKE ? OR 
                 c.phone LIKE ? OR
         rr.reportedProblem LIKE ? OR 
@@ -430,14 +430,14 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // CRITICAL: Use db.query instead of db.execute for queries with LIMIT/OFFSET
     // db.execute uses prepared statements which cause issues with LIMIT/OFFSET in MariaDB strict mode
     // db.query interpolates values directly and works perfectly with LIMIT/OFFSET
-    
+
     // Log للتصحيح
     if (searchTerm && searchTerm.trim()) {
       // Query built with filters and search
     }
-    
+
     const [rows] = await db.query(query, queryParams);
-    
+
     // Log query results for debugging
     console.log(`[REPAIRS API] Query returned ${rows.length} rows for customerId: ${customerId || 'N/A'}, status: ${status || 'all'}, page: ${pageNum}, limit: ${parsedLimit}`);
     console.log(`[REPAIRS API] WHERE conditions: ${whereConditions.join(' AND ')}`);
@@ -446,7 +446,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     if (rows.length > 0 && rows.length < 5) {
       console.log(`[REPAIRS API] Returned repair IDs: ${rows.map(r => r.id).join(', ')}`);
     }
-    
+
     // Log للتصحيح
     if (searchTerm && searchTerm.trim()) {
       // Found rows.length results
@@ -476,7 +476,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
     // Log total count for debugging
     console.log(`[REPAIRS API] Total count query will use ${countParams.length} params`);
     console.log(`[REPAIRS API] Count WHERE conditions: ${whereConditions.join(' AND ')}`);
-    
+
     // Log count query params in production
     if (process.env.NODE_ENV === 'production') {
       console.log('[REPAIRS API] Count query params:', countParams.length, 'params');
@@ -497,7 +497,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
           LEFT JOIN VariableOption vo ON rra.accessoryOptionId = vo.id
           WHERE rra.repairRequestId IN (${placeholders})
         `, repairIds);
-        
+
         // تجميع الملحقات حسب repairRequestId
         accRows.forEach(acc => {
           if (!accessoriesMap[acc.repairRequestId]) {
@@ -514,8 +514,8 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
         rows.forEach(row => {
           if (row.accessories) {
             try {
-              const parsed = typeof row.accessories === 'string' 
-                ? JSON.parse(row.accessories) 
+              const parsed = typeof row.accessories === 'string'
+                ? JSON.parse(row.accessories)
                 : (Array.isArray(row.accessories) ? row.accessories : []);
               accessoriesMap[row.id] = parsed.filter(a => a != null);
             } catch (e) {
@@ -532,7 +532,7 @@ router.get('/', authMiddleware, validate(repairSchemas.getRepairs, 'query'), asy
       let accessories = accessoriesMap[row.id] || [];
       if (accessories.length === 0 && row.accessories) {
         try {
-          accessories = typeof row.accessories === 'string' 
+          accessories = typeof row.accessories === 'string'
             ? JSON.parse(row.accessories).filter(a => a != null)
             : (Array.isArray(row.accessories) ? row.accessories.filter(a => a != null) : []);
         } catch (e) {
@@ -854,7 +854,7 @@ router.patch('/bulk-status', authMiddleware, async (req, res) => {
 router.get('/device-specs/common', authMiddleware, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 6;
-    
+
     // Get most common CPU values
     // Use db.query instead of db.execute for LIMIT - prepared statements have issues with LIMIT in MariaDB
     const [cpuResults] = await db.query(`
@@ -865,7 +865,7 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
       ORDER BY count DESC
       LIMIT ${parseInt(limit)}
     `);
-    
+
     // Get most common GPU values
     const [gpuResults] = await db.query(`
       SELECT gpu as value, COUNT(*) as count
@@ -875,7 +875,7 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
       ORDER BY count DESC
       LIMIT ${parseInt(limit)}
     `);
-    
+
     // Get most common RAM values
     const [ramResults] = await db.query(`
       SELECT ram as value, COUNT(*) as count
@@ -885,7 +885,7 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
       ORDER BY count DESC
       LIMIT ${parseInt(limit)}
     `);
-    
+
     // Get most common Storage values
     const [storageResults] = await db.query(`
       SELECT storage as value, COUNT(*) as count
@@ -895,7 +895,7 @@ router.get('/device-specs/common', authMiddleware, async (req, res) => {
       ORDER BY count DESC
       LIMIT ${parseInt(limit)}
     `);
-    
+
     res.json({
       success: true,
       data: {
@@ -932,7 +932,7 @@ router.get('/:repairId/technicians', authMiddleware, async (req, res) => {
       WHERE tr.repairId = ?
       ORDER BY tr.role DESC, tr.assignedAt ASC
     `, [repairId]);
-    
+
     res.json({ success: true, data: technicians });
   } catch (err) {
     console.error('Error fetching repair technicians:', err);
@@ -975,34 +975,34 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
     // Check if user is a customer and verify they own this repair
     const userRoleId = req.user?.roleId || req.user?.role;
     const isCustomer = userRoleId === 6 || userRoleId === 8 || userRoleId === '6' || userRoleId === '8';
-    
+
     if (isCustomer) {
       // Get customerId from database - try multiple methods
       let userCustomerId = null;
-      
+
       if (req.user?.id) {
         // Method 1: Check if customerId is stored directly in User table
         const [userRows] = await db.execute(
           'SELECT customerId FROM User WHERE id = ? AND deletedAt IS NULL',
           [req.user.id]
         );
-        
+
         if (userRows.length > 0 && userRows[0].customerId) {
           userCustomerId = userRows[0].customerId;
         }
-        
+
         // Method 2: If not found, try to find Customer record by userId
         if (!userCustomerId) {
           const [customerRows] = await db.execute(
             'SELECT id FROM Customer WHERE userId = ? AND deletedAt IS NULL',
             [req.user.id]
           );
-          
+
           if (customerRows.length > 0) {
             userCustomerId = customerRows[0].id;
           }
         }
-        
+
         // Method 3: If userId itself might be the customerId (for legacy data)
         // Check if there's a Customer record with id = userId
         if (!userCustomerId) {
@@ -1010,29 +1010,29 @@ router.get('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
             'SELECT id FROM Customer WHERE id = ? AND deletedAt IS NULL',
             [req.user.id]
           );
-          
+
           if (customerByIdRows.length > 0) {
             userCustomerId = customerByIdRows[0].id;
           }
         }
       }
-      
+
       // Check if user's customerId matches repair's customerId
       // Also check if userId itself matches repair's customerId (for legacy data where userId = customerId)
       const userIdMatches = req.user?.id && repair.customerId === req.user.id;
       const customerIdMatches = userCustomerId && repair.customerId === userCustomerId;
-      
+
       if (!userCustomerId && !userIdMatches) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'You do not have permission to view this repair request' 
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this repair request'
         });
       }
-      
+
       if (!customerIdMatches && !userIdMatches) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'You do not have permission to view this repair request' 
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this repair request'
         });
       }
     }
@@ -1152,7 +1152,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     minUndefined: req.body.estimatedCostMin === undefined,
     maxUndefined: req.body.estimatedCostMax === undefined
   });
-  
+
   const {
     customerId, customerName, customerPhone, customerEmail,
     deviceType, deviceBrand, brandId, deviceModel, serialNumber,
@@ -1163,17 +1163,17 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     companyId, // Include companyId from request body
     estimatedCostMin, estimatedCostMax // Include estimated cost range
   } = req.body;
-  
+
   console.log('🔍 [POST /] Extracted values:', {
     estimatedCostMin,
     estimatedCostMax,
     minType: typeof estimatedCostMin,
     maxType: typeof estimatedCostMax
   });
-  
+
   // Use problemDescription or reportedProblem (support both for backwards compatibility)
   const finalProblemDescription = String(problemDescription || reportedProblem || '').trim();
-  
+
   // Validate that we have a problem description (at least one of problemDescription or reportedProblem must be provided)
   if (!finalProblemDescription || finalProblemDescription.length < 10) {
     return res.status(400).json({
@@ -1185,7 +1185,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       }]
     });
   }
-  
+
   console.log('✅ Final problem description length:', finalProblemDescription.length);
 
   // Debug logging
@@ -1209,7 +1209,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
   try {
     connection = await db.getConnection();
-    
+
     // Start transaction
     await connection.beginTransaction();
 
@@ -1228,20 +1228,20 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         if (companyId != null && companyId !== '' && !isNaN(parseInt(companyId))) {
           const finalCompanyId = parseInt(companyId);
           if (finalCompanyId > 0) {
-          console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
-          await connection.execute(
-            'UPDATE Customer SET companyId = ? WHERE id = ?',
-            [finalCompanyId, actualCustomerId]
-          );
-          console.log('✅ Successfully linked company to existing customer');
+            console.log('🟡 Updating existing customer with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId, 'for customer:', actualCustomerId);
+            await connection.execute(
+              'UPDATE Customer SET companyId = ? WHERE id = ?',
+              [finalCompanyId, actualCustomerId]
+            );
+            console.log('✅ Successfully linked company to existing customer');
 
-          // Verify the update
-          const [verifyCustomer] = await connection.execute(
-            'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-            [actualCustomerId]
-          );
-          if (verifyCustomer.length > 0) {
-            console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+            // Verify the update
+            const [verifyCustomer] = await connection.execute(
+              'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+              [actualCustomerId]
+            );
+            if (verifyCustomer.length > 0) {
+              console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
             }
           }
         }
@@ -1276,20 +1276,20 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       // If customer exists and companyId is provided and valid, update customer's company
       const finalCompanyId = parseInt(companyId);
       if (finalCompanyId > 0) {
-      console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
-      await connection.execute(
-        'UPDATE Customer SET companyId = ? WHERE id = ?',
-        [finalCompanyId, actualCustomerId]
-      );
-      console.log('✅ Successfully linked company to existing customer');
+        console.log('🟢 Updating existing customerId:', actualCustomerId, 'with companyId:', finalCompanyId, 'Type:', typeof finalCompanyId);
+        await connection.execute(
+          'UPDATE Customer SET companyId = ? WHERE id = ?',
+          [finalCompanyId, actualCustomerId]
+        );
+        console.log('✅ Successfully linked company to existing customer');
 
-      // Verify the update
-      const [verifyCustomer] = await connection.execute(
-        'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
-        [actualCustomerId]
-      );
-      if (verifyCustomer.length > 0) {
-        console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
+        // Verify the update
+        const [verifyCustomer] = await connection.execute(
+          'SELECT id, name, phone, companyId FROM Customer WHERE id = ?',
+          [actualCustomerId]
+        );
+        if (verifyCustomer.length > 0) {
+          console.log('✅ Verification - Customer updated with companyId:', verifyCustomer[0].companyId);
         }
       }
     }
@@ -1318,7 +1318,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
 
     // ثالثاً: إنشاء طلب الإصلاح
     const repairStatus = mapFrontendStatusToDb(status) || 'RECEIVED';
-    
+
     // التحقق من أن actualCustomerId موجود
     if (!actualCustomerId) {
       await connection.rollback();
@@ -1328,11 +1328,11 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         error: 'Customer ID is required'
       });
     }
-    
+
     // توليد توكن تتبع عام للعميل
     const crypto = require('crypto');
     const trackingToken = crypto.randomBytes(24).toString('hex');
-    
+
     // التحقق من وجود branchId = 1
     let branchIdToUse = 1;
     try {
@@ -1348,7 +1348,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       console.warn('⚠️ Error checking branch, using NULL:', branchError.message);
       branchIdToUse = null;
     }
-    
+
     // Use estimatedCost if provided, otherwise 0 (no average calculation)
     const finalEstimatedCost = estimatedCost !== undefined && estimatedCost !== null ? parseFloat(estimatedCost) : 0;
 
@@ -1394,7 +1394,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         'UPDATE RepairRequest SET accessories = ? WHERE id = ?',
         [accessoriesJson, result.insertId]
       );
-      
+
       // حفظ الملحقات في جدول RepairRequestAccessory (الطريقة الصحيحة)
       // البحث عن accessoryOptionId من VariableOption بناءً على القيمة أو الاسم
       for (const accessory of accessories) {
@@ -1406,7 +1406,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
               'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
               [accessoryValue, accessoryValue]
             );
-            
+
             if (optionRows.length > 0) {
               // حفظ في RepairRequestAccessory
               await connection.execute(
@@ -1431,7 +1431,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       minUndefined: estimatedCostMin === undefined,
       maxUndefined: estimatedCostMax === undefined
     });
-    
+
     // Save estimated cost range to customFields
     console.log('🔍 [POST /] Processing estimated cost range for saving:', {
       estimatedCostMin,
@@ -1441,7 +1441,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       minIsNumber: typeof estimatedCostMin === 'number',
       maxIsNumber: typeof estimatedCostMax === 'number'
     });
-    
+
     // Update customFields with estimated cost range if provided (matching PATCH /:id/details logic)
     console.log('🔍 [POST /] Updating customFields:', {
       estimatedCostMin,
@@ -1451,10 +1451,10 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       minUndefined: estimatedCostMin === undefined,
       maxUndefined: estimatedCostMax === undefined
     });
-    
+
     if (estimatedCostMin !== undefined || estimatedCostMax !== undefined) {
       const customFields = {};
-      
+
       // Update with new range values (store directly, matching PATCH logic)
       if (estimatedCostMin !== undefined) {
         customFields.estimatedCostMin = estimatedCostMin !== null ? parseFloat(estimatedCostMin) : null;
@@ -1462,18 +1462,18 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       if (estimatedCostMax !== undefined) {
         customFields.estimatedCostMax = estimatedCostMax !== null ? parseFloat(estimatedCostMax) : null;
       }
-      
+
       console.log('🔍 [POST /] Prepared customFields object:', customFields);
       const customFieldsJson = JSON.stringify(customFields);
       console.log('🔍 [POST /] Saving customFields JSON:', customFieldsJson);
-      
+
       // Save customFields (always save, even if values are null, to match PATCH behavior)
       await connection.execute(
         'UPDATE RepairRequest SET customFields = ? WHERE id = ?',
         [customFieldsJson, result.insertId]
       );
       console.log('✅ [POST /] Estimated cost range saved in customFields:', customFields);
-      
+
       // Verify it was saved
       const [verifyRows] = await connection.execute(
         'SELECT customFields FROM RepairRequest WHERE id = ?',
@@ -1550,17 +1550,17 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
     // Rollback transaction on error
     if (connection && connection.beginTransaction) {
       try {
-      await connection.rollback();
+        await connection.rollback();
       } catch (rollbackErr) {
         console.error('❌ Error during rollback:', rollbackErr);
       }
       try {
-      connection.release();
+        connection.release();
       } catch (releaseErr) {
         console.error('❌ Error releasing connection:', releaseErr);
       }
     }
-    
+
     // Log error details comprehensively
     console.error('❌ ========== ERROR CREATING REPAIR REQUEST ==========');
     console.error('❌ Error message:', err.message);
@@ -1575,14 +1575,14 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
       console.error('❌ SQL Query:', err.sql);
     }
     console.error('❌ ====================================================');
-    
+
     // Return detailed error in development, generic in production
     const errorResponse = {
       success: false,
       error: 'Server Error',
       message: err.message || 'An error occurred while creating the repair request'
     };
-    
+
     if (process.env.NODE_ENV === 'development') {
       errorResponse.details = {
         code: err.code,
@@ -1591,7 +1591,7 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
         stack: err.stack
       };
     }
-    
+
     res.status(500).json(errorResponse);
   }
 });
@@ -1607,13 +1607,13 @@ router.put('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
       return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
     const oldStatus = oldRepair[0].status;
-    
+
     status = mapFrontendStatusToDb(status);
     const [result] = await db.execute('UPDATE RepairRequest SET deviceId = ?, reportedProblem = ?, technicianReport = ?, status = ?, customerId = ?, branchId = ?, technicianId = ?, quotationId = ?, invoiceId = ?, deviceBatchId = ?, attachments = ?, customFields = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND deletedAt IS NULL', [deviceId, reportedProblem, technicianReport, status, customerId, branchId, technicianId, quotationId, invoiceId, deviceBatchId, JSON.stringify(attachments), JSON.stringify(customFields), id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, error: 'Repair request not found or already deleted' });
     }
-    
+
     // Trigger automation notification if status changed
     if (oldStatus !== status) {
       const automationService = require('../services/automation.service');
@@ -1624,7 +1624,7 @@ router.put('/:id', authMiddleware, validate(repairSchemas.getRepairById, 'params
         req.user?.id || null
       ).catch(err => console.error(`Error in automation for repair ${id}:`, err));
     }
-    
+
     res.json({ success: true, message: 'Repair request updated successfully' });
   } catch (err) {
     console.error(`Error updating repair request with ID ${id}:`, err);
@@ -1666,14 +1666,14 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
     const originalStatus = status;
     status = mapFrontendStatusToDb(status);
     console.log(`[UPDATE STATUS] Mapped status: "${originalStatus}" -> "${status}"`);
-    
+
     // Validate that status is not null
     if (!status) {
       await connection.rollback();
       connection.release();
       return res.status(400).json({ success: false, error: 'Invalid status value', details: `Status "${originalStatus}" could not be mapped to a valid database status` });
     }
-    
+
     const [beforeRows] = await connection.execute('SELECT status FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
     if (!beforeRows || beforeRows.length === 0) {
       await connection.rollback();
@@ -1753,14 +1753,14 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
 
             for (const part of partsUsed) {
               // 🔧 Fix: Use unitSellingPrice from PartsUsed first, then fallback to InventoryItem sellingPrice
-              const unitPrice = part.unitSellingPrice !== null && part.unitSellingPrice !== undefined 
-                ? Number(part.unitSellingPrice) 
+              const unitPrice = part.unitSellingPrice !== null && part.unitSellingPrice !== undefined
+                ? Number(part.unitSellingPrice)
                 : (part.sellingPrice ? Number(part.sellingPrice) : 0);
               const quantity = part.quantity || 1;
               const totalPrice = part.totalPrice !== null && part.totalPrice !== undefined
                 ? Number(part.totalPrice)
                 : (quantity * unitPrice);
-              
+
               console.log('📦 Creating invoice item from part:', {
                 partId: part.id,
                 partName: part.name,
@@ -1972,9 +1972,9 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
     console.error('❌ SQL Message:', err.sqlMessage);
     console.error('❌ Status value:', status);
     console.error('❌ Original status from request:', req.body.status);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Server Error', 
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
       details: err.message,
       sqlMessage: err.sqlMessage,
       code: err.code
@@ -1985,7 +1985,11 @@ router.patch('/:id/status', authMiddleware, validate(repairSchemas.getRepairById
 // Update repair details (estimatedCost, actualCost, priority, expectedDeliveryDate, notes, accessories)
 router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairById, 'params'), validate(repairSchemas.updateDetails), async (req, res) => {
   const { id } = req.params;
-  const { estimatedCost, estimatedCostMin, estimatedCostMax, actualCost, priority, expectedDeliveryDate, notes, accessories } = req.body;
+  const {
+    estimatedCost, estimatedCostMin, estimatedCostMax, actualCost, priority, expectedDeliveryDate, notes, accessories,
+    // Device specs
+    cpu, ram, storage, gpu, devicePassword
+  } = req.body;
 
   console.log('🔍 [PATCH /:id/details] Received request body:', {
     id,
@@ -1996,7 +2000,8 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
     priority,
     expectedDeliveryDate,
     notes,
-    accessories: accessories ? 'present' : 'not present'
+    accessories: accessories ? 'present' : 'not present',
+    deviceSpecs: { cpu, ram, storage, gpu, devicePassword }
   });
 
   try {
@@ -2020,7 +2025,7 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
       }
     }
 
-    // Build dynamic update query
+    // Build dynamic update query for RepairRequest
     const updates = [];
     const values = [];
 
@@ -2052,11 +2057,11 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
     if (accessories !== undefined) {
       updates.push('accessories = ?');
       values.push(Array.isArray(accessories) ? JSON.stringify(accessories) : null);
-      
+
       // تحديث جدول RepairRequestAccessory أيضاً
       // حذف الملحقات القديمة أولاً
       await db.execute('DELETE FROM RepairRequestAccessory WHERE repairRequestId = ?', [id]);
-      
+
       // إضافة الملحقات الجديدة إذا كانت موجودة
       if (Array.isArray(accessories) && accessories.length > 0) {
         for (const accessory of accessories) {
@@ -2068,7 +2073,7 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
                 'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
                 [accessoryValue, accessoryValue]
               );
-              
+
               if (optionRows.length > 0) {
                 // حفظ في RepairRequestAccessory
                 await db.execute(
@@ -2085,77 +2090,135 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
       }
     }
 
-    if (updates.length === 0 && estimatedCostMin === undefined && estimatedCostMax === undefined) {
+    // Check if there are any RepairRequest fields to update OR device fields
+    const hasRepairRequestUpdates = updates.length > 0 || estimatedCostMin !== undefined || estimatedCostMax !== undefined;
+    const hasDeviceUpdates = cpu !== undefined || ram !== undefined || storage !== undefined || gpu !== undefined || devicePassword !== undefined;
+
+    if (!hasRepairRequestUpdates && !hasDeviceUpdates) {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
-    updates.push('updatedAt = CURRENT_TIMESTAMP');
-    values.push(id);
+    // Update RepairRequest if there are changes
+    if (hasRepairRequestUpdates) {
+      if (updates.length > 0) {
+        updates.push('updatedAt = CURRENT_TIMESTAMP');
+        values.push(id);
 
-    const query = `UPDATE RepairRequest SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`;
+        const query = `UPDATE RepairRequest SET ${updates.join(', ')} WHERE id = ? AND deletedAt IS NULL`;
 
-    const [result] = await db.execute(query, values);
+        const [result] = await db.execute(query, values);
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Repair request not found or already deleted' });
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: 'Repair request not found or already deleted' });
+        }
+      }
+
+      // Update customFields with estimated cost range if provided (no average calculation)
+      console.log('🔍 [PATCH /:id/details] Updating customFields:', {
+        estimatedCostMin,
+        estimatedCostMax,
+        minType: typeof estimatedCostMin,
+        maxType: typeof estimatedCostMax,
+        minUndefined: estimatedCostMin === undefined,
+        maxUndefined: estimatedCostMax === undefined
+      });
+
+      if (estimatedCostMin !== undefined || estimatedCostMax !== undefined) {
+        // Get current customFields
+        const [currentRows] = await db.execute('SELECT customFields FROM RepairRequest WHERE id = ?', [id]);
+        let customFields = {};
+        try {
+          if (currentRows[0]?.customFields) {
+            customFields = typeof currentRows[0].customFields === 'string'
+              ? JSON.parse(currentRows[0].customFields)
+              : (currentRows[0].customFields || {});
+          }
+          console.log('🔍 [PATCH /:id/details] Current customFields from DB:', customFields);
+        } catch (e) {
+          console.error('❌ [PATCH /:id/details] Error parsing current customFields:', e);
+          customFields = {};
+        }
+
+        // Update with new range values (store directly, no average)
+        if (estimatedCostMin !== undefined) {
+          customFields.estimatedCostMin = estimatedCostMin !== null ? parseFloat(estimatedCostMin) : null;
+        }
+        if (estimatedCostMax !== undefined) {
+          customFields.estimatedCostMax = estimatedCostMax !== null ? parseFloat(estimatedCostMax) : null;
+        }
+
+        console.log('🔍 [PATCH /:id/details] Updated customFields object:', customFields);
+        const customFieldsJson = JSON.stringify(customFields);
+        console.log('🔍 [PATCH /:id/details] Saving customFields JSON:', customFieldsJson);
+
+        // Save updated customFields
+        await db.execute(
+          'UPDATE RepairRequest SET customFields = ? WHERE id = ?',
+          [customFieldsJson, id]
+        );
+
+        console.log('✅ [PATCH /:id/details] customFields saved successfully');
+
+        // Verify it was saved
+        const [verifyRows] = await db.execute(
+          'SELECT customFields FROM RepairRequest WHERE id = ?',
+          [id]
+        );
+        if (verifyRows.length > 0) {
+          console.log('✅ [PATCH /:id/details] Verification - customFields in DB:', verifyRows[0].customFields);
+        }
+      } else {
+        console.log('⚠️ [PATCH /:id/details] estimatedCostMin and estimatedCostMax are both undefined, skipping customFields update');
+      }
     }
 
-    // Update customFields with estimated cost range if provided (no average calculation)
-    console.log('🔍 [PATCH /:id/details] Updating customFields:', {
-      estimatedCostMin,
-      estimatedCostMax,
-      minType: typeof estimatedCostMin,
-      maxType: typeof estimatedCostMax,
-      minUndefined: estimatedCostMin === undefined,
-      maxUndefined: estimatedCostMax === undefined
-    });
-    
-    if (estimatedCostMin !== undefined || estimatedCostMax !== undefined) {
-      // Get current customFields
-      const [currentRows] = await db.execute('SELECT customFields FROM RepairRequest WHERE id = ?', [id]);
-      let customFields = {};
-      try {
-        if (currentRows[0]?.customFields) {
-          customFields = typeof currentRows[0].customFields === 'string' 
-            ? JSON.parse(currentRows[0].customFields) 
-            : (currentRows[0].customFields || {});
-        }
-        console.log('🔍 [PATCH /:id/details] Current customFields from DB:', customFields);
-      } catch (e) {
-        console.error('❌ [PATCH /:id/details] Error parsing current customFields:', e);
-        customFields = {};
+    // Update Device specs if provided
+    if (hasDeviceUpdates) {
+      // Get device ID from repair request
+      const [repairRows] = await db.execute('SELECT deviceId FROM RepairRequest WHERE id = ? AND deletedAt IS NULL', [id]);
+
+      if (repairRows.length === 0) {
+        return res.status(404).json({ error: 'Repair request not found' });
       }
 
-      // Update with new range values (store directly, no average)
-      if (estimatedCostMin !== undefined) {
-        customFields.estimatedCostMin = estimatedCostMin !== null ? parseFloat(estimatedCostMin) : null;
-      }
-      if (estimatedCostMax !== undefined) {
-        customFields.estimatedCostMax = estimatedCostMax !== null ? parseFloat(estimatedCostMax) : null;
+      const deviceId = repairRows[0].deviceId;
+
+      if (!deviceId) {
+        return res.status(400).json({ error: 'No device associated with this repair request' });
       }
 
-      console.log('🔍 [PATCH /:id/details] Updated customFields object:', customFields);
-      const customFieldsJson = JSON.stringify(customFields);
-      console.log('🔍 [PATCH /:id/details] Saving customFields JSON:', customFieldsJson);
+      // Build device update query
+      const deviceUpdates = [];
+      const deviceValues = [];
 
-      // Save updated customFields
-      await db.execute(
-        'UPDATE RepairRequest SET customFields = ? WHERE id = ?',
-        [customFieldsJson, id]
-      );
-      
-      console.log('✅ [PATCH /:id/details] customFields saved successfully');
-      
-      // Verify it was saved
-      const [verifyRows] = await db.execute(
-        'SELECT customFields FROM RepairRequest WHERE id = ?',
-        [id]
-      );
-      if (verifyRows.length > 0) {
-        console.log('✅ [PATCH /:id/details] Verification - customFields in DB:', verifyRows[0].customFields);
+      if (cpu !== undefined) {
+        deviceUpdates.push('cpu = ?');
+        deviceValues.push(cpu || null);
       }
-    } else {
-      console.log('⚠️ [PATCH /:id/details] estimatedCostMin and estimatedCostMax are both undefined, skipping customFields update');
+      if (ram !== undefined) {
+        deviceUpdates.push('ram = ?');
+        deviceValues.push(ram || null);
+      }
+      if (storage !== undefined) {
+        deviceUpdates.push('storage = ?');
+        deviceValues.push(storage || null);
+      }
+      if (gpu !== undefined) {
+        deviceUpdates.push('gpu = ?');
+        deviceValues.push(gpu || null);
+      }
+      if (devicePassword !== undefined) {
+        deviceUpdates.push('devicePassword = ?');
+        deviceValues.push(devicePassword || null);
+      }
+
+      if (deviceUpdates.length > 0) {
+        deviceValues.push(deviceId);
+        const deviceQuery = `UPDATE Device SET ${deviceUpdates.join(', ')} WHERE id = ?`;
+
+        await db.execute(deviceQuery, deviceValues);
+        console.log('✅ [PATCH /:id/details] Device specs updated successfully');
+      }
     }
 
     res.json({ message: 'Repair details updated successfully' });
@@ -2448,7 +2511,7 @@ router.post('/:id/assign', authMiddleware, validate(repairSchemas.getRepairById,
       const repair = repairDetails[0];
       const taskTitle = `إصلاح #${id}`;
       const taskDescription = repair.reportedProblem || 'مهمة إصلاح جديدة';
-      
+
       await connection.execute(`
         INSERT INTO Tasks (
           technicianId, title, description, taskType, repairId, deviceId,
@@ -2536,8 +2599,8 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
     // Extract estimated cost range from customFields (no average - direct range display)
     let estimatedCostRange = '';
     try {
-      const customFields = typeof repair.customFields === 'string' 
-        ? JSON.parse(repair.customFields) 
+      const customFields = typeof repair.customFields === 'string'
+        ? JSON.parse(repair.customFields)
         : (repair.customFields || {});
       const minCost = customFields.estimatedCostMin;
       const maxCost = customFields.estimatedCostMax;
@@ -2567,13 +2630,13 @@ router.get('/:id/print/receipt', authMiddleware, async (req, res) => {
       customerName: repair.customerName || '',
       estimatedCostRange: estimatedCostRange || 'لم يتم تحديدها'
     };
-    
+
     // Add estimated cost range to terms if not already included
     let termsText = settings.terms || '';
     if (estimatedCostRange && !termsText.includes('estimatedCostRange') && !termsText.includes('التكلفة المقدرة')) {
       termsText += `\n\nالتكلفة المقدرة للإصلاح: {{estimatedCostRange}}`;
     }
-    
+
     const termsRendered = renderTemplate(termsText, termsVars)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // إنشاء رابط التتبع - يجب أن يكون الرابط الصحيح للواجهة الأمامية
@@ -3164,14 +3227,14 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       WHERE repairRequestId = ? AND deletedAt IS NULL 
       LIMIT 1
     `, [id]);
-    
+
     if (invoiceRows && invoiceRows.length > 0) {
       const invoiceId = invoiceRows[0].id;
       // إعادة التوجيه إلى route الفواتير الموحد
       // نستخدم relative URL للتوافق مع أي base URL
       return res.redirect(`/api/invoices/${invoiceId}/print`);
     }
-    
+
     // إذا لم توجد فاتورة مرتبطة، نعرض رسالة خطأ
     return res.status(404).send(`
       <html dir="rtl">
@@ -3191,7 +3254,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         </body>
       </html>
     `);
-    
+
     // استخدام إعدادات الفاتورة أو الإعدادات العامة كبديل
     const getSetting = (key, defaultValue) => {
       // للقيم المتداخلة مثل colors.primary أو financial.showTax
@@ -3199,7 +3262,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         const parts = key.split('.');
         let value = invoiceSettings;
         let found = true;
-        
+
         // البحث في invoiceSettings
         for (let i = 0; i < parts.length; i++) {
           if (value && typeof value === 'object' && value[parts[i]] !== undefined) {
@@ -3209,7 +3272,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             break;
           }
         }
-        
+
         if (found && value !== undefined) {
           // للقيم boolean، نتحقق من false أيضاً
           if (typeof value === 'boolean') {
@@ -3220,7 +3283,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             return value;
           }
         }
-        
+
         // البحث في settings العامة
         value = settings;
         found = true;
@@ -3232,7 +3295,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             break;
           }
         }
-        
+
         if (found && value !== undefined) {
           if (typeof value === 'boolean') {
             return value;
@@ -3241,7 +3304,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
             return value;
           }
         }
-        
+
         return defaultValue;
       }
       // للقيم العادية
@@ -3265,12 +3328,12 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       }
       return defaultValue;
     };
-    
+
     // Debug: طباعة الإعدادات للتحقق
     console.log('Invoice Settings:', JSON.stringify(invoiceSettings, null, 2));
     console.log('financial.showTax:', getSetting('financial.showTax', true));
     console.log('financial.showShipping:', getSetting('financial.showShipping', true));
-    
+
     const [repairRows] = await db.execute(`
       SELECT rr.*, 
              c.name AS customerName, c.phone AS customerPhone, c.email AS customerEmail,
@@ -3295,7 +3358,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
 
     // جلب بيانات الفاتورة
     let invoice = { taxAmount: 0, shippingAmount: 0, totalAmount: 0 };
-    
+
     try {
       // محاولة جلب جميع الأعمدة المتاحة
       const [invoiceRows] = await db.execute(`
@@ -3304,11 +3367,11 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         WHERE repairRequestId = ? AND deletedAt IS NULL
         LIMIT 1
       `, [id]);
-      
+
       if (invoiceRows && invoiceRows.length > 0) {
         invoice.taxAmount = Number(invoiceRows[0].taxAmount) || 0;
         invoice.totalAmount = Number(invoiceRows[0].totalAmount) || 0;
-        
+
         // محاولة جلب shippingAmount إذا كان موجوداً في قاعدة البيانات
         try {
           const [shippingCheck] = await db.execute(`
@@ -3362,17 +3425,17 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
         : ((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0));
       subtotal += itemTotal;
     });
-    
+
     // حساب الضريبة: إذا كانت موجودة في الفاتورة نستخدمها، وإلا نحسبها من العناصر (15%)
     let taxAmount = Number(invoice.taxAmount) || 0;
     if (taxAmount === 0 && subtotal > 0) {
       // حساب الضريبة من مجموع العناصر (15%)
       taxAmount = subtotal * 0.15;
     }
-    
+
     // استخدام قيمة الشحن من الفاتورة
     const shippingAmount = Number(invoice.shippingAmount) || 0;
-    
+
     // Debug: طباعة القيم للتحقق
     console.log('Invoice values:', {
       taxAmount: invoice.taxAmount,
@@ -3380,7 +3443,7 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
       calculatedTax: taxAmount,
       subtotal: subtotal
     });
-    
+
     // حساب الإجمالي النهائي بناءً على الإعدادات
     const showTax = getSetting('financial.showTax', true);
     const showShipping = getSetting('financial.showShipping', true);
@@ -3408,12 +3471,12 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
     const { getFrontendUrl } = require('../utils/frontendUrl');
     const frontendUrl = getFrontendUrl(req);
     const trackUrl = `${frontendUrl}/track/${repair.trackingToken || repair.id}`;
-    
+
     // تنسيق التاريخ حسب الإعدادات
     const dateDisplayMode = getSetting('dateDisplay', 'both');
     const invoiceDate = new Date();
     const dates = formatDates(invoiceDate, dateDisplayMode);
-    const formattedDate = dateDisplayMode === 'both' && dates.secondary 
+    const formattedDate = dateDisplayMode === 'both' && dates.secondary
       ? `${dates.primary}<br><small style="color:#6b7280;">${dates.secondary}</small>`
       : dates.primary;
 
@@ -3556,9 +3619,9 @@ router.get('/:id/print/invoice', authMiddleware, async (req, res) => {
           border-bottom:1px solid #e5e7eb;
         }
         .table th { 
-          background: ${getSetting('tableStyle', 'bordered') === 'bordered' 
-            ? `linear-gradient(135deg, ${getSetting('colors', {}).primary || '#3b82f6'} 0%, ${getSetting('colors', {}).primary || '#3b82f6'}dd 100%)`
-            : getSetting('colors', {}).headerBg || '#f9fafb'};
+          background: ${getSetting('tableStyle', 'bordered') === 'bordered'
+        ? `linear-gradient(135deg, ${getSetting('colors', {}).primary || '#3b82f6'} 0%, ${getSetting('colors', {}).primary || '#3b82f6'}dd 100%)`
+        : getSetting('colors', {}).headerBg || '#f9fafb'};
           color: ${getSetting('tableStyle', 'bordered') === 'bordered' ? '#fff' : getSetting('colors', {}).primary || '#111827'};
           font-weight:600;
           font-size: ${getSetting('tableFontSize', 13)}px;
