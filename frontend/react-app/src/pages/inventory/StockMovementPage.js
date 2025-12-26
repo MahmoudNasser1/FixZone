@@ -12,7 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import StockMovementForm from './StockMovementForm';
-import { 
+import {
   Plus, Search, Filter, Download, RefreshCw,
   ArrowUp, ArrowDown, ArrowRightLeft,
   Package, Warehouse, Calendar, Hash,
@@ -23,7 +23,7 @@ import {
 const StockMovementPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   // مساعد تنبيهات بسيط لتقليل الإزعاج
   const notify = useCallback((type, message) => {
     if (notifications?.addNotification) {
@@ -44,23 +44,23 @@ const StockMovementPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [error, setError] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  
+
   // Multi-select state
   const [selectedMovements, setSelectedMovements] = useState([]);
-  
+
   // Sorting state
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
-  
+
   // Modal state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingMovement, setEditingMovement] = useState(null);
-  
+
   // Stats state
   const [stats, setStats] = useState({
     totalMovements: 0,
@@ -73,9 +73,9 @@ const StockMovementPage = () => {
 
   // Movement types
   const movementTypes = [
-    { value: 'IN', label: 'دخول', icon: ArrowUp, color: 'text-green-600', bgColor: 'bg-green-100', borderColor: 'border-green-200' },
-    { value: 'OUT', label: 'خروج', icon: ArrowDown, color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200' },
-    { value: 'TRANSFER', label: 'نقل', icon: ArrowRightLeft, color: 'text-blue-600', bgColor: 'bg-blue-100', borderColor: 'border-blue-200' }
+    { value: 'IN', label: 'دخول', icon: ArrowUp, color: 'text-green-500', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/20' },
+    { value: 'OUT', label: 'خروج', icon: ArrowDown, color: 'text-red-500', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20' },
+    { value: 'TRANSFER', label: 'نقل', icon: ArrowRightLeft, color: 'text-blue-500', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20' }
   ];
 
   // جلب البيانات
@@ -86,7 +86,7 @@ const StockMovementPage = () => {
   // Re-fetch when filters change
   useEffect(() => {
     if (isInitialMount.current) return;
-    
+
     const timer = setTimeout(() => {
       fetchMovements();
     }, searchTerm ? 500 : 0);
@@ -113,7 +113,7 @@ const StockMovementPage = () => {
     try {
       const response = await inventoryService.listWarehouses();
       let warehousesData = [];
-      
+
       if (Array.isArray(response)) {
         warehousesData = response;
       } else if (response?.data && Array.isArray(response.data)) {
@@ -121,7 +121,7 @@ const StockMovementPage = () => {
       } else if (response?.warehouses && Array.isArray(response.warehouses)) {
         warehousesData = response.warehouses;
       }
-      
+
       setWarehouses(warehousesData);
     } catch (error) {
       console.error('Error loading warehouses:', error);
@@ -133,7 +133,7 @@ const StockMovementPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {
         page: currentPage,
         limit: itemsPerPage,
@@ -167,7 +167,7 @@ const StockMovementPage = () => {
       }
 
       const response = await apiService.getStockMovements(params);
-      
+
       let movementsData = [];
       let totalCount = 0;
 
@@ -204,7 +204,7 @@ const StockMovementPage = () => {
       if (dateTo) params.dateTo = dateTo;
 
       const response = await apiService.getStockMovementStats(params);
-      
+
       if (response?.success && response?.data) {
         const summary = response.data.summary || {};
         setStats({
@@ -269,14 +269,13 @@ const StockMovementPage = () => {
     setCurrentPage(1);
   };
 
-  // Render sort icon
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
-      <ArrowDown className="w-4 h-4 text-blue-600" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-primary" /> :
+      <ArrowDown className="w-4 h-4 text-primary" />;
   };
 
   // Clear filters
@@ -318,8 +317,8 @@ const StockMovementPage = () => {
         const typeInfo = getMovementTypeInfo(movement.type);
         const IconComponent = typeInfo.icon;
         return (
-          <SimpleBadge 
-            variant="secondary" 
+          <SimpleBadge
+            variant="secondary"
             className={`flex items-center gap-1.5 ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
           >
             <IconComponent className="w-3.5 h-3.5" />
@@ -348,11 +347,11 @@ const StockMovementPage = () => {
         const movement = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Package className="w-4 h-4 text-gray-400" />
+            <Package className="w-4 h-4 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{movement.itemName || '-'}</p>
+              <p className="text-sm font-medium text-foreground">{movement.itemName || '-'}</p>
               {movement.sku && (
-                <p className="text-xs text-gray-500">SKU: {movement.sku}</p>
+                <p className="text-xs text-muted-foreground">SKU: {movement.sku}</p>
               )}
             </div>
           </div>
@@ -400,17 +399,17 @@ const StockMovementPage = () => {
       accessorKey: 'warehouseName',
       cell: ({ row }) => {
         const movement = row.original;
-        const warehouseName = movement.type === 'IN' 
-          ? movement.toWarehouseName 
-          : movement.type === 'OUT' 
-          ? movement.fromWarehouseName 
-          : movement.type === 'TRANSFER'
-          ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
-          : '-';
+        const warehouseName = movement.type === 'IN'
+          ? movement.toWarehouseName
+          : movement.type === 'OUT'
+            ? movement.fromWarehouseName
+            : movement.type === 'TRANSFER'
+              ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
+              : '-';
         return (
           <div className="flex items-center gap-2">
-            <Warehouse className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{warehouseName}</span>
+            <Warehouse className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">{warehouseName}</span>
           </div>
         );
       }
@@ -427,11 +426,11 @@ const StockMovementPage = () => {
         const movement = row.original;
         return movement.userName ? (
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{movement.userName}</span>
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">{movement.userName}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
     },
@@ -447,7 +446,7 @@ const StockMovementPage = () => {
         const movement = row.original;
         return (
           <div className="max-w-xs">
-            <p className="text-sm text-gray-700 truncate">
+            <p className="text-sm text-foreground truncate">
               {movement.notes || '-'}
             </p>
           </div>
@@ -474,8 +473,8 @@ const StockMovementPage = () => {
         const movement = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-900">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">
               {movement.createdAt ? new Date(movement.createdAt).toLocaleDateString('ar-EG', {
                 year: 'numeric',
                 month: 'short',
@@ -519,7 +518,7 @@ const StockMovementPage = () => {
                 e.stopPropagation();
                 handleDeleteMovement(movement.id);
               }}
-              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
               title="حذف"
             >
               <Trash2 className="w-4 h-4" />
@@ -535,78 +534,78 @@ const StockMovementPage = () => {
     const quantity = parseInt(movement.quantity || 0);
     const typeInfo = getMovementTypeInfo(movement.type);
     const IconComponent = typeInfo.icon;
-    const warehouseName = movement.type === 'IN' 
-      ? movement.toWarehouseName 
-      : movement.type === 'OUT' 
-      ? movement.fromWarehouseName 
-      : movement.type === 'TRANSFER'
-      ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
-      : '-';
-    
+    const warehouseName = movement.type === 'IN'
+      ? movement.toWarehouseName
+      : movement.type === 'OUT'
+        ? movement.fromWarehouseName
+        : movement.type === 'TRANSFER'
+          ? `${movement.fromWarehouseName || '-'} → ${movement.toWarehouseName || '-'}`
+          : '-';
+
     return (
-      <SimpleCard className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200" onClick={() => handleEditMovement(movement)}>
+      <SimpleCard className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-border" onClick={() => handleEditMovement(movement)}>
         <SimpleCardContent className="p-5">
           {/* Header with Type */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-3">
-                <SimpleBadge 
-                  variant="secondary" 
+                <SimpleBadge
+                  variant="secondary"
                   className={`flex items-center gap-1.5 px-2.5 py-1 ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
                 >
                   <IconComponent className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">{typeInfo.label}</span>
                 </SimpleBadge>
               </div>
-              
+
               {/* Quantity */}
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              <h3 className="text-2xl font-bold text-foreground mb-3">
                 {movement.type === 'IN' ? '+' : movement.type === 'OUT' ? '-' : '→'} {quantity}
               </h3>
-              
+
               {/* Item Info */}
               <div className="space-y-2 mb-3">
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center gap-2 text-sm text-foreground/80">
+                  <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <span className="font-medium">الصنف:</span>
-                  <span className="text-gray-900">{movement.itemName || '-'}</span>
+                  <span className="text-foreground">{movement.itemName || '-'}</span>
                 </div>
                 {movement.sku && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mr-6">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mr-6">
                     <span>SKU: {movement.sku}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <Warehouse className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center gap-2 text-sm text-foreground/80">
+                  <Warehouse className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <span className="font-medium">المخزن:</span>
-                  <span className="text-gray-900">{warehouseName}</span>
+                  <span className="text-foreground">{warehouseName}</span>
                 </div>
               </div>
-              
+
               {/* Notes */}
               {movement.notes && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2 bg-gray-50 p-2 rounded">
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2 bg-muted/30 p-2 rounded">
                   {movement.notes}
                 </p>
               )}
             </div>
           </div>
-          
+
           {/* Footer with Meta Info */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <div className="flex items-center gap-4 text-xs text-gray-600">
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-gray-400" />
+                <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span>{movement.createdAt ? new Date(movement.createdAt).toLocaleDateString('ar-EG') : '-'}</span>
               </div>
               {movement.userName && (
                 <div className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-gray-400" />
+                  <Users className="w-4 h-4 text-muted-foreground" />
                   <span>{movement.userName}</span>
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center gap-1">
               <SimpleButton
                 variant="ghost"
@@ -626,7 +625,7 @@ const StockMovementPage = () => {
                   e.stopPropagation();
                   handleDeleteMovement(movement.id);
                 }}
-                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-3 h-3" />
               </SimpleButton>
@@ -644,11 +643,11 @@ const StockMovementPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <ArrowRightLeft className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <ArrowRightLeft className="w-8 h-8 text-primary" />
             إدارة حركات المخزون
           </h1>
-          <p className="text-gray-600 mt-1">تتبع جميع حركات المخزون والتحويلات</p>
+          <p className="text-muted-foreground mt-1">تتبع جميع حركات المخزون والتحويلات</p>
         </div>
         <SimpleButton onClick={handleCreateMovement}>
           <Plus className="w-5 h-5 ml-2" />
@@ -662,12 +661,12 @@ const StockMovementPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <ArrowRightLeft className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ArrowRightLeft className="w-6 h-6 text-primary" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">إجمالي الحركات</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalMovements}</p>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي الحركات</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalMovements}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -677,7 +676,7 @@ const StockMovementPage = () => {
             const count = stats.counts[type.value.toLowerCase()] || 0;
             const quantity = stats.totalQuantity[type.value.toLowerCase()] || 0;
             const IconComponent = type.icon;
-            
+
             return (
               <SimpleCard key={type.value}>
                 <SimpleCardContent className="p-6">
@@ -686,9 +685,9 @@ const StockMovementPage = () => {
                       <IconComponent className={`w-6 h-6 ${type.color}`} />
                     </div>
                     <div className="mr-4">
-                      <p className="text-sm font-medium text-gray-600">{type.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">{count}</p>
-                      <p className="text-xs text-gray-500">{quantity} وحدة</p>
+                      <p className="text-sm font-medium text-muted-foreground">{type.label}</p>
+                      <p className="text-2xl font-bold text-foreground">{count}</p>
+                      <p className="text-xs text-muted-foreground">{quantity} وحدة</p>
                     </div>
                   </div>
                 </SimpleCardContent>
@@ -705,7 +704,7 @@ const StockMovementPage = () => {
             <div className="flex flex-wrap items-center gap-3 flex-1">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="البحث في الحركات..."
                   value={searchTerm}
@@ -822,7 +821,7 @@ const StockMovementPage = () => {
       ) : error ? (
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <div className="text-center text-red-600">{error}</div>
+            <div className="text-center text-destructive">{error}</div>
           </SimpleCardContent>
         </SimpleCard>
       ) : (

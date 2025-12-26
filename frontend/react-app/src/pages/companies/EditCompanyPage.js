@@ -4,8 +4,8 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
-import { 
-  ArrowRight, Building2, Phone, Mail, MapPin, 
+import {
+  ArrowRight, Building2, Phone, Mail, MapPin,
   Globe, Save, X, AlertCircle, Briefcase
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -77,7 +77,7 @@ const EditCompanyPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.phone) {
       setError('اسم الشركة ورقم الهاتف مطلوبان');
       return;
@@ -86,13 +86,13 @@ const EditCompanyPage = () => {
     try {
       setSaving(true);
       setError(null);
-      
+
       // تحضير البيانات للإرسال مع تحويل status إلى isActive
       const companyData = {
         ...formData,
         isActive: formData.status === 'active'
       };
-      
+
       const result = await apiService.updateCompany(id, companyData);
       if (result?.success === false) {
         throw new Error(result?.message || result?.error || 'فشل تحديث الشركة');
@@ -112,7 +112,7 @@ const EditCompanyPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات الشركة...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل بيانات الشركة...</p>
         </div>
       </div>
     );
@@ -128,9 +128,9 @@ const EditCompanyPage = () => {
               <ArrowRight className="w-4 h-4" />
             </SimpleButton>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">تعديل الشركة</h1>
+          <h1 className="text-2xl font-bold text-foreground">تعديل الشركة</h1>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to={`/companies/${id}`}>
             <SimpleButton variant="outline">
@@ -161,7 +161,7 @@ const EditCompanyPage = () => {
           <SimpleCardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   اسم الشركة *
                 </label>
                 <Input
@@ -172,9 +172,9 @@ const EditCompanyPage = () => {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   رقم الهاتف *
                 </label>
                 <Input
@@ -185,9 +185,9 @@ const EditCompanyPage = () => {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   البريد الإلكتروني
                 </label>
                 <Input
@@ -198,9 +198,9 @@ const EditCompanyPage = () => {
                   placeholder="info@company.com"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   الموقع الإلكتروني
                 </label>
                 <Input
@@ -211,7 +211,7 @@ const EditCompanyPage = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 العنوان
@@ -258,7 +258,7 @@ const EditCompanyPage = () => {
                 <option value="أخرى">أخرى</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 وصف الشركة
@@ -272,10 +272,10 @@ const EditCompanyPage = () => {
                 placeholder="وصف مختصر عن نشاط الشركة وخدماتها..."
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   الرقم الضريبي
                 </label>
                 <Input
@@ -285,16 +285,16 @@ const EditCompanyPage = () => {
                   placeholder="123456789"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   حالة الشركة
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 >
                   <option value="active">نشطة</option>
                   <option value="inactive">غير نشطة</option>
@@ -312,8 +312,8 @@ const EditCompanyPage = () => {
               إلغاء
             </SimpleButton>
           </Link>
-          <SimpleButton 
-            type="submit" 
+          <SimpleButton
+            type="submit"
             disabled={saving}
             className="flex items-center"
           >

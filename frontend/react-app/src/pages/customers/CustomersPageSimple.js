@@ -71,7 +71,7 @@ const CustomersPageSimple = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل العملاء...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل العملاء...</p>
         </div>
       </div>
     );
@@ -108,8 +108,8 @@ const CustomersPageSimple = () => {
                 <User className="w-6 h-6 text-blue-600" />
               </div>
               <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">إجمالي العملاء</p>
-                <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">إجمالي العملاء</p>
+                <p className="text-2xl font-bold text-foreground">{customers.length}</p>
               </div>
             </div>
           </SimpleCardContent>
@@ -122,8 +122,8 @@ const CustomersPageSimple = () => {
                 <User className="w-6 h-6 text-green-600" />
               </div>
               <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">عملاء نشطين</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">عملاء نشطين</p>
+                <p className="text-2xl font-bold text-foreground">
                   {customers.filter(c => c.status === 'active').length}
                 </p>
               </div>
@@ -138,12 +138,12 @@ const CustomersPageSimple = () => {
                 <User className="w-6 h-6 text-yellow-600" />
               </div>
               <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">عملاء VIP</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">عملاء VIP</p>
+                <p className="text-2xl font-bold text-foreground">
                   {customers.filter(c => {
                     try {
-                      const customFields = typeof c.customFields === 'string' 
-                        ? JSON.parse(c.customFields) 
+                      const customFields = typeof c.customFields === 'string'
+                        ? JSON.parse(c.customFields)
                         : c.customFields;
                       return customFields?.isVip;
                     } catch {
@@ -163,8 +163,8 @@ const CustomersPageSimple = () => {
                 <User className="w-6 h-6 text-purple-600" />
               </div>
               <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">عملاء شركات</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">عملاء شركات</p>
+                <p className="text-2xl font-bold text-foreground">
                   {customers.filter(c => c.companyId).length}
                 </p>
               </div>
@@ -181,26 +181,26 @@ const CustomersPageSimple = () => {
         <SimpleCardContent>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted/30">
                 <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     العميل
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     معلومات الاتصال
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     العنوان
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     الحالة
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     الإجراءات
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {customers.map((customer) => (
                   <tr key={customer.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -209,14 +209,14 @@ const CustomersPageSimple = () => {
                           <User className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="mr-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {customer.name}
                           </div>
                           <div className="flex items-center space-x-2 space-x-reverse">
                             {(() => {
                               try {
-                                const customFields = typeof customer.customFields === 'string' 
-                                  ? JSON.parse(customer.customFields) 
+                                const customFields = typeof customer.customFields === 'string'
+                                  ? JSON.parse(customer.customFields)
                                   : customer.customFields;
                                 return customFields?.isVip && (
                                   <SimpleBadge variant="default" size="sm">VIP</SimpleBadge>
@@ -230,7 +230,7 @@ const CustomersPageSimple = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         <div className="flex items-center">
                           <Phone className="w-4 h-4 text-gray-400 ml-2" />
                           {customer.phone}
@@ -243,11 +243,11 @@ const CustomersPageSimple = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {customer.address || 'غير محدد'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <SimpleBadge 
+                      <SimpleBadge
                         variant={customer.status === 'active' ? 'success' : 'secondary'}
                         size="sm"
                       >
@@ -266,9 +266,9 @@ const CustomersPageSimple = () => {
                             <Edit className="w-4 h-4" />
                           </SimpleButton>
                         </Link>
-                        <SimpleButton 
-                          variant="ghost" 
-                          size="sm" 
+                        <SimpleButton
+                          variant="ghost"
+                          size="sm"
                           className="text-red-600 hover:text-red-700"
                           onClick={() => handleDeleteCustomer(customer.id)}
                         >

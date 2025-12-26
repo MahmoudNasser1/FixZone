@@ -4,8 +4,8 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
-import { 
-  ArrowRight, Building2, Phone, Mail, MapPin, Globe, 
+import {
+  ArrowRight, Building2, Phone, Mail, MapPin, Globe,
   Edit, Trash2, Users, Calendar, Briefcase, FileText,
   AlertCircle, CheckCircle, XCircle, Clock
 } from 'lucide-react';
@@ -102,7 +102,7 @@ const CompanyDetailsPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات الشركة...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل بيانات الشركة...</p>
         </div>
       </div>
     );
@@ -112,8 +112,8 @@ const CompanyDetailsPage = () => {
     return (
       <div className="text-center py-12">
         <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">خطأ في تحميل البيانات</h3>
-        <p className="text-gray-500 mb-6">{error || 'الشركة غير موجودة'}</p>
+        <h3 className="text-lg font-medium text-foreground mb-2">خطأ في تحميل البيانات</h3>
+        <p className="text-muted-foreground mb-6">{error || 'الشركة غير موجودة'}</p>
         <Link to="/companies">
           <SimpleButton>
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -138,11 +138,11 @@ const CompanyDetailsPage = () => {
             </SimpleButton>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{company.name}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{company.name}</h1>
             <p className="text-gray-600">تفاصيل الشركة</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to={`/companies/${id}/edit`}>
             <SimpleButton variant="outline">
@@ -150,8 +150,8 @@ const CompanyDetailsPage = () => {
               تعديل
             </SimpleButton>
           </Link>
-          <SimpleButton 
-            variant="outline" 
+          <SimpleButton
+            variant="outline"
             color="danger"
             onClick={handleDeleteCompany}
             disabled={deleting}
@@ -185,10 +185,10 @@ const CompanyDetailsPage = () => {
             <SimpleCardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">اسم الشركة</label>
-                  <p className="text-lg font-medium text-gray-900">{company.name}</p>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">اسم الشركة</label>
+                  <p className="text-lg font-medium text-foreground">{company.name}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">الحالة</label>
                   <div className="flex items-center">
@@ -198,7 +198,7 @@ const CompanyDetailsPage = () => {
                     </SimpleBadge>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">القطاع</label>
                   <div className="flex items-center">
@@ -206,13 +206,13 @@ const CompanyDetailsPage = () => {
                     <span className="text-gray-900">{company.industry || 'غير محدد'}</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">الرقم الضريبي</label>
                   <span className="text-gray-900">{company.taxNumber || 'غير محدد'}</span>
                 </div>
               </div>
-              
+
               {company.description && (
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">الوصف</label>
@@ -238,7 +238,7 @@ const CompanyDetailsPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {company.email && (
                   <div className="flex items-center">
                     <Mail className="w-5 h-5 text-gray-400 ml-3" />
@@ -248,13 +248,13 @@ const CompanyDetailsPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {company.website && (
                   <div className="flex items-center">
                     <Globe className="w-5 h-5 text-gray-400 ml-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-500">الموقع الإلكتروني</p>
-                      <a 
+                      <a
                         href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -265,13 +265,13 @@ const CompanyDetailsPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {company.address && (
                   <div className="flex items-center">
                     <MapPin className="w-5 h-5 text-gray-400 ml-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500">العنوان</p>
-                      <p className="text-gray-900">{company.address}</p>
+                      <p className="text-sm font-medium text-muted-foreground">العنوان</p>
+                      <p className="text-foreground">{company.address}</p>
                     </div>
                   </div>
                 )}
@@ -296,7 +296,7 @@ const CompanyDetailsPage = () => {
               ) : (
                 <div className="space-y-3">
                   {customers.map((customer) => (
-                    <div key={customer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={customer.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-accent/30 transition-colors cursor-pointer">
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                           <Users className="w-4 h-4 text-blue-600" />
@@ -331,7 +331,7 @@ const CompanyDetailsPage = () => {
                 <span className="text-sm text-gray-500">إجمالي العملاء</span>
                 <span className="text-lg font-bold text-gray-900">{customers.length}</span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">تاريخ الإنشاء</span>
                 <div className="flex items-center">
@@ -341,7 +341,7 @@ const CompanyDetailsPage = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">آخر تحديث</span>
                 <div className="flex items-center">

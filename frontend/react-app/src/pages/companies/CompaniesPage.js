@@ -5,7 +5,7 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { Input } from '../../components/ui/Input';
-import { 
+import {
   Plus, Search, Filter, Download, RefreshCw, Building2,
   Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, Globe,
@@ -18,7 +18,7 @@ const CompaniesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [error, setError] = useState(null);
-  
+
   // Sorting state
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
@@ -34,7 +34,7 @@ const CompaniesPage = () => {
       setError(null);
       const response = await apiService.getCompanies();
       console.log('Companies response:', response);
-      
+
       // apiService.getCompanies() يعيد البيانات مباشرة
       let companiesData = [];
       if (Array.isArray(response)) {
@@ -44,19 +44,19 @@ const CompaniesPage = () => {
       } else if (response && response.companies && Array.isArray(response.companies)) {
         companiesData = response.companies;
       }
-      
+
       // تنظيف البيانات من العناصر الفارغة
-      companiesData = companiesData.filter(company => 
-        company && 
-        company.id && 
-        company.name && 
-        typeof company.id !== 'undefined' && 
+      companiesData = companiesData.filter(company =>
+        company &&
+        company.id &&
+        company.name &&
+        typeof company.id !== 'undefined' &&
         company.id !== null
       );
-      
+
       console.log('Companies after cleanup:', companiesData);
       setCompanies(companiesData);
-      
+
     } catch (err) {
       console.error('Error fetching companies:', err);
       setError('حدث خطأ في تحميل بيانات الشركات');
@@ -68,23 +68,23 @@ const CompaniesPage = () => {
 
   const handleDeleteCompany = async (companyId) => {
     console.log('Delete company called with ID:', companyId, 'Type:', typeof companyId);
-    
+
     if (!companyId || companyId === 'undefined' || companyId === 'null') {
       alert('خطأ: معرف الشركة غير صحيح');
       return;
     }
-    
+
     const company = companies.find(c => c.id === companyId);
-    
+
     // إذا الشركة غير موجودة في الـ state (محذوفة من الـ DB بالفعل)
     if (!company) {
       alert('⚠️ هذه الشركة محذوفة بالفعل من قاعدة البيانات!\n\nسيتم تحديث القائمة...');
       fetchCompanies(); // إعادة تحميل البيانات من الـ DB
       return;
     }
-    
+
     const hasCustomers = company && company.customersCount > 0;
-    
+
     // إذا كان هناك عملاء مرتبطين، اعرض خيارات
     if (hasCustomers) {
       const customersList = company.customersCount === 1 ? 'عميل واحد' : `${company.customersCount} عميل`;
@@ -94,11 +94,11 @@ const CompaniesPage = () => {
         `• اضغط "موافق" لحذف الشركة وإلغاء ربط العملاء\n` +
         `• اضغط "إلغاء" لإلغاء العملية`
       );
-      
+
       if (!forceDelete) {
         return;
       }
-      
+
       // حذف مع force
       try {
         const response = await apiService.deleteCompany(companyId, true); // force = true
@@ -123,10 +123,10 @@ const CompaniesPage = () => {
       }
       return;
     }
-    
+
     // إذا لم يكن هناك عملاء، حذف عادي
     const confirmMessage = 'هل أنت متأكد من حذف هذه الشركة؟';
-    
+
     if (window.confirm(confirmMessage)) {
       try {
         const response = await apiService.deleteCompany(companyId, false);
@@ -177,10 +177,10 @@ const CompaniesPage = () => {
   // Render sort icon
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground/60" />;
     }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-blue-600" /> :
       <ArrowDown className="w-4 h-4 text-blue-600" />;
   };
 
@@ -189,17 +189,17 @@ const CompaniesPage = () => {
     let filtered = companies.filter(company => {
       console.log('Filtering company:', company, 'ID:', company.id, 'Type:', typeof company.id);
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         (company.name || '').toLowerCase().includes(searchLower) ||
         (company.phone || '').includes(searchTerm) ||
         (company.email || '').toLowerCase().includes(searchLower) ||
         (company.industry || '').toLowerCase().includes(searchLower) ||
         (company.address || '').toLowerCase().includes(searchLower);
-      
+
       if (selectedFilter === 'all') return matchesSearch;
       if (selectedFilter === 'active') return matchesSearch && company.status === 'active';
       if (selectedFilter === 'inactive') return matchesSearch && company.status === 'inactive';
-      
+
       return matchesSearch;
     });
 
@@ -235,7 +235,7 @@ const CompaniesPage = () => {
   };
 
   const filteredCompanies = getFilteredAndSortedCompanies();
-  
+
   console.log('Filtered companies:', filteredCompanies);
 
   // حساب الإحصائيات
@@ -251,7 +251,7 @@ const CompaniesPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات الشركات...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل بيانات الشركات...</p>
         </div>
       </div>
     );
@@ -261,7 +261,7 @@ const CompaniesPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">إدارة الشركات</h1>
+        <h1 className="text-2xl font-bold text-foreground">إدارة الشركات</h1>
         <Link to="/companies/new">
           <SimpleButton className="flex items-center space-x-2 space-x-reverse">
             <Plus className="w-4 h-4" />
@@ -274,9 +274,9 @@ const CompaniesPage = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
-          <SimpleButton 
-            variant="ghost" 
-            size="sm" 
+          <SimpleButton
+            variant="ghost"
+            size="sm"
             onClick={handleRefresh}
             className="mr-2"
           >
@@ -294,8 +294,8 @@ const CompaniesPage = () => {
                 <Building2 className="w-6 h-6 text-blue-600" />
               </div>
               <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600">إجمالي الشركات</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm font-medium text-muted-foreground">إجمالي الشركات</p>
+                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
               </div>
             </div>
           </SimpleCardContent>
@@ -350,7 +350,7 @@ const CompaniesPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex items-center space-x-4 space-x-reverse">
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/60 w-4 h-4" />
                 <Input
                   placeholder="البحث في الشركات..."
                   value={searchTerm}
@@ -358,11 +358,11 @@ const CompaniesPage = () => {
                   className="pr-10 w-64"
                 />
               </div>
-              
+
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               >
                 <option value="all">جميع الشركات</option>
                 <option value="active">نشطة</option>
@@ -393,14 +393,14 @@ const CompaniesPage = () => {
           {filteredCompanies.length === 0 ? (
             <div className="text-center py-8">
               <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد شركات</p>
+              <p className="text-muted-foreground">لا توجد شركات</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                  <tr className="border-b border-border">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       <button
                         onClick={() => handleSort('id')}
                         className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -409,7 +409,7 @@ const CompaniesPage = () => {
                         {renderSortIcon('id')}
                       </button>
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       <button
                         onClick={() => handleSort('name')}
                         className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -418,7 +418,7 @@ const CompaniesPage = () => {
                         {renderSortIcon('name')}
                       </button>
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       <button
                         onClick={() => handleSort('phone')}
                         className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -427,7 +427,7 @@ const CompaniesPage = () => {
                         {renderSortIcon('phone')}
                       </button>
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       <button
                         onClick={() => handleSort('industry')}
                         className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -436,8 +436,8 @@ const CompaniesPage = () => {
                         {renderSortIcon('industry')}
                       </button>
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">العملاء</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">العملاء</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       <button
                         onClick={() => handleSort('status')}
                         className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -446,12 +446,12 @@ const CompaniesPage = () => {
                         {renderSortIcon('status')}
                       </button>
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCompanies.filter(company => company.id).map((company, index) => (
-                    <tr key={company.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={company.id} className="border-b border-border hover:bg-accent/50 transition-colors">
                       <td className="py-4 px-4">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           #{company.id}
@@ -463,7 +463,7 @@ const CompaniesPage = () => {
                             <Building2 className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="mr-3">
-                            <p className="font-medium text-gray-900">{company.name}</p>
+                            <p className="font-medium text-foreground">{company.name}</p>
                             {company.website && (
                               <div className="flex items-center text-sm text-gray-500 mt-1">
                                 <Globe className="w-3 h-3 ml-1" />
@@ -503,7 +503,7 @@ const CompaniesPage = () => {
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <SimpleBadge 
+                        <SimpleBadge
                           variant={company.status === 'active' ? 'success' : 'secondary'}
                           size="sm"
                         >
@@ -522,8 +522,8 @@ const CompaniesPage = () => {
                               <Edit className="w-4 h-4" />
                             </SimpleButton>
                           </Link>
-                          <SimpleButton 
-                            variant="ghost" 
+                          <SimpleButton
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteCompany(company.id)}
                             className="text-red-600 hover:text-red-700"

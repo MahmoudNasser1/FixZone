@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowRight, 
-  Package, 
-  Warehouse, 
+import {
+  ArrowRight,
+  Package,
+  Warehouse,
   Truck,
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
 import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
-import SimpleBadge from '../../components/ui/SimpleBadge';
+import { Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import apiService from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -37,7 +45,7 @@ const InventoryTransferPage = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const [warehousesData, itemsData, levelsData] = await Promise.all([
         apiService.request('/warehouses'),
         apiService.request('/inventory'),
@@ -51,7 +59,6 @@ const InventoryTransferPage = () => {
       } else if (warehousesData?.data) {
         parsedWarehouses = Array.isArray(warehousesData.data) ? warehousesData.data : [];
       }
-      console.log('Warehouses loaded:', parsedWarehouses.length, parsedWarehouses);
       setWarehouses(parsedWarehouses);
 
       // Parse items
@@ -61,7 +68,6 @@ const InventoryTransferPage = () => {
       } else if (itemsData?.data) {
         parsedItems = Array.isArray(itemsData.data) ? itemsData.data : (itemsData.data.items || []);
       }
-      console.log('Items loaded:', parsedItems.length);
       setInventoryItems(parsedItems);
 
       // Parse stock levels
@@ -71,7 +77,6 @@ const InventoryTransferPage = () => {
       } else if (levelsData?.data) {
         parsedLevels = Array.isArray(levelsData.data) ? levelsData.data : [];
       }
-      console.log('Stock levels loaded:', parsedLevels.length);
       setStockLevels(parsedLevels);
 
     } catch (err) {
@@ -90,7 +95,7 @@ const InventoryTransferPage = () => {
   // Get available items for a specific warehouse
   const getAvailableItems = (warehouseId) => {
     if (!warehouseId) return [];
-    
+
     return stockLevels
       .filter(level => level.warehouseId === parseInt(warehouseId) && level.quantity > 0)
       .map(level => {
@@ -106,17 +111,14 @@ const InventoryTransferPage = () => {
 
   // Get stock level for an item in a specific warehouse
   const getStockLevel = (itemId, warehouseId) => {
-    console.log('getStockLevel called with:', { itemId, warehouseId, stockLevels });
-    const level = stockLevels.find(level => 
+    const level = stockLevels.find(level =>
       level.inventoryItemId === parseInt(itemId) && level.warehouseId === parseInt(warehouseId)
     );
-    console.log('Found stock level:', level);
     return level;
   };
 
   // Handle transfer form changes
-  const handleTransferFormChange = (e) => {
-    const { name, value } = e.target;
+  const handleTransferFormChange = (name, value) => {
     setTransferForm(prev => ({
       ...prev,
       [name]: value
@@ -136,7 +138,7 @@ const InventoryTransferPage = () => {
   const executeTransfer = async () => {
     try {
       const { fromWarehouseId, toWarehouseId, inventoryItemId, quantity, notes } = transferForm;
-      
+
       if (!fromWarehouseId || !toWarehouseId || !inventoryItemId || !quantity) {
         notifications.error('يرجى ملء جميع الحقول المطلوبة');
         return;
@@ -232,7 +234,7 @@ const InventoryTransferPage = () => {
       }
 
       notifications.success('تم النقل بنجاح');
-      
+
       // Reset form
       setTransferForm({
         fromWarehouseId: '',
@@ -255,141 +257,144 @@ const InventoryTransferPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات المخزون...</p>
+          <div className="w-12 h-12 mx-auto mb-4 border-4 border-muted border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground">جاري تحميل بيانات المخزون...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <Breadcrumb 
+        <div>
+          <Breadcrumb
             items={[
               { label: 'الرئيسية', href: '/' },
               { label: 'إدارة المخزون', href: '/inventory' },
               { label: 'نقل المخزون', href: '/inventory/transfer', active: true }
-            ]} 
+            ]}
           />
           <div className="mt-4">
-            <h1 className="text-3xl font-bold text-gray-900">نقل المخزون بين المخازن</h1>
-            <p className="text-gray-600 mt-2">إدارة حركة القطع بين المخازن المختلفة</p>
+            <h1 className="text-3xl font-bold text-foreground">نقل المخزون بين المخازن</h1>
+            <p className="text-muted-foreground mt-2">إدارة حركة القطع بين المخازن المختلفة</p>
           </div>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Transfer Form */}
           <SimpleCard>
             <SimpleCardHeader>
               <h2 className="text-xl font-semibold flex items-center">
-                <Truck className="w-5 h-5 ml-2 text-blue-600" />
+                <Truck className="w-5 h-5 ml-2 text-primary" />
                 نموذج النقل
               </h2>
             </SimpleCardHeader>
             <SimpleCardContent>
               <div className="space-y-4">
                 {/* From Warehouse */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">
                     من مخزن
                   </label>
-                  <select
-                    name="fromWarehouseId"
+                  <Select
                     value={transferForm.fromWarehouseId}
-                    onChange={handleTransferFormChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onValueChange={(value) => handleTransferFormChange('fromWarehouseId', value)}
                   >
-                    <option value="">اختر المخزن المصدر</option>
-                    {warehouses.map(warehouse => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full text-right dir-rtl">
+                      <SelectValue placeholder="اختر المخزن المصدر" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {warehouses.map(warehouse => (
+                        <SelectItem key={warehouse.id} value={String(warehouse.id)}>
+                          {warehouse.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* To Warehouse */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">
                     إلى مخزن
                   </label>
-                  <select
-                    name="toWarehouseId"
+                  <Select
                     value={transferForm.toWarehouseId}
-                    onChange={handleTransferFormChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onValueChange={(value) => handleTransferFormChange('toWarehouseId', value)}
                   >
-                    <option value="">اختر المخزن الهدف</option>
-                    {warehouses
-                      .filter(w => w.id !== parseInt(transferForm.fromWarehouseId))
-                      .map(warehouse => (
-                        <option key={warehouse.id} value={warehouse.id}>
-                          {warehouse.name}
-                        </option>
-                      ))}
-                  </select>
+                    <SelectTrigger className="w-full text-right dir-rtl">
+                      <SelectValue placeholder="اختر المخزن الهدف" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {warehouses
+                        .filter(w => w.id !== parseInt(transferForm.fromWarehouseId))
+                        .map(warehouse => (
+                          <SelectItem key={warehouse.id} value={String(warehouse.id)}>
+                            {warehouse.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Inventory Item */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">
                     القطعة
                   </label>
-                  <select
-                    name="inventoryItemId"
+                  <Select
                     value={transferForm.inventoryItemId}
-                    onChange={handleTransferFormChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onValueChange={(value) => handleTransferFormChange('inventoryItemId', value)}
                     disabled={!transferForm.fromWarehouseId}
                   >
-                    <option value="">اختر القطعة</option>
-                    {getAvailableItems(transferForm.fromWarehouseId).map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} - المتوفر: {item.availableQuantity}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full text-right dir-rtl">
+                      <SelectValue placeholder="اختر القطعة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableItems(transferForm.fromWarehouseId).map(item => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name} - المتوفر: {item.availableQuantity}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Quantity */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">
                     الكمية
                   </label>
-                  <input
+                  <Input
                     type="number"
-                    name="quantity"
                     value={transferForm.quantity}
-                    onChange={handleTransferFormChange}
+                    onChange={(e) => handleTransferFormChange('quantity', e.target.value)}
                     min="1"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={!transferForm.inventoryItemId}
                   />
                 </div>
 
                 {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">
                     ملاحظات (اختياري)
                   </label>
-                  <textarea
-                    name="notes"
+                  <Textarea
                     value={transferForm.notes}
-                    onChange={handleTransferFormChange}
+                    onChange={(e) => handleTransferFormChange('notes', e.target.value)}
                     rows={3}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="أضف ملاحظات حول النقل..."
                   />
                 </div>
@@ -403,7 +408,7 @@ const InventoryTransferPage = () => {
                 >
                   {transferring ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current ml-2"></div>
                       جاري النقل...
                     </>
                   ) : (
@@ -421,7 +426,7 @@ const InventoryTransferPage = () => {
           <SimpleCard>
             <SimpleCardHeader>
               <h2 className="text-xl font-semibold flex items-center">
-                <CheckCircle className="w-5 h-5 ml-2 text-green-600" />
+                <CheckCircle className="w-5 h-5 ml-2 text-emerald-500" />
                 ملخص النقل
               </h2>
             </SimpleCardHeader>
@@ -429,29 +434,29 @@ const InventoryTransferPage = () => {
               {transferForm.fromWarehouseId && transferForm.toWarehouseId && transferForm.inventoryItemId ? (
                 <div className="space-y-4">
                   {/* Source Warehouse Info */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-blue-900 mb-2">المخزن المصدر</h3>
-                    <div className="text-sm text-blue-700">
-                      <p>المخزن: {warehouses.find(w => w.id === parseInt(transferForm.fromWarehouseId))?.name}</p>
-                      <p>القطعة: {inventoryItems.find(i => i.id === parseInt(transferForm.inventoryItemId))?.name}</p>
-                      <p>الكمية المتوفرة: {getStockLevel(transferForm.inventoryItemId, transferForm.fromWarehouseId)?.quantity || 0}</p>
-                      <p>الكمية المطلوبة: {transferForm.quantity}</p>
+                  <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-lg">
+                    <h3 className="font-medium text-foreground mb-2">المخزن المصدر</h3>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>المخزن: <span className="font-medium text-foreground">{warehouses.find(w => w.id === parseInt(transferForm.fromWarehouseId))?.name}</span></p>
+                      <p>القطعة: <span className="font-medium text-foreground">{inventoryItems.find(i => i.id === parseInt(transferForm.inventoryItemId))?.name}</span></p>
+                      <p>الكمية المتوفرة: <span className="font-medium text-foreground">{getStockLevel(transferForm.inventoryItemId, transferForm.fromWarehouseId)?.quantity || 0}</span></p>
+                      <p>الكمية المطلوبة: <span className="font-medium text-foreground">{transferForm.quantity}</span></p>
                     </div>
                   </div>
 
                   {/* Transfer Arrow */}
                   <div className="flex justify-center">
-                    <ArrowRight className="w-8 h-8 text-gray-400" />
+                    <ArrowRight className="w-8 h-8 text-muted-foreground" />
                   </div>
 
                   {/* Destination Warehouse Info */}
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-green-900 mb-2">المخزن الهدف</h3>
-                    <div className="text-sm text-green-700">
-                      <p>المخزن: {warehouses.find(w => w.id === parseInt(transferForm.toWarehouseId))?.name}</p>
-                      <p>القطعة: {inventoryItems.find(i => i.id === parseInt(transferForm.inventoryItemId))?.name}</p>
-                      <p>المخزون الحالي: {getStockLevel(transferForm.inventoryItemId, transferForm.toWarehouseId)?.quantity || 0}</p>
-                      <p>المخزون بعد النقل: {(getStockLevel(transferForm.inventoryItemId, transferForm.toWarehouseId)?.quantity || 0) + parseInt(transferForm.quantity)}</p>
+                  <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-lg">
+                    <h3 className="font-medium text-foreground mb-2">المخزن الهدف</h3>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>المخزن: <span className="font-medium text-foreground">{warehouses.find(w => w.id === parseInt(transferForm.toWarehouseId))?.name}</span></p>
+                      <p>القطعة: <span className="font-medium text-foreground">{inventoryItems.find(i => i.id === parseInt(transferForm.inventoryItemId))?.name}</span></p>
+                      <p>المخزون الحالي: <span className="font-medium text-foreground">{getStockLevel(transferForm.inventoryItemId, transferForm.toWarehouseId)?.quantity || 0}</span></p>
+                      <p>المخزون بعد النقل: <span className="font-medium text-foreground">{(getStockLevel(transferForm.inventoryItemId, transferForm.toWarehouseId)?.quantity || 0) + parseInt(transferForm.quantity)}</span></p>
                     </div>
                   </div>
 
@@ -460,27 +465,27 @@ const InventoryTransferPage = () => {
                     const sourceStock = getStockLevel(transferForm.inventoryItemId, transferForm.fromWarehouseId);
                     const availableQuantity = sourceStock?.quantity || 0;
                     const requestedQuantity = parseInt(transferForm.quantity);
-                    
+
                     if (requestedQuantity > availableQuantity) {
                       return (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                          <AlertTriangle className="w-5 h-5 inline ml-2" />
-                          الكمية المطلوبة ({requestedQuantity}) أكبر من المتوفر ({availableQuantity})
+                        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 shrink-0" />
+                          <span>الكمية المطلوبة ({requestedQuantity}) أكبر من المتوفر ({availableQuantity})</span>
                         </div>
                       );
                     }
-                    
+
                     return (
-                      <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                        <CheckCircle className="w-5 h-5 inline ml-2" />
-                        النقل ممكن - الكمية متوفرة
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-4 py-3 rounded-lg flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 shrink-0" />
+                        <span>النقل ممكن - الكمية متوفرة</span>
                       </div>
                     );
                   })()}
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <div className="text-center text-muted-foreground py-12">
+                  <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
                   <p>اختر المخازن والقطعة لعرض ملخص النقل</p>
                 </div>
               )}
@@ -489,19 +494,17 @@ const InventoryTransferPage = () => {
         </div>
 
         {/* Recent Transfers */}
-        <div className="mt-8">
-          <SimpleCard>
-            <SimpleCardHeader>
-              <h2 className="text-xl font-semibold">آخر عمليات النقل</h2>
-            </SimpleCardHeader>
-            <SimpleCardContent>
-              <div className="text-center text-gray-500 py-8">
-                <Truck className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p>سيتم عرض آخر عمليات النقل هنا</p>
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
-        </div>
+        <SimpleCard>
+          <SimpleCardHeader>
+            <h2 className="text-xl font-semibold">آخر عمليات النقل</h2>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="text-center text-muted-foreground py-12">
+              <Truck className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+              <p>سيتم عرض آخر عمليات النقل هنا</p>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
     </div>
   );

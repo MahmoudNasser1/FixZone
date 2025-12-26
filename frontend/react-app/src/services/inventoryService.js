@@ -18,7 +18,7 @@ const inventoryService = {
       sortBy = 'name',
       sortOrder = 'ASC'
     } = params;
-    
+
     const query = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -30,7 +30,7 @@ const inventoryService = {
       sortBy,
       sortOrder
     });
-    
+
     return apiService.request(`/inventory-enhanced/items?${query}`);
   },
   getItem(id) {
@@ -151,15 +151,32 @@ const inventoryService = {
     return apiService.request(`/stock-movements/stats/summary${qs ? `?${qs}` : ''}`);
   },
 
+  // Stock Alerts (New APIs)
+  getStockAlertsLow() {
+    return apiService.request('/stock-alerts/low');
+  },
+  getStockAlertSettings() {
+    return apiService.request('/stock-alerts/settings');
+  },
+  updateStockAlertSettings(itemId, settings) {
+    return apiService.request(`/stock-alerts/settings/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    });
+  },
+  getReorderSuggestions() {
+    return apiService.request('/stock-alerts/reorder-suggestions');
+  },
+
   // Issue a part to a repair request (transactional backend endpoint)
   issuePart({ repairRequestId, inventoryItemId, warehouseId, quantity, userId, invoiceItemId = null, invoiceId = null, unitSellingPrice = null, serialNumber = null, notes = null }) {
-    const payload = { 
-      repairRequestId, 
-      inventoryItemId, 
-      warehouseId, 
-      quantity, 
-      userId, 
-      invoiceItemId, 
+    const payload = {
+      repairRequestId,
+      inventoryItemId,
+      warehouseId,
+      quantity,
+      userId,
+      invoiceItemId,
       invoiceId,
       ...(unitSellingPrice !== null && unitSellingPrice !== undefined && unitSellingPrice !== '' && { unitSellingPrice: Number(unitSellingPrice) }),
       ...(serialNumber && { serialNumber }),

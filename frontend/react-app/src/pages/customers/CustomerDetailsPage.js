@@ -152,7 +152,7 @@ const CustomerDetailsPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات العميل...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل بيانات العميل...</p>
         </div>
       </div>
     );
@@ -177,7 +177,7 @@ const CustomerDetailsPage = () => {
   if (!customer) {
     return (
       <div className="p-8">
-        <p className="text-gray-600">العميل غير موجود</p>
+        <p className="text-muted-foreground">العميل غير موجود</p>
         <Link to="/customers" className="mt-4 inline-block">
           <SimpleButton variant="outline">
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -209,14 +209,14 @@ const CustomerDetailsPage = () => {
                 <ArrowRight className="w-4 h-4" />
               </SimpleButton>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               ملف العميل: {customer.name}
             </h1>
             {customFields.isVip && (
               <SimpleBadge variant="default">VIP</SimpleBadge>
             )}
           </div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             تاريخ التسجيل: {new Date(customer.createdAt).toLocaleDateString('en-GB')}
           </p>
         </div>
@@ -251,25 +251,25 @@ const CustomerDetailsPage = () => {
             <SimpleCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">
                     الاسم الكامل
                   </label>
-                  <p className="text-gray-900">{customer.name}</p>
+                  <p className="text-foreground">{customer.name}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">
                     رقم الهاتف
                   </label>
                   <div className="flex items-center">
-                    <Phone className="w-4 h-4 text-gray-400 ml-2" />
+                    <Phone className="w-4 h-4 text-muted-foreground/60 ml-2" />
                     <p className="text-gray-900 en-text">{customer.phone}</p>
                   </div>
                 </div>
 
                 {customer.email && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
                       البريد الإلكتروني
                     </label>
                     <div className="flex items-center">
@@ -281,12 +281,12 @@ const CustomerDetailsPage = () => {
 
                 {customer.address && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
                       العنوان
                     </label>
                     <div className="flex items-center">
                       <MapPin className="w-4 h-4 text-gray-400 ml-2" />
-                      <p className="text-gray-900">{customer.address}</p>
+                      <p className="text-foreground">{customer.address}</p>
                     </div>
                   </div>
                 )}
@@ -304,10 +304,10 @@ const CustomerDetailsPage = () => {
                 <div className="space-y-3">
                   {customFields.preferredContact && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-muted-foreground mb-1">
                         طريقة التواصل المفضلة
                       </label>
-                      <p className="text-gray-900">
+                      <p className="text-foreground">
                         {customFields.preferredContact === 'phone' ? 'الهاتف' : 'البريد الإلكتروني'}
                       </p>
                     </div>
@@ -315,10 +315,10 @@ const CustomerDetailsPage = () => {
 
                   {customFields.notes && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-muted-foreground mb-1">
                         ملاحظات
                       </label>
-                      <p className="text-gray-900">{customFields.notes}</p>
+                      <p className="text-foreground">{customFields.notes}</p>
                     </div>
                   )}
                 </div>
@@ -358,7 +358,7 @@ const CustomerDetailsPage = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-muted-foreground text-sm">
                         العميل مرتبط بالشركة:
                       </p>
                       <p className="font-medium text-gray-900">
@@ -370,7 +370,7 @@ const CustomerDetailsPage = () => {
                     </div>
                     {company && (
                       <div className="text-right">
-                        <p className="text-sm text-gray-600">{company.industry || 'غير محدد'}</p>
+                        <p className="text-sm text-muted-foreground"> {company.industry || 'غير محدد'} </p>
                         <p className="text-xs text-gray-500">{company.status === 'active' ? 'نشطة' : 'غير نشطة'}</p>
                       </div>
                     )}
@@ -397,7 +397,7 @@ const CustomerDetailsPage = () => {
             <SimpleCardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">إجمالي المدفوعات:</span>
+                  <span className="text-sm text-muted-foreground">الرصيد المستحق:</span>
                   <span className="font-semibold text-green-600">
                     {customerStats?.totalPaid ? parseFloat(customerStats.totalPaid).toFixed(2) : '0.00'} ج.م
                   </span>
@@ -469,12 +469,12 @@ const CustomerDetailsPage = () => {
             {repairsLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="mr-3 text-gray-600">جاري تحميل طلبات الإصلاح...</span>
+                <span className="mr-3 text-muted-foreground">جاري تحميل طلبات الإصلاح...</span>
               </div>
             ) : customerRepairs.length === 0 ? (
               <div className="text-center py-8">
                 <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">لا توجد طلبات إصلاح لهذا العميل</p>
+                <p className="text-muted-foreground mb-4">لا توجد طلبات إصلاح لهذا العميل</p>
                 <Link to={`/repairs/new?customerId=${customer.id}`}>
                   <SimpleButton>
                     <Plus className="w-4 h-4 ml-2" />

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Save, 
-  X, 
-  Package, 
-  DollarSign, 
-  Clock, 
+import {
+  Save,
+  X,
+  Package,
+  DollarSign,
+  Clock,
   FileText,
   Tag,
   AlertCircle
@@ -86,7 +86,7 @@ const ServiceForm = () => {
     try {
       setInitialLoading(true);
       const service = await apiService.getService(id);
-      
+
       setFormData({
         serviceName: service.name || '',
         description: service.description || '',
@@ -191,22 +191,22 @@ const ServiceForm = () => {
   }
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-6 bg-background min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               {isEdit ? 'تعديل الخدمة' : 'إضافة خدمة جديدة'}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-muted-foreground mt-1">
               {isEdit ? 'تعديل بيانات الخدمة' : 'أضف خدمة جديدة إلى الكتالوج'}
             </p>
           </div>
           <SimpleButton
             variant="outline"
             onClick={handleCancel}
-            className="text-gray-600 border-gray-300"
+            className="text-muted-foreground border-border"
           >
             <X className="w-4 h-4 ml-2" />
             إلغاء
@@ -219,7 +219,7 @@ const ServiceForm = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Service Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               اسم الخدمة <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -239,7 +239,7 @@ const ServiceForm = () => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               وصف الخدمة
             </label>
             <div className="relative">
@@ -257,7 +257,7 @@ const ServiceForm = () => {
           {/* Category and Base Price */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 الفئة
               </label>
               <Select
@@ -274,8 +274,8 @@ const ServiceForm = () => {
                     <SelectItem value="" disabled>جاري التحميل...</SelectItem>
                   ) : (
                     categories.map(cat => (
-                      <SelectItem 
-                        key={cat.id || cat.name || cat} 
+                      <SelectItem
+                        key={cat.id || cat.name || cat}
                         value={cat.name || cat}
                       >
                         {cat.name || cat}
@@ -287,7 +287,7 @@ const ServiceForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 السعر الأساسي (ج.م) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -312,7 +312,7 @@ const ServiceForm = () => {
           {/* Estimated Duration and Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 المدة المقدرة (دقيقة)
               </label>
               <div className="relative">
@@ -329,13 +329,13 @@ const ServiceForm = () => {
                   <p className="text-red-500 text-sm mt-1">{errors.estimatedDuration}</p>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 المدة المتوقعة لإنجاز هذه الخدمة
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 حالة الخدمة
               </label>
               <Select
@@ -351,19 +351,19 @@ const ServiceForm = () => {
                   <SelectItem value="inactive">غير نشط</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 الخدمات غير النشطة لن تظهر في القوائم العامة
               </p>
             </div>
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end space-x-3 space-x-reverse pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-end space-x-3 space-x-reverse pt-6 border-t border-border">
             <SimpleButton
               type="button"
               variant="outline"
               onClick={handleCancel}
-              className="text-gray-600 border-gray-300"
+              className="text-muted-foreground border-border"
             >
               <X className="w-4 h-4 ml-2" />
               إلغاء

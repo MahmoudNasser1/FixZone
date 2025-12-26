@@ -1147,7 +1147,7 @@ const RepairsPage = () => {
     const isSelected = selectedItems?.includes(r.id) || false;
 
     return (
-      <div className={`relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition duration-200 ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+      <div className={`relative group bg-card border border-border rounded-xl p-5 hover:shadow-md transition duration-200 ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`}>
         {/* Checkbox للتحديد المتعدد */}
         {onItemSelect && (
           <div className="absolute top-3 left-3 z-20" onClick={(e) => e.stopPropagation()}>
@@ -1159,7 +1159,7 @@ const RepairsPage = () => {
                 onItemSelect?.(r.id, e.target.checked);
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+              className="w-5 h-5 text-primary bg-card border-2 border-border rounded focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:border-primary/50"
               title={isSelected ? 'إلغاء التحديد' : 'تحديد'}
             />
           </div>
@@ -1179,7 +1179,7 @@ const RepairsPage = () => {
               handlePrintRepair(r.id, 'invoice');
             }}
             title="طباعة الفاتورة"
-            className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center hover:scale-105 shadow"
+            className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center hover:scale-105 shadow"
           >
             <Printer className="w-4 h-4" />
           </button>
@@ -1187,7 +1187,7 @@ const RepairsPage = () => {
 
         {/* العنوان */}
         <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold text-gray-900 dark:text-gray-100">{(isVisible('requestNumber') && (r.requestNumber || `#${r.id}`)) || `#${r.id}`}</div>
+          <div className="font-semibold text-foreground">{(isVisible('requestNumber') && (r.requestNumber || `#${r.id}`)) || `#${r.id}`}</div>
           {isVisible('status') && (
             <SimpleBadge color={statusColor}>{statusText}</SimpleBadge>
           )}
@@ -1199,7 +1199,7 @@ const RepairsPage = () => {
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-gray-400" />
               {isVisible('customerName') && (
-                <span className="text-gray-600 dark:text-gray-300">{r.customerName || '-'}</span>
+                <span className="text-muted-foreground">{r.customerName || '-'}</span>
               )}
               {isVisible('customerPhone') && (
                 <>
@@ -1213,18 +1213,18 @@ const RepairsPage = () => {
             <div className="flex items-center gap-2">
               <Wrench className="w-4 h-4 text-gray-400" />
               {isVisible('deviceType') && (
-                <span className="text-gray-600 dark:text-gray-300">{r.deviceType || '-'}</span>
+                <span className="text-muted-foreground">{r.deviceType || '-'}</span>
               )}
               {isVisible('deviceBrand') && (
                 <>
                   <span className="text-gray-400">/</span>
-                  <span className="text-gray-600 dark:text-gray-300">{r.deviceBrand || '-'}</span>
+                  <span className="text-muted-foreground">{r.deviceBrand || '-'}</span>
                 </>
               )}
               {isVisible('deviceModel') && (
                 <>
                   <span className="text-gray-400">/</span>
-                  <span className="text-gray-600 dark:text-gray-300">{r.deviceModel || '-'}</span>
+                  <span className="text-muted-foreground">{r.deviceModel || '-'}</span>
                 </>
               )}
             </div>
@@ -1234,7 +1234,7 @@ const RepairsPage = () => {
               {isVisible('estimatedCost') && (
                 <>
                   <DollarSign className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-200 font-medium">{r.estimatedCost != null ? formatMoney(Number(r.estimatedCost) || 0) : '-'}</span>
+                  <span className="text-foreground font-medium">{r.estimatedCost != null ? formatMoney(Number(r.estimatedCost) || 0) : '-'}</span>
                 </>
               )}
               {isVisible('priority') && (
@@ -1257,7 +1257,7 @@ const RepairsPage = () => {
 
         {/* وصف المشكلة */}
         {r.problemDescription && (
-          <div className="mt-3 text-sm text-gray-700 dark:text-gray-200 line-clamp-3">
+          <div className="mt-3 text-sm text-foreground/80 line-clamp-3">
             {r.problemDescription}
           </div>
         )}
@@ -1280,7 +1280,7 @@ const RepairsPage = () => {
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center gap-2">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">طلبات الإصلاح</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">طلبات الإصلاح</h1>
         <Link to="/repairs/new">
           <SimpleButton size="sm" className="flex items-center gap-1 sm:gap-2">
             <Plus className="w-4 h-4" />
@@ -1445,7 +1445,7 @@ const RepairsPage = () => {
               <select
                 value={searchField}
                 onChange={(e) => setSearchField(e.target.value)}
-                className="w-full h-9 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 pr-6 appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500"
+                className="w-full h-9 text-xs sm:text-sm border border-input rounded-lg bg-background text-foreground px-2 pr-6 appearance-none cursor-pointer focus:ring-2 focus:ring-primary"
               >
                 {searchFieldOptions.map(option => (
                   <option key={option.key} value={option.key}>{option.label}</option>
@@ -1486,11 +1486,11 @@ const RepairsPage = () => {
                 <ChevronDown className="w-3.5 h-3.5" />
               </SimpleButton>
               {showSortMenu && (
-                <div className="absolute left-0 sm:right-0 mt-2 w-48 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1">
+                <div className="absolute left-0 sm:right-0 mt-2 w-48 z-40 bg-popover border border-border rounded-lg shadow-xl py-1">
                   {sortFields.map((f) => (
                     <button
                       key={f.key}
-                      className={`w-full text-right px-4 py-2 text-sm flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 ${sortBy === f.key ? 'text-blue-600 bg-blue-50' : ''}`}
+                      className={`w-full text-right px-4 py-2 text-sm flex items-center justify-between hover:bg-accent hover:text-accent-foreground ${sortBy === f.key ? 'text-primary bg-primary/10' : ''}`}
                       onClick={() => { setSortBy(f.key); setShowSortMenu(false); }}
                     >
                       <span>{f.label}</span>
@@ -1530,11 +1530,11 @@ const RepairsPage = () => {
 
       {/* Advanced Filters Section */}
       {showAdvancedFilters && (
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4 animate-in slide-in-from-top-2">
+        <div className="bg-muted/30 p-4 rounded-lg border border-border mb-4 animate-in slide-in-from-top-2">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">من تاريخ</label>
+              <label className="block text-sm font-medium text-foreground mb-1">من تاريخ</label>
               <input
                 type="date"
                 value={dateFrom}
@@ -1543,7 +1543,7 @@ const RepairsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">إلى تاريخ</label>
+              <label className="block text-sm font-medium text-foreground mb-1">إلى تاريخ</label>
               <input
                 type="date"
                 value={dateTo}
@@ -1554,7 +1554,7 @@ const RepairsPage = () => {
 
             {/* Technician Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الفني المسؤول</label>
+              <label className="block text-sm font-medium text-foreground mb-1">الفني المسؤول</label>
               <select
                 value={technicianId}
                 onChange={(e) => setTechnicianId(e.target.value)}
@@ -1569,7 +1569,7 @@ const RepairsPage = () => {
 
             {/* Priority Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأولوية</label>
+              <label className="block text-sm font-medium text-foreground mb-1">الأولوية</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
@@ -1587,7 +1587,7 @@ const RepairsPage = () => {
           <div className="flex justify-end mt-4 gap-2">
             <button
               onClick={clearFilters}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-md hover:bg-accent"
             >
               إعادة تعيين
             </button>
@@ -1600,10 +1600,10 @@ const RepairsPage = () => {
       {loading ? (
         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {Array.from({ length: Math.min(pageSize || 10, 8) }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-pulse bg-white dark:bg-gray-800">
+            <div key={i} className="rounded-lg border border-border p-4 animate-pulse bg-card">
               <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
               <div className="space-y-2">
-                <div className="h-3 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-3 w-5/6 bg-muted rounded"></div>
                 <div className="h-3 w-2/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 <div className="h-3 w-4/5 bg-gray-200 dark:bg-gray-700 rounded"></div>
               </div>
@@ -1633,7 +1633,7 @@ const RepairsPage = () => {
             renderClassicItem={renderClassicItem}
             emptyState={(
               <div className="text-center py-12">
-                <div className="text-gray-500 mb-3">لا توجد طلبات إصلاح مطابقة للمعايير الحالية</div>
+                <div className="text-muted-foreground mb-3">لا توجد طلبات إصلاح مطابقة للمعايير الحالية</div>
                 <Link to="/repairs/new">
                   <SimpleButton>
                     <Plus className="w-4 h-4 ml-2" /> إنشاء طلب جديد
@@ -1652,9 +1652,9 @@ const RepairsPage = () => {
           عرض {displayedStart}–{displayedEnd} من {effectiveTotal}
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-300">عدد الصفوف:</label>
+          <label className="text-sm text-muted-foreground">عدد الصفوف:</label>
           <select
-            className="h-8 text-sm border border-gray-200 dark:border-gray-700 rounded px-2 bg-white dark:bg-gray-800"
+            className="h-8 text-sm border border-input rounded px-2 bg-background text-foreground"
             value={pageSize}
             onChange={(e) => setPageSize(parseInt(e.target.value, 10) || 10)}
           >

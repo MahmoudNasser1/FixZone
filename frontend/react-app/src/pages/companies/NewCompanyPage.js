@@ -4,8 +4,8 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
-import { 
-  ArrowRight, Building2, Phone, Mail, MapPin, 
+import {
+  ArrowRight, Building2, Phone, Mail, MapPin,
   Globe, Save, X, AlertCircle, Briefcase
 } from 'lucide-react';
 
@@ -36,7 +36,7 @@ const NewCompanyPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // التحقق من البيانات المطلوبة
     if (!formData.name.trim() || !formData.phone.trim()) {
       setError('اسم الشركة ورقم الهاتف مطلوبان');
@@ -65,7 +65,7 @@ const NewCompanyPage = () => {
       console.log('Sending company data:', companyData);
       const response = await apiService.createCompany(companyData);
       console.log('API response:', response);
-      
+
       // apiService.createCompany() يعيد البيانات مباشرة
       if (response && response.success !== false) {
         // إظهار رسالة نجاح والانتقال لصفحة الشركات
@@ -75,7 +75,7 @@ const NewCompanyPage = () => {
         const errorMessage = response?.error || response?.message || 'Failed to create company';
         throw new Error(errorMessage);
       }
-      
+
     } catch (err) {
       console.error('Error creating company:', err);
       setError('حدث خطأ في إنشاء الشركة: ' + err.message);
@@ -94,9 +94,9 @@ const NewCompanyPage = () => {
               <ArrowRight className="w-4 h-4" />
             </SimpleButton>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">إضافة شركة جديدة</h1>
+          <h1 className="text-2xl font-bold text-foreground">إضافة شركة جديدة</h1>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to="/companies">
             <SimpleButton variant="outline">
@@ -127,7 +127,7 @@ const NewCompanyPage = () => {
           <SimpleCardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   اسم الشركة *
                 </label>
                 <Input
@@ -138,9 +138,9 @@ const NewCompanyPage = () => {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   رقم الهاتف *
                 </label>
                 <Input
@@ -151,9 +151,9 @@ const NewCompanyPage = () => {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   البريد الإلكتروني
                 </label>
                 <Input
@@ -164,9 +164,9 @@ const NewCompanyPage = () => {
                   placeholder="info@company.com"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   الموقع الإلكتروني
                 </label>
                 <Input
@@ -177,7 +177,7 @@ const NewCompanyPage = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 العنوان
@@ -224,7 +224,7 @@ const NewCompanyPage = () => {
                 <option value="أخرى">أخرى</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 وصف الشركة
@@ -238,10 +238,10 @@ const NewCompanyPage = () => {
                 placeholder="وصف مختصر عن نشاط الشركة وخدماتها..."
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   الرقم الضريبي
                 </label>
                 <Input
@@ -251,16 +251,16 @@ const NewCompanyPage = () => {
                   placeholder="123456789"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   حالة الشركة
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 >
                   <option value="active">نشطة</option>
                   <option value="inactive">غير نشطة</option>
@@ -278,8 +278,8 @@ const NewCompanyPage = () => {
               إلغاء
             </SimpleButton>
           </Link>
-          <SimpleButton 
-            type="submit" 
+          <SimpleButton
+            type="submit"
             disabled={saving}
             className="flex items-center"
           >

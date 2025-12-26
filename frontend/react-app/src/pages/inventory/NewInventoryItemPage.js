@@ -13,7 +13,7 @@ const API_BASE_URL = getDefaultApiBaseUrl();
 const NewInventoryItemPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     sku: '',
@@ -43,14 +43,14 @@ const NewInventoryItemPage = () => {
     setFormData(prev => ({
       ...prev,
       [name]: name.includes('Price')
-        ? parseFloat(value) || 0 
+        ? parseFloat(value) || 0
         : value
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name) {
       notifications.error('اسم الصنف مطلوب');
       return;
@@ -96,7 +96,7 @@ const NewInventoryItemPage = () => {
             <ArrowLeft className="w-4 h-4" />
             العودة
           </SimpleButton>
-          <h1 className="text-2xl font-bold text-gray-900">إضافة صنف جديد</h1>
+          <h1 className="text-2xl font-bold text-foreground">إضافة صنف جديد</h1>
         </div>
       </div>
 
@@ -109,8 +109,8 @@ const NewInventoryItemPage = () => {
           <SimpleCardContent className="space-y-6">
             {/* SKU */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                رمز المنتج (SKU) <span className="text-gray-400">(اختياري)</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                رمز المنتج (SKU) <span className="text-muted-foreground">(اختياري)</span>
               </label>
               <Input
                 type="text"
@@ -123,7 +123,7 @@ const NewInventoryItemPage = () => {
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 اسم الصنف <span className="text-red-500">*</span>
               </label>
               <Input
@@ -138,29 +138,29 @@ const NewInventoryItemPage = () => {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                الوصف <span className="text-gray-400">(اختياري)</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                الوصف <span className="text-muted-foreground">(اختياري)</span>
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="وصف مفصل للصنف..."
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 الفئة
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               >
                 <option value="">اختر الفئة</option>
                 {categories.map(cat => (
@@ -171,7 +171,7 @@ const NewInventoryItemPage = () => {
 
             {/* Unit */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 وحدة القياس
               </label>
               <Input
@@ -193,7 +193,7 @@ const NewInventoryItemPage = () => {
           <SimpleCardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   سعر الشراء
                 </label>
                 <Input
@@ -208,7 +208,7 @@ const NewInventoryItemPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   سعر البيع
                 </label>
                 <Input

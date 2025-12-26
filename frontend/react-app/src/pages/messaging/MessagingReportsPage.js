@@ -2,15 +2,15 @@
 // صفحة تقارير وإحصائيات المراسلة
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   LineElement,
   PointElement,
-  Title, 
-  Tooltip, 
+  Title,
+  Tooltip,
   Legend,
   ArcElement
 } from 'chart.js';
@@ -21,8 +21,8 @@ import { Input } from '../../components/ui/Input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/Select';
 import messagingService from '../../services/messagingService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import { 
-  TrendingUp, MessageSquare, Mail, AlertCircle, CheckCircle, 
+import {
+  TrendingUp, MessageSquare, Mail, AlertCircle, CheckCircle,
   XCircle, Calendar, Download, RefreshCw, BarChart3, PieChart
 } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -41,11 +41,11 @@ ChartJS.register(
 
 const MessagingReportsPage = () => {
   const notifications = useNotifications();
-  
+
   // State
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  
+
   // Filters
   const [filters, setFilters] = useState({
     dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // آخر 30 يوم
@@ -92,7 +92,7 @@ const MessagingReportsPage = () => {
   if (!stats) {
     return (
       <div className="p-6">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-muted-foreground">
           <AlertCircle className="w-12 h-12 mx-auto mb-4" />
           <p>لا توجد بيانات متاحة</p>
         </div>
@@ -220,7 +220,7 @@ const MessagingReportsPage = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">تقارير وإحصائيات المراسلة</h1>
+            <h1 className="text-2xl font-bold text-foreground">تقارير وإحصائيات المراسلة</h1>
             <p className="text-gray-600 mt-1">متابعة شاملة لأداء المراسلة والإشعارات</p>
           </div>
           <div className="flex gap-2">
@@ -318,8 +318,8 @@ const MessagingReportsPage = () => {
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">إجمالي الرسائل</p>
-                <p className="text-2xl font-bold text-gray-900">{(summary?.total || 0).toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground mb-1">إجمالي الرسائل</p>
+                <p className="text-2xl font-bold text-foreground">{(summary?.total || 0).toLocaleString()}</p>
               </div>
               <MessageSquare className="w-8 h-8 text-blue-500" />
             </div>
@@ -330,9 +330,9 @@ const MessagingReportsPage = () => {
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">مرسل</p>
+                <p className="text-sm text-muted-foreground mb-1">مرسل</p>
                 <p className="text-2xl font-bold text-green-600">{(summary?.sent || 0).toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">{summary?.successRate || 0}%</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{summary?.successRate || 0}%</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -343,9 +343,9 @@ const MessagingReportsPage = () => {
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">فاشل</p>
+                <p className="text-sm text-muted-foreground mb-1">فاشل</p>
                 <p className="text-2xl font-bold text-red-600">{(summary?.failed || 0).toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">{summary?.failureRate || 0}%</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{summary?.failureRate || 0}%</p>
               </div>
               <XCircle className="w-8 h-8 text-red-500" />
             </div>
@@ -356,9 +356,9 @@ const MessagingReportsPage = () => {
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">معدل النجاح</p>
+                <p className="text-sm text-muted-foreground mb-1">معدل النجاح</p>
                 <p className="text-2xl font-bold text-blue-600">{summary?.successRate || 0}%</p>
-                <p className="text-xs text-gray-500 mt-1">من إجمالي المحاولات</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">من إجمالي المحاولات</p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
             </div>
@@ -442,7 +442,7 @@ const MessagingReportsPage = () => {
             <div className="space-y-2">
               {failureReasons.map((reason, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-gray-700 flex-1">{reason.reason}</p>
+                  <p className="text-sm text-foreground flex-1">Reason: {reason.reason}</p>
                   <span className="text-sm font-semibold text-red-600">{reason.count}</span>
                 </div>
               ))}

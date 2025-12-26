@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
+import {
+  BarChart3,
+  TrendingUp,
   TrendingDown,
   AlertTriangle,
   Package,
   Warehouse,
   Download,
   Calendar,
-  Filter
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
-import SimpleBadge from '../../components/ui/SimpleBadge';
+import { Input } from '../../components/ui/Input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import apiService from '../../services/api';
+import { cn } from '../../lib/utils';
 
 const InventoryReportsPage = () => {
   const [warehouses, setWarehouses] = useState([]);
@@ -28,14 +37,14 @@ const InventoryReportsPage = () => {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [selectedWarehouse, setSelectedWarehouse] = useState('all');
 
   // Load inventory data
   const loadInventoryData = async () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const [warehousesData, itemsData, levelsData, movementsData] = await Promise.all([
         apiService.request('/warehouses'),
         apiService.request('/inventory'),
@@ -79,13 +88,6 @@ const InventoryReportsPage = () => {
       }
       setStockMovements(parsedMovements);
 
-      console.log('Reports data loaded:', {
-        warehouses: parsedWarehouses.length,
-        items: parsedItems.length,
-        levels: parsedLevels.length,
-        movements: parsedMovements.length
-      });
-
     } catch (err) {
       setError('تعذر تحميل بيانات المخزون');
       console.error('Error loading inventory data:', err);
@@ -104,13 +106,17 @@ const InventoryReportsPage = () => {
       const movementDate = new Date(movement.createdAt);
       const startDate = new Date(dateRange.startDate);
       const endDate = new Date(dateRange.endDate);
-      
-      return movementDate >= startDate && movementDate <= endDate;
+
+      // Add one day to endDate to include the full day
+      const adjustedEndDate = new Date(endDate);
+      adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+
+      return movementDate >= startDate && movementDate < adjustedEndDate;
     });
 
-    if (selectedWarehouse) {
-      filteredMovements = filteredMovements.filter(movement => 
-        movement.fromWarehouseId === parseInt(selectedWarehouse) || 
+    if (selectedWarehouse && selectedWarehouse !== 'all') {
+      filteredMovements = filteredMovements.filter(movement =>
+        movement.fromWarehouseId === parseInt(selectedWarehouse) ||
         movement.toWarehouseId === parseInt(selectedWarehouse)
       );
     }
@@ -121,15 +127,15 @@ const InventoryReportsPage = () => {
   // Calculate statistics
   const calculateStats = () => {
     const filteredMovements = getFilteredData();
-    
+
     const totalIn = filteredMovements
       .filter(m => m.type === 'IN')
       .reduce((sum, m) => sum + (m.quantity || 0), 0);
-    
+
     const totalOut = filteredMovements
       .filter(m => m.type === 'OUT')
       .reduce((sum, m) => sum + (m.quantity || 0), 0);
-    
+
     const totalTransfer = filteredMovements
       .filter(m => m.type === 'TRANSFER')
       .reduce((sum, m) => sum + (m.quantity || 0), 0);
@@ -139,21 +145,30 @@ const InventoryReportsPage = () => {
 
   // Get low stock items
   const getLowStockItems = () => {
-    return stockLevels.filter(level => 
+    let items = stockLevels.filter(level =>
       level.isLowStock || (level.quantity <= level.minLevel)
     );
+
+    if (selectedWarehouse && selectedWarehouse !== 'all') {
+      items = items.filter(level => level.warehouseId === parseInt(selectedWarehouse));
+    }
+
+    return items;
   };
 
   // Get high value items
   const getHighValueItems = () => {
     return inventoryItems
       .map(item => {
-        const totalStock = stockLevels
-          .filter(level => level.inventoryItemId === item.id)
-          .reduce((sum, level) => sum + (level.quantity || 0), 0);
-        
+        let relevantLevels = stockLevels.filter(level => level.inventoryItemId === item.id);
+
+        if (selectedWarehouse && selectedWarehouse !== 'all') {
+          relevantLevels = relevantLevels.filter(level => level.warehouseId === parseInt(selectedWarehouse));
+        }
+
+        const totalStock = relevantLevels.reduce((sum, level) => sum + (level.quantity || 0), 0);
         const totalValue = totalStock * (item.sellingPrice || 0);
-        
+
         return {
           ...item,
           totalStock,
@@ -165,33 +180,12 @@ const InventoryReportsPage = () => {
       .slice(0, 10);
   };
 
-  // Get movement trends
-  const getMovementTrends = () => {
-    const filteredMovements = getFilteredData();
-    const trends = {};
-    
-    filteredMovements.forEach(movement => {
-      const date = new Date(movement.createdAt).toISOString().split('T')[0];
-      if (!trends[date]) {
-        trends[date] = { in: 0, out: 0, transfer: 0 };
-      }
-      
-      if (movement.type === 'IN') trends[date].in += movement.quantity || 0;
-      else if (movement.type === 'OUT') trends[date].out += movement.quantity || 0;
-      else if (movement.type === 'TRANSFER') trends[date].transfer += movement.quantity || 0;
-    });
-    
-    return Object.entries(trends)
-      .map(([date, data]) => ({ date, ...data }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-  };
-
   // Export report
   const exportReport = () => {
     const data = {
       reportType: activeReport,
       dateRange,
-      warehouse: selectedWarehouse ? warehouses.find(w => w.id === parseInt(selectedWarehouse))?.name : 'جميع المخازن',
+      warehouse: selectedWarehouse && selectedWarehouse !== 'all' ? warehouses.find(w => w.id === parseInt(selectedWarehouse))?.name : 'جميع المخازن',
       generatedAt: new Date().toISOString(),
       data: {}
     };
@@ -237,6 +231,8 @@ const InventoryReportsPage = () => {
           notes: movement.notes
         }));
         break;
+      default:
+        break;
     }
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -252,91 +248,104 @@ const InventoryReportsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات التقارير...</p>
+          <div className="w-12 h-12 mx-auto mb-4 border-4 border-muted border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground">جاري تحميل بيانات التقارير...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <Breadcrumb 
-            items={[
-              { label: 'الرئيسية', href: '/' },
-              { label: 'إدارة المخزون', href: '/inventory' },
-              { label: 'تقارير المخزون', href: '/inventory/reports', active: true }
-            ]} 
-          />
-          <div className="mt-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">تقارير المخزون</h1>
-              <p className="text-gray-600 mt-2">تحليل شامل لمخزون وحركة القطع</p>
-            </div>
-            <div className="flex gap-3">
-              <SimpleButton size="lg" variant="outline" onClick={exportReport}>
-                <Download className="w-5 h-5 ml-2" />
-                تصدير التقرير
-              </SimpleButton>
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <Breadcrumb
+              items={[
+                { label: 'الرئيسية', href: '/' },
+                { label: 'إدارة المخزون', href: '/inventory' },
+                { label: 'تقارير المخزون', href: '/inventory/reports', active: true }
+              ]}
+            />
+            <h1 className="text-3xl font-bold text-foreground mt-2">تقارير المخزون</h1>
+            <p className="text-muted-foreground mt-1">تحليل شامل لمخزون وحركة القطع</p>
           </div>
+          <SimpleButton size="lg" variant="outline" onClick={exportReport} className="w-full md:w-auto">
+            <Download className="w-4 h-4 ml-2" />
+            تصدير التقرير
+          </SimpleButton>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">الفترة الزمنية:</span>
+        <SimpleCard>
+          <SimpleCardContent className="p-4 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  من تاريخ
+                </label>
+                <Input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  إلى تاريخ
+                </label>
+                <Input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2 lg:col-span-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Warehouse className="w-4 h-4 text-muted-foreground" />
+                  المخزن
+                </label>
+                <Select
+                  value={selectedWarehouse}
+                  onValueChange={setSelectedWarehouse}
+                >
+                  <SelectTrigger className="w-full text-right dir-rtl">
+                    <SelectValue placeholder="جميع المخازن" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المخازن</SelectItem>
+                    {warehouses.map(warehouse => (
+                      <SelectItem key={warehouse.id} value={String(warehouse.id)}>
+                        {warehouse.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <input
-              type="date"
-              value={dateRange.startDate}
-              onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <span className="text-gray-500">إلى</span>
-            <input
-              type="date"
-              value={dateRange.endDate}
-              onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            
-            <div className="flex items-center gap-2">
-              <Warehouse className="w-5 h-5 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">المخزن:</span>
-            </div>
-            <select
-              value={selectedWarehouse}
-              onChange={(e) => setSelectedWarehouse(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="">جميع المخازن</option>
-              {warehouses.map(warehouse => (
-                <option key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
             {error}
           </div>
         )}
 
         {/* Report Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-6 space-x-reverse">
+        <div className="border-b border-border overflow-x-auto">
+          <nav className="-mb-px flex space-x-6 space-x-reverse min-w-max px-2">
             {[
               { key: 'overview', label: 'نظرة عامة', icon: BarChart3 },
               { key: 'lowStock', label: 'المخزون المنخفض', icon: AlertTriangle },
@@ -349,7 +358,12 @@ const InventoryReportsPage = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveReport(tab.key)}
-                  className={`${active ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center`}
+                  className={cn(
+                    "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center transition-colors",
+                    active
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                  )}
                 >
                   <Icon className="w-4 h-4 ml-2" />
                   {tab.label}
@@ -365,36 +379,44 @@ const InventoryReportsPage = () => {
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <SimpleCard>
-                <SimpleCardContent className="text-center">
-                  <Warehouse className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">{warehouses.length}</div>
-                  <div className="text-sm text-gray-600">إجمالي المخازن</div>
+                <SimpleCardContent className="text-center p-6">
+                  <div className="p-3 bg-blue-500/10 rounded-full w-fit mx-auto mb-3">
+                    <Warehouse className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{warehouses.length}</div>
+                  <div className="text-sm text-muted-foreground">إجمالي المخازن</div>
                 </SimpleCardContent>
               </SimpleCard>
 
               <SimpleCard>
-                <SimpleCardContent className="text-center">
-                  <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">{inventoryItems.length}</div>
-                  <div className="text-sm text-gray-600">إجمالي قطع الغيار</div>
+                <SimpleCardContent className="text-center p-6">
+                  <div className="p-3 bg-green-500/10 rounded-full w-fit mx-auto mb-3">
+                    <Package className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{inventoryItems.length}</div>
+                  <div className="text-sm text-muted-foreground">إجمالي قطع الغيار</div>
                 </SimpleCardContent>
               </SimpleCard>
 
               <SimpleCard>
-                <SimpleCardContent className="text-center">
-                  <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">{getLowStockItems().length}</div>
-                  <div className="text-sm text-gray-600">قطع غيار منخفضة</div>
+                <SimpleCardContent className="text-center p-6">
+                  <div className="p-3 bg-red-500/10 rounded-full w-fit mx-auto mb-3">
+                    <AlertTriangle className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{getLowStockItems().length}</div>
+                  <div className="text-sm text-muted-foreground">قطع غيار منخفضة</div>
                 </SimpleCardContent>
               </SimpleCard>
 
               <SimpleCard>
-                <SimpleCardContent className="text-center">
-                  <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">
+                <SimpleCardContent className="text-center p-6">
+                  <div className="p-3 bg-purple-500/10 rounded-full w-fit mx-auto mb-3">
+                    <TrendingUp className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">
                     {getFilteredData().length}
                   </div>
-                  <div className="text-sm text-gray-600">حركات في الفترة</div>
+                  <div className="text-sm text-muted-foreground">حركات في الفترة</div>
                 </SimpleCardContent>
               </SimpleCard>
             </div>
@@ -410,20 +432,20 @@ const InventoryReportsPage = () => {
                     const stats = calculateStats();
                     return (
                       <>
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                          <div className="text-2xl font-bold text-green-700">{stats.totalIn}</div>
-                          <div className="text-sm text-green-600">وارد</div>
+                        <div className="text-center p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
+                          <TrendingUp className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.totalIn}</div>
+                          <div className="text-sm text-emerald-600/80 dark:text-emerald-400/80">وارد</div>
                         </div>
-                        <div className="text-center p-4 bg-red-50 rounded-lg">
-                          <TrendingDown className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                          <div className="text-2xl font-bold text-red-700">{stats.totalOut}</div>
-                          <div className="text-sm text-red-600">صادر</div>
+                        <div className="text-center p-4 bg-red-500/5 border border-red-500/10 rounded-lg">
+                          <TrendingDown className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                          <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.totalOut}</div>
+                          <div className="text-sm text-red-600/80 dark:text-red-400/80">صادر</div>
                         </div>
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <BarChart3 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                          <div className="text-2xl font-bold text-blue-700">{stats.totalTransfer}</div>
-                          <div className="text-sm text-blue-600">نقل</div>
+                        <div className="text-center p-4 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                          <BarChart3 className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalTransfer}</div>
+                          <div className="text-sm text-blue-600/80 dark:text-blue-400/80">نقل</div>
                         </div>
                       </>
                     );
@@ -440,38 +462,40 @@ const InventoryReportsPage = () => {
               <h2 className="text-xl font-semibold">تقرير المخزون المنخفض</h2>
             </SimpleCardHeader>
             <SimpleCardContent>
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {getLowStockItems().map(level => {
                   const item = inventoryItems.find(i => i.id === level.inventoryItemId);
                   const warehouse = warehouses.find(w => w.id === level.warehouseId);
-                  
+
                   if (!item || !warehouse) return null;
-                  
+
                   return (
-                    <div key={`${level.inventoryItemId}-${level.warehouseId}`} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div key={`${level.inventoryItemId}-${level.warehouseId}`} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/10 gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-4">
-                          <AlertTriangle className="w-6 h-6 text-red-600" />
+                        <div className="flex items-start gap-4">
+                          <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-1" />
                           <div>
-                            <h3 className="font-semibold text-red-900">{item.name}</h3>
-                            <p className="text-sm text-red-700">SKU: {item.sku}</p>
-                            <p className="text-sm text-red-700">المخزن: {warehouse.name}</p>
+                            <h3 className="font-semibold text-foreground">{item.name}</h3>
+                            <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                            <p className="text-sm text-muted-foreground">المخزن: {warehouse.name}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-red-600">
+                      <div className="text-right flex flex-row md:flex-col justify-between items-end">
+                        <div className="text-lg font-bold text-destructive">
                           {level.quantity}
                         </div>
-                        <div className="text-sm text-red-700">المخزون الحالي</div>
-                        <div className="text-sm text-red-700">الحد الأدنى: {level.minLevel}</div>
+                        <div className="text-sm text-muted-foreground">
+                          الحد الأدنى: <span className="font-medium">{level.minLevel}</span>
+                        </div>
                       </div>
                     </div>
                   );
                 })}
-                
+
                 {getLowStockItems().length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                     لا توجد قطع غيار منخفضة المخزون
                   </div>
                 )}
@@ -486,24 +510,23 @@ const InventoryReportsPage = () => {
               <h2 className="text-xl font-semibold">أعلى 10 قطع غيار قيمة</h2>
             </SimpleCardHeader>
             <SimpleCardContent>
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {getHighValueItems().map((item, index) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div key={item.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-card hover:bg-muted/50 rounded-lg border border-border transition-colors gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold shrink-0">
                         {index + 1}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-green-900">{item.name}</h3>
-                        <p className="text-sm text-green-700">SKU: {item.sku}</p>
+                        <h3 className="font-semibold text-foreground">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-700">
+                    <div className="text-right flex flex-row md:flex-col justify-between items-end">
+                      <div className="text-lg font-bold text-primary">
                         {item.totalValue.toFixed(2)} ج.م
                       </div>
-                      <div className="text-sm text-green-600">إجمالي القيمة</div>
-                      <div className="text-sm text-green-600">المخزون: {item.totalStock}</div>
+                      <div className="text-sm text-muted-foreground">المخزون: {item.totalStock}</div>
                     </div>
                   </div>
                 ))}
@@ -518,48 +541,58 @@ const InventoryReportsPage = () => {
               <h2 className="text-xl font-semibold">تقرير حركة المخزون</h2>
             </SimpleCardHeader>
             <SimpleCardContent>
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {getFilteredData().map(movement => (
-                  <div key={movement.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div key={movement.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-card rounded-lg border border-border gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className={cn(
+                          "p-2 rounded-full",
+                          movement.type === 'IN' ? 'bg-emerald-500/10 text-emerald-600' :
+                            movement.type === 'OUT' ? 'bg-red-500/10 text-red-600' :
+                              'bg-blue-500/10 text-blue-600'
+                        )}>
+                          {movement.type === 'IN' ? <TrendingUp className="w-4 h-4" /> :
+                            movement.type === 'OUT' ? <TrendingDown className="w-4 h-4" /> :
+                              <BarChart3 className="w-4 h-4" />}
+                        </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">
+                          <h3 className="font-semibold text-foreground">
                             {movement.type === 'IN' ? 'وارد' : movement.type === 'OUT' ? 'صادر' : 'نقل'}
                           </h3>
-                          <p className="text-sm text-gray-600">
-                            الكمية: {movement.quantity}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">
-                            من: {movement.fromWarehouseId ? warehouses.find(w => w.id === movement.fromWarehouseId)?.name : 'خارجي'}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            إلى: {movement.toWarehouseId ? warehouses.find(w => w.id === movement.toWarehouseId)?.name : 'خارجي'}
+                          <div className="flex flex-col sm:flex-row sm:gap-4 text-sm text-muted-foreground mt-1">
+                            <span>الكمية: <span className="font-medium text-foreground">{movement.quantity}</span></span>
+                            {movement.type === 'TRANSFER' ? (
+                              <>
+                                <span>من: {warehouses.find(w => w.id === movement.fromWarehouseId)?.name}</span>
+                                <span>إلى: {warehouses.find(w => w.id === movement.toWarehouseId)?.name}</span>
+                              </>
+                            ) : (
+                              <span>المخزن: {movement.type === 'IN'
+                                ? warehouses.find(w => w.id === movement.toWarehouseId)?.name
+                                : warehouses.find(w => w.id === movement.fromWarehouseId)?.name
+                              }</span>
+                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600">
-                        {new Date(movement.createdAt).toLocaleDateString('en-GB')}
+                    <div className="text-right flex flex-row md:flex-col justify-between items-end">
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(movement.createdAt).toLocaleDateString('ar-EG')}
                       </div>
-                      <SimpleBadge 
-                        className={
-                          movement.type === 'IN' ? 'bg-green-100 text-green-800' :
-                          movement.type === 'OUT' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'
-                        }
-                      >
-                        {movement.type === 'IN' ? 'وارد' : movement.type === 'OUT' ? 'صادر' : 'نقل'}
-                      </SimpleBadge>
+                      {movement.notes && (
+                        <p className="text-xs text-muted-foreground/70 max-w-[200px] truncate" title={movement.notes}>
+                          {movement.notes}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
-                
+
                 {getFilteredData().length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                     لا توجد حركات مخزون في الفترة المحددة
                   </div>
                 )}

@@ -454,7 +454,7 @@ const CustomersPage = () => {
   // Render sort icon
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc' ?
       <ArrowUp className="w-4 h-4 text-blue-600" /> :
@@ -691,7 +691,7 @@ const CustomersPage = () => {
         const customer = row.original;
         return (
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
               #{customer.id}
             </span>
           </div>
@@ -722,8 +722,8 @@ const CustomersPage = () => {
               <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{customer.company || 'عميل فردي'}</div>
+              <div className="font-medium text-foreground">{customer.name}</div>
+              <div className="text-sm text-muted-foreground">{customer.company || 'عميل فردي'}</div>
             </div>
           </div>
         );
@@ -750,13 +750,11 @@ const CustomersPage = () => {
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm">
-              <Phone className="w-3 h-3 text-gray-400" />
-              <span className="text-gray-900 dark:text-gray-100">{customer.phone}</span>
+              <span className="text-foreground">{customer.phone}</span>
             </div>
             {customer.email && (
               <div className="flex items-center gap-2 text-sm">
-                <Mail className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-400">{customer.email}</span>
+                <span className="text-muted-foreground">{customer.email}</span>
               </div>
             )}
           </div>
@@ -855,7 +853,7 @@ const CustomersPage = () => {
       cell: ({ row }) => {
         const customer = row.original;
         return (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-3 h-3" />
             <span>{new Date(customer.createdAt).toLocaleDateString('en-GB')}</span>
           </div>
@@ -903,7 +901,7 @@ const CustomersPage = () => {
                 e.stopPropagation();
                 handleCreateCustomerAccount(customer);
               }}
-              className={`h-8 w-8 p-0 ${customer.hasUserAccount ? 'text-gray-400 cursor-not-allowed' : 'text-green-600 hover:text-green-800'}`}
+              className={`h-8 w-8 p-0 ${customer.hasUserAccount ? 'text-muted-foreground/50 cursor-not-allowed' : 'text-green-600 hover:text-green-800'}`}
               disabled={creatingAccountFor === customer.id || customer.hasUserAccount}
               title={customer.hasUserAccount ? 'الحساب موجود بالفعل' : 'إنشاء حساب للعميل'}
             >
@@ -1045,11 +1043,11 @@ const CustomersPage = () => {
           </div>
           <div>
             {show('name') && (
-              <div className="font-medium text-gray-900 dark:text-gray-100 text-base">
+              <div className="font-medium text-foreground text-base">
                 {customer.name || 'بدون اسم'}
               </div>
             )}
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+            <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
               {show('contact') && customer.phone && (
                 <span className="inline-flex items-center gap-1">
                   <Phone className="w-3.5 h-3.5" />
@@ -1064,7 +1062,7 @@ const CustomersPage = () => {
               )}
             </div>
             {show('name') && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {customer.companyId ?
                   (companies.find(c => c.id.toString() === customer.companyId.toString())?.name || `شركة (ID: ${customer.companyId})`)
                   : 'عميل فردي'
@@ -1121,8 +1119,8 @@ const CustomersPage = () => {
             <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <div className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="font-medium text-foreground">{customer.name}</div>
+            <div className="text-sm text-muted-foreground">
               {customer.phone} • {customer.company || 'عميل فردي'}
             </div>
           </div>
@@ -1182,15 +1180,15 @@ const CustomersPage = () => {
     })();
 
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow cursor-pointer">
+      <div className="bg-card rounded-lg border border-border p-4 hover:shadow-md transition-shadow cursor-pointer">
         <div className="text-center">
           <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
             <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 truncate">
+          <div className="font-medium text-foreground mb-1 truncate">
             {customer.name}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
+          <div className="text-xs text-muted-foreground mb-2 truncate">
             {customer.phone}
           </div>
           <div className="flex items-center justify-center gap-1">
@@ -1239,7 +1237,7 @@ const CustomersPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات العملاء...</p>
+          <p className="mt-4 text-muted-foreground">جاري تحميل بيانات العملاء...</p>
         </div>
       </div>
     );
@@ -1249,7 +1247,7 @@ const CustomersPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">إدارة العملاء</h1>
+        <h1 className="text-2xl font-bold text-foreground">إدارة العملاء</h1>
         <Link to="/customers/new">
           <SimpleButton className="flex items-center space-x-2 space-x-reverse">
             <Plus className="w-4 h-4" />
@@ -1285,8 +1283,8 @@ const CustomersPage = () => {
                   <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">إجمالي العملاء</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي العملاء</p>
+                  <p className="text-2xl font-bold text-foreground"> {stats.total} </p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1356,7 +1354,7 @@ const CustomersPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex items-center space-x-4 space-x-reverse">
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="البحث في العملاء... (الاسم، الهاتف، البريد الإلكتروني)"
                   value={search}
@@ -1368,7 +1366,7 @@ const CustomersPage = () => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               >
                 <option value="all">جميع العملاء</option>
                 <option value="vip">عملاء VIP</option>
@@ -1390,8 +1388,8 @@ const CustomersPage = () => {
                 الإجراءات
               </SimpleButton>
               {actionsOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
-                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleRefresh(); closeActions(); }}>
+                <div className="absolute left-0 mt-2 w-48 bg-popover border border-border rounded-md shadow-lg z-10">
+                  <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground" onClick={() => { handleRefresh(); closeActions(); }}>
                     <RefreshCw className="w-4 h-4 ml-2" /> تحديث
                   </button>
                   <button className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => { handleImportClick(); closeActions(); }}>
@@ -1445,8 +1443,8 @@ const CustomersPage = () => {
           emptyState={
             <div className="text-center py-12">
               <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">لا توجد عملاء</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">ابدأ بإضافة عميل جديد للنظام</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">لا توجد عملاء</h3>
+              <p className="text-muted-foreground mb-6">ابدأ بإضافة عميل جديد للنظام</p>
               <Link to="/customers/new">
                 <SimpleButton>
                   <Plus className="w-4 h-4 ml-2" />
@@ -1462,7 +1460,7 @@ const CustomersPage = () => {
       {totalItems > 0 && (
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center space-x-2 space-x-reverse">
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-muted-foreground">
               عرض {((currentPage - 1) * itemsPerPage) + 1} إلى {Math.min(currentPage * itemsPerPage, totalItems)} من {totalItems} عميل
             </span>
             <select
@@ -1471,7 +1469,7 @@ const CustomersPage = () => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-sm border border-input bg-background text-foreground rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value={10}>10 لكل صفحة</option>
               <option value={20}>20 لكل صفحة</option>

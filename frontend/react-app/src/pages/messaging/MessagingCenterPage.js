@@ -10,8 +10,8 @@ import MessageStatusBadge from '../../components/messaging/MessageStatusBadge';
 import MessageLogViewer from '../../components/messaging/MessageLogViewer';
 import messagingService from '../../services/messagingService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import { 
-  MessageSquare, Mail, Search, Filter, RefreshCw, 
+import {
+  MessageSquare, Mail, Search, Filter, RefreshCw,
   Eye, RotateCw, Calendar, TrendingUp, AlertCircle,
   CheckCircle, XCircle, FileText, Download, Send, BarChart3
 } from 'lucide-react';
@@ -100,7 +100,7 @@ const MessagingCenterPage = () => {
     try {
       setRetrying(logId);
       await messagingService.retryMessage(logId);
-      
+
       notifications.success('تم إعادة المحاولة', {
         message: 'سيتم إرسال الرسالة مرة أخرى'
       });
@@ -188,7 +188,7 @@ const MessagingCenterPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">مركز الرسائل والمتابعة</h1>
+          <h1 className="text-2xl font-bold text-foreground">مركز الرسائل والمتابعة</h1>
           <p className="text-gray-600 mt-1">إدارة ومتابعة جميع المراسلات المرسلة للعملاء</p>
         </div>
         <div className="flex gap-2">
@@ -220,8 +220,8 @@ const MessagingCenterPage = () => {
           <SimpleCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">إجمالي الرسائل</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-muted-foreground">إجمالي الرسائل</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {stats.total || 0}
                 </p>
               </div>
@@ -234,7 +234,7 @@ const MessagingCenterPage = () => {
           <SimpleCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">مرسلة بنجاح</p>
+                <p className="text-sm text-muted-foreground">مرسلة بنجاح</p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
                   {stats.sent || 0}
                 </p>
@@ -253,7 +253,7 @@ const MessagingCenterPage = () => {
           <SimpleCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">فاشلة</p>
+                <p className="text-sm text-muted-foreground">فاشلة</p>
                 <p className="text-2xl font-bold text-red-600 mt-1">
                   {stats.failed || 0}
                 </p>
@@ -272,7 +272,7 @@ const MessagingCenterPage = () => {
           <SimpleCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">معدل النجاح</p>
+                <p className="text-sm text-muted-foreground">معدل النجاح</p>
                 <p className="text-2xl font-bold text-blue-600 mt-1">
                   {stats.successRate?.toFixed(1) || 0}%
                 </p>
@@ -451,12 +451,12 @@ const MessagingCenterPage = () => {
           {loading && logs.length === 0 ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-500">جاري تحميل السجل...</p>
+              <p className="text-muted-foreground">جاري تحميل السجل...</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد رسائل مسجلة</p>
+              <p className="text-muted-foreground">لا توجد رسائل مسجلة</p>
             </div>
           ) : (
             <>
@@ -467,7 +467,7 @@ const MessagingCenterPage = () => {
                   return (
                     <div
                       key={log.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200 bg-card"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
@@ -475,7 +475,7 @@ const MessagingCenterPage = () => {
                             <ChannelIcon className="w-5 h-5 text-gray-600" />
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900">
+                                <span className="font-medium text-foreground">
                                   {getChannelLabel(log.channel)}
                                 </span>
                                 <MessageStatusBadge status={log.status} />
@@ -490,9 +490,9 @@ const MessagingCenterPage = () => {
                           </div>
 
                           {log.message && (
-                            <div className="mt-2 p-3 bg-gray-50 rounded text-sm text-gray-700">
-                              {log.message.length > 200 
-                                ? `${log.message.substring(0, 200)}...` 
+                            <div className="mt-2 p-3 bg-muted/50 rounded text-sm text-foreground">
+                              {log.message.length > 200
+                                ? `${log.message.substring(0, 200)}...`
                                 : log.message}
                             </div>
                           )}
@@ -601,10 +601,10 @@ const MessagingCenterPage = () => {
       {/* Message Details Modal */}
       {selectedLog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card border border-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">تفاصيل الرسالة</h2>
+                <h2 className="text-xl font-bold text-foreground">تفاصيل الرسالة</h2>
                 <SimpleButton
                   variant="ghost"
                   size="sm"
@@ -653,7 +653,7 @@ const MessagingCenterPage = () => {
                 {selectedLog.message && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">الرسالة</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded text-sm text-gray-700 whitespace-pre-wrap">
+                    <div className="mt-1 p-3 bg-muted/50 rounded text-sm text-foreground whitespace-pre-wrap">
                       {selectedLog.message}
                     </div>
                   </div>

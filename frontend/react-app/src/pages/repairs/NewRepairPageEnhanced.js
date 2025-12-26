@@ -33,7 +33,7 @@ const NewRepairPageEnhanced = () => {
   const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
-  
+
   // Company state
   const [companies, setCompanies] = useState([]);
   const [companySearch, setCompanySearch] = useState('');
@@ -193,19 +193,19 @@ const NewRepairPageEnhanced = () => {
         const brandValue = (brand.value || '').toUpperCase();
         const brandLabel = (brand.label || '').toUpperCase();
         // Exclude accessories - check for common accessory keywords
-        const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') || 
-                           brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') || 
-                           brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
-                           brandValue.includes('BAG') || brandValue.includes('CHARGER') || 
-                           brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') || 
-                           brandValue.includes('MOUSE') || brandValue.includes('CABLE');
+        const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') ||
+          brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') ||
+          brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
+          brandValue.includes('BAG') || brandValue.includes('CHARGER') ||
+          brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') ||
+          brandValue.includes('MOUSE') || brandValue.includes('CABLE');
         // Only include actual brand names
-        const actualBrands = ['APPLE', 'SAMSUNG', 'HUAWEI', 'DELL', 'HP', 'MICROSOFT', 'LENOVO', 
-                             'ACER', 'ASUS', 'XIAOMI', 'ONEPLUS', 'GOOGLE', 'FITBIT', 'GARMIN', 
-                             'SONY', 'BOSE', 'JBL', 'SENNHEISER', 'MSI', 'ALIENWARE', 'TOSHIBA'];
+        const actualBrands = ['APPLE', 'SAMSUNG', 'HUAWEI', 'DELL', 'HP', 'MICROSOFT', 'LENOVO',
+          'ACER', 'ASUS', 'XIAOMI', 'ONEPLUS', 'GOOGLE', 'FITBIT', 'GARMIN',
+          'SONY', 'BOSE', 'JBL', 'SENNHEISER', 'MSI', 'ALIENWARE', 'TOSHIBA'];
         return !isAccessory && (actualBrands.includes(brandValue) || actualBrands.some(ab => brandLabel.includes(ab)));
       });
-      
+
       setAllBrandOptions(filteredBrands.length > 0 ? filteredBrands : allBrands);
       setBrandOptions(filteredBrands.length > 0 ? filteredBrands : allBrands); // Initially show filtered brands
 
@@ -294,7 +294,7 @@ const NewRepairPageEnhanced = () => {
         }));
         setCustomerSearch(`${customer.firstName || ''} ${customer.lastName || ''}`.trim());
         setShowCustomerResults(false);
-        
+
         // If customer has a company, load it
         if (companyId) {
           try {
@@ -357,12 +357,12 @@ const NewRepairPageEnhanced = () => {
       const brandValue = (brand.value || '').toUpperCase();
       const brandLabel = (brand.label || '').toUpperCase();
       // Exclude accessories from brands
-      const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') || 
-                         brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') || 
-                         brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
-                         brandValue.includes('BAG') || brandValue.includes('CHARGER') || 
-                         brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') || 
-                         brandValue.includes('MOUSE') || brandValue.includes('CABLE');
+      const isAccessory = brandLabel.includes('شنطة') || brandLabel.includes('شاحن') ||
+        brandLabel.includes('فلاش') || brandLabel.includes('كيبورد') ||
+        brandLabel.includes('ماوس') || brandLabel.includes('كابل') ||
+        brandValue.includes('BAG') || brandValue.includes('CHARGER') ||
+        brandValue.includes('FLASH') || brandValue.includes('KEYBOARD') ||
+        brandValue.includes('MOUSE') || brandValue.includes('CABLE');
       return !isAccessory && allowedBrands.includes(brand.value);
     });
 
@@ -392,11 +392,11 @@ const NewRepairPageEnhanced = () => {
   const selectCustomer = (customer) => {
     setSelectedCustomer(customer);
     const customerCompanyId = customer.companyId || null;
-    
+
     // Preserve existing company selection if customer doesn't have a company
     // Only override if customer has a company
     const finalCompanyId = customerCompanyId || formData.companyId || null;
-    
+
     setFormData(prev => ({
       ...prev,
       customerId: customer.id,
@@ -408,7 +408,7 @@ const NewRepairPageEnhanced = () => {
     setCustomerSearch(customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim());
     setShowCustomerResults(false);
     setCustomers([]);
-    
+
     // If customer has a company, load it and override selection
     if (customerCompanyId) {
       apiService.getCompany(customerCompanyId)
@@ -485,7 +485,7 @@ const NewRepairPageEnhanced = () => {
 
   const selectCompany = (company) => {
     if (!company || !company.id) return;
-    
+
     setSelectedCompany(company);
     setFormData(prev => ({
       ...prev,
@@ -514,9 +514,9 @@ const NewRepairPageEnhanced = () => {
         notifications.error('اسم الشركة مطلوب');
         return;
       }
-      
+
       const response = await apiService.createCompany(newCompanyData);
-      
+
       // Handle different response formats
       let company;
       if (response && response.id) {
@@ -531,18 +531,18 @@ const NewRepairPageEnhanced = () => {
       } else {
         throw new Error('Invalid company response format');
       }
-      
+
       // Ensure company has required fields
       if (!company || !company.id) {
         throw new Error('Company data is invalid');
       }
-      
+
       // Get company name - use response name or fallback to input name
       const companyName = String(company.name || newCompanyData.name || '').trim();
-      
+
       // Select the company FIRST - this ensures state is updated
       setSelectedCompany(company);
-      
+
       // Update formData with companyId - CRITICAL: use functional update to ensure we get the latest state
       setFormData(prev => {
         console.log('🔄 Updating formData with companyId:', company.id, 'Current formData.companyId:', prev.companyId);
@@ -551,17 +551,17 @@ const NewRepairPageEnhanced = () => {
           companyId: company.id // Always set companyId when company is created/selected
         };
       });
-      
+
       // Update companySearch with company name - ALWAYS use string, never undefined/null
       // This fixes the "controlled to uncontrolled" error
       setCompanySearch(companyName);
-      
+
       // Close forms and clear data
       setShowCompanyResults(false);
       setCompanies([]);
       setShowCompanyForm(false);
       setNewCompanyData({ name: '', email: '', phone: '', address: '' });
-      
+
       // Link company to customer if customer is selected
       if (selectedCustomer && selectedCustomer.id) {
         try {
@@ -582,10 +582,10 @@ const NewRepairPageEnhanced = () => {
       } else {
         console.log('ℹ️ No customer selected yet - companyId will be linked when repair is created');
       }
-      
+
       // Show success notification - this should always appear
       notifications.success('تم إنشاء الشركة بنجاح' + (selectedCustomer ? ' وربطها بالعميل' : ''));
-      
+
       // Force a small delay to ensure state updates are reflected in UI
       setTimeout(() => {
         // Double-check that companySearch is set correctly (always string)
@@ -640,11 +640,11 @@ const NewRepairPageEnhanced = () => {
         // This is only for validation purposes - we use the range for display
         estimatedCost: (formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined && formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined)
           ? (formData.estimatedCostMin + formData.estimatedCostMax) / 2 // Calculate average for validation
-          : (formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined 
-              ? formData.estimatedCostMin 
-              : (formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined 
-                  ? formData.estimatedCostMax 
-                  : 0)), // Use single value or 0
+          : (formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined
+            ? formData.estimatedCostMin
+            : (formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined
+              ? formData.estimatedCostMax
+              : 0)), // Use single value or 0
         estimatedCostMin: formData.estimatedCostMin !== null && formData.estimatedCostMin !== undefined ? formData.estimatedCostMin : null, // Send min value
         estimatedCostMax: formData.estimatedCostMax !== null && formData.estimatedCostMax !== undefined ? formData.estimatedCostMax : null, // Send max value
         // CRITICAL: Get companyId from multiple sources to ensure it's not lost
@@ -719,10 +719,10 @@ const NewRepairPageEnhanced = () => {
       {Array.from({ length: totalSteps }, (_, index) => (
         <React.Fragment key={index}>
           <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep > index + 1
-              ? 'bg-green-500 border-green-500 text-white'
-              : currentStep === index + 1
-                ? 'bg-blue-500 border-blue-500 text-white'
-                : 'bg-gray-200 border-gray-300 text-gray-500'
+            ? 'bg-primary border-primary text-primary-foreground'
+            : currentStep === index + 1
+              ? 'bg-blue-600 border-blue-600 text-white dark:bg-blue-500 dark:border-blue-500' // Keeping blue for active step but making it theme aware
+              : 'bg-muted border-muted-foreground/20 text-muted-foreground'
             }`}>
             {currentStep > index + 1 ? (
               <CheckCircle className="w-5 h-5" />
@@ -731,7 +731,7 @@ const NewRepairPageEnhanced = () => {
             )}
           </div>
           {index < totalSteps - 1 && (
-            <div className={`w-16 h-1 mx-2 ${currentStep > index + 1 ? 'bg-green-500' : 'bg-gray-200'
+            <div className={`w-16 h-1 mx-2 ${currentStep > index + 1 ? 'bg-primary' : 'bg-muted'
               }`} />
           )}
         </React.Fragment>
@@ -742,18 +742,18 @@ const NewRepairPageEnhanced = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">معلومات العميل</h2>
-        <p className="text-gray-600">ابحث عن العميل أو أدخل بياناته الجديدة</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">معلومات العميل</h2>
+        <p className="text-muted-foreground">ابحث عن العميل أو أدخل بياناته الجديدة</p>
       </div>
 
       {/* البحث عن العميل */}
       <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           <User className="w-4 h-4 inline ml-1" />
           البحث عن العميل
         </label>
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input
             type="text"
             value={customerSearch}
@@ -768,19 +768,19 @@ const NewRepairPageEnhanced = () => {
 
         {/* نتائج البحث */}
         {showCustomerResults && customers.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
             {customers.map((customer) => (
               <div
                 key={customer.id}
                 onClick={() => selectCustomer(customer)}
-                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                className="p-3 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
-                    <p className="text-sm text-gray-600">{customer.phone}</p>
+                    <p className="font-medium text-foreground">{customer.name}</p>
+                    <p className="text-sm text-muted-foreground">{customer.phone}</p>
                   </div>
-                  <Phone className="w-4 h-4 text-gray-400" />
+                  <Phone className="w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
             ))}
@@ -789,8 +789,8 @@ const NewRepairPageEnhanced = () => {
 
         {/* رسالة عدم وجود نتائج */}
         {showCustomerResults && customers.length === 0 && customerSearch.length >= 2 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-center text-gray-500">
-            <User className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
+            <User className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
             <p>لم يتم العثور على عملاء</p>
           </div>
         )}
@@ -798,13 +798,13 @@ const NewRepairPageEnhanced = () => {
 
       {/* العميل المختار */}
       {selectedCustomer && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 text-green-500 ml-2" />
               <div>
-                <p className="font-medium text-green-900">{selectedCustomer.name}</p>
-                <p className="text-sm text-green-700">{selectedCustomer.phone}</p>
+                <p className="font-medium text-foreground">{selectedCustomer.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
               </div>
             </div>
             <SimpleButton
@@ -812,7 +812,7 @@ const NewRepairPageEnhanced = () => {
               variant="ghost"
               size="sm"
               onClick={clearCustomer}
-              className="text-green-600 hover:text-green-800"
+              className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
             >
               <X className="w-4 h-4" />
             </SimpleButton>
@@ -823,7 +823,7 @@ const NewRepairPageEnhanced = () => {
       {/* بيانات العميل الجديد */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             اسم العميل *
           </label>
           <Input
@@ -836,7 +836,7 @@ const NewRepairPageEnhanced = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             رقم الهاتف *
           </label>
           <Input
@@ -849,7 +849,7 @@ const NewRepairPageEnhanced = () => {
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             البريد الإلكتروني
           </label>
           <Input
@@ -863,21 +863,21 @@ const NewRepairPageEnhanced = () => {
       </div>
 
       {/* سيكشن الشركة */}
-      <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="mt-6 p-4 bg-muted/50 border border-border rounded-lg">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <Building2 className="w-5 h-5 ml-2" />
           الشركة (اختياري)
         </h3>
-        
+
         {/* عرض الشركة المختارة */}
         {selectedCompany && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Building2 className="w-5 h-5 text-blue-500 ml-2" />
                 <div>
-                  <p className="font-medium text-blue-900">{selectedCompany.name}</p>
-                  {selectedCompany.phone && <p className="text-sm text-blue-700">{selectedCompany.phone}</p>}
+                  <p className="font-medium text-foreground">{selectedCompany.name}</p>
+                  {selectedCompany.phone && <p className="text-sm text-muted-foreground">{selectedCompany.phone}</p>}
                 </div>
               </div>
               <SimpleButton
@@ -885,7 +885,7 @@ const NewRepairPageEnhanced = () => {
                 variant="ghost"
                 size="sm"
                 onClick={clearCompany}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
               >
                 <X className="w-4 h-4" />
               </SimpleButton>
@@ -895,142 +895,142 @@ const NewRepairPageEnhanced = () => {
 
         {/* البحث عن الشركة - يظهر دائماً حتى لو كان هناك شركة مختارة (لإمكانية تغييرها) */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <Building2 className="w-4 h-4 inline ml-1" />
             البحث عن الشركة
           </label>
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="text"
-                value={String(companySearch ?? '')}
-                onChange={handleCompanySearchChange}
-                placeholder="ابحث باسم الشركة..."
-                className="pr-10"
-              />
-              {searchingCompanies && (
-                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-5 h-5 animate-spin" />
-              )}
-            </div>
-
-            {/* نتائج البحث */}
-            {showCompanyResults && companies.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {companies.map((company) => (
-                  <div
-                    key={company.id}
-                    onClick={() => selectCompany(company)}
-                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">{company.name}</p>
-                        {company.phone && <p className="text-sm text-gray-600">{company.phone}</p>}
-                      </div>
-                      <Building2 className="w-4 h-4 text-gray-400" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              type="text"
+              value={String(companySearch ?? '')}
+              onChange={handleCompanySearchChange}
+              placeholder="ابحث باسم الشركة..."
+              className="pr-10"
+            />
+            {searchingCompanies && (
+              <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-5 h-5 animate-spin" />
             )}
+          </div>
 
-            {/* رسالة عدم وجود نتائج */}
-            {showCompanyResults && companies.length === 0 && companySearch.length >= 2 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-                <p className="text-center text-gray-500 mb-2">لم يتم العثور على شركات</p>
-                <SimpleButton
-                  type="button"
-                  size="sm"
-                  onClick={() => setShowCompanyForm(true)}
-                  className="w-full"
+          {/* نتائج البحث */}
+          {showCompanyResults && companies.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {companies.map((company) => (
+                <div
+                  key={company.id}
+                  onClick={() => selectCompany(company)}
+                  className="p-3 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0"
                 >
-                  <Plus className="w-4 h-4 ml-2" />
-                  إضافة شركة جديدة
-                </SimpleButton>
-              </div>
-            )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">{company.name}</p>
+                      {company.phone && <p className="text-sm text-muted-foreground">{company.phone}</p>}
+                    </div>
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-            {/* زر إضافة شركة جديدة */}
-            {!showCompanyResults && (
+          {/* رسالة عدم وجود نتائج */}
+          {showCompanyResults && companies.length === 0 && companySearch.length >= 2 && (
+            <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4">
+              <p className="text-center text-muted-foreground mb-2">لم يتم العثور على شركات</p>
               <SimpleButton
                 type="button"
-                variant="outline"
                 size="sm"
                 onClick={() => setShowCompanyForm(true)}
-                className="mt-2"
+                className="w-full"
               >
                 <Plus className="w-4 h-4 ml-2" />
                 إضافة شركة جديدة
               </SimpleButton>
-            )}
+            </div>
+          )}
 
-            {/* نموذج إضافة شركة جديدة */}
-            {showCompanyForm && (
-              <div className="mt-4 p-4 bg-white border border-gray-300 rounded-lg">
-                <h4 className="text-md font-semibold text-gray-900 mb-3">إضافة شركة جديدة</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">اسم الشركة *</label>
-                    <Input
-                      type="text"
-                      value={newCompanyData.name}
-                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="اسم الشركة"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
-                    <Input
-                      type="tel"
-                      value={newCompanyData.phone}
-                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="رقم الهاتف"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
-                    <Input
-                      type="email"
-                      value={newCompanyData.email}
-                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="البريد الإلكتروني"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
-                    <Input
-                      type="text"
-                      value={newCompanyData.address}
-                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, address: e.target.value }))}
-                      placeholder="العنوان"
-                    />
-                  </div>
+          {/* زر إضافة شركة جديدة */}
+          {!showCompanyResults && (
+            <SimpleButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCompanyForm(true)}
+              className="mt-2"
+            >
+              <Plus className="w-4 h-4 ml-2" />
+              إضافة شركة جديدة
+            </SimpleButton>
+          )}
+
+          {/* نموذج إضافة شركة جديدة */}
+          {showCompanyForm && (
+            <div className="mt-4 p-4 bg-card border border-border rounded-lg">
+              <h4 className="text-md font-semibold text-foreground mb-3">إضافة شركة جديدة</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">اسم الشركة *</label>
+                  <Input
+                    type="text"
+                    value={newCompanyData.name}
+                    onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="اسم الشركة"
+                    required
+                  />
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <SimpleButton
-                    type="button"
-                    size="sm"
-                    onClick={handleCreateCompany}
-                  >
-                    <Save className="w-4 h-4 ml-2" />
-                    حفظ
-                  </SimpleButton>
-                  <SimpleButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setShowCompanyForm(false);
-                      setNewCompanyData({ name: '', email: '', phone: '', address: '' });
-                    }}
-                  >
-                    <X className="w-4 h-4 ml-2" />
-                    إلغاء
-                  </SimpleButton>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">رقم الهاتف</label>
+                  <Input
+                    type="tel"
+                    value={newCompanyData.phone}
+                    onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="رقم الهاتف"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">البريد الإلكتروني</label>
+                  <Input
+                    type="email"
+                    value={newCompanyData.email}
+                    onChange={(e) => setNewCompanyData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="البريد الإلكتروني"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">العنوان</label>
+                  <Input
+                    type="text"
+                    value={newCompanyData.address}
+                    onChange={(e) => setNewCompanyData(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="العنوان"
+                  />
                 </div>
               </div>
-            )}
+              <div className="flex gap-2 mt-3">
+                <SimpleButton
+                  type="button"
+                  size="sm"
+                  onClick={handleCreateCompany}
+                >
+                  <Save className="w-4 h-4 ml-2" />
+                  حفظ
+                </SimpleButton>
+                <SimpleButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowCompanyForm(false);
+                    setNewCompanyData({ name: '', email: '', phone: '', address: '' });
+                  }}
+                >
+                  <X className="w-4 h-4 ml-2" />
+                  إلغاء
+                </SimpleButton>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1039,8 +1039,8 @@ const NewRepairPageEnhanced = () => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">معلومات الجهاز</h2>
-        <p className="text-gray-600">أدخل تفاصيل الجهاز المراد إصلاحه</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">معلومات الجهاز</h2>
+        <p className="text-muted-foreground">أدخل تفاصيل الجهاز المراد إصلاحه</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1145,8 +1145,8 @@ const NewRepairPageEnhanced = () => {
 
       {/* مواصفات إضافية للابتوب */}
       {formData.deviceType === 'LAPTOP' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="md:col-span-2 text-lg font-semibold text-gray-900 mb-2">المواصفات التقنية</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-muted/50 rounded-lg">
+          <h3 className="md:col-span-2 text-lg font-semibold text-foreground mb-2">المواصفات التقنية</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">المعالج (CPU)</label>
             <Input
@@ -1164,7 +1164,7 @@ const NewRepairPageEnhanced = () => {
                       key={index}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, cpu: value }))}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                      className="px-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-full hover:bg-accent hover:border-accent-foreground transition-colors duration-200 whitespace-nowrap flex-shrink-0"
                     >
                       {value}
                     </button>
@@ -1190,7 +1190,7 @@ const NewRepairPageEnhanced = () => {
                       key={index}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, gpu: value }))}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                      className="px-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-full hover:bg-accent hover:border-accent-foreground transition-colors duration-200 whitespace-nowrap flex-shrink-0"
                     >
                       {value}
                     </button>
@@ -1216,7 +1216,7 @@ const NewRepairPageEnhanced = () => {
                       key={index}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, ram: value }))}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                      className="px-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-full hover:bg-accent hover:border-accent-foreground transition-colors duration-200 whitespace-nowrap flex-shrink-0"
                     >
                       {value}
                     </button>
@@ -1242,7 +1242,7 @@ const NewRepairPageEnhanced = () => {
                       key={index}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, storage: value }))}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                      className="px-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-full hover:bg-accent hover:border-accent-foreground transition-colors duration-200 whitespace-nowrap flex-shrink-0"
                     >
                       {value}
                     </button>
@@ -1255,16 +1255,16 @@ const NewRepairPageEnhanced = () => {
       )}
 
       {/* قسم المتعلقات المستلمة */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <FileText className="w-5 h-5 ml-2" />
           المتعلقات المستلمة من العميل
         </h3>
-        <p className="text-sm text-gray-600 mb-4">اختر المتعلقات التي استلمتها من العميل مع الجهاز</p>
+        <p className="text-sm text-muted-foreground mb-4">اختر المتعلقات التي استلمتها من العميل مع الجهاز</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {accessoryOptions.map((option) => (
-            <label key={option.id} className="flex items-center space-x-2 space-x-reverse p-3 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer">
+            <label key={option.id} className="flex items-center space-x-2 space-x-reverse p-3 border border-border rounded-lg hover:bg-accent cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.accessories.some(a => a.id === option.id || a.label === option.label)}
@@ -1281,7 +1281,7 @@ const NewRepairPageEnhanced = () => {
                     }));
                   }
                 }}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 dark:border-gray-600 bg-background"
               />
               <span className="text-sm">{option.label}</span>
             </label>
@@ -1290,10 +1290,10 @@ const NewRepairPageEnhanced = () => {
 
         {formData.accessories.length > 0 && (
           <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">المتعلقات المختارة:</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">المتعلقات المختارة:</h4>
             <div className="flex flex-wrap gap-2">
               {formData.accessories.map((accessory, index) => (
-                <span key={accessory.id || index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                <span key={accessory.id || index} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                   {accessory.label}
                 </span>
               ))}
@@ -1414,8 +1414,8 @@ const NewRepairPageEnhanced = () => {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">مراجعة البيانات</h2>
-        <p className="text-gray-600">تأكد من صحة جميع البيانات قبل الإرسال</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">مراجعة البيانات</h2>
+        <p className="text-muted-foreground">تأكد من صحة جميع البيانات قبل الإرسال</p>
       </div>
 
       <div className="space-y-4">
@@ -1487,7 +1487,7 @@ const NewRepairPageEnhanced = () => {
             {formData.accessories.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {formData.accessories.map((accessory, index) => (
-                  <span key={accessory.id || index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                  <span key={accessory.id || index} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                     {accessory.label}
                   </span>
                 ))}
@@ -1545,7 +1545,7 @@ const NewRepairPageEnhanced = () => {
               <ArrowRight className="w-4 h-4" />
             </SimpleButton>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">طلب إصلاح جديد</h1>
+          <h1 className="text-2xl font-bold text-foreground">طلب إصلاح جديد</h1>
         </div>
 
         <div className="flex items-center space-x-2 space-x-reverse">
@@ -1563,10 +1563,10 @@ const NewRepairPageEnhanced = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-500 ml-2" />
-            <p className="text-red-700">{error}</p>
+            <AlertCircle className="w-5 h-5 text-destructive ml-2" />
+            <p className="text-destructive">{error}</p>
           </div>
         </div>
       )}

@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building2, Users, TrendingUp, DollarSign, Eye, FileText } from 'lucide-react';
-import { DataTable } from '../../components/ui/DataTable';
-import { Button } from '../../components/ui/Button';
+import { Plus, Building2, Users, TrendingUp, DollarSign, Eye, FileText, Edit, Trash2, Power } from 'lucide-react';
+import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import DataView from '../../components/ui/DataView';
 import { Modal } from '../../components/ui/Modal';
-import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import vendorService from '../../services/vendorService';
 import VendorForm from './VendorForm';
@@ -115,7 +124,6 @@ const VendorsPage = () => {
       fetchVendors();
       fetchStats();
     } catch (error) {
-      // عرض رسالة الخطأ الفعلية من API
       const errorMessage = error.message || 'فشل في حفظ بيانات المورد';
       addNotification('error', errorMessage);
     }
@@ -142,12 +150,12 @@ const VendorsPage = () => {
         const vendor = row.original;
         return (
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3">
-              <Building2 className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center ml-3">
+              <Building2 className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <div className="font-medium text-gray-900">{vendor.name}</div>
-              <div className="text-sm text-gray-500">{vendor.contactPerson}</div>
+              <div className="font-medium text-foreground">{vendor.name}</div>
+              <div className="text-sm text-muted-foreground">{vendor.contactPerson}</div>
             </div>
           </div>
         );
@@ -161,8 +169,8 @@ const VendorsPage = () => {
         const vendor = row.original;
         return (
           <div className="text-sm">
-            <div className="text-gray-900">{vendor.phone}</div>
-            <div className="text-gray-500">{vendor.email}</div>
+            <div className="text-foreground">{vendor.phone}</div>
+            <div className="text-muted-foreground">{vendor.email}</div>
           </div>
         );
       }
@@ -174,7 +182,7 @@ const VendorsPage = () => {
       cell: ({ row }) => {
         const vendor = row.original;
         return (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             {vendor.address || 'غير محدد'}
           </div>
         );
@@ -187,13 +195,9 @@ const VendorsPage = () => {
       cell: ({ row }) => {
         const vendor = row.original;
         return (
-          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-            vendor.status === 'active' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
+          <SimpleBadge variant={vendor.status === 'active' ? 'success' : 'destructive'}>
             {vendor.status === 'active' ? 'نشط' : 'غير نشط'}
-          </span>
+          </SimpleBadge>
         );
       }
     },
@@ -204,7 +208,7 @@ const VendorsPage = () => {
       cell: ({ row }) => {
         const vendor = row.original;
         return (
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-foreground">
             {vendor.totalOrders || 0}
           </span>
         );
@@ -216,8 +220,8 @@ const VendorsPage = () => {
       cell: ({ row }) => {
         const vendor = row.original;
         return (
-          <div className="flex space-x-2 space-x-reverse">
-            <Button
+          <div className="flex flex-wrap gap-2">
+            <SimpleButton
               variant="outline"
               size="sm"
               onClick={() => navigate(`/vendors/${vendor.id}`)}
@@ -225,190 +229,193 @@ const VendorsPage = () => {
             >
               <Eye className="w-4 h-4 ml-1" />
               تفاصيل
-            </Button>
-            <Button
+            </SimpleButton>
+            <SimpleButton
               variant="outline"
               size="sm"
               onClick={() => handleEditVendor(vendor)}
             >
+              <Edit className="w-4 h-4 ml-1" />
               تعديل
-            </Button>
-            <Button
+            </SimpleButton>
+            <SimpleButton
               variant="outline"
               size="sm"
               onClick={() => navigate(`/invoices/new?vendorId=${vendor.id}`)}
               title="إنشاء فاتورة شراء للمورد"
             >
               <FileText className="w-4 h-4 ml-1" />
-              فاتورة شراء
-            </Button>
-            <Button
-              variant={vendor.status === 'active' ? 'danger' : 'success'}
+              فاتورة
+            </SimpleButton>
+            <SimpleButton
+              variant={vendor.status === 'active' ? 'destructive' : 'default'}
               size="sm"
               onClick={() => handleToggleStatus(vendor)}
             >
-              {vendor.status === 'active' ? 'إلغاء تفعيل' : 'تفعيل'}
-            </Button>
-            <Button
-              variant="danger"
+              <Power className="w-4 h-4 ml-1" />
+              {vendor.status === 'active' ? 'إلغاء' : 'تفعيل'}
+            </SimpleButton>
+            <SimpleButton
+              variant="destructive"
               size="sm"
               onClick={() => handleDeleteVendor(vendor)}
             >
+              <Trash2 className="w-4 h-4 ml-1" />
               حذف
-            </Button>
+            </SimpleButton>
           </div>
         );
       }
     }
   ];
 
-  const filterOptions = [
-    {
-      key: 'status',
-      label: 'الحالة',
-      type: 'select',
-      options: [
-        { value: '', label: 'جميع الحالات' },
-        { value: 'active', label: 'نشط' },
-        { value: 'inactive', label: 'غير نشط' }
-      ]
-    }
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Building2 className="h-8 w-8 text-blue-600" />
-            </div>
-            <div className="mr-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.totalVendors}
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-blue-500/10 rounded-full">
+                <Building2 className="h-6 w-6 text-blue-500" />
               </div>
-              <div className="text-sm text-gray-600">إجمالي الموردين</div>
+              <div className="mr-4">
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.totalVendors}
+                </div>
+                <div className="text-sm text-muted-foreground">إجمالي الموردين</div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </SimpleCardContent>
+        </SimpleCard>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Users className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="mr-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.activeVendors}
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-green-500/10 rounded-full">
+                <Users className="h-6 w-6 text-green-500" />
               </div>
-              <div className="text-sm text-gray-600">موردين نشطين</div>
+              <div className="mr-4">
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.activeVendors}
+                </div>
+                <div className="text-sm text-muted-foreground">موردين نشطين</div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </SimpleCardContent>
+        </SimpleCard>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <TrendingUp className="h-8 w-8 text-yellow-600" />
-            </div>
-            <div className="mr-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.inactiveVendors}
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-yellow-500/10 rounded-full">
+                <TrendingUp className="h-6 w-6 text-yellow-500" />
               </div>
-              <div className="text-sm text-gray-600">موردين غير نشطين</div>
+              <div className="mr-4">
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.inactiveVendors}
+                </div>
+                <div className="text-sm text-muted-foreground">موردين غير نشطين</div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </SimpleCardContent>
+        </SimpleCard>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <DollarSign className="h-8 w-8 text-purple-600" />
-            </div>
-            <div className="mr-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.totalPurchaseOrders}
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-purple-500/10 rounded-full">
+                <DollarSign className="h-6 w-6 text-purple-500" />
               </div>
-              <div className="text-sm text-gray-600">طلبات الشراء</div>
+              <div className="mr-4">
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.totalPurchaseOrders}
+                </div>
+                <div className="text-sm text-muted-foreground">طلبات الشراء</div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </SimpleCardContent>
+        </SimpleCard>
       </div>
 
       {/* Main Content */}
-      <Card>
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الموردين</h1>
-            <Button onClick={handleCreateVendor} className="flex items-center">
+      <SimpleCard>
+        <SimpleCardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-2xl font-bold text-foreground">إدارة الموردين</h1>
+            <SimpleButton onClick={handleCreateVendor} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 ml-2" />
               مورد جديد
-            </Button>
+            </SimpleButton>
+          </div>
+        </SimpleCardHeader>
+        <SimpleCardContent>
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+              <Input
+                type="text"
+                placeholder="البحث في الموردين..."
+                value={filters.search}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full sm:w-64"
+              />
+              <Select
+                value={filters.status}
+                onValueChange={(value) => handleFilterChange('status', value)}
+              >
+                <SelectTrigger className="w-full sm:w-48 text-right dir-rtl">
+                  <SelectValue placeholder="جميع الحالات" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">جميع الحالات</SelectItem>
+                  <SelectItem value="active">نشط</SelectItem>
+                  <SelectItem value="inactive">غير نشط</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {pagination.totalItems} مورد
+            </div>
           </div>
 
-          <DataTable
+          {/* Data Table */}
+          <DataView
             data={vendors}
             columns={columns}
-          >
-            {(table) => (
-              <div className="space-y-4">
-                {/* Search and Filters */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <input
-                      type="text"
-                      placeholder="البحث في الموردين..."
-                      value={filters.search}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <select
-                      value={filters.status}
-                      onChange={(e) => handleFilterChange('status', e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">جميع الحالات</option>
-                      <option value="active">نشط</option>
-                      <option value="inactive">غير نشط</option>
-                    </select>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {pagination.totalItems} مورد
-                  </div>
-                </div>
+            loading={loading}
+            emptyMessage="لا توجد موردين"
+            defaultView="table"
+          />
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      صفحة {pagination.page} من {pagination.totalPages}
-                    </div>
-                    <div className="flex space-x-2 space-x-reverse">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(pagination.page - 1)}
-                        disabled={pagination.page <= 1}
-                      >
-                        السابق
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={pagination.page >= pagination.totalPages}
-                      >
-                        التالي
-                      </Button>
-                    </div>
-                  </div>
-                )}
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-border">
+              <div className="text-sm text-muted-foreground">
+                صفحة {pagination.page} من {pagination.totalPages}
               </div>
-            )}
-          </DataTable>
-        </div>
-      </Card>
+              <div className="flex gap-2">
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  السابق
+                </SimpleButton>
+                <SimpleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  التالي
+                </SimpleButton>
+              </div>
+            </div>
+          )}
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Add/Edit Modal */}
       <Modal

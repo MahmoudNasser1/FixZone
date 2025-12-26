@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Wrench, Users, Warehouse, BarChart2, Settings, ChevronDown, ChevronRight,
   DollarSign, FileText, Package, UserCheck, Calendar, MessageSquare,
-  TrendingUp, PieChart, Activity, Shield, Database, HelpCircle,
+  TrendingUp, PieChart, Activity, Shield, Database, HelpCircle, ClipboardList,
   Smartphone, Printer, Monitor, HardDrive,
   CreditCard, Receipt, Banknote, Calculator, Building2, MapPin, ShoppingCart,
   Search, X, Inbox, Send
@@ -63,6 +63,7 @@ const navItems = [
       { href: '/inventory/warehouses', label: 'إدارة المخازن', icon: Building2 },
       { href: '/inventory/transfer', label: 'نقل المخزون', icon: Package },
       { href: '/inventory/stock-movements', label: 'حركة المخزون', icon: Activity },
+      { href: '/stock-count', label: 'جرد المخزون', icon: ClipboardList },
       { href: '/inventory/stock-alerts', label: 'تنبيهات المخزون', icon: Activity, badge: '3' },
       { href: '/inventory/reports', label: 'تقارير المخزون', icon: BarChart2 },
       { href: '/inventory/parts', label: 'قطع الغيار', icon: Package, badge: 'نقص' },

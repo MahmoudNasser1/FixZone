@@ -1342,15 +1342,15 @@ const RepairDetailsPage = () => {
 
   const getInvoiceStatusBadge = (status) => {
     const statusConfig = {
-      'draft': { variant: 'outline', className: 'bg-gray-100 text-gray-800' },
+      'draft': { variant: 'outline', className: 'bg-muted text-muted-foreground' },
       'sent': { variant: 'default', className: 'bg-blue-100 text-blue-800' },
       'paid': { variant: 'default', className: 'bg-green-100 text-green-800' },
       'unpaid': { variant: 'destructive', className: 'bg-red-100 text-red-800' },
       'partial': { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800' },
       'overdue': { variant: 'destructive', className: 'bg-red-100 text-red-800' },
-      'cancelled': { variant: 'outline', className: 'bg-gray-100 text-gray-800' }
+      'cancelled': { variant: 'outline', className: 'bg-muted text-muted-foreground' }
     };
-    const config = statusConfig[status] || { variant: 'outline', className: 'bg-gray-100 text-gray-800' };
+    const config = statusConfig[status] || { variant: 'outline', className: 'bg-muted text-muted-foreground' };
     return config;
   };
 
@@ -2255,7 +2255,7 @@ const RepairDetailsPage = () => {
       'in-progress': { text: 'قيد الإصلاح', color: 'bg-blue-100 text-blue-800', icon: Play },
       'waiting-parts': { text: 'بانتظار قطع غيار', color: 'bg-orange-100 text-orange-800', icon: ShoppingCart },
       'ready-for-pickup': { text: 'جاهز للاستلام', color: 'bg-green-100 text-green-800', icon: Package },
-      'on-hold': { text: 'معلق', color: 'bg-gray-100 text-gray-800', icon: AlertTriangle },
+      'on-hold': { text: 'معلق', color: 'bg-muted text-muted-foreground', icon: AlertTriangle },
       completed: { text: 'مكتمل', color: 'bg-green-100 text-green-800', icon: CheckCircle },
       cancelled: { text: 'ملغي', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
@@ -2264,7 +2264,7 @@ const RepairDetailsPage = () => {
 
   const getPriorityInfo = (priority) => {
     const priorityMap = {
-      LOW: { text: 'منخفضة', color: 'bg-gray-100 text-gray-800' },
+      LOW: { text: 'منخفضة', color: 'bg-muted text-muted-foreground' },
       MEDIUM: { text: 'متوسطة', color: 'bg-yellow-100 text-yellow-800' },
       HIGH: { text: 'عالية', color: 'bg-red-100 text-red-800' },
       URGENT: { text: 'عاجلة', color: 'bg-red-200 text-red-900' }
@@ -2308,7 +2308,7 @@ const RepairDetailsPage = () => {
       bank_transfer: 'bg-purple-100 text-purple-800',
       check: 'bg-orange-100 text-orange-800'
     };
-    return colors[method] || 'bg-gray-100 text-gray-800';
+    return colors[method] || 'bg-muted text-muted-foreground';
   };
 
   // دالة الحصول على نص طريقة الدفع
@@ -2336,7 +2336,7 @@ const RepairDetailsPage = () => {
   if (!repair) {
     return (
       <div className="p-8">
-        <p className="text-gray-600">الطلب غير موجود</p>
+        <p className="text-muted-foreground">الطلب غير موجود</p>
         <Link to="/repairs" className="mt-4 inline-block">
           <SimpleButton variant="outline">
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -2388,8 +2388,8 @@ const RepairDetailsPage = () => {
           {/* Tracking Link */}
           {repair.trackingToken || repair.id ? (
             <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="text-xs sm:text-sm text-gray-600 shrink-0">رابط التتبع:</span>
-              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5 w-full sm:max-w-md overflow-hidden">
+              <span className="text-xs sm:text-sm text-muted-foreground shrink-0">رابط التتبع:</span>
+              <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5 w-full sm:max-w-md overflow-hidden">
                 <span className="text-xs sm:text-sm text-blue-600 font-mono truncate flex-1">
                   {getFrontendBaseUrl()}/track?trackingToken={repair.trackingToken || repair.id}
                 </span>
@@ -2428,7 +2428,7 @@ const RepairDetailsPage = () => {
                   {trackingLinkCopied ? (
                     <Check className="w-4 h-4 text-green-600" />
                   ) : (
-                    <Copy className="w-4 h-4 text-gray-600" />
+                    <Copy className="w-4 h-4 text-muted-foreground" />
                   )}
                 </SimpleButton>
               </div>
@@ -2504,7 +2504,7 @@ const RepairDetailsPage = () => {
       {/* حوار إضافة خدمة - تصميم جديد */}
       {addServiceOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto transform transition-all overflow-hidden border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg my-auto transform transition-all overflow-hidden border border-border">
             {/* Header */}
             <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
               <div>
@@ -2513,7 +2513,7 @@ const RepairDetailsPage = () => {
               </div>
               <button
                 onClick={() => setAddServiceOpen(false)}
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+                className="bg-white/10 hover:bg-white/20 text-foreground p-2 rounded-lg transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -2528,12 +2528,12 @@ const RepairDetailsPage = () => {
               )}
 
               {/* Service Type Toggle */}
-              <div className="bg-gray-50 p-1.5 rounded-xl border border-gray-200 flex items-center relative">
+              <div className="bg-muted p-1.5 rounded-xl border border-border flex items-center relative">
                 <div className="flex-1 flex items-center justify-between px-4 py-2">
-                  <span className={`text-sm font-medium transition-colors ${!isManualService ? 'text-blue-700' : 'text-gray-500'}`}>
+                  <span className={`text-sm font-medium transition-colors ${!isManualService ? 'text-primary' : 'text-muted-foreground'}`}>
                     من القائمة - اختر خدمة محفوظة
                   </span>
-                  <Wrench className={`w-4 h-4 ${!isManualService ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <Wrench className={`w-4 h-4 ${!isManualService ? 'text-primary' : 'text-muted-foreground'}`} />
                 </div>
 
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -2547,12 +2547,12 @@ const RepairDetailsPage = () => {
                         setAddSvcError('');
                       }}
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-input peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
 
                 <div className="flex-1 flex items-center justify-between px-4 py-2 flex-row-reverse">
-                  <span className={`text-sm font-medium transition-colors ${isManualService ? 'text-blue-700' : 'text-gray-500'}`}>
+                  <span className={`text-sm font-medium transition-colors ${isManualService ? 'text-primary' : 'text-muted-foreground'}`}>
                     يدوي
                   </span>
                 </div>
@@ -2562,7 +2562,7 @@ const RepairDetailsPage = () => {
               <div className="space-y-4">
                 {!isManualService ? (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">اختر الخدمة <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">اختر الخدمة <span className="text-destructive">*</span></label>
                     <div className="relative">
                       <select
                         name="serviceId"
@@ -2572,7 +2572,7 @@ const RepairDetailsPage = () => {
                           const svc = availableServices.find(s => String(s.id) === String(sel) || String(s.serviceId) === String(sel));
                           setSvcForm(f => ({ ...f, serviceId: sel, price: svc ? (svc.basePrice || svc.price || svc.unitPrice || '') : f.price }));
                         }}
-                        className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white transition-shadow"
+                        className="w-full pl-4 pr-10 py-3 border border-input rounded-xl focus:ring-2 focus:ring-primary focus:border-primary appearance-none bg-background text-foreground transition-shadow"
                         disabled={availableServices.length === 0}
                       >
                         <option value="">-- اختر الخدمة --</option>
@@ -2587,13 +2587,13 @@ const RepairDetailsPage = () => {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">اسم الخدمة <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">اسم الخدمة <span className="text-destructive">*</span></label>
                     <input
                       type="text"
                       name="name"
                       value={manualServiceForm.name}
                       onChange={handleManualServiceChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                      className="w-full px-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-shadow bg-background text-foreground"
                       placeholder="أدخل اسم الخدمة..."
                     />
                   </div>
@@ -2601,7 +2601,7 @@ const RepairDetailsPage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الفني المسؤول <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">الفني المسؤول <span className="text-destructive">*</span></label>
                     <div className="relative">
                       <select
                         name="technicianId"
@@ -2620,14 +2620,14 @@ const RepairDetailsPage = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">السعر (جنيه) <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">السعر (جنيه) <span className="text-destructive">*</span></label>
                     <div className="relative">
                       <input
                         type="number"
                         name={isManualService ? "unitPrice" : "price"}
                         value={isManualService ? manualServiceForm.unitPrice : svcForm.price}
                         onChange={isManualService ? handleManualServiceChange : handleAddServiceChange}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-left ltr"
+                        className="w-full pl-12 pr-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-shadow text-left ltr bg-background text-foreground"
                         placeholder="0.00"
                       />
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">ج.م</span>
@@ -2637,7 +2637,7 @@ const RepairDetailsPage = () => {
 
                 {isManualService && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">الكمية</label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">الكمية</label>
                     <input
                       type="number"
                       name="quantity"
@@ -2650,7 +2650,7 @@ const RepairDetailsPage = () => {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">ملاحظات إضافية</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">ملاحظات إضافية</label>
                   <textarea
                     name="notes"
                     value={svcForm.notes}
@@ -2911,7 +2911,7 @@ const RepairDetailsPage = () => {
                                         step="0.01"
                                         value={editingService.price || service.price || ''}
                                         onChange={(e) => setEditingService({ ...editingService, price: e.target.value })}
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        className="w-full p-2 border border-input rounded-lg bg-background text-foreground"
                                       />
                                     </div>
                                     <div>
@@ -2919,7 +2919,7 @@ const RepairDetailsPage = () => {
                                       <select
                                         value={editingService.technicianId !== undefined ? editingService.technicianId : (service.technicianId || '')}
                                         onChange={(e) => setEditingService({ ...editingService, technicianId: e.target.value || null })}
-                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white"
+                                        className="w-full p-2 border border-input rounded-lg bg-background text-foreground"
                                       >
                                         <option value="">اختر الفني...</option>
                                         {techOptions.map((tech) => (
@@ -3914,7 +3914,7 @@ const RepairDetailsPage = () => {
                   {/* قائمة الأنشطة المفلترة */}
                   <div className="space-y-4">
                     {getFilteredSortedNotes().length === 0 ? (
-                      <p className="text-gray-600 text-center py-8">لا توجد أنشطة تطابق المرشح المحدد</p>
+                      <p className="text-muted-foreground text-center py-4">لا يوجد سجل نشاط يطابق المرشح المحدد</p>
                     ) : (
                       getFilteredSortedNotes().map((note) => {
                         const getActivityIcon = (type) => {

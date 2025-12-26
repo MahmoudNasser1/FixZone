@@ -14,7 +14,7 @@ const EditInventoryItemPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const notifications = useNotifications();
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -81,14 +81,14 @@ const EditInventoryItemPage = () => {
     setFormData(prev => ({
       ...prev,
       [name]: name.includes('Price')
-        ? parseFloat(value) || 0 
+        ? parseFloat(value) || 0
         : value
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name) {
       notifications.error('اسم الصنف مطلوب');
       return;
@@ -144,7 +144,7 @@ const EditInventoryItemPage = () => {
             <ArrowLeft className="w-4 h-4" />
             العودة
           </SimpleButton>
-          <h1 className="text-2xl font-bold text-gray-900">تعديل صنف</h1>
+          <h1 className="text-2xl font-bold text-foreground">تعديل صنف</h1>
         </div>
       </div>
 
@@ -157,8 +157,8 @@ const EditInventoryItemPage = () => {
           <SimpleCardContent className="space-y-6">
             {/* SKU */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                رمز المنتج (SKU) <span className="text-gray-400">(اختياري)</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                رمز المنتج (SKU) <span className="text-muted-foreground">(اختياري)</span>
               </label>
               <Input
                 type="text"
@@ -171,7 +171,7 @@ const EditInventoryItemPage = () => {
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 اسم الصنف <span className="text-red-500">*</span>
               </label>
               <Input
@@ -186,29 +186,29 @@ const EditInventoryItemPage = () => {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                الوصف <span className="text-gray-400">(اختياري)</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                الوصف <span className="text-muted-foreground">(اختياري)</span>
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="وصف مفصل للصنف..."
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 الفئة
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               >
                 <option value="">اختر الفئة</option>
                 {categories.map(cat => (
@@ -219,7 +219,7 @@ const EditInventoryItemPage = () => {
 
             {/* Unit */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 وحدة القياس
               </label>
               <Input
@@ -241,7 +241,7 @@ const EditInventoryItemPage = () => {
           <SimpleCardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   سعر الشراء
                 </label>
                 <Input
@@ -256,7 +256,7 @@ const EditInventoryItemPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   سعر البيع
                 </label>
                 <Input
@@ -272,17 +272,17 @@ const EditInventoryItemPage = () => {
             </div>
           </SimpleCardContent>
         </SimpleCard>
-        
+
         {/* Stock Management Note */}
-        <SimpleCard className="mt-6 bg-blue-50 border-blue-200">
+        <SimpleCard className="mt-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <SimpleCardContent className="p-6">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               <div>
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">إدارة الكمية</h3>
-                <p className="text-sm text-blue-800">
+                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">إدارة الكمية</h3>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   لإدارة الكمية المتاحة، يرجى الانتقال إلى قسم المخازن وإضافة الكمية المطلوبة لكل مخزن.
                 </p>
               </div>

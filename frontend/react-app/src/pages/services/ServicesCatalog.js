@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit2, 
-  Trash2, 
-  Eye, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit2,
+  Trash2,
+  Eye,
   MoreVertical,
   Package,
   Clock,
@@ -29,7 +29,7 @@ const ServicesCatalog = () => {
   const notify = (type, message) => {
     notifications.addNotification({ type, message });
   };
-  
+
   // State management
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +42,11 @@ const ServicesCatalog = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  
+
   // Multi-select state
   const [selectedServices, setSelectedServices] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  
+
   // Actions menu
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef(null);
@@ -67,7 +67,7 @@ const ServicesCatalog = () => {
       if (statusFilter !== '') params.isActive = statusFilter === 'active' ? 'true' : 'false';
 
       const data = await apiService.getServices(params);
-      
+
       setServices(data.items || []);
       setTotalPages(data.totalPages || 1);
       setTotalItems(data.total || 0);
@@ -177,8 +177,8 @@ const ServicesCatalog = () => {
       try {
         const deletePromises = selectedServices.map(id => apiService.deleteService(id));
         await Promise.all(deletePromises);
-        
-        setServices(prevServices => 
+
+        setServices(prevServices =>
           prevServices.filter(service => !selectedServices.includes(service.id))
         );
         setSelectedServices([]);
@@ -321,11 +321,10 @@ const ServicesCatalog = () => {
       render: (service) => (
         <button
           onClick={() => handleToggleStatus(service.id, service.isActive)}
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-            service.isActive
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${service.isActive
               ? 'bg-green-100 text-green-800 hover:bg-green-200'
               : 'bg-red-100 text-red-800 hover:bg-red-200'
-          }`}
+            }`}
         >
           {service.isActive ? (
             <>
@@ -376,13 +375,13 @@ const ServicesCatalog = () => {
   ];
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-6 bg-background min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">كتالوج الخدمات</h1>
-            <p className="text-gray-600 mt-1">إدارة جميع خدمات الإصلاح المتاحة</p>
+            <h1 className="text-2xl font-bold text-foreground">كتالوج الخدمات</h1>
+            <p className="text-muted-foreground mt-1">إدارة جميع خدمات الإصلاح المتاحة</p>
           </div>
           <SimpleButton
             onClick={() => navigate('/services/new')}
@@ -395,10 +394,10 @@ const ServicesCatalog = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+      <div className="bg-muted/30 rounded-lg p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               البحث
             </label>
             <div className="relative">
@@ -411,9 +410,9 @@ const ServicesCatalog = () => {
               />
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               الفئة
             </label>
             <Select
@@ -429,8 +428,8 @@ const ServicesCatalog = () => {
                   <SelectItem value="" disabled>جاري التحميل...</SelectItem>
                 ) : (
                   categories.map(cat => (
-                    <SelectItem 
-                      key={cat.id || cat.name || cat} 
+                    <SelectItem
+                      key={cat.id || cat.name || cat}
                       value={cat.name || cat}
                     >
                       {cat.name || cat}
@@ -442,7 +441,7 @@ const ServicesCatalog = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               الحالة
             </label>
             <Select
@@ -461,7 +460,7 @@ const ServicesCatalog = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               ترتيب حسب
             </label>
             <Select
@@ -521,51 +520,51 @@ const ServicesCatalog = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center">
             <Package className="w-8 h-8 text-blue-600" />
             <div className="mr-3">
-              <p className="text-sm font-medium text-gray-600">إجمالي الخدمات</p>
-              <p className="text-2xl font-bold text-gray-900">{totalItems}</p>
+              <p className="text-sm font-medium text-muted-foreground">إجمالي الخدمات</p>
+              <p className="text-2xl font-bold text-foreground">{totalItems}</p>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+
+        <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center">
             <CheckCircle className="w-8 h-8 text-green-600" />
             <div className="mr-3">
-              <p className="text-sm font-medium text-gray-600">الخدمات النشطة</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-muted-foreground">الخدمات النشطة</p>
+              <p className="text-2xl font-bold text-foreground">
                 {services.filter(s => s.isActive).length}
               </p>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+
+        <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center">
             <XCircle className="w-8 h-8 text-red-600" />
             <div className="mr-3">
-              <p className="text-sm font-medium text-gray-600">الخدمات غير النشطة</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-muted-foreground">الخدمات غير النشطة</p>
+              <p className="text-2xl font-bold text-foreground">
                 {services.filter(s => !s.isActive).length}
               </p>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+
+        <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center">
             <DollarSign className="w-8 h-8 text-yellow-600" />
             <div className="mr-3">
-              <p className="text-sm font-medium text-gray-600">متوسط السعر</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {services.length > 0 
+              <p className="text-sm font-medium text-muted-foreground">متوسط السعر</p>
+              <p className="text-2xl font-bold text-foreground">
+                {services.length > 0
                   ? Math.round(services.reduce((sum, s) => {
-                      const price = parseFloat(s.basePrice) || 0;
-                      return sum + price;
-                    }, 0) / services.length)
+                    const price = parseFloat(s.basePrice) || 0;
+                    return sum + price;
+                  }, 0) / services.length)
                   : 0} ج.م
               </p>
             </div>
@@ -574,7 +573,7 @@ const ServicesCatalog = () => {
       </div>
 
       {/* Services Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
         {/* Bulk Actions Bar */}
         {selectedServices.length > 0 && (
           <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
@@ -613,9 +612,9 @@ const ServicesCatalog = () => {
             {/* Services Table */}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       <input
                         type="checkbox"
                         checked={selectAll}
@@ -623,29 +622,29 @@ const ServicesCatalog = () => {
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       />
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       اسم الخدمة
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       الفئة
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       السعر الأساسي
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       المدة المقدرة
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       الحالة
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       الإجراءات
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {services.map((service) => (
-                    <tr key={service.id} className="hover:bg-gray-50">
+                    <tr key={service.id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
@@ -691,11 +690,10 @@ const ServicesCatalog = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => handleToggleStatus(service.id, service.isActive)}
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            service.isActive
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${service.isActive
                               ? 'bg-green-100 text-green-800 hover:bg-green-200'
                               : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
+                            }`}
                         >
                           {service.isActive ? (
                             <>
@@ -751,8 +749,8 @@ const ServicesCatalog = () => {
             {services.length === 0 && (
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد خدمات متاحة</h3>
-                <p className="text-gray-600 mb-4">ابدأ بإضافة خدمة جديدة لعرضها هنا</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">لا توجد خدمات متاحة</h3>
+                <p className="text-muted-foreground mb-4">ابدأ بإضافة خدمة جديدة لعرضها هنا</p>
                 <SimpleButton
                   onClick={() => navigate('/services/new')}
                   className="bg-green-600 hover:bg-green-700 text-white"

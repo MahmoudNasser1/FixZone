@@ -4,15 +4,15 @@ import apiService from '../../services/api';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import { Input } from '../../components/ui/Input';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/Select';
-import { 
-  ArrowRight, User, Phone, Mail, MapPin, 
+import {
+  ArrowRight, User, Phone, Mail, MapPin,
   Building2, Save, X, AlertCircle, CheckCircle,
   Star, MessageSquare, Settings, UserCheck,
   Calendar, Clock, Shield, Eye
@@ -49,9 +49,9 @@ const EditCustomerPage = () => {
       setLoading(true);
       setError(null);
       const response = await apiService.getCustomer(id);
-      
+
       console.log('Customer data received:', response);
-      
+
       // التحقق من وجود البيانات
       let customer;
       if (response && response.id) {
@@ -61,12 +61,12 @@ const EditCustomerPage = () => {
       } else {
         throw new Error('العميل غير موجود أو البيانات غير صحيحة');
       }
-      
+
       // تحليل customFields
       const customFields = (() => {
         try {
-          return typeof customer.customFields === 'string' 
-            ? JSON.parse(customer.customFields) 
+          return typeof customer.customFields === 'string'
+            ? JSON.parse(customer.customFields)
             : customer.customFields || {};
         } catch {
           console.warn('Failed to parse customFields:', customer.customFields);
@@ -87,12 +87,12 @@ const EditCustomerPage = () => {
         preferredContact: customFields.preferredContact || 'phone',
         notes: customFields.notes || ''
       };
-      
+
       console.log('Setting form data:', newFormData);
       console.log('Customer companyId:', customer.companyId);
-      
+
       setFormData(newFormData);
-      
+
       console.log('Form data set:', {
         name: customer.name || '',
         phone: customer.phone || '',
@@ -106,7 +106,7 @@ const EditCustomerPage = () => {
     } catch (err) {
       console.error('Error fetching customer:', err);
       setError('حدث خطأ في تحميل بيانات العميل: ' + err.message);
-      
+
       // إضافة بيانات تجريبية في حالة الخطأ
       setFormData({
         name: 'عميل تجريبي',
@@ -119,7 +119,7 @@ const EditCustomerPage = () => {
         preferredContact: 'phone',
         notes: 'هذه بيانات تجريبية - حدث خطأ في تحميل البيانات'
       });
-      
+
       console.log('Using fallback data due to error');
     } finally {
       setLoading(false);
@@ -154,23 +154,23 @@ const EditCustomerPage = () => {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = 'الاسم مطلوب';
     } else if (formData.name.trim().length < 2) {
       errors.name = 'الاسم يجب أن يكون أكثر من حرفين';
     }
-    
+
     if (!formData.phone.trim()) {
       errors.phone = 'رقم الهاتف مطلوب';
     } else if (!/^[0-9+\-\s()]+$/.test(formData.phone.trim())) {
       errors.phone = 'رقم الهاتف غير صحيح';
     }
-    
+
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = 'البريد الإلكتروني غير صحيح';
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -182,7 +182,7 @@ const EditCustomerPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
+
     // مسح خطأ التحقق عند التعديل
     if (validationErrors[name]) {
       setValidationErrors(prev => ({
@@ -202,7 +202,7 @@ const EditCustomerPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       setError('يرجى تصحيح الأخطاء في النموذج');
       return;
@@ -227,24 +227,24 @@ const EditCustomerPage = () => {
           notes: formData.notes.trim()
         }
       };
-      
+
       console.log('Sending customer data:', customerData);
       console.log('Company ID being sent:', customerData.companyId);
 
       const response = await apiService.updateCustomer(id, customerData);
       console.log('Update response:', response);
-      
+
       if (response && response.success) {
         console.log('Customer updated successfully:', response);
       } else {
         throw new Error('فشل في تحديث بيانات العميل');
       }
-      
+
       setSuccess(true);
       setTimeout(() => {
         navigate(`/customers/${id}`);
       }, 1500);
-      
+
     } catch (err) {
       console.error('Error updating customer:', err);
       setError('حدث خطأ في تحديث بيانات العميل: ' + (err.message || 'خطأ غير معروف'));
@@ -258,8 +258,8 @@ const EditCustomerPage = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-6 text-lg text-gray-600">جاري تحميل بيانات العميل...</p>
-          <p className="mt-2 text-sm text-gray-500">يرجى الانتظار</p>
+          <p className="mt-6 text-lg text-muted-foreground">جاري تحميل بيانات العميل...</p>
+          <p className="mt-2 text-sm text-muted-foreground/60">يرجى الانتظار</p>
         </div>
       </div>
     );
@@ -271,10 +271,10 @@ const EditCustomerPage = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-lg text-gray-600">لا توجد بيانات للعرض</p>
+          <p className="text-lg text-muted-foreground">لا توجد بيانات للعرض</p>
           <p className="mt-2 text-sm text-gray-500">يرجى المحاولة مرة أخرى</p>
-          <SimpleButton 
-            onClick={() => fetchCustomer()} 
+          <SimpleButton
+            onClick={() => fetchCustomer()}
             className="mt-4"
           >
             إعادة المحاولة
@@ -300,7 +300,7 @@ const EditCustomerPage = () => {
               <p className="text-blue-100 mt-1">تحديث معلومات العميل وإعداداته</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3 space-x-reverse">
             <Link to={`/customers/${id}`}>
               <SimpleButton variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -344,13 +344,13 @@ const EditCustomerPage = () => {
             <SimpleCardTitle className="flex items-center text-lg">
               <User className="w-6 h-6 text-blue-600 ml-3" />
               البيانات الأساسية
-              <span className="text-sm text-gray-500 mr-2">(مطلوب)</span>
+              <span className="text-sm text-muted-foreground mr-2">(مطلوب)</span>
             </SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent className="p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   الاسم الكامل *
                 </label>
                 <Input
@@ -368,9 +368,9 @@ const EditCustomerPage = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   رقم الهاتف *
                 </label>
                 <Input
@@ -388,9 +388,9 @@ const EditCustomerPage = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   البريد الإلكتروني
                 </label>
                 <Input
@@ -408,9 +408,9 @@ const EditCustomerPage = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   العنوان
                 </label>
                 <Input
@@ -420,13 +420,13 @@ const EditCustomerPage = () => {
                   placeholder="العنوان الكامل للعميل"
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   حالة العميل
                 </label>
-                <Select 
-                  value={formData.status || 'active'} 
+                <Select
+                  value={formData.status || 'active'}
                   onValueChange={(value) => handleSelectChange('status', value)}
                 >
                   <SelectTrigger>
@@ -441,7 +441,7 @@ const EditCustomerPage = () => {
                     </SelectItem>
                     <SelectItem value="inactive">
                       <div className="flex items-center">
-                        <div className="w-2 h-2 bg-gray-500 rounded-full ml-2"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full ml-2"></div>
                         غير نشط
                       </div>
                     </SelectItem>
@@ -464,11 +464,11 @@ const EditCustomerPage = () => {
           <SimpleCardContent className="p-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   الشركة التابع لها
                 </label>
-                <Select 
-                  value={formData.companyId || ''} 
+                <Select
+                  value={formData.companyId || ''}
                   onValueChange={(value) => handleSelectChange('companyId', value)}
                 >
                   <SelectTrigger className="w-full">
@@ -488,11 +488,11 @@ const EditCustomerPage = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   يمكنك ربط العميل بشركة معينة أو تركه كعميل فردي
                 </p>
               </div>
-              
+
               {/* عرض معلومات الشركة المختارة */}
               {formData.companyId && (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -532,11 +532,11 @@ const EditCustomerPage = () => {
           <SimpleCardContent className="p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   طريقة التواصل المفضلة
                 </label>
-                <Select 
-                  value={formData.preferredContact || 'phone'} 
+                <Select
+                  value={formData.preferredContact || 'phone'}
                   onValueChange={(value) => handleSelectChange('preferredContact', value)}
                 >
                   <SelectTrigger>
@@ -558,9 +558,9 @@ const EditCustomerPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-4">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   نوع العميل
                 </label>
                 <div className="flex items-center space-x-3 space-x-reverse p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -569,20 +569,20 @@ const EditCustomerPage = () => {
                     name="isVip"
                     checked={formData.isVip || false}
                     onChange={handleInputChange}
-                    className="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                    className="w-5 h-5 rounded border-input text-primary focus:ring-primary"
                   />
                   <div className="flex items-center">
                     <Star className="w-5 h-5 text-yellow-600 ml-2" />
-                    <span className="text-sm font-medium text-gray-700">عميل VIP</span>
+                    <span className="text-sm font-medium text-foreground">عميل VIP</span>
                   </div>
                   <Shield className="w-4 h-4 text-yellow-600" />
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   العملاء VIP يحصلون على معاملة خاصة وأولوية في الخدمة
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-6 space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 ملاحظات إضافية
@@ -592,7 +592,7 @@ const EditCustomerPage = () => {
                 value={formData.notes || ''}
                 onChange={handleInputChange}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-background text-foreground"
                 placeholder="أي ملاحظات إضافية عن العميل، تفضيلاته، أو معلومات مهمة..."
               />
               <p className="text-xs text-gray-500">
@@ -603,12 +603,12 @@ const EditCustomerPage = () => {
         </SimpleCard>
 
         {/* أزرار الحفظ */}
-        <div className="flex justify-between items-center bg-gray-50 p-6 rounded-lg">
-          <div className="flex items-center text-sm text-gray-600">
+        <div className="flex justify-between items-center bg-muted/30 p-6 rounded-lg">
+          <div className="flex items-center text-sm text-muted-foreground">
             <Clock className="w-4 h-4 ml-2" />
             آخر تحديث: {new Date().toLocaleDateString('en-GB')}
           </div>
-          
+
           <div className="flex items-center space-x-4 space-x-reverse">
             <Link to={`/customers/${id}`}>
               <SimpleButton type="button" variant="outline" size="lg">
@@ -616,8 +616,8 @@ const EditCustomerPage = () => {
                 إلغاء
               </SimpleButton>
             </Link>
-            <SimpleButton 
-              type="submit" 
+            <SimpleButton
+              type="submit"
               disabled={saving}
               className="flex items-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               size="lg"

@@ -8,8 +8,8 @@ import { Label } from '../../components/ui/Label';
 import { Textarea } from '../../components/ui/Textarea';
 import { Switch } from '../../components/ui/Switch';
 import { Alert, AlertDescription } from '../../components/ui/Alert';
-import { 
-  Save, X, User, Phone, Mail, MapPin, Building2, 
+import {
+  Save, X, User, Phone, Mail, MapPin, Building2,
   AlertCircle, CheckCircle, Star, Users
 } from 'lucide-react';
 import {
@@ -58,7 +58,7 @@ const NewCustomerPage = () => {
       ...prev,
       [field]: value
     }));
-    
+
     // إزالة الخطأ عند التعديل
     if (errors[field]) {
       setErrors(prev => ({
@@ -94,7 +94,7 @@ const NewCustomerPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -120,17 +120,17 @@ const NewCustomerPage = () => {
       // إرسال البيانات إلى Backend
       const result = await apiService.createCustomer(customerData);
       console.log('Customer created successfully:', result);
-      
+
       setSuccess(true);
-      
+
       // الانتقال إلى صفحة العملاء بعد 2 ثانية
       setTimeout(() => {
         navigate('/customers');
       }, 2000);
-      
+
     } catch (error) {
       console.error('Error creating customer:', error);
-      
+
       // Use the error message from the backend if available
       if (error.message && error.message !== `HTTP error! status: ${error.message}`) {
         setErrors({ submit: error.message });
@@ -159,8 +159,8 @@ const NewCustomerPage = () => {
         <X className="w-4 h-4 ml-2" />
         إلغاء
       </Button>
-      <Button 
-        onClick={handleSubmit} 
+      <Button
+        onClick={handleSubmit}
         disabled={loading}
         className="bg-green-600 hover:bg-green-700"
       >
@@ -172,209 +172,209 @@ const NewCustomerPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-        {/* رسائل النجاح والخطأ */}
-        {success && (
-          <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
-              تم إنشاء العميل بنجاح! سيتم توجيهك إلى قائمة العملاء...
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* رسائل النجاح والخطأ */}
+      {success && (
+        <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            تم إنشاء العميل بنجاح! سيتم توجيهك إلى قائمة العملاء...
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {errors.submit && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{errors.submit}</AlertDescription>
-          </Alert>
-        )}
+      {errors.submit && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errors.submit}</AlertDescription>
+        </Alert>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* المعلومات الأساسية */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 space-x-reverse">
-                <User className="w-5 h-5" />
-                <span>المعلومات الأساسية</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">اسم العميل *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="أدخل اسم العميل"
-                    className={errors.name ? 'border-red-500' : ''}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-600">{errors.name}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">رقم الهاتف *</Label>
-                  <div className="relative">
-                    <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="أدخل رقم الهاتف"
-                      className={`pr-10 ${errors.phone ? 'border-red-500' : ''}`}
-                      dir="ltr"
-                    />
-                  </div>
-                  {errors.phone && (
-                    <p className="text-sm text-red-600">{errors.phone}</p>
-                  )}
-                </div>
-              </div>
-
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* المعلومات الأساسية */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 space-x-reverse">
+              <User className="w-5 h-5" />
+              <span>المعلومات الأساسية</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="example@email.com"
-                    className={`pr-10 ${errors.email ? 'border-red-500' : ''}`}
-                    dir="ltr"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email}</p>
+                <Label htmlFor="name">اسم العميل *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="أدخل اسم العميل"
+                  className={errors.name ? 'border-red-500' : ''}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-600">{errors.name}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">العنوان</Label>
+                <Label htmlFor="phone">رقم الهاتف *</Label>
                 <div className="relative">
-                  <MapPin className="absolute right-3 top-3 text-gray-400 w-4 h-4" />
-                  <Textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="أدخل عنوان العميل"
-                    className="pr-10"
-                    rows={3}
+                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/60 w-4 h-4" />
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="أدخل رقم الهاتف"
+                    className={`pr-10 ${errors.phone ? 'border-red-500' : ''}`}
+                    dir="ltr"
                   />
                 </div>
+                {errors.phone && (
+                  <p className="text-sm text-red-600">{errors.phone}</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* معلومات الشركة */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 space-x-reverse">
-                <Building2 className="w-5 h-5" />
-                <span>معلومات الشركة</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <div className="relative">
+                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/60 w-4 h-4" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="example@email.com"
+                  className={`pr-10 ${errors.email ? 'border-red-500' : ''}`}
+                  dir="ltr"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">العنوان</Label>
+              <div className="relative">
+                <MapPin className="absolute right-3 top-3 text-muted-foreground/60 w-4 h-4" />
+                <Textarea
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  placeholder="أدخل عنوان العميل"
+                  className="pr-10"
+                  rows={3}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* معلومات الشركة */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 space-x-reverse">
+              <Building2 className="w-5 h-5" />
+              <span>معلومات الشركة</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">الشركة التابع لها (اختياري)</Label>
+              <Select
+                value={formData.companyId}
+                onValueChange={(value) => handleInputChange('companyId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر الشركة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">عميل فردي</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id.toString()}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* الإعدادات المتقدمة */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 space-x-reverse">
+              <Users className="w-5 h-5" />
+              <span>الإعدادات المتقدمة</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company">الشركة التابع لها (اختياري)</Label>
-                <Select 
-                  value={formData.companyId} 
-                  onValueChange={(value) => handleInputChange('companyId', value)}
+                <Label htmlFor="preferredContact">طريقة التواصل المفضلة</Label>
+                <Select
+                  value={formData.preferredContact}
+                  onValueChange={(value) => handleInputChange('preferredContact', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر الشركة" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">عميل فردي</SelectItem>
-                    {companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="phone">مكالمة هاتفية</SelectItem>
+                    <SelectItem value="email">بريد إلكتروني</SelectItem>
+                    <SelectItem value="whatsapp">واتساب</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* الإعدادات المتقدمة */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 space-x-reverse">
-                <Users className="w-5 h-5" />
-                <span>الإعدادات المتقدمة</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="preferredContact">طريقة التواصل المفضلة</Label>
-                  <Select 
-                    value={formData.preferredContact} 
-                    onValueChange={(value) => handleInputChange('preferredContact', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="phone">مكالمة هاتفية</SelectItem>
-                      <SelectItem value="email">بريد إلكتروني</SelectItem>
-                      <SelectItem value="whatsapp">واتساب</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center space-x-3 space-x-reverse">
-                  <Switch
-                    id="vip"
-                    checked={formData.vipCustomer}
-                    onCheckedChange={(checked) => handleInputChange('vipCustomer', checked)}
-                  />
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <Label htmlFor="vip">عميل VIP</Label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">ملاحظات</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="أي ملاحظات إضافية حول العميل..."
-                  rows={4}
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <Switch
+                  id="vip"
+                  checked={formData.vipCustomer}
+                  onCheckedChange={(checked) => handleInputChange('vipCustomer', checked)}
                 />
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <Label htmlFor="vip">عميل VIP</Label>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* أزرار الحفظ والإلغاء */}
-          <div className="flex justify-end space-x-4 space-x-reverse">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              <X className="w-4 h-4 ml-2" />
-              إلغاء
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Save className="w-4 h-4 ml-2" />
-              {loading ? 'جاري الحفظ...' : 'حفظ العميل'}
-            </Button>
-          </div>
-        </form>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">ملاحظات</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="أي ملاحظات إضافية حول العميل..."
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* أزرار الحفظ والإلغاء */}
+        <div className="flex justify-end space-x-4 space-x-reverse">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={loading}
+          >
+            <X className="w-4 h-4 ml-2" />
+            إلغاء
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Save className="w-4 h-4 ml-2" />
+            {loading ? 'جاري الحفظ...' : 'حفظ العميل'}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 

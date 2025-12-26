@@ -68,15 +68,15 @@ const DashboardPage = () => {
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase() || '';
     if (statusLower.includes('completed') || statusLower.includes('delivered')) {
-      return 'text-green-600 bg-green-50';
+      return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
     }
     if (statusLower.includes('pending') || statusLower.includes('received')) {
-      return 'text-yellow-600 bg-yellow-50';
+      return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400';
     }
     if (statusLower.includes('in_progress') || statusLower.includes('diagnosed')) {
-      return 'text-blue-600 bg-blue-50';
+      return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400';
     }
-    return 'text-gray-600 bg-gray-50';
+    return 'text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-400';
   };
 
   if (loading && !stats) {
@@ -95,12 +95,12 @@ const DashboardPage = () => {
     return (
       <div className="p-4">
         <h1 className="text-3xl font-bold mb-6">لوحة التحكم</h1>
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-300 px-4 py-3 rounded">
           <p className="font-semibold">خطأ في التحميل</p>
           <p className="text-sm">{error}</p>
           <button
             onClick={loadDashboardData}
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
           >
             إعادة المحاولة
           </button>
@@ -126,12 +126,12 @@ const DashboardPage = () => {
       {alerts && (alerts.totalAlerts > 0 || alerts.delayedCount > 0 || alerts.lowStockCount > 0) && (
         <div className="mb-6 space-y-3">
           {alerts.delayedCount > 0 && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+            <div className="bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-300 px-4 py-3 rounded">
               <p className="font-semibold">⚠️ طلبات متأخرة: {alerts.delayedCount}</p>
             </div>
           )}
           {alerts.lowStockCount > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-900/50 dark:text-yellow-300 px-4 py-3 rounded">
               <p className="font-semibold">⚠️ أصناف منخفضة المخزون: {alerts.lowStockCount}</p>
             </div>
           )}

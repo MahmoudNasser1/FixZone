@@ -343,11 +343,11 @@ const InventoryPageEnhanced = () => {
 
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc'
-      ? <ArrowUp className="w-4 h-4 text-blue-600" />
-      : <ArrowDown className="w-4 h-4 text-blue-600" />;
+      ? <ArrowUp className="w-4 h-4 text-blue-500" />
+      : <ArrowDown className="w-4 h-4 text-blue-500" />;
   };
 
   const getStockStatusBadge = (item) => {
@@ -355,16 +355,16 @@ const InventoryPageEnhanced = () => {
     const available = stock.quantity || 0;
 
     if (available === 0) {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
         نفذ
       </span>;
     } else if (available <= (stock.minLevel || 5)) {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
         <AlertTriangle className="w-3 h-3 ml-1" />
         منخفض
       </span>;
     } else {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
         متوفر
       </span>;
     }
@@ -429,11 +429,11 @@ const InventoryPageEnhanced = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
             <Package className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
             إدارة المخزون
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">إدارة الأصناف والمستودعات ومستويات المخزون</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">إدارة الأصناف والمستودعات ومستويات المخزون</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -487,7 +487,7 @@ const InventoryPageEnhanced = () => {
         <SimpleCardContent className="p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 <Search className="w-3.5 h-3.5 inline ml-1" />
                 البحث
               </label>
@@ -501,14 +501,14 @@ const InventoryPageEnhanced = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 <Filter className="w-3.5 h-3.5 inline ml-1" />
                 الفئة
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full h-9 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
+                className="w-full h-9 px-3 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
               >
                 <option value="">الكل</option>
                 {categories.map(cat => (
@@ -518,14 +518,14 @@ const InventoryPageEnhanced = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 inline ml-1" />
                 حالة المخزون
               </label>
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="w-full h-9 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
+                className="w-full h-9 px-3 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
               >
                 <option value="all">الكل</option>
                 <option value="normal">متوفر</option>
@@ -542,10 +542,10 @@ const InventoryPageEnhanced = () => {
         <SimpleCardHeader className="px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-3">
-              <span className="font-semibold text-sm sm:text-base">قائمة الأصناف ({getFilteredAndSortedItems().length})</span>
+              <span className="font-semibold text-sm sm:text-base text-foreground">قائمة الأصناف ({getFilteredAndSortedItems().length})</span>
               {selectedItems.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] sm:text-xs text-gray-600">({selectedItems.length} محدد)</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">({selectedItems.length} محدد)</span>
                   <SimpleButton
                     variant="danger"
                     size="sm"
@@ -565,7 +565,7 @@ const InventoryPageEnhanced = () => {
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-8 px-2 py-0 border border-gray-300 rounded-md text-xs bg-background"
+                className="h-8 px-2 py-0 border border-border rounded-md text-xs bg-background text-foreground"
               >
                 <option value="10">10</option>
                 <option value="25">25</option>
@@ -604,77 +604,77 @@ const InventoryPageEnhanced = () => {
               {/* Desktop Table View */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-muted/50 border-b border-border">
                     <tr>
                       <th className="px-4 py-3 text-center">
                         <input
                           type="checkbox"
                           checked={selectedItems.length === getCurrentPageItems().length && getCurrentPageItems().length > 0}
                           onChange={(e) => handleSelectAll(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500 cursor-pointer bg-background"
                         />
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         #
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('name')}
-                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                          className="flex items-center gap-1 hover:text-foreground font-bold"
                         >
                           الاسم
                           {renderSortIcon('name')}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('sku')}
-                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                          className="flex items-center gap-1 hover:text-foreground font-bold"
                         >
                           SKU
                           {renderSortIcon('sku')}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('category')}
-                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                          className="flex items-center gap-1 hover:text-foreground font-bold"
                         >
                           الفئة
                           {renderSortIcon('category')}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('stock')}
-                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                          className="flex items-center gap-1 hover:text-foreground font-bold"
                         >
                           المخزون
                           {renderSortIcon('stock')}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('price')}
-                          className="flex items-center gap-1 hover:text-gray-700 font-bold"
+                          className="flex items-center gap-1 hover:text-foreground font-bold"
                         >
                           السعر
                           {renderSortIcon('price')}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider font-bold">
                         الحالة
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider font-bold">
                         الإجراءات
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-background divide-y divide-border">
                     {getCurrentPageItems().length === 0 ? (
                       <tr>
-                        <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
-                          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <td colSpan="9" className="px-6 py-12 text-center text-muted-foreground">
+                          <Package className="w-12 h-12 mx-auto mb-3 text-muted" />
                           <p className="text-lg">لا توجد أصناف تطابق معايير البحث</p>
                         </td>
                       </tr>
@@ -685,45 +685,45 @@ const InventoryPageEnhanced = () => {
                         const warehousesCount = (stock.warehouses || []).length;
 
                         return (
-                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                          <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                             <td className="px-4 py-4 whitespace-nowrap text-center">
                               <input
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
                                 onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500 cursor-pointer bg-background"
                               />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-xs font-mono text-gray-500">#{item.id}</span>
+                              <span className="text-xs font-mono text-muted-foreground">#{item.id}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm font-bold text-gray-900">{item.name}</div>
+                              <div className="text-sm font-bold text-foreground">{item.name}</div>
                               {item.description && (
-                                <div className="text-xs text-gray-500 truncate max-w-xs">{item.description}</div>
+                                <div className="text-xs text-muted-foreground truncate max-w-xs">{item.description}</div>
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{item.sku || 'N/A'}</code>
+                              <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded border border-border text-foreground">{item.sku || 'N/A'}</code>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">
                                 {item.category || 'غير مصنف'}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {stock.error ? (
-                                <span className="text-[10px] text-red-500 bg-red-50 px-2 py-1 rounded border border-red-100">غير مضاف للمخازن</span>
+                                <span className="text-[10px] text-red-500 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">غير مضاف للمخازن</span>
                               ) : (
                                 <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-gray-900">{available} {item.unit || 'قطعة'}</span>
-                                  {warehousesCount > 0 && <span className="text-[10px] text-gray-400">{warehousesCount} مخازن</span>}
+                                  <span className="text-sm font-bold text-foreground">{available} {item.unit || 'قطعة'}</span>
+                                  {warehousesCount > 0 && <span className="text-[10px] text-muted-foreground">{warehousesCount} مخازن</span>}
                                 </div>
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-bold text-blue-700">{formatMoney(item.sellingPrice)}</div>
-                              <div className="text-[10px] text-gray-400">التكلفة: {formatMoney(item.purchasePrice)}</div>
+                              <div className="text-sm font-bold text-blue-500">{formatMoney(item.sellingPrice)}</div>
+                              <div className="text-[10px] text-muted-foreground">التكلفة: {formatMoney(item.purchasePrice)}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getStockStatusBadge(item)}
@@ -734,7 +734,7 @@ const InventoryPageEnhanced = () => {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => navigate(`/inventory/${item.id}`)}
-                                  className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                                  className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-500/10"
                                   title="عرض"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -743,7 +743,7 @@ const InventoryPageEnhanced = () => {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleManageStock(item)}
-                                  className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
+                                  className="h-8 w-8 p-0 text-purple-500 hover:bg-purple-500/10"
                                   title="تعديل المخزون"
                                 >
                                   <Warehouse className="w-4 h-4" />
@@ -752,7 +752,7 @@ const InventoryPageEnhanced = () => {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                                  className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                                  className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"
                                   title="تعديل البيانات"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -768,10 +768,10 @@ const InventoryPageEnhanced = () => {
               </div>
 
               {/* Mobile Card View */}
-              <div className="sm:hidden divide-y divide-gray-100">
+              <div className="sm:hidden divide-y divide-border">
                 {getCurrentPageItems().length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Package className="w-10 h-10 mx-auto mb-2 text-muted" />
                     <p className="text-sm">لا توجد أصناف</p>
                   </div>
                 ) : (
@@ -780,57 +780,57 @@ const InventoryPageEnhanced = () => {
                     const available = stock.quantity || 0;
 
                     return (
-                      <div key={item.id} className="p-4 active:bg-gray-50">
+                      <div key={item.id} className="p-4 active:bg-muted/50">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-start gap-2">
                             <input
                               type="checkbox"
                               checked={selectedItems.includes(item.id)}
                               onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded"
+                              className="mt-1 w-4 h-4 text-blue-600 border-border rounded bg-background"
                             />
                             <div>
-                              <h3 className="text-sm font-bold text-gray-900 leading-tight">{item.name}</h3>
+                              <h3 className="text-sm font-bold text-foreground leading-tight">{item.name}</h3>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">#{item.id}</span>
-                                <span className="text-[10px] text-gray-400">{item.sku}</span>
+                                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">#{item.id}</span>
+                                <span className="text-[10px] text-muted-foreground">{item.sku}</span>
                               </div>
                             </div>
                           </div>
                           {getStockStatusBadge(item)}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mt-3 bg-gray-50/50 rounded-lg p-2 border border-gray-100">
+                        <div className="grid grid-cols-2 gap-4 mt-3 bg-muted/30 rounded-lg p-2 border border-border">
                           <div>
-                            <span className="text-[10px] text-gray-500 block mb-0.5">المخزون</span>
-                            <span className="text-sm font-bold text-gray-900">{available} {item.unit || 'قطعة'}</span>
+                            <span className="text-[10px] text-muted-foreground block mb-0.5">المخزون</span>
+                            <span className="text-sm font-bold text-foreground">{available} {item.unit || 'قطعة'}</span>
                           </div>
                           <div className="text-left">
-                            <span className="text-[10px] text-gray-500 block mb-0.5">السعر</span>
-                            <span className="text-sm font-bold text-blue-600">{formatMoney(item.sellingPrice)}</span>
+                            <span className="text-[10px] text-muted-foreground block mb-0.5">السعر</span>
+                            <span className="text-sm font-bold text-blue-500">{formatMoney(item.sellingPrice)}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between mt-4">
-                          <span className="text-[10px] text-white bg-indigo-500 px-2 py-0.5 rounded-full">{item.category || 'عام'}</span>
+                          <span className="text-[10px] text-white bg-indigo-600 px-2 py-0.5 rounded-full">{item.category || 'عام'}</span>
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => navigate(`/inventory/${item.id}`)}
-                              className="text-blue-600 text-xs font-medium flex items-center gap-1"
+                              className="text-blue-500 text-xs font-medium flex items-center gap-1"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               عرض
                             </button>
                             <button
                               onClick={() => handleManageStock(item)}
-                              className="text-purple-600 text-xs font-medium flex items-center gap-1"
+                              className="text-purple-500 text-xs font-medium flex items-center gap-1"
                             >
                               <Warehouse className="w-3.5 h-3.5" />
                               المخزون
                             </button>
                             <button
                               onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                              className="text-green-600 text-xs font-medium flex items-center gap-1"
+                              className="text-green-500 text-xs font-medium flex items-center gap-1"
                             >
                               <Edit className="w-3.5 h-3.5" />
                               تعديل
@@ -847,8 +847,8 @@ const InventoryPageEnhanced = () => {
 
           {/* Pagination */}
           {getTotalPages() > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 sm:px-6 border-t border-gray-200 bg-gray-50/30">
-              <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 sm:px-6 border-t border-border bg-muted/10">
+              <div className="text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
                 عرض {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, getFilteredAndSortedItems().length)} من {getFilteredAndSortedItems().length}
               </div>
               <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
@@ -871,7 +871,7 @@ const InventoryPageEnhanced = () => {
                 >
                   السابق
                 </SimpleButton>
-                <span className="px-2 py-1 text-[10px] sm:text-xs text-gray-600 font-medium">
+                <span className="px-2 py-1 text-[10px] sm:text-xs text-muted-foreground font-medium">
                   {currentPage} / {getTotalPages()}
                 </span>
                 <SimpleButton
@@ -907,12 +907,12 @@ const InventoryPageEnhanced = () => {
         >
           <SimpleCardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Warehouse className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
+                <Warehouse className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">إدارة المخازن</p>
-                <p className="text-sm text-gray-600">{warehouses.length} مخازن</p>
+                <p className="font-semibold text-foreground">إدارة المخازن</p>
+                <p className="text-sm text-muted-foreground">{warehouses.length} مخازن</p>
               </div>
             </div>
           </SimpleCardContent>
@@ -924,12 +924,12 @@ const InventoryPageEnhanced = () => {
         >
           <SimpleCardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-500" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">حركات المخزون</p>
-                <p className="text-sm text-gray-600">سجل الحركات</p>
+                <p className="font-semibold text-foreground">حركات المخزون</p>
+                <p className="text-sm text-muted-foreground">سجل الحركات</p>
               </div>
             </div>
           </SimpleCardContent>
@@ -941,12 +941,12 @@ const InventoryPageEnhanced = () => {
         >
           <SimpleCardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-500" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">تنبيهات المخزون</p>
-                <p className="text-sm text-gray-600">{stats.lowStockItems} تنبيه</p>
+                <p className="font-semibold text-foreground">تنبيهات المخزون</p>
+                <p className="text-sm text-muted-foreground">{stats.lowStockItems} تنبيه</p>
               </div>
             </div>
           </SimpleCardContent>
@@ -967,13 +967,13 @@ const InventoryPageEnhanced = () => {
             {/* المخازن الموجودة */}
             {getItemStockLevels().length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">المخازن الحالية:</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-3">المخازن الحالية:</h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {getItemStockLevels().map((level) => (
-                    <div key={level.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={level.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
                       <div>
-                        <div className="font-medium text-gray-900">{level.warehouseName}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-foreground">{level.warehouseName}</div>
+                        <div className="text-sm text-muted-foreground">
                           الكمية: {level.quantity} | الحد الأدنى: {level.minLevel || 0}
                         </div>
                       </div>
@@ -987,7 +987,7 @@ const InventoryPageEnhanced = () => {
                             minLevel: level.minLevel || ''
                           });
                         }}
-                        className="text-blue-600"
+                        className="text-blue-500 hover:bg-blue-500/10"
                       >
                         تعديل
                       </SimpleButton>
@@ -998,15 +998,15 @@ const InventoryPageEnhanced = () => {
             )}
 
             {/* نموذج إضافة/تحديث */}
-            <div className="border-t pt-4 space-y-4">
+            <div className="border-t border-border pt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   المخزن <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={stockForm.warehouseId}
                   onChange={(e) => setStockForm({ ...stockForm, warehouseId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                   required
                 >
                   <option value="">اختر المخزن</option>
@@ -1020,7 +1020,7 @@ const InventoryPageEnhanced = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     الكمية <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -1034,7 +1034,7 @@ const InventoryPageEnhanced = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     الحد الأدنى
                   </label>
                   <Input
