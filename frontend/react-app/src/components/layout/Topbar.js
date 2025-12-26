@@ -199,11 +199,11 @@ const Topbar = () => {
             </DropdownMenu>
           </div>
 
-          {/* Theme Toggle - Hidden on very small screens */}
+          {/* Theme Toggle - Visible on all screens */}
           <Button
             variant="ghost"
             size="icon"
-            className="hidden xs:flex"
+            className="flex"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -313,7 +313,7 @@ const Topbar = () => {
                   {user ? user.name?.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user ? user.name : 'مستخدم'}</p>
+                  <p className="text-sm font-medium leading-none text-foreground">{user ? user.name : 'مستخدم'}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user ? user.email : 'user@example.com'}
                   </p>

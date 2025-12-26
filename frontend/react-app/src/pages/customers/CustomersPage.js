@@ -9,7 +9,7 @@ import DataView from '../../components/ui/DataView';
 import { Input } from '../../components/ui/Input';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
-import { 
+import {
   Plus, Search, Filter, Download, RefreshCw, Building2,
   User, Phone, Mail, MapPin, Calendar, MoreHorizontal,
   Eye, Edit, Trash2, Users, UserCheck, UserX, History,
@@ -45,16 +45,16 @@ const CustomersPage = () => {
   const isTypingRef = useRef(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [error, setError] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  
+
   // Sorting state
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
-  
+
   // Multi-select state
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -134,13 +134,13 @@ const CustomersPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Use pagination API with isActive filter if needed
       const params = {
         page: currentPage,
         pageSize: itemsPerPage
       };
-      
+
       // Add isActive filter if selected
       if (selectedFilter === 'active') {
         params.isActive = true;
@@ -149,26 +149,26 @@ const CustomersPage = () => {
       } else if (selectedFilter === 'hasDebt') {
         params.hasDebt = true;
       }
-      
+
       // Add search term if provided - استخدام debouncedSearch
       if (debouncedSearch) {
         params.q = debouncedSearch;
       }
-      
+
       // Add sort parameters if provided
       if (sortField) {
         params.sort = sortField;
         params.sortDir = sortDirection === 'asc' ? 'ASC' : 'DESC';
       }
-      
+
       const data = await apiService.getCustomers(params);
-      
+
       // التأكد من أن البيانات هي array
       let customersData = [];
       let totalCount = 0;
-      
+
       console.log('Raw API response:', data);
-      
+
       if (data && data.success && data.data && Array.isArray(data.data.customers)) {
         customersData = data.data.customers;
         totalCount = data.data.total || 0;
@@ -186,7 +186,7 @@ const CustomersPage = () => {
         customersData = [];
         totalCount = 0;
       }
-      
+
       setCustomers(customersData);
       setTotalItems(totalCount);
     } catch (err) {
@@ -216,7 +216,7 @@ const CustomersPage = () => {
 
   // قالب CSV للتنزيل
   const handleDownloadCSVTemplate = () => {
-    const headers = ['name','phone','email','company','status','address'];
+    const headers = ['name', 'phone', 'email', 'company', 'status', 'address'];
     const csv = headers.join(',') + '\n';
     downloadFile(csv, 'customers_template.csv', 'text/csv;charset=utf-8;');
     // لا حاجة لتنبيه هنا لتقليل الضوضاء
@@ -232,28 +232,28 @@ const CustomersPage = () => {
       const text = await file.text();
       const lines = text.split('\n');
       const headers = lines[0].split(',');
-      
+
       let successCount = 0;
       let errorCount = 0;
-      
+
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        
+
         const values = line.split(',');
         const customerData = {};
-        
+
         headers.forEach((header, index) => {
           customerData[header.trim()] = values[index] ? values[index].trim() : '';
         });
-        
+
         // تقسيم الاسم
         const nameParts = customerData.name ? customerData.name.trim().split(' ') : [];
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
-        
+
         if (!firstName || !customerData.phone) continue;
-        
+
         try {
           const response = await apiService.createCustomer({
             firstName: firstName,
@@ -263,7 +263,7 @@ const CustomersPage = () => {
             address: customerData.address || null,
             status: customerData.status || 'active'
           });
-          
+
           if (response.ok) {
             successCount++;
           } else {
@@ -274,7 +274,7 @@ const CustomersPage = () => {
           errorCount++;
         }
       }
-      
+
       notify('success', `تم استيراد ${successCount} عميل بنجاح${errorCount > 0 ? ` (${errorCount} فشل)` : ''}`);
       fetchCustomers(); // تحديث القائمة
     } catch (error) {
@@ -357,15 +357,15 @@ const CustomersPage = () => {
       // استخدام search للبحث المحلي الفوري (بدلاً من searchTerm)
       const searchLower = (search || '').toLowerCase();
       const matchesSearch = customerName.toLowerCase().includes(searchLower) ||
-                           (customer.phone && customer.phone.includes(search)) ||
-                           (customer.email && customer.email.toLowerCase().includes(searchLower));
-      
+        (customer.phone && customer.phone.includes(search)) ||
+        (customer.email && customer.email.toLowerCase().includes(searchLower));
+
       if (selectedFilter === 'all') return matchesSearch;
       if (selectedFilter === 'vip') {
         const customFields = (() => {
           try {
-            return typeof customer.customFields === 'string' 
-              ? JSON.parse(customer.customFields) 
+            return typeof customer.customFields === 'string'
+              ? JSON.parse(customer.customFields)
               : customer.customFields || {};
           } catch {
             return {};
@@ -456,8 +456,8 @@ const CustomersPage = () => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
     }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-blue-600" /> :
       <ArrowDown className="w-4 h-4 text-blue-600" />;
   };
 
@@ -485,7 +485,7 @@ const CustomersPage = () => {
   // Update selectAll when selectedCustomers changes
   useEffect(() => {
     const currentFilteredCustomers = getFilteredCustomers();
-    
+
     if (currentFilteredCustomers.length > 0) {
       setSelectAll(selectedCustomers.length === currentFilteredCustomers.length);
     } else {
@@ -504,8 +504,8 @@ const CustomersPage = () => {
       try {
         const deletePromises = selectedCustomers.map(id => apiService.deleteCustomer(id));
         await Promise.all(deletePromises);
-        
-        setCustomers(prevCustomers => 
+
+        setCustomers(prevCustomers =>
           prevCustomers.filter(customer => !selectedCustomers.includes(customer.id))
         );
         setSelectedCustomers([]);
@@ -555,7 +555,7 @@ const CustomersPage = () => {
   };
 
   const exportToCSV = (rows) => {
-    const headers = ['id','name','phone','email','company','status','address','createdAt'];
+    const headers = ['id', 'name', 'phone', 'email', 'company', 'status', 'address', 'createdAt'];
     const escape = (v) => {
       if (v == null) return '';
       const s = String(v).replace(/"/g, '""');
@@ -570,7 +570,7 @@ const CustomersPage = () => {
   const handleExportCSV = () => {
     try {
       const csv = exportToCSV(filteredCustomers);
-      downloadFile(csv, `customers_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+      downloadFile(csv, `customers_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
       // تصدير ناجح بلا تنبيه لتقليل الإزعاج
     } catch (e) {
       console.error(e);
@@ -581,7 +581,7 @@ const CustomersPage = () => {
   const handleExportJSON = () => {
     try {
       const data = JSON.stringify(filteredCustomers, null, 2);
-      downloadFile(data, `customers_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+      downloadFile(data, `customers_${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
       // تصدير ناجح بلا تنبيه لتقليل الإزعاج
     } catch (e) {
       console.error(e);
@@ -596,7 +596,7 @@ const CustomersPage = () => {
   const parseCSV = async (file) => {
     const text = await file.text();
     const [headerLine, ...lines] = text.split(/\r?\n/).filter(Boolean);
-    const headers = headerLine.split(',').map(h => h.trim().replace(/^"|"$/g,''));
+    const headers = headerLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
     return lines.map(line => {
       // naive CSV split (supports quoted values)
       const values = [];
@@ -604,7 +604,7 @@ const CustomersPage = () => {
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
         if (ch === '"') {
-          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+          if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
           else { inQuotes = !inQuotes; }
         } else if (ch === ',' && !inQuotes) {
           values.push(cur); cur = '';
@@ -614,7 +614,7 @@ const CustomersPage = () => {
       }
       values.push(cur);
       const obj = {};
-      headers.forEach((h, idx) => obj[h] = values[idx]?.replace(/^\s*|\s*$/g,'') || null);
+      headers.forEach((h, idx) => obj[h] = values[idx]?.replace(/^\s*|\s*$/g, '') || null);
       return obj;
     });
   };
@@ -819,17 +819,17 @@ const CustomersPage = () => {
         const customer = row.original;
         const customFields = (() => {
           try {
-            return typeof customer.customFields === 'string' 
-              ? JSON.parse(customer.customFields) 
+            return typeof customer.customFields === 'string'
+              ? JSON.parse(customer.customFields)
               : customer.customFields || {};
           } catch {
             return {};
           }
         })();
-        
+
         return (
           <div className="flex items-center gap-2">
-            <SimpleBadge 
+            <SimpleBadge
               variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
@@ -978,7 +978,7 @@ const CustomersPage = () => {
           }
           const rows = Array.isArray(customers) ? customers.filter(c => selectedIds.includes(c.id)) : [];
           const csv = exportToCSV(rows);
-          downloadFile(csv, `customers_selected_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+          downloadFile(csv, `customers_selected_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
           // تصدير المحددين: بدون تنبيه لتقليل الإزعاج
         } catch (e) {
           console.error(e);
@@ -998,12 +998,12 @@ const CustomersPage = () => {
           notify('warning', 'لم تقم بتحديد أي عميل');
           return;
         }
-        
+
         try {
           const deletePromises = selectedIds.map(id => apiService.deleteCustomer(id));
           await Promise.all(deletePromises);
-          
-          setCustomers(prevCustomers => 
+
+          setCustomers(prevCustomers =>
             prevCustomers.filter(customer => !selectedIds.includes(customer.id))
           );
           notify('success', `تم حذف ${selectedIds.length} عميل بنجاح`);
@@ -1019,14 +1019,14 @@ const CustomersPage = () => {
   const renderCard = (customer, { columns } = {}) => {
     const customFields = (() => {
       try {
-        return typeof customer.customFields === 'string' 
-          ? JSON.parse(customer.customFields) 
+        return typeof customer.customFields === 'string'
+          ? JSON.parse(customer.customFields)
           : customer.customFields || {};
       } catch {
         return {};
       }
     })();
-    
+
     // احترم الأعمدة المرئية القادمة من DataView عند توفرها
     const visibleKeys = Array.isArray(columns)
       ? columns.map(c => c.accessorKey || c.key)
@@ -1065,8 +1065,8 @@ const CustomersPage = () => {
             </div>
             {show('name') && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {customer.companyId ? 
-                  (companies.find(c => c.id.toString() === customer.companyId.toString())?.name || `شركة (ID: ${customer.companyId})`) 
+                {customer.companyId ?
+                  (companies.find(c => c.id.toString() === customer.companyId.toString())?.name || `شركة (ID: ${customer.companyId})`)
                   : 'عميل فردي'
                 }
               </div>
@@ -1085,7 +1085,7 @@ const CustomersPage = () => {
           })()}
           <div className="flex items-center gap-2">
             {show('status') && (
-              <SimpleBadge 
+              <SimpleBadge
                 variant={customer.isActive === true ? 'success' : 'secondary'}
                 className="text-xs"
               >
@@ -1106,8 +1106,8 @@ const CustomersPage = () => {
   const renderListItem = (customer) => {
     const customFields = (() => {
       try {
-        return typeof customer.customFields === 'string' 
-          ? JSON.parse(customer.customFields) 
+        return typeof customer.customFields === 'string'
+          ? JSON.parse(customer.customFields)
           : customer.customFields || {};
       } catch {
         return {};
@@ -1129,7 +1129,7 @@ const CustomersPage = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <SimpleBadge 
+            <SimpleBadge
               variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
@@ -1173,8 +1173,8 @@ const CustomersPage = () => {
   const renderGridItem = (customer) => {
     const customFields = (() => {
       try {
-        return typeof customer.customFields === 'string' 
-          ? JSON.parse(customer.customFields) 
+        return typeof customer.customFields === 'string'
+          ? JSON.parse(customer.customFields)
           : customer.customFields || {};
       } catch {
         return {};
@@ -1194,7 +1194,7 @@ const CustomersPage = () => {
             {customer.phone}
           </div>
           <div className="flex items-center justify-center gap-1">
-            <SimpleBadge 
+            <SimpleBadge
               variant={customer.isActive === true ? 'success' : 'secondary'}
               className="text-xs"
             >
@@ -1216,12 +1216,12 @@ const CustomersPage = () => {
 
   // حساب الإحصائيات
   const stats = {
-          total: totalItems, // Use totalItems from API for accurate count across all pages
-            vip: Array.isArray(customers) ? customers.filter(customer => {
+    total: totalItems, // Use totalItems from API for accurate count across all pages
+    vip: Array.isArray(customers) ? customers.filter(customer => {
       const customFields = (() => {
         try {
-          return typeof customer.customFields === 'string' 
-            ? JSON.parse(customer.customFields) 
+          return typeof customer.customFields === 'string'
+            ? JSON.parse(customer.customFields)
             : customer.customFields || {};
         } catch {
           return {};
@@ -1229,9 +1229,9 @@ const CustomersPage = () => {
       })();
       return customFields.isVip;
     }).length : 0,
-          active: Array.isArray(customers) ? customers.filter(customer => customer.isActive === true).length : 0,
-      inactive: Array.isArray(customers) ? customers.filter(customer => customer.isActive === false).length : 0,
-      hasDebt: Array.isArray(customers) ? customers.filter(customer => (parseFloat(customer.outstandingBalance || 0)) > 0).length : 0
+    active: Array.isArray(customers) ? customers.filter(customer => customer.isActive === true).length : 0,
+    inactive: Array.isArray(customers) ? customers.filter(customer => customer.isActive === false).length : 0,
+    hasDebt: Array.isArray(customers) ? customers.filter(customer => (parseFloat(customer.outstandingBalance || 0)) > 0).length : 0
   };
 
   if (loading) {
@@ -1262,9 +1262,9 @@ const CustomersPage = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
-          <SimpleButton 
-            variant="ghost" 
-            size="sm" 
+          <SimpleButton
+            variant="ghost"
+            size="sm"
             onClick={handleRefresh}
             className="mr-2"
           >
@@ -1281,12 +1281,12 @@ const CustomersPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">إجمالي العملاء</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">إجمالي العملاء</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1295,12 +1295,12 @@ const CustomersPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <UserCheck className="w-6 h-6 text-yellow-600" />
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <UserCheck className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">عملاء VIP</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.vip}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">عملاء VIP</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.vip}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1309,12 +1309,12 @@ const CustomersPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <UserCheck className="w-6 h-6 text-green-600" />
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">نشط</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">نشط</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.active}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1323,12 +1323,12 @@ const CustomersPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <UserX className="w-6 h-6 text-red-600" />
+                <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                  <UserX className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">غير نشط</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">غير نشط</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.inactive}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1337,12 +1337,12 @@ const CustomersPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
                   <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">عملاء مدينون</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.hasDebt || 0}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">عملاء مدينون</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.hasDebt || 0}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -1364,11 +1364,11 @@ const CustomersPage = () => {
                   className="pr-10 w-64"
                 />
               </div>
-              
+
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="all">جميع العملاء</option>
                 <option value="vip">عملاء VIP</option>
@@ -1432,10 +1432,10 @@ const CustomersPage = () => {
           viewModes={['cards', 'table', 'list', 'grid']}
           defaultViewMode="cards"
           enableBulkActions={true}
-        enableColumnToggle={true}
-        bulkActions={bulkActions}
-        storageKey="customers"
-        renderCard={renderCard}
+          enableColumnToggle={true}
+          bulkActions={bulkActions}
+          storageKey="customers"
+          renderCard={renderCard}
           renderListItem={renderListItem}
           renderGridItem={renderGridItem}
           onItemClick={handleCustomerClick}
@@ -1479,7 +1479,7 @@ const CustomersPage = () => {
               <option value={100}>100 لكل صفحة</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-1 space-x-reverse">
             <SimpleButton
               variant="outline"
@@ -1497,7 +1497,7 @@ const CustomersPage = () => {
             >
               السابق
             </SimpleButton>
-            
+
             {/* Page numbers */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum;
@@ -1510,7 +1510,7 @@ const CustomersPage = () => {
               } else {
                 pageNum = currentPage - 2 + i;
               }
-              
+
               return (
                 <SimpleButton
                   key={pageNum}
@@ -1523,7 +1523,7 @@ const CustomersPage = () => {
                 </SimpleButton>
               );
             })}
-            
+
             <SimpleButton
               variant="outline"
               size="sm"

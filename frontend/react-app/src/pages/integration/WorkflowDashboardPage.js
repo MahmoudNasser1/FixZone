@@ -64,8 +64,8 @@ const WorkflowDashboardPage = () => {
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
-      notifications.error('خطأ في التحميل', { 
-        message: err.message || 'فشل تحميل بيانات لوحة التحكم' 
+      notifications.error('خطأ في التحميل', {
+        message: err.message || 'فشل تحميل بيانات لوحة التحكم'
       });
     } finally {
       setLoading(false);
@@ -219,7 +219,7 @@ const WorkflowDashboardPage = () => {
         setLowStockItems(dashboardAlerts.lowStockItems.slice(0, 5));
         return;
       }
-      
+
       // Fallback to old endpoint
       const response = await api.request('/stocklevels/low-stock').catch(() => null);
       if (response && Array.isArray(response)) {
@@ -238,7 +238,7 @@ const WorkflowDashboardPage = () => {
   const fetchPendingInvoices = async () => {
     try {
       const invoicesRes = await api.getInvoices().catch(() => ({ data: { invoices: [] } }));
-      
+
       // Handle different response formats
       let invoicesArray = [];
       if (Array.isArray(invoicesRes)) {
@@ -252,13 +252,13 @@ const WorkflowDashboardPage = () => {
       } else if (Array.isArray(invoicesRes)) {
         invoicesArray = invoicesRes;
       }
-      
+
       // Ensure invoicesArray is an array before filtering
       if (!Array.isArray(invoicesArray)) {
         invoicesArray = [];
       }
-      
-      const pending = invoicesArray.filter(inv => 
+
+      const pending = invoicesArray.filter(inv =>
         inv && (inv.status === 'unpaid' || inv.paymentStatus === 'unpaid' || inv.status === 'pending' || inv.paymentStatus === 'pending')
       );
       setPendingInvoices(pending.slice(0, 5));
@@ -457,18 +457,18 @@ const WorkflowDashboardPage = () => {
           </div>
 
           {/* Today Revenue */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6">
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl shadow-sm border border-purple-200 dark:border-purple-800 p-6">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="text-sm font-medium text-purple-700 mb-1">إيرادات اليوم</div>
-                <div className="text-3xl font-bold text-purple-900">
+                <div className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-1">إيرادات اليوم</div>
+                <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
                   {formatMoney(todayStats?.totalRevenue || 0, 'EGP')}
                 </div>
-                <div className="text-xs text-purple-600 mt-2">
+                <div className="text-xs text-purple-600 dark:text-purple-400 mt-2">
                   {todayStats?.paymentCount || 0} مدفوعات
                 </div>
               </div>
-              <div className="bg-purple-600 rounded-full p-4">
+              <div className="bg-purple-600 dark:bg-purple-500 rounded-full p-4">
                 <CurrencyDollarIcon className="h-8 w-8 text-white" />
               </div>
             </div>
@@ -484,17 +484,37 @@ const WorkflowDashboardPage = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
-            { label: 'معلق', count: stats?.pendingRepairs || 0, color: 'yellow', icon: ExclamationTriangleIcon },
-            { label: 'قيد الإصلاح', count: stats?.inProgressRepairs || 0, color: 'blue', icon: ClockIcon },
-            { label: 'مكتمل', count: stats?.completedRepairs || 0, color: 'green', icon: CheckCircleIcon },
-            { label: 'تم الاضافة', count: pendingInvoices.length, color: 'purple', icon: DocumentTextIcon },
-            { label: 'مسلم', count: stats?.deliveredRepairs || 0, color: 'emerald', icon: CheckCircleIcon }
+            {
+              label: 'معلق', count: stats?.pendingRepairs || 0, color: 'yellow', icon: ExclamationTriangleIcon,
+              bgClass: 'bg-yellow-100 dark:bg-yellow-900/30', borderClass: 'border-yellow-200 dark:border-yellow-800',
+              textIcon: 'text-yellow-600 dark:text-yellow-400', textCount: 'text-yellow-900 dark:text-yellow-100'
+            },
+            {
+              label: 'قيد الإصلاح', count: stats?.inProgressRepairs || 0, color: 'blue', icon: ClockIcon,
+              bgClass: 'bg-blue-100 dark:bg-blue-900/30', borderClass: 'border-blue-200 dark:border-blue-800',
+              textIcon: 'text-blue-600 dark:text-blue-400', textCount: 'text-blue-900 dark:text-blue-100'
+            },
+            {
+              label: 'مكتمل', count: stats?.completedRepairs || 0, color: 'green', icon: CheckCircleIcon,
+              bgClass: 'bg-green-100 dark:bg-green-900/30', borderClass: 'border-green-200 dark:border-green-800',
+              textIcon: 'text-green-600 dark:text-green-400', textCount: 'text-green-900 dark:text-green-100'
+            },
+            {
+              label: 'تم الاضافة', count: pendingInvoices.length, color: 'purple', icon: DocumentTextIcon,
+              bgClass: 'bg-purple-100 dark:bg-purple-900/30', borderClass: 'border-purple-200 dark:border-purple-800',
+              textIcon: 'text-purple-600 dark:text-purple-400', textCount: 'text-purple-900 dark:text-purple-100'
+            },
+            {
+              label: 'مسلم', count: stats?.deliveredRepairs || 0, color: 'emerald', icon: CheckCircleIcon,
+              bgClass: 'bg-emerald-100 dark:bg-emerald-900/30', borderClass: 'border-emerald-200 dark:border-emerald-800',
+              textIcon: 'text-emerald-600 dark:text-emerald-400', textCount: 'text-emerald-900 dark:text-emerald-100'
+            }
           ].map((status, idx) => (
             <div key={idx} className="text-center">
-              <div className={`bg-${status.color}-100 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-3 border-2 border-${status.color}-200 shadow-sm`}>
+              <div className={`${status.bgClass} rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-3 border-2 ${status.borderClass} shadow-sm`}>
                 <div>
-                  <status.icon className={`h-6 w-6 text-${status.color}-600 mx-auto mb-1`} />
-                  <span className={`text-2xl font-bold text-${status.color}-900`}>{status.count}</span>
+                  <status.icon className={`h-6 w-6 ${status.textIcon} mx-auto mb-1`} />
+                  <span className={`text-2xl font-bold ${status.textCount}`}>{status.count}</span>
                 </div>
               </div>
               <div className="text-sm font-medium text-muted-foreground">{status.label}</div>
@@ -600,7 +620,7 @@ const WorkflowDashboardPage = () => {
 
           {/* Recent Payments */}
           <div className="mt-6 pt-6 border-t border-border">
-              <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
               <BanknotesIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
               آخر المدفوعات
             </h4>
@@ -667,7 +687,7 @@ const WorkflowDashboardPage = () => {
           {/* Unpaid Invoices Alert */}
           {pendingInvoices.length > 0 && (
             <div>
-              <h4 className="text-sm font-bold text-orange-700 mb-3 flex items-center gap-2">
+              <h4 className="text-sm font-bold text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
                 <DocumentTextIcon className="h-4 w-4" />
                 فواتير غير مدفوعة ({pendingInvoices.length})
               </h4>
@@ -745,20 +765,18 @@ const WorkflowDashboardPage = () => {
             ].map((system, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    system.status === 'active' ? 'bg-green-500 dark:bg-green-400 animate-pulse' : 
-                    system.status === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' : 
-                    'bg-muted-foreground'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${system.status === 'active' ? 'bg-green-500 dark:bg-green-400 animate-pulse' :
+                      system.status === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' :
+                        'bg-muted-foreground'
+                    }`}></div>
                   <span className="font-medium text-foreground">{system.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">{system.count} عنصر</span>
-                  <span className={`text-xs font-bold ${
-                    system.status === 'active' ? 'text-green-600 dark:text-green-400' : 
-                    system.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' : 
-                    'text-muted-foreground'
-                  }`}>
+                  <span className={`text-xs font-bold ${system.status === 'active' ? 'text-green-600 dark:text-green-400' :
+                      system.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
+                        'text-muted-foreground'
+                    }`}>
                     {system.status === 'active' ? 'نشط' : system.status === 'warning' ? 'تحذير' : 'متوقف'}
                   </span>
                 </div>
@@ -772,12 +790,12 @@ const WorkflowDashboardPage = () => {
               <span className="text-sm text-foreground">الأداء العام</span>
               <div className="flex items-center gap-2">
                 <div className="w-32 bg-muted rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500 h-2 rounded-full transition-all"
                     style={{ width: `${Math.min(100, (stats?.completedRepairs / (stats?.totalRepairs || 1)) * 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm font-bold text-green-700">
+                <span className="text-sm font-bold text-green-700 dark:text-green-400">
                   {Math.round((stats?.completedRepairs / (stats?.totalRepairs || 1)) * 100)}%
                 </span>
               </div>
@@ -788,14 +806,14 @@ const WorkflowDashboardPage = () => {
 
       {/* Call to Action Banner */}
       {(stats?.pendingRepairs > 5 || lowStockItems.length > 3) && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border-2 border-red-200 p-6">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl border-2 border-red-200 dark:border-red-800 p-6">
           <div className="flex items-start gap-4">
-            <div className="bg-red-100 rounded-full p-3">
-              <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
+            <div className="bg-red-100 dark:bg-red-900/40 rounded-full p-3">
+              <ExclamationTriangleIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-red-900 mb-2">يحتاج انتباهك!</h3>
-              <ul className="space-y-1 text-sm text-red-800">
+              <h3 className="text-lg font-bold text-red-900 dark:text-red-200 mb-2">يحتاج انتباهك!</h3>
+              <ul className="space-y-1 text-sm text-red-800 dark:text-red-300">
                 {stats?.pendingRepairs > 5 && (
                   <li>• لديك {stats.pendingRepairs} طلبات معلقة تحتاج متابعة</li>
                 )}

@@ -4,7 +4,7 @@ import apiService from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
-import { 
+import {
   ArrowRight, FileText, Plus, Trash2, Save, X,
   DollarSign, Calculator, User, Building2, Search, Wrench, Paperclip
 } from 'lucide-react';
@@ -123,7 +123,7 @@ const CreateInvoicePage = () => {
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:88',message:'customerSearch useEffect triggered',data:{customerSearch,hasSearch:!!customerSearch},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:88', message: 'customerSearch useEffect triggered', data: { customerSearch, hasSearch: !!customerSearch }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
     // #endregion
     if (customerSearch) {
       fetchCustomers(customerSearch);
@@ -154,12 +154,12 @@ const CreateInvoicePage = () => {
 
   const fetchInventoryItems = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:119',message:'fetchInventoryItems entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:119', message: 'fetchInventoryItems entry', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
     // #endregion
     try {
       const response = await apiService.getInventoryItems();
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:124',message:'fetchInventoryItems response received',data:{hasResponse:!!response,responseType:typeof response,hasOk:!!response?.ok,isArray:Array.isArray(response),hasData:!!response?.data,dataType:typeof response?.data,isDataArray:Array.isArray(response?.data)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:124', message: 'fetchInventoryItems response received', data: { hasResponse: !!response, responseType: typeof response, hasOk: !!response?.ok, isArray: Array.isArray(response), hasData: !!response?.data, dataType: typeof response?.data, isDataArray: Array.isArray(response?.data) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
       // #endregion
       // apiService.getInventoryItems() returns data directly, not a Response object
       let data = response;
@@ -171,12 +171,12 @@ const CreateInvoicePage = () => {
         data = response.data;
       }
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:133',message:'fetchInventoryItems data processed',data:{isArray:Array.isArray(data),dataLength:Array.isArray(data)?data.length:0,dataKeys:data?Object.keys(data):[],firstItem:Array.isArray(data)&&data.length>0?data[0]:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:133', message: 'fetchInventoryItems data processed', data: { isArray: Array.isArray(data), dataLength: Array.isArray(data) ? data.length : 0, dataKeys: data ? Object.keys(data) : [], firstItem: Array.isArray(data) && data.length > 0 ? data[0] : null }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
       // #endregion
       setInventoryItems(Array.isArray(data) ? data : []);
     } catch (err) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:136',message:'fetchInventoryItems error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:136', message: 'fetchInventoryItems error', data: { errorMessage: err?.message, errorStack: err?.stack }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'C' }) }).catch(() => { });
       // #endregion
       console.error('Error fetching inventory items:', err);
       setInventoryItems([]);
@@ -185,7 +185,7 @@ const CreateInvoicePage = () => {
 
   const fetchCustomers = async (search = '') => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:147',message:'fetchCustomers entry',data:{search,hasSearch:!!search},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:147', message: 'fetchCustomers entry', data: { search, hasSearch: !!search }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
     // #endregion
     try {
       let response;
@@ -193,7 +193,7 @@ const CreateInvoicePage = () => {
         // Use searchCustomers API for search queries
         const searchResponse = await apiService.searchCustomers(search.trim(), 1, 50);
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:151',message:'fetchCustomers searchCustomers response',data:{hasResponse:!!searchResponse,responseOk:searchResponse?.ok,responseStatus:searchResponse?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:151', message: 'fetchCustomers searchCustomers response', data: { hasResponse: !!searchResponse, responseOk: searchResponse?.ok, responseStatus: searchResponse?.status }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         if (searchResponse && searchResponse.ok) {
           const result = await searchResponse.json();
@@ -206,27 +206,27 @@ const CreateInvoicePage = () => {
         response = await apiService.getCustomers({ limit: 50 });
       }
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:162',message:'fetchCustomers response received',data:{hasResponse:!!response,responseType:typeof response,isArray:Array.isArray(response),hasData:!!response?.data,dataType:typeof response?.data,isDataArray:Array.isArray(response?.data),responseLength:Array.isArray(response)?response.length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:162', message: 'fetchCustomers response received', data: { hasResponse: !!response, responseType: typeof response, isArray: Array.isArray(response), hasData: !!response?.data, dataType: typeof response?.data, isDataArray: Array.isArray(response?.data), responseLength: Array.isArray(response) ? response.length : 0 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
       // #endregion
       if (response && Array.isArray(response)) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:164',message:'fetchCustomers response is array',data:{arrayLength:response.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:164', message: 'fetchCustomers response is array', data: { arrayLength: response.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         setCustomers(response);
       } else if (response && response.data && Array.isArray(response.data)) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:166',message:'fetchCustomers response.data is array',data:{arrayLength:response.data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:166', message: 'fetchCustomers response.data is array', data: { arrayLength: response.data.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'B' }) }).catch(() => { });
         // #endregion
         setCustomers(response.data);
       } else {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:168',message:'fetchCustomers no valid data found',data:{responseType:typeof response},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:168', message: 'fetchCustomers no valid data found', data: { responseType: typeof response }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         setCustomers([]);
       }
     } catch (err) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:171',message:'fetchCustomers error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:171', message: 'fetchCustomers error', data: { errorMessage: err?.message, errorStack: err?.stack }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' }) }).catch(() => { });
       // #endregion
       console.error('Error fetching customers:', err);
       setCustomers([]);
@@ -235,39 +235,39 @@ const CreateInvoicePage = () => {
 
   const fetchVendors = async (search = '') => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:200',message:'fetchVendors entry',data:{search,hasSearch:!!search},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:200', message: 'fetchVendors entry', data: { search, hasSearch: !!search }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
     // #endregion
     try {
       const params = search ? { search, limit: 50, page: 1 } : { limit: 50, page: 1 };
       const queryString = new URLSearchParams(params).toString();
       const response = await apiService.request(`/vendors?${queryString}`);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:203',message:'fetchVendors response received',data:{hasResponse:!!response,responseType:typeof response,isArray:Array.isArray(response),hasData:!!response?.data,hasDataVendors:!!response?.data?.vendors,isDataVendorsArray:Array.isArray(response?.data?.vendors)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:203', message: 'fetchVendors response received', data: { hasResponse: !!response, responseType: typeof response, isArray: Array.isArray(response), hasData: !!response?.data, hasDataVendors: !!response?.data?.vendors, isDataVendorsArray: Array.isArray(response?.data?.vendors) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
       // #endregion
       if (response && Array.isArray(response)) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:205',message:'fetchVendors response is array',data:{arrayLength:response.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:205', message: 'fetchVendors response is array', data: { arrayLength: response.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
         // #endregion
         setVendors(response);
       } else if (response && response.data && Array.isArray(response.data)) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:207',message:'fetchVendors response.data is array',data:{arrayLength:response.data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:207', message: 'fetchVendors response.data is array', data: { arrayLength: response.data.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
         // #endregion
         setVendors(response.data);
       } else if (response && response.data && response.data.vendors && Array.isArray(response.data.vendors)) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:209',message:'fetchVendors response.data.vendors is array',data:{arrayLength:response.data.vendors.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:209', message: 'fetchVendors response.data.vendors is array', data: { arrayLength: response.data.vendors.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
         // #endregion
         setVendors(response.data.vendors);
       } else {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:211',message:'fetchVendors no valid data found',data:{responseType:typeof response,hasData:!!response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:211', message: 'fetchVendors no valid data found', data: { responseType: typeof response, hasData: !!response?.data }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
         // #endregion
         setVendors([]);
       }
     } catch (err) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:214',message:'fetchVendors error',data:{errorMessage:err?.message,errorStack:err?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:214', message: 'fetchVendors error', data: { errorMessage: err?.message, errorStack: err?.stack }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'E' }) }).catch(() => { });
       // #endregion
       console.error('Error fetching vendors:', err);
       setVendors([]);
@@ -276,7 +276,7 @@ const CreateInvoicePage = () => {
 
   const fetchRepairRequest = async () => {
     if (!repairRequestId) return;
-    
+
     try {
       const response = await apiService.getRepairRequest(repairRequestId);
       // Handle both response object and direct data
@@ -294,7 +294,7 @@ const CreateInvoicePage = () => {
 
   const handleCustomerSelect = async (customerId) => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:296',message:'handleCustomerSelect entry',data:{customerId,customersLength:customers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'G'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:296', message: 'handleCustomerSelect entry', data: { customerId, customersLength: customers.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'G' }) }).catch(() => { });
     // #endregion
     let customer = customers.find(c => c.id === parseInt(customerId));
     // If customer not found in local array, fetch from API
@@ -306,7 +306,7 @@ const CreateInvoicePage = () => {
       }
     }
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:305',message:'handleCustomerSelect customer found',data:{found:!!customer,customerName:customer?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'G'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:305', message: 'handleCustomerSelect customer found', data: { found: !!customer, customerName: customer?.name }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'G' }) }).catch(() => { });
     // #endregion
     if (customer) {
       setSelectedCustomer(customer);
@@ -366,13 +366,13 @@ const CreateInvoicePage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const numValue = name === 'totalAmount' || name === 'taxAmount' || name === 'shippingAmount' 
-      ? parseFloat(value) || 0 
+    const numValue = name === 'totalAmount' || name === 'taxAmount' || name === 'shippingAmount'
+      ? parseFloat(value) || 0
       : value;
-    
+
     setFormData(prev => {
       const updated = { ...prev, [name]: numValue };
-      
+
       // Apply default percentages/amounts when totalAmount changes
       if (name === 'totalAmount' && printSettings?.financial) {
         const financial = printSettings.financial;
@@ -383,7 +383,7 @@ const CreateInvoicePage = () => {
           updated.shippingAmount = financial.defaultShippingAmount;
         }
       }
-      
+
       return updated;
     });
   };
@@ -406,7 +406,7 @@ const CreateInvoicePage = () => {
     setInvoiceItems(prev => {
       const updated = [...prev];
       const currentItem = updated[index];
-      
+
       // إذا تم تغيير itemType، إعادة ضبط الحقول
       if (field === 'itemType') {
         updated[index] = {
@@ -421,11 +421,11 @@ const CreateInvoicePage = () => {
       // إذا تم اختيار inventoryItemId، جلب بيانات الصنف
       else if (field === 'inventoryItemId' && value) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:293',message:'updateInvoiceItem inventoryItemId selected',data:{value,valueParsed:parseInt(value),inventoryItemsLength:inventoryItems.length,inventoryItemsIds:inventoryItems.map(i=>i.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:293', message: 'updateInvoiceItem inventoryItemId selected', data: { value, valueParsed: parseInt(value), inventoryItemsLength: inventoryItems.length, inventoryItemsIds: inventoryItems.map(i => i.id) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
         // #endregion
         const selectedItem = inventoryItems.find(item => item.id === parseInt(value));
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:294',message:'updateInvoiceItem selectedItem found',data:{found:!!selectedItem,selectedItemName:selectedItem?.name,selectedItemPrice:selectedItem?.sellingPrice},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:294', message: 'updateInvoiceItem selectedItem found', data: { found: !!selectedItem, selectedItemName: selectedItem?.name, selectedItemPrice: selectedItem?.sellingPrice }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
         // #endregion
         if (selectedItem) {
           updated[index] = {
@@ -478,7 +478,7 @@ const CreateInvoicePage = () => {
       const total = updated.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
       setFormData(prevForm => {
         const updatedForm = { ...prevForm, totalAmount: total };
-        
+
         // Apply default percentages/amounts when totalAmount changes
         if (printSettings?.financial) {
           const financial = printSettings.financial;
@@ -489,7 +489,7 @@ const CreateInvoicePage = () => {
             updatedForm.shippingAmount = financial.defaultShippingAmount;
           }
         }
-        
+
         return updatedForm;
       });
 
@@ -504,7 +504,7 @@ const CreateInvoicePage = () => {
       const total = updated.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
       setFormData(prevForm => {
         const updatedForm = { ...prevForm, totalAmount: total };
-        
+
         // Apply default percentages/amounts when totalAmount changes
         if (printSettings?.financial) {
           const financial = printSettings.financial;
@@ -515,7 +515,7 @@ const CreateInvoicePage = () => {
             updatedForm.shippingAmount = financial.defaultShippingAmount;
           }
         }
-        
+
         return updatedForm;
       });
       return updated;
@@ -526,7 +526,7 @@ const CreateInvoicePage = () => {
     const total = invoiceItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
     setFormData(prev => {
       const updated = { ...prev, totalAmount: total };
-      
+
       // Apply default percentages/amounts when totalAmount changes
       if (printSettings?.financial) {
         const financial = printSettings.financial;
@@ -537,14 +537,14 @@ const CreateInvoicePage = () => {
           updated.shippingAmount = financial.defaultShippingAmount;
         }
       }
-      
+
       return updated;
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // التحقق من البيانات المطلوبة حسب نوع الفاتورة
     if (formData.invoiceType === 'sale') {
       if (!formData.repairRequestId && !formData.customerId) {
@@ -557,7 +557,7 @@ const CreateInvoicePage = () => {
         return;
       }
     }
-    
+
     if (invoiceItems.length === 0) {
       alert('يرجى إضافة عنصر واحد على الأقل للفاتورة');
       return;
@@ -587,47 +587,47 @@ const CreateInvoicePage = () => {
         amountPaid: 0
       };
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:576',message:'handleSubmit invoiceData prepared',data:{invoiceType:invoiceData.invoiceType,vendorId:invoiceData.vendorId,customerId:invoiceData.customerId,repairRequestId:invoiceData.repairRequestId,totalAmount:invoiceData.totalAmount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:576', message: 'handleSubmit invoiceData prepared', data: { invoiceType: invoiceData.invoiceType, vendorId: invoiceData.vendorId, customerId: invoiceData.customerId, repairRequestId: invoiceData.repairRequestId, totalAmount: invoiceData.totalAmount }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H' }) }).catch(() => { });
       // #endregion
 
       const createdInvoice = await apiService.createInvoice(invoiceData);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:591',message:'handleSubmit invoice created',data:{invoiceId:createdInvoice.data?.id||createdInvoice.id,vendorId:createdInvoice.data?.vendorId,vendorName:createdInvoice.data?.vendorName,customerId:createdInvoice.data?.customerId,customerName:createdInvoice.data?.customerName,invoiceType:createdInvoice.data?.invoiceType},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:591', message: 'handleSubmit invoice created', data: { invoiceId: createdInvoice.data?.id || createdInvoice.id, vendorId: createdInvoice.data?.vendorId, vendorName: createdInvoice.data?.vendorName, customerId: createdInvoice.data?.customerId, customerName: createdInvoice.data?.customerName, invoiceType: createdInvoice.data?.invoiceType }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H' }) }).catch(() => { });
       // #endregion
-        const invoiceId = createdInvoice.data?.id || createdInvoice.id;
-        
-        // Add invoice items
-        for (const item of invoiceItems) {
-          // Get description from item, or from selected service/inventory item
-          let description = item.description;
-          if (!description || description.trim() === '') {
-            if (item.itemType === 'service' && item.serviceId) {
-              const selectedService = services.find(s => s.id === item.serviceId);
-              description = selectedService?.name || 'خدمة';
-            } else if (item.itemType === 'part' && item.inventoryItemId) {
-              const selectedItem = inventoryItems.find(i => i.id === item.inventoryItemId);
-              description = selectedItem?.name || 'صنف من المخزون';
-            } else {
-              description = item.itemType === 'service' ? 'خدمة' : 'صنف من المخزون';
-            }
+      const invoiceId = createdInvoice.data?.id || createdInvoice.id;
+
+      // Add invoice items
+      for (const item of invoiceItems) {
+        // Get description from item, or from selected service/inventory item
+        let description = item.description;
+        if (!description || description.trim() === '') {
+          if (item.itemType === 'service' && item.serviceId) {
+            const selectedService = services.find(s => s.id === item.serviceId);
+            description = selectedService?.name || 'خدمة';
+          } else if (item.itemType === 'part' && item.inventoryItemId) {
+            const selectedItem = inventoryItems.find(i => i.id === item.inventoryItemId);
+            description = selectedItem?.name || 'صنف من المخزون';
+          } else {
+            description = item.itemType === 'service' ? 'خدمة' : 'صنف من المخزون';
           }
-          
-          const itemData = {
-            description: description.trim(),
-            quantity: parseInt(item.quantity) || 1,
-            unitPrice: parseFloat(item.unitPrice) || 0,
-            itemType: item.itemType,
-            serviceId: item.serviceId || null,
-            inventoryItemId: item.inventoryItemId || null
-          };
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateInvoicePage.js:551',message:'adding invoice item',data:{description:itemData.description,quantity:itemData.quantity,unitPrice:itemData.unitPrice,itemType:itemData.itemType},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-          // #endregion
-          await apiService.addInvoiceItem(invoiceId, itemData);
         }
 
-        alert('تم إنشاء الفاتورة بنجاح');
-        navigate(`/invoices/${invoiceId}`);
+        const itemData = {
+          description: description.trim(),
+          quantity: parseInt(item.quantity) || 1,
+          unitPrice: parseFloat(item.unitPrice) || 0,
+          itemType: item.itemType,
+          serviceId: item.serviceId || null,
+          inventoryItemId: item.inventoryItemId || null
+        };
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CreateInvoicePage.js:551', message: 'adding invoice item', data: { description: itemData.description, quantity: itemData.quantity, unitPrice: itemData.unitPrice, itemType: itemData.itemType }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'F' }) }).catch(() => { });
+        // #endregion
+        await apiService.addInvoiceItem(invoiceId, itemData);
+      }
+
+      alert('تم إنشاء الفاتورة بنجاح');
+      navigate(`/invoices/${invoiceId}`);
     } catch (err) {
       console.error('Error creating invoice:', err);
       setError('حدث خطأ في إنشاء الفاتورة');
@@ -646,22 +646,22 @@ const CreateInvoicePage = () => {
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center space-x-2 space-x-reverse mb-2">
-            <SimpleButton 
-              variant="ghost" 
+            <SimpleButton
+              variant="ghost"
               size="sm"
               onClick={() => navigate('/invoices')}
             >
               <ArrowRight className="w-4 h-4" />
             </SimpleButton>
-            <h1 className="text-2xl font-bold text-gray-900">إنشاء فاتورة جديدة</h1>
+            <h1 className="text-2xl font-bold text-foreground">إنشاء فاتورة جديدة</h1>
           </div>
-          <p className="text-gray-600">إنشاء فاتورة جديدة لطلب إصلاح</p>
+          <p className="text-muted-foreground">إنشاء فاتورة جديدة لطلب إصلاح</p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
@@ -680,7 +680,7 @@ const CreateInvoicePage = () => {
               <SimpleCardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       نوع الفاتورة *
                     </label>
                     <div className="flex gap-4">
@@ -713,7 +713,7 @@ const CreateInvoicePage = () => {
                     <>
                       {!formData.customerId && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-foreground mb-2">
                             طلب الإصلاح (اختياري)
                           </label>
                           <input
@@ -722,13 +722,13 @@ const CreateInvoicePage = () => {
                             value={formData.repairRequestId}
                             onChange={(e) => handleRepairRequestChange(e.target.value)}
                             placeholder="رقم طلب الإصلاح"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                           />
                         </div>
                       )}
                       {!formData.repairRequestId && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-foreground mb-2">
                             العميل *
                           </label>
                           <div className="relative">
@@ -737,12 +737,12 @@ const CreateInvoicePage = () => {
                               value={customerSearch}
                               onChange={(e) => setCustomerSearch(e.target.value)}
                               placeholder="ابحث عن عميل..."
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                             />
                             {customerSearch && (
-                              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                {customers.filter(c => 
-                                  !customerSearch || 
+                              <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {customers.filter(c =>
+                                  !customerSearch ||
                                   c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
                                   c.phone?.includes(customerSearch)
                                 ).map(customer => (
@@ -753,27 +753,27 @@ const CreateInvoicePage = () => {
                                       const customerName = customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
                                       setCustomerSearch(customerName);
                                     }}
-                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
+                                    className="px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border text-foreground"
                                   >
                                     <div className="font-medium">{customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim()}</div>
                                     {customer.phone && (
-                                      <div className="text-sm text-gray-500">{customer.phone}</div>
+                                      <div className="text-sm text-muted-foreground">{customer.phone}</div>
                                     )}
                                   </div>
                                 ))}
                                 {customers.length === 0 && (
-                                  <div className="px-4 py-2 text-gray-500 text-sm">لا يوجد عملاء</div>
+                                  <div className="px-4 py-2 text-muted-foreground text-sm">لا يوجد عملاء</div>
                                 )}
                               </div>
                             )}
                           </div>
                           {selectedCustomer && (
-                            <div className="mt-2 p-2 bg-blue-50 rounded-lg">
-                              <div className="text-sm font-medium text-blue-900">
+                            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
                                 العميل المختار: {selectedCustomer.name || `${selectedCustomer.firstName || ''} ${selectedCustomer.lastName || ''}`.trim()}
                               </div>
                               {selectedCustomer.phone && (
-                                <div className="text-xs text-blue-700">{selectedCustomer.phone}</div>
+                                <div className="text-xs text-blue-700 dark:text-blue-300">{selectedCustomer.phone}</div>
                               )}
                             </div>
                           )}
@@ -784,7 +784,7 @@ const CreateInvoicePage = () => {
 
                   {formData.invoiceType === 'purchase' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         المورد *
                       </label>
                       <div className="relative">
@@ -793,12 +793,12 @@ const CreateInvoicePage = () => {
                           value={vendorSearch}
                           onChange={(e) => setVendorSearch(e.target.value)}
                           placeholder="ابحث عن مورد..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                         />
                         {vendorSearch && (
                           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {vendors.filter(v => 
-                              !vendorSearch || 
+                            {vendors.filter(v =>
+                              !vendorSearch ||
                               v.name?.toLowerCase().includes(vendorSearch.toLowerCase()) ||
                               v.phone?.includes(vendorSearch)
                             ).map(vendor => (
@@ -808,41 +808,41 @@ const CreateInvoicePage = () => {
                                   handleVendorSelect(vendor.id);
                                   setVendorSearch(vendor.name || '');
                                 }}
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
+                                className="px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border text-foreground"
                               >
                                 <div className="font-medium">{vendor.name || 'مورد'}</div>
                                 {vendor.phone && (
-                                  <div className="text-sm text-gray-500">{vendor.phone}</div>
+                                  <div className="text-sm text-muted-foreground">{vendor.phone}</div>
                                 )}
                               </div>
                             ))}
                             {vendors.length === 0 && (
-                              <div className="px-4 py-2 text-gray-500 text-sm">لا يوجد موردين</div>
+                              <div className="px-4 py-2 text-muted-foreground text-sm">لا يوجد موردين</div>
                             )}
                           </div>
                         )}
                       </div>
                       {selectedVendor && (
-                        <div className="mt-2 p-2 bg-green-50 rounded-lg">
-                          <div className="text-sm font-medium text-green-900">
+                        <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <div className="text-sm font-medium text-green-900 dark:text-green-100">
                             المورد المختار: {selectedVendor.name || 'مورد'}
                           </div>
                           {selectedVendor.phone && (
-                            <div className="text-xs text-green-700">{selectedVendor.phone}</div>
+                            <div className="text-xs text-green-700 dark:text-green-300">{selectedVendor.phone}</div>
                           )}
                         </div>
                       )}
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       العملة
                     </label>
                     <select
                       name="currency"
                       value={formData.currency}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                     >
                       <option value="EGP">جنيه مصري (EGP) - ج.م</option>
                       <option value="USD">دولار أمريكي (USD)</option>
@@ -850,7 +850,7 @@ const CreateInvoicePage = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       المبلغ الإجمالي
                     </label>
                     <input
@@ -860,12 +860,12 @@ const CreateInvoicePage = () => {
                       onChange={handleInputChange}
                       step="0.01"
                       min="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                     />
                   </div>
                   {printSettings?.financial?.showTax !== false && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         مبلغ الضريبة
                       </label>
                       <input
@@ -875,13 +875,13 @@ const CreateInvoicePage = () => {
                         onChange={handleInputChange}
                         step="0.01"
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                   )}
                   {printSettings?.financial?.showShipping !== false && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         مبلغ الشحن
                       </label>
                       <input
@@ -891,12 +891,12 @@ const CreateInvoicePage = () => {
                         onChange={handleInputChange}
                         step="0.01"
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       الخصم (%)
                     </label>
                     <input
@@ -907,7 +907,7 @@ const CreateInvoicePage = () => {
                       step="0.01"
                       min="0"
                       max="100"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       placeholder="0"
                     />
                     {formData.discountPercent > 0 && formData.totalAmount > 0 && (
@@ -918,7 +918,7 @@ const CreateInvoicePage = () => {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     ملاحظات
                   </label>
                   <textarea
@@ -927,7 +927,7 @@ const CreateInvoicePage = () => {
                     onChange={handleInputChange}
                     rows={3}
                     placeholder="ملاحظات إضافية..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                   />
                 </div>
               </SimpleCardContent>
@@ -947,23 +947,23 @@ const CreateInvoicePage = () => {
               <SimpleCardContent>
                 {invoiceItems.length === 0 ? (
                   <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">لا توجد عناصر في الفاتورة</p>
-                    <p className="text-sm text-gray-400">اضغط "إضافة عنصر" لبدء إضافة العناصر</p>
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">لا توجد عناصر في الفاتورة</p>
+                    <p className="text-sm text-muted-foreground/70">اضغط "إضافة عنصر" لبدء إضافة العناصر</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {invoiceItems.map((item, index) => (
-                      <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={item.id} className="border border-border rounded-lg p-4">
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               النوع
                             </label>
                             <select
                               value={item.itemType}
                               onChange={(e) => updateInvoiceItem(index, 'itemType', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                             >
                               <option value="service">خدمة</option>
                               <option value="part">صنف من المخزون</option>
@@ -971,13 +971,13 @@ const CreateInvoicePage = () => {
                           </div>
                           {item.itemType === 'service' ? (
                             <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                              <label className="block text-sm font-medium text-foreground mb-1">
                                 الخدمة
                               </label>
                               <select
                                 value={item.serviceId || ''}
                                 onChange={(e) => updateInvoiceItem(index, 'serviceId', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                               >
                                 <option value="">اختر خدمة...</option>
                                 {services.map(service => (
@@ -989,13 +989,13 @@ const CreateInvoicePage = () => {
                             </div>
                           ) : (
                             <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                              <label className="block text-sm font-medium text-foreground mb-1">
                                 الصنف من المخزون
                               </label>
                               <select
                                 value={item.inventoryItemId || ''}
                                 onChange={(e) => updateInvoiceItem(index, 'inventoryItemId', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                               >
                                 <option value="">اختر صنف...</option>
                                 {inventoryItems.map(invItem => (
@@ -1007,7 +1007,7 @@ const CreateInvoicePage = () => {
                             </div>
                           )}
                           <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               الوصف
                             </label>
                             <input
@@ -1015,11 +1015,11 @@ const CreateInvoicePage = () => {
                               value={item.description}
                               onChange={(e) => updateInvoiceItem(index, 'description', e.target.value)}
                               placeholder="وصف العنصر"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               الكمية
                             </label>
                             <input
@@ -1027,11 +1027,11 @@ const CreateInvoicePage = () => {
                               value={item.quantity}
                               onChange={(e) => updateInvoiceItem(index, 'quantity', e.target.value)}
                               min="1"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               سعر الوحدة
                             </label>
                             <input
@@ -1040,7 +1040,7 @@ const CreateInvoicePage = () => {
                               onChange={(e) => updateInvoiceItem(index, 'unitPrice', e.target.value)}
                               step="0.01"
                               min="0"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                             />
                           </div>
                           <div className="flex items-end">
@@ -1056,8 +1056,8 @@ const CreateInvoicePage = () => {
                           </div>
                         </div>
                         <div className="mt-2 text-right">
-                          <span className="text-sm text-gray-600">المجموع: </span>
-                          <span className="font-semibold">{formatCurrency(item.totalPrice)}</span>
+                          <span className="text-sm text-muted-foreground">المجموع: </span>
+                          <span className="font-semibold text-foreground">{formatCurrency(item.totalPrice)}</span>
                         </div>
                       </div>
                     ))}
@@ -1081,45 +1081,45 @@ const CreateInvoicePage = () => {
                 <SimpleCardContent>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-600">رقم الطلب</p>
-                      <p className="font-semibold">#{repairRequest.id}</p>
+                      <p className="text-sm text-muted-foreground">رقم الطلب</p>
+                      <p className="font-semibold text-foreground">#{repairRequest.id}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">التكلفة المقدرة</p>
-                      <p className="font-semibold">{formatCurrency(repairRequest.estimatedCost)}</p>
+                      <p className="text-sm text-muted-foreground">التكلفة المقدرة</p>
+                      <p className="font-semibold text-foreground">{formatCurrency(repairRequest.estimatedCost)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">الحالة</p>
-                      <p className="font-semibold">{repairRequest.status}</p>
+                      <p className="text-sm text-muted-foreground">الحالة</p>
+                      <p className="font-semibold text-foreground">{repairRequest.status}</p>
                     </div>
 
                     {/* مواصفات الجهاز */}
                     {repairRequest.deviceSpecs && (repairRequest.deviceSpecs.cpu || repairRequest.deviceSpecs.gpu || repairRequest.deviceSpecs.ram || repairRequest.deviceSpecs.storage) && (
-                      <div className="border-t pt-3 mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">مواصفات الجهاز:</p>
+                      <div className="border-t border-border pt-3 mt-3">
+                        <p className="text-sm font-medium text-foreground mb-2">مواصفات الجهاز:</p>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           {repairRequest.deviceSpecs.cpu && (
                             <div>
-                              <span className="text-gray-600">المعالج:</span>
-                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.cpu}</p>
+                              <span className="text-muted-foreground">المعالج:</span>
+                              <p className="text-foreground font-medium">{repairRequest.deviceSpecs.cpu}</p>
                             </div>
                           )}
                           {repairRequest.deviceSpecs.gpu && (
                             <div>
-                              <span className="text-gray-600">كارت الشاشة:</span>
-                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.gpu}</p>
+                              <span className="text-muted-foreground">كارت الشاشة:</span>
+                              <p className="text-foreground font-medium">{repairRequest.deviceSpecs.gpu}</p>
                             </div>
                           )}
                           {repairRequest.deviceSpecs.ram && (
                             <div>
-                              <span className="text-gray-600">الذاكرة:</span>
-                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.ram}</p>
+                              <span className="text-muted-foreground">الذاكرة:</span>
+                              <p className="text-foreground font-medium">{repairRequest.deviceSpecs.ram}</p>
                             </div>
                           )}
                           {repairRequest.deviceSpecs.storage && (
                             <div>
-                              <span className="text-gray-600">التخزين:</span>
-                              <p className="text-gray-900 font-medium">{repairRequest.deviceSpecs.storage}</p>
+                              <span className="text-muted-foreground">التخزين:</span>
+                              <p className="text-foreground font-medium">{repairRequest.deviceSpecs.storage}</p>
                             </div>
                           )}
                         </div>
@@ -1128,11 +1128,11 @@ const CreateInvoicePage = () => {
 
                     {/* المتعلقات المستلمة */}
                     {repairRequest.accessories && Array.isArray(repairRequest.accessories) && repairRequest.accessories.length > 0 && (
-                      <div className="border-t pt-3 mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">المتعلقات المستلمة:</p>
+                      <div className="border-t border-border pt-3 mt-3">
+                        <p className="text-sm font-medium text-foreground mb-2">المتعلقات المستلمة:</p>
                         <div className="flex flex-wrap gap-2">
                           {repairRequest.accessories.filter(a => a != null).map((a, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                            <span key={index} className="px-2 py-1 bg-muted text-foreground rounded text-xs">
                               {typeof a === 'string' ? a : (a?.label || a?.name || a?.value || 'Unknown')}
                             </span>
                           ))}
@@ -1155,31 +1155,31 @@ const CreateInvoicePage = () => {
               <SimpleCardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">عدد العناصر:</span>
-                    <span className="font-semibold">{invoiceItems.length}</span>
+                    <span className="text-muted-foreground">عدد العناصر:</span>
+                    <span className="font-semibold text-foreground">{invoiceItems.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">المجموع الفرعي:</span>
-                    <span className="font-semibold">{formatCurrency(formData.totalAmount)}</span>
+                    <span className="text-muted-foreground">المجموع الفرعي:</span>
+                    <span className="font-semibold text-foreground">{formatCurrency(formData.totalAmount)}</span>
                   </div>
                   {printSettings?.financial?.showTax !== false && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">الضريبة:</span>
-                      <span className="font-semibold">{formatCurrency(formData.taxAmount)}</span>
+                      <span className="text-muted-foreground">الضريبة:</span>
+                      <span className="font-semibold text-foreground">{formatCurrency(formData.taxAmount)}</span>
                     </div>
                   )}
                   {printSettings?.financial?.showShipping !== false && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">الشحن:</span>
-                      <span className="font-semibold">{formatCurrency(formData.shippingAmount)}</span>
+                      <span className="text-muted-foreground">الشحن:</span>
+                      <span className="font-semibold text-foreground">{formatCurrency(formData.shippingAmount)}</span>
                     </div>
                   )}
-                  <div className="border-t pt-3">
+                  <div className="border-t border-border pt-3">
                     <div className="flex justify-between">
-                      <span className="text-lg font-semibold">المجموع الإجمالي:</span>
-                      <span className="text-lg font-bold text-blue-600">
+                      <span className="text-lg font-semibold text-foreground">المجموع الإجمالي:</span>
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                         {formatCurrency(
-                          parseFloat(formData.totalAmount) + 
+                          parseFloat(formData.totalAmount) +
                           (printSettings?.financial?.showTax !== false ? parseFloat(formData.taxAmount) : 0) +
                           (printSettings?.financial?.showShipping !== false ? parseFloat(formData.shippingAmount) : 0)
                         )}
@@ -1197,8 +1197,8 @@ const CreateInvoicePage = () => {
               </SimpleCardHeader>
               <SimpleCardContent>
                 <div className="space-y-2">
-                  <SimpleButton 
-                    type="submit" 
+                  <SimpleButton
+                    type="submit"
                     className="w-full"
                     disabled={loading || invoiceItems.length === 0}
                   >
@@ -1214,9 +1214,9 @@ const CreateInvoicePage = () => {
                       </>
                     )}
                   </SimpleButton>
-                  <SimpleButton 
-                    type="button" 
-                    variant="outline" 
+                  <SimpleButton
+                    type="button"
+                    variant="outline"
                     className="w-full"
                     onClick={() => navigate('/invoices')}
                   >

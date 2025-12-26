@@ -54,16 +54,16 @@ const createInventoryColumns = (handleEditItem, handleDeleteItem) => [
     header: "إجراءات",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <SimpleButton 
-          variant="outline" 
+        <SimpleButton
+          variant="outline"
           size="sm"
           onClick={() => handleEditItem(row.original)}
         >
           <Edit className="w-3 h-3 ml-1" />
           تعديل
         </SimpleButton>
-        <SimpleButton 
-          variant="outline" 
+        <SimpleButton
+          variant="outline"
           size="sm"
           onClick={() => handleDeleteItem(row.original.id)}
           className="text-red-600 hover:text-red-700"
@@ -94,18 +94,18 @@ export default function InventoryPage() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [saving, setSaving] = useState(false);
-  
+
   // Import/Export states
   const [showImportModal, setShowImportModal] = useState(false);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  
+
   // Form state
   const [itemForm, setItemForm] = useState({
     sku: '',
@@ -155,7 +155,7 @@ export default function InventoryPage() {
 
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا العنصر؟')) return;
-    
+
     try {
       await inventoryService.deleteItem(itemId);
       notifications.success('تم حذف العنصر بنجاح');
@@ -255,26 +255,26 @@ export default function InventoryPage() {
           inventoryService.getStatistics(),
         ]);
         if (!mounted) return;
-        
+
         // Parse responses correctly
         if (itemsRes && itemsRes.success) {
           setItems(itemsRes.data?.items || itemsRes.data || []);
         } else if (Array.isArray(itemsRes)) {
           setItems(itemsRes);
         }
-        
+
         if (lowRes && Array.isArray(lowRes)) {
           setLowStock(lowRes);
         }
-        
+
         if (whRes && Array.isArray(whRes)) {
           setWarehouses(whRes);
         }
-        
+
         if (levelsRes && Array.isArray(levelsRes)) {
           setStockLevels(levelsRes);
         }
-        
+
         if (statsRes && statsRes.success) {
           setStats(statsRes.data);
         }
@@ -292,7 +292,7 @@ export default function InventoryPage() {
   // Export functions
   const exportToCSV = (data) => {
     if (!data || data.length === 0) return '';
-    
+
     const headers = ['SKU', 'Name', 'Type', 'Purchase Price', 'Selling Price', 'Serial Number'];
     const csvContent = [
       headers.join(','),
@@ -305,7 +305,7 @@ export default function InventoryPage() {
         item.serialNumber || ''
       ].join(','))
     ].join('\n');
-    
+
     return csvContent;
   };
 
@@ -325,7 +325,7 @@ export default function InventoryPage() {
     try {
       setExporting(true);
       const csvContent = exportToCSV(items);
-      downloadFile(csvContent, `inventory_export_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+      downloadFile(csvContent, `inventory_export_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
       notifications.success('تم تصدير البيانات بنجاح');
     } catch (error) {
       console.error('Export error:', error);
@@ -346,12 +346,12 @@ export default function InventoryPage() {
       setImporting(true);
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const response = await apiService.request('/inventory/import', {
         method: 'POST',
         body: formData
       });
-      
+
       if (response.ok) {
         notifications.success('تم استيراد البيانات بنجاح');
         window.location.reload(); // Reload data
@@ -381,24 +381,24 @@ export default function InventoryPage() {
             <p className="text-sm text-gray-500">إدارة المخزون والقطع</p>
           </div>
           <div className="flex items-center gap-2">
-            <SimpleButton 
-              variant="outline" 
+            <SimpleButton
+              variant="outline"
               onClick={handleExportTemplate}
               className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
             >
               <FileSpreadsheet className="w-4 h-4 ml-2" />
               قالب الاستيراد
             </SimpleButton>
-            <SimpleButton 
-              variant="outline" 
+            <SimpleButton
+              variant="outline"
               onClick={() => setShowImportModal(true)}
               className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
             >
               <Upload className="w-4 h-4 ml-2" />
               استيراد
             </SimpleButton>
-            <SimpleButton 
-              variant="outline" 
+            <SimpleButton
+              variant="outline"
               onClick={handleExport}
               disabled={exporting}
               className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
@@ -418,32 +418,32 @@ export default function InventoryPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SimpleCard>
           <SimpleCardContent>
-            <div className="text-sm text-gray-500">عدد العناصر</div>
-            <div className="text-2xl font-bold mt-1 text-gray-900">{items.length}</div>
+            <div className="text-sm text-muted-foreground">عدد العناصر</div>
+            <div className="text-2xl font-bold mt-1 text-foreground">{items.length}</div>
           </SimpleCardContent>
         </SimpleCard>
         <SimpleCard>
           <SimpleCardContent>
-            <div className="text-sm text-gray-500">تنبيهات النقص</div>
-            <div className={`text-2xl font-bold mt-1 ${lowStock.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>{lowStock.length}</div>
+            <div className="text-sm text-muted-foreground">تنبيهات النقص</div>
+            <div className={`text-2xl font-bold mt-1 ${lowStock.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{lowStock.length}</div>
           </SimpleCardContent>
         </SimpleCard>
         <SimpleCard>
           <SimpleCardContent>
-            <div className="text-sm text-gray-500">عدد المخازن</div>
-            <div className="text-2xl font-bold mt-1 text-gray-900">{warehouses.length}</div>
+            <div className="text-sm text-muted-foreground">عدد المخازن</div>
+            <div className="text-2xl font-bold mt-1 text-foreground">{warehouses.length}</div>
           </SimpleCardContent>
         </SimpleCard>
         <SimpleCard>
           <SimpleCardContent>
-            <div className="text-sm text-gray-500">أنواع مختلفة</div>
-            <div className="text-2xl font-bold mt-1 text-gray-900">{new Set(items.map(i => i.type).filter(Boolean)).size}</div>
+            <div className="text-sm text-muted-foreground">أنواع مختلفة</div>
+            <div className="text-2xl font-bold mt-1 text-foreground">{new Set(items.map(i => i.type).filter(Boolean)).size}</div>
           </SimpleCardContent>
         </SimpleCard>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border border-gray-200 rounded-xl p-2 flex items-center gap-2">
+      <div className="bg-muted/30 border border-border rounded-xl p-2 flex items-center gap-2">
         <SimpleButton
           variant={activeTab === 'items' ? 'primary' : 'outline'}
           size="sm"
@@ -514,12 +514,12 @@ export default function InventoryPage() {
             </SimpleCard>
           );
         }
-        
+
         if (error) {
           return (
             <SimpleCard>
               <SimpleCardContent>
-                <ErrorHandler 
+                <ErrorHandler
                   error={{ message: error }}
                   onRetry={() => window.location.reload()}
                   title="خطأ في تحميل البيانات"
@@ -528,7 +528,7 @@ export default function InventoryPage() {
             </SimpleCard>
           );
         }
-        
+
         if (activeTab === 'items') {
           return (
             <EnhancedInventoryTable
@@ -541,115 +541,115 @@ export default function InventoryPage() {
             />
           );
         }
-        
+
         if (activeTab === 'low') {
           return (
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>عناصر منخفضة المخزون</SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="overflow-auto rounded-lg border border-amber-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-amber-50">
-                  <tr className="text-right text-amber-900">
-                    <th className="px-3 py-2">المخزن</th>
-                    <th className="px-3 py-2">العنصر</th>
-                    <th className="px-3 py-2">الكمية الحالية</th>
-                    <th className="px-3 py-2">الحد الأدنى</th>
-                    <th className="px-3 py-2">حالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lowStock.map((row) => (
-                    <tr key={`${row.stockLevelId}`} className="border-t border-amber-200 hover:bg-amber-50/60">
-                      <td className="px-3 py-2 text-gray-900">{row.warehouseName}</td>
-                      <td className="px-3 py-2 text-gray-900"><span className="font-mono text-xs opacity-70">{row.sku}</span> — {row.name}</td>
-                      <td className="px-3 py-2 text-gray-900">{row.quantity}</td>
-                      <td className="px-3 py-2 text-gray-900">{row.minLevel ?? 0}</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                          نقص
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {lowStock.length === 0 && (
-                    <tr>
-                      <td className="px-3 py-6 text-center text-gray-500" colSpan={5}>لا توجد عناصر منخفضة المخزون</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-          );
-        }
-        
-        if (activeTab === 'levels') {
-          return (
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>مستويات المخزون حسب المخازن</SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="overflow-auto rounded-lg border border-gray-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr className="text-right text-gray-700">
-                    <th className="px-3 py-2">المخزن</th>
-                    <th className="px-3 py-2">العنصر</th>
-                    <th className="px-3 py-2">الكمية المتاحة</th>
-                    <th className="px-3 py-2">الحد الأدنى</th>
-                    <th className="px-3 py-2">الحد الأقصى</th>
-                    <th className="px-3 py-2">الحالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockLevels.map((level) => {
-                    const isLow = level.quantity <= (level.minLevel || 0);
-                    const isHigh = level.maxLevel && level.quantity >= level.maxLevel;
-                    return (
-                      <tr key={`${level.id}`} className="border-t border-gray-200 hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900">{level.warehouseName || 'غير محدد'}</td>
-                        <td className="px-3 py-2 text-gray-900">
-                          <span className="font-mono text-xs opacity-70">{level.sku}</span> — {level.itemName}
-                        </td>
-                        <td className="px-3 py-2 text-gray-900 font-medium">{level.quantity}</td>
-                        <td className="px-3 py-2 text-gray-600">{level.minLevel || '-'}</td>
-                        <td className="px-3 py-2 text-gray-600">{level.maxLevel || '-'}</td>
-                        <td className="px-3 py-2">
-                          {isLow ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle>عناصر منخفضة المخزون</SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="overflow-auto rounded-lg border border-amber-200 dark:border-amber-900/50">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-amber-50 dark:bg-amber-950/30">
+                      <tr className="text-right text-amber-900 dark:text-amber-100">
+                        <th className="px-3 py-2">المخزن</th>
+                        <th className="px-3 py-2">العنصر</th>
+                        <th className="px-3 py-2">الكمية الحالية</th>
+                        <th className="px-3 py-2">الحد الأدنى</th>
+                        <th className="px-3 py-2">حالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowStock.map((row) => (
+                        <tr key={`${row.stockLevelId}`} className="border-t border-amber-200 dark:border-amber-900/50 hover:bg-amber-50/60 dark:hover:bg-amber-900/20">
+                          <td className="px-3 py-2 text-foreground">{row.warehouseName}</td>
+                          <td className="px-3 py-2 text-foreground"><span className="font-mono text-xs opacity-70">{row.sku}</span> — {row.name}</td>
+                          <td className="px-3 py-2 text-foreground">{row.quantity}</td>
+                          <td className="px-3 py-2 text-foreground">{row.minLevel ?? 0}</td>
+                          <td className="px-3 py-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100 border border-amber-200 dark:border-amber-800">
                               نقص
                             </span>
-                          ) : isHigh ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              فائض
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              طبيعي
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {stockLevels.length === 0 && (
-                    <tr>
-                      <td className="px-3 py-6 text-center text-gray-500" colSpan={6}>لا توجد بيانات مستويات المخزون</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
+                          </td>
+                        </tr>
+                      ))}
+                      {lowStock.length === 0 && (
+                        <tr>
+                          <td className="px-3 py-6 text-center text-muted-foreground" colSpan={5}>لا توجد عناصر منخفضة المخزون</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
           );
         }
-        
+
+        if (activeTab === 'levels') {
+          return (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <SimpleCardTitle>مستويات المخزون حسب المخازن</SimpleCardTitle>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="overflow-auto rounded-lg border border-border">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr className="text-right text-muted-foreground">
+                        <th className="px-3 py-2">المخزن</th>
+                        <th className="px-3 py-2">العنصر</th>
+                        <th className="px-3 py-2">الكمية المتاحة</th>
+                        <th className="px-3 py-2">الحد الأدنى</th>
+                        <th className="px-3 py-2">الحد الأقصى</th>
+                        <th className="px-3 py-2">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stockLevels.map((level) => {
+                        const isLow = level.quantity <= (level.minLevel || 0);
+                        const isHigh = level.maxLevel && level.quantity >= level.maxLevel;
+                        return (
+                          <tr key={`${level.id}`} className="border-t border-border hover:bg-muted/20">
+                            <td className="px-3 py-2 text-foreground">{level.warehouseName || 'غير محدد'}</td>
+                            <td className="px-3 py-2 text-foreground">
+                              <span className="font-mono text-xs opacity-70">{level.sku}</span> — {level.itemName}
+                            </td>
+                            <td className="px-3 py-2 text-foreground font-medium">{level.quantity}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{level.minLevel || '-'}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{level.maxLevel || '-'}</td>
+                            <td className="px-3 py-2">
+                              {isLow ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-100">
+                                  نقص
+                                </span>
+                              ) : isHigh ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-100">
+                                  فائض
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">
+                                  طبيعي
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {stockLevels.length === 0 && (
+                        <tr>
+                          <td className="px-3 py-6 text-center text-muted-foreground" colSpan={6}>لا توجد بيانات مستويات المخزون</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          );
+        }
+
         if (activeTab === 'warehouse-items') {
           return (
             <SimpleCard>
@@ -664,15 +664,14 @@ export default function InventoryPage() {
                       <div key={warehouse.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-lg font-semibold text-gray-900">{warehouse.name}</h4>
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            warehouse.isActive !== false 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${warehouse.isActive !== false
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}>
                             {warehouse.isActive !== false ? 'نشط' : 'معطل'}
                           </span>
                         </div>
-                        
+
                         {warehouseItems.length > 0 ? (
                           <div className="overflow-auto rounded-lg border border-gray-200">
                             <table className="min-w-full text-sm">
@@ -700,11 +699,10 @@ export default function InventoryPage() {
                                       <td className="px-3 py-2">{level.minLevel || 0}</td>
                                       <td className="px-3 py-2">{level.maxLevel || '-'}</td>
                                       <td className="px-3 py-2">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                          level.isLowStock 
-                                            ? 'bg-red-100 text-red-800' 
-                                            : 'bg-green-100 text-green-800'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${level.isLowStock
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-green-100 text-green-800'
+                                          }`}>
                                           {level.isLowStock ? 'منخفض' : 'طبيعي'}
                                         </span>
                                       </td>
@@ -728,7 +726,7 @@ export default function InventoryPage() {
             </SimpleCard>
           );
         }
-        
+
         if (activeTab === 'warehouses') {
           return (
             <SimpleCard>
@@ -738,18 +736,17 @@ export default function InventoryPage() {
               <SimpleCardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {warehouses.map((warehouse) => (
-                    <div key={warehouse.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={warehouse.id} className="border border-border rounded-lg p-4 hover:shadow-md hover:bg-accent/5 transition-all">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900">{warehouse.name}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          warehouse.isActive !== false 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <h4 className="font-semibold text-foreground">{warehouse.name}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${warehouse.isActive !== false
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-100'
+                          }`}>
                           {warehouse.isActive !== false ? 'نشط' : 'معطل'}
                         </span>
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className="space-y-1 text-sm text-muted-foreground">
                         <p><strong>الموقع:</strong> {warehouse.location || 'غير محدد'}</p>
                         {warehouse.address && <p><strong>العنوان:</strong> {warehouse.address}</p>}
                         {warehouse.phone && <p><strong>الهاتف:</strong> {warehouse.phone}</p>}
@@ -757,10 +754,10 @@ export default function InventoryPage() {
                         {warehouse.manager && <p><strong>المدير:</strong> {warehouse.manager}</p>}
                         {warehouse.capacity && <p><strong>السعة:</strong> {warehouse.capacity}</p>}
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="mt-3 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">العناصر:</span>
-                          <span className="font-medium text-gray-900">
+                          <span className="text-muted-foreground">العناصر:</span>
+                          <span className="font-medium text-foreground">
                             {stockLevels.filter(level => level.warehouseId === warehouse.id).length}
                           </span>
                         </div>
@@ -768,7 +765,7 @@ export default function InventoryPage() {
                     </div>
                   ))}
                   {warehouses.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
                       لا توجد مخازن مضافة
                     </div>
                   )}
@@ -777,7 +774,7 @@ export default function InventoryPage() {
             </SimpleCard>
           );
         }
-        
+
         return null;
       })()}
 
@@ -786,12 +783,12 @@ export default function InventoryPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold mb-4">إضافة عنصر جديد</h3>
-            
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">الرمز SKU</label>
-                  <input 
+                  <input
                     type="text"
                     value={itemForm.sku}
                     onChange={(e) => setItemForm(prev => ({ ...prev, sku: e.target.value }))}
@@ -801,7 +798,7 @@ export default function InventoryPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">النوع</label>
-                  <input 
+                  <input
                     type="text"
                     value={itemForm.type}
                     onChange={(e) => setItemForm(prev => ({ ...prev, type: e.target.value }))}
@@ -810,10 +807,10 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
-                <input 
+                <input
                   type="text"
                   value={itemForm.name}
                   onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
@@ -821,11 +818,11 @@ export default function InventoryPage() {
                   placeholder="اسم العنصر"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">سعر الشراء</label>
-                  <input 
+                  <input
                     type="number"
                     value={itemForm.purchasePrice}
                     onChange={(e) => setItemForm(prev => ({ ...prev, purchasePrice: Number(e.target.value) }))}
@@ -835,7 +832,7 @@ export default function InventoryPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">سعر البيع</label>
-                  <input 
+                  <input
                     type="number"
                     value={itemForm.sellingPrice}
                     onChange={(e) => setItemForm(prev => ({ ...prev, sellingPrice: Number(e.target.value) }))}
@@ -844,10 +841,10 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الرقم التسلسلي (اختياري)</label>
-                <input 
+                <input
                   type="text"
                   value={itemForm.serialNumber}
                   onChange={(e) => setItemForm(prev => ({ ...prev, serialNumber: e.target.value }))}
@@ -856,10 +853,10 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-2 mt-6">
-              <SimpleButton 
-                variant="outline" 
+              <SimpleButton
+                variant="outline"
                 onClick={() => {
                   setShowCreateModal(false);
                   resetForm();
@@ -867,7 +864,7 @@ export default function InventoryPage() {
               >
                 إلغاء
               </SimpleButton>
-              <SimpleButton 
+              <SimpleButton
                 onClick={handleCreateItem}
                 disabled={saving || !itemForm.sku || !itemForm.name}
               >
@@ -883,12 +880,12 @@ export default function InventoryPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold mb-4">تعديل العنصر</h3>
-            
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">الرمز SKU</label>
-                  <input 
+                  <input
                     type="text"
                     value={itemForm.sku}
                     onChange={(e) => setItemForm(prev => ({ ...prev, sku: e.target.value }))}
@@ -898,7 +895,7 @@ export default function InventoryPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">النوع</label>
-                  <input 
+                  <input
                     type="text"
                     value={itemForm.type}
                     onChange={(e) => setItemForm(prev => ({ ...prev, type: e.target.value }))}
@@ -907,10 +904,10 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
-                <input 
+                <input
                   type="text"
                   value={itemForm.name}
                   onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
@@ -918,11 +915,11 @@ export default function InventoryPage() {
                   placeholder="اسم العنصر"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">سعر الشراء</label>
-                  <input 
+                  <input
                     type="number"
                     value={itemForm.purchasePrice}
                     onChange={(e) => setItemForm(prev => ({ ...prev, purchasePrice: Number(e.target.value) }))}
@@ -932,7 +929,7 @@ export default function InventoryPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">سعر البيع</label>
-                  <input 
+                  <input
                     type="number"
                     value={itemForm.sellingPrice}
                     onChange={(e) => setItemForm(prev => ({ ...prev, sellingPrice: Number(e.target.value) }))}
@@ -941,10 +938,10 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الرقم التسلسلي (اختياري)</label>
-                <input 
+                <input
                   type="text"
                   value={itemForm.serialNumber}
                   onChange={(e) => setItemForm(prev => ({ ...prev, serialNumber: e.target.value }))}
@@ -953,10 +950,10 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-2 mt-6">
-              <SimpleButton 
-                variant="outline" 
+              <SimpleButton
+                variant="outline"
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingItem(null);
@@ -965,7 +962,7 @@ export default function InventoryPage() {
               >
                 إلغاء
               </SimpleButton>
-              <SimpleButton 
+              <SimpleButton
                 onClick={handleUpdateItem}
                 disabled={saving || !itemForm.sku || !itemForm.name}
               >
@@ -981,7 +978,7 @@ export default function InventoryPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4">استيراد البيانات</h3>
-            
+
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-900 mb-2">تعليمات الاستيراد:</h4>
@@ -991,7 +988,7 @@ export default function InventoryPage() {
                   <li>• يمكنك تحميل قالب الاستيراد أولاً</li>
                 </ul>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">اختر ملف CSV</label>
                 <input
@@ -1007,7 +1004,7 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <SimpleButton
                 variant="outline"

@@ -258,12 +258,12 @@ const InvoiceDetailsPage = () => {
                 <ArrowRight className="w-4 h-4" />
               </SimpleButton>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               فاتورة #{invoice.id}
             </h1>
             {getStatusBadge(invoice.status)}
           </div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             تاريخ الإنشاء: {formatDate(invoice.createdAt)}
           </p>
         </div>
@@ -314,41 +314,41 @@ const InvoiceDetailsPage = () => {
             <SimpleCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">رقم الفاتورة</label>
-                  <p className="text-lg font-semibold text-gray-900">#{invoice.id}</p>
+                  <label className="text-sm font-medium text-muted-foreground">رقم الفاتورة</label>
+                  <p className="text-lg font-semibold text-foreground">#{invoice.id}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">تاريخ الإنشاء</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatDate(invoice.createdAt)}</p>
+                  <label className="text-sm font-medium text-muted-foreground">تاريخ الإنشاء</label>
+                  <p className="text-lg font-semibold text-foreground">{formatDate(invoice.createdAt)}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">المبلغ الإجمالي</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(effectiveTotalAmount, invoice.currency)}</p>
+                  <label className="text-sm font-medium text-muted-foreground">المبلغ الإجمالي</label>
+                  <p className="text-lg font-semibold text-foreground">{formatCurrency(effectiveTotalAmount, invoice.currency)}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">المبلغ المدفوع</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(invoice.amountPaid, invoice.currency)}</p>
+                  <label className="text-sm font-medium text-muted-foreground">المبلغ المدفوع</label>
+                  <p className="text-lg font-semibold text-foreground">{formatCurrency(invoice.amountPaid, invoice.currency)}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">المبلغ المتبقي</label>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(remainingAmount, invoice.currency)}</p>
+                  <label className="text-sm font-medium text-muted-foreground">المبلغ المتبقي</label>
+                  <p className="text-lg font-semibold text-foreground">{formatCurrency(remainingAmount, invoice.currency)}</p>
                 </div>
                 {taxAmount > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">الضريبة</label>
-                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(taxAmount, invoice.currency)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">الضريبة</label>
+                    <p className="text-lg font-semibold text-foreground">{formatCurrency(taxAmount, invoice.currency)}</p>
                   </div>
                 )}
                 {(discountPercent > 0 || discountAmount > 0) && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">الخصم {discountPercent > 0 ? `(${discountPercent}%)` : ''}</label>
-                    <p className="text-lg font-semibold text-red-600">-{formatCurrency(discountAmount, invoice.currency)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">الخصم {discountPercent > 0 ? `(${discountPercent}%)` : ''}</label>
+                    <p className="text-lg font-semibold text-red-600 dark:text-red-400">-{formatCurrency(discountAmount, invoice.currency)}</p>
                   </div>
                 )}
                 {shippingAmount > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">الشحن</label>
-                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(shippingAmount, invoice.currency)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">الشحن</label>
+                    <p className="text-lg font-semibold text-foreground">{formatCurrency(shippingAmount, invoice.currency)}</p>
                   </div>
                 )}
               </div>
@@ -369,10 +369,10 @@ const InvoiceDetailsPage = () => {
               ) : (
                 <div className="space-y-4">
                   {invoiceItems.map((item, index) => (
-                    <div key={item.id || index} className="border border-gray-200 rounded-lg p-4">
+                    <div key={item.id || index} className="border border-border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-foreground">
                             {item.itemType === 'part' && item.partName ? item.partName : (item.itemType === 'service' && item.serviceName ? item.serviceName : item.description)}
                           </h4>
 
@@ -425,7 +425,7 @@ const InvoiceDetailsPage = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-foreground">
                             {formatCurrency(item.totalPrice, invoice.currency)}
                           </p>
                         </div>
@@ -437,10 +437,10 @@ const InvoiceDetailsPage = () => {
 
               {/* Invoice Summary - Discount, Tax, Shipping */}
               {(discountPercent > 0 || discountAmount > 0 || taxAmount > 0 || shippingAmount > 0) && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-6 border-t border-border">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">المجموع الفرعي:</span>
+                      <span className="text-muted-foreground">المجموع الفرعي:</span>
                       <span className="font-medium">{formatCurrency(subtotal, invoice.currency)}</span>
                     </div>
 
@@ -501,9 +501,9 @@ const InvoiceDetailsPage = () => {
 
                   {/* تاريخ الاستلام */}
                   {invoice.repair?.createdAt && (
-                    <div className="border-t pt-3">
-                      <label className="text-sm font-medium text-gray-500">تاريخ الاستلام:</label>
-                      <p className="text-sm text-gray-900 mt-1">{formatDate(invoice.repair.createdAt)}</p>
+                    <div className="border-t border-border pt-3">
+                      <label className="text-sm font-medium text-muted-foreground">تاريخ الاستلام:</label>
+                      <p className="text-sm text-foreground mt-1">{formatDate(invoice.repair.createdAt)}</p>
                     </div>
                   )}
 
@@ -709,17 +709,17 @@ const InvoiceDetailsPage = () => {
               ) : (
                 <div className="space-y-4">
                   {/* Payment Summary */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-blue-700 font-medium">إجمالي المدفوعات:</span>
-                        <p className="text-blue-900 font-semibold text-lg">
+                        <span className="text-blue-700 dark:text-blue-300 font-medium">إجمالي المدفوعات:</span>
+                        <p className="text-blue-900 dark:text-blue-100 font-semibold text-lg">
                           {formatCurrency(payments.reduce((sum, p) => sum + parseFloat(p.amount), 0), invoice.currency)}
                         </p>
                       </div>
                       <div>
-                        <span className="text-blue-700 font-medium">المتبقي:</span>
-                        <p className="text-blue-900 font-semibold text-lg">
+                        <span className="text-blue-700 dark:text-blue-300 font-medium">المتبقي:</span>
+                        <p className="text-blue-900 dark:text-blue-100 font-semibold text-lg">
                           {formatCurrency(remainingAmount, invoice.currency)}
                         </p>
                       </div>

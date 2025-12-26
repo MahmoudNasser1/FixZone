@@ -7,7 +7,7 @@ import { useNotifications } from '../components/notifications/NotificationSystem
 const DashboardPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   const [stats, setStats] = useState(null);
   const [recentRepairs, setRecentRepairs] = useState([]);
   const [alerts, setAlerts] = useState(null);
@@ -25,20 +25,20 @@ const DashboardPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [statsRes, recentRepairsRes, alertsRes] = await Promise.all([
         api.getDashboardStats().catch(e => ({ success: false, error: e.message })),
         api.getRecentRepairs(5).catch(e => ({ success: false, error: e.message })),
         api.getDashboardAlerts().catch(e => ({ success: false, error: e.message }))
       ]);
-      
+
       // Parse stats
       if (statsRes?.success && statsRes?.data) {
         setStats(statsRes.data);
       } else if (statsRes?.error) {
         console.error('Error loading stats:', statsRes.error);
       }
-      
+
       // Parse recent repairs
       if (recentRepairsRes?.success && recentRepairsRes?.data) {
         setRecentRepairs(Array.isArray(recentRepairsRes.data) ? recentRepairsRes.data : []);
@@ -47,7 +47,7 @@ const DashboardPage = () => {
       } else if (recentRepairsRes?.error) {
         console.error('Error loading recent repairs:', recentRepairsRes.error);
       }
-      
+
       // Parse alerts
       if (alertsRes?.success && alertsRes?.data) {
         setAlerts(alertsRes.data);
@@ -57,8 +57,8 @@ const DashboardPage = () => {
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
-      notifications.error('خطأ في التحميل', { 
-        message: err.message || 'فشل تحميل بيانات لوحة التحكم' 
+      notifications.error('خطأ في التحميل', {
+        message: err.message || 'فشل تحميل بيانات لوحة التحكم'
       });
     } finally {
       setLoading(false);
@@ -140,82 +140,82 @@ const DashboardPage = () => {
 
       {/* Statistics Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">إجمالي طلبات الإصلاح</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">إجمالي طلبات الإصلاح</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-gray-900">{stats?.totalRequests || 0}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats?.recentStats?.repairs > 0 
-                ? `+${stats.recentStats.repairs} خلال آخر 7 أيام` 
+            <p className="text-2xl font-bold text-foreground">{stats?.totalRequests || 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.recentStats?.repairs > 0
+                ? `+${stats.recentStats.repairs} خلال آخر 7 أيام`
                 : 'لا توجد طلبات حديثة'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">طلبات معلقة</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">طلبات معلقة</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-yellow-600">{stats?.pendingRequests || 0}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats?.todayStats?.pending > 0 
-                ? `+${stats.todayStats.pending} جديد اليوم` 
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">{stats?.pendingRequests || 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.todayStats?.pending > 0
+                ? `+${stats.todayStats.pending} جديد اليوم`
                 : 'لا توجد طلبات جديدة اليوم'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">طلبات مكتملة</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">طلبات مكتملة</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{stats?.completedRequests || 0}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats?.todayStats?.repairs > 0 
-                ? `${stats.todayStats.repairs} اليوم` 
+            <p className="text-2xl font-bold text-green-600 dark:text-green-500">{stats?.completedRequests || 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.todayStats?.repairs > 0
+                ? `${stats.todayStats.repairs} اليوم`
                 : 'لا توجد إحصائيات اليوم'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">طلبات متأخرة</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">طلبات متأخرة</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-red-600">{stats?.delayedCount || 0}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats?.delayedCount > 0 
-                ? 'تتطلب متابعة' 
+            <p className="text-2xl font-bold text-red-600 dark:text-red-500">{stats?.delayedCount || 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.delayedCount > 0
+                ? 'تتطلب متابعة'
                 : 'لا توجد طلبات متأخرة'}
             </p>
           </CardContent>
         </Card>
 
         {stats?.lowStockCount > 0 && (
-          <Card className="bg-white border border-yellow-200 shadow-sm">
+          <Card className="border-yellow-200 dark:border-yellow-900/50 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">أصناف منخفضة المخزون</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">أصناف منخفضة المخزون</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-yellow-600">{stats.lowStockCount}</p>
-              <p className="text-xs text-gray-500 mt-1">تتطلب إعادة تموين</p>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">{stats.lowStockCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">تتطلب إعادة تموين</p>
             </CardContent>
           </Card>
         )}
 
         {stats?.technicianTasksCount > 0 && (
-          <Card className="bg-white border border-blue-200 shadow-sm">
+          <Card className="border-blue-200 dark:border-blue-900/50 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">مهام الفنيين</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">مهام الفنيين</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600">{stats.technicianTasksCount}</p>
-              <p className="text-xs text-gray-500 mt-1">قيد التنفيذ</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-500">{stats.technicianTasksCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">قيد التنفيذ</p>
             </CardContent>
           </Card>
         )}
@@ -223,13 +223,13 @@ const DashboardPage = () => {
 
       {/* Recent Repairs */}
       {recentRepairs.length > 0 && (
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>آخر طلبات الإصلاح</CardTitle>
               <button
                 onClick={() => navigate('/repairs')}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
               >
                 عرض الكل →
               </button>
@@ -241,16 +241,16 @@ const DashboardPage = () => {
                 <div
                   key={repair.id}
                   onClick={() => navigate(`/repairs/${repair.id}`)}
-                  className="p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-foreground">
                         {repair.requestNumber || `#${repair.id}`}
                       </p>
-                      <p className="text-sm text-gray-600">{repair.reportedProblem || 'لا يوجد وصف'}</p>
+                      <p className="text-sm text-muted-foreground">{repair.reportedProblem || 'لا يوجد وصف'}</p>
                       {repair.customerName && (
-                        <p className="text-xs text-gray-500 mt-1">{repair.customerName}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{repair.customerName}</p>
                       )}
                     </div>
                     <div className="text-right ml-4">
@@ -258,7 +258,7 @@ const DashboardPage = () => {
                         {repair.status || 'غير محدد'}
                       </span>
                       {repair.createdAt && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {new Date(repair.createdAt).toLocaleDateString('ar')}
                         </p>
                       )}
@@ -274,7 +274,7 @@ const DashboardPage = () => {
       {/* Empty State */}
       {!loading && !stats && !error && (
         <div className="text-center py-12">
-          <p className="text-gray-500">لا توجد بيانات للعرض</p>
+          <p className="text-muted-foreground">لا توجد بيانات للعرض</p>
         </div>
       )}
     </div>

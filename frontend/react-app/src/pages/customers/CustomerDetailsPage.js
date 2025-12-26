@@ -5,9 +5,9 @@ import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from
 import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import PerformanceAnalytics from '../../components/ui/PerformanceAnalytics';
-import { 
-  ArrowRight, User, Phone, Mail, MapPin, Calendar, 
-  Building2, Settings, History, Plus, DollarSign 
+import {
+  ArrowRight, User, Phone, Mail, MapPin, Calendar,
+  Building2, Settings, History, Plus, DollarSign
 } from 'lucide-react';
 
 const CustomerDetailsPage = () => {
@@ -39,7 +39,7 @@ const CustomerDetailsPage = () => {
       setError(null);
       const response = await apiService.getCustomer(id);
       console.log('Customer response:', response);
-      
+
       if (response && response.success && response.data) {
         console.log('Customer details:', response.data);
         setCustomer(response.data);
@@ -74,7 +74,7 @@ const CustomerDetailsPage = () => {
       // استخدام الـ API الصحيح لجلب طلبات الإصلاح للعميل
       const response = await apiService.request(`/customers/${id}/repairs`);
       console.log('Customer repairs response:', response);
-      
+
       // معالجة البيانات من API
       let repairsData = [];
       if (response && response.success && response.data && response.data.repairs) {
@@ -84,7 +84,7 @@ const CustomerDetailsPage = () => {
       } else {
         repairsData = [];
       }
-      
+
       console.log('Customer repairs data:', repairsData);
       setCustomerRepairs(repairsData);
     } catch (err) {
@@ -100,7 +100,7 @@ const CustomerDetailsPage = () => {
       setStatsLoading(true);
       const response = await apiService.getCustomerStats(id);
       console.log('Customer stats response:', response);
-      
+
       if (response && response.customerId) {
         console.log('Customer stats data:', response);
         setCustomerStats(response);
@@ -190,8 +190,8 @@ const CustomerDetailsPage = () => {
 
   const customFields = (() => {
     try {
-      return typeof customer.customFields === 'string' 
-        ? JSON.parse(customer.customFields) 
+      return typeof customer.customFields === 'string'
+        ? JSON.parse(customer.customFields)
         : customer.customFields || {};
     } catch {
       return {};
@@ -220,7 +220,7 @@ const CustomerDetailsPage = () => {
             تاريخ التسجيل: {new Date(customer.createdAt).toLocaleDateString('en-GB')}
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-2 space-x-reverse">
           <Link to={`/customers/${customer.id}/edit`}>
             <SimpleButton variant="outline">
@@ -256,7 +256,7 @@ const CustomerDetailsPage = () => {
                   </label>
                   <p className="text-gray-900">{customer.name}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     رقم الهاتف
@@ -266,7 +266,7 @@ const CustomerDetailsPage = () => {
                     <p className="text-gray-900 en-text">{customer.phone}</p>
                   </div>
                 </div>
-                
+
                 {customer.email && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -278,7 +278,7 @@ const CustomerDetailsPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {customer.address && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -312,7 +312,7 @@ const CustomerDetailsPage = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   {customFields.notes && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -325,9 +325,9 @@ const CustomerDetailsPage = () => {
               </SimpleCardContent>
             </SimpleCard>
           )}
-          
+
           {/* تحليل الأداء الكامل */}
-          <PerformanceAnalytics 
+          <PerformanceAnalytics
             stats={customerStats}
             customerName={customer.name}
             showTrends={true}
@@ -338,7 +338,7 @@ const CustomerDetailsPage = () => {
         {/* الشريط الجانبي */}
         <div className="space-y-6">
           {/* تحليل الأداء */}
-          <PerformanceAnalytics 
+          <PerformanceAnalytics
             stats={customerStats}
             customerName={customer.name}
             showTrends={true}
@@ -487,14 +487,14 @@ const CustomerDetailsPage = () => {
                 {customerRepairs.map((repair) => {
                   const getStatusColor = (status) => {
                     const colors = {
-                      'RECEIVED': 'bg-yellow-100 text-yellow-800',
-                      'UNDER_REPAIR': 'bg-blue-100 text-blue-800',
-                      'COMPLETED': 'bg-green-100 text-green-800',
-                      'CANCELLED': 'bg-red-100 text-red-800',
-                      'pending': 'bg-yellow-100 text-yellow-800',
-                      'in-progress': 'bg-blue-100 text-blue-800',
-                      'completed': 'bg-green-100 text-green-800',
-                      'cancelled': 'bg-red-100 text-red-800'
+                      'RECEIVED': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-100 border-yellow-200 dark:border-yellow-900',
+                      'UNDER_REPAIR': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-100 border-blue-200 dark:border-blue-900',
+                      'COMPLETED': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-100 border-green-200 dark:border-green-900',
+                      'CANCELLED': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-100 border-red-200 dark:border-red-900',
+                      'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-100 border-yellow-200 dark:border-yellow-900',
+                      'in-progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-100 border-blue-200 dark:border-blue-900',
+                      'completed': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-100 border-green-200 dark:border-green-900',
+                      'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-100 border-red-200 dark:border-red-900'
                     };
                     return colors[status] || 'bg-gray-100 text-gray-800';
                   };
@@ -515,10 +515,10 @@ const CustomerDetailsPage = () => {
 
                   const getPriorityColor = (priority) => {
                     const colors = {
-                      'low': 'bg-gray-100 text-gray-800',
-                      'medium': 'bg-yellow-100 text-yellow-800',
-                      'high': 'bg-red-100 text-red-800',
-                      'normal': 'bg-gray-100 text-gray-800'
+                      'low': 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+                      'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-100',
+                      'high': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-100',
+                      'normal': 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                     };
                     return colors[priority] || 'bg-gray-100 text-gray-800';
                   };
@@ -534,13 +534,13 @@ const CustomerDetailsPage = () => {
                   };
 
                   return (
-                    <div key={repair.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={repair.id} className="border border-border rounded-lg p-4 hover:shadow-md hover:bg-accent/5 transition-all">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h4 className="font-semibold text-lg text-gray-900">
+                          <h4 className="font-semibold text-lg text-foreground">
                             REP-{new Date(repair.createdAt).getFullYear()}-{String(new Date(repair.createdAt).getMonth() + 1).padStart(2, '0')}-{String(new Date(repair.createdAt).getDate()).padStart(2, '0')}-{String(repair.id).padStart(3, '0')}
                           </h4>
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-muted-foreground text-sm">
                             {repair.deviceBrand || 'غير محدد'} {repair.deviceModel || ''} - {repair.deviceType || 'غير محدد'}
                           </p>
                         </div>
@@ -553,12 +553,12 @@ const CustomerDetailsPage = () => {
                           </SimpleBadge>
                         </div>
                       </div>
-                      
-                      <p className="text-gray-700 mb-3 text-sm">
+
+                      <p className="text-foreground/90 mb-3 text-sm">
                         <strong>المشكلة:</strong> {repair.problem}
                       </p>
-                      
-                      <div className="flex items-center justify-between text-sm text-gray-600">
+
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex items-center gap-4">
                           <span>
                             <Calendar className="w-4 h-4 inline ml-1" />
@@ -566,8 +566,8 @@ const CustomerDetailsPage = () => {
                           </span>
                           {repair.estimatedCost && repair.estimatedCost !== 0 && (
                             <span className="font-semibold text-green-600">
-                              {typeof repair.estimatedCost === 'number' 
-                                ? repair.estimatedCost.toFixed(2) 
+                              {typeof repair.estimatedCost === 'number'
+                                ? repair.estimatedCost.toFixed(2)
                                 : parseFloat(repair.estimatedCost || 0).toFixed(2)} ج.م
                             </span>
                           )}

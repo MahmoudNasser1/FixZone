@@ -2362,8 +2362,8 @@ const RepairDetailsPage = () => {
                 <ArrowRight className="w-4 h-4" />
               </SimpleButton>
             </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate max-w-[200px] xs:max-w-none">
-              تفاصيل الطلب: {repair.requestNumber}
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              تفاصيل الطلب: {repair.requestNumber || repair.id}
             </h1>
             <div className="flex items-center gap-2">
               <SimpleBadge className={statusInfo.color}>
@@ -2437,7 +2437,7 @@ const RepairDetailsPage = () => {
         </div>
 
         <div className="w-full lg:w-auto">
-          <div className="flex flex-wrap items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-2">
+          <div className="flex flex-wrap items-center gap-2 bg-muted/50 border border-border rounded-xl p-2">
             <SimpleButton
               size="sm"
               variant="outline"
@@ -2748,15 +2748,15 @@ const RepairDetailsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">نوع الجهاز</label>
-                        <p className="text-gray-900">{repair.deviceType}</p>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">نوع الجهاز</label>
+                        <p className="text-foreground">{repair.deviceType}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">الماركة والموديل</label>
-                        <p className="text-gray-900">{repair.deviceBrand} {repair.deviceModel}</p>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">الماركة والموديل</label>
+                        <p className="text-foreground">{repair.deviceBrand} {repair.deviceModel}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة المقدرة</label>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">التكلفة المقدرة</label>
                         {(() => {
                           // Try to get min/max from customFields
                           let customFields = {};
@@ -2775,24 +2775,24 @@ const RepairDetailsPage = () => {
 
                           if (minCost !== undefined && maxCost !== undefined && minCost !== null && maxCost !== null) {
                             return (
-                              <p className="text-gray-900 font-semibold">
+                              <p className="text-foreground font-semibold">
                                 من {formatNumber(minCost)} إلى {formatNumber(maxCost)} ج.م
                               </p>
                             );
                           } else {
-                            return <p className="text-gray-900 font-semibold">لم يتم تحديدها بعد</p>;
+                            return <p className="text-foreground font-semibold">لم يتم تحديدها بعد</p>;
                           }
                         })()}
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة الفعلية</label>
-                        <p className="text-gray-900">{repair.actualCost != null ? formatMoney(repair.actualCost) : 'لم يتم تحديدها بعد'}</p>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">التكلفة الفعلية</label>
+                        <p className="text-foreground">{repair.actualCost != null ? formatMoney(repair.actualCost) : 'لم يتم تحديدها بعد'}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">موعد التسليم المتوقع</label>
-                        <p className="text-gray-900">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('en-GB') : 'لم يتم تحديده بعد'}</p>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">موعد التسليم المتوقع</label>
+                        <p className="text-foreground">{repair.expectedDeliveryDate ? new Date(repair.expectedDeliveryDate).toLocaleDateString('en-GB') : 'لم يتم تحديده بعد'}</p>
                       </div>
                     </div>
 
@@ -2805,16 +2805,16 @@ const RepairDetailsPage = () => {
                     </div>
                   </div>
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشكلة</label>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-900">{repair.problemDescription || repair.reportedProblem || '—'}</p>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">وصف المشكلة</label>
+                    <div className="bg-muted/30 rounded-lg p-4">
+                      <p className="text-foreground">{repair.problemDescription || repair.reportedProblem || '—'}</p>
                     </div>
                   </div>
                   {repair.technicianNotes && (
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">ملاحظات الفني</label>
-                      <div className="bg-blue-50 rounded-lg p-4">
-                        <p className="text-blue-900">{repair.technicianNotes}</p>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">ملاحظات الفني</label>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                        <p className="text-blue-900 dark:text-blue-100">{repair.technicianNotes}</p>
                       </div>
                     </div>
                   )}
@@ -2899,7 +2899,7 @@ const RepairDetailsPage = () => {
                         const invoiced = !!service.invoiceItemId || service.isManual;
                         const isEditing = editingService?.id === service.id;
                         return (
-                          <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all">
+                          <div key={service.id} className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4 border-l-4 border-purple-400 dark:border-purple-600 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 transition-all">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 {isEditing ? (
@@ -2946,7 +2946,7 @@ const RepairDetailsPage = () => {
                                         <Settings className="w-5 h-5 text-purple-600" />
                                       </div>
                                       <div>
-                                        <div className="font-semibold text-gray-900 text-lg">
+                                        <div className="font-semibold text-foreground text-lg">
                                           {service.serviceName || service.description || `خدمة إصلاح #${service.serviceId || 'يدوية'}`}
                                         </div>
                                         <div className="text-sm text-gray-500">
@@ -2962,13 +2962,13 @@ const RepairDetailsPage = () => {
                                     <div className="grid grid-cols-2 gap-4 text-sm mb-2">
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="text-gray-600">السعر:</span>
-                                        <span className="font-medium text-gray-900">{formatCurrency(service.finalPrice || service.price || 0)}</span>
+                                        <span className="text-muted-foreground">السعر:</span>
+                                        <span className="font-medium text-foreground">{formatCurrency(service.finalPrice || service.price || 0)}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                        <span className="text-gray-600">الفني:</span>
-                                        <span className="font-medium text-gray-900">
+                                        <span className="text-muted-foreground">الفني:</span>
+                                        <span className="font-medium text-foreground">
                                           {service.technicianName || (service.technicianId ? `مستخدم #${service.technicianId}` : 'غير محدد')}
                                         </span>
                                       </div>
@@ -3982,12 +3982,12 @@ const RepairDetailsPage = () => {
         <div className="space-y-6">
           {/* الفريق المسؤول */}
           <SimpleCard>
-            <SimpleCardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 bg-gray-50/50">
-              <SimpleCardTitle className="flex items-center text-purple-700">
+            <SimpleCardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 bg-muted/50">
+              <SimpleCardTitle className="flex items-center text-primary">
                 <Users className="w-5 h-5 ml-2" />
                 الفريق المسؤول
               </SimpleCardTitle>
-              <SimpleButton size="sm" variant="outline" onClick={() => setAssignOpen(true)} className="rounded-lg border-purple-200 hover:bg-purple-50 text-purple-700">
+              <SimpleButton size="sm" variant="outline" onClick={() => setAssignOpen(true)} className="rounded-lg border-primary/20 hover:bg-primary/10 text-primary">
                 <UserPlus className="w-4 h-4 ml-1" />
                 إسناد فني
               </SimpleButton>
@@ -3996,13 +3996,13 @@ const RepairDetailsPage = () => {
               {assignedTechnicians.length > 0 ? (
                 <div className="space-y-3">
                   {assignedTechnicians.map((tech) => (
-                    <div key={tech.id || tech.technicianId} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <div key={tech.id || tech.technicianId} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border shadow-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           {(tech.technicianName || tech.name || 'U')[0]}
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-gray-900 truncate max-w-[100px]">{tech.technicianName || tech.name || `مستخدم #${tech.technicianId || tech.id}`}</p>
+                          <p className="font-bold text-sm text-foreground truncate max-w-[100px]">{tech.technicianName || tech.name || `مستخدم #${tech.technicianId || tech.id}`}</p>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full ${tech.role === 'primary' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                             {tech.role === 'primary' ? 'فني رئيسي' : 'فني مساعد'}
                           </span>
@@ -4019,8 +4019,8 @@ const RepairDetailsPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                  <UserX className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                <div className="text-center py-6 bg-muted/50 rounded-xl border border-dashed border-border">
+                  <UserX className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
                   <p className="text-xs text-gray-500 italic">لم يتم إسناد فنيين</p>
                   <button onClick={() => setAssignOpen(true)} className="mt-2 text-purple-600 hover:text-purple-700 font-bold text-[10px] flex items-center justify-center mx-auto gap-1">
                     <Plus className="w-3 h-3" />
@@ -4078,17 +4078,17 @@ const RepairDetailsPage = () => {
                 <SimpleCardContent>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">الاسم</label>
-                      <p className="text-gray-900">{customer.name}</p>
+                      <label className="block text-sm font-medium text-muted-foreground">الاسم</label>
+                      <p className="text-foreground">{customer.name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">الهاتف</label>
-                      <p className="text-gray-900 en-text">{customer.phone}</p>
+                      <label className="block text-sm font-medium text-muted-foreground">الهاتف</label>
+                      <p className="text-foreground en-text">{customer.phone}</p>
                     </div>
                     {customer.email && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-                        <p className="text-gray-900 en-text">{customer.email}</p>
+                        <label className="block text-sm font-medium text-muted-foreground">البريد الإلكتروني</label>
+                        <p className="text-foreground en-text">{customer.email}</p>
                       </div>
                     )}
                   </div>
@@ -4123,19 +4123,19 @@ const RepairDetailsPage = () => {
                 </SimpleCardHeader>
                 <SimpleCardContent>
                   {/* المعلومات الأساسية */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">نوع الجهاز</label>
-                      <p className="text-gray-900">{repair.deviceType || 'غير محدد'}</p>
+                      <label className="block text-sm font-medium text-muted-foreground">نوع الجهاز</label>
+                      <p className="text-foreground">{repair.deviceType || 'غير محدد'}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">الماركة والموديل</label>
-                      <p className="text-gray-900">{repair.deviceBrand} {repair.deviceModel}</p>
+                      <label className="block text-sm font-medium text-muted-foreground">الماركة والموديل</label>
+                      <p className="text-foreground">{repair.deviceBrand} {repair.deviceModel}</p>
                     </div>
                     {repair.serialNumber && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">الرقم التسلسلي</label>
-                        <p className="text-gray-900 en-text">{repair.serialNumber}</p>
+                        <label className="block text-sm font-medium text-muted-foreground">الرقم التسلسلي</label>
+                        <p className="text-foreground en-text">{repair.serialNumber}</p>
                       </div>
                     )}
                   </div>
@@ -5350,42 +5350,42 @@ const RepairDetailsPage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الذاكرة (RAM)</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">الذاكرة (RAM)</label>
                     <input
                       type="text"
                       value={deviceSpecs.ram || ''}
                       onChange={(e) => setDeviceSpecs(prev => ({ ...prev, ram: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      className="w-full p-3 border border-input rounded-xl bg-muted/30 focus:ring-2 focus:ring-primary"
                       placeholder="مثال: 16GB DDR4"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">التخزين (Storage)</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">التخزين (Storage)</label>
                     <input
                       type="text"
                       value={deviceSpecs.storage || ''}
                       onChange={(e) => setDeviceSpecs(prev => ({ ...prev, storage: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      className="w-full p-3 border border-input rounded-xl bg-muted/30 focus:ring-2 focus:ring-primary"
                       placeholder="مثال: 512GB SSD"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">حجم الشاشة</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">حجم الشاشة</label>
                     <input
                       type="text"
                       value={deviceSpecs.screenSize || ''}
                       onChange={(e) => setDeviceSpecs(prev => ({ ...prev, screenSize: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      className="w-full p-3 border border-input rounded-xl bg-muted/30 focus:ring-2 focus:ring-primary"
                       placeholder="مثال: 15.6 بوصة"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">نظام التشغيل</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">نظام التشغيل</label>
                     <input
                       type="text"
                       value={deviceSpecs.os || ''}
                       onChange={(e) => setDeviceSpecs(prev => ({ ...prev, os: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500"
+                      className="w-full p-3 border border-input rounded-xl bg-muted/30 focus:ring-2 focus:ring-primary"
                       placeholder="مثال: Windows 11"
                     />
                   </div>

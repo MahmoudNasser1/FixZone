@@ -6,8 +6,8 @@ import SimpleBadge from '../../components/ui/SimpleBadge';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorHandler from '../../components/common/ErrorHandler';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import { 
-  ArrowLeft, Edit, Trash2, Package, DollarSign, 
+import {
+  ArrowLeft, Edit, Trash2, Package, DollarSign,
   Hash, FileText, Tag, ShoppingCart, TrendingUp,
   AlertCircle, CheckCircle, Clock
 } from 'lucide-react';
@@ -17,7 +17,7 @@ const InventoryItemDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState(null);
   const [error, setError] = useState(null);
@@ -33,11 +33,11 @@ const InventoryItemDetailsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await apiService.request(`/inventory/${id}`);
       const itemData = response.data || response;
       setItem(itemData);
-      
+
       // Fetch stock levels if available
       try {
         const stockResponse = await apiService.request(`/inventory/${id}/stock-levels`);
@@ -59,7 +59,7 @@ const InventoryItemDetailsPage = () => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الصنف؟')) {
       return;
     }
-    
+
     try {
       await apiService.request(`/inventory/${id}`, { method: 'DELETE' });
       notifications.success('تم حذف الصنف بنجاح');
@@ -86,7 +86,7 @@ const InventoryItemDetailsPage = () => {
   if (error || !item) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <ErrorHandler 
+        <ErrorHandler
           error={{ message: error || 'الصنف غير موجود' }}
           onRetry={() => navigate('/inventory')}
           title="خطأ في تحميل البيانات"
@@ -98,12 +98,12 @@ const InventoryItemDetailsPage = () => {
   const getStockStatus = () => {
     const totalStock = stockLevels.reduce((sum, level) => sum + (parseFloat(level.quantity) || 0), 0);
     if (totalStock === 0) {
-      return { label: 'نفد المخزون', color: 'bg-red-100 text-red-800', icon: AlertCircle };
+      return { label: 'نفد المخزون', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-100', icon: AlertCircle };
     }
     if (totalStock < (item.minStockLevel || 10)) {
-      return { label: 'مخزون منخفض', color: 'bg-yellow-100 text-yellow-800', icon: Clock };
+      return { label: 'مخزون منخفض', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-100', icon: Clock };
     }
-    return { label: 'متوفر', color: 'bg-green-100 text-green-800', icon: CheckCircle };
+    return { label: 'متوفر', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100', icon: CheckCircle };
   };
 
   const stockStatus = getStockStatus();
@@ -161,12 +161,12 @@ const InventoryItemDetailsPage = () => {
             <SimpleCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">الرمز SKU</label>
-                  <p className="mt-1 text-sm font-mono bg-gray-100 px-3 py-2 rounded">{item.sku || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">الرمز SKU</label>
+                  <p className="mt-1 text-sm font-mono bg-muted px-3 py-2 rounded text-foreground">{item.sku || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">الاسم</label>
-                  <p className="mt-1 text-sm font-semibold">{item.name || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">الاسم</label>
+                  <p className="mt-1 text-sm font-semibold text-foreground">{item.name || '-'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">الفئة</label>
@@ -203,14 +203,14 @@ const InventoryItemDetailsPage = () => {
             <SimpleCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">سعر الشراء</label>
-                  <p className="mt-1 text-lg font-semibold text-gray-900">
+                  <label className="text-sm font-medium text-muted-foreground">سعر الشراء</label>
+                  <p className="mt-1 text-lg font-semibold text-foreground">
                     {item.purchasePrice ? `${parseFloat(item.purchasePrice).toFixed(2)} ج.م` : '-'}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">سعر البيع</label>
-                  <p className="mt-1 text-lg font-semibold text-green-600">
+                  <label className="text-sm font-medium text-muted-foreground">سعر البيع</label>
+                  <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
                     {item.sellingPrice ? `${parseFloat(item.sellingPrice).toFixed(2)} ج.م` : '-'}
                   </p>
                 </div>
@@ -238,14 +238,14 @@ const InventoryItemDetailsPage = () => {
               <SimpleCardContent>
                 <div className="space-y-3">
                   {stockLevels.map((level, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="font-medium text-sm">{level.warehouseName || 'مخزن غير محدد'}</p>
-                        <p className="text-xs text-gray-500">{level.location || ''}</p>
+                        <p className="font-medium text-sm text-foreground">{level.warehouseName || 'مخزن غير محدد'}</p>
+                        <p className="text-xs text-muted-foreground">{level.location || ''}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-semibold">{parseFloat(level.quantity) || 0}</p>
-                        <p className="text-xs text-gray-500">{item.unit || 'قطعة'}</p>
+                        <p className="text-lg font-semibold text-foreground">{parseFloat(level.quantity) || 0}</p>
+                        <p className="text-xs text-muted-foreground">{item.unit || 'قطعة'}</p>
                       </div>
                     </div>
                   ))}
@@ -268,10 +268,10 @@ const InventoryItemDetailsPage = () => {
                   <stockStatus.icon className="w-5 h-5" />
                   <span className="font-medium">{stockStatus.label}</span>
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{totalStock}</p>
-                <p className="text-sm text-gray-500 mt-1">{item.unit || 'قطعة'} متاحة</p>
+                <p className="text-3xl font-bold text-foreground">{totalStock}</p>
+                <p className="text-sm text-muted-foreground mt-1">{item.unit || 'قطعة'} متاحة</p>
                 {item.minStockLevel && (
-                  <p className="text-xs text-gray-400 mt-2">الحد الأدنى: {item.minStockLevel}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">الحد الأدنى: {item.minStockLevel}</p>
                 )}
               </div>
             </SimpleCardContent>

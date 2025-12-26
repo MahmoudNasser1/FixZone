@@ -162,8 +162,8 @@ const InvoicesPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">إدارة الفواتير</h1>
-          <p className="text-[10px] sm:text-sm text-gray-600 mt-0.5">إدارة فواتير طلبات الإصلاح والمدفوعات</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">إدارة الفواتير</h1>
+          <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5">إدارة فواتير طلبات الإصلاح والمدفوعات</p>
         </div>
         <Link to="/invoices/new" className="shrink-0">
           <SimpleButton size="sm" className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 sm:gap-2">
@@ -179,20 +179,20 @@ const InvoicesPage = () => {
         <SimpleCardContent className="p-3 sm:p-6">
           <div className="flex flex-col gap-3">
             <div className="relative w-full">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
                 placeholder="البحث في الفواتير..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pr-10 pl-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background"
+                className="w-full h-10 pr-10 pl-4 text-sm border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={invoiceTypeFilter}
                 onChange={(e) => setInvoiceTypeFilter(e.target.value)}
-                className="w-full h-9 px-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background appearance-none cursor-pointer"
+                className="w-full h-9 px-2 text-xs sm:text-sm border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground appearance-none cursor-pointer"
               >
                 <option value="all">جميع الأنواع</option>
                 <option value="sale">فاتورة بيع</option>
@@ -201,7 +201,7 @@ const InvoicesPage = () => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="w-full h-9 px-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-background appearance-none cursor-pointer"
+                className="w-full h-9 px-2 text-xs sm:text-sm border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground appearance-none cursor-pointer"
               >
                 <option value="all">جميع الحالات</option>
                 <option value="paid">مدفوعة</option>
@@ -217,63 +217,63 @@ const InvoicesPage = () => {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SimpleCard className="hover:shadow-lg transition-shadow">
+        <SimpleCard className="hover:shadow-lg transition-shadow hover:bg-accent/5">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">إجمالي الفواتير</p>
-                <p className="text-3xl font-bold text-gray-900">{(invoices || []).length}</p>
+                <p className="text-sm text-muted-foreground mb-1">إجمالي الفواتير</p>
+                <p className="text-3xl font-bold text-foreground">{(invoices || []).length}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>
 
-        <SimpleCard className="hover:shadow-lg transition-shadow">
+        <SimpleCard className="hover:shadow-lg transition-shadow hover:bg-accent/5">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">المبلغ الإجمالي</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground mb-1">المبلغ الإجمالي</p>
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency((invoices || []).reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0), 'EGP')}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>
 
-        <SimpleCard className="hover:shadow-lg transition-shadow">
+        <SimpleCard className="hover:shadow-lg transition-shadow hover:bg-accent/5">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">المدفوع</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground mb-1">المدفوع</p>
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency((invoices || []).reduce((sum, invoice) => sum + (invoice.amountPaid || 0), 0), 'EGP')}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>
 
-        <SimpleCard className="hover:shadow-lg transition-shadow">
+        <SimpleCard className="hover:shadow-lg transition-shadow hover:bg-accent/5">
           <SimpleCardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">غير مدفوعة</p>
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground mb-1">غير مدفوعة</p>
+                <p className="text-3xl font-bold text-foreground">
                   {(invoices || []).filter(invoice => invoice.status === 'unpaid').length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <XCircle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </SimpleCardContent>
@@ -301,17 +301,17 @@ const InvoicesPage = () => {
           ) : (
             <div className="space-y-4">
               {filteredInvoices.map((invoice) => (
-                <div key={invoice.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={invoice.id} className="border border-border rounded-lg p-4 hover:shadow-md hover:bg-accent/5 transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-foreground">
                           فاتورة #{invoice.id}
                         </h3>
                         {getStatusBadge(invoice.paymentStatus || invoice.status)}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4" />
                           <span>المبلغ: {formatCurrency(invoice.totalAmount, invoice.currency)}</span>
@@ -333,7 +333,7 @@ const InvoicesPage = () => {
                         </div>
                       </div>
                       {invoice.repairRequestId && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground/80">
                           <FileText className="w-4 h-4" />
                           <span>طلب الإصلاح: #{invoice.repairRequestId}</span>
                         </div>
