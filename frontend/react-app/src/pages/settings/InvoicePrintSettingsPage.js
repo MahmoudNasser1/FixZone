@@ -208,8 +208,8 @@ export default function InvoicePrintSettingsPage() {
             const key = name.split('.')[1];
             setInvoicePrint((ip) => ({
                 ...ip,
-                financial: { 
-                    ...ip.financial, 
+                financial: {
+                    ...ip.financial,
                     [key]: key === 'showTax' || key === 'showShipping' ? checked : (key === 'defaultTaxPercent' || key === 'defaultShippingAmount' ? Number(value) : value)
                 }
             }));
@@ -283,7 +283,7 @@ export default function InvoicePrintSettingsPage() {
     };
 
     const PreviewCurrency = useMemo(() => (
-        <span className="inline-block text-sm text-gray-600">
+        <span className="inline-block text-sm text-muted-foreground">
             مثال: {formatMoney(12345.67)}
         </span>
     ), [formatMoney]);
@@ -291,38 +291,39 @@ export default function InvoicePrintSettingsPage() {
     return (
         <div className="space-y-4">
             <SimpleCard>
-                <SimpleCardHeader className="flex flex-row items-center justify-between">
+                <SimpleCardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <SimpleCardTitle>إعدادات طباعة الفواتير</SimpleCardTitle>
                     <SimpleButton
                         onClick={handleSaveInvoicePrint}
                         disabled={saving}
+                        className="w-full sm:w-auto"
                     >
-                        <Save className="h-4 w-4 mr-2" />
-                        {saving ? 'جاري الحفظ...' : 'حفظ'}
+                        <Save className="h-4 w-4 ml-2" />
+                        {saving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
                     </SimpleButton>
                 </SimpleCardHeader>
                 <SimpleCardContent className="space-y-6">
                     {/* Header & Logo */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">الرأس والشعار</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">الرأس والشعار</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الفاتورة</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">عنوان الفاتورة</label>
                                 <input
                                     name="headerText"
                                     value={invoicePrint.headerText}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">حجم خط العنوان</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">حجم خط العنوان</label>
                                 <input
                                     type="number"
                                     name="headerFontSize"
                                     value={invoicePrint.headerFontSize}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div className="md:col-span-2">
@@ -332,25 +333,25 @@ export default function InvoicePrintSettingsPage() {
                                         name="showLogo"
                                         checked={!!invoicePrint.showLogo}
                                         onChange={handleInvoicePrintChange}
-                                        className="rounded text-blue-600"
+                                        className="rounded text-primary focus:ring-primary"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">إظهار الشعار</span>
+                                    <span className="text-sm font-medium text-foreground">إظهار الشعار</span>
                                 </label>
                                 {invoicePrint.showLogo && (
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">رفع شعار جديد</label>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
+                                        <div className="flex-1 w-full">
+                                            <label className="block text-sm font-medium text-muted-foreground mb-1">رفع شعار جديد</label>
                                             <div className="flex items-center gap-2">
-                                                <label className="cursor-pointer bg-white border border-gray-300 rounded-md px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                                <label className="cursor-pointer bg-background border border-border rounded-md px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2">
                                                     <Upload className="h-4 w-4" />
-                                                    <span>اختر ملف</span>
+                                                    <span className="text-sm">اختر ملف</span>
                                                     <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                                                 </label>
-                                                <span className="text-xs text-gray-500">PNG, JPG (Max 1MB)</span>
+                                                <span className="text-xs text-muted-foreground">PNG, JPG (Max 1MB)</span>
                                             </div>
                                         </div>
                                         {invoicePrint.logoUrl && (
-                                            <div className="w-20 h-20 border rounded-md p-1 flex items-center justify-center bg-gray-50">
+                                            <div className="w-20 h-20 border border-border rounded-md p-1 flex items-center justify-center bg-background">
                                                 <img src={invoicePrint.logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
                                             </div>
                                         )}
@@ -361,8 +362,8 @@ export default function InvoicePrintSettingsPage() {
                     </div>
 
                     {/* Content Options */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">محتوى الفاتورة</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">محتوى الفاتورة</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
                                 { key: 'showInvoiceNumber', label: 'رقم الفاتورة' },
@@ -387,17 +388,17 @@ export default function InvoicePrintSettingsPage() {
                                         name={opt.key}
                                         checked={!!invoicePrint[opt.key]}
                                         onChange={handleInvoicePrintChange}
-                                        className="rounded text-blue-600"
+                                        className="rounded text-primary focus:ring-primary"
                                     />
-                                    <span className="text-sm text-gray-700">{opt.label}</span>
+                                    <span className="text-sm text-foreground">{opt.label}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
                     {/* Table Columns */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">أعمدة الجدول</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">أعمدة الجدول</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
                                 { key: 'showItemDescription', label: 'الوصف' },
@@ -414,66 +415,66 @@ export default function InvoicePrintSettingsPage() {
                                         name={opt.key}
                                         checked={!!invoicePrint[opt.key]}
                                         onChange={handleInvoicePrintChange}
-                                        className="rounded text-blue-600"
+                                        className="rounded text-primary focus:ring-primary"
                                     />
-                                    <span className="text-sm text-gray-700">{opt.label}</span>
+                                    <span className="text-sm text-foreground">{opt.label}</span>
                                 </label>
                             ))}
                         </div>
                         {invoicePrint.showServiceNotes && (
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">مسمى الملاحظات</label>
+                            <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">مسمى الملاحظات</label>
                                 <input
                                     name="serviceNotesLabel"
                                     value={invoicePrint.serviceNotesLabel || 'ملاحظات'}
                                     onChange={handleInvoicePrintChange}
                                     placeholder="ملاحظات"
-                                    className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full md:w-1/3 px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لإخفاء المسمى</p>
+                                <p className="text-xs text-muted-foreground mt-1">اتركه فارغاً لإخفاء المسمى</p>
                             </div>
                         )}
                     </div>
 
                     {/* Formatting */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">التنسيق والأرقام</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">التنسيق والأرقام</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">عدد الأرقام العشرية</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">عدد الأرقام العشرية</label>
                                 <input
                                     type="number"
                                     name="numberFormat.decimalPlaces"
                                     value={invoicePrint.numberFormat.decimalPlaces}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">فاصل الآلاف</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">فاصل الآلاف</label>
                                 <input
                                     name="numberFormat.thousandSeparator"
                                     value={invoicePrint.numberFormat.thousandSeparator}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">الفاصل العشري</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">الفاصل العشري</label>
                                 <input
                                     name="numberFormat.decimalSeparator"
                                     value={invoicePrint.numberFormat.decimalSeparator}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">اتجاه الصفحة</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">اتجاه الصفحة</label>
                                 <select
                                     name="orientation"
                                     value={invoicePrint.orientation}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 >
                                     <option value="portrait">عمودي</option>
                                     <option value="landscape">أفقي</option>
@@ -487,16 +488,16 @@ export default function InvoicePrintSettingsPage() {
 
                     {/* QR Code Settings */}
                     {invoicePrint.showQrCode && (
-                        <div className="border-b pb-4">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">إعدادات QR Code</h3>
+                        <div className="border-b border-border pb-6">
+                            <h3 className="text-lg font-medium text-foreground mb-4">إعدادات QR Code</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">الموضع</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">الموضع</label>
                                     <select
                                         name="qrCodePosition"
                                         value={invoicePrint.qrCodePosition}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     >
                                         <option value="top-right">أعلى يمين</option>
                                         <option value="top-left">أعلى يسار</option>
@@ -505,13 +506,13 @@ export default function InvoicePrintSettingsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">الحجم (بكسل)</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">الحجم (بكسل)</label>
                                     <input
                                         type="number"
                                         name="qrCodeSize"
                                         value={invoicePrint.qrCodeSize}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     />
                                 </div>
                             </div>
@@ -520,39 +521,39 @@ export default function InvoicePrintSettingsPage() {
 
                     {/* Barcode Settings */}
                     {invoicePrint.showBarcode && (
-                        <div className="border-b pb-4">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">إعدادات الباركود</h3>
+                        <div className="border-b border-border pb-6">
+                            <h3 className="text-lg font-medium text-foreground mb-4">إعدادات الباركود</h3>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">الموضع</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">الموضع</label>
                                     <select
                                         name="barcodePosition"
                                         value={invoicePrint.barcodePosition}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     >
                                         <option value="top">أعلى</option>
                                         <option value="bottom">أسفل</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">العرض</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">العرض</label>
                                     <input
                                         type="number"
                                         name="barcodeWidth"
                                         value={invoicePrint.barcodeWidth}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">الارتفاع</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">الارتفاع</label>
                                     <input
                                         type="number"
                                         name="barcodeHeight"
                                         value={invoicePrint.barcodeHeight}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     />
                                 </div>
                             </div>
@@ -561,26 +562,26 @@ export default function InvoicePrintSettingsPage() {
 
                     {/* Terms Settings */}
                     {invoicePrint.showTerms && (
-                        <div className="border-b pb-4">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">الشروط والأحكام</h3>
+                        <div className="border-b border-border pb-6">
+                            <h3 className="text-lg font-medium text-foreground mb-4">الشروط والأحكام</h3>
                             <div className="grid grid-cols-1 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">عنوان القسم</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">عنوان القسم</label>
                                     <input
                                         name="termsLabel"
                                         value={invoicePrint.termsLabel}
                                         onChange={handleInvoicePrintChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">نص الشروط والأحكام</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1">نص الشروط والأحكام</label>
                                     <textarea
                                         name="termsText"
                                         value={invoicePrint.termsText}
                                         onChange={handleInvoicePrintChange}
                                         rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     />
                                 </div>
                             </div>
@@ -588,21 +589,23 @@ export default function InvoicePrintSettingsPage() {
                     )}
 
                     {/* Financial Settings */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">الإعدادات المالية</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">الإعدادات المالية</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="financial.showTax"
-                                    checked={!!invoicePrint.financial?.showTax}
-                                    onChange={handleInvoicePrintChange}
-                                    className="rounded text-blue-600"
-                                />
-                                <span className="text-sm text-gray-700">إظهار الضريبة</span>
-                            </label>
+                            <div className="flex items-center">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="financial.showTax"
+                                        checked={!!invoicePrint.financial?.showTax}
+                                        onChange={handleInvoicePrintChange}
+                                        className="rounded text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-sm text-foreground">إظهار الضريبة</span>
+                                </label>
+                            </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">نسبة الضريبة (%)</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">نسبة الضريبة (%)</label>
                                 <input
                                     type="number"
                                     name="financial.defaultTaxPercent"
@@ -611,22 +614,24 @@ export default function InvoicePrintSettingsPage() {
                                     min="0"
                                     max="100"
                                     step="0.1"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground disabled:opacity-50"
                                     disabled={!invoicePrint.financial?.showTax}
                                 />
                             </div>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="financial.showShipping"
-                                    checked={!!invoicePrint.financial?.showShipping}
-                                    onChange={handleInvoicePrintChange}
-                                    className="rounded text-blue-600"
-                                />
-                                <span className="text-sm text-gray-700">إظهار الشحن</span>
-                            </label>
+                            <div className="flex items-center">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="financial.showShipping"
+                                        checked={!!invoicePrint.financial?.showShipping}
+                                        onChange={handleInvoicePrintChange}
+                                        className="rounded text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-sm text-foreground">إظهار الشحن</span>
+                                </label>
+                            </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">مبلغ الشحن الافتراضي (ج.م)</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">مبلغ الشحن الافتراضي (ج.م)</label>
                                 <input
                                     type="number"
                                     name="financial.defaultShippingAmount"
@@ -634,7 +639,7 @@ export default function InvoicePrintSettingsPage() {
                                     onChange={handleInvoicePrintChange}
                                     min="0"
                                     step="0.01"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground disabled:opacity-50"
                                     disabled={!invoicePrint.financial?.showShipping}
                                 />
                             </div>
@@ -642,8 +647,8 @@ export default function InvoicePrintSettingsPage() {
                     </div>
 
                     {/* Page Break Settings */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">تقسيم الصفحات</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">تقسيم الصفحات</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -651,9 +656,9 @@ export default function InvoicePrintSettingsPage() {
                                     name="pageBreak.avoidItems"
                                     checked={!!invoicePrint.pageBreak.avoidItems}
                                     onChange={handleInvoicePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm text-gray-700">منع تقسيم الجدول بين صفحات</span>
+                                <span className="text-sm text-foreground">منع تقسيم الجدول بين صفحات</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -661,40 +666,40 @@ export default function InvoicePrintSettingsPage() {
                                     name="pageBreak.avoidCustomerInfo"
                                     checked={!!invoicePrint.pageBreak.avoidCustomerInfo}
                                     onChange={handleInvoicePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm text-gray-700">منع تقسيم بيانات العميل بين صفحات</span>
+                                <span className="text-sm text-foreground">منع تقسيم بيانات العميل بين صفحات</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Watermark */}
-                    <div className="border-b pb-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">العلامة المائية</h3>
+                    <div className="border-b border-border pb-6">
+                        <h3 className="text-lg font-medium text-foreground mb-4">العلامة المائية</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="flex items-center h-full pt-6">
+                            <div className="flex items-center h-full pt-2 md:pt-6">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         name="watermark.enabled"
                                         checked={!!invoicePrint.watermark.enabled}
                                         onChange={handleInvoicePrintChange}
-                                        className="rounded text-blue-600"
+                                        className="rounded text-primary focus:ring-primary"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">تفعيل العلامة المائية</span>
+                                    <span className="text-sm font-medium text-foreground">تفعيل العلامة المائية</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">النص</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">النص</label>
                                 <input
                                     name="watermark.text"
                                     value={invoicePrint.watermark.text}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">الشفافية (0-1)</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">الشفافية (0-1)</label>
                                 <input
                                     type="number"
                                     step="0.1"
@@ -703,7 +708,7 @@ export default function InvoicePrintSettingsPage() {
                                     name="watermark.opacity"
                                     value={invoicePrint.watermark.opacity}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                         </div>
@@ -711,46 +716,46 @@ export default function InvoicePrintSettingsPage() {
 
                     {/* Margins */}
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">هوامش الصفحة (مم)</h3>
+                        <h3 className="text-lg font-medium text-foreground mb-4">هوامش الصفحة (مم)</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">أعلى</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">أعلى</label>
                                 <input
                                     type="number"
                                     name="margins.top"
                                     value={invoicePrint.margins.top}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">يمين</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">يمين</label>
                                 <input
                                     type="number"
                                     name="margins.right"
                                     value={invoicePrint.margins.right}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">أسفل</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">أسفل</label>
                                 <input
                                     type="number"
                                     name="margins.bottom"
                                     value={invoicePrint.margins.bottom}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">يسار</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">يسار</label>
                                 <input
                                     type="number"
                                     name="margins.left"
                                     value={invoicePrint.margins.left}
                                     onChange={handleInvoicePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                         </div>

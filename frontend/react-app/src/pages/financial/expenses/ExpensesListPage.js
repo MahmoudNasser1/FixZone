@@ -3,33 +3,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, RefreshCw, Edit, Trash2, DollarSign } from 'lucide-react';
 import apiService from '../../../services/api';
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Chip,
-  Tooltip
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon
-} from '@mui/icons-material';
+import { SimpleCard, SimpleCardContent } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
+import SimpleBadge from '../../../components/ui/SimpleBadge';
+import DataView from '../../../components/ui/DataView';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { useExpenses } from '../../../hooks/financial/useExpenses';
 import FinancialSummaryCard from '../../../components/financial/shared/FinancialSummaryCard';
 import FinancialFilters from '../../../components/financial/shared/FinancialFilters';
-import { AttachMoney } from '@mui/icons-material';
+import { ConfirmModal } from '../../../components/ui/Modal';
 
 const ExpensesListPage = () => {
   const navigate = useNavigate();
@@ -46,9 +30,9 @@ const ExpensesListPage = () => {
     refetch
   } = useExpenses();
 
-  // const [selectedExpenses, setSelectedExpenses] = useState([]); // Reserved for future bulk actions
   const [categories, setCategories] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
 
   const handleCreate = () => {
     navigate('/financial/expenses/create');
@@ -56,7 +40,6 @@ const ExpensesListPage = () => {
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    // Reset to first page when filters change
     setPagination({ ...pagination, page: 1 });
   };
 
@@ -69,22 +52,17 @@ const ExpensesListPage = () => {
     navigate(`/financial/expenses/${id}/edit`);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه النفقة؟')) {
-      try {
-        await deleteExpense(id);
-      } catch (error) {
-        console.error('Error deleting expense:', error);
-      }
+  const handleDeleteClick = (id) => {
+    setDeleteConfirm({ open: true, id });
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteExpense(deleteConfirm.id);
+      setDeleteConfirm({ open: false, id: null });
+    } catch (error) {
+      console.error('Error deleting expense:', error);
     }
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setPagination({ ...pagination, page: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setPagination({ ...pagination, limit: parseInt(event.target.value, 10), page: 1 });
   };
 
   const formatCurrency = (amount) => {
@@ -103,7 +81,6 @@ const ExpensesListPage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load expense categories
         const categoriesResponse = await apiService.request('/expense-categories');
         if (categoriesResponse?.success && categoriesResponse?.data) {
           setCategories(categoriesResponse.data);
@@ -111,7 +88,6 @@ const ExpensesListPage = () => {
           setCategories(categoriesResponse);
         }
 
-        // Load branches
         const branchesResponse = await apiService.request('/branches');
         if (branchesResponse?.success && branchesResponse?.data) {
           setBranches(branchesResponse.data);
@@ -126,56 +102,114 @@ const ExpensesListPage = () => {
     loadData();
   }, []);
 
+  const columns = [
+    {
+      key: 'date',
+      label: 'التاريخ',
+      render: (expense) => formatDate(expense.date)
+    },
+    {
+      key: 'description',
+      label: 'الوصف',
+      render: (expense) => expense.description
+    },
+    {
+      key: 'category',
+      label: 'التصنيف',
+      render: (expense) => (
+        <SimpleBadge variant="secondary">
+          {expense.categoryName || '-'}
+        </SimpleBadge>
+      )
+    },
+    {
+      key: 'amount',
+      label: 'المبلغ',
+      render: (expense) => (
+        <div className="font-semibold text-foreground">
+          {formatCurrency(expense.amount)}
+        </div>
+      )
+    },
+    {
+      key: 'branch',
+      label: 'الفرع',
+      render: (expense) => expense.branchName || '-'
+    },
+    {
+      key: 'actions',
+      label: 'إجراءات',
+      render: (expense) => (
+        <div className="flex items-center gap-2">
+          <SimpleButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(expense.id)}
+          >
+            <Edit className="w-4 h-4" />
+          </SimpleButton>
+          <SimpleButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteClick(expense.id)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </SimpleButton>
+        </div>
+      )
+    }
+  ];
+
   if (error && !expenses.length) {
-    const errorMessage = typeof error === 'string' 
-      ? error 
+    const errorMessage = typeof error === 'string'
+      ? error
       : error?.message || error?.title || 'حدث خطأ غير متوقع';
     return (
-      <Box p={3}>
-        <Typography color="error">خطأ: {errorMessage}</Typography>
-        <Button onClick={refetch} variant="outlined" sx={{ mt: 2 }}>
-          إعادة المحاولة
-        </Button>
-      </Box>
+      <div className="p-6">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <p className="text-destructive mb-4">خطأ: {errorMessage}</p>
+            <SimpleButton onClick={refetch} variant="outline">
+              إعادة المحاولة
+            </SimpleButton>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          النفقات
-        </Typography>
-        <Box>
-          <Tooltip title="تحديث">
-            <IconButton onClick={refetch} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-            sx={{ ml: 1 }}
-          >
-            إضافة نفقة جديدة
-          </Button>
-        </Box>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-3xl font-bold text-foreground">النفقات</h1>
+          <div className="flex items-center gap-2">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </SimpleButton>
+            <SimpleButton onClick={handleCreate}>
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة نفقة جديدة
+            </SimpleButton>
+          </div>
+        </div>
 
-      {/* Summary Card */}
-      <Box mb={3}>
+        {/* Summary Card */}
         <FinancialSummaryCard
           title="ملخص النفقات"
           data={stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : null}
           loading={loading}
-          icon={AttachMoney}
+          icon={DollarSign}
         />
-      </Box>
 
-      {/* Filters */}
-      <Box mb={3}>
+        {/* Filters */}
         <FinancialFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -186,92 +220,42 @@ const ExpensesListPage = () => {
           categories={categories}
           branches={branches}
         />
-      </Box>
 
-      {/* Expenses Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>التاريخ</TableCell>
-              <TableCell>الوصف</TableCell>
-              <TableCell>التصنيف</TableCell>
-              <TableCell>المبلغ</TableCell>
-              <TableCell>الفرع</TableCell>
-              <TableCell>إجراءات</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading && expenses.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
-            ) : expenses.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  لا توجد نفقات
-                </TableCell>
-              </TableRow>
-            ) : (
-              expenses.map((expense) => (
-                <TableRow key={expense.id} hover>
-                  <TableCell>{formatDate(expense.date)}</TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell>
-                    <Chip label={expense.categoryName || '-'} size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(expense.amount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{expense.branchName || '-'}</TableCell>
-                  <TableCell>
-                    <Tooltip title="تعديل">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEdit(expense.id)}
-                        color="primary"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="حذف">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(expense.id)}
-                        color="error"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        {/* Expenses Table */}
+        {loading && expenses.length === 0 ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : (
+          <DataView
+            data={expenses}
+            columns={columns}
+            loading={loading}
+            emptyMessage="لا توجد نفقات"
+            pagination={{
+              currentPage: pagination.page,
+              totalPages: Math.ceil(pagination.total / pagination.limit),
+              pageSize: pagination.limit,
+              totalItems: pagination.total,
+              onPageChange: (page) => setPagination({ ...pagination, page }),
+              onPageSizeChange: (limit) => setPagination({ ...pagination, limit, page: 1 })
+            }}
+          />
+        )}
 
-        {/* Pagination */}
-        <TablePagination
-          component="div"
-          count={pagination.total}
-          page={pagination.page - 1}
-          onPageChange={handlePageChange}
-          rowsPerPage={pagination.limit}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          labelRowsPerPage="عدد الصفوف:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
-          }
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deleteConfirm.open}
+          onClose={() => setDeleteConfirm({ open: false, id: null })}
+          onConfirm={handleDeleteConfirm}
+          title="تأكيد الحذف"
+          message="هل أنت متأكد من حذف هذه النفقة؟ لا يمكن التراجع عن هذا الإجراء."
+          confirmText="حذف"
+          cancelText="إلغاء"
         />
-      </TableContainer>
-    </Box>
+      </div>
+    </div>
   );
 };
 
 export default ExpensesListPage;
-

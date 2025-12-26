@@ -180,7 +180,7 @@ function InvoicesPage() {
         <div>
           <div className="font-medium">{invoice.customerName || 'غير محدد'}</div>
           {invoice.customerPhone && (
-            <div className="text-sm text-gray-500">{invoice.customerPhone}</div>
+            <div className="text-sm text-muted-foreground">{invoice.customerPhone}</div>
           )}
         </div>
       ),
@@ -192,7 +192,7 @@ function InvoicesPage() {
       render: (invoice) => invoice.deviceModel ? (
         <div>
           <div className="font-medium">{invoice.deviceBrand}</div>
-          <div className="text-sm text-gray-500">{invoice.deviceModel}</div>
+          <div className="text-sm text-muted-foreground">{invoice.deviceModel}</div>
         </div>
       ) : 'غير محدد'
     },
@@ -203,7 +203,7 @@ function InvoicesPage() {
         <div className="text-right">
           <div className="font-medium">{invoice.totalAmount?.toFixed(2)} {invoice.currency}</div>
           {invoice.amountPaid > 0 && (
-            <div className="text-sm text-green-600">مدفوع: {invoice.amountPaid?.toFixed(2)}</div>
+            <div className="text-sm text-emerald-600 dark:text-emerald-400">مدفوع: {invoice.amountPaid?.toFixed(2)}</div>
           )}
         </div>
       ),
@@ -240,14 +240,14 @@ function InvoicesPage() {
           >
             <Printer className="w-4 h-4" />
           </SimpleButton>
-            <SimpleButton
-              variant="outline"
-              size="sm"
-              onClick={() => openDeleteModal(invoice.id)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </SimpleButton>
+          <SimpleButton
+            variant="outline"
+            size="sm"
+            onClick={() => openDeleteModal(invoice.id)}
+            className="text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+          </SimpleButton>
         </div>
       )
     }
@@ -285,8 +285,8 @@ function InvoicesPage() {
     return (
       <div className="p-6">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">جاري التحميل...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-muted border-t-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">جاري التحميل...</p>
         </div>
       </div>
     );
@@ -317,7 +317,7 @@ function InvoicesPage() {
       {/* Header with Stats */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">إدارة الفواتير</h1>
+          <h1 className="text-2xl font-bold text-foreground">إدارة الفواتير</h1>
           <div className="flex items-center gap-2">
             <SimpleButton
               variant="outline"
@@ -337,60 +337,60 @@ function InvoicesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <SimpleCard className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg ml-3">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-500/10 rounded-lg ml-3">
+                <FileText className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">إجمالي الفواتير</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total || 0}</p>
+                <p className="text-sm text-muted-foreground">إجمالي الفواتير</p>
+                <p className="text-2xl font-bold text-foreground">{stats.total || 0}</p>
               </div>
             </div>
           </SimpleCard>
 
           <SimpleCard className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg ml-3">
-                <Edit className="w-6 h-6 text-yellow-600" />
+              <div className="p-2 bg-amber-500/10 rounded-lg ml-3">
+                <Edit className="w-6 h-6 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">مسودات</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.draft || 0}</p>
+                <p className="text-sm text-muted-foreground">مسودات</p>
+                <p className="text-2xl font-bold text-foreground">{stats.draft || 0}</p>
               </div>
             </div>
           </SimpleCard>
 
           <SimpleCard className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg ml-3">
-                <Send className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-500/10 rounded-lg ml-3">
+                <Send className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">مرسلة</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.sent || 0}</p>
+                <p className="text-sm text-muted-foreground">مرسلة</p>
+                <p className="text-2xl font-bold text-foreground">{stats.sent || 0}</p>
               </div>
             </div>
           </SimpleCard>
 
           <SimpleCard className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg ml-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-emerald-500/10 rounded-lg ml-3">
+                <CheckCircle className="w-6 h-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">مدفوعة</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.paid || 0}</p>
+                <p className="text-sm text-muted-foreground">مدفوعة</p>
+                <p className="text-2xl font-bold text-foreground">{stats.paid || 0}</p>
               </div>
             </div>
           </SimpleCard>
 
           <SimpleCard className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg ml-3">
-                <AlertCircle className="w-6 h-6 text-red-600" />
+              <div className="p-2 bg-destructive/10 rounded-lg ml-3">
+                <AlertCircle className="w-6 h-6 text-destructive" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">متأخرة</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.overdue || 0}</p>
+                <p className="text-sm text-muted-foreground">متأخرة</p>
+                <p className="text-2xl font-bold text-foreground">{stats.overdue || 0}</p>
               </div>
             </div>
           </SimpleCard>

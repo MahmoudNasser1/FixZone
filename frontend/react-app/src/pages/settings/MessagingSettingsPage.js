@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Save, Send, MessageSquare, FileText, Settings, Eye, RotateCcw, Search, X, Plus, Trash2, Clock, Calendar, Edit } from 'lucide-react';
+import { Save, Send, MessageSquare, FileText, Settings, Eye, RotateCcw, Search, X, Plus, Trash2, Clock, Calendar, Edit, CheckCheck, Smartphone, Mail, Globe, Wrench, CreditCard, AlertTriangle } from 'lucide-react';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -628,18 +628,18 @@ export default function MessagingSettingsPage() {
     // Filter templates based on search
     const filteredTemplates = useMemo(() => {
         if (!templateSearch) return templateDefinitions;
-        
+
         const searchLower = templateSearch.toLowerCase();
         const filtered = {};
-        
+
         Object.keys(templateDefinitions).forEach(category => {
-            filtered[category] = templateDefinitions[category].filter(template => 
+            filtered[category] = templateDefinitions[category].filter(template =>
                 template.label.toLowerCase().includes(searchLower) ||
                 template.key.toLowerCase().includes(searchLower) ||
                 template.variables.toLowerCase().includes(searchLower)
             );
         });
-        
+
         return filtered;
     }, [templateSearch, templateDefinitions]);
 
@@ -647,14 +647,14 @@ export default function MessagingSettingsPage() {
     const renderTemplateDisplay = useCallback((template) => {
         const value = messagingSettings.whatsapp[template.key] || '';
         const preview = value.length > 100 ? value.substring(0, 100) + '...' : value;
-        
+
         return (
-            <div className="space-y-2 border border-gray-200 rounded-lg p-4 bg-white">
-                <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700 text-right">
+            <div className="space-y-2 border border-border rounded-lg p-4 bg-background">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <label className="block text-sm font-medium text-foreground text-right font-bold">
                         {template.label}
                     </label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                         <SimpleButton
                             variant="outline"
                             size="sm"
@@ -662,7 +662,7 @@ export default function MessagingSettingsPage() {
                                 setEditingTemplate(template);
                                 setEditTemplateValue(value);
                             }}
-                            className="text-xs"
+                            className="text-xs flex-1 sm:flex-none"
                         >
                             <Edit className="w-3 h-3 ml-1" />
                             تعديل
@@ -671,34 +671,37 @@ export default function MessagingSettingsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => resetTemplate(template.key)}
-                            className="text-xs"
+                            className="text-xs flex-1 sm:flex-none"
                         >
                             <RotateCcw className="w-3 h-3 ml-1" />
-                            استعادة افتراضي
+                            استعادة
                         </SimpleButton>
                     </div>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-md p-3 min-h-[100px]">
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono text-right" dir="rtl">
+                <div className="bg-muted/50 border border-border rounded-md p-3 min-h-[80px]">
+                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono text-right" dir="rtl">
                         {preview}
                     </pre>
                 </div>
-                <p className="text-xs text-gray-500">
-                    المتغيرات المتاحة: {template.variables}
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                    <span className="text-[10px] text-muted-foreground font-medium">المتغيرات:</span>
+                    {template.variables.split(',').map((v, i) => (
+                        <span key={i} className="text-[10px] bg-primary/10 text-primary px-1 rounded">{v.trim()}</span>
+                    ))}
+                </div>
             </div>
         );
     }, [messagingSettings.whatsapp, resetTemplate]);
-    
+
     // حفظ القالب بعد التعديل
     const handleSaveTemplate = useCallback((e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        
+
         if (!editingTemplate) return;
-        
+
         handleMessagingChange('whatsapp', editingTemplate.key, editTemplateValue);
         setEditingTemplate(null);
         setEditTemplateValue('');
@@ -714,61 +717,61 @@ export default function MessagingSettingsPage() {
             <SimpleCard>
                 <SimpleCardHeader>
                     <SimpleCardTitle className="flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-green-600" />
+                        <MessageSquare className="w-5 h-5 text-green-500" />
                         إعدادات واتساب (WhatsApp)
                     </SimpleCardTitle>
                 </SimpleCardHeader>
                 <SimpleCardContent className="space-y-4">
-                    <div className="flex items-center gap-4 mb-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <label className="flex items-center gap-2 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={messagingSettings.whatsapp.enabled}
                                 onChange={(e) => handleMessagingChange('whatsapp', 'enabled', e.target.checked)}
-                                className="rounded text-blue-600"
+                                className="rounded text-primary focus:ring-primary"
                             />
-                            <span className="font-medium">تفعيل واتساب</span>
+                            <span className="font-medium text-foreground text-sm">تفعيل واتساب</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={messagingSettings.whatsapp.webEnabled}
                                 onChange={(e) => handleMessagingChange('whatsapp', 'webEnabled', e.target.checked)}
-                                className="rounded text-blue-600"
+                                className="rounded text-primary focus:ring-primary"
                             />
-                            <span className="font-medium">استخدام WhatsApp Web</span>
+                            <span className="font-medium text-foreground text-sm">WhatsApp Web</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={messagingSettings.whatsapp.apiEnabled}
                                 onChange={(e) => handleMessagingChange('whatsapp', 'apiEnabled', e.target.checked)}
-                                className="rounded text-blue-600"
+                                className="rounded text-primary focus:ring-primary"
                             />
-                            <span className="font-medium">استخدام WhatsApp API</span>
+                            <span className="font-medium text-foreground text-sm">WhatsApp API</span>
                         </label>
                     </div>
 
                     {messagingSettings.whatsapp.apiEnabled && (
-                        <div className="grid grid-cols-1 gap-4 p-4 bg-gray-50 rounded-lg border">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-border">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 text-right">API URL</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1 text-right">API URL</label>
                                 <input
                                     type="text"
                                     value={messagingSettings.whatsapp.apiUrl}
                                     onChange={(e) => handleMessagingChange('whatsapp', 'apiUrl', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     placeholder="https://api.whatsapp.com/send"
                                     dir="ltr"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 text-right">API Token</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1 text-right">API Token / Secret Key</label>
                                 <input
                                     type="password"
                                     value={messagingSettings.whatsapp.apiToken}
                                     onChange={(e) => handleMessagingChange('whatsapp', 'apiToken', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                     dir="ltr"
                                 />
                             </div>
@@ -802,109 +805,112 @@ export default function MessagingSettingsPage() {
             <SimpleCard>
                 <SimpleCardHeader>
                     <SimpleCardTitle className="flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-blue-600" />
+                        <MessageSquare className="w-5 h-5 text-blue-500" />
                         إعدادات البريد الإلكتروني (Email)
                     </SimpleCardTitle>
                 </SimpleCardHeader>
-                <SimpleCardContent className="space-y-4">
-                    <div className="flex items-center gap-4 mb-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                <SimpleCardContent className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer w-full sm:w-auto">
                             <input
                                 type="checkbox"
                                 checked={messagingSettings.email.enabled}
                                 onChange={(e) => handleMessagingChange('email', 'enabled', e.target.checked)}
-                                className="rounded text-blue-600"
+                                className="rounded text-primary focus:ring-primary"
                             />
-                            <span className="font-medium">تفعيل البريد الإلكتروني</span>
+                            <span className="font-medium text-foreground text-sm">تفعيل البريد الإلكتروني</span>
                         </label>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">SMTP Host</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">SMTP Host</label>
                             <input
                                 type="text"
                                 value={messagingSettings.email.smtpHost}
                                 onChange={(e) => handleMessagingChange('email', 'smtpHost', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                                 placeholder="smtp.gmail.com"
                                 dir="ltr"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">SMTP Port</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">SMTP Port</label>
                             <input
                                 type="number"
                                 value={messagingSettings.email.smtpPort}
                                 onChange={(e) => handleMessagingChange('email', 'smtpPort', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                                 placeholder="587"
                                 dir="ltr"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">SMTP User</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">SMTP User</label>
                             <input
                                 type="text"
                                 value={messagingSettings.email.smtpUser}
                                 onChange={(e) => handleMessagingChange('email', 'smtpUser', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                                 dir="ltr"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">SMTP Password</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">SMTP Password</label>
                             <input
                                 type="password"
                                 value={messagingSettings.email.smtpPassword}
                                 onChange={(e) => handleMessagingChange('email', 'smtpPassword', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                                 dir="ltr"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">From Email</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">From Email</label>
                             <input
                                 type="email"
                                 value={messagingSettings.email.fromEmail}
                                 onChange={(e) => handleMessagingChange('email', 'fromEmail', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                                 dir="ltr"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">From Name</label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">From Name</label>
                             <input
                                 type="text"
                                 value={messagingSettings.email.fromName}
                                 onChange={(e) => handleMessagingChange('email', 'fromName', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                             />
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 text-right">عنوان الرسالة الافتراضي</label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">عنوان الرسالة الافتراضي</label>
                         <input
                             type="text"
                             value={messagingSettings.email.defaultSubject}
                             onChange={(e) => handleMessagingChange('email', 'defaultSubject', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 text-right">قالب الرسالة الافتراضي</label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-muted-foreground mr-1 text-right">قالب الرسالة الافتراضي</label>
                         <textarea
                             value={messagingSettings.email.defaultTemplate}
                             onChange={(e) => handleMessagingChange('email', 'defaultTemplate', e.target.value)}
                             rows={6}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm text-right"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-md font-mono text-sm text-foreground text-right"
                             dir="rtl"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            المتغيرات المتاحة: {'{customerName}, {invoiceId}, {totalAmount}, {currency}, {invoiceDate}, {status}, {invoiceLink}'}
-                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            <span className="text-[10px] text-muted-foreground font-medium">المتغيرات:</span>
+                            {'{customerName}, {invoiceId}, {totalAmount}, {currency}, {invoiceDate}, {status}, {invoiceLink}'.split(',').map((v, i) => (
+                                <span key={i} className="text-[10px] bg-primary/10 text-primary px-1 rounded">{v.trim()}</span>
+                            ))}
+                        </div>
                     </div>
                 </SimpleCardContent>
             </SimpleCard>
@@ -917,131 +923,131 @@ export default function MessagingSettingsPage() {
         // لكن content يتم إعادة إنشاؤه في كل render لأنه يعتمد على messagingSettings.whatsapp
         const accordionItems = React.useMemo(() => {
             const items = [
-            // Invoice Templates
-            {
-                value: 'invoice-templates',
-                label: 'قوالب الفواتير',
-                badge: filteredTemplates.invoice?.length || 0,
-                content: (
-                    <div className="space-y-4">
-                        {filteredTemplates.invoice?.map(template => (
-                            <div key={template.key}>
-                                {renderTemplateDisplay(template)}
-                            </div>
-                        ))}
-                    </div>
-                )
-            },
-            // Repair Templates
-            {
-                value: 'repair-templates',
-                label: 'قوالب طلبات الإصلاح',
-                badge: filteredTemplates.repair?.length || 0,
-                content: (
-                    <div className="space-y-4">
-                        {filteredTemplates.repair?.map(template => (
-                            <div key={template.key}>
-                                {renderTemplateDisplay(template)}
-                            </div>
-                        ))}
-                    </div>
-                )
-            },
-            // Quotation Templates
-            {
-                value: 'quotation-templates',
-                label: 'قوالب العروض السعرية',
-                badge: filteredTemplates.quotation?.length || 0,
-                content: (
-                    <div className="space-y-4">
-                        {filteredTemplates.quotation?.map(template => (
-                            <div key={template.key}>
-                                {renderTemplateDisplay(template)}
-                            </div>
-                        ))}
-                    </div>
-                )
-            },
-            // Payment Templates
-            {
-                value: 'payment-templates',
-                label: 'قوالب التذكيرات',
-                badge: filteredTemplates.payment?.length || 0,
-                content: (
-                    <div className="space-y-4">
-                        {filteredTemplates.payment?.map(template => (
-                            <div key={template.key}>
-                                {renderTemplateDisplay(template)}
-                            </div>
-                        ))}
-                    </div>
-                )
-            }
-        ];
-
-        // إضافة القوالب المخصصة
-        if (messagingSettings.customTemplates && messagingSettings.customTemplates.length > 0) {
-            const customTemplatesFiltered = messagingSettings.customTemplates.filter(t => {
-                if (!templateSearch) return true;
-                const searchLower = templateSearch.toLowerCase();
-                return t.name.toLowerCase().includes(searchLower) ||
-                       t.template.toLowerCase().includes(searchLower);
-            });
-
-            if (customTemplatesFiltered.length > 0) {
-                items.push({
-                    value: 'custom-templates',
-                    label: 'قوالب مخصصة',
-                    badge: customTemplatesFiltered.length,
+                // Invoice Templates
+                {
+                    value: 'invoice-templates',
+                    label: 'قوالب الفواتير',
+                    badge: filteredTemplates.invoice?.length || 0,
                     content: (
                         <div className="space-y-4">
-                            {customTemplatesFiltered.map((template, index) => {
-                                return (
-                                    <div key={template.id || index} className="border border-gray-200 rounded-lg p-4 bg-white">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div>
-                                                <h4 className="font-medium text-gray-900">{template.name}</h4>
-                                                <p className="text-xs text-gray-500">
-                                                    {template.entityType} {template.status && `- ${template.status}`}
-                                                </p>
-                                            </div>
-                                            <SimpleButton
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    const updated = messagingSettings.customTemplates.filter(t => t.id !== template.id);
-                                                    handleMessagingChange('customTemplates', null, updated);
-                                                }}
-                                                className="text-red-600 hover:text-red-700"
-                                            >
-                                                <Trash2 className="w-4 h-4 ml-1" />
-                                                حذف
-                                            </SimpleButton>
-                                        </div>
-                                        <textarea
-                                            value={template.template}
-                                            onChange={(e) => {
-                                                const updated = messagingSettings.customTemplates.map(t =>
-                                                    t.id === template.id
-                                                        ? { ...t, template: e.target.value }
-                                                        : t
-                                                );
-                                                handleMessagingChange('customTemplates', null, updated);
-                                            }}
-                                            rows={6}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm text-right"
-                                            dir="rtl"
-                                        />
-                                    </div>
-                                );
-                            })}
+                            {filteredTemplates.invoice?.map(template => (
+                                <div key={template.key}>
+                                    {renderTemplateDisplay(template)}
+                                </div>
+                            ))}
                         </div>
                     )
+                },
+                // Repair Templates
+                {
+                    value: 'repair-templates',
+                    label: 'قوالب طلبات الإصلاح',
+                    badge: filteredTemplates.repair?.length || 0,
+                    content: (
+                        <div className="space-y-4">
+                            {filteredTemplates.repair?.map(template => (
+                                <div key={template.key}>
+                                    {renderTemplateDisplay(template)}
+                                </div>
+                            ))}
+                        </div>
+                    )
+                },
+                // Quotation Templates
+                {
+                    value: 'quotation-templates',
+                    label: 'قوالب العروض السعرية',
+                    badge: filteredTemplates.quotation?.length || 0,
+                    content: (
+                        <div className="space-y-4">
+                            {filteredTemplates.quotation?.map(template => (
+                                <div key={template.key}>
+                                    {renderTemplateDisplay(template)}
+                                </div>
+                            ))}
+                        </div>
+                    )
+                },
+                // Payment Templates
+                {
+                    value: 'payment-templates',
+                    label: 'قوالب التذكيرات',
+                    badge: filteredTemplates.payment?.length || 0,
+                    content: (
+                        <div className="space-y-4">
+                            {filteredTemplates.payment?.map(template => (
+                                <div key={template.key}>
+                                    {renderTemplateDisplay(template)}
+                                </div>
+                            ))}
+                        </div>
+                    )
+                }
+            ];
+
+            // إضافة القوالب المخصصة
+            if (messagingSettings.customTemplates && messagingSettings.customTemplates.length > 0) {
+                const customTemplatesFiltered = messagingSettings.customTemplates.filter(t => {
+                    if (!templateSearch) return true;
+                    const searchLower = templateSearch.toLowerCase();
+                    return t.name.toLowerCase().includes(searchLower) ||
+                        t.template.toLowerCase().includes(searchLower);
                 });
+
+                if (customTemplatesFiltered.length > 0) {
+                    items.push({
+                        value: 'custom-templates',
+                        label: 'قوالب مخصصة',
+                        badge: customTemplatesFiltered.length,
+                        content: (
+                            <div className="space-y-4">
+                                {customTemplatesFiltered.map((template, index) => {
+                                    return (
+                                        <div key={template.id || index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900">{template.name}</h4>
+                                                    <p className="text-xs text-gray-500">
+                                                        {template.entityType} {template.status && `- ${template.status}`}
+                                                    </p>
+                                                </div>
+                                                <SimpleButton
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const updated = messagingSettings.customTemplates.filter(t => t.id !== template.id);
+                                                        handleMessagingChange('customTemplates', null, updated);
+                                                    }}
+                                                    className="text-red-600 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="w-4 h-4 ml-1" />
+                                                    حذف
+                                                </SimpleButton>
+                                            </div>
+                                            <textarea
+                                                value={template.template}
+                                                onChange={(e) => {
+                                                    const updated = messagingSettings.customTemplates.map(t =>
+                                                        t.id === template.id
+                                                            ? { ...t, template: e.target.value }
+                                                            : t
+                                                    );
+                                                    handleMessagingChange('customTemplates', null, updated);
+                                                }}
+                                                rows={6}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm text-right"
+                                                dir="rtl"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )
+                    });
+                }
             }
-        }
-        
-        return items;
+
+            return items;
         }, [
             // Dependencies for useMemo
             // لا نضع messagingSettings.whatsapp أو renderTemplateEditor هنا
@@ -1059,48 +1065,42 @@ export default function MessagingSettingsPage() {
             <div className="space-y-6" dir="rtl">
                 {/* Search and Stats */}
                 <SimpleCard>
-                    <SimpleCardContent className="space-y-4">
-                        <div className="flex items-center justify-between flex-row-reverse">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h3 className="text-lg font-semibold text-gray-900">القوالب</h3>
-                                    <SimpleButton
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowAddTemplateModal(true)}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        إضافة قالب جديد
-                                    </SimpleButton>
-                                </div>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    إجمالي القوالب: <span className="font-medium text-blue-600">{totalTemplates} قالب</span>
-                                    {' '}({filteredTemplates.invoice?.length || 0} فواتير + {filteredTemplates.repair?.length || 0} إصلاح + {filteredTemplates.quotation?.length || 0} عروض + {filteredTemplates.payment?.length || 0} تذكيرات)
-                                    {messagingSettings.customTemplates?.length > 0 && (
-                                        <span className="mr-2">+ {messagingSettings.customTemplates.length} مخصص</span>
-                                    )}
-                                </p>
-                            </div>
-                            <div className="flex-1 max-w-md">
+                    <SimpleCardContent className="p-6">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div className="flex-1 w-full md:w-auto order-2 md:order-1">
                                 <div className="relative" dir="rtl">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                                     <input
                                         type="text"
                                         value={templateSearch}
                                         onChange={(e) => setTemplateSearch(e.target.value)}
-                                        placeholder="ابحث في القوالب..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                                        placeholder="ابحث في القوالب (الاسم، المحتوى، المتغيرات)..."
+                                        className="w-full pr-10 pl-4 py-2.5 bg-muted/50 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground transition-all"
                                     />
                                     {templateSearch && (
                                         <button
                                             onClick={() => setTemplateSearch('')}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto order-1 md:order-2">
+                                <div className="text-right">
+                                    <h3 className="text-lg font-bold text-foreground">المكتبة الذكية للقوالب</h3>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        تتحكم في <span className="font-bold text-primary">{totalTemplates} قالب</span> نشط عبر جميع القنوات
+                                    </p>
+                                </div>
+                                <SimpleButton
+                                    onClick={() => setShowAddTemplateModal(true)}
+                                    className="w-full sm:w-auto shadow-lg shadow-primary/20"
+                                >
+                                    <Plus className="w-4 h-4 ml-1.5" />
+                                    إضافة قالب مخصص
+                                </SimpleButton>
                             </div>
                         </div>
                     </SimpleCardContent>
@@ -1109,7 +1109,7 @@ export default function MessagingSettingsPage() {
                 {/* Templates Accordion */}
                 <SimpleCard>
                     <SimpleCardContent>
-                        <Accordion 
+                        <Accordion
                             items={accordionItems}
                             allowMultiple={true}
                             defaultOpen={templateSearch ? accordionItems.map(item => item.value) : []}
@@ -1209,700 +1209,359 @@ export default function MessagingSettingsPage() {
                     </SimpleCardTitle>
                 </SimpleCardHeader>
                 <SimpleCardContent className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <p className="text-sm text-blue-800">
-                            <strong>معلومات:</strong> الأتمتة تتيح إرسال إشعارات تلقائية عند تغيير حالات الطلبات والفواتير، 
-                            بالإضافة إلى تذكيرات الدفع التلقائية.
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 relative overflow-hidden group font-arabic">
+                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                            <Settings className="w-12 h-12" />
+                        </div>
+                        <p className="text-sm text-foreground/80 leading-relaxed">
+                            <strong className="text-primary">الذكاء الإجرائي:</strong> تتيح لك الأتمتة إرسال إشعارات ذكية لعملائك بمجرد تغيير حالة الطلب أو الفاتورة، مما يرفع مستوى الشفافية والاحترافية. يمكنك أيضاً جدولة تذكيرات الدفع لضمان تحصيل مستحقاتك في الموعد.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="flex items-center gap-4 mb-6">
+                        <label className="flex items-center gap-3 p-4 border border-border rounded-xl bg-background/50 hover:bg-muted/30 transition-all cursor-pointer w-full sm:w-auto shadow-sm">
+                            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${messagingSettings.automation?.enabled !== false ? 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-muted border border-border'}`}>
+                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.enabled !== false) ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </div>
                             <input
                                 type="checkbox"
                                 checked={messagingSettings.automation?.enabled ?? true}
                                 onChange={(e) => handleMessagingChange('automation', 'enabled', e.target.checked)}
-                                className="rounded text-blue-600"
+                                className="hidden"
                             />
-                            <span className="font-medium">تفعيل الأتمتة</span>
+                            <span className="font-bold text-foreground">تفعيل نظام الأتمتة الشامل</span>
                         </label>
                     </div>
 
                     {messagingSettings.automation?.enabled && (
                         <>
                             {/* Default Channels */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border mb-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                        القنوات الافتراضية للأتمتة
-                                    </label>
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.defaultChannels?.includes('whatsapp') ?? true}
-                                                onChange={(e) => {
-                                                    const channels = messagingSettings.automation?.defaultChannels || ['whatsapp'];
-                                                    if (e.target.checked) {
-                                                        if (!channels.includes('whatsapp')) {
-                                                            handleMessagingChange('automation', 'defaultChannels', [...channels, 'whatsapp']);
-                                                        }
-                                                    } else {
-                                                        handleMessagingChange('automation', 'defaultChannels', channels.filter(c => c !== 'whatsapp'));
-                                                    }
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span>واتساب (WhatsApp)</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.defaultChannels?.includes('email') ?? false}
-                                                onChange={(e) => {
-                                                    const channels = messagingSettings.automation?.defaultChannels || ['whatsapp'];
-                                                    if (e.target.checked) {
-                                                        if (!channels.includes('email')) {
-                                                            handleMessagingChange('automation', 'defaultChannels', [...channels, 'email']);
-                                                        }
-                                                    } else {
-                                                        handleMessagingChange('automation', 'defaultChannels', channels.filter(c => c !== 'email'));
-                                                    }
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span>بريد إلكتروني (Email)</span>
-                                        </label>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        سيتم إرسال الإشعارات التلقائية عبر القنوات المحددة
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Invoice Notifications */}
-                            <div className="border border-gray-200 rounded-lg p-4 mb-4">
-                                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                    إشعارات الفواتير
+                            <div className="bg-muted/30 border border-border rounded-xl p-6 mb-8">
+                                <h4 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                                    <Globe className="w-4 h-4 text-primary" />
+                                    القنوات الافتراضية للبث التلقائي
                                 </h4>
-                                <div className="space-y-3">
-                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer mb-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.invoice?.notifyOnCreate ?? true}
-                                                onChange={(e) => {
-                                                    const invoice = messagingSettings.automation?.invoice || {};
-                                                    handleMessagingChange('automation', { invoice: { ...invoice, notifyOnCreate: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند إنشاء فاتورة جديدة</span>
-                                        </label>
-                                        {messagingSettings.automation?.invoice?.notifyOnCreate && (
-                                            <div className="mr-6 mt-2 space-y-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-600">القنوات:</span>
-                                                    <label className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={true}
-                                                            disabled
-                                                            className="rounded text-blue-600"
-                                                        />
-                                                        <span className="text-xs">واتساب</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={messagingSettings.automation?.defaultChannels?.includes('email')}
-                                                            disabled
-                                                            className="rounded text-blue-600"
-                                                        />
-                                                        <span className="text-xs">بريد إلكتروني</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer mb-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.invoice?.notifyOnStatusChange ?? false}
-                                                onChange={(e) => {
-                                                    const invoice = messagingSettings.automation?.invoice || {};
-                                                    handleMessagingChange('automation', { invoice: { ...invoice, notifyOnStatusChange: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند تغيير حالة الفاتورة</span>
-                                        </label>
-                                        {messagingSettings.automation?.invoice?.notifyOnStatusChange && (
-                                            <div className="mr-6 mt-2 space-y-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-600">القنوات:</span>
-                                                    <label className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={true}
-                                                            disabled
-                                                            className="rounded text-blue-600"
-                                                        />
-                                                        <span className="text-xs">واتساب</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={messagingSettings.automation?.defaultChannels?.includes('email')}
-                                                            disabled
-                                                            className="rounded text-blue-600"
-                                                        />
-                                                        <span className="text-xs">بريد إلكتروني</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Repair Notifications */}
-                            <div className="border border-gray-200 rounded-lg p-4 mb-4">
-                                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    إشعارات طلبات الإصلاح
-                                </h4>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                <div className="flex flex-wrap gap-4">
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                                         <input
                                             type="checkbox"
-                                            checked={messagingSettings.automation?.repair?.notifyOnReceived ?? true}
+                                            checked={messagingSettings.automation?.defaultChannels?.includes('whatsapp') ?? true}
                                             onChange={(e) => {
-                                                const repair = messagingSettings.automation?.repair || {};
-                                                handleMessagingChange('automation', { repair: { ...repair, notifyOnReceived: e.target.checked } });
+                                                const channels = messagingSettings.automation?.defaultChannels || ['whatsapp'];
+                                                if (e.target.checked) {
+                                                    if (!channels.includes('whatsapp')) {
+                                                        handleMessagingChange('automation', 'defaultChannels', [...channels, 'whatsapp']);
+                                                    }
+                                                } else {
+                                                    handleMessagingChange('automation', 'defaultChannels', channels.filter(c => c !== 'whatsapp'));
+                                                }
                                             }}
-                                            className="rounded text-blue-600"
+                                            className="rounded text-primary focus:ring-primary"
                                         />
-                                        <span>إشعار عند استلام الطلب (RECEIVED)</span>
+                                        <span className="text-sm font-medium text-foreground">واتساب (WhatsApp)</span>
                                     </label>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnDiagnosed ?? true}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnDiagnosed: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند اكتمال التشخيص (INSPECTION)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnAwaitingApproval ?? true}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnAwaitingApproval: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند بانتظار الموافقة (AWAITING_APPROVAL)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnUnderRepair ?? false}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnUnderRepair: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند البدء في الإصلاح (UNDER_REPAIR)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnWaitingParts ?? true}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnWaitingParts: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند بانتظار قطع الغيار (WAITING_PARTS)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnReadyPickup ?? true}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnReadyPickup: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند جاهزية الاستلام (READY_FOR_PICKUP)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnCompleted ?? true}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnCompleted: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند اكتمال الإصلاح (READY_FOR_DELIVERY/DELIVERED)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnRejected ?? false}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnRejected: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند رفض الطلب (REJECTED)</span>
-                                        </label>
-                                    </div>
-                                    <div className="p-2 bg-gray-50 rounded border border-gray-200">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.repair?.notifyOnOnHold ?? false}
-                                                onChange={(e) => {
-                                                    const repair = messagingSettings.automation?.repair || {};
-                                                    handleMessagingChange('automation', { repair: { ...repair, notifyOnOnHold: e.target.checked } });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">إشعار عند تعليق الطلب (ON_HOLD)</span>
-                                        </label>
-                                    </div>
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={messagingSettings.automation?.defaultChannels?.includes('email') ?? false}
+                                            onChange={(e) => {
+                                                const channels = messagingSettings.automation?.defaultChannels || ['whatsapp'];
+                                                if (e.target.checked) {
+                                                    if (!channels.includes('email')) {
+                                                        handleMessagingChange('automation', 'defaultChannels', [...channels, 'email']);
+                                                    }
+                                                } else {
+                                                    handleMessagingChange('automation', 'defaultChannels', channels.filter(c => c !== 'email'));
+                                                }
+                                            }}
+                                            className="rounded text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm font-medium text-foreground">بريد إلكتروني (Email)</span>
+                                    </label>
                                 </div>
+                                <p className="text-[11px] text-muted-foreground mt-3 italic">
+                                    * سيقوم النظام بإرسال الإشعارات عبر كافة القنوات المفعلة أعلاه بشكل متزامن.
+                                </p>
                             </div>
 
-                            {/* Payment Reminders */}
-                            <div className="border border-gray-200 rounded-lg p-4 mb-4">
-                                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                    تذكيرات الدفع
-                                </h4>
-                                
-                                {/* Overdue Reminders */}
-                                <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.invoice?.overdueReminders?.enabled ?? true}
-                                                onChange={(e) => {
-                                                    const invoice = messagingSettings.automation?.invoice || {};
-                                                    const overdue = invoice.overdueReminders || {};
-                                                    handleMessagingChange('automation', { 
-                                                        invoice: { 
-                                                            ...invoice, 
-                                                            overdueReminders: { ...overdue, enabled: e.target.checked } 
-                                                        } 
-                                                    });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">تذكيرات الدفع المتأخرة</span>
-                                        </label>
-                                    </div>
-                                    {messagingSettings.automation?.invoice?.overdueReminders?.enabled && (
-                                        <div className="mt-2 space-y-3 text-sm">
-                                            {/* Schedule Settings */}
-                                            <div className="border-t border-orange-200 pt-3">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                                    <Clock className="w-4 h-4 inline ml-1" />
-                                                    الجدولة
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    {/* Invoice Notifications */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-foreground flex items-center gap-2 px-1">
+                                            <FileText className="w-4 h-4 text-blue-500" />
+                                            إشعارات الفواتير
+                                        </h4>
+                                        <div className="space-y-3">
+                                            <div className="p-4 bg-background border border-border rounded-xl hover:border-primary/30 transition-colors">
+                                                <label className="flex items-center justify-between cursor-pointer group">
+                                                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">إنشاء فاتورة جديدة</span>
+                                                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative group-hover:scale-105 ${messagingSettings.automation?.invoice?.notifyOnCreate ?? true ? 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-muted border border-border'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.invoice?.notifyOnCreate ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={messagingSettings.automation?.invoice?.notifyOnCreate ?? true}
+                                                        onChange={(e) => {
+                                                            const invoice = messagingSettings.automation?.invoice || {};
+                                                            handleMessagingChange('automation', { invoice: { ...invoice, notifyOnCreate: e.target.checked } });
+                                                        }}
+                                                        className="hidden"
+                                                    />
                                                 </label>
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="radio"
-                                                            name="overdueScheduleType"
-                                                            checked={(messagingSettings.automation?.invoice?.overdueReminders?.schedule?.type || 'daily') === 'daily'}
-                                                            onChange={() => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const overdue = invoice.overdueReminders || {};
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        overdueReminders: { 
-                                                                            ...overdue, 
-                                                                            schedule: { type: 'daily', time: '09:00', days: [1,2,3,4,5,6,7], cronExpression: '0 9 * * *' }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <label className="text-sm">كل يوم</label>
-                                                        <input
-                                                            type="time"
-                                                            value={messagingSettings.automation?.invoice?.overdueReminders?.schedule?.time || '09:00'}
-                                                            onChange={(e) => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const overdue = invoice.overdueReminders || {};
-                                                                const schedule = overdue.schedule || { type: 'daily', time: '09:00', days: [1,2,3,4,5,6,7] };
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        overdueReminders: { 
-                                                                            ...overdue, 
-                                                                            schedule: { ...schedule, time: e.target.value, cronExpression: `0 ${e.target.value.split(':')[1]} ${e.target.value.split(':')[0]} * * *` }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="mr-2 px-2 py-1 border border-gray-300 rounded text-sm"
-                                                            dir="ltr"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="radio"
-                                                            name="overdueScheduleType"
-                                                            checked={(messagingSettings.automation?.invoice?.overdueReminders?.schedule?.type || 'daily') === 'weekly'}
-                                                            onChange={() => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const overdue = invoice.overdueReminders || {};
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        overdueReminders: { 
-                                                                            ...overdue, 
-                                                                            schedule: { type: 'weekly', time: '09:00', days: [1,2,3,4,5], cronExpression: '0 9 * * 1-5' }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <label className="text-sm">أيام محددة</label>
-                                                    </div>
-                                                    {(messagingSettings.automation?.invoice?.overdueReminders?.schedule?.type || 'daily') === 'weekly' && (
-                                                        <div className="mr-6 space-y-2">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {[
-                                                                    { value: 1, label: 'السبت' },
-                                                                    { value: 2, label: 'الأحد' },
-                                                                    { value: 3, label: 'الاثنين' },
-                                                                    { value: 4, label: 'الثلاثاء' },
-                                                                    { value: 5, label: 'الأربعاء' },
-                                                                    { value: 6, label: 'الخميس' },
-                                                                    { value: 7, label: 'الجمعة' }
-                                                                ].map(day => (
-                                                                    <label key={day.value} className="flex items-center gap-1 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={(messagingSettings.automation?.invoice?.overdueReminders?.schedule?.days || []).includes(day.value)}
-                                                                            onChange={(e) => {
-                                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                                const overdue = invoice.overdueReminders || {};
-                                                                                const schedule = overdue.schedule || { type: 'weekly', time: '09:00', days: [] };
-                                                                                const days = schedule.days || [];
-                                                                                const newDays = e.target.checked 
-                                                                                    ? [...days, day.value]
-                                                                                    : days.filter(d => d !== day.value);
-                                                                                handleMessagingChange('automation', { 
-                                                                                    invoice: { 
-                                                                                        ...invoice, 
-                                                                                        overdueReminders: { 
-                                                                                            ...overdue, 
-                                                                                            schedule: { ...schedule, days: newDays }
-                                                                                        } 
-                                                                                    } 
-                                                                                });
-                                                                            }}
-                                                                            className="rounded text-blue-600"
-                                                                        />
-                                                                        <span className="text-xs">{day.label}</span>
-                                                                    </label>
-                                                                ))}
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs text-gray-600">الوقت:</span>
-                                                                <input
-                                                                    type="time"
-                                                                    value={messagingSettings.automation?.invoice?.overdueReminders?.schedule?.time || '09:00'}
-                                                                    onChange={(e) => {
-                                                                        const invoice = messagingSettings.automation?.invoice || {};
-                                                                        const overdue = invoice.overdueReminders || {};
-                                                                        const schedule = overdue.schedule || { type: 'weekly', time: '09:00', days: [] };
-                                                                        handleMessagingChange('automation', { 
-                                                                            invoice: { 
-                                                                                ...invoice, 
-                                                                                overdueReminders: { 
-                                                                                    ...overdue, 
-                                                                                    schedule: { ...schedule, time: e.target.value }
-                                                                                } 
-                                                                            } 
-                                                                        });
-                                                                    }}
-                                                                    className="px-2 py-1 border border-gray-300 rounded text-sm"
-                                                                    dir="ltr"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <span>📅 الحد الأدنى بين التذكيرات:</span>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={messagingSettings.automation?.invoice?.overdueReminders?.minDaysBetweenReminders ?? 1}
-                                                    onChange={(e) => {
-                                                        const invoice = messagingSettings.automation?.invoice || {};
-                                                        const overdue = invoice.overdueReminders || {};
-                                                        handleMessagingChange('automation', { 
-                                                            invoice: { 
-                                                                ...invoice, 
-                                                                overdueReminders: { ...overdue, minDaysBetweenReminders: parseInt(e.target.value) || 1 } 
-                                                            } 
-                                                        });
-                                                    }}
-                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
-                                                    dir="ltr"
-                                                />
-                                                <span>يوم</span>
+                                            <div className="p-4 bg-background border border-border rounded-xl hover:border-primary/30 transition-colors">
+                                                <label className="flex items-center justify-between cursor-pointer group">
+                                                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">تغيير حالة الفاتورة</span>
+                                                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative group-hover:scale-105 ${messagingSettings.automation?.invoice?.notifyOnStatusChange ?? false ? 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-muted border border-border'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.invoice?.notifyOnStatusChange ?? false) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={messagingSettings.automation?.invoice?.notifyOnStatusChange ?? false}
+                                                        onChange={(e) => {
+                                                            const invoice = messagingSettings.automation?.invoice || {};
+                                                            handleMessagingChange('automation', { invoice: { ...invoice, notifyOnStatusChange: e.target.checked } });
+                                                        }}
+                                                        className="hidden"
+                                                    />
+                                                </label>
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    {/* Repair Notifications */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-foreground flex items-center gap-2 px-1">
+                                            <Wrench className="w-4 h-4 text-green-500" />
+                                            إشعارات طلبات الإصلاح
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {[
+                                                { key: 'notifyOnReceived', label: 'استلام الطلب', color: 'bg-blue-500/10 text-blue-500' },
+                                                { key: 'notifyOnDiagnosed', label: 'اكتمال التشخيص', color: 'bg-purple-500/10 text-purple-500' },
+                                                { key: 'notifyOnAwaitingApproval', label: 'بانتظار الموافقة', color: 'bg-orange-500/10 text-orange-500' },
+                                                { key: 'notifyOnUnderRepair', label: 'قيد الإصلاح', color: 'bg-yellow-500/10 text-yellow-500' },
+                                                { key: 'notifyOnWaitingParts', label: 'بانتظار قطع الغيار', color: 'bg-pink-500/10 text-pink-500' },
+                                                { key: 'notifyOnReadyPickup', label: 'جاهزية الاستلام', color: 'bg-teal-500/10 text-teal-500' },
+                                                { key: 'notifyOnCompleted', label: 'اكتمال الإصلاح', color: 'bg-green-500/10 text-green-500' },
+                                                { key: 'notifyOnRejected', label: 'رفض الطلب', color: 'bg-red-500/10 text-red-500' },
+                                                { key: 'notifyOnOnHold', label: 'تعليق الطلب', color: 'bg-gray-500/10 text-gray-500' }
+                                            ].map((item) => (
+                                                <div key={item.key} className="p-3 bg-background border border-border rounded-xl transition-all hover:bg-muted/30">
+                                                    <label className="flex items-center justify-between cursor-pointer">
+                                                        <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                                                        <div className={`w-10 h-5 rounded-full transition-all duration-300 relative group-hover:scale-105 ${messagingSettings.automation?.repair?.[item.key] ?? false ? 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-muted border border-border'}`}>
+                                                            <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.repair?.[item.key] ?? false) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={messagingSettings.automation?.repair?.[item.key] ?? false}
+                                                            onChange={(e) => {
+                                                                const repair = messagingSettings.automation?.repair || {};
+                                                                handleMessagingChange('automation', { repair: { ...repair, [item.key]: e.target.checked } });
+                                                            }}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* Before Due Reminders */}
-                                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={messagingSettings.automation?.invoice?.beforeDueReminders?.enabled ?? true}
-                                                onChange={(e) => {
-                                                    const invoice = messagingSettings.automation?.invoice || {};
-                                                    const beforeDue = invoice.beforeDueReminders || {};
-                                                    handleMessagingChange('automation', { 
-                                                        invoice: { 
-                                                            ...invoice, 
-                                                            beforeDueReminders: { ...beforeDue, enabled: e.target.checked } 
-                                                        } 
-                                                    });
-                                                }}
-                                                className="rounded text-blue-600"
-                                            />
-                                            <span className="font-medium">تذكيرات قبل الاستحقاق</span>
-                                        </label>
-                                    </div>
-                                    {messagingSettings.automation?.invoice?.beforeDueReminders?.enabled && (
-                                        <div className="mt-2 space-y-3 text-sm">
-                                            {/* Schedule Settings */}
-                                            <div className="border-t border-blue-200 pt-3">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                                    <Clock className="w-4 h-4 inline ml-1" />
-                                                    الجدولة
+                                <div className="space-y-6">
+                                    {/* Payment Reminders */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-foreground flex items-center gap-2 px-1">
+                                            <CreditCard className="w-4 h-4 text-orange-500" />
+                                            تذكيرات الدفع والتحصيل
+                                        </h4>
+                                        <div className="space-y-4">
+                                            {/* Overdue Reminders */}
+                                            <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
+                                                <label className="flex items-center justify-between cursor-pointer mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <AlertTriangle className="w-4 h-4 text-orange-500" />
+                                                        <span className="font-bold text-foreground">تذكيرات الدفع المتأخرة</span>
+                                                    </div>
+                                                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative group-hover:scale-105 ${messagingSettings.automation?.invoice?.overdueReminders?.enabled !== false ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]' : 'bg-muted border border-border'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.invoice?.overdueReminders?.enabled !== false) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={messagingSettings.automation?.invoice?.overdueReminders?.enabled ?? true}
+                                                        onChange={(e) => {
+                                                            const invoice = messagingSettings.automation?.invoice || {};
+                                                            const overdue = invoice.overdueReminders || {};
+                                                            handleMessagingChange('automation', {
+                                                                invoice: {
+                                                                    ...invoice,
+                                                                    overdueReminders: { ...overdue, enabled: e.target.checked }
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="hidden"
+                                                    />
                                                 </label>
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="radio"
-                                                            name="beforeDueScheduleType"
-                                                            checked={(messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.type || 'daily') === 'daily'}
-                                                            onChange={() => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const beforeDue = invoice.beforeDueReminders || {};
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        beforeDueReminders: { 
-                                                                            ...beforeDue, 
-                                                                            schedule: { type: 'daily', time: '10:00', days: [1,2,3,4,5,6,7], cronExpression: '0 10 * * *' }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <label className="text-sm">كل يوم</label>
-                                                        <input
-                                                            type="time"
-                                                            value={messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.time || '10:00'}
-                                                            onChange={(e) => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const beforeDue = invoice.beforeDueReminders || {};
-                                                                const schedule = beforeDue.schedule || { type: 'daily', time: '10:00', days: [1,2,3,4,5,6,7] };
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        beforeDueReminders: { 
-                                                                            ...beforeDue, 
-                                                                            schedule: { ...schedule, time: e.target.value, cronExpression: `0 ${e.target.value.split(':')[1]} ${e.target.value.split(':')[0]} * * *` }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="mr-2 px-2 py-1 border border-gray-300 rounded text-sm"
-                                                            dir="ltr"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="radio"
-                                                            name="beforeDueScheduleType"
-                                                            checked={(messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.type || 'daily') === 'weekly'}
-                                                            onChange={() => {
-                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                const beforeDue = invoice.beforeDueReminders || {};
-                                                                handleMessagingChange('automation', { 
-                                                                    invoice: { 
-                                                                        ...invoice, 
-                                                                        beforeDueReminders: { 
-                                                                            ...beforeDue, 
-                                                                            schedule: { type: 'weekly', time: '10:00', days: [1,2,3,4,5], cronExpression: '0 10 * * 1-5' }
-                                                                        } 
-                                                                    } 
-                                                                });
-                                                            }}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <label className="text-sm">أيام محددة</label>
-                                                    </div>
-                                                    {(messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.type || 'daily') === 'weekly' && (
-                                                        <div className="mr-6 space-y-2">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {[
-                                                                    { value: 1, label: 'السبت' },
-                                                                    { value: 2, label: 'الأحد' },
-                                                                    { value: 3, label: 'الاثنين' },
-                                                                    { value: 4, label: 'الثلاثاء' },
-                                                                    { value: 5, label: 'الأربعاء' },
-                                                                    { value: 6, label: 'الخميس' },
-                                                                    { value: 7, label: 'الجمعة' }
-                                                                ].map(day => (
-                                                                    <label key={day.value} className="flex items-center gap-1 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={(messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.days || []).includes(day.value)}
-                                                                            onChange={(e) => {
-                                                                                const invoice = messagingSettings.automation?.invoice || {};
-                                                                                const beforeDue = invoice.beforeDueReminders || {};
-                                                                                const schedule = beforeDue.schedule || { type: 'weekly', time: '10:00', days: [] };
-                                                                                const days = schedule.days || [];
-                                                                                const newDays = e.target.checked 
-                                                                                    ? [...days, day.value]
-                                                                                    : days.filter(d => d !== day.value);
-                                                                                handleMessagingChange('automation', { 
-                                                                                    invoice: { 
-                                                                                        ...invoice, 
-                                                                                        beforeDueReminders: { 
-                                                                                            ...beforeDue, 
-                                                                                            schedule: { ...schedule, days: newDays }
-                                                                                        } 
-                                                                                    } 
-                                                                                });
-                                                                            }}
-                                                                            className="rounded text-blue-600"
-                                                                        />
-                                                                        <span className="text-xs">{day.label}</span>
-                                                                    </label>
+                                                {messagingSettings.automation?.invoice?.overdueReminders?.enabled !== false && (
+                                                    <div className="space-y-4 border-t border-orange-500/10 pt-4 animate-in slide-in-from-top-2 duration-300">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <span className="text-xs text-muted-foreground">نمط الأتمتة:</span>
+                                                            <div className="flex bg-muted/50 p-1 rounded-lg">
+                                                                {['daily', 'weekly'].map(type => (
+                                                                    <button
+                                                                        key={type}
+                                                                        onClick={() => {
+                                                                            const invoice = messagingSettings.automation?.invoice || {};
+                                                                            const overdue = invoice.overdueReminders || {};
+                                                                            handleMessagingChange('automation', {
+                                                                                invoice: {
+                                                                                    ...invoice,
+                                                                                    overdueReminders: {
+                                                                                        ...overdue,
+                                                                                        schedule: {
+                                                                                            ...overdue.schedule,
+                                                                                            type,
+                                                                                            days: type === 'daily' ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5]
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                        className={`px-3 py-1 text-[10px] rounded-md transition-all ${(messagingSettings.automation?.invoice?.overdueReminders?.schedule?.type || 'daily') === type
+                                                                            ? 'bg-orange-500 text-white shadow-sm'
+                                                                            : 'text-muted-foreground hover:text-foreground'
+                                                                            }`}
+                                                                    >
+                                                                        {type === 'daily' ? 'يومي' : 'أسبوعي'}
+                                                                    </button>
                                                                 ))}
                                                             </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs text-muted-foreground">وقت الإرسال:</span>
+                                                            <input
+                                                                type="time"
+                                                                value={messagingSettings.automation?.invoice?.overdueReminders?.schedule?.time || '09:00'}
+                                                                onChange={(e) => {
+                                                                    const invoice = messagingSettings.automation?.invoice || {};
+                                                                    const overdue = invoice.overdueReminders || {};
+                                                                    handleMessagingChange('automation', {
+                                                                        invoice: {
+                                                                            ...invoice,
+                                                                            overdueReminders: {
+                                                                                ...overdue,
+                                                                                schedule: { ...overdue.schedule, time: e.target.value }
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="bg-transparent border-none text-xs font-bold text-foreground focus:ring-0 w-20 text-center"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs text-muted-foreground">الفاصل الزمني (أيام):</span>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={messagingSettings.automation?.invoice?.overdueReminders?.minDaysBetweenReminders ?? 1}
+                                                                onChange={(e) => {
+                                                                    const invoice = messagingSettings.automation?.invoice || {};
+                                                                    const overdue = invoice.overdueReminders || {};
+                                                                    handleMessagingChange('automation', {
+                                                                        invoice: {
+                                                                            ...invoice,
+                                                                            overdueReminders: { ...overdue, minDaysBetweenReminders: parseInt(e.target.value) || 1 }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="bg-background border border-border rounded-md text-xs font-bold text-foreground w-16 text-center py-1"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Before Due Reminders */}
+                                            <div className="p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                                                <label className="flex items-center justify-between cursor-pointer mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-4 h-4 text-blue-500" />
+                                                        <span className="font-bold text-foreground">تذكيرات استباقية</span>
+                                                    </div>
+                                                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative group-hover:scale-105 ${messagingSettings.automation?.invoice?.beforeDueReminders?.enabled !== false ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-muted border border-border'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${(messagingSettings.automation?.invoice?.beforeDueReminders?.enabled !== false) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={messagingSettings.automation?.invoice?.beforeDueReminders?.enabled ?? true}
+                                                        onChange={(e) => {
+                                                            const invoice = messagingSettings.automation?.invoice || {};
+                                                            const beforeDue = invoice.beforeDueReminders || {};
+                                                            handleMessagingChange('automation', {
+                                                                invoice: {
+                                                                    ...invoice,
+                                                                    beforeDueReminders: { ...beforeDue, enabled: e.target.checked }
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+                                                {messagingSettings.automation?.invoice?.beforeDueReminders?.enabled !== false && (
+                                                    <div className="space-y-4 border-t border-blue-500/10 pt-4 animate-in slide-in-from-top-2 duration-300">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs text-muted-foreground">قبل الاستحقاق بـ:</span>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-xs text-gray-600">الوقت:</span>
                                                                 <input
-                                                                    type="time"
-                                                                    value={messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.time || '10:00'}
+                                                                    type="number"
+                                                                    min="1"
+                                                                    max="30"
+                                                                    value={messagingSettings.automation?.invoice?.beforeDueReminders?.daysBeforeDue ?? 3}
                                                                     onChange={(e) => {
                                                                         const invoice = messagingSettings.automation?.invoice || {};
                                                                         const beforeDue = invoice.beforeDueReminders || {};
-                                                                        const schedule = beforeDue.schedule || { type: 'weekly', time: '10:00', days: [] };
-                                                                        handleMessagingChange('automation', { 
-                                                                            invoice: { 
-                                                                                ...invoice, 
-                                                                                beforeDueReminders: { 
-                                                                                    ...beforeDue, 
-                                                                                    schedule: { ...schedule, time: e.target.value }
-                                                                                } 
-                                                                            } 
+                                                                        handleMessagingChange('automation', {
+                                                                            invoice: {
+                                                                                ...invoice,
+                                                                                beforeDueReminders: { ...beforeDue, daysBeforeDue: parseInt(e.target.value) || 3 }
+                                                                            }
                                                                         });
                                                                     }}
-                                                                    className="px-2 py-1 border border-gray-300 rounded text-sm"
-                                                                    dir="ltr"
+                                                                    className="bg-background border border-border rounded-md text-xs font-bold text-foreground w-16 text-center py-1"
                                                                 />
+                                                                <span className="text-xs text-muted-foreground">أيام</span>
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <span>📅 عدد الأيام قبل الاستحقاق:</span>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="30"
-                                                    value={messagingSettings.automation?.invoice?.beforeDueReminders?.daysBeforeDue ?? 3}
-                                                    onChange={(e) => {
-                                                        const invoice = messagingSettings.automation?.invoice || {};
-                                                        const beforeDue = invoice.beforeDueReminders || {};
-                                                        handleMessagingChange('automation', { 
-                                                            invoice: { 
-                                                                ...invoice, 
-                                                                beforeDueReminders: { ...beforeDue, daysBeforeDue: parseInt(e.target.value) || 3 } 
-                                                            } 
-                                                        });
-                                                    }}
-                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
-                                                    dir="ltr"
-                                                />
-                                                <span>يوم</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <span>📅 الحد الأدنى بين التذكيرات:</span>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={messagingSettings.automation?.invoice?.beforeDueReminders?.minDaysBetweenReminders ?? 1}
-                                                    onChange={(e) => {
-                                                        const invoice = messagingSettings.automation?.invoice || {};
-                                                        const beforeDue = invoice.beforeDueReminders || {};
-                                                        handleMessagingChange('automation', { 
-                                                            invoice: { 
-                                                                ...invoice, 
-                                                                beforeDueReminders: { ...beforeDue, minDaysBetweenReminders: parseInt(e.target.value) || 1 } 
-                                                            } 
-                                                        });
-                                                    }}
-                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
-                                                    dir="ltr"
-                                                />
-                                                <span>يوم</span>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs text-muted-foreground">وقت الإرسال:</span>
+                                                            <input
+                                                                type="time"
+                                                                value={messagingSettings.automation?.invoice?.beforeDueReminders?.schedule?.time || '10:00'}
+                                                                onChange={(e) => {
+                                                                    const invoice = messagingSettings.automation?.invoice || {};
+                                                                    const beforeDue = invoice.beforeDueReminders || {};
+                                                                    handleMessagingChange('automation', {
+                                                                        invoice: {
+                                                                            ...invoice,
+                                                                            beforeDueReminders: {
+                                                                                ...beforeDue,
+                                                                                schedule: { ...beforeDue.schedule, time: e.target.value }
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="bg-transparent border-none text-xs font-bold text-foreground focus:ring-0 w-20 text-center"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
                         </>
@@ -1945,64 +1604,118 @@ export default function MessagingSettingsPage() {
         ];
 
         return (
-            <div className="space-y-6" dir="rtl">
-                <SimpleCard>
-                    <SimpleCardHeader>
-                        <SimpleCardTitle className="flex items-center gap-2">
-                            <Eye className="w-5 h-5 text-purple-600" />
-                            معاينة القوالب
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <SimpleCard className="border-none shadow-xl bg-background/50 backdrop-blur-md overflow-hidden">
+                    <SimpleCardHeader className="border-b border-border bg-muted/30">
+                        <SimpleCardTitle className="flex items-center gap-3 text-foreground font-bold">
+                            <div className="p-2 bg-purple-500/10 rounded-lg">
+                                <Eye className="w-5 h-5 text-purple-500" />
+                            </div>
+                            مختبر معاينة القوالب
                         </SimpleCardTitle>
                     </SimpleCardHeader>
-                    <SimpleCardContent className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                اختر قالب للمعاينة
-                            </label>
-                            <select
-                                value={selectedTemplate}
-                                onChange={(e) => setSelectedTemplate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
-                            >
-                                <option value="">-- اختر قالب --</option>
-                                {allTemplates.map(template => (
-                                    <option key={template.key} value={template.key}>
-                                        {template.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {selectedTemplate && (
-                            <>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                        المتغيرات التجريبية
+                    <SimpleCardContent className="p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* Controls Side */}
+                            <div className="lg:col-span-5 space-y-6">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-primary" />
+                                        اختر القالب للمعاينة
                                     </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {Object.keys(previewVariables).map(key => (
-                                            <div key={key}>
-                                                <label className="block text-xs text-gray-600 mb-1 text-right">{key}</label>
-                                                <input
-                                                    type="text"
-                                                    value={previewVariables[key]}
-                                                    onChange={(e) => setPreviewVariables(prev => ({ ...prev, [key]: e.target.value }))}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded text-right"
-                                                />
-                                            </div>
+                                    <select
+                                        value={selectedTemplate}
+                                        onChange={(e) => setSelectedTemplate(e.target.value)}
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">-- اختر من مكتبة القوالب --</option>
+                                        {allTemplates.map(template => (
+                                            <option key={template.key} value={template.key}>
+                                                {template.label}
+                                            </option>
                                         ))}
-                                    </div>
+                                    </select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-                                        المعاينة
-                                    </label>
-                                    <div className="p-4 bg-gray-50 border border-gray-300 rounded-md font-mono text-sm whitespace-pre-wrap min-h-[200px] text-right" dir="rtl">
-                                        {renderPreview() || 'اختر قالب للمعاينة'}
+                                {selectedTemplate ? (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                <Settings className="w-4 h-4 text-orange-500" />
+                                                تخصيص قيم المتغيرات
+                                            </label>
+                                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">تحديث فوري</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-muted/30 rounded-2xl border border-border">
+                                            {Object.keys(previewVariables).map(key => (
+                                                <div key={key} className="space-y-1">
+                                                    <label className="text-[10px] font-medium text-muted-foreground mr-1 text-right block">{key}</label>
+                                                    <input
+                                                        type="text"
+                                                        value={previewVariables[key]}
+                                                        onChange={(e) => setPreviewVariables(prev => ({ ...prev, [key]: e.target.value }))}
+                                                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none transition-all"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-2xl opacity-50 bg-muted/10">
+                                        <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
+                                        <p className="text-sm text-foreground font-medium">ابدأ باختيار قالب من القائمة</p>
+                                        <p className="text-xs text-muted-foreground mt-1">سيظهر لك نص القالب مع إمكانية تجربة المتغيرات</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Preview Side */}
+                            <div className="lg:col-span-7">
+                                <div className="h-full flex flex-col">
+                                    <div className="flex items-center justify-between mb-3 px-1">
+                                        <label className="text-sm font-bold text-foreground">النتيجة النهائية (المعاينة الحية)</label>
+                                        <div className="flex gap-1">
+                                            <div className="w-2 h-2 rounded-full bg-red-400" />
+                                            <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                                            <div className="w-2 h-2 rounded-full bg-green-400" />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 min-h-[400px] bg-muted/40 border border-border rounded-3xl p-6 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        {selectedTemplate ? (
+                                            <div className="relative h-full flex flex-col font-arabic">
+                                                <div className="bg-background rounded-2xl rounded-tr-none p-5 shadow-sm border border-border text-foreground text-sm leading-relaxed whitespace-pre-wrap max-w-[90%] self-end relative animate-in zoom-in-95 duration-200">
+                                                    {renderPreview()}
+                                                    <div className="absolute top-0 -right-2 w-0 h-0 border-t-[10px] border-t-background border-r-[10px] border-r-transparent" />
+                                                    <div className="text-[10px] text-muted-foreground mt-3 flex justify-end gap-1 items-center">
+                                                        <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <CheckCheck className="w-3 h-3 text-blue-500" />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-auto pt-6 border-t border-border/50 flex items-center justify-center gap-4 text-muted-foreground">
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <div className="p-2 bg-background rounded-full border border-border">
+                                                            <Smartphone className="w-4 h-4" />
+                                                        </div>
+                                                        <span className="text-[10px]">موبايل</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity cursor-not-allowed">
+                                                        <div className="p-2 bg-background rounded-full border border-border">
+                                                            <Mail className="w-4 h-4" />
+                                                        </div>
+                                                        <span className="text-[10px]">إيميل</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="h-full flex items-center justify-center">
+                                                <p className="text-muted-foreground text-sm italic">في انتظار اختيار القالب...</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
                     </SimpleCardContent>
                 </SimpleCard>
             </div>
@@ -2012,27 +1725,45 @@ export default function MessagingSettingsPage() {
     return (
         <div className="space-y-6" dir="rtl">
             {/* Header with Save Button */}
-            <SimpleCard>
-                <SimpleCardHeader className="flex flex-row items-center justify-between">
-                    <SimpleCardTitle>إعدادات المراسلة</SimpleCardTitle>
+            <div className="sticky top-0 z-20 pb-4">
+                <div className="bg-background/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-xl">
+                            <MessageSquare className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold text-foreground">إعدادات المراسلة</h1>
+                            <p className="text-xs text-muted-foreground font-medium">إدارة القنوات، القوالب، والأتمتة الذكية</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
                         {hasUnsavedChanges && (
-                            <span className="text-sm text-orange-600 flex items-center gap-1">
-                                <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                                لديك تغييرات غير محفوظة
-                            </span>
+                            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-full animate-in fade-in zoom-in">
+                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-bold text-orange-600 uppercase tracking-tight">لديك تغييرات غير محفوظة</span>
+                            </div>
                         )}
                         <SimpleButton
                             onClick={handleMessagingSave}
                             disabled={saving}
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            className={`flex-1 sm:flex-none h-11 px-8 rounded-xl font-bold shadow-lg transition-all ${saving ? 'bg-muted opacity-80' : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20 active:scale-95'
+                                }`}
                         >
-                            <Save className="h-4 w-4 ml-2" />
-                            {saving ? 'جاري الحفظ...' : 'حفظ'}
+                            {saving ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>جاري الحفظ...</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <Save className="w-4 h-4" />
+                                    <span>حفظ الإعدادات</span>
+                                </div>
+                            )}
                         </SimpleButton>
                     </div>
-                </SimpleCardHeader>
-            </SimpleCard>
+                </div>
+            </div>
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -2083,102 +1814,106 @@ export default function MessagingSettingsPage() {
                     setNewTemplate({ name: '', entityType: 'repair', status: '', template: '' });
                 }}
                 title="إضافة قالب مخصص"
-                description="أضف قالباً مخصصاً واربطه بحالة معينة"
                 size="2xl"
+                className="font-arabic"
             >
-                <div className="space-y-4" dir="rtl">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                            اسم القالب
-                        </label>
-                        <input
-                            type="text"
-                            value={newTemplate.name}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
-                            placeholder="مثال: رسالة مخصصة للإصلاح"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                                نوع الكيان
-                            </label>
-                            <select
-                                value={newTemplate.entityType}
-                                onChange={(e) => setNewTemplate({ ...newTemplate, entityType: e.target.value, status: '' })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
-                            >
-                                <option value="repair">طلب إصلاح</option>
-                                <option value="invoice">فاتورة</option>
-                                <option value="quotation">عرض سعر</option>
-                                <option value="payment">دفعة</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                                الحالة المرتبطة (اختياري)
-                            </label>
-                            <select
-                                value={newTemplate.status}
-                                onChange={(e) => setNewTemplate({ ...newTemplate, status: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
-                            >
-                                <option value="">-- اختر حالة --</option>
-                                {newTemplate.entityType === 'repair' && (
-                                    <>
-                                        <option value="RECEIVED">استلام الطلب</option>
-                                        <option value="INSPECTION">اكتمال التشخيص</option>
-                                        <option value="AWAITING_APPROVAL">بانتظار الموافقة</option>
-                                        <option value="UNDER_REPAIR">قيد الإصلاح</option>
-                                        <option value="WAITING_PARTS">بانتظار قطع الغيار</option>
-                                        <option value="READY_FOR_PICKUP">جاهزية الاستلام</option>
-                                        <option value="READY_FOR_DELIVERY">اكتمال الإصلاح</option>
-                                        <option value="DELIVERED">تم التسليم</option>
-                                        <option value="COMPLETED">مكتمل</option>
-                                        <option value="REJECTED">مرفوض</option>
-                                        <option value="ON_HOLD">معلق</option>
-                                    </>
-                                )}
-                                {newTemplate.entityType === 'invoice' && (
-                                    <>
-                                        <option value="paid">مدفوعة</option>
-                                        <option value="unpaid">غير مدفوعة</option>
-                                        <option value="partially_paid">مدفوعة جزئياً</option>
-                                        <option value="overdue">متأخرة</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                            القالب
-                        </label>
-                        <textarea
-                            value={newTemplate.template}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, template: e.target.value })}
-                            rows={10}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm text-right"
-                            placeholder="أدخل نص القالب هنا..."
-                            dir="rtl"
-                        />
-                        <p className="text-xs text-gray-500 mt-1 text-right">
-                            المتغيرات المتاحة: {'{customerName}, {repairNumber}, {deviceInfo}, {problem}, {trackingUrl}, {invoiceId}, {totalAmount}, {currency}'}
+                <div className="p-6 space-y-6">
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 mb-4">
+                        <p className="text-xs text-primary font-medium leading-relaxed">
+                            تسمح لك القوالب المخصصة بإنشاء رسائل فريدة مرتبطة بحالات معينة في النظام.
+                            يمكنك استخدام المتغيرات بالأسفل ليقوم النظام بتعويضها آلياً عند الإرسال.
                         </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-muted-foreground mr-1">اسم القالب الفريد</label>
+                            <input
+                                type="text"
+                                value={newTemplate.name}
+                                onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                placeholder="مثال: رسالة تأكيد استلام الجهاز"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-muted-foreground mr-1">نوع الكيان</label>
+                                <select
+                                    value={newTemplate.entityType}
+                                    onChange={(e) => setNewTemplate({ ...newTemplate, entityType: e.target.value, status: '' })}
+                                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="repair">طلب إصلاح</option>
+                                    <option value="invoice">فاتورة</option>
+                                    <option value="quotation">عرض سعر</option>
+                                    <option value="payment">دفعة</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-muted-foreground mr-1">الحالة المرتبطة (اختياري)</label>
+                                <select
+                                    value={newTemplate.status}
+                                    onChange={(e) => setNewTemplate({ ...newTemplate, status: e.target.value })}
+                                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">-- اختر حالة للربط --</option>
+                                    {newTemplate.entityType === 'repair' && (
+                                        <>
+                                            <option value="RECEIVED">استلام الطلب</option>
+                                            <option value="INSPECTION">اكتمال التشخيص</option>
+                                            <option value="AWAITING_APPROVAL">بانتظار الموافقة</option>
+                                            <option value="UNDER_REPAIR">قيد الإصلاح</option>
+                                            <option value="WAITING_PARTS">بانتظار قطع الغيار</option>
+                                            <option value="READY_FOR_PICKUP">جاهزية الاستلام</option>
+                                            <option value="READY_FOR_DELIVERY">اكتمال الإصلاح</option>
+                                            <option value="DELIVERED">تم التسليم</option>
+                                            <option value="COMPLETED">مكتمل</option>
+                                            <option value="REJECTED">مرفوض</option>
+                                            <option value="ON_HOLD">معلق</option>
+                                        </>
+                                    )}
+                                    {newTemplate.entityType === 'invoice' && (
+                                        <>
+                                            <option value="paid">مدفوعة</option>
+                                            <option value="unpaid">غير مدفوعة</option>
+                                            <option value="partially_paid">مدفوعة جزئياً</option>
+                                            <option value="overdue">متأخرة</option>
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5 text-right">
+                            <label className="text-xs font-bold text-muted-foreground mr-1">محتوى القالب</label>
+                            <textarea
+                                value={newTemplate.template}
+                                onChange={(e) => setNewTemplate({ ...newTemplate, template: e.target.value })}
+                                rows={8}
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono"
+                                placeholder="أدخل نص القالب هنا..."
+                                dir="rtl"
+                            />
+                            <div className="flex flex-wrap gap-1.5 mt-2 justify-end">
+                                {['customerName', 'repairNumber', 'deviceInfo', 'problem', 'trackingUrl', 'invoiceId', 'totalAmount', 'currency'].map(v => (
+                                    <span key={v} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-mono">{`{${v}}`}</span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <ModalFooter>
+                <div className="p-6 border-t border-border bg-muted/30 flex items-center justify-end gap-3">
                     <SimpleButton
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => {
                             setShowAddTemplateModal(false);
                             setNewTemplate({ name: '', entityType: 'repair', status: '', template: '' });
                         }}
+                        className="font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
                     >
                         إلغاء
                     </SimpleButton>
@@ -2199,11 +1934,11 @@ export default function MessagingSettingsPage() {
                             setNewTemplate({ name: '', entityType: 'repair', status: '', template: '' });
                             notifications.success('تم الحفظ', { message: 'تم إضافة القالب المخصص بنجاح' });
                         }}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 shadow-lg shadow-primary/20"
                     >
-                        حفظ
+                        حفظ القالب
                     </SimpleButton>
-                </ModalFooter>
+                </div>
             </Modal>
         </div>
     );

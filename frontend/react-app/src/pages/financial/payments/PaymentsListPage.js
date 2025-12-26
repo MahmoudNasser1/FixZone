@@ -3,27 +3,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Chip,
-  Tooltip
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Receipt as ReceiptIcon
-} from '@mui/icons-material';
+import { Plus, RefreshCw, Receipt } from 'lucide-react';
+import { SimpleCard, SimpleCardContent } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
+import SimpleBadge from '../../../components/ui/SimpleBadge';
+import DataView from '../../../components/ui/DataView';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { usePayments } from '../../../hooks/financial/usePayments';
 import FinancialSummaryCard from '../../../components/financial/shared/FinancialSummaryCard';
 
@@ -41,14 +26,6 @@ const PaymentsListPage = () => {
 
   const handleCreate = () => {
     navigate('/financial/payments/create');
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setPagination({ ...pagination, page: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setPagination({ ...pagination, limit: parseInt(event.target.value, 10), page: 1 });
   };
 
   const formatCurrency = (amount) => {
@@ -74,133 +51,123 @@ const PaymentsListPage = () => {
     return methods[method] || method;
   };
 
+  const columns = [
+    {
+      key: 'date',
+      label: 'التاريخ',
+      render: (payment) => formatDate(payment.paymentDate || payment.createdAt)
+    },
+    {
+      key: 'invoice',
+      label: 'الفاتورة',
+      render: (payment) => payment.invoiceNumber || `#${payment.invoiceId}`
+    },
+    {
+      key: 'customer',
+      label: 'العميل',
+      render: (payment) => payment.customerName || '-'
+    },
+    {
+      key: 'amount',
+      label: 'المبلغ',
+      render: (payment) => (
+        <div className="font-semibold text-foreground">
+          {formatCurrency(payment.amount)}
+        </div>
+      )
+    },
+    {
+      key: 'paymentMethod',
+      label: 'طريقة الدفع',
+      render: (payment) => (
+        <SimpleBadge variant="outline">
+          {getPaymentMethodLabel(payment.paymentMethod)}
+        </SimpleBadge>
+      )
+    },
+    {
+      key: 'status',
+      label: 'الحالة',
+      render: (payment) => (
+        <SimpleBadge variant={payment.invoiceStatus === 'paid' ? 'success' : 'warning'}>
+          {payment.invoiceStatus === 'paid' ? 'مدفوعة' : 'جزئية'}
+        </SimpleBadge>
+      )
+    }
+  ];
+
   if (error && !payments.length) {
-    const errorMessage = typeof error === 'string' 
-      ? error 
+    const errorMessage = typeof error === 'string'
+      ? error
       : error?.message || error?.title || 'حدث خطأ غير متوقع';
     return (
-      <Box p={3}>
-        <Typography color="error">خطأ: {errorMessage}</Typography>
-        <Button onClick={refetch} variant="outlined" sx={{ mt: 2 }}>
-          إعادة المحاولة
-        </Button>
-      </Box>
+      <div className="p-6">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <p className="text-destructive mb-4">خطأ: {errorMessage}</p>
+            <SimpleButton onClick={refetch} variant="outline">
+              إعادة المحاولة
+            </SimpleButton>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          المدفوعات
-        </Typography>
-        <Box>
-          <Tooltip title="تحديث">
-            <IconButton onClick={refetch} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-            sx={{ ml: 1 }}
-          >
-            إضافة دفعة جديدة
-          </Button>
-        </Box>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-3xl font-bold text-foreground">المدفوعات</h1>
+          <div className="flex items-center gap-2">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </SimpleButton>
+            <SimpleButton onClick={handleCreate}>
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة دفعة جديدة
+            </SimpleButton>
+          </div>
+        </div>
 
-      {/* Summary Card */}
-      <Box mb={3}>
+        {/* Summary Card */}
         <FinancialSummaryCard
           title="ملخص المدفوعات"
           data={stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : null}
           loading={loading}
-          icon={ReceiptIcon}
+          icon={Receipt}
         />
-      </Box>
 
-      {/* Payments Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>التاريخ</TableCell>
-              <TableCell>الفاتورة</TableCell>
-              <TableCell>العميل</TableCell>
-              <TableCell>المبلغ</TableCell>
-              <TableCell>طريقة الدفع</TableCell>
-              <TableCell>الحالة</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading && payments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
-            ) : payments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  لا توجد مدفوعات
-                </TableCell>
-              </TableRow>
-            ) : (
-              payments.map((payment) => (
-                <TableRow key={payment.id} hover>
-                  <TableCell>{formatDate(payment.paymentDate || payment.createdAt)}</TableCell>
-                  <TableCell>
-                    {payment.invoiceNumber || `#${payment.invoiceId}`}
-                  </TableCell>
-                  <TableCell>{payment.customerName || '-'}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(payment.amount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getPaymentMethodLabel(payment.paymentMethod)}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={payment.invoiceStatus === 'paid' ? 'مدفوعة' : 'جزئية'}
-                      size="small"
-                      color={payment.invoiceStatus === 'paid' ? 'success' : 'warning'}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-
-        {/* Pagination */}
-        <TablePagination
-          component="div"
-          count={pagination.total}
-          page={pagination.page - 1}
-          onPageChange={handlePageChange}
-          rowsPerPage={pagination.limit}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          labelRowsPerPage="عدد الصفوف:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
-          }
-        />
-      </TableContainer>
-    </Box>
+        {/* Payments Table */}
+        {loading && payments.length === 0 ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : (
+          <DataView
+            data={payments}
+            columns={columns}
+            loading={loading}
+            emptyMessage="لا توجد مدفوعات"
+            pagination={{
+              currentPage: pagination.page,
+              totalPages: Math.ceil(pagination.total / pagination.limit),
+              pageSize: pagination.limit,
+              totalItems: pagination.total,
+              onPageChange: (page) => setPagination({ ...pagination, page }),
+              onPageSizeChange: (limit) => setPagination({ ...pagination, limit, page: 1 })
+            }}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
 export default PaymentsListPage;
-
-

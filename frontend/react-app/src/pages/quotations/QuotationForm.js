@@ -5,11 +5,11 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/Select';
-import { 
-  Save, 
-  X, 
-  DollarSign, 
-  Calendar, 
+import {
+  Save,
+  X,
+  DollarSign,
+  Calendar,
   FileText,
   Wrench,
   Tag
@@ -209,9 +209,9 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Repair Request */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <Wrench className="inline w-4 h-4 ml-1" />
-            طلب الإصلاح <span className="text-red-500">*</span>
+            طلب الإصلاح <span className="text-destructive">*</span>
           </label>
           <Select
             value={formData.repairRequestId?.toString()}
@@ -230,13 +230,13 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
             </SelectContent>
           </Select>
           {errors.repairRequestId && (
-            <p className="text-red-500 text-sm mt-1">{errors.repairRequestId}</p>
+            <p className="text-destructive text-sm mt-1">{errors.repairRequestId}</p>
           )}
         </div>
 
         {/* Status */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <Tag className="inline w-4 h-4 ml-1" />
             الحالة
           </label>
@@ -259,9 +259,9 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
 
         {/* Total Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <DollarSign className="inline w-4 h-4 ml-1" />
-            المبلغ الإجمالي (ج.م) <span className="text-red-500">*</span>
+            المبلغ الإجمالي (ج.م) <span className="text-destructive">*</span>
           </label>
           <Input
             type="number"
@@ -274,13 +274,13 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
             required
           />
           {errors.totalAmount && (
-            <p className="text-red-500 text-sm mt-1">{errors.totalAmount}</p>
+            <p className="text-destructive text-sm mt-1">{errors.totalAmount}</p>
           )}
         </div>
 
         {/* Tax Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <DollarSign className="inline w-4 h-4 ml-1" />
             مبلغ الضريبة (ج.م)
           </label>
@@ -294,13 +294,13 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
             className={errors.taxAmount ? 'border-red-500' : ''}
           />
           {errors.taxAmount && (
-            <p className="text-red-500 text-sm mt-1">{errors.taxAmount}</p>
+            <p className="text-destructive text-sm mt-1">{errors.taxAmount}</p>
           )}
         </div>
 
         {/* Currency */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             العملة
           </label>
           <Input
@@ -314,7 +314,7 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
 
         {/* Sent At */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <Calendar className="inline w-4 h-4 ml-1" />
             تاريخ الإرسال
           </label>
@@ -327,7 +327,7 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
 
         {/* Response At */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             <Calendar className="inline w-4 h-4 ml-1" />
             تاريخ الرد
           </label>
@@ -341,7 +341,7 @@ const QuotationForm = ({ quotation, onSave, onCancel, onSuccess }) => {
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           <FileText className="inline w-4 h-4 ml-1" />
           الملاحظات
         </label>

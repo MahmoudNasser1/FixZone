@@ -2,15 +2,6 @@
 // Reusable form component for creating/editing invoices
 
 import React from 'react';
-import {
-  TextField,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText
-} from '@mui/material';
 
 const InvoiceForm = ({ formData, errors, onChange, customers = [], repairs = [] }) => {
   const handleChange = (e) => {
@@ -20,122 +11,134 @@ const InvoiceForm = ({ formData, errors, onChange, customers = [], repairs = [] 
     }
   };
 
-  return (
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="رقم طلب الإصلاح"
-          name="repairRequestId"
-          type="number"
-          value={formData.repairRequestId || ''}
-          onChange={handleChange}
-          helperText="اختياري - إذا كان الفاتورة مرتبطة بطلب إصلاح"
-          InputLabelProps={{ shrink: true }}
-        />
-      </Grid>
+  const inputClasses = "w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm transition-all";
+  const labelClasses = "block text-sm font-medium text-foreground mb-1";
+  const errorClasses = "text-xs text-destructive mt-1";
 
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>العميل</InputLabel>
-          <Select
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>رقم طلب الإصلاح</label>
+          <input
+            name="repairRequestId"
+            type="number"
+            value={formData.repairRequestId || ''}
+            onChange={handleChange}
+            className={inputClasses}
+            placeholder="اختياري - رقم طلب الإصلاح"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">اختياري - إذا كان الفاتورة مرتبطة بطلب إصلاح</p>
+        </div>
+
+        <div className="space-y-1">
+          <label className={labelClasses}>العميل</label>
+          <select
             name="customerId"
             value={formData.customerId || ''}
             onChange={handleChange}
-            label="العميل"
+            className={inputClasses}
           >
-            <MenuItem value="">اختر العميل</MenuItem>
+            <option value="">اختر العميل</option>
             {customers.map((customer) => (
-              <MenuItem key={customer.id} value={customer.id}>
+              <option key={customer.id} value={customer.id}>
                 {customer.name}
-              </MenuItem>
+              </option>
             ))}
-          </Select>
-        </FormControl>
-      </Grid>
+          </select>
+        </div>
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="تاريخ الاستحقاق"
-          name="dueDate"
-          type="date"
-          value={formData.dueDate || ''}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-        />
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>تاريخ الاستحقاق</label>
+          <input
+            name="dueDate"
+            type="date"
+            value={formData.dueDate || ''}
+            onChange={handleChange}
+            className={inputClasses}
+          />
+        </div>
 
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>العملة</InputLabel>
-          <Select
+        <div className="space-y-1">
+          <label className={labelClasses}>العملة</label>
+          <select
             name="currency"
             value={formData.currency || 'EGP'}
             onChange={handleChange}
-            label="العملة"
+            className={inputClasses}
           >
-            <MenuItem value="EGP">جنيه مصري</MenuItem>
-            <MenuItem value="USD">دولار أمريكي</MenuItem>
-            <MenuItem value="EUR">يورو</MenuItem>
-          </Select>
-        </FormControl>
-      </Grid>
+            <option value="EGP">جنيه مصري</option>
+            <option value="USD">دولار أمريكي</option>
+            <option value="EUR">يورو</option>
+          </select>
+        </div>
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="الخصم (%)"
-          name="discountPercent"
-          type="number"
-          value={formData.discountPercent || 0}
-          onChange={handleChange}
-          inputProps={{ min: 0, max: 100, step: 0.01 }}
-          helperText="نسبة الخصم"
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="مبلغ الخصم"
-          name="discountAmount"
-          type="number"
-          value={formData.discountAmount || 0}
-          onChange={handleChange}
-          inputProps={{ min: 0, step: 0.01 }}
-          helperText="مبلغ الخصم (يتم حسابه تلقائياً من النسبة)"
-          disabled={formData.discountPercent > 0}
-        />
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>الخصم (%)</label>
+          <input
+            name="discountPercent"
+            type="number"
+            value={formData.discountPercent || 0}
+            onChange={handleChange}
+            className={inputClasses}
+            min="0"
+            max="100"
+            step="0.01"
+            placeholder="0"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">نسبة الخصم</p>
+        </div>
+        <div className="space-y-1">
+          <label className={labelClasses}>مبلغ الخصم</label>
+          <input
+            name="discountAmount"
+            type="number"
+            value={formData.discountAmount || 0}
+            onChange={handleChange}
+            className={`${inputClasses} ${formData.discountPercent > 0 ? 'bg-muted opacity-70' : ''}`}
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            disabled={formData.discountPercent > 0}
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">مبلغ الخصم (يتم حسابه تلقائياً من النسبة)</p>
+        </div>
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="الضريبة (%)"
-          name="taxRate"
-          type="number"
-          value={formData.taxRate || 14}
-          onChange={handleChange}
-          inputProps={{ min: 0, max: 100, step: 0.01 }}
-          helperText="نسبة الضريبة (افتراضي: 14%)"
-        />
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>الضريبة (%)</label>
+          <input
+            name="taxRate"
+            type="number"
+            value={formData.taxRate || 14}
+            onChange={handleChange}
+            className={inputClasses}
+            min="0"
+            max="100"
+            step="0.01"
+            placeholder="14"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">نسبة الضريبة (افتراضي: 14%)</p>
+        </div>
+      </div>
 
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="ملاحظات"
+      <div className="space-y-1">
+        <label className={labelClasses}>ملاحظات</label>
+        <textarea
           name="notes"
           value={formData.notes || ''}
           onChange={handleChange}
-          multiline
-          rows={4}
+          className={`${inputClasses} min-h-[100px]`}
+          placeholder="أدخل أي ملاحظات إضافية هنا..."
         />
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 };
 
 export default InvoiceForm;
-
-

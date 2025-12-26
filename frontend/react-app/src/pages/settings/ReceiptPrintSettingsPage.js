@@ -99,48 +99,49 @@ export default function ReceiptPrintSettingsPage() {
     return (
         <div className="space-y-4">
             <SimpleCard>
-                <SimpleCardHeader className="flex flex-row items-center justify-between">
+                <SimpleCardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <SimpleCardTitle>إعدادات إيصال الاستلام</SimpleCardTitle>
                     <SimpleButton
                         onClick={handleSavePrint}
                         disabled={saving}
+                        className="w-full sm:w-auto"
                     >
-                        <Save className="h-4 w-4 mr-2" />
-                        {saving ? 'جاري الحفظ...' : 'حفظ'}
+                        <Save className="h-4 w-4 ml-2" />
+                        {saving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
                     </SimpleButton>
                 </SimpleCardHeader>
                 <SimpleCardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الإيصال</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">عنوان الإيصال</label>
                             <input
                                 name="title"
                                 value={print.title}
                                 onChange={handlePrintChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                             />
                         </div>
 
-                        <div className="flex items-center h-full pt-6">
+                        <div className="flex items-center h-full pt-2 md:pt-6">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="showLogo"
                                     checked={!!print.showLogo}
                                     onChange={handlePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700">إظهار الشعار</span>
+                                <span className="text-sm font-medium text-foreground">إظهار الشعار</span>
                             </label>
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">رابط الشعار</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">رابط الشعار</label>
                             <input
                                 name="logoUrl"
                                 value={print.logoUrl}
                                 onChange={handlePrintChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 dir="ltr"
                             />
                         </div>
@@ -152,14 +153,14 @@ export default function ReceiptPrintSettingsPage() {
                                     name="showQr"
                                     checked={!!print.showQr}
                                     onChange={handlePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700">إظهار QR للتتبّع</span>
+                                <span className="text-sm font-medium text-foreground">إظهار QR للتتبّع</span>
                             </label>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">حجم QR</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">حجم QR</label>
                             <input
                                 type="number"
                                 min={100}
@@ -167,7 +168,7 @@ export default function ReceiptPrintSettingsPage() {
                                 name="qrSize"
                                 value={print.qrSize}
                                 onChange={handlePrintChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                             />
                         </div>
 
@@ -178,9 +179,9 @@ export default function ReceiptPrintSettingsPage() {
                                     name="showDevicePassword"
                                     checked={!!print.showDevicePassword}
                                     onChange={handlePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700">عرض كلمة المرور على الإيصال</span>
+                                <span className="text-sm font-medium text-foreground">عرض كلمة المرور على الإيصال</span>
                             </label>
                         </div>
 
@@ -191,31 +192,31 @@ export default function ReceiptPrintSettingsPage() {
                                     name="showSerialBarcode"
                                     checked={!!print.showSerialBarcode}
                                     onChange={handlePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700">إظهار باركود الرقم التسلسلي</span>
+                                <span className="text-sm font-medium text-foreground">إظهار باركود الرقم التسلسلي</span>
                             </label>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">عرض الباركود</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">عرض الباركود</label>
                             <input
                                 type="number"
                                 name="barcodeWidth"
                                 value={print.barcodeWidth}
                                 onChange={handlePrintChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">ارتفاع الباركود</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">ارتفاع الباركود</label>
                             <input
                                 type="number"
                                 name="barcodeHeight"
                                 value={print.barcodeHeight}
                                 onChange={handlePrintChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                             />
                         </div>
 
@@ -226,101 +227,101 @@ export default function ReceiptPrintSettingsPage() {
                                     name="compactMode"
                                     checked={!!print.compactMode}
                                     onChange={handlePrintChange}
-                                    className="rounded text-blue-600"
+                                    className="rounded text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700">وضع الطباعة المصغر (Compact Mode)</span>
+                                <span className="text-sm font-medium text-foreground">وضع الطباعة المصغر (Compact Mode)</span>
                             </label>
                         </div>
                     </div>
 
-                    <div className="border-t pt-4 mt-4">
-                        <h3 className="text-sm font-medium text-gray-900 mb-3">معلومات الفرع (تظهر في الإيصال)</h3>
+                    <div className="border-t border-border pt-4 mt-4">
+                        <h3 className="text-sm font-medium text-foreground mb-3">معلومات الفرع (تظهر في الإيصال)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">اسم الفرع</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">اسم الفرع</label>
                                 <input
                                     name="branchName"
                                     value={print.branchName}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">العنوان</label>
                                 <input
                                     name="branchAddress"
                                     value={print.branchAddress}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">الهاتف</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">الهاتف</label>
                                 <input
                                     name="branchPhone"
                                     value={print.branchPhone}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="border-t pt-4 mt-4">
-                        <h3 className="text-sm font-medium text-gray-900 mb-3">هوامش الطباعة (بكسل)</h3>
+                    <div className="border-t border-border pt-4 mt-4">
+                        <h3 className="text-sm font-medium text-foreground mb-3">هوامش الطباعة (بكسل)</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">أعلى</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">أعلى</label>
                                 <input
                                     type="number"
                                     name="margins.top"
                                     value={print.margins.top}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">يمين</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">يمين</label>
                                 <input
                                     type="number"
                                     name="margins.right"
                                     value={print.margins.right}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">أسفل</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">أسفل</label>
                                 <input
                                     type="number"
                                     name="margins.bottom"
                                     value={print.margins.bottom}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">يسار</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">يسار</label>
                                 <input
                                     type="number"
                                     name="margins.left"
                                     value={print.margins.left}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="border-t pt-4 mt-4">
+                    <div className="border-t border-border pt-4 mt-4">
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">طريقة عرض التاريخ</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">طريقة عرض التاريخ</label>
                                 <select
                                     name="dateDisplay"
                                     value={print.dateDisplay}
                                     onChange={handlePrintChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 >
                                     <option value="date">التاريخ فقط</option>
                                     <option value="datetime">التاريخ والوقت</option>
@@ -328,13 +329,13 @@ export default function ReceiptPrintSettingsPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">الشروط والأحكام (تظهر أسفل الإيصال)</label>
+                                <label className="block text-sm font-medium text-muted-foreground mb-1">الشروط والأحكام (تظهر أسفل الإيصال)</label>
                                 <textarea
                                     name="terms"
                                     value={print.terms}
                                     onChange={handlePrintChange}
                                     rows={4}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                                 />
                             </div>
                         </div>

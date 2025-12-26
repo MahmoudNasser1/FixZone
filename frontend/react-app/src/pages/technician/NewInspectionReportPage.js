@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  FileCheck,
+  X,
+  Save,
+  RefreshCw,
+  ArrowRight,
+  AlertCircle,
+  ClipboardList,
+  FileText,
+  Calendar,
+  MessageSquare,
+  ShieldCheck,
+  CheckCircle,
+  HelpCircle,
+  Info
+} from 'lucide-react';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { cn } from '../../lib/utils';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import TechnicianHeader from '../../components/technician/TechnicianHeader';
 import TechnicianBottomNav from '../../components/technician/TechnicianBottomNav';
 import PageTransition from '../../components/ui/PageTransition';
-import { X, Save, RefreshCw, ArrowRight } from 'lucide-react';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
 
@@ -15,7 +35,7 @@ export default function NewInspectionReportPage() {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const user = useAuthStore((state) => state.user);
-  
+
   const editingReportId = reportId;
   const [editingReport, setEditingReport] = useState(null);
   const [inspectionTypes, setInspectionTypes] = useState([]);
@@ -100,7 +120,7 @@ export default function NewInspectionReportPage() {
       if (reportDateISO && reportDateISO.length === 10) {
         reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
       }
-      
+
       const payload = {
         repairRequestId: id,
         inspectionTypeId: inspectionForm.inspectionTypeId || null,
@@ -115,7 +135,7 @@ export default function NewInspectionReportPage() {
       const url = editingReportId
         ? `${API_BASE_URL}/inspectionreports/${editingReportId}`
         : `${API_BASE_URL}/inspectionreports`;
-      
+
       const method = editingReportId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -126,8 +146,7 @@ export default function NewInspectionReportPage() {
       });
 
       if (response.ok) {
-        notifications.success('تم', { message: editingReportId ? 'تم تحديث التقرير' : 'تم إنشاء التقرير' });
-        // العودة للصفحة السابقة
+        notifications.success('تم', { message: editingReportId ? 'تم تحديث التقرير بنجاح' : 'تم إنشاء التقرير بنجاح' });
         navigate(`/technician/jobs/${id}`, { state: { activeTab: 'reports' } });
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -143,136 +162,189 @@ export default function NewInspectionReportPage() {
 
   if (loading) {
     return (
-      <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-28 md:pb-8">
+      <PageTransition className="min-h-screen bg-background text-right" dir="rtl">
         <TechnicianHeader user={user} notificationCount={5} />
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-8 h-8 text-slate-400 animate-spin" />
-          </div>
+        <div className="max-w-4xl mx-auto px-4 py-12 flex flex-col items-center">
+          <LoadingSpinner message="جاري استرداد بيانات التقرير..." />
         </div>
       </PageTransition>
     );
   }
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-28 md:pb-8">
+    <PageTransition className="min-h-screen bg-background pb-28 md:pb-8 text-right font-sans" dir="rtl">
       <TechnicianHeader user={user} notificationCount={5} />
-      
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => navigate(`/technician/jobs/${id}?tab=reports`)}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all"
-          >
-            <ArrowRight className="w-5 h-5" />
-            <span className="font-medium">العودة</span>
-          </button>
-          
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {editingReportId ? 'تعديل التقرير' : 'تقرير فني جديد'}
-          </h1>
-          
-          <div className="w-24" /> {/* Spacer for alignment */}
+
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+        {/* Navigation & Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(`/technician/jobs/${id}?tab=reports`)}
+              className="p-3 bg-card hover:bg-muted text-muted-foreground hover:text-foreground rounded-2xl shadow-sm border border-border/40 transition-all active:scale-95"
+              aria-label="العودة"
+            >
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black text-foreground">
+                {editingReportId ? 'تحديث التقرير الفني' : 'إعداد تقرير فحص'}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {editingReportId ? `تعديل التقرير رقم #${editingReportId}` : `تسجيل نتائج الفحص للطلب رقم #${id}`}
+              </p>
+            </div>
+          </div>
+          {editingReportId && (
+            <SimpleBadge variant="info" className="w-fit animate-pulse">وضع التعديل النشط</SimpleBadge>
+          )}
         </div>
 
-        {/* Form */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800 p-6 space-y-6">
+        {/* Form Container */}
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            <div className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive animate-in zoom-in-95 duration-300">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <p className="text-sm font-semibold">{error}</p>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">نوع التقرير</label>
-            <select
-              value={inspectionForm.inspectionTypeId}
-              onChange={(e) => setInspectionForm({ ...inspectionForm, inspectionTypeId: e.target.value })}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white"
-            >
-              <option value="">اختر نوع التقرير...</option>
-              {inspectionTypes.map((type) => (
-                <option key={type.id} value={type.id}>{type.name}</option>
-              ))}
-            </select>
-          </div>
+          <SimpleCard className="border-none shadow-xl shadow-primary/5 bg-card/60 backdrop-blur-md overflow-hidden">
+            <SimpleCardHeader className="bg-muted/30 border-b border-border/50 px-6 py-5">
+              <SimpleCardTitle className="text-base font-bold flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-primary" />
+                المعلومات الأساسية للفحص
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6 sm:p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Type Selection */}
+                <div className="space-y-2.5">
+                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-primary" />
+                    نوع التقرير / الفحص
+                  </label>
+                  <select
+                    value={inspectionForm.inspectionTypeId}
+                    onChange={(e) => setInspectionForm({ ...inspectionForm, inspectionTypeId: e.target.value })}
+                    className="w-full bg-muted/50 border-border text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none"
+                  >
+                    <option value="">-- اختر نوع التقرير --</option>
+                    {inspectionTypes.map((type) => (
+                      <option key={type.id} value={type.id}>{type.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">تاريخ التقرير *</label>
-            <input
-              type="date"
-              value={inspectionForm.reportDate}
-              onChange={(e) => setInspectionForm({ ...inspectionForm, reportDate: e.target.value })}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white"
-              required
-            />
-          </div>
+                {/* Date Selection */}
+                <div className="space-y-2.5">
+                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    تاريخ الفحص *
+                  </label>
+                  <input
+                    type="date"
+                    value={inspectionForm.reportDate}
+                    onChange={(e) => setInspectionForm({ ...inspectionForm, reportDate: e.target.value })}
+                    className="w-full bg-muted/50 border-border text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    required
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">الملخص</label>
-            <textarea
-              value={inspectionForm.summary}
-              onChange={(e) => setInspectionForm({ ...inspectionForm, summary: e.target.value })}
-              placeholder="ملخص التقرير..."
-              rows={4}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white resize-none"
-            />
-          </div>
+              {/* Summary field */}
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  ملخص مختصر للحالة
+                </label>
+                <textarea
+                  value={inspectionForm.summary}
+                  onChange={(e) => setInspectionForm({ ...inspectionForm, summary: e.target.value })}
+                  placeholder="اكتب ملخصاً سريعاً عن حالة الجهاز..."
+                  rows={3}
+                  className="w-full bg-muted/50 border-border text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">النتيجة والتشخيص</label>
-            <textarea
-              value={inspectionForm.result}
-              onChange={(e) => setInspectionForm({ ...inspectionForm, result: e.target.value })}
-              placeholder="نتيجة الفحص..."
-              rows={5}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white resize-none"
-            />
-          </div>
+              {/* Result field */}
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-success" />
+                  النتيجة التفصيلية والتشخيص
+                </label>
+                <textarea
+                  value={inspectionForm.result}
+                  onChange={(e) => setInspectionForm({ ...inspectionForm, result: e.target.value })}
+                  placeholder="اشرح بالتفصيل المشاكل التي تم العثور عليها..."
+                  rows={6}
+                  className="w-full bg-muted/50 border-border text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">التوصيات</label>
-            <textarea
-              value={inspectionForm.recommendations}
-              onChange={(e) => setInspectionForm({ ...inspectionForm, recommendations: e.target.value })}
-              placeholder="التوصيات..."
-              rows={4}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-white resize-none"
-            />
-          </div>
+              {/* Recommendations field */}
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Info className="w-4 h-4 text-info" />
+                  التوصيات وخطوات الإصلاح المقترحة
+                </label>
+                <textarea
+                  value={inspectionForm.recommendations}
+                  onChange={(e) => setInspectionForm({ ...inspectionForm, recommendations: e.target.value })}
+                  placeholder="ما هي القطع التي يجب تبديلها أو الإجراءات القادمة؟"
+                  rows={4}
+                  className="w-full bg-muted/50 border-border text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+                />
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => navigate(`/technician/jobs/${id}?tab=reports`)}
-              disabled={saving}
-              className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium disabled:opacity-50"
-            >
-              إلغاء
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !inspectionForm.reportDate}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl hover:from-teal-600 hover:to-emerald-600 transition-all font-medium shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  جاري الحفظ...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  حفظ
-                </>
-              )}
-            </button>
-          </div>
+              {/* Internal Notes */}
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-warning" />
+                  ملاحظات فنية داخلية (اختياري)
+                </label>
+                <textarea
+                  value={inspectionForm.notes}
+                  onChange={(e) => setInspectionForm({ ...inspectionForm, notes: e.target.value })}
+                  placeholder="أي ملاحظات إضافية للفريق الفني..."
+                  rows={3}
+                  className="w-full bg-muted/20 border-border/50 text-foreground rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none"
+                />
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-border/50">
+                <SimpleButton
+                  variant="outline"
+                  onClick={() => navigate(`/technician/jobs/${id}?tab=reports`)}
+                  disabled={saving}
+                  className="px-8 h-14 rounded-2xl border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground"
+                >
+                  إلغاء العملية
+                </SimpleButton>
+                <SimpleButton
+                  onClick={handleSave}
+                  disabled={saving || !inspectionForm.reportDate}
+                  className="flex-1 h-14 rounded-2xl shadow-xl shadow-primary/20 gap-3 text-base font-bold"
+                >
+                  {saving ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      جاري حفظ البيانات...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      {editingReportId ? 'تحديث التقرير الآن' : 'اعتماد التقرير ونشره'}
+                    </>
+                  )}
+                </SimpleButton>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
         </div>
       </div>
 
-      {/* Bottom Navigation - Mobile Only */}
       <TechnicianBottomNav />
     </PageTransition>
   );

@@ -3,28 +3,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Grid,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Tooltip
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Print as PrintIcon,
-  Edit as EditIcon
-} from '@mui/icons-material';
+import { ArrowLeft, Printer, Edit } from 'lucide-react';
+import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
+import SimpleBadge from '../../../components/ui/SimpleBadge';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { useInvoices } from '../../../hooks/financial/useInvoices';
 import { usePayments } from '../../../hooks/financial/usePayments';
 
@@ -104,296 +87,262 @@ const InvoiceDetailsPage = () => {
     return statuses[status] || status;
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'default',
-      sent: 'info',
+  const getStatusVariant = (status) => {
+    const variants = {
+      draft: 'secondary',
+      sent: 'default',
       paid: 'success',
       partially_paid: 'warning',
-      overdue: 'error',
-      cancelled: 'default'
+      overdue: 'destructive',
+      cancelled: 'secondary'
     };
-    return colors[status] || 'default';
+    return variants[status] || 'default';
   };
 
   if (loading) {
     return (
-      <Box p={3}>
-        <Typography>جاري التحميل...</Typography>
-      </Box>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
     );
   }
 
   if (!invoice) {
     return (
-      <Box p={3}>
-        <Typography color="error">الفاتورة غير موجودة</Typography>
-        <Button onClick={() => navigate('/financial/invoices')} sx={{ mt: 2 }}>
-          رجوع
-        </Button>
-      </Box>
+      <div className="min-h-screen bg-background p-6">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <p className="text-destructive mb-4">الفاتورة غير موجودة</p>
+            <SimpleButton onClick={() => navigate('/financial/invoices')}>
+              رجوع
+            </SimpleButton>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/financial/invoices')}
-            sx={{ mr: 2 }}
-          >
-            رجوع
-          </Button>
-          <Typography variant="h4" component="h1">
-            فاتورة #{invoice.invoiceNumber || invoice.id}
-          </Typography>
-        </Box>
-        <Box>
-          <Tooltip title="طباعة">
-            <IconButton onClick={handlePrint} color="primary">
-              <PrintIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="تعديل">
-            <IconButton onClick={handleEdit} color="primary">
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/financial/invoices')}
+            >
+              <ArrowLeft className="w-4 h-4 ml-2" />
+              رجوع
+            </SimpleButton>
+            <h1 className="text-3xl font-bold text-foreground">
+              فاتورة #{invoice.invoiceNumber || invoice.id}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+            >
+              <Printer className="w-4 h-4 ml-2" />
+              طباعة
+            </SimpleButton>
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+            >
+              <Edit className="w-4 h-4 ml-2" />
+              تعديل
+            </SimpleButton>
+          </div>
+        </div>
 
-      <Grid container spacing={3}>
-        {/* Invoice Info */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              معلومات الفاتورة
-            </Typography>
-            <Divider sx={{ my: 2 }} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Invoice Info */}
+            <SimpleCard>
+              <SimpleCardHeader>
+                <h2 className="text-xl font-semibold text-foreground">معلومات الفاتورة</h2>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">رقم الفاتورة</p>
+                    <p className="font-semibold text-foreground">
+                      {invoice.invoiceNumber || `#${invoice.id}`}
+                    </p>
+                  </div>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="textSecondary">
-                  رقم الفاتورة
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {invoice.invoiceNumber || `#${invoice.id}`}
-                </Typography>
-              </Grid>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">الحالة</p>
+                    <SimpleBadge variant={getStatusVariant(invoice.status)}>
+                      {getStatusLabel(invoice.status)}
+                    </SimpleBadge>
+                  </div>
 
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="textSecondary">
-                  الحالة
-                </Typography>
-                <Chip
-                  label={getStatusLabel(invoice.status)}
-                  color={getStatusColor(invoice.status)}
-                  size="small"
-                />
-              </Grid>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">العميل</p>
+                    <p className="text-foreground">{invoice.customerName || '-'}</p>
+                  </div>
 
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="textSecondary">
-                  العميل
-                </Typography>
-                <Typography variant="body1">
-                  {invoice.customerName || '-'}
-                </Typography>
-              </Grid>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">تاريخ الإصدار</p>
+                    <p className="text-foreground">
+                      {formatDate(invoice.issueDate || invoice.createdAt)}
+                    </p>
+                  </div>
 
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="textSecondary">
-                  تاريخ الإصدار
-                </Typography>
-                <Typography variant="body1">
-                  {formatDate(invoice.issueDate || invoice.createdAt)}
-                </Typography>
-              </Grid>
-
-              {invoice.dueDate && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    تاريخ الاستحقاق
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDate(invoice.dueDate)}
-                  </Typography>
-                </Grid>
-              )}
-
-              {invoice.notes && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="textSecondary">
-                    ملاحظات
-                  </Typography>
-                  <Typography variant="body1">
-                    {invoice.notes}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </Paper>
-
-          {/* Invoice Items */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              عناصر الفاتورة
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>الوصف</TableCell>
-                    <TableCell align="right">الكمية</TableCell>
-                    <TableCell align="right">سعر الوحدة</TableCell>
-                    <TableCell align="right">الإجمالي</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {invoice.items && invoice.items.length > 0 ? (
-                    invoice.items.map((item, index) => (
-                      <TableRow key={item.id || index}>
-                        <TableCell>{item.description}</TableCell>
-                        <TableCell align="right">{item.quantity}</TableCell>
-                        <TableCell align="right">{formatCurrency(item.unitPrice)}</TableCell>
-                        <TableCell align="right">{formatCurrency(item.totalPrice)}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        لا توجد عناصر
-                      </TableCell>
-                    </TableRow>
+                  {invoice.dueDate && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">تاريخ الاستحقاق</p>
+                      <p className="text-foreground">{formatDate(invoice.dueDate)}</p>
+                    </div>
                   )}
-                </TableBody>
-              </Table>
-            </TableContainer>
 
-            <Box mt={3} display="flex" justifyContent="flex-end">
-              <Grid container spacing={2} sx={{ maxWidth: 400 }}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    المجموع الفرعي
-                  </Typography>
-                </Grid>
-                <Grid item xs={6} align="right">
-                  <Typography variant="body1">
-                    {formatCurrency(invoice.subtotal)}
-                  </Typography>
-                </Grid>
+                  {invoice.notes && (
+                    <div className="sm:col-span-2">
+                      <p className="text-sm text-muted-foreground mb-1">ملاحظات</p>
+                      <p className="text-foreground">{invoice.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
 
-                {invoice.taxAmount > 0 && (
-                  <>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        الضريبة (14%)
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6} align="right">
-                      <Typography variant="body1">
-                        {formatCurrency(invoice.taxAmount)}
-                      </Typography>
-                    </Grid>
-                  </>
+            {/* Invoice Items */}
+            <SimpleCard>
+              <SimpleCardHeader>
+                <h2 className="text-xl font-semibold text-foreground">عناصر الفاتورة</h2>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b border-border">
+                      <tr>
+                        <th className="text-right py-3 px-4 text-sm font-semibold text-foreground">الوصف</th>
+                        <th className="text-right py-3 px-4 text-sm font-semibold text-foreground">الكمية</th>
+                        <th className="text-right py-3 px-4 text-sm font-semibold text-foreground">سعر الوحدة</th>
+                        <th className="text-right py-3 px-4 text-sm font-semibold text-foreground">الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoice.items && invoice.items.length > 0 ? (
+                        invoice.items.map((item, index) => (
+                          <tr key={item.id || index} className="border-b border-border last:border-0">
+                            <td className="py-3 px-4 text-foreground">{item.description}</td>
+                            <td className="py-3 px-4 text-foreground">{item.quantity}</td>
+                            <td className="py-3 px-4 text-foreground">{formatCurrency(item.unitPrice)}</td>
+                            <td className="py-3 px-4 font-semibold text-foreground">
+                              {formatCurrency(item.totalPrice)}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="py-6 text-center text-muted-foreground">
+                            لا توجد عناصر
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Summary */}
+                <div className="mt-6 flex justify-end">
+                  <div className="w-full max-w-sm space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">المجموع الفرعي</span>
+                      <span className="text-foreground">{formatCurrency(invoice.subtotal)}</span>
+                    </div>
+
+                    {invoice.taxAmount > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">الضريبة (14%)</span>
+                        <span className="text-foreground">{formatCurrency(invoice.taxAmount)}</span>
+                      </div>
+                    )}
+
+                    {invoice.discountAmount > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">الخصم</span>
+                        <span className="text-destructive">-{formatCurrency(invoice.discountAmount)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-2 border-t border-border">
+                      <span className="text-lg font-semibold text-foreground">الإجمالي</span>
+                      <span className="text-lg font-bold text-primary">
+                        {formatCurrency(invoice.totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
+
+          {/* Payments Sidebar */}
+          <div className="lg:col-span-1">
+            <SimpleCard>
+              <SimpleCardHeader>
+                <h2 className="text-xl font-semibold text-foreground">المدفوعات</h2>
+              </SimpleCardHeader>
+              <SimpleCardContent>
+                {paymentsSummary && (
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">المدفوع</p>
+                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(paymentsSummary.totalPaid)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">المتبقي</p>
+                      <p className="text-xl font-bold text-destructive">
+                        {formatCurrency(paymentsSummary.remaining)}
+                      </p>
+                    </div>
+                  </div>
                 )}
 
-                {invoice.discountAmount > 0 && (
-                  <>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="textSecondary">
-                        الخصم
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6} align="right">
-                      <Typography variant="body1" color="error">
-                        -{formatCurrency(invoice.discountAmount)}
-                      </Typography>
-                    </Grid>
-                  </>
+                {paymentsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : payments.length > 0 ? (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground mb-2">سجل المدفوعات</h3>
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="p-3 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <p className="font-semibold text-foreground mb-1">
+                          {formatCurrency(payment.amount)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(payment.paymentDate || payment.createdAt)} - {payment.paymentMethod}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    لا توجد مدفوعات
+                  </p>
                 )}
-
-                <Grid item xs={6}>
-                  <Typography variant="h6">
-                    الإجمالي
-                  </Typography>
-                </Grid>
-                <Grid item xs={6} align="right">
-                  <Typography variant="h6" fontWeight="bold">
-                    {formatCurrency(invoice.totalAmount)}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Payments Summary */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              المدفوعات
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-
-            {paymentsSummary && (
-              <Box mb={3}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      المدفوع
-                    </Typography>
-                    <Typography variant="h6" color="success.main">
-                      {formatCurrency(paymentsSummary.totalPaid)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      المتبقي
-                    </Typography>
-                    <Typography variant="h6" color="error.main">
-                      {formatCurrency(paymentsSummary.remaining)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-
-            {paymentsLoading ? (
-              <Typography>جاري التحميل...</Typography>
-            ) : payments.length > 0 ? (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  سجل المدفوعات
-                </Typography>
-                {payments.map((payment) => (
-                  <Box key={payment.id} mb={2} p={1} bgcolor="grey.50" borderRadius={1}>
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(payment.amount)}
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      {formatDate(payment.paymentDate || payment.createdAt)} - {payment.paymentMethod}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Typography variant="body2" color="textSecondary">
-                لا توجد مدفوعات
-              </Typography>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default InvoiceDetailsPage;
-
-

@@ -2,25 +2,13 @@
 // Reusable filters component for financial pages
 
 import React from 'react';
-import {
-  Box,
-  TextField,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Button,
-  Paper
-} from '@mui/material';
-import {
-  FilterList as FilterListIcon,
-  Clear as ClearIcon
-} from '@mui/icons-material';
+import { SimpleCard, SimpleCardContent } from '../../ui/SimpleCard';
+import SimpleButton from '../../ui/SimpleButton';
+import { Filter, X } from 'lucide-react';
 
-const FinancialFilters = ({ 
-  filters, 
-  onFilterChange, 
+const FinancialFilters = ({
+  filters,
+  onFilterChange,
   onReset,
   showDateRange = true,
   showCategory = false,
@@ -37,152 +25,141 @@ const FinancialFilters = ({
   };
 
   return (
-    <Paper sx={{ p: 2, mb: 3 }}>
-      <Box display="flex" alignItems="center" mb={2}>
-        <FilterListIcon sx={{ mr: 1 }} />
-        <strong>الفلاتر</strong>
-      </Box>
+    <SimpleCard className="mb-6">
+      <SimpleCardContent className="p-4">
+        <div className="flex items-center gap-2 mb-4 border-b border-border pb-2">
+          <Filter className="w-5 h-5 text-primary" />
+          <span className="font-bold text-foreground">الفلاتر</span>
+        </div>
 
-      <Grid container spacing={2}>
-        {showDateRange && (
-          <>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="من تاريخ"
-                name="dateFrom"
-                type="date"
-                value={filters.dateFrom || ''}
-                onChange={(e) => handleChange('dateFrom', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="إلى تاريخ"
-                name="dateTo"
-                type="date"
-                value={filters.dateTo || ''}
-                onChange={(e) => handleChange('dateTo', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-          </>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {showDateRange && (
+            <>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-muted-foreground mr-1">من تاريخ</label>
+                <input
+                  type="date"
+                  name="dateFrom"
+                  value={filters.dateFrom || ''}
+                  onChange={(e) => handleChange('dateFrom', e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-muted-foreground mr-1">إلى تاريخ</label>
+                <input
+                  type="date"
+                  name="dateTo"
+                  value={filters.dateTo || ''}
+                  onChange={(e) => handleChange('dateTo', e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
+                />
+              </div>
+            </>
+          )}
 
-        {showCategory && (
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>التصنيف</InputLabel>
-              <Select
+          {showCategory && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground mr-1">التصنيف</label>
+              <select
                 name="categoryId"
                 value={filters.categoryId || ''}
                 onChange={(e) => handleChange('categoryId', e.target.value)}
-                label="التصنيف"
+                className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
               >
-                <MenuItem value="">الكل</MenuItem>
+                <option value="">الكل</option>
                 {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
+                  <option key={category.id} value={category.id}>
                     {category.name}
-                  </MenuItem>
+                  </option>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        )}
+              </select>
+            </div>
+          )}
 
-        {showBranch && (
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>الفرع</InputLabel>
-              <Select
+          {showBranch && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground mr-1">الفرع</label>
+              <select
                 name="branchId"
                 value={filters.branchId || ''}
                 onChange={(e) => handleChange('branchId', e.target.value)}
-                label="الفرع"
+                className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
               >
-                <MenuItem value="">الكل</MenuItem>
+                <option value="">الكل</option>
                 {branches.map((branch) => (
-                  <MenuItem key={branch.id} value={branch.id}>
+                  <option key={branch.id} value={branch.id}>
                     {branch.name}
-                  </MenuItem>
+                  </option>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        )}
+              </select>
+            </div>
+          )}
 
-        {showCustomer && (
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>العميل</InputLabel>
-              <Select
+          {showCustomer && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground mr-1">العميل</label>
+              <select
                 name="customerId"
                 value={filters.customerId || ''}
                 onChange={(e) => handleChange('customerId', e.target.value)}
-                label="العميل"
+                className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
               >
-                <MenuItem value="">الكل</MenuItem>
+                <option value="">الكل</option>
                 {customers.map((customer) => (
-                  <MenuItem key={customer.id} value={customer.id}>
+                  <option key={customer.id} value={customer.id}>
                     {customer.name}
-                  </MenuItem>
+                  </option>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        )}
+              </select>
+            </div>
+          )}
 
-        {showStatus && (
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>الحالة</InputLabel>
-              <Select
+          {showStatus && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground mr-1">الحالة</label>
+              <select
                 name="status"
                 value={filters.status || ''}
                 onChange={(e) => handleChange('status', e.target.value)}
-                label="الحالة"
+                className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
               >
-                <MenuItem value="">الكل</MenuItem>
+                <option value="">الكل</option>
                 {statuses.map((status) => (
-                  <MenuItem key={status.value} value={status.value}>
+                  <option key={status.value} value={status.value}>
                     {status.label}
-                  </MenuItem>
+                  </option>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        )}
+              </select>
+            </div>
+          )}
 
-        <Grid item xs={12} md={3}>
-          <TextField
-            fullWidth
-            label="بحث"
-            name="search"
-            value={filters.search || ''}
-            onChange={(e) => handleChange('search', e.target.value)}
-            placeholder="ابحث..."
-          />
-        </Grid>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-muted-foreground mr-1">بحث</label>
+            <input
+              type="text"
+              name="search"
+              value={filters.search || ''}
+              onChange={(e) => handleChange('search', e.target.value)}
+              placeholder="ابحث..."
+              className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm"
+            />
+          </div>
 
-        <Grid item xs={12} md={3}>
-          <Box display="flex" gap={1}>
-            <Button
-              variant="outlined"
-              startIcon={<ClearIcon />}
+          <div className="flex items-end">
+            <SimpleButton
+              variant="outline"
               onClick={onReset}
-              fullWidth
+              className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/5"
             >
-              مسح
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    </Paper>
+              <X className="w-4 h-4" />
+              <span>مسح الفلاتر</span>
+            </SimpleButton>
+          </div>
+        </div>
+      </SimpleCardContent>
+    </SimpleCard>
   );
 };
 
 export default FinancialFilters;
-
-

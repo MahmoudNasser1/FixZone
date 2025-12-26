@@ -11,7 +11,7 @@ export default function PaymentDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
-  
+
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState(null);
 
@@ -52,7 +52,7 @@ export default function PaymentDetailsPage() {
     try {
       setLoading(true);
       const response = await paymentService.deletePayment(id);
-      
+
       if (response.success) {
         addNotification({ type: 'success', message: 'تم حذف الدفعة بنجاح' });
         navigate('/payments');
@@ -70,7 +70,7 @@ export default function PaymentDetailsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export default function PaymentDetailsPage() {
   if (!payment) {
     return (
       <div className="text-center py-8">
-        <h2 className="text-xl font-semibold text-gray-900">الدفعة غير موجودة</h2>
+        <h2 className="text-xl font-semibold text-foreground">الدفعة غير موجودة</h2>
         <SimpleButton
           onClick={() => navigate('/payments')}
           className="mt-4"
@@ -94,8 +94,8 @@ export default function PaymentDetailsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">تفاصيل الدفعة</h1>
-          <p className="text-gray-600">رقم الدفعة: #{payment.id}</p>
+          <h1 className="text-2xl font-bold text-foreground">تفاصيل الدفعة</h1>
+          <p className="text-muted-foreground">رقم الدفعة: #{payment.id}</p>
         </div>
         <div className="flex space-x-3 rtl:space-x-reverse">
           <SimpleButton
@@ -106,13 +106,13 @@ export default function PaymentDetailsPage() {
           </SimpleButton>
           <SimpleButton
             onClick={handleEdit}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90"
           >
             تعديل
           </SimpleButton>
           <SimpleButton
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-destructive hover:bg-destructive/90"
           >
             حذف
           </SimpleButton>
@@ -133,17 +133,17 @@ export default function PaymentDetailsPage() {
         {/* Payment Details */}
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل الدفعة</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">تفاصيل الدفعة</h2>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">المبلغ:</span>
-                <span className="font-semibold text-lg text-green-600">
+                <span className="text-muted-foreground">المبلغ:</span>
+                <span className="font-semibold text-lg text-emerald-600 dark:text-emerald-400">
                   {paymentService.formatAmount(payment.amount, payment.currency)}
                 </span>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">طريقة الدفع:</span>
+                <span className="text-muted-foreground">طريقة الدفع:</span>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <span className="text-xl">{paymentService.getPaymentMethodIcon(payment.paymentMethod)}</span>
                   <span className="font-medium">
@@ -151,28 +151,28 @@ export default function PaymentDetailsPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">تاريخ الدفع:</span>
+                <span className="text-muted-foreground">تاريخ الدفع:</span>
                 <span className="font-medium">{paymentService.formatDate(payment.paymentDate)}</span>
               </div>
-              
+
               {payment.referenceNumber && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">رقم المرجع:</span>
+                  <span className="text-muted-foreground">رقم المرجع:</span>
                   <span className="font-medium">{payment.referenceNumber}</span>
                 </div>
               )}
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">تاريخ الإنشاء:</span>
+                <span className="text-muted-foreground">تاريخ الإنشاء:</span>
                 <span className="font-medium">{paymentService.formatDate(payment.createdAt)}</span>
               </div>
-              
+
               {payment.notes && (
                 <div>
-                  <span className="text-gray-600 block mb-2">ملاحظات:</span>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  <span className="text-muted-foreground block mb-2">ملاحظات:</span>
+                  <p className="text-foreground bg-muted p-3 rounded-lg">
                     {payment.notes}
                   </p>
                 </div>
@@ -184,58 +184,57 @@ export default function PaymentDetailsPage() {
         {/* Invoice Details */}
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل الفاتورة</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">تفاصيل الفاتورة</h2>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">رقم الفاتورة:</span>
+                <span className="text-muted-foreground">رقم الفاتورة:</span>
                 <span className="font-medium">{payment.invoiceNumber || 'غير محدد'}</span>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">إجمالي الفاتورة:</span>
+                <span className="text-muted-foreground">إجمالي الفاتورة:</span>
                 <span className="font-medium">
                   {payment && payment.invoiceFinal ? paymentService.formatAmount(payment.invoiceFinal, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">المدفوع:</span>
-                <span className="font-medium text-green-600">
+                <span className="text-muted-foreground">المدفوع:</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
                   {payment && payment.totalPaid !== undefined ? paymentService.formatAmount(payment.totalPaid, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">المتبقي:</span>
-                <span className={`font-medium ${payment && payment.remainingAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                <span className="text-muted-foreground">المتبقي:</span>
+                <span className={`font-medium ${payment && payment.remainingAmount > 0 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {payment && payment.remainingAmount !== undefined ? paymentService.formatAmount(payment.remainingAmount, payment.currency || 'EGP') : '0.00 ج.م'}
                 </span>
               </div>
-              
+
               <div className="flex justify-between">
-                <span className="text-gray-600">حالة الفاتورة:</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${
-                  payment.invoiceStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                  payment.invoiceStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
-                  payment.invoiceStatus === 'overdue' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {payment.invoiceStatus === 'paid' ? 'مدفوعة' : 
-                   payment.invoiceStatus === 'partially_paid' ? 'مدفوعة جزئياً' : 
-                   payment.invoiceStatus === 'overdue' ? 'متأخرة' : 'مسودة'}
+                <span className="text-muted-foreground">حالة الفاتورة:</span>
+                <span className={`px-2 py-1 rounded-full text-sm font-medium ${payment.invoiceStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    payment.invoiceStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+                      payment.invoiceStatus === 'overdue' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                  }`}>
+                  {payment.invoiceStatus === 'paid' ? 'مدفوعة' :
+                    payment.invoiceStatus === 'partially_paid' ? 'مدفوعة جزئياً' :
+                      payment.invoiceStatus === 'overdue' ? 'متأخرة' : 'مسودة'}
                 </span>
               </div>
-              
+
               {payment.invoiceDate && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">تاريخ الفاتورة:</span>
+                  <span className="text-muted-foreground">تاريخ الفاتورة:</span>
                   <span className="font-medium">{paymentService.formatDate(payment.invoiceDate)}</span>
                 </div>
               )}
-              
+
               {payment.invoiceDueDate && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">تاريخ الاستحقاق:</span>
+                  <span className="text-muted-foreground">تاريخ الاستحقاق:</span>
                   <span className="font-medium">{paymentService.formatDate(payment.invoiceDueDate)}</span>
                 </div>
               )}
@@ -248,23 +247,23 @@ export default function PaymentDetailsPage() {
       {(payment.customerName || payment.customerFirstName) && (
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل العميل</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">تفاصيل العميل</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <span className="text-gray-600 block">الاسم:</span>
+                <span className="text-muted-foreground block">الاسم:</span>
                 <span className="font-medium">
                   {payment.customerName || `${payment.customerFirstName || ''} ${payment.customerLastName || ''}`.trim() || 'غير محدد'}
                 </span>
               </div>
               {payment.customerPhone && (
                 <div>
-                  <span className="text-gray-600 block">الهاتف:</span>
+                  <span className="text-muted-foreground block">الهاتف:</span>
                   <span className="font-medium">{payment.customerPhone}</span>
                 </div>
               )}
               {payment.customerEmail && (
                 <div>
-                  <span className="text-gray-600 block">البريد الإلكتروني:</span>
+                  <span className="text-muted-foreground block">البريد الإلكتروني:</span>
                   <span className="font-medium">{payment.customerEmail}</span>
                 </div>
               )}
@@ -277,9 +276,9 @@ export default function PaymentDetailsPage() {
       {payment.createdByName && (
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">معلومات الإنشاء</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">معلومات الإنشاء</h2>
             <div className="flex justify-between">
-              <span className="text-gray-600">أنشئ بواسطة:</span>
+              <span className="text-muted-foreground">أنشئ بواسطة:</span>
               <span className="font-medium">
                 {payment.createdByName}
               </span>

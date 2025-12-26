@@ -4,8 +4,8 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import paymentService from '../../services/paymentService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import { 
-  AlertTriangle, Clock, Phone, Mail, Calendar, 
+import {
+  AlertTriangle, Clock, Phone, Mail, Calendar,
   DollarSign, User, FileText, Send, CheckCircle
 } from 'lucide-react';
 import SendButton from '../../components/messaging/SendButton';
@@ -53,8 +53,8 @@ const OverduePaymentsPage = () => {
   };
 
   const handleSelectPayment = (paymentId) => {
-    setSelectedPayments(prev => 
-      prev.includes(paymentId) 
+    setSelectedPayments(prev =>
+      prev.includes(paymentId)
         ? prev.filter(id => id !== paymentId)
         : [...prev, paymentId]
     );
@@ -79,7 +79,7 @@ const OverduePaymentsPage = () => {
         addNotification('يرجى اختيار مدفوعات لإرسال التذكير', 'warning');
         return;
       }
-      
+
       // إرسال تذكير مجمع
       addNotification(`تم إرسال التذكير لـ ${selectedPayments.length} مدفوعة`, 'success');
       setSelectedPayments([]);
@@ -102,11 +102,11 @@ const OverduePaymentsPage = () => {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">المدفوعات المتأخرة</h1>
+          <h1 className="text-2xl font-bold text-foreground">المدفوعات المتأخرة</h1>
         </div>
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-500">جاري تحميل المدفوعات المتأخرة...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">جاري تحميل المدفوعات المتأخرة...</p>
         </div>
       </div>
     );
@@ -117,8 +117,8 @@ const OverduePaymentsPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">المدفوعات المتأخرة</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">المدفوعات المتأخرة</h1>
+          <p className="text-muted-foreground mt-1">
             إدارة ومتابعة المدفوعات المتأخرة ({overduePayments.length} مدفوعة)
           </p>
         </div>
@@ -139,13 +139,13 @@ const OverduePaymentsPage = () => {
         <SimpleCardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 مدة التأخير
               </label>
               <select
                 value={filters.daysOverdue}
                 onChange={(e) => setFilters(prev => ({ ...prev, daysOverdue: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">جميع المدفوعات</option>
                 <option value="7">أقل من 7 أيام</option>
@@ -155,13 +155,13 @@ const OverduePaymentsPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 نطاق المبلغ
               </label>
               <select
                 value={filters.amountRange}
                 onChange={(e) => setFilters(prev => ({ ...prev, amountRange: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">جميع المبالغ</option>
                 <option value="0-500">0 - 500 ج.م</option>
@@ -171,7 +171,7 @@ const OverduePaymentsPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 العميل
               </label>
               <input
@@ -179,7 +179,7 @@ const OverduePaymentsPage = () => {
                 placeholder="البحث بالاسم أو الهاتف"
                 value={filters.customerId}
                 onChange={(e) => setFilters(prev => ({ ...prev, customerId: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -191,8 +191,8 @@ const OverduePaymentsPage = () => {
         <SimpleCard>
           <SimpleCardContent className="p-8 text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد مدفوعات متأخرة</h3>
-            <p className="text-gray-500">جميع المدفوعات محدثة ولا توجد مدفوعات متأخرة</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد مدفوعات متأخرة</h3>
+            <p className="text-muted-foreground">جميع المدفوعات محدثة ولا توجد مدفوعات متأخرة</p>
           </SimpleCardContent>
         </SimpleCard>
       ) : (
@@ -200,7 +200,7 @@ const OverduePaymentsPage = () => {
           {overduePayments.map((payment) => {
             const overdueDays = getOverdueDays(payment.dueDate);
             const status = getOverdueStatus(overdueDays);
-            
+
             return (
               <SimpleCard key={payment.id} className="border-l-4 border-l-red-500">
                 <SimpleCardContent className="p-6">
@@ -210,43 +210,43 @@ const OverduePaymentsPage = () => {
                         type="checkbox"
                         checked={selectedPayments.includes(payment.id)}
                         onChange={() => handleSelectPayment(payment.id)}
-                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mt-1 h-4 w-4 text-primary focus:ring-primary border-border rounded"
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 space-x-reverse mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-foreground">
                             فاتورة #{payment.invoiceId}
                           </h3>
                           <SimpleBadge color={status.color}>
                             {status.label}
                           </SimpleBadge>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-muted-foreground">
                             {overdueDays} يوم متأخر
                           </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                           <div className="flex items-center space-x-2 space-x-reverse">
-                            <User className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               {payment.customerName || 'عميل غير محدد'}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 space-x-reverse">
-                            <DollarSign className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
+                            <DollarSign className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               {payment.remainingAmount?.toLocaleString('ar-EG')} ج.م
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 space-x-reverse">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               استحقاق: {new Date(payment.dueDate).toLocaleDateString('en-GB')}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-2 space-x-reverse text-sm text-gray-500">
+                        <div className="flex items-center space-x-2 space-x-reverse text-sm text-muted-foreground">
                           <Phone className="w-4 h-4" />
                           <span>{payment.customerPhone || 'غير محدد'}</span>
                           {payment.customerEmail && (
@@ -270,7 +270,7 @@ const OverduePaymentsPage = () => {
                           showChannelSelector={false}
                           variant="default"
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-primary hover:bg-primary/90"
                         />
                       )}
                       <SimpleButton
@@ -292,17 +292,17 @@ const OverduePaymentsPage = () => {
 
       {/* Bulk Actions */}
       {selectedPayments.length > 0 && (
-        <SimpleCard className="bg-blue-50 border-blue-200">
+        <SimpleCard className="bg-primary/10 border-primary/20">
           <SimpleCardContent className="p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-700">
+              <span className="text-sm text-primary">
                 تم اختيار {selectedPayments.length} مدفوعة
               </span>
               <div className="flex space-x-2 space-x-reverse">
                 <SimpleButton
                   size="sm"
                   onClick={handleBulkReminder}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <Send className="w-4 h-4 ml-1" />
                   إرسال تذكير مجمع

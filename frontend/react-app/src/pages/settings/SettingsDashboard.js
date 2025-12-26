@@ -13,7 +13,26 @@ import { UnifiedBackup } from '../../components/settings/UnifiedBackup';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import { Save } from 'lucide-react';
+import {
+  Save,
+  Settings,
+  Coins,
+  Printer,
+  FileText,
+  Receipt,
+  MessageSquare,
+  Globe,
+  Monitor,
+  List,
+  History,
+  Database,
+  DownloadCloud,
+  HelpCircle,
+  Plus,
+  Trash2,
+  Edit2,
+  X
+} from 'lucide-react';
 
 // Import new components
 import ReceiptPrintSettingsPage from './ReceiptPrintSettingsPage';
@@ -23,15 +42,15 @@ import SystemVariablesPage from './SystemVariablesPage';
 
 // Settings categories
 const CATEGORIES = [
-  { key: 'general', label: 'عام', icon: '⚙️' },
-  { key: 'currency', label: 'العملة', icon: '💰' },
-  { key: 'printing', label: 'الطباعة', icon: '🖨️' },
-  { key: 'receiptPrint', label: 'إيصال الاستلام', icon: '📄' },
-  { key: 'invoicePrint', label: 'إعدادات طباعة الفواتير', icon: '🧾' },
-  { key: 'messaging', label: 'إعدادات المراسلة', icon: '💬' },
-  { key: 'locale', label: 'المحلية واللغة', icon: '🌐' },
-  { key: 'systemSettings', label: 'إعدادات النظام العامة', icon: '🖥️' },
-  { key: 'variables', label: 'متغيرات النظام', icon: '📋' },
+  { key: 'general', label: 'عام', icon: <Settings className="w-4 h-4" /> },
+  { key: 'currency', label: 'العملة', icon: <Coins className="w-4 h-4" /> },
+  { key: 'printing', label: 'الطباعة', icon: <Printer className="w-4 h-4" /> },
+  { key: 'receiptPrint', label: 'إيصال الاستلام', icon: <FileText className="w-4 h-4" /> },
+  { key: 'invoicePrint', label: 'إعدادات طباعة الفواتير', icon: <Receipt className="w-4 h-4" /> },
+  { key: 'messaging', label: 'إعدادات المراسلة', icon: <MessageSquare className="w-4 h-4" /> },
+  { key: 'locale', label: 'المحلية واللغة', icon: <Globe className="w-4 h-4" /> },
+  { key: 'systemSettings', label: 'إعدادات النظام العامة', icon: <Monitor className="w-4 h-4" /> },
+  { key: 'variables', label: 'متغيرات النظام', icon: <List className="w-4 h-4" /> },
 ];
 
 /**
@@ -505,48 +524,48 @@ export default function SettingsDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">اسم الشركة</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">اسم الشركة</label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">العنوان</label>
                   <input
                     type="text"
                     value={form.address}
                     onChange={(e) => handleFormChange('address', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الهاتف</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">الهاتف</label>
                   <input
                     type="text"
                     value={form.phone}
                     onChange={(e) => handleFormChange('phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الموقع الإلكتروني</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">الموقع الإلكتروني</label>
                   <input
                     type="text"
                     value={form.website}
                     onChange={(e) => handleFormChange('website', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">رابط الشعار</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">رابط الشعار</label>
                   <input
                     type="text"
                     value={form.logoUrl}
                     onChange={(e) => handleFormChange('logoUrl', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-primary"
                   />
                 </div>
               </SimpleCardContent>
@@ -563,43 +582,43 @@ export default function SettingsDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">رمز العملة</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">رمز العملة</label>
                   <input
                     type="text"
                     value={form.currencyCode}
                     onChange={(e) => handleFormChange('currencyCode', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">رمز العملة</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">رمز العملة</label>
                   <input
                     type="text"
                     value={form.currencySymbol}
                     onChange={(e) => handleFormChange('currencySymbol', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">اسم العملة</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">اسم العملة</label>
                   <input
                     type="text"
                     value={form.currencyName}
                     onChange={(e) => handleFormChange('currencyName', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">اللغة المحلية</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">اللغة المحلية</label>
                   <input
                     type="text"
                     value={form.currencyLocale}
                     onChange={(e) => handleFormChange('currencyLocale', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">عدد الأرقام العشرية</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">عدد الأرقام العشرية</label>
                   <input
                     type="number"
                     value={form.minimumFractionDigits}
@@ -607,7 +626,7 @@ export default function SettingsDashboard() {
                       const val = e.target.value === '' ? 0 : parseInt(e.target.value);
                       handleFormChange('minimumFractionDigits', isNaN(val) ? 0 : val);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                     min="0"
                     max="10"
                   />
@@ -626,33 +645,33 @@ export default function SettingsDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">نسخة الطباعة الافتراضية</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">نسخة الطباعة الافتراضية</label>
                   <select
                     value={form.defaultCopy}
                     onChange={(e) => handleFormChange('defaultCopy', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   >
                     <option value="customer">العميل</option>
                     <option value="archive">الأرشيف</option>
                   </select>
                 </div>
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.showWatermark}
                       onChange={(e) => handleFormChange('showWatermark', e.target.checked)}
-                      className="mr-2"
+                      className="rounded text-primary focus:ring-primary"
                     />
-                    إظهار العلامة المائية
+                    <span className="text-sm font-medium text-foreground">إظهار العلامة المائية</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">حجم الورق</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">حجم الورق</label>
                   <select
                     value={form.paperSize}
                     onChange={(e) => handleFormChange('paperSize', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                   >
                     <option value="A4">A4</option>
                     <option value="A5">A5</option>
@@ -660,14 +679,14 @@ export default function SettingsDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.showSerialBarcode}
                       onChange={(e) => handleFormChange('showSerialBarcode', e.target.checked)}
-                      className="mr-2"
+                      className="rounded text-primary focus:ring-primary"
                     />
-                    إظهار الباركود التسلسلي
+                    <span className="text-sm font-medium text-foreground">إظهار الباركود التسلسلي</span>
                   </label>
                 </div>
               </SimpleCardContent>
@@ -684,23 +703,23 @@ export default function SettingsDashboard() {
               </SimpleCardHeader>
               <SimpleCardContent className="space-y-4">
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.rtl}
                       onChange={(e) => handleFormChange('rtl', e.target.checked)}
-                      className="mr-2"
+                      className="rounded text-primary focus:ring-primary"
                     />
-                    اتجاه النص من اليمين لليسار (RTL)
+                    <span className="text-sm font-medium text-foreground">اتجاه النص من اليمين لليسار (RTL)</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">تنسيق التاريخ</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">تنسيق التاريخ</label>
                   <input
                     type="text"
                     value={form.dateFormat}
                     onChange={(e) => handleFormChange('dateFormat', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                     placeholder="yyyy/MM/dd"
                   />
                 </div>
@@ -720,40 +739,41 @@ export default function SettingsDashboard() {
                 {sysLoading ? (
                   <LoadingSpinner />
                 ) : sysError ? (
-                  <div className="text-red-600">{sysError}</div>
+                  <div className="text-error">{sysError}</div>
                 ) : (
                   <div className="space-y-4">
-                    <form onSubmit={handleSysSubmit} className="space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                    <form onSubmit={handleSysSubmit} className="space-y-4 mb-4 p-4 bg-muted/30 rounded-lg border border-border">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">المفتاح (Key)</label>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">المفتاح (Key)</label>
                         <input
                           type="text"
                           value={sysForm.key}
                           onChange={(e) => setSysForm(prev => ({ ...prev, key: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">القيمة (Value)</label>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">القيمة (Value)</label>
                         <textarea
                           value={sysForm.value}
                           onChange={(e) => setSysForm(prev => ({ ...prev, value: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                           rows={3}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">الوصف</label>
                         <input
                           type="text"
                           value={sysForm.description}
                           onChange={(e) => setSysForm(prev => ({ ...prev, description: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                         />
                       </div>
                       <div className="flex gap-2">
                         <SimpleButton type="submit" disabled={saving}>
+                          {editingKey ? <Save className="w-4 h-4 ml-2" /> : <Plus className="w-4 h-4 ml-2" />}
                           {editingKey ? 'تحديث' : 'إنشاء'}
                         </SimpleButton>
                         {editingKey && (
@@ -765,6 +785,7 @@ export default function SettingsDashboard() {
                               setSysForm({ key: '', value: '', description: '' });
                             }}
                           >
+                            <X className="w-4 h-4 ml-2" />
                             إلغاء
                           </SimpleButton>
                         )}
@@ -773,27 +794,34 @@ export default function SettingsDashboard() {
 
                     <div className="space-y-2">
                       {sysItems.map((item) => (
-                        <div key={item.key} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div key={item.key} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-border rounded-lg bg-background hover:bg-muted/10 transition-colors gap-4">
                           <div className="flex-1">
-                            <div className="font-medium">{item.key}</div>
-                            <div className="text-sm text-gray-600">{item.value}</div>
+                            <div className="font-bold text-foreground flex items-center gap-2">
+                              <Monitor className="w-4 h-4 text-primary" />
+                              {item.key}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1 break-all">{item.value}</div>
                             {item.description && (
-                              <div className="text-xs text-gray-500">{item.description}</div>
+                              <div className="text-xs text-muted-foreground/60 mt-1 italic">{item.description}</div>
                             )}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 w-full sm:w-auto">
                             <SimpleButton
                               size="sm"
                               variant="outline"
                               onClick={() => handleSysEdit(item.key)}
+                              className="flex-1 sm:flex-none"
                             >
+                              <Edit2 className="w-3.5 h-3.5 ml-1.5" />
                               تعديل
                             </SimpleButton>
                             <SimpleButton
                               size="sm"
                               variant="outline"
                               onClick={() => handleSysDelete(item.key)}
+                              className="flex-1 sm:flex-none text-error hover:text-error hover:bg-error/10 border-error/20"
                             >
+                              <Trash2 className="w-3.5 h-3.5 ml-1.5" />
                               حذف
                             </SimpleButton>
                           </div>
@@ -826,52 +854,51 @@ export default function SettingsDashboard() {
 
   // Main tabs
   const mainTabs = [
-    { key: 'settings', label: 'الإعدادات', icon: '⚙️' },
-    { key: 'history', label: 'التاريخ', icon: '📜' },
-    { key: 'backup', label: 'النسخ الاحتياطي', icon: '💾' },
-    { key: 'import-export', label: 'استيراد/تصدير', icon: '📥' },
-    { key: 'help', label: 'المساعدة', icon: '❓' },
+    { key: 'settings', label: 'الإعدادات', icon: <Settings className="w-4 h-4" /> },
+    { key: 'history', label: 'التاريخ', icon: <History className="w-4 h-4" /> },
+    { key: 'backup', label: 'النسخ الاحتياطي', icon: <Database className="w-4 h-4" /> },
+    { key: 'import-export', label: 'استيراد/تصدير', icon: <DownloadCloud className="w-4 h-4" /> },
+    { key: 'help', label: 'المساعدة', icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إعدادات النظام</h1>
-          <p className="text-sm text-gray-500 mt-1">إدارة جميع إعدادات النظام</p>
+          <h1 className="text-2xl font-bold text-foreground">إعدادات النظام</h1>
+          <p className="text-sm text-muted-foreground mt-1">إدارة جميع إعدادات النظام</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           {activeTab === 'settings' && ['general', 'currency', 'printing', 'locale'].includes(activeCategory) && (
-            <>
-              <SimpleButton
-                onClick={handleSave}
-                disabled={saving || loading}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                حفظ
-              </SimpleButton>
-            </>
+            <SimpleButton
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="w-full sm:w-auto"
+            >
+              <Save className="h-4 w-4 ml-2" />
+              حفظ التغييرات
+            </SimpleButton>
           )}
         </div>
       </div>
 
       {/* Main Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-1" aria-label="Tabs">
+      <div className="border-b border-border overflow-x-auto">
+        <nav className="flex space-x-4 min-w-max" aria-label="Tabs">
           {mainTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`
-                whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors
                 ${activeTab === tab.key
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }
               `}
             >
-              <span className="mr-2">{tab.icon}</span>
+              {tab.icon}
               {tab.label}
             </button>
           ))}

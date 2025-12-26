@@ -15,7 +15,7 @@ export default function PaymentsPage() {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
   const user = useAuthStore((state) => state.user);
-  
+
   const [loading, setLoading] = useState(false);
   const [payments, setPayments] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
@@ -28,7 +28,7 @@ export default function PaymentsPage() {
   const [stats, setStats] = useState({});
   const [overduePayments, setOverduePayments] = useState([]);
   const [selectedPayments, setSelectedPayments] = useState([]);
-  
+
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -50,7 +50,7 @@ export default function PaymentsPage() {
         limit: 10,
         ...filters
       });
-      
+
       if (response.payments) {
         setPayments(response.payments);
         setPagination(prev => ({
@@ -87,7 +87,7 @@ export default function PaymentsPage() {
   const handleAddPayment = async (paymentData) => {
     try {
       setLoading(true);
-      
+
       const response = await paymentService.createPayment({
         ...paymentData
         // createdBy will be set automatically from req.user.id in backend
@@ -113,7 +113,7 @@ export default function PaymentsPage() {
   const handleEditPayment = async (paymentData) => {
     try {
       setLoading(true);
-      
+
       const response = await paymentService.updatePayment(selectedPayment.id, paymentData);
 
       if (response.success) {
@@ -140,7 +140,7 @@ export default function PaymentsPage() {
 
     try {
       setLoading(true);
-      
+
       const response = await paymentService.deletePayment(payment.id);
 
       if (response.success) {
@@ -160,8 +160,8 @@ export default function PaymentsPage() {
 
   // Bulk Operations
   const handleSelectPayment = (paymentId) => {
-    setSelectedPayments(prev => 
-      prev.includes(paymentId) 
+    setSelectedPayments(prev =>
+      prev.includes(paymentId)
         ? prev.filter(id => id !== paymentId)
         : [...prev, paymentId]
     );
@@ -188,7 +188,7 @@ export default function PaymentsPage() {
   const handleBulkExport = async (paymentIds, format) => {
     try {
       const selectedPaymentData = payments.filter(p => paymentIds.includes(p.id));
-      
+
       if (format === 'pdf') {
         await exportService.exportPaymentsToPDF(selectedPaymentData, 'تقرير المدفوعات المختارة');
       } else if (format === 'excel') {
@@ -212,7 +212,7 @@ export default function PaymentsPage() {
 
   const handleBulkUpdateStatus = async (paymentIds, status) => {
     try {
-      await Promise.all(paymentIds.map(id => 
+      await Promise.all(paymentIds.map(id =>
         paymentService.updatePayment(id, { status })
       ));
       loadPayments();
@@ -288,7 +288,7 @@ export default function PaymentsPage() {
         <div className="flex space-x-2 rtl:space-x-reverse">
           <button
             onClick={() => handleViewPayment(row.original)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-primary hover:text-primary/80 text-sm"
           >
             عرض
           </button>
@@ -310,27 +310,28 @@ export default function PaymentsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">إدارة المدفوعات</h1>
-        <div className="flex space-x-3 rtl:space-x-reverse">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold text-foreground">إدارة المدفوعات</h1>
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <SimpleButton
             onClick={() => navigate('/payments/reports')}
             variant="outline"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 sm:flex-none"
           >
             التقارير
           </SimpleButton>
           <SimpleButton
             onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
             variant="outline"
+            className="flex-1 sm:flex-none"
           >
             {viewMode === 'grid' ? 'عرض جدولي' : 'عرض بطاقات'}
           </SimpleButton>
           <SimpleButton
             onClick={() => handleAddPaymentClick()}
-            className="bg-green-600 hover:bg-green-700"
+            className="flex-1 sm:flex-none bg-success hover:bg-success/90 text-white"
           >
             إضافة دفعة جديدة
           </SimpleButton>
@@ -342,15 +343,15 @@ export default function PaymentsPage() {
 
       {/* Overdue Payments Alert */}
       {overduePayments.length > 0 && (
-        <SimpleCard className="border-red-200 bg-red-50">
+        <SimpleCard className="border-error/20 bg-error/5">
           <SimpleCardContent className="p-4">
             <div className="flex items-center space-x-3 rtl:space-x-reverse">
               <span className="text-2xl">⚠️</span>
               <div>
-                <h3 className="font-semibold text-red-900">
+                <h3 className="font-semibold text-error">
                   مدفوعات متأخرة ({overduePayments.length})
                 </h3>
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-muted-foreground">
                   يوجد {overduePayments.length} فاتورة متأخرة عن موعد الدفع
                 </p>
               </div>
@@ -362,42 +363,42 @@ export default function PaymentsPage() {
       {/* Filters */}
       <SimpleCard>
         <SimpleCardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 من تاريخ
               </label>
               <input
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 إلى تاريخ
               </label>
               <input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 طريقة الدفع
               </label>
               <select
                 value={filters.paymentMethod}
                 onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
               >
                 <option value="">جميع الطرق</option>
                 {paymentMethods.map(method => (
                   <option key={method.value} value={method.value}>
-                    {method.icon} {method.label}
+                    {method.label}
                   </option>
                 ))}
               </select>
@@ -451,10 +452,10 @@ export default function PaymentsPage() {
 
       {/* Add Payment Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <SimpleCard className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
+              <h2 className="text-xl font-bold mb-4 text-foreground">
                 {selectedInvoice ? 'إضافة دفعة للفاتورة' : 'إضافة دفعة جديدة'}
               </h2>
               <PaymentForm
@@ -467,16 +468,16 @@ export default function PaymentsPage() {
                 loading={loading}
               />
             </div>
-          </div>
+          </SimpleCard>
         </div>
       )}
 
       {/* Edit Payment Modal */}
       {showEditModal && selectedPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <SimpleCard className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">تعديل الدفعة</h2>
+              <h2 className="text-xl font-bold mb-4 text-foreground">تعديل الدفعة</h2>
               <PaymentForm
                 payment={selectedPayment}
                 onSubmit={handleEditPayment}
@@ -487,7 +488,7 @@ export default function PaymentsPage() {
                 loading={loading}
               />
             </div>
-          </div>
+          </SimpleCard>
         </div>
       )}
 

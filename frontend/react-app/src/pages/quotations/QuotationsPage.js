@@ -11,7 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import QuotationForm from './QuotationForm';
-import { 
+import {
   Plus, Search, Filter, Download, RefreshCw,
   DollarSign, Calendar, Tag, FileText,
   Eye, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, X,
@@ -21,7 +21,7 @@ import {
 const QuotationsPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   // مساعد تنبيهات بسيط لتقليل الإزعاج
   const notify = useCallback((type, message) => {
     if (notifications?.addNotification) {
@@ -39,20 +39,20 @@ const QuotationsPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [error, setError] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  
+
   // Sorting state
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
-  
+
   // Modal state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState(null);
-  
+
   // Repairs for filter
   const [repairs, setRepairs] = useState([]);
 
@@ -95,7 +95,7 @@ const QuotationsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {
         page: currentPage,
         limit: itemsPerPage,
@@ -125,7 +125,7 @@ const QuotationsPage = () => {
       }
 
       const response = await apiService.getQuotations(params);
-      
+
       let quotationsData = [];
       let totalCount = 0;
 
@@ -156,7 +156,7 @@ const QuotationsPage = () => {
   useEffect(() => {
     // Skip initial mount (already fetched in loadInitialData)
     if (isInitialMount.current) return;
-    
+
     const timer = setTimeout(() => {
       fetchQuotations();
     }, searchTerm ? 500 : 0);
@@ -213,11 +213,11 @@ const QuotationsPage = () => {
   // Render sort icon
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
-      <ArrowDown className="w-4 h-4 text-blue-600" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-primary" /> :
+      <ArrowDown className="w-4 h-4 text-primary" />;
   };
 
   // Clear filters
@@ -249,7 +249,7 @@ const QuotationsPage = () => {
       header: (
         <button
           onClick={() => handleSort('id')}
-          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-2 hover:text-primary transition-colors"
         >
           طلب الإصلاح
           {renderSortIcon('id')}
@@ -263,11 +263,11 @@ const QuotationsPage = () => {
         const quotation = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-blue-500" />
+            <Wrench className="w-4 h-4 text-primary" />
             <div>
               {quotation.trackingToken ? (
                 <button
-                  className="text-sm text-blue-600 hover:underline cursor-pointer"
+                  className="text-sm text-primary hover:underline cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/repairs/${quotation.repairRequestId}`);
@@ -276,10 +276,10 @@ const QuotationsPage = () => {
                   {quotation.trackingToken}
                 </button>
               ) : (
-                <span className="text-sm text-gray-700">طلب #{quotation.repairRequestId}</span>
+                <span className="text-sm text-foreground">طلب #{quotation.repairRequestId}</span>
               )}
               {quotation.customerName && (
-                <p className="text-xs text-gray-500">{quotation.customerName}</p>
+                <p className="text-xs text-muted-foreground">{quotation.customerName}</p>
               )}
             </div>
           </div>
@@ -292,7 +292,7 @@ const QuotationsPage = () => {
       header: (
         <button
           onClick={() => handleSort('status')}
-          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-2 hover:text-primary transition-colors"
         >
           الحالة
           {renderSortIcon('status')}
@@ -320,7 +320,7 @@ const QuotationsPage = () => {
       header: (
         <button
           onClick={() => handleSort('totalAmount')}
-          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-2 hover:text-primary transition-colors"
         >
           المبلغ الإجمالي
           {renderSortIcon('totalAmount')}
@@ -349,7 +349,7 @@ const QuotationsPage = () => {
       header: (
         <button
           onClick={() => handleSort('taxAmount')}
-          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-2 hover:text-primary transition-colors"
         >
           الضريبة
           {renderSortIcon('taxAmount')}
@@ -363,7 +363,7 @@ const QuotationsPage = () => {
         const quotation = row.original;
         const tax = parseFloat(quotation.taxAmount || 0);
         return (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-foreground">
             {tax.toFixed(2)} {quotation.currency || 'EGP'}
           </span>
         );
@@ -382,10 +382,10 @@ const QuotationsPage = () => {
         return (
           <div className="text-sm">
             {quotation.deviceType && (
-              <p className="text-gray-700">{quotation.deviceType}</p>
+              <p className="text-foreground">{quotation.deviceType}</p>
             )}
             {quotation.deviceBrand && quotation.deviceModel && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {quotation.deviceBrand} {quotation.deviceModel}
               </p>
             )}
@@ -399,7 +399,7 @@ const QuotationsPage = () => {
       header: (
         <button
           onClick={() => handleSort('createdAt')}
-          className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-2 hover:text-primary transition-colors"
         >
           التاريخ
           {renderSortIcon('createdAt')}
@@ -413,8 +413,8 @@ const QuotationsPage = () => {
         const quotation = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-900">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">
               {quotation.createdAt ? new Date(quotation.createdAt).toLocaleDateString('ar-EG') : '-'}
             </span>
           </div>
@@ -432,11 +432,11 @@ const QuotationsPage = () => {
       cell: ({ row }) => {
         const quotation = row.original;
         return quotation.sentAt ? (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-foreground">
             {new Date(quotation.sentAt).toLocaleDateString('ar-EG')}
           </span>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
     },
@@ -451,11 +451,11 @@ const QuotationsPage = () => {
       cell: ({ row }) => {
         const quotation = row.original;
         return quotation.responseAt ? (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-foreground">
             {new Date(quotation.responseAt).toLocaleDateString('ar-EG')}
           </span>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
     },
@@ -471,7 +471,7 @@ const QuotationsPage = () => {
         const quotation = row.original;
         return (
           <div className="max-w-xs">
-            <p className="text-sm text-gray-700 truncate">
+            <p className="text-sm text-foreground truncate">
               {quotation.notes || 'لا توجد ملاحظات'}
             </p>
           </div>
@@ -526,7 +526,7 @@ const QuotationsPage = () => {
     const tax = parseFloat(quotation.taxAmount || 0);
     const statusInfo = getStatusBadge(quotation.status);
     const StatusIcon = statusInfo.icon;
-    
+
     return (
       <SimpleCard className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200" onClick={() => handleEditQuotation(quotation)}>
         <SimpleCardContent className="p-5">
@@ -539,64 +539,64 @@ const QuotationsPage = () => {
                   <span className="text-xs font-medium">{statusInfo.label}</span>
                 </SimpleBadge>
               </div>
-              
+
               {/* Amount */}
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {amount.toFixed(2)} <span className="text-base font-semibold text-gray-600">{quotation.currency || 'EGP'}</span>
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                {amount.toFixed(2)} <span className="text-base font-semibold text-muted-foreground">{quotation.currency || 'EGP'}</span>
               </h3>
-              
+
               {/* Customer & Repair Info */}
               <div className="space-y-2 mb-3">
                 {quotation.customerName && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span className="font-medium">العميل:</span>
-                    <span className="text-gray-900">{quotation.customerName}</span>
+                    <span className="text-foreground">{quotation.customerName}</span>
                   </div>
                 )}
                 {quotation.trackingToken && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <Wrench className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <Wrench className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span className="font-medium">طلب:</span>
-                    <span className="text-blue-600 hover:text-blue-700 font-mono text-xs">
-                      {quotation.trackingToken.length > 20 
-                        ? `${quotation.trackingToken.substring(0, 20)}...` 
+                    <span className="text-primary hover:text-primary font-mono text-xs">
+                      {quotation.trackingToken.length > 20
+                        ? `${quotation.trackingToken.substring(0, 20)}...`
                         : quotation.trackingToken}
                     </span>
                   </div>
                 )}
               </div>
-              
+
               {/* Notes */}
               {quotation.notes && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2 bg-gray-50 p-2 rounded">
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2 bg-muted p-2 rounded">
                   {quotation.notes}
                 </p>
               )}
             </div>
           </div>
-          
+
           {/* Footer with Meta Info */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <div className="flex items-center gap-4 text-xs text-gray-600">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-gray-400" />
+                <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span>{quotation.createdAt ? new Date(quotation.createdAt).toLocaleDateString('ar-EG') : '-'}</span>
               </div>
               {tax > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
                   <span>ضريبة: <span className="font-medium">{tax.toFixed(2)}</span></span>
                 </div>
               )}
               {quotation.deviceType && (
                 <div className="flex items-center gap-1.5">
-                  <Monitor className="w-4 h-4 text-gray-400" />
+                  <Monitor className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">{quotation.deviceType}</span>
                 </div>
               )}
             </div>
-            
+
             {/* Actions */}
             <div className="flex items-center gap-1">
               <SimpleButton
@@ -606,7 +606,7 @@ const QuotationsPage = () => {
                   e.stopPropagation();
                   handleEditQuotation(quotation);
                 }}
-                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
                 title="تعديل"
               >
                 <Edit className="w-4 h-4" />
@@ -637,8 +637,8 @@ const QuotationsPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">إدارة العروض السعرية</h1>
-          <p className="text-gray-600 mt-1">إنشاء وإدارة عروض الأسعار للعملاء</p>
+          <h1 className="text-3xl font-bold text-foreground">إدارة العروض السعرية</h1>
+          <p className="text-muted-foreground mt-1">إنشاء وإدارة عروض الأسعار للعملاء</p>
         </div>
         <SimpleButton onClick={handleCreateQuotation}>
           <Plus className="w-5 h-5 ml-2" />
@@ -653,7 +653,7 @@ const QuotationsPage = () => {
             <div className="flex flex-wrap items-center gap-3 flex-1">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="البحث في العروض السعرية..."
                   value={searchTerm}
@@ -733,7 +733,7 @@ const QuotationsPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleClearFilters}
-                  className="text-gray-600"
+                  className="text-muted-foreground"
                 >
                   <X className="w-4 h-4 ml-1" />
                   مسح
@@ -770,9 +770,9 @@ const QuotationsPage = () => {
       ) : quotations.length === 0 ? (
         <SimpleCard>
           <SimpleCardContent className="p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد عروض سعرية</h3>
-            <p className="text-gray-600 mb-4">ابدأ بإنشاء عرض سعري جديد</p>
+            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد عروض سعرية</h3>
+            <p className="text-muted-foreground mb-4">ابدأ بإنشاء عرض سعري جديد</p>
             <SimpleButton onClick={handleCreateQuotation}>
               <Plus className="w-4 h-4 ml-2" />
               إضافة عرض سعري جديد

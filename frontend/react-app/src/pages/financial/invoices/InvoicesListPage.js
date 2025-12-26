@@ -3,28 +3,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Chip,
-  Tooltip
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Description as DescriptionIcon
-} from '@mui/icons-material';
+import { Plus, RefreshCw, Eye, FileText } from 'lucide-react';
+import { SimpleCard, SimpleCardContent } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
+import SimpleBadge from '../../../components/ui/SimpleBadge';
+import DataView from '../../../components/ui/DataView';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { useInvoices } from '../../../hooks/financial/useInvoices';
 import FinancialSummaryCard from '../../../components/financial/shared/FinancialSummaryCard';
 
@@ -46,14 +30,6 @@ const InvoicesListPage = () => {
 
   const handleView = (id) => {
     navigate(`/financial/invoices/${id}`);
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setPagination({ ...pagination, page: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setPagination({ ...pagination, limit: parseInt(event.target.value, 10), page: 1 });
   };
 
   const formatCurrency = (amount) => {
@@ -80,162 +56,161 @@ const InvoicesListPage = () => {
     return statuses[status] || status;
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'default',
-      sent: 'info',
+  const getStatusVariant = (status) => {
+    const variants = {
+      draft: 'secondary',
+      sent: 'default',
       paid: 'success',
       partially_paid: 'warning',
-      overdue: 'error',
-      cancelled: 'default'
+      overdue: 'destructive',
+      cancelled: 'secondary'
     };
-    return colors[status] || 'default';
+    return variants[status] || 'default';
   };
 
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      label: 'رقم الفاتورة',
+      render: (invoice) => (
+        <div className="font-semibold text-foreground">
+          {invoice.invoiceNumber || `#${invoice.id}`}
+        </div>
+      )
+    },
+    {
+      key: 'customerName',
+      label: 'العميل',
+      render: (invoice) => invoice.customerName || '-'
+    },
+    {
+      key: 'date',
+      label: 'التاريخ',
+      render: (invoice) => formatDate(invoice.issueDate || invoice.createdAt)
+    },
+    {
+      key: 'totalAmount',
+      label: 'المبلغ الإجمالي',
+      render: (invoice) => (
+        <div className="font-semibold text-foreground">
+          {formatCurrency(invoice.totalAmount)}
+        </div>
+      )
+    },
+    {
+      key: 'amountPaid',
+      label: 'المدفوع',
+      render: (invoice) => (
+        <div className="text-emerald-600 dark:text-emerald-400">
+          {formatCurrency(invoice.amountPaid || 0)}
+        </div>
+      )
+    },
+    {
+      key: 'amountRemaining',
+      label: 'المتبقي',
+      render: (invoice) => (
+        <div className="text-destructive">
+          {formatCurrency(invoice.amountRemaining || 0)}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      label: 'الحالة',
+      render: (invoice) => (
+        <SimpleBadge variant={getStatusVariant(invoice.status)}>
+          {getStatusLabel(invoice.status)}
+        </SimpleBadge>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'إجراءات',
+      render: (invoice) => (
+        <SimpleButton
+          variant="ghost"
+          size="sm"
+          onClick={() => handleView(invoice.id)}
+        >
+          <Eye className="w-4 h-4" />
+        </SimpleButton>
+      )
+    }
+  ];
+
   if (error && !invoices.length) {
-    const errorMessage = typeof error === 'string' 
-      ? error 
+    const errorMessage = typeof error === 'string'
+      ? error
       : error?.message || error?.title || 'حدث خطأ غير متوقع';
     return (
-      <Box p={3}>
-        <Typography color="error">خطأ: {errorMessage}</Typography>
-        <Button onClick={refetch} variant="outlined" sx={{ mt: 2 }}>
-          إعادة المحاولة
-        </Button>
-      </Box>
+      <div className="p-6">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <p className="text-destructive mb-4">خطأ: {errorMessage}</p>
+            <SimpleButton onClick={refetch} variant="outline">
+              إعادة المحاولة
+            </SimpleButton>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          الفواتير
-        </Typography>
-        <Box>
-          <Tooltip title="تحديث">
-            <IconButton onClick={refetch} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-            sx={{ ml: 1 }}
-          >
-            إنشاء فاتورة جديدة
-          </Button>
-        </Box>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-3xl font-bold text-foreground">الفواتير</h1>
+          <div className="flex items-center gap-2">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </SimpleButton>
+            <SimpleButton onClick={handleCreate}>
+              <Plus className="w-4 h-4 ml-1" />
+              إنشاء فاتورة جديدة
+            </SimpleButton>
+          </div>
+        </div>
 
-      {/* Summary Card */}
-      <Box mb={3}>
+        {/* Summary Card */}
         <FinancialSummaryCard
           title="ملخص الفواتير"
           data={stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : null}
           loading={loading}
-          icon={DescriptionIcon}
+          icon={FileText}
         />
-      </Box>
 
-      {/* Invoices Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>رقم الفاتورة</TableCell>
-              <TableCell>العميل</TableCell>
-              <TableCell>التاريخ</TableCell>
-              <TableCell>المبلغ الإجمالي</TableCell>
-              <TableCell>المدفوع</TableCell>
-              <TableCell>المتبقي</TableCell>
-              <TableCell>الحالة</TableCell>
-              <TableCell>إجراءات</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading && invoices.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
-            ) : invoices.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  لا توجد فواتير
-                </TableCell>
-              </TableRow>
-            ) : (
-              invoices.map((invoice) => (
-                <TableRow key={invoice.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {invoice.invoiceNumber || `#${invoice.id}`}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{invoice.customerName || '-'}</TableCell>
-                  <TableCell>{formatDate(invoice.issueDate || invoice.createdAt)}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(invoice.totalAmount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="success.main">
-                      {formatCurrency(invoice.amountPaid || 0)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="error.main">
-                      {formatCurrency(invoice.amountRemaining || 0)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getStatusLabel(invoice.status)}
-                      size="small"
-                      color={getStatusColor(invoice.status)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title="عرض التفاصيل">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleView(invoice.id)}
-                        color="primary"
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-
-        {/* Pagination */}
-        <TablePagination
-          component="div"
-          count={pagination.total}
-          page={pagination.page - 1}
-          onPageChange={handlePageChange}
-          rowsPerPage={pagination.limit}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          labelRowsPerPage="عدد الصفوف:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
-          }
-        />
-      </TableContainer>
-    </Box>
+        {/* Invoices Table */}
+        {loading && invoices.length === 0 ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : (
+          <DataView
+            data={invoices}
+            columns={columns}
+            loading={loading}
+            emptyMessage="لا توجد فواتير"
+            pagination={{
+              currentPage: pagination.page,
+              totalPages: Math.ceil(pagination.total / pagination.limit),
+              pageSize: pagination.limit,
+              totalItems: pagination.total,
+              onPageChange: (page) => setPagination({ ...pagination, page }),
+              onPageSizeChange: (limit) => setPagination({ ...pagination, limit, page: 1 })
+            }}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
 export default InvoicesListPage;
-
-

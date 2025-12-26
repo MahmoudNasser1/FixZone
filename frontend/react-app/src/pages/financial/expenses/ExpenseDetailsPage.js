@@ -3,22 +3,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Grid,
-  Divider,
-  Chip,
-  IconButton,
-  Tooltip
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
+import SimpleBadge from '../../../components/ui/SimpleBadge';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { useExpenses } from '../../../hooks/financial/useExpenses';
 import expensesService from '../../../services/financial/expensesService';
 
@@ -29,6 +19,7 @@ const ExpenseDetailsPage = () => {
 
   const [expense, setExpense] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchExpense = async () => {
@@ -55,13 +46,11 @@ const ExpenseDetailsPage = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('هل أنت متأكد من حذف هذه النفقة؟')) {
-      try {
-        await deleteExpense(id);
-        navigate('/financial/expenses');
-      } catch (error) {
-        console.error('Error deleting expense:', error);
-      }
+    try {
+      await deleteExpense(id);
+      navigate('/financial/expenses');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
     }
   };
 
@@ -79,149 +68,143 @@ const ExpenseDetailsPage = () => {
 
   if (loading) {
     return (
-      <Box p={3}>
-        <Typography>جاري التحميل...</Typography>
-      </Box>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
     );
   }
 
   if (!expense) {
     return (
-      <Box p={3}>
-        <Typography color="error">النفقة غير موجودة</Typography>
-        <Button onClick={() => navigate('/financial/expenses')} sx={{ mt: 2 }}>
-          رجوع
-        </Button>
-      </Box>
+      <div className="min-h-screen bg-background p-6">
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <p className="text-destructive mb-4">النفقة غير موجودة</p>
+            <SimpleButton onClick={() => navigate('/financial/expenses')}>
+              رجوع
+            </SimpleButton>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/financial/expenses')}
-            sx={{ mr: 2 }}
-          >
-            رجوع
-          </Button>
-          <Typography variant="h4" component="h1">
-            نفقة #{expense.id}
-          </Typography>
-        </Box>
-        <Box>
-          <Tooltip title="تعديل">
-            <IconButton onClick={handleEdit} color="primary">
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="حذف">
-            <IconButton onClick={handleDelete} color="error">
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/financial/expenses')}
+            >
+              <ArrowLeft className="w-4 h-4 ml-2" />
+              رجوع
+            </SimpleButton>
+            <h1 className="text-3xl font-bold text-foreground">
+              نفقة #{expense.id}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <SimpleButton
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+            >
+              <Edit className="w-4 h-4 ml-2" />
+              تعديل
+            </SimpleButton>
+            <SimpleButton
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              <Trash2 className="w-4 h-4 ml-2" />
+              حذف
+            </SimpleButton>
+          </div>
+        </div>
 
-      {/* Expense Info */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          معلومات النفقة
-        </Typography>
-        <Divider sx={{ my: 2 }} />
+        {/* Expense Info */}
+        <SimpleCard>
+          <SimpleCardHeader>
+            <h2 className="text-xl font-semibold text-foreground">معلومات النفقة</h2>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">المبلغ</p>
+                <p className="text-3xl font-bold text-primary">
+                  {formatCurrency(expense.amount)}
+                </p>
+              </div>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
-              المبلغ
-            </Typography>
-            <Typography variant="h5" fontWeight="bold" color="primary">
-              {formatCurrency(expense.amount)}
-            </Typography>
-          </Grid>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">التصنيف</p>
+                <SimpleBadge variant="default" className="mt-1">
+                  {expense.categoryName || '-'}
+                </SimpleBadge>
+              </div>
 
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
-              التصنيف
-            </Typography>
-            <Chip
-              label={expense.categoryName || '-'}
-              color="primary"
-              variant="outlined"
-              sx={{ mt: 1 }}
-            />
-          </Grid>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">التاريخ</p>
+                <p className="text-foreground">
+                  {formatDate(expense.expenseDate || expense.date)}
+                </p>
+              </div>
 
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
-              التاريخ
-            </Typography>
-            <Typography variant="body1">
-              {formatDate(expense.expenseDate || expense.date)}
-            </Typography>
-          </Grid>
+              {expense.branchName && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">الفرع</p>
+                  <p className="text-foreground">{expense.branchName}</p>
+                </div>
+              )}
 
-          {expense.branchName && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="textSecondary">
-                الفرع
-              </Typography>
-              <Typography variant="body1">
-                {expense.branchName}
-              </Typography>
-            </Grid>
-          )}
+              {expense.vendorName && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">المورد</p>
+                  <p className="text-foreground">{expense.vendorName}</p>
+                </div>
+              )}
 
-          {expense.vendorName && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="textSecondary">
-                المورد
-              </Typography>
-              <Typography variant="body1">
-                {expense.vendorName}
-              </Typography>
-            </Grid>
-          )}
+              <div className="sm:col-span-2">
+                <p className="text-sm text-muted-foreground mb-1">الوصف</p>
+                <p className="text-foreground">{expense.description || '-'}</p>
+              </div>
 
-          <Grid item xs={12}>
-            <Typography variant="body2" color="textSecondary">
-              الوصف
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1 }}>
-              {expense.description || '-'}
-            </Typography>
-          </Grid>
+              {expense.createdByName && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">تم الإنشاء بواسطة</p>
+                  <p className="text-foreground">{expense.createdByName}</p>
+                </div>
+              )}
 
-          {expense.createdByName && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="textSecondary">
-                تم الإنشاء بواسطة
-              </Typography>
-              <Typography variant="body1">
-                {expense.createdByName}
-              </Typography>
-            </Grid>
-          )}
+              {expense.createdAt && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">تاريخ الإنشاء</p>
+                  <p className="text-foreground">{formatDate(expense.createdAt)}</p>
+                </div>
+              )}
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
-          {expense.createdAt && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="textSecondary">
-                تاريخ الإنشاء
-              </Typography>
-              <Typography variant="body1">
-                {formatDate(expense.createdAt)}
-              </Typography>
-            </Grid>
-          )}
-        </Grid>
-      </Paper>
-    </Box>
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDelete}
+          title="تأكيد الحذف"
+          message="هل أنت متأكد من حذف هذه النفقة؟ لا يمكن التراجع عن هذا الإجراء."
+          confirmText="حذف"
+          cancelText="إلغاء"
+          variant="danger"
+        />
+      </div>
+    </div>
   );
 };
 
 export default ExpenseDetailsPage;
-
-

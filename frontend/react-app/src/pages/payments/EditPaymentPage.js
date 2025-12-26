@@ -56,8 +56,8 @@ const EditPaymentPage = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري تحميل بيانات المدفوعة...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري تحميل بيانات المدفوعة...</p>
         </div>
       </div>
     );
@@ -67,7 +67,7 @@ const EditPaymentPage = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">المدفوعة غير موجودة</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">المدفوعة غير موجودة</h2>
           <SimpleButton onClick={() => navigate('/payments')}>
             العودة للمدفوعات
           </SimpleButton>
@@ -83,8 +83,8 @@ const EditPaymentPage = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">تعديل المدفوعة</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-foreground">تعديل المدفوعة</h1>
+              <p className="text-muted-foreground mt-1">
                 تعديل مدفوعة #{payment.id} - {paymentService.formatAmount(payment.amount)}
               </p>
             </div>
@@ -101,40 +101,40 @@ const EditPaymentPage = () => {
         {/* Payment Info Card */}
         <SimpleCard className="mb-6">
           <SimpleCardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات المدفوعة الحالية</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">معلومات المدفوعة الحالية</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <span className="text-sm text-gray-500">رقم المدفوعة:</span>
+                <span className="text-sm text-muted-foreground">رقم المدفوعة:</span>
                 <p className="font-medium">#{payment.id}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">المبلغ:</span>
-                <p className="font-medium text-green-600">
+                <span className="text-sm text-muted-foreground">المبلغ:</span>
+                <p className="font-medium text-emerald-600 dark:text-emerald-400">
                   {paymentService.formatAmount(payment.amount)}
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">طريقة الدفع:</span>
+                <span className="text-sm text-muted-foreground">طريقة الدفع:</span>
                 <p className="font-medium">
                   {paymentService.getPaymentMethods().find(m => m.value === payment.paymentMethod)?.label}
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">تاريخ الدفع:</span>
+                <span className="text-sm text-muted-foreground">تاريخ الدفع:</span>
                 <p className="font-medium">{paymentService.formatDate(payment.paymentDate)}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">رقم المرجع:</span>
+                <span className="text-sm text-muted-foreground">رقم المرجع:</span>
                 <p className="font-medium">{payment.referenceNumber || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">تاريخ الإنشاء:</span>
+                <span className="text-sm text-muted-foreground">تاريخ الإنشاء:</span>
                 <p className="font-medium">{paymentService.formatDate(payment.createdAt)}</p>
               </div>
             </div>
             {payment.notes && (
               <div className="mt-4">
-                <span className="text-sm text-gray-500">الملاحظات:</span>
+                <span className="text-sm text-muted-foreground">الملاحظات:</span>
                 <p className="font-medium mt-1">{payment.notes}</p>
               </div>
             )}
@@ -144,7 +144,7 @@ const EditPaymentPage = () => {
         {/* Edit Form */}
         <SimpleCard>
           <SimpleCardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">تعديل المدفوعة</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">تعديل المدفوعة</h3>
             <PaymentForm
               payment={payment}
               onSubmit={handleSubmit}

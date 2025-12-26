@@ -15,17 +15,18 @@ import {
   ArcElement
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
-import SimpleButton from '../../components/ui/SimpleButton';
-import { Input } from '../../components/ui/Input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/Select';
 import messagingService from '../../services/messagingService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import { cn } from '../../lib/utils';
 import {
   TrendingUp, MessageSquare, Mail, AlertCircle, CheckCircle,
-  XCircle, Calendar, Download, RefreshCw, BarChart3, PieChart
+  XCircle, Calendar, Download, RefreshCw, BarChart3, PieChart,
+  Search, ExternalLink, Filter, ChevronLeft, Send, AlertTriangle
 } from 'lucide-react';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 ChartJS.register(
   CategoryScale,
@@ -184,350 +185,385 @@ const MessagingReportsPage = () => {
     ]
   };
 
-  const chartOptions = {
+  const commonChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
-        rtl: true
+        position: 'bottom',
+        rtl: true,
+        labels: {
+          color: 'oklch(var(--muted-foreground))',
+          font: { size: 12, weight: '500' },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
       },
-      title: {
-        display: false
+      tooltip: {
+        rtl: true,
+        backgroundColor: 'oklch(var(--card))',
+        titleColor: 'oklch(var(--foreground))',
+        bodyColor: 'oklch(var(--muted-foreground))',
+        borderColor: 'oklch(var(--border))',
+        borderWidth: 1,
+        padding: 12,
+        boxPadding: 8,
+        usePointStyle: true
       }
     },
     scales: {
+      x: {
+        grid: {
+          display: false,
+          color: 'oklch(var(--border) / 0.1)'
+        },
+        ticks: {
+          color: 'oklch(var(--muted-foreground))',
+          font: { size: 11 }
+        }
+      },
       y: {
+        grid: {
+          color: 'oklch(var(--border) / 0.1)',
+          drawBorder: false
+        },
+        ticks: {
+          color: 'oklch(var(--muted-foreground))',
+          font: { size: 11 },
+          padding: 8
+        },
         beginAtZero: true
       }
     }
   };
 
   const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
+    ...commonChartOptions,
+    scales: undefined, // Doughnut doesn't use scales
+    cutout: '70%',
     plugins: {
+      ...commonChartOptions.plugins,
       legend: {
-        position: 'bottom',
-        rtl: true
+        ...commonChartOptions.plugins.legend,
+        position: 'bottom'
       }
     }
   };
 
   return (
-    <div className="p-6" dir="rtl">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">تقارير وإحصائيات المراسلة</h1>
-            <p className="text-gray-600 mt-1">متابعة شاملة لأداء المراسلة والإشعارات</p>
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6 text-right" dir="rtl">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3.5 bg-primary/10 rounded-2xl">
+              <MessageSquare className="w-9 h-9 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">تقارير المراسلة</h1>
+              <p className="text-muted-foreground mt-1">رؤية تحليلية شاملة لنظام الإشعارات والتواصل</p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <SimpleButton
-              variant="outline"
-              onClick={() => handleExport('pdf')}
-              className="flex items-center gap-2"
-            >
+          <div className="flex flex-wrap items-center gap-3">
+            <SimpleButton variant="outline" onClick={() => handleExport('pdf')} className="gap-2">
               <Download className="w-4 h-4" />
               تصدير PDF
             </SimpleButton>
-            <SimpleButton
-              variant="outline"
-              onClick={() => handleExport('excel')}
-              className="flex items-center gap-2"
-            >
+            <SimpleButton variant="outline" onClick={() => handleExport('excel')} className="gap-2">
               <Download className="w-4 h-4" />
               تصدير Excel
             </SimpleButton>
-            <SimpleButton
-              variant="outline"
-              onClick={loadStats}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              تحديث
+            <SimpleButton onClick={loadStats} className="gap-2 shadow-lg shadow-primary/20">
+              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+              تحديث البيانات
             </SimpleButton>
           </div>
         </div>
 
-        {/* Filters */}
-        <SimpleCard>
-          <SimpleCardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+        {/* Filters Card */}
+        <SimpleCard className="border-none shadow-sm bg-card/50 backdrop-blur-sm">
+          <SimpleCardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  <Calendar className="w-4 h-4 text-primary" />
                   من تاريخ
                 </label>
-                <Input
+                <input
                   type="date"
                   value={filters.dateFrom}
                   onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  className="w-full bg-muted border-border text-foreground rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  <Calendar className="w-4 h-4 text-primary" />
                   إلى تاريخ
                 </label>
-                <Input
+                <input
                   type="date"
                   value={filters.dateTo}
                   onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  className="w-full bg-muted border-border text-foreground rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  <Filter className="w-4 h-4 text-primary" />
                   القناة
                 </label>
-                <Select value={filters.channel} onValueChange={(value) => handleFilterChange('channel', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="جميع القنوات" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">جميع القنوات</SelectItem>
-                    <SelectItem value="whatsapp">واتساب</SelectItem>
-                    <SelectItem value="email">بريد إلكتروني</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={filters.channel}
+                  onChange={(e) => handleFilterChange('channel', e.target.value)}
+                  className="w-full bg-muted border-border text-foreground rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none"
+                >
+                  <option value="">جميع القنوات</option>
+                  <option value="whatsapp">واتساب</option>
+                  <option value="email">بريد إلكتروني</option>
+                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  <BarChart3 className="w-4 h-4 text-primary" />
                   نوع الكيان
                 </label>
-                <Select value={filters.entityType} onValueChange={(value) => handleFilterChange('entityType', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="جميع الأنواع" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">جميع الأنواع</SelectItem>
-                    <SelectItem value="invoice">فواتير</SelectItem>
-                    <SelectItem value="repair">طلبات إصلاح</SelectItem>
-                    <SelectItem value="quotation">عروض سعرية</SelectItem>
-                    <SelectItem value="payment">مدفوعات</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={filters.entityType}
+                  onChange={(e) => handleFilterChange('entityType', e.target.value)}
+                  className="w-full bg-muted border-border text-foreground rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none"
+                >
+                  <option value="">جميع الأنواع</option>
+                  <option value="invoice">فواتير</option>
+                  <option value="repair">طلبات إصلاح</option>
+                  <option value="quotation">عروض سعرية</option>
+                  <option value="payment">مدفوعات</option>
+                </select>
               </div>
             </div>
           </SimpleCardContent>
         </SimpleCard>
-      </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">إجمالي الرسائل</p>
-                <p className="text-2xl font-bold text-foreground">{(summary?.total || 0).toLocaleString()}</p>
-              </div>
-              <MessageSquare className="w-8 h-8 text-blue-500" />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">مرسل</p>
-                <p className="text-2xl font-bold text-green-600">{(summary?.sent || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">{summary?.successRate || 0}%</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">فاشل</p>
-                <p className="text-2xl font-bold text-red-600">{(summary?.failed || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">{summary?.failureRate || 0}%</p>
-              </div>
-              <XCircle className="w-8 h-8 text-red-500" />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        <SimpleCard>
-          <SimpleCardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">معدل النجاح</p>
-                <p className="text-2xl font-bold text-blue-600">{summary?.successRate || 0}%</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">من إجمالي المحاولات</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* القنوات - Bar Chart */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              الإحصائيات حسب القناة
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div style={{ height: '300px' }}>
-              <Bar data={channelChartData} options={chartOptions} />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        {/* القنوات - Doughnut Chart */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center gap-2">
-              <PieChart className="w-5 h-5" />
-              التوزيع حسب القناة
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div style={{ height: '300px' }}>
-              <Doughnut data={channelDoughnutData} options={doughnutOptions} />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        {/* أنواع الكيانات */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              الإحصائيات حسب نوع الكيان
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div style={{ height: '300px' }}>
-              <Bar data={entityChartData} options={chartOptions} />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-
-        {/* الإحصائيات اليومية */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              الإحصائيات اليومية (آخر 30 يوم)
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div style={{ height: '300px' }}>
-              <Line data={dailyChartData} options={chartOptions} />
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-      </div>
-
-      {/* Failure Reasons */}
-      {failureReasons && failureReasons.length > 0 && (
-        <SimpleCard className="mb-6">
-          <SimpleCardHeader>
-            <SimpleCardTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              أسباب الفشل (أكثر 10)
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="space-y-2">
-              {failureReasons.map((reason, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-foreground flex-1">Reason: {reason.reason}</p>
-                  <span className="text-sm font-semibold text-red-600">{reason.count}</span>
+        {/* Summary Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'إجمالي الرسائل', value: summary?.total, icon: Send, color: 'primary', suffix: '' },
+            { label: 'رسائل ناجحة', value: summary?.sent, icon: CheckCircle, color: 'success', suffix: `${summary?.successRate || 0}%` },
+            { label: 'رسائل فاشلة', value: summary?.failed, icon: AlertTriangle, color: 'destructive', suffix: `${summary?.failureRate || 0}%` },
+            { label: 'معدل الوصول', value: summary?.successRate, icon: TrendingUp, color: 'info', suffix: '%' },
+          ].map((item, idx) => (
+            <SimpleCard key={idx} className="overflow-hidden border-none shadow-sm hover:translate-y-[-2px] transition-all duration-300">
+              <SimpleCardContent className="p-6 flex items-center gap-5">
+                <div className={cn("p-4 rounded-2xl", `bg-${item.color}/10`, `text-${item.color}`)}>
+                  <item.icon className="w-7 h-7" />
                 </div>
-              ))}
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
-      )}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-2xl font-bold text-foreground">
+                      {(item.value || 0).toLocaleString()}
+                      {item.color === 'info' && '%'}
+                    </span>
+                    {item.suffix && item.color !== 'info' && (
+                      <SimpleBadge variant={item.color === 'success' ? 'success' : 'destructive'} className="text-[10px] py-0">
+                        {item.suffix}
+                      </SimpleBadge>
+                    )}
+                  </div>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          ))}
+        </div>
 
-      {/* Detailed Stats Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* إحصائيات القنوات */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>تفاصيل القنوات</SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-right p-2">القناة</th>
-                    <th className="text-right p-2">إجمالي</th>
-                    <th className="text-right p-2">مرسل</th>
-                    <th className="text-right p-2">فاشل</th>
-                    <th className="text-right p-2">معدل النجاح</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(byChannel || []).map((channel, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">
-                        {channel.channel === 'whatsapp' ? 'واتساب' : channel.channel === 'email' ? 'بريد إلكتروني' : channel.channel}
-                      </td>
-                      <td className="p-2">{channel.total}</td>
-                      <td className="p-2 text-green-600">{channel.sent}</td>
-                      <td className="p-2 text-red-600">{channel.failed}</td>
-                      <td className="p-2">{channel.successRate}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </SimpleCardContent>
-        </SimpleCard>
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Main Trends Line Chart */}
+          <SimpleCard className="lg:col-span-2 border-none shadow-md overflow-hidden">
+            <SimpleCardHeader className="bg-muted/30 border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <SimpleCardTitle className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  تحليل الاتجاه اليومي (آخر 30 يوم)
+                </SimpleCardTitle>
+              </div>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6">
+              <div className="h-[350px]">
+                <Line data={dailyChartData} options={commonChartOptions} />
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        {/* إحصائيات أنواع الكيانات */}
-        <SimpleCard>
-          <SimpleCardHeader>
-            <SimpleCardTitle>تفاصيل أنواع الكيانات</SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-right p-2">النوع</th>
-                    <th className="text-right p-2">إجمالي</th>
-                    <th className="text-right p-2">مرسل</th>
-                    <th className="text-right p-2">فاشل</th>
-                    <th className="text-right p-2">معدل النجاح</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(byEntity || []).map((entity, index) => {
-                    const labels = {
-                      invoice: 'فواتير',
-                      repair: 'طلبات إصلاح',
-                      quotation: 'عروض سعرية',
-                      payment: 'مدفوعات'
-                    };
-                    return (
-                      <tr key={index} className="border-b">
-                        <td className="p-2">{labels[entity.entityType] || entity.entityType}</td>
-                        <td className="p-2">{entity.total}</td>
-                        <td className="p-2 text-green-600">{entity.sent}</td>
-                        <td className="p-2 text-red-600">{entity.failed}</td>
-                        <td className="p-2">{entity.successRate}%</td>
+          {/* Channels Bar Chart */}
+          <SimpleCard className="border-none shadow-md overflow-hidden">
+            <SimpleCardHeader className="bg-muted/30 border-b border-border/50">
+              <SimpleCardTitle className="flex items-center gap-3">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                أداء القنوات المتاحة
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6">
+              <div className="h-[300px]">
+                <Bar data={channelChartData} options={commonChartOptions} />
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+
+          {/* Channels Distribution Doughnut */}
+          <SimpleCard className="border-none shadow-md overflow-hidden">
+            <SimpleCardHeader className="bg-muted/30 border-b border-border/50">
+              <SimpleCardTitle className="flex items-center gap-3">
+                <PieChart className="w-5 h-5 text-primary" />
+                توزيع حجم التراسل حسب القناة
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6">
+              <div className="h-[300px]">
+                <Doughnut data={channelDoughnutData} options={doughnutOptions} />
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+
+          {/* Entity Type Bar Chart */}
+          <SimpleCard className="lg:col-span-2 border-none shadow-md overflow-hidden">
+            <SimpleCardHeader className="bg-muted/30 border-b border-border/50">
+              <SimpleCardTitle className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-primary" />
+                توزيع الإشعارات حسب نوع المعاملة
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6">
+              <div className="h-[350px]">
+                <Bar data={entityChartData} options={commonChartOptions} />
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        </div>
+
+        {/* Failure Reasons Section */}
+        {failureReasons && failureReasons.length > 0 && (
+          <SimpleCard className="border-none shadow-lg border-t-4 border-t-destructive overflow-hidden">
+            <SimpleCardHeader className="bg-destructive/5">
+              <SimpleCardTitle className="flex items-center gap-3 text-destructive">
+                <AlertCircle className="w-6 h-6" />
+                أبرز أسباب فشل الإرسال (Top 10)
+              </SimpleCardTitle>
+            </SimpleCardHeader>
+            <SimpleCardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {failureReasons.map((reason, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-destructive/5 rounded-2xl border border-destructive/10 hover:bg-destructive/10 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center text-[10px] font-bold text-destructive">
+                        {index + 1}
+                      </div>
+                      <p className="text-sm font-semibold text-foreground truncate max-w-[200px] md:max-w-xs" title={reason.reason}>
+                        {reason.reason}
+                      </p>
+                    </div>
+                    <SimpleBadge variant="destructive">{reason.count}</SimpleBadge>
+                  </div>
+                ))}
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        )}
+
+        {/* Detailed Tables Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+          {/* Detailed Channels Table */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+              <h3 className="text-xl font-bold text-foreground">تحليل القنوات التفصيلي</h3>
+            </div>
+            <SimpleCard className="border-none shadow-sm overflow-hidden">
+              <SimpleCardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-right">
+                    <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4 font-bold">القناة</th>
+                        <th className="px-6 py-4 font-bold">إجمالي الرسائل</th>
+                        <th className="px-6 py-4 font-bold">ناجحة</th>
+                        <th className="px-6 py-4 font-bold">فاشلة</th>
+                        <th className="px-6 py-4 font-bold text-left">معدل النجاح</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(byChannel || []).map((channel, index) => (
+                        <tr key={index} className="hover:bg-muted/30 transition-colors group">
+                          <td className="px-6 py-4 font-semibold text-foreground flex items-center gap-3">
+                            <div className={cn("w-2 h-2 rounded-full", channel.channel === 'whatsapp' ? 'bg-success' : 'bg-primary')}></div>
+                            {channel.channel === 'whatsapp' ? 'واتساب' : channel.channel === 'email' ? 'بريد إلكتروني' : channel.channel}
+                          </td>
+                          <td className="px-6 py-4 text-foreground">{(channel.total || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-success font-medium">{(channel.sent || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-destructive font-medium">{(channel.failed || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-left">
+                            <SimpleBadge variant={channel.successRate >= 90 ? 'success' : channel.successRate >= 70 ? 'warning' : 'destructive'}>
+                              {channel.successRate}%
+                            </SimpleBadge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
+
+          {/* Detailed Entities Table */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+              <h3 className="text-xl font-bold text-foreground">تحليل المعاملات التفصيلي</h3>
             </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            <SimpleCard className="border-none shadow-sm overflow-hidden">
+              <SimpleCardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-right">
+                    <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4 font-bold">نوع المعاملة</th>
+                        <th className="px-6 py-4 font-bold">إجمالي</th>
+                        <th className="px-6 py-4 font-bold">ناجحة</th>
+                        <th className="px-6 py-4 font-bold text-left">معدل النجاح</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(byEntity || []).map((entity, index) => {
+                        const labels = {
+                          invoice: 'فواتير',
+                          repair: 'طلبات إصلاح',
+                          quotation: 'عروض سعرية',
+                          payment: 'مدفوعات'
+                        };
+                        return (
+                          <tr key={index} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-6 py-4 font-semibold text-foreground">
+                              {labels[entity.entityType] || entity.entityType}
+                            </td>
+                            <td className="px-6 py-4 text-foreground">{(entity.total || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-success font-medium">{(entity.sent || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-left">
+                              <SimpleBadge variant="outline" className="border-primary/20 text-primary bg-primary/5">
+                                {entity.successRate}%
+                              </SimpleBadge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
+        </div>
       </div>
     </div>
   );

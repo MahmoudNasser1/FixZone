@@ -3,15 +3,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import apiService from '../../../services/api';
 import vendorService from '../../../services/vendorService';
-import {
-  Box,
-  Button,
-  Typography,
-  Paper
-} from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { SimpleCard, SimpleCardContent } from '../../../components/ui/SimpleCard';
+import SimpleButton from '../../../components/ui/SimpleButton';
 import { useExpenses } from '../../../hooks/financial/useExpenses';
 import ExpenseForm from '../../../components/financial/expenses/ExpenseForm';
 
@@ -134,52 +130,56 @@ const ExpenseCreatePage = () => {
   }, []);
 
   return (
-    <Box p={3}>
-      <Box display="flex" alignItems="center" mb={3}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/financial/expenses')}
-          sx={{ mr: 2 }}
-        >
-          رجوع
-        </Button>
-        <Typography variant="h4" component="h1">
-          إضافة نفقة جديدة
-        </Typography>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <SimpleButton
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/financial/expenses')}
+          >
+            <ArrowLeft className="w-4 h-4 ml-2" />
+            رجوع
+          </SimpleButton>
+          <h1 className="text-3xl font-bold text-foreground">إضافة نفقة جديدة</h1>
+        </div>
 
-      <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <ExpenseForm
-            formData={formData}
-            errors={errors}
-            onChange={(name, value) => handleChange({ target: { name, value } })}
-            categories={categories}
-            branches={branches}
-            vendors={vendors}
-            loading={loadingData}
-          />
+        {/* Form */}
+        <SimpleCard>
+          <SimpleCardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <ExpenseForm
+                formData={formData}
+                errors={errors}
+                onChange={(name, value) => handleChange({ target: { name, value } })}
+                categories={categories}
+                branches={branches}
+                vendors={vendors}
+                loading={loadingData}
+              />
 
-          <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/financial/expenses')}
-            >
-              إلغاء
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-            >
-              {loading ? 'جاري الحفظ...' : 'حفظ'}
-            </Button>
-          </Box>
-        </form>
-      </Paper>
-    </Box>
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <SimpleButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/financial/expenses')}
+                >
+                  إلغاء
+                </SimpleButton>
+                <SimpleButton
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? 'جاري الحفظ...' : 'حفظ'}
+                </SimpleButton>
+              </div>
+            </form>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
+    </div>
   );
 };
 
 export default ExpenseCreatePage;
-

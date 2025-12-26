@@ -2,17 +2,7 @@
 // Reusable form component for creating/editing payments
 
 import React, { useState, useEffect } from 'react';
-import {
-  TextField,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText,
-  Alert,
-  Box
-} from '@mui/material';
+import { AlertCircle, Info } from 'lucide-react';
 import invoicesService from '../../../services/financial/invoicesService';
 
 const PaymentForm = ({ formData, errors, onChange, invoiceId: propInvoiceId }) => {
@@ -57,121 +47,136 @@ const PaymentForm = ({ formData, errors, onChange, invoiceId: propInvoiceId }) =
     }).format(amount || 0);
   };
 
-  const remainingAmount = invoice 
+  const remainingAmount = invoice
     ? (invoice.totalAmount || 0) - (invoice.amountPaid || 0)
     : null;
 
+  const inputClasses = "w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm transition-all";
+  const labelClasses = "block text-sm font-medium text-foreground mb-1";
+  const errorClasses = "text-xs text-destructive mt-1";
+
   return (
-    <Grid container spacing={3}>
+    <div className="space-y-6">
       {invoice && (
-        <Grid item xs={12}>
-          <Alert severity="info">
-            <Box>
-              <strong>الفاتورة:</strong> {invoice.invoiceNumber || `#${invoice.id}`} | 
-              <strong> الإجمالي:</strong> {formatCurrency(invoice.totalAmount)} | 
-              <strong> المدفوع:</strong> {formatCurrency(invoice.amountPaid || 0)} | 
-              <strong> المتبقي:</strong> {formatCurrency(remainingAmount)}
-            </Box>
-          </Alert>
-        </Grid>
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex gap-3 items-start">
+          <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+          <div className="text-sm text-foreground">
+            <div className="font-bold mb-1">بيانات الفاتورة:</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+              <span><strong>رقم الفاتورة:</strong> {invoice.invoiceNumber || `#${invoice.id}`}</span>
+              <span><strong>الإجمالي:</strong> {formatCurrency(invoice.totalAmount)}</span>
+              <span><strong>المدفوع:</strong> {formatCurrency(invoice.amountPaid || 0)}</span>
+              <span className="text-primary font-bold"><strong>المتبقي:</strong> {formatCurrency(remainingAmount)}</span>
+            </div>
+          </div>
+        </div>
       )}
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="رقم الفاتورة *"
-          name="invoiceId"
-          type="number"
-          value={formData.invoiceId || ''}
-          onChange={handleChange}
-          error={!!errors.invoiceId}
-          helperText={errors.invoiceId}
-          disabled={!!propInvoiceId}
-          required
-        />
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>رقم الفاتورة *</label>
+          <input
+            name="invoiceId"
+            type="number"
+            value={formData.invoiceId || ''}
+            onChange={handleChange}
+            className={`${inputClasses} ${errors.invoiceId ? 'border-destructive' : ''} ${propInvoiceId ? 'bg-muted opacity-70' : ''}`}
+            disabled={!!propInvoiceId}
+            required
+          />
+          {errors.invoiceId && (
+            <p className={errorClasses}>{errors.invoiceId}</p>
+          )}
+        </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="المبلغ *"
-          name="amount"
-          type="number"
-          value={formData.amount || ''}
-          onChange={handleChange}
-          error={!!errors.amount}
-          helperText={errors.amount || (remainingAmount !== null && `الحد الأقصى: ${formatCurrency(remainingAmount)}`)}
-          inputProps={{ 
-            min: 0, 
-            step: 0.01,
-            max: remainingAmount || undefined
-          }}
-          required
-        />
-      </Grid>
+        <div className="space-y-1">
+          <label className={labelClasses}>المبلغ *</label>
+          <input
+            name="amount"
+            type="number"
+            value={formData.amount || ''}
+            onChange={handleChange}
+            className={`${inputClasses} ${errors.amount ? 'border-destructive' : ''}`}
+            min="0"
+            step="0.01"
+            max={remainingAmount || undefined}
+            required
+            placeholder="0.00"
+          />
+          <div className="flex justify-between mt-1">
+            {errors.amount ? (
+              <p className={errorClasses}>{errors.amount}</p>
+            ) : (
+              remainingAmount !== null && (
+                <p className="text-[10px] text-muted-foreground">الحد الأقصى: {formatCurrency(remainingAmount)}</p>
+              )
+            )}
+          </div>
+        </div>
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth error={!!errors.paymentMethod} required>
-          <InputLabel>طريقة الدفع *</InputLabel>
-          <Select
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>طريقة الدفع *</label>
+          <select
             name="paymentMethod"
             value={formData.paymentMethod || 'cash'}
             onChange={handleChange}
-            label="طريقة الدفع *"
+            className={`${inputClasses} ${errors.paymentMethod ? 'border-destructive' : ''}`}
+            required
           >
-            <MenuItem value="cash">نقدي</MenuItem>
-            <MenuItem value="card">بطاقة</MenuItem>
-            <MenuItem value="bank_transfer">تحويل بنكي</MenuItem>
-            <MenuItem value="check">شيك</MenuItem>
-            <MenuItem value="other">أخرى</MenuItem>
-          </Select>
+            <option value="cash">نقدي</option>
+            <option value="card">بطاقة</option>
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="check">شيك</option>
+            <option value="other">أخرى</option>
+          </select>
           {errors.paymentMethod && (
-            <FormHelperText>{errors.paymentMethod}</FormHelperText>
+            <p className={errorClasses}>{errors.paymentMethod}</p>
           )}
-        </FormControl>
-      </Grid>
+        </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="تاريخ الدفع *"
-          name="paymentDate"
-          type="date"
-          value={formData.paymentDate || ''}
-          onChange={handleChange}
-          error={!!errors.paymentDate}
-          helperText={errors.paymentDate}
-          InputLabelProps={{ shrink: true }}
-          required
-        />
-      </Grid>
+        <div className="space-y-1">
+          <label className={labelClasses}>تاريخ الدفع *</label>
+          <input
+            name="paymentDate"
+            type="date"
+            value={formData.paymentDate || ''}
+            onChange={handleChange}
+            className={`${inputClasses} ${errors.paymentDate ? 'border-destructive' : ''}`}
+            required
+          />
+          {errors.paymentDate && (
+            <p className={errorClasses}>{errors.paymentDate}</p>
+          )}
+        </div>
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="رقم المرجع"
+      <div className="space-y-1">
+        <label className={labelClasses}>رقم المرجع</label>
+        <input
           name="referenceNumber"
+          type="text"
           value={formData.referenceNumber || ''}
           onChange={handleChange}
-          helperText="رقم المرجع أو رقم المعاملة"
+          className={inputClasses}
+          placeholder="رقم المرجع أو رقم المعاملة"
         />
-      </Grid>
+        <p className="text-[10px] text-muted-foreground mt-1">رقم المرجع أو رقم المعاملة (اختياري)</p>
+      </div>
 
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="ملاحظات"
+      <div className="space-y-1">
+        <label className={labelClasses}>ملاحظات</label>
+        <textarea
           name="notes"
           value={formData.notes || ''}
           onChange={handleChange}
-          multiline
-          rows={3}
+          className={`${inputClasses} min-h-[80px]`}
+          placeholder="أي ملاحظات إضافية..."
         />
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 };
 
 export default PaymentForm;
-
-

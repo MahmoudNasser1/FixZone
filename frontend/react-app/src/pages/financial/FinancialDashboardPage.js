@@ -1,28 +1,19 @@
-// Financial Dashboard Page
-// Main dashboard for financial overview
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Card,
-  CardContent,
-  CircularProgress,
-  Button
-} from '@mui/material';
-import {
-  AttachMoney,
-  Receipt,
-  CreditCard,
   TrendingUp,
   TrendingDown,
-  AccountBalance,
-  CalendarToday,
-  ArrowForward
-} from '@mui/icons-material';
+  Receipt,
+  CreditCard,
+  DollarSign,
+  ArrowRight,
+  Download,
+  BarChart3
+} from 'lucide-react';
+import { SimpleCard, SimpleCardContent, SimpleCardHeader } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import Breadcrumb from '../../components/layout/Breadcrumb';
 import apiService from '../../services/api';
 import FinancialSummaryCard from '../../components/financial/shared/FinancialSummaryCard';
 
@@ -73,9 +64,12 @@ const FinancialDashboardPage = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-muted-foreground">جاري تحميل البيانات المالية...</p>
+        </div>
+      </div>
     );
   }
 
@@ -85,228 +79,223 @@ const FinancialDashboardPage = () => {
   const expenses = stats.expenses || {};
 
   return (
-    <Box p={3}>
-      {/* Header */}
-      <Box mb={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          لوحة التحكم المالية
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          نظرة عامة على الوضع المالي للنظام
-        </Typography>
-      </Box>
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <Breadcrumb
+            items={[
+              { label: 'الرئيسية', href: '/' },
+              { label: 'النظام المالي', href: '/financial', active: true }
+            ]}
+          />
+          <div className="mt-4">
+            <h1 className="text-3xl font-bold text-foreground">لوحة التحكم المالية</h1>
+            <p className="text-muted-foreground mt-2">نظرة عامة على الوضع المالي للنظام</p>
+          </div>
+        </div>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {/* Revenue Card */}
+          <SimpleCard className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
                     إجمالي الإيرادات
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  </p>
+                  <h3 className="text-2xl font-bold text-foreground">
                     {formatCurrency(summary.revenue?.total || payments.totalAmount || 0)}
-                  </Typography>
-                </Box>
-                <TrendingUp sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                  </h3>
+                </div>
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'error.main', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+          {/* Expenses Card */}
+          <SimpleCard className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
                     إجمالي المصروفات
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  </p>
+                  <h3 className="text-2xl font-bold text-foreground">
                     {formatCurrency(summary.expenses?.total || expenses.totalAmount || 0)}
-                  </Typography>
-                </Box>
-                <TrendingDown sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                  </h3>
+                </div>
+                <div className="p-3 bg-destructive/10 rounded-full">
+                  <TrendingDown className="w-6 h-6 text-destructive" />
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'success.main', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+          {/* Net Profit Card */}
+          <SimpleCard className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
                     صافي الربح
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  </p>
+                  <h3 className="text-2xl font-bold text-foreground">
                     {formatCurrency(summary.profit?.net || 0)}
-                  </Typography>
-                </Box>
-                <AccountBalance sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                  </h3>
+                </div>
+                <div className="p-3 bg-emerald-500/10 rounded-full">
+                  <BarChart3 className="w-6 h-6 text-emerald-500" />
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'warning.main', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+          {/* Outstanding Card */}
+          <SimpleCard className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
+            <SimpleCardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
                     المديونيات المستحقة
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  </p>
+                  <h3 className="text-2xl font-bold text-foreground">
                     {formatCurrency(summary.outstanding?.amount || invoices.unpaidAmount || 0)}
-                  </Typography>
-                </Box>
-                <Receipt sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                  </h3>
+                </div>
+                <div className="p-3 bg-amber-500/10 rounded-full">
+                  <Receipt className="w-6 h-6 text-amber-500" />
+                </div>
+              </div>
+            </SimpleCardContent>
+          </SimpleCard>
+        </div>
 
-      {/* Quick Actions */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          إجراءات سريعة
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<Receipt />}
-              onClick={() => navigate('/financial/invoices/create')}
-              sx={{ py: 1.5 }}
-            >
-              إنشاء فاتورة
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<CreditCard />}
-              onClick={() => navigate('/financial/payments/create')}
-              sx={{ py: 1.5 }}
-            >
-              تسجيل دفعة
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<AttachMoney />}
-              onClick={() => navigate('/financial/expenses/create')}
-              sx={{ py: 1.5 }}
-            >
-              إضافة مصروف
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<ArrowForward />}
-              onClick={() => navigate('/reports/financial')}
-              sx={{ py: 1.5 }}
-            >
-              التقارير المالية
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+        {/* Quick Actions */}
+        <SimpleCard>
+          <SimpleCardHeader>
+            <h2 className="text-xl font-semibold text-foreground">إجراءات سريعة</h2>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <SimpleButton
+                variant="default"
+                className="w-full justify-start"
+                onClick={() => navigate('/financial/invoices/create')}
+              >
+                <Receipt className="w-4 h-4 ml-2" />
+                إنشاء فاتورة
+              </SimpleButton>
+              <SimpleButton
+                variant="default"
+                className="w-full justify-start"
+                onClick={() => navigate('/financial/payments/create')}
+              >
+                <CreditCard className="w-4 h-4 ml-2" />
+                تسجيل دفعة
+              </SimpleButton>
+              <SimpleButton
+                variant="default"
+                className="w-full justify-start"
+                onClick={() => navigate('/financial/expenses/create')}
+              >
+                <DollarSign className="w-4 h-4 ml-2" />
+                إضافة مصروف
+              </SimpleButton>
+              <SimpleButton
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate('/reports/financial')}
+              >
+                <ArrowRight className="w-4 h-4 ml-2" />
+                التقارير المالية
+              </SimpleButton>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
 
-      {/* Detailed Stats */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        {/* Detailed Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <FinancialSummaryCard
             title="ملخص الفواتير"
             data={invoices}
             loading={false}
             icon={Receipt}
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
           <FinancialSummaryCard
             title="ملخص المدفوعات"
             data={payments}
             loading={false}
             icon={CreditCard}
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
           <FinancialSummaryCard
             title="ملخص المصروفات"
             data={expenses}
             loading={false}
-            icon={AttachMoney}
+            icon={DollarSign}
           />
-        </Grid>
-      </Grid>
+        </div>
 
-      {/* Links to Detailed Pages */}
-      <Paper sx={{ p: 3, mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          صفحات النظام المالي
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Receipt />}
-              endIcon={<ArrowForward />}
-              onClick={() => navigate('/financial/invoices')}
-            >
-              الفواتير
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<CreditCard />}
-              endIcon={<ArrowForward />}
-              onClick={() => navigate('/financial/payments')}
-            >
-              المدفوعات
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<AttachMoney />}
-              endIcon={<ArrowForward />}
-              onClick={() => navigate('/financial/expenses')}
-            >
-              المصروفات
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<CalendarToday />}
-              endIcon={<ArrowForward />}
-              onClick={() => navigate('/reports/financial')}
-            >
-              التقارير
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Box>
+        {/* Links to Detailed Pages */}
+        <SimpleCard>
+          <SimpleCardHeader>
+            <h2 className="text-xl font-semibold text-foreground">صفحات النظام المالي</h2>
+          </SimpleCardHeader>
+          <SimpleCardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <SimpleButton
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => navigate('/financial/invoices')}
+              >
+                <div className="flex items-center">
+                  <Receipt className="w-4 h-4 ml-2" />
+                  الفواتير
+                </div>
+                <ArrowRight className="w-4 h-4" />
+              </SimpleButton>
+              <SimpleButton
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => navigate('/financial/payments')}
+              >
+                <div className="flex items-center">
+                  <CreditCard className="w-4 h-4 ml-2" />
+                  المدفوعات
+                </div>
+                <ArrowRight className="w-4 h-4" />
+              </SimpleButton>
+              <SimpleButton
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => navigate('/financial/expenses')}
+              >
+                <div className="flex items-center">
+                  <DollarSign className="w-4 h-4 ml-2" />
+                  المصروفات
+                </div>
+                <ArrowRight className="w-4 h-4" />
+              </SimpleButton>
+              <SimpleButton
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => navigate('/reports/financial')}
+              >
+                <div className="flex items-center">
+                  <BarChart3 className="w-4 h-4 ml-2" />
+                  التقارير
+                </div>
+                <ArrowRight className="w-4 h-4" />
+              </SimpleButton>
+            </div>
+          </SimpleCardContent>
+        </SimpleCard>
+      </div>
+    </div>
   );
 };
 
 export default FinancialDashboardPage;
-

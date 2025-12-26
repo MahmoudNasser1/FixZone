@@ -71,7 +71,7 @@ const InvoiceTemplatesPage = () => {
       accessorKey: "isActive",
       header: "الحالة",
       cell: ({ row }) => (
-        <SimpleBadge className={row.getValue("isActive") ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+        <SimpleBadge className={row.getValue("isActive") ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground'}>
           {row.getValue("isActive") ? 'نشط' : 'غير نشط'}
         </SimpleBadge>
       ),
@@ -218,7 +218,7 @@ const InvoiceTemplatesPage = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا القالب؟')) return;
-    
+
     try {
       await invoiceTemplatesService.deleteTemplate(id);
       notifications.success('تم حذف القالب بنجاح');
@@ -267,8 +267,8 @@ const InvoiceTemplatesPage = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل قوالب الفواتير...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">جاري تحميل قوالب الفواتير...</p>
         </div>
       </div>
     );
@@ -279,8 +279,8 @@ const InvoiceTemplatesPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">قوالب الفواتير</h1>
-          <p className="text-gray-600">إدارة قوالب الفواتير المختلفة</p>
+          <h1 className="text-2xl font-bold text-foreground">قوالب الفواتير</h1>
+          <p className="text-muted-foreground">إدارة قوالب الفواتير المختلفة</p>
         </div>
         <SimpleButton onClick={handleCreate}>
           <Plus className="w-4 h-4 ml-2" />
@@ -312,29 +312,29 @@ const InvoiceTemplatesPage = () => {
               <h3 className="text-lg font-semibold mb-4">
                 {editingTemplate ? 'تعديل القالب' : 'إنشاء قالب جديد'}
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900">المعلومات الأساسية</h4>
-                  
+                  <h4 className="font-medium text-foreground">المعلومات الأساسية</h4>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">اسم القالب</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">اسم القالب</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleFormChange('name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="اسم القالب"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">النوع</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">النوع</label>
                     <select
                       value={formData.type}
                       onChange={(e) => handleFormChange('type', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="standard">أساسي</option>
                       <option value="tax">ضريبي</option>
@@ -345,11 +345,11 @@ const InvoiceTemplatesPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">الوصف</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => handleFormChange('description', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       rows="3"
                       placeholder="وصف القالب"
                     />
@@ -361,7 +361,7 @@ const InvoiceTemplatesPage = () => {
                         type="checkbox"
                         checked={formData.isDefault}
                         onChange={(e) => handleFormChange('isDefault', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-border text-primary focus:ring-primary"
                       />
                       <span className="mr-2 text-sm">قالب افتراضي</span>
                     </label>
@@ -370,7 +370,7 @@ const InvoiceTemplatesPage = () => {
                         type="checkbox"
                         checked={formData.isActive}
                         onChange={(e) => handleFormChange('isActive', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-border text-primary focus:ring-primary"
                       />
                       <span className="mr-2 text-sm">نشط</span>
                     </label>
@@ -379,55 +379,55 @@ const InvoiceTemplatesPage = () => {
 
                 {/* Company Settings */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900">إعدادات الشركة</h4>
-                  
+                  <h4 className="font-medium text-foreground">إعدادات الشركة</h4>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">اسم الشركة</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">اسم الشركة</label>
                     <input
                       type="text"
                       value={formData.settings.companyName || ''}
                       onChange={(e) => handleFormChange('settings.companyName', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الشركة</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">عنوان الشركة</label>
                     <input
                       type="text"
                       value={formData.settings.companyAddress || ''}
                       onChange={(e) => handleFormChange('settings.companyAddress', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">هاتف الشركة</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">هاتف الشركة</label>
                     <input
                       type="text"
                       value={formData.settings.companyPhone || ''}
                       onChange={(e) => handleFormChange('settings.companyPhone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">إيميل الشركة</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">إيميل الشركة</label>
                     <input
                       type="email"
                       value={formData.settings.companyEmail || ''}
                       onChange={(e) => handleFormChange('settings.companyEmail', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">العملة</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">العملة</label>
                     <input
                       type="text"
                       value={formData.settings.currency || ''}
                       onChange={(e) => handleFormChange('settings.currency', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="جنية"
                     />
                   </div>
@@ -436,26 +436,26 @@ const InvoiceTemplatesPage = () => {
 
               {/* HTML/CSS Customization */}
               <div className="mt-6 space-y-4">
-                <h4 className="font-medium text-gray-900">تخصيص القالب</h4>
-                
+                <h4 className="font-medium text-foreground">تخصيص القالب</h4>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">HTML الرأس</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">HTML الرأس</label>
                     <textarea
                       value={formData.headerHTML}
                       onChange={(e) => handleFormChange('headerHTML', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                       rows="4"
                       placeholder="<div>محتوى الرأس...</div>"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">HTML التذييل</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">HTML التذييل</label>
                     <textarea
                       value={formData.footerHTML}
                       onChange={(e) => handleFormChange('footerHTML', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                       rows="4"
                       placeholder="<div>محتوى التذييل...</div>"
                     />
@@ -463,11 +463,11 @@ const InvoiceTemplatesPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">أنماط CSS</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">أنماط CSS</label>
                   <textarea
                     value={formData.stylesCSS}
                     onChange={(e) => handleFormChange('stylesCSS', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                     rows="6"
                     placeholder=".invoice-container { margin: 0 auto; }"
                   />

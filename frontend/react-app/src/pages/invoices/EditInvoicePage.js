@@ -427,7 +427,7 @@ export default function EditInvoicePage() {
                 )}
 
                 {printSettings?.financial?.showShipping !== false && form.shippingAmount > 0 && (
-                  <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                  <div className="flex justify-between text-primary dark:text-primary/80">
                     <span>+ الشحن:</span>
                     <span>+{formatCurrency(form.shippingAmount, form.currency)}</span>
                   </div>
@@ -479,9 +479,9 @@ export default function EditInvoicePage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الحالة الحالية:</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${form.status === 'paid' ? 'bg-green-100 text-green-700' :
-                    form.status === 'sent' ? 'bg-blue-100 text-blue-700' :
+                    form.status === 'sent' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
                       form.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
+                        'bg-muted text-muted-foreground'
                     }`}>
                     {form.status === 'draft' ? 'مسودة' :
                       form.status === 'sent' ? 'مرسلة' :

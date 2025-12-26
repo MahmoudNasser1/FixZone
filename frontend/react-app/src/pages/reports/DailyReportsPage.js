@@ -12,16 +12,27 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
-  CalendarDaysIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline';
+  Calendar,
+  DollarSign,
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  CreditCard,
+  Target,
+  Wrench,
+  Package,
+  Download,
+  Filter
+} from 'lucide-react';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { cn } from '../../lib/utils';
 
 ChartJS.register(
   CategoryScale,
@@ -138,7 +149,7 @@ const DailyReportsPage = () => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value) {
+          callback: function (value) {
             return value.toLocaleString('ar-SA') + ' جنية';
           }
         }
@@ -156,80 +167,86 @@ const DailyReportsPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <SimpleCard>
-        <SimpleCardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-              <SimpleCardTitle className="text-2xl flex items-center gap-2">
-              <DocumentTextIcon className="h-8 w-8 text-blue-600" />
-              التقرير اليومي
-              </SimpleCardTitle>
-              <p className="text-muted-foreground mt-1">ملخص شامل لأداء اليوم</p>
-            </div>
-          </div>
-        </SimpleCardHeader>
-      </SimpleCard>
-
-      {/* Date Selector */}
-      <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle className="flex items-center gap-2">
-          <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
-          اختيار التاريخ
-          </SimpleCardTitle>
-        </SimpleCardHeader>
-        <SimpleCardContent>
-        <div className="max-w-md">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">التقرير اليومي</h1>
+          <p className="text-muted-foreground mt-1">ملخص شامل لأداء وتدفق العمل لليوم</p>
         </div>
-        </SimpleCardContent>
-      </SimpleCard>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const d = new Date(selectedDate);
+                d.setDate(d.getDate() - 1);
+                setSelectedDate(d.toISOString().split('T')[0]);
+              }}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </SimpleButton>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent border-none focus:ring-0 text-foreground font-medium px-2 text-center text-sm md:text-base cursor-pointer"
+            />
+            <SimpleButton
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const d = new Date(selectedDate);
+                d.setDate(d.getDate() + 1);
+                setSelectedDate(d.toISOString().split('T')[0]);
+              }}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </SimpleButton>
+          </div>
+          <SimpleButton variant="outline" onClick={() => window.print()}>
+            <Download className="w-4 h-4 ml-2" />
+            تصدير PDF
+          </SimpleButton>
+        </div>
+      </div>
+
 
       {/* Revenue Summary */}
       {dailyData && (
         <SimpleCard>
           <SimpleCardHeader>
             <SimpleCardTitle className="flex items-center gap-2">
-            <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
-            ملخص الإيرادات
+              <DollarSign className="w-5 h-5 text-success" />
+              ملخص الإيرادات
             </SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="text-sm font-medium text-green-800">إجمالي الإيرادات</div>
-              <div className="text-2xl font-bold text-green-900">
-                {dailyData.totalRevenue?.toLocaleString('ar-SA')} جنية
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-success/5 rounded-lg p-4 border border-success/10">
+                <div className="text-sm font-medium text-success">إجمالي الإيرادات</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {dailyData.totalRevenue?.toLocaleString('ar-SA')} جنية
+                </div>
+              </div>
+              <div className="bg-blue-500/5 rounded-lg p-4 border border-blue-500/10">
+                <div className="text-sm font-medium text-blue-600">عدد المدفوعات</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {dailyData.paymentCount || 0}
+                </div>
+              </div>
+              <div className="bg-purple-500/5 rounded-lg p-4 border border-purple-500/10">
+                <div className="text-sm font-medium text-purple-600">متوسط المدفوعات</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {dailyData.averagePayment?.toLocaleString('ar-SA')} جنية
+                </div>
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="text-sm font-medium text-blue-800">عدد المدفوعات</div>
-              <div className="text-2xl font-bold text-blue-900">
-                {dailyData.paymentCount || 0}
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-              <div className="text-sm font-medium text-purple-800">متوسط المدفوعات</div>
-              <div className="text-2xl font-bold text-purple-900">
-                {dailyData.averagePayment?.toLocaleString('ar-SA')} جنية
-              </div>
-            </div>
-          </div>
           </SimpleCardContent>
         </SimpleCard>
       )}
@@ -239,38 +256,38 @@ const DailyReportsPage = () => {
         <SimpleCard>
           <SimpleCardHeader>
             <SimpleCardTitle className="flex items-center gap-2">
-            <CheckCircleIcon className="h-5 w-5 text-blue-600" />
-            إحصائيات الإصلاحات
+              <CheckCircle className="w-5 h-5 text-primary" />
+              إحصائيات الإصلاحات
             </SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="text-sm font-medium text-blue-800">إجمالي الطلبات</div>
-              <div className="text-2xl font-bold text-blue-900">
-                {repairStats.totalRepairs}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-blue-500/5 rounded-lg p-4 border border-blue-500/10">
+                <div className="text-sm font-medium text-blue-600">إجمالي الطلبات</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {repairStats.totalRepairs}
+                </div>
+              </div>
+              <div className="bg-success/5 rounded-lg p-4 border border-success/10">
+                <div className="text-sm font-medium text-success">طلبات جديدة</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {repairStats.newRepairs}
+                </div>
+              </div>
+              <div className="bg-warning/5 rounded-lg p-4 border border-warning/10">
+                <div className="text-sm font-medium text-warning">قيد الإصلاح</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {repairStats.inProgress}
+                </div>
+              </div>
+              <div className="bg-emerald-500/5 rounded-lg p-4 border border-emerald-500/10">
+                <div className="text-sm font-medium text-emerald-600">مكتمل</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {repairStats.completed}
+                </div>
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="text-sm font-medium text-green-800">طلبات جديدة</div>
-              <div className="text-2xl font-bold text-green-900">
-                {repairStats.newRepairs}
-              </div>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <div className="text-sm font-medium text-yellow-800">قيد الإصلاح</div>
-              <div className="text-2xl font-bold text-yellow-900">
-                {repairStats.inProgress}
-              </div>
-            </div>
-            <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-              <div className="text-sm font-medium text-emerald-800">مكتمل</div>
-              <div className="text-2xl font-bold text-emerald-900">
-                {repairStats.completed}
-              </div>
-            </div>
-          </div>
-        </SimpleCardContent>
+          </SimpleCardContent>
         </SimpleCard>
       )}
 
@@ -282,7 +299,7 @@ const DailyReportsPage = () => {
             <SimpleCardTitle>الإيرادات اليومية</SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent>
-          <Bar data={revenueChartData} options={chartOptions} />
+            <Bar data={revenueChartData} options={chartOptions} />
           </SimpleCardContent>
         </SimpleCard>
 
@@ -292,7 +309,7 @@ const DailyReportsPage = () => {
             <SimpleCardTitle>توزيع حالة الإصلاحات</SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent>
-          <Doughnut data={repairStatusData} options={doughnutOptions} />
+            <Doughnut data={repairStatusData} options={doughnutOptions} />
           </SimpleCardContent>
         </SimpleCard>
       </div>
@@ -302,26 +319,26 @@ const DailyReportsPage = () => {
         <SimpleCard>
           <SimpleCardHeader>
             <SimpleCardTitle className="flex items-center gap-2">
-            <ClockIcon className="h-5 w-5 text-blue-600" />
-            مؤشرات الأداء
+              <Clock className="w-5 h-5 text-primary" />
+              مؤشرات الأداء
             </SimpleCardTitle>
           </SimpleCardHeader>
           <SimpleCardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-800">متوسط وقت الإصلاح</div>
-              <div className="text-xl font-bold text-gray-900">
-                {repairStats.averageRepairTime} ساعات
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-muted rounded-lg p-4">
+                <div className="text-sm font-medium text-muted-foreground">متوسط وقت الإصلاح</div>
+                <div className="text-xl font-bold text-foreground">
+                  {repairStats.averageRepairTime} ساعات
+                </div>
+              </div>
+              <div className="bg-muted rounded-lg p-4">
+                <div className="text-sm font-medium text-muted-foreground">معدل الإنجاز</div>
+                <div className="text-xl font-bold text-foreground">
+                  {((repairStats.completed / repairStats.totalRepairs) * 100).toFixed(1)}%
+                </div>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-800">معدل الإنجاز</div>
-              <div className="text-xl font-bold text-gray-900">
-                {((repairStats.completed / repairStats.totalRepairs) * 100).toFixed(1)}%
-              </div>
-            </div>
-          </div>
-        </SimpleCardContent>
+          </SimpleCardContent>
         </SimpleCard>
       )}
 
@@ -329,23 +346,23 @@ const DailyReportsPage = () => {
       <SimpleCard>
         <SimpleCardHeader>
           <SimpleCardTitle className="flex items-center gap-2">
-          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-          تنبيهات اليوم
+            <AlertTriangle className="w-5 h-5 text-warning" />
+            تنبيهات اليوم
           </SimpleCardTitle>
         </SimpleCardHeader>
         <SimpleCardContent>
-        <div className="space-y-3">
-          <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3" />
-            <span className="text-yellow-800">يوجد {repairStats?.pending || 0} طلبات إصلاح معلقة</span>
-          </div>
-          {repairStats?.averageRepairTime > 3 && (
-            <div className="flex items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <ClockIcon className="h-5 w-5 text-orange-600 mr-3" />
-              <span className="text-orange-800">متوسط وقت الإصلاح أعلى من المعتاد</span>
+          <div className="space-y-3">
+            <div className="flex items-center p-3 bg-warning/5 border border-warning/10 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-warning ml-3" />
+              <span className="text-warning">يوجد {repairStats?.pending || 0} طلبات إصلاح معلقة</span>
             </div>
-          )}
-        </div>
+            {repairStats?.averageRepairTime > 3 && (
+              <div className="flex items-center p-3 bg-orange-500/5 border border-orange-500/10 rounded-lg">
+                <Clock className="h-5 w-5 text-orange-600 ml-3" />
+                <span className="text-orange-900 dark:text-orange-400">متوسط وقت الإصلاح أعلى من المعتاد</span>
+              </div>
+            )}
+          </div>
         </SimpleCardContent>
       </SimpleCard>
     </div>

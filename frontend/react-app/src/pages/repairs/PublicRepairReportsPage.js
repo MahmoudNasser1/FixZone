@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
+import {
   FileCheck,
   X,
   FileText,
   Calendar,
   User,
   MapPin,
-  ArrowRight
+  ArrowRight,
+  ClipboardList,
+  ShieldCheck,
+  ChevronLeft,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleButton from '../../components/ui/SimpleButton';
-import { Loading } from '../../components/ui/Loading';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { cn } from '../../lib/utils';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
@@ -21,7 +28,7 @@ const PublicRepairReportsPage = () => {
   const navigate = useNavigate();
   const trackingToken = searchParams.get('trackingToken');
   const repairId = searchParams.get('repairId');
-  
+
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(true);
   const [repairData, setRepairData] = useState(null);
@@ -82,7 +89,7 @@ const PublicRepairReportsPage = () => {
       try {
         setReportsLoading(true);
         const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${id}`);
-        
+
         if (response.ok) {
           const data = await response.json();
           // Handle different response formats
@@ -104,7 +111,7 @@ const PublicRepairReportsPage = () => {
       }
     };
 
-      fetchReports();
+    fetchReports();
   }, [repairId, repairData?.id]);
 
   const handleBack = () => {
@@ -112,188 +119,203 @@ const PublicRepairReportsPage = () => {
     navigate(-1);
   };
 
-  // Force light mode for this page
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    root.classList.add('light');
-    root.style.colorScheme = 'light';
-    
-    return () => {
-      // Don't restore theme on unmount - let user's preference persist
-    };
-  }, []);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-background border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 space-x-reverse flex-1 min-w-0">
+    <div className="min-h-screen bg-background text-right" dir="rtl">
+      {/* Premium Header */}
+      <div className="bg-card border-b border-border shadow-sm sticky top-0 z-30 backdrop-blur-md bg-card/80">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <button
                 onClick={handleBack}
-                className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
+                className="p-2.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded-xl transition-all"
                 aria-label="رجوع"
               >
-                <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                <ArrowRight className="w-5 h-5" />
               </button>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground truncate">تقارير الفحص</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                  {repairData?.customerName ? `تقارير فحص لطلب ${repairData.customerName}` : 'عرض تقارير الفحص'}
-                </p>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">تقارير الفحص الفني</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-md">
+                    {repairData?.customerName ? `عرض التقارير الخاصة بـ: ${repairData.customerName}` : 'تفاصيل الفحص والاختبار'}
+                  </p>
+                  <SimpleBadge variant="outline" className="text-[10px] py-0 px-1.5 border-primary/20 bg-primary/5 text-primary">رسمي</SimpleBadge>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 space-x-reverse flex-shrink-0">
-              <img 
-                src="/Fav.png" 
-                alt="FixZone Logo" 
-                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 object-contain flex-shrink-0"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+            <div className="hidden sm:block">
+              <img
+                src="/Fav.png"
+                alt="FixZone Logo"
+                className="h-10 w-auto opacity-80 brightness-90 dark:brightness-110"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-        {/* Repair Info Card */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Repair Context Card */}
         {repairData && (
-          <SimpleCard className="mb-4 sm:mb-6 md:mb-8">
-            <SimpleCardContent className="p-4 sm:p-6 md:p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {repairData.customerName && (
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted rounded-full flex-shrink-0">
-                      <User className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-info/20 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+            <SimpleCard className="relative border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
+              <SimpleCardContent className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                  {[
+                    { label: 'العميل المستفيد', value: repairData.customerName, icon: User, color: 'text-primary' },
+                    { label: 'العنصر الخاضع للفحص', value: repairData.deviceModel, icon: ClipboardList, color: 'text-info' },
+                    { label: 'تاريخ التسجيل', value: formatDate(repairData.createdAt), icon: Calendar, color: 'text-success' },
+                    { label: 'الموقع / الفرع', value: repairData.branchName, icon: MapPin, color: 'text-warning' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <item.icon className={cn("w-4 h-4", item.color)} />
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{item.label}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground break-words">{item.value || 'غير متوفر'}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-1">العميل</h4>
-                      <p className="text-sm sm:text-base text-muted-foreground break-words">{repairData.customerName}</p>
-                    </div>
-                  </div>
-                )}
-                {repairData.deviceModel && (
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted rounded-full flex-shrink-0">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-1">الموديل</h4>
-                      <p className="text-sm sm:text-base text-muted-foreground break-words">{repairData.deviceModel}</p>
-                    </div>
-                  </div>
-                )}
-                {repairData.createdAt && (
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted rounded-full flex-shrink-0">
-                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-1">تاريخ الاستلام</h4>
-                      <p className="text-sm sm:text-base text-muted-foreground break-words">{formatDate(repairData.createdAt)}</p>
-                    </div>
-                  </div>
-                )}
-                {repairData.branchName && (
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-muted rounded-full flex-shrink-0">
-                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-sm font-medium text-foreground mb-1">الفرع</h4>
-                      <p className="text-sm sm:text-base text-muted-foreground break-words">{repairData.branchName}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </SimpleCardContent>
-          </SimpleCard>
+                  ))}
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          </div>
         )}
 
-        {/* Reports Content */}
-        <SimpleCard>
-          <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-            <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
-              <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
-                <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+        {/* Main Content Area */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-success/10 rounded-lg text-success">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <span className="font-semibold text-foreground">تقارير الفحص</span>
-            </SimpleCardTitle>
-          </SimpleCardHeader>
-          <SimpleCardContent className="p-4 sm:p-5 md:p-6">
+              <h2 className="text-xl font-bold text-foreground">التقارير المعتمدة</h2>
+            </div>
+            {reports.length > 0 && (
+              <SimpleBadge variant="success" className="font-bold">{reports.length} تقارير</SimpleBadge>
+            )}
+          </div>
+
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {reportsLoading ? (
-              <div className="flex items-center justify-center py-8 sm:py-12">
-                <Loading size="lg" text="جاري تحميل التقارير..." />
+              <div className="py-20 flex flex-col items-center">
+                <LoadingSpinner message="جاري استرجاع تقارير الفحص..." />
               </div>
             ) : reports.length === 0 ? (
-              <div className="text-center py-8 sm:py-12">
-                <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-medium text-foreground mb-1 sm:mb-2">لا توجد تقارير</h3>
-                <p className="text-sm sm:text-base text-muted-foreground px-4">لا توجد تقارير فحص مرتبطة بهذا الطلب</p>
-              </div>
+              <SimpleCard className="border-dashed border-2 bg-transparent">
+                <SimpleCardContent className="py-20 text-center">
+                  <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FileText className="w-10 h-10 text-muted-foreground/50" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">لا توجد تقارير منشورة</h3>
+                  <p className="text-muted-foreground max-w-xs mx-auto text-sm leading-relaxed">
+                    لم نتمكن من العثور على أي تقارير فحص فني نهائية مرتبطة برقم التتبع هذا حالياً.
+                  </p>
+                </SimpleCardContent>
+              </SimpleCard>
             ) : (
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-6">
                 {reports.map((report, index) => (
-                  <SimpleCard key={report.id || index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                    <SimpleCardHeader className="p-4 sm:p-5 md:p-6 pb-4 border-b">
-                      <SimpleCardTitle className="text-lg sm:text-xl mb-0 flex items-center">
-                        <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full ml-3 sm:ml-4">
-                          <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0" />
+                  <SimpleCard key={report.id || index} className="border-none shadow-md overflow-hidden bg-card/60 hover:bg-card transition-all group">
+                    <SimpleCardHeader className="bg-muted/30 border-b border-border/50 px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <SimpleCardTitle className="text-lg font-bold">
+                              {report.inspectionTypeName || report.typeName || report.name || "تقرير فحص فني"}
+                            </SimpleCardTitle>
+                            <div className="flex items-center gap-3 mt-1 underline-offset-4">
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(report.reportDate)}
+                              </span>
+                              {report.technicianName && (
+                                <>
+                                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                                    <User className="w-3 h-3" />
+                                    بإشراف الفني: {report.technicianName}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <span className="font-semibold text-foreground">
-                          {report.inspectionTypeName || report.typeName || report.name || `تقرير فحص #${index + 1}`}
-                        </span>
-                      </SimpleCardTitle>
+                        <SimpleBadge variant="outline" className="hidden sm:flex items-center gap-1 text-[10px] bg-card">
+                          <Info className="w-3 h-3" />
+                          معتمد رقم {report.id}
+                        </SimpleBadge>
+                      </div>
                     </SimpleCardHeader>
-                    <SimpleCardContent className="p-4 sm:p-5 md:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
-                        <div className="flex-1">
-                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                            تاريخ التقرير: {formatDate(report.reportDate)}
-                          </p>
-                          {report.technicianName && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              الفني: <span className="font-medium text-foreground">{report.technicianName}</span>
-                            </p>
+                    <SimpleCardContent className="p-6 sm:p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Summary & Result */}
+                        <div className="space-y-6">
+                          {report.summary && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-primary" />
+                                ملخص الحالة الفنية
+                              </h4>
+                              <div className="p-4 rounded-2xl bg-muted/40 text-sm leading-relaxed text-foreground/80 border border-border/10">
+                                {report.summary}
+                              </div>
+                            </div>
+                          )}
+                          {report.result && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-success" />
+                                النتيجة النهائية للفحص
+                              </h4>
+                              <div className="p-4 rounded-2xl bg-success/5 text-sm leading-relaxed text-foreground/90 border border-success/10 font-medium">
+                                {report.result}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Recommendations & Notes */}
+                        <div className="space-y-6">
+                          {report.recommendations && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <Info className="w-4 h-4 text-info" />
+                                التوصيات الفنية المقترحة
+                              </h4>
+                              <div className="p-4 rounded-2xl bg-info/5 text-sm leading-relaxed text-foreground/80 border border-info/10 italic">
+                                "{report.recommendations}"
+                              </div>
+                            </div>
+                          )}
+                          {report.notes && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-warning" />
+                                ملاحظات فنية إضافية
+                              </h4>
+                              <div className="p-4 rounded-2xl bg-muted/20 text-sm leading-relaxed text-muted-foreground border border-border/5">
+                                {report.notes}
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      {report.summary && (
-                        <div className="mb-4">
-                          <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">الملخص</h4>
-                          <p className="text-sm sm:text-base text-muted-foreground bg-muted/30 p-3 sm:p-4 rounded-lg break-words leading-relaxed">{report.summary}</p>
-                        </div>
-                      )}
-
-                      {report.result && (
-                        <div className="mb-4">
-                          <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">النتيجة</h4>
-                          <p className="text-sm sm:text-base text-muted-foreground bg-muted/30 p-3 sm:p-4 rounded-lg break-words leading-relaxed">{report.result}</p>
-                        </div>
-                      )}
-
-                      {report.recommendations && (
-                        <div className="mb-4">
-                          <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">التوصيات</h4>
-                          <p className="text-sm sm:text-base text-muted-foreground bg-muted/30 p-3 sm:p-4 rounded-lg break-words leading-relaxed">{report.recommendations}</p>
-                        </div>
-                      )}
-
-                      {report.notes && (
-                        <div className="mb-4">
-                          <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">ملاحظات</h4>
-                          <p className="text-sm sm:text-base text-muted-foreground bg-muted/30 p-3 sm:p-4 rounded-lg break-words leading-relaxed">{report.notes}</p>
-                        </div>
-                      )}
-
                       {report.branchName && (
-                        <div className="text-xs sm:text-sm text-muted-foreground pt-2 border-t">
-                          <span className="font-medium">الفرع:</span> {report.branchName}
+                        <div className="mt-8 pt-4 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
+                            صادر عن فرع: {report.branchName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FileCheck className="w-3 h-3 text-success" />
+                            تم الفحص والتحقق بنجاح
+                          </span>
                         </div>
                       )}
                     </SimpleCardContent>
@@ -301,8 +323,8 @@ const PublicRepairReportsPage = () => {
                 ))}
               </div>
             )}
-          </SimpleCardContent>
-        </SimpleCard>
+          </div>
+        </div>
       </div>
     </div>
   );

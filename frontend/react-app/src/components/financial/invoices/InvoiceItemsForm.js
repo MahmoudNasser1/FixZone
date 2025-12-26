@@ -2,26 +2,9 @@
 // Component for managing invoice items
 
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  TextField,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Paper,
-  Typography,
-  Alert
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+import { Plus, Trash2, Info } from 'lucide-react';
+import { SimpleCard, SimpleCardContent } from '../../ui/SimpleCard';
+import SimpleButton from '../../ui/SimpleButton';
 
 const InvoiceItemsForm = ({ items = [], onChange, errors }) => {
   const [newItem, setNewItem] = useState({
@@ -88,162 +71,157 @@ const InvoiceItemsForm = ({ items = [], onChange, errors }) => {
 
   const subtotal = items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
 
+  const inputClasses = "w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm transition-all";
+  const labelClasses = "block text-sm font-medium text-foreground mb-1";
+
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        عناصر الفاتورة
-      </Typography>
-      
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-lg font-bold text-foreground">عناصر الفاتورة</h3>
+      </div>
+
       {errors?.items && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-md p-3 mb-4 text-right">
           {errors.items}
-        </Alert>
+        </div>
       )}
 
       {/* Add Item Form */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="الوصف"
-              name="description"
-              value={newItem.description}
-              onChange={handleItemChange}
-              size="small"
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              label="الكمية"
-              name="quantity"
-              type="number"
-              value={newItem.quantity}
-              onChange={handleItemChange}
-              size="small"
-              inputProps={{ min: 1 }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="سعر الوحدة"
-              name="unitPrice"
-              type="number"
-              value={newItem.unitPrice}
-              onChange={handleItemChange}
-              size="small"
-              inputProps={{ min: 0, step: 0.01 }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddItem}
-              disabled={!newItem.description || newItem.quantity <= 0 || newItem.unitPrice <= 0}
-            >
-              إضافة
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+      <SimpleCard className="mb-6">
+        <SimpleCardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div className="md:col-span-5 space-y-1">
+              <label className={labelClasses}>الوصف</label>
+              <input
+                type="text"
+                name="description"
+                value={newItem.description}
+                onChange={handleItemChange}
+                className={inputClasses}
+                placeholder="وصف العنصر..."
+                required
+              />
+            </div>
+            <div className="md:col-span-2 space-y-1">
+              <label className={labelClasses}>الكمية</label>
+              <input
+                type="number"
+                name="quantity"
+                value={newItem.quantity}
+                onChange={handleItemChange}
+                className={inputClasses}
+                min="1"
+                required
+              />
+            </div>
+            <div className="md:col-span-3 space-y-1">
+              <label className={labelClasses}>سعر الوحدة</label>
+              <input
+                type="number"
+                name="unitPrice"
+                value={newItem.unitPrice}
+                onChange={handleItemChange}
+                className={inputClasses}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <SimpleButton
+                onClick={handleAddItem}
+                disabled={!newItem.description || newItem.quantity <= 0 || newItem.unitPrice <= 0}
+                className="w-full gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>إضافة</span>
+              </SimpleButton>
+            </div>
+          </div>
+        </SimpleCardContent>
+      </SimpleCard>
 
       {/* Items Table */}
-      {items.length > 0 && (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>الوصف</TableCell>
-                <TableCell align="right">الكمية</TableCell>
-                <TableCell align="right">سعر الوحدة</TableCell>
-                <TableCell align="right">الإجمالي</TableCell>
-                <TableCell align="center">إجراءات</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      {items.length > 0 ? (
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-sm text-right">
+            <thead className="bg-muted text-muted-foreground font-medium text-right">
+              <tr>
+                <th className="px-4 py-3 text-right">الوصف</th>
+                <th className="px-4 py-3 w-24 text-center">الكمية</th>
+                <th className="px-4 py-3 w-32 text-center">سعر الوحدة</th>
+                <th className="px-4 py-3 w-32 text-left">الإجمالي</th>
+                <th className="px-4 py-3 w-16 text-center">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
               {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <TextField
-                      fullWidth
-                      size="small"
+                <tr key={item.id} className="bg-card hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-2">
+                    <input
+                      type="text"
                       value={item.description}
                       onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
+                      className="w-full bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-2 py-1 text-right"
                     />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      size="small"
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
                       type="number"
                       value={item.quantity}
                       onChange={(e) => handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                      inputProps={{ min: 1, style: { textAlign: 'right', width: '80px' } }}
+                      className="w-full bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-2 py-1 text-center"
+                      min="1"
                     />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      size="small"
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
                       type="number"
                       value={item.unitPrice}
                       onChange={(e) => handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      inputProps={{ min: 0, step: 0.01, style: { textAlign: 'right', width: '100px' } }}
+                      className="w-full bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-2 py-1 text-center"
+                      min="0"
+                      step="0.01"
                     />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(item.totalPrice)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
+                  </td>
+                  <td className="px-4 py-2 font-bold text-foreground text-left">
+                    {formatCurrency(item.totalPrice)}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      type="button"
                       onClick={() => handleRemoveItem(item.id)}
-                      color="error"
+                      className="p-1.5 text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                      title="حذف"
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-8 bg-muted/20 rounded-lg border border-dashed border-border text-center">
+          <Info className="w-10 h-10 text-muted-foreground mb-2 opacity-20" />
+          <p className="text-muted-foreground">لا توجد عناصر. أضف عنصراً على الأقل.</p>
+        </div>
       )}
 
       {/* Summary */}
       {items.length > 0 && (
-        <Box mt={2} display="flex" justifyContent="flex-end">
-          <Grid container spacing={2} sx={{ maxWidth: 400 }}>
-            <Grid item xs={6}>
-              <Typography variant="body2" color="textSecondary">
-                المجموع الفرعي
-              </Typography>
-            </Grid>
-            <Grid item xs={6} align="right">
-              <Typography variant="body1" fontWeight="bold">
-                {formatCurrency(subtotal)}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <div className="flex justify-end pt-4">
+          <div className="w-full max-w-[300px] space-y-2">
+            <div className="flex justify-between items-center text-muted-foreground">
+              <span>المجموع الفرعي</span>
+              <span className="font-bold text-foreground">{formatCurrency(subtotal)}</span>
+            </div>
+          </div>
+        </div>
       )}
-
-      {items.length === 0 && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          لا توجد عناصر. أضف عنصراً على الأقل.
-        </Alert>
-      )}
-    </Box>
+    </div>
   );
 };
 
 export default InvoiceItemsForm;
-
-

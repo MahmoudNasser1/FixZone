@@ -2,15 +2,6 @@
 // Reusable form component for creating/editing expenses
 
 import React from 'react';
-import {
-  TextField,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText
-} from '@mui/material';
 
 const ExpenseForm = ({ formData, errors, onChange, categories = [], branches = [], vendors = [] }) => {
   const handleChange = (e) => {
@@ -18,128 +9,137 @@ const ExpenseForm = ({ formData, errors, onChange, categories = [], branches = [
     onChange(name, value);
   };
 
+  const inputClasses = "w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground text-sm transition-all";
+  const labelClasses = "block text-sm font-medium text-foreground mb-1";
+  const errorClasses = "text-xs text-destructive mt-1";
+
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth error={!!errors.categoryId} required>
-          <InputLabel>التصنيف *</InputLabel>
-          <Select
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>التصنيف *</label>
+          <select
             name="categoryId"
             value={formData.categoryId || ''}
             onChange={handleChange}
-            label="التصنيف *"
+            className={`${inputClasses} ${errors.categoryId ? 'border-destructive' : ''}`}
+            required
           >
+            <option value="">اختر التصنيف</option>
             {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
+              <option key={category.id} value={category.id}>
                 {category.name}
-              </MenuItem>
+              </option>
             ))}
-          </Select>
+          </select>
           {errors.categoryId && (
-            <FormHelperText>{errors.categoryId}</FormHelperText>
+            <p className={errorClasses}>{errors.categoryId}</p>
           )}
-        </FormControl>
-      </Grid>
+        </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="المبلغ *"
-          name="amount"
-          type="number"
-          value={formData.amount || ''}
-          onChange={handleChange}
-          error={!!errors.amount}
-          helperText={errors.amount}
-          inputProps={{ min: 0, step: 0.01 }}
-          required
-        />
-      </Grid>
+        <div className="space-y-1">
+          <label className={labelClasses}>المبلغ *</label>
+          <input
+            name="amount"
+            type="number"
+            value={formData.amount || ''}
+            onChange={handleChange}
+            className={`${inputClasses} ${errors.amount ? 'border-destructive' : ''}`}
+            min="0"
+            step="0.01"
+            required
+            placeholder="0.00"
+          />
+          {errors.amount && (
+            <p className={errorClasses}>{errors.amount}</p>
+          )}
+        </div>
+      </div>
 
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="الوصف *"
+      <div className="space-y-1">
+        <label className={labelClasses}>الوصف *</label>
+        <textarea
           name="description"
           value={formData.description || ''}
           onChange={handleChange}
-          error={!!errors.description}
-          helperText={errors.description}
-          multiline
-          rows={4}
+          className={`${inputClasses} min-h-[100px] ${errors.description ? 'border-destructive' : ''}`}
           required
+          placeholder="أدخل وصف المصروف هنا..."
         />
-      </Grid>
+        {errors.description && (
+          <p className={errorClasses}>{errors.description}</p>
+        )}
+      </div>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="التاريخ *"
-          name="date"
-          type="date"
-          value={formData.date || ''}
-          onChange={handleChange}
-          error={!!errors.date}
-          helperText={errors.date}
-          InputLabelProps={{ shrink: true }}
-          required
-        />
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className={labelClasses}>التاريخ *</label>
+          <input
+            name="date"
+            type="date"
+            value={formData.date || ''}
+            onChange={handleChange}
+            className={`${inputClasses} ${errors.date ? 'border-destructive' : ''}`}
+            required
+          />
+          {errors.date && (
+            <p className={errorClasses}>{errors.date}</p>
+          )}
+        </div>
 
-      <Grid item xs={12} md={6}>
-        <FormControl fullWidth>
-          <InputLabel>الفرع</InputLabel>
-          <Select
+        <div className="space-y-1">
+          <label className={labelClasses}>الفرع</label>
+          <select
             name="branchId"
             value={formData.branchId || ''}
             onChange={handleChange}
-            label="الفرع"
+            className={inputClasses}
           >
-            <MenuItem value="">اختر الفرع</MenuItem>
+            <option value="">اختر الفرع</option>
             {branches.map((branch) => (
-              <MenuItem key={branch.id} value={branch.id}>
+              <option key={branch.id} value={branch.id}>
                 {branch.name}
-              </MenuItem>
+              </option>
             ))}
-          </Select>
-        </FormControl>
-      </Grid>
+          </select>
+        </div>
+      </div>
 
-      {vendors.length > 0 && (
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>المورد</InputLabel>
-            <Select
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {vendors.length > 0 && (
+          <div className="space-y-1">
+            <label className={labelClasses}>المورد</label>
+            <select
               name="vendorId"
               value={formData.vendorId || ''}
               onChange={handleChange}
-              label="المورد"
+              className={inputClasses}
             >
-              <MenuItem value="">اختر المورد</MenuItem>
+              <option value="">اختر المورد</option>
               {vendors.map((vendor) => (
-                <MenuItem key={vendor.id} value={vendor.id}>
+                <option key={vendor.id} value={vendor.id}>
                   {vendor.name}
-                </MenuItem>
+                </option>
               ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      )}
+            </select>
+          </div>
+        )}
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="رقم المرجع"
-          name="referenceNumber"
-          value={formData.referenceNumber || ''}
-          onChange={handleChange}
-          helperText="رقم المرجع أو الفاتورة من المورد"
-        />
-      </Grid>
-    </Grid>
+        <div className="space-y-1">
+          <label className={labelClasses}>رقم المرجع</label>
+          <input
+            name="referenceNumber"
+            type="text"
+            value={formData.referenceNumber || ''}
+            onChange={handleChange}
+            className={inputClasses}
+            placeholder="رقم المرجع أو الفاتورة"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">رقم المرجع أو الفاتورة من المورد</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default ExpenseForm;
-
-

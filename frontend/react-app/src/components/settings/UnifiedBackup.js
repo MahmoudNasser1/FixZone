@@ -7,12 +7,12 @@ import SimpleButton from '../ui/SimpleButton';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import { 
-  Save, 
-  Download, 
-  Upload, 
-  Trash2, 
-  Calendar, 
+import {
+  Save,
+  Download,
+  Upload,
+  Trash2,
+  Calendar,
   User,
   AlertCircle,
   Database,
@@ -20,9 +20,10 @@ import {
   RefreshCw,
   Settings,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  HardDrive
 } from 'lucide-react';
-import { 
+import {
   Modal as ModalWrapper,
   ModalContent,
   ModalHeader,
@@ -39,7 +40,7 @@ import { useNotifications } from '../../components/notifications/NotificationSys
 export const UnifiedBackup = () => {
   const notifications = useNotifications();
   const [activeSubTab, setActiveSubTab] = useState('database'); // 'database' or 'settings'
-  
+
   // Settings Backup
   const {
     backups: settingsBackups,
@@ -65,7 +66,9 @@ export const UnifiedBackup = () => {
   const [backupDescription, setBackupDescription] = useState('');
   const [restoreOptions, setRestoreOptions] = useState({
     overwriteExisting: true,
-    skipSystemSettings: true
+    skipSystemSettings: true,
+    dropDatabase: true,
+    createDatabase: true
   });
 
   // Auto Backup Settings (Simplified)
@@ -94,14 +97,11 @@ export const UnifiedBackup = () => {
       setDbError(null);
       const response = await api.listDatabaseBackups();
       if (response.success) {
-        // Ensure data is an array (handle both array and object with backups property)
         let backupsData = response.data;
         if (backupsData && !Array.isArray(backupsData)) {
-          // If data is an object with backups property, use that
           if (backupsData.backups && Array.isArray(backupsData.backups)) {
             backupsData = backupsData.backups;
           } else {
-            // If it's not an array and doesn't have backups property, make it an empty array
             backupsData = [];
           }
         }
@@ -242,7 +242,6 @@ export const UnifiedBackup = () => {
   };
 
   const handleDelete = async (id) => {
-    // Validate ID
     if (!id && id !== 0) {
       notifications.error('خطأ', { message: 'معرف النسخة الاحتياطية غير صحيح' });
       return;
@@ -255,7 +254,6 @@ export const UnifiedBackup = () => {
     try {
       if (activeSubTab === 'database') {
         setDbLoading(true);
-        // Convert ID to string if needed (API expects string)
         const backupId = String(id);
         const response = await api.deleteDatabaseBackup(backupId);
         if (response.success) {
@@ -292,191 +290,205 @@ export const UnifiedBackup = () => {
     return `${mb.toFixed(2)} MB`;
   };
 
-  // Ensure currentBackups is always an array
   const getCurrentBackups = () => {
     const backups = activeSubTab === 'database' ? dbBackups : settingsBackups;
     if (!backups) return [];
     if (Array.isArray(backups)) return backups;
-    // If it's an object with backups property, use that
     if (backups.backups && Array.isArray(backups.backups)) return backups.backups;
-    // Otherwise, return empty array
     return [];
   };
-  
+
   const currentBackups = getCurrentBackups();
   const currentLoading = activeSubTab === 'database' ? dbLoading : settingsLoading;
   const currentError = activeSubTab === 'database' ? dbError : settingsError;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Database className="h-6 w-6" />
-            النسخ الاحتياطي
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">إدارة النسخ الاحتياطية للإعدادات وقاعدة البيانات</p>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-background/50 p-6 rounded-2xl border border-border backdrop-blur-xl shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl">
+            <Database className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">النسخ الاحتياطي</h2>
+            <p className="text-sm text-muted-foreground mt-1">إدارة شاملة لنسخ قاعدة البيانات وإعدادات النظام</p>
+          </div>
         </div>
-        <SimpleButton 
-          onClick={() => setIsCreateModalOpen(true)} 
+        <SimpleButton
+          onClick={() => setIsCreateModalOpen(true)}
           disabled={currentLoading}
+          className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-4 w-4 ml-2" />
           إنشاء نسخة احتياطية
         </SimpleButton>
       </div>
 
       {/* Sub Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-1">
-          <button
-            onClick={() => setActiveSubTab('database')}
-            className={`
-              px-4 py-2 text-sm font-medium border-b-2 transition-colors
-              ${activeSubTab === 'database'
-                ? 'border-green-500 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-              }
-            `}
-          >
-            <Database className="h-4 w-4 inline mr-2" />
-            قاعدة البيانات
-          </button>
-          <button
-            onClick={() => setActiveSubTab('settings')}
-            className={`
-              px-4 py-2 text-sm font-medium border-b-2 transition-colors
-              ${activeSubTab === 'settings'
-                ? 'border-green-500 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-              }
-            `}
-          >
-            <Settings className="h-4 w-4 inline mr-2" />
-            الإعدادات
-          </button>
-        </nav>
+      <div className="flex p-1 bg-muted/30 rounded-xl border border-border w-fit mx-auto sm:mx-0">
+        <button
+          onClick={() => setActiveSubTab('database')}
+          className={`
+            flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300
+            ${activeSubTab === 'database'
+              ? 'bg-background text-primary shadow-sm border border-border/50 translate-y-[-1px]'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+            }
+          `}
+        >
+          <HardDrive className="w-4 h-4" />
+          قاعدة البيانات
+        </button>
+        <button
+          onClick={() => setActiveSubTab('settings')}
+          className={`
+            flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300
+            ${activeSubTab === 'settings'
+              ? 'bg-background text-primary shadow-sm border border-border/50 translate-y-[-1px]'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+            }
+          `}
+        >
+          <Settings className="w-4 h-4" />
+          الإعدادات
+        </button>
       </div>
 
-      {/* Database Statistics (only for database tab) */}
+      {/* Database Statistics */}
       {activeSubTab === 'database' && dbStatistics && (
-        <SimpleCard>
-          <SimpleCardHeader>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-gray-500" />
-              <SimpleCardTitle>الإحصائيات</SimpleCardTitle>
-            </div>
-          </SimpleCardHeader>
-          <SimpleCardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">إجمالي النسخ</p>
-                <p className="text-2xl font-bold">{dbStatistics.total || 0}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">الحجم الإجمالي</p>
-                <p className="text-2xl font-bold">{dbStatistics.totalSizeMB || 0} MB</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">أقدم نسخة</p>
-                <p className="text-sm font-medium">
-                  {dbStatistics.oldest ? formatDate(dbStatistics.oldest) : 'لا يوجد'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">أحدث نسخة</p>
-                <p className="text-sm font-medium">
-                  {dbStatistics.newest ? formatDate(dbStatistics.newest) : 'لا يوجد'}
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-background border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/50 group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-muted-foreground">إجمالي النسخ</span>
+              <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                <Database className="w-5 h-5 text-blue-500" />
               </div>
             </div>
-          </SimpleCardContent>
-        </SimpleCard>
+            <p className="text-3xl font-bold text-foreground">{dbStatistics.total || 0}</p>
+          </div>
+
+          <div className="bg-background border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/50 group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-muted-foreground">الحجم الإجمالي</span>
+              <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
+                <BarChart3 className="w-5 h-5 text-purple-500" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-foreground overflow-hidden text-ellipsis" dir="ltr">{dbStatistics.totalSizeMB || 0} MB</p>
+          </div>
+
+          <div className="bg-background border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/50 group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-muted-foreground">أقدم نسخة</span>
+              <div className="p-2 bg-orange-500/10 rounded-lg group-hover:bg-orange-500/20 transition-colors">
+                <Clock className="w-5 h-5 text-orange-500" />
+              </div>
+            </div>
+            <p className="text-sm font-bold text-foreground">
+              {dbStatistics.oldest ? formatDate(dbStatistics.oldest) : 'لا يوجد'}
+            </p>
+          </div>
+
+          <div className="bg-background border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/50 group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-muted-foreground">أحدث نسخة</span>
+              <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
+                <Clock className="w-5 h-5 text-green-500" />
+              </div>
+            </div>
+            <p className="text-sm font-bold text-foreground">
+              {dbStatistics.newest ? formatDate(dbStatistics.newest) : 'لا يوجد'}
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Auto Backup Settings (Simplified - only for database tab) */}
+      {/* Auto Backup Settings */}
       {activeSubTab === 'database' && (
-        <SimpleCard>
-          <SimpleCardHeader>
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-gray-500" />
-              <SimpleCardTitle>النسخ التلقائي</SimpleCardTitle>
-            </div>
+        <SimpleCard className="overflow-hidden border-border bg-background/50 backdrop-blur-sm shadow-sm">
+          <SimpleCardHeader className="border-b border-border bg-muted/20 pb-4">
+            <SimpleCardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5 text-primary" />
+              النسخ الاحتياطي التلقائي
+            </SimpleCardTitle>
           </SimpleCardHeader>
-          <SimpleCardContent>
+          <SimpleCardContent className="p-6">
             {autoBackupLoading && <LoadingSpinner />}
-            <div className="space-y-4">
-              {/* Enable/Disable */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoBackupEnabled}
-                      onChange={(e) => setAutoBackupEnabled(e.target.checked)}
-                      className="h-5 w-5 text-green-600"
-                    />
-                    <span className="font-medium">تفعيل النسخ التلقائي</span>
-                  </label>
-                  <p className="text-sm text-gray-500 mt-1">إنشاء نسخ احتياطية تلقائية بشكل دوري</p>
+            <div className="space-y-6">
+              {/* Enable/Disable Toggle */}
+              <div className="flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:border-primary/30 transition-all">
+                <div className="space-y-1">
+                  <span className="font-bold text-foreground block">تفعيل المجدول الزمني</span>
+                  <span className="text-sm text-muted-foreground">تفعيل نظام النسخ الاحتياطي الدوري تلقائياً</span>
                 </div>
-                {autoBackupEnabled && (
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
-                )}
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={autoBackupEnabled}
+                    onChange={(e) => setAutoBackupEnabled(e.target.checked)}
+                  />
+                  <div className={`w-14 h-7 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/20 transition-all duration-300 ${autoBackupEnabled ? 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-muted border border-border'}`}></div>
+                  <div className={`absolute top-1 left-1 bg-white border-gray-300 border w-5 h-5 rounded-full transition-all duration-300 ${autoBackupEnabled ? 'translate-x-7 border-white' : 'translate-x-0'}`}></div>
+                </label>
               </div>
 
-              {/* Settings (only shown when enabled) */}
+              {/* Enhanced Settings Area */}
               {autoBackupEnabled && (
-                <div className="space-y-4 p-4 bg-white border border-gray-200 rounded-lg">
-                  {/* Type Selection */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">نوع النسخ</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-muted/10 rounded-2xl border border-border/50 animate-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-4">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      نوع التكرار
+                    </label>
                     <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="backupType"
-                          value="daily"
-                          checked={autoBackupType === 'daily'}
-                          onChange={(e) => setAutoBackupType(e.target.value)}
-                          className="h-4 w-4"
-                        />
-                        <span>يومي</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="backupType"
-                          value="weekly"
-                          checked={autoBackupType === 'weekly'}
-                          onChange={(e) => setAutoBackupType(e.target.value)}
-                          className="h-4 w-4"
-                        />
-                        <span>أسبوعي</span>
-                      </label>
+                      {['daily', 'weekly'].map((type) => (
+                        <label key={type} className={`
+                          flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all duration-200
+                          ${autoBackupType === type
+                            ? 'bg-primary/10 border-primary text-primary shadow-sm'
+                            : 'bg-background border-border text-muted-foreground hover:bg-muted'
+                          }
+                        `}>
+                          <input
+                            type="radio"
+                            name="backupType"
+                            value={type}
+                            checked={autoBackupType === type}
+                            onChange={(e) => setAutoBackupType(e.target.value)}
+                            className="hidden"
+                          />
+                          <span className="font-medium">{type === 'daily' ? 'يومي' : 'أسبوعي'}</span>
+                          {autoBackupType === type && <CheckCircle2 className="w-4 h-4" />}
+                        </label>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Time */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">الوقت</label>
+                  <div className="space-y-4">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      وقت التنفيذ
+                    </label>
                     <Input
                       type="time"
                       value={autoBackupTime}
                       onChange={(e) => setAutoBackupTime(e.target.value)}
-                      className="w-40"
+                      className="w-full text-center font-mono text-lg tracking-wider"
                     />
                   </div>
 
-                  {/* Day (only for weekly) */}
                   {autoBackupType === 'weekly' && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">اليوم</label>
+                    <div className="space-y-4">
+                      <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        يوم التنفيذ
+                      </label>
                       <select
                         value={autoBackupDay}
                         onChange={(e) => setAutoBackupDay(parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       >
                         <option value="0">الأحد</option>
                         <option value="1">الاثنين</option>
@@ -489,25 +501,27 @@ export const UnifiedBackup = () => {
                     </div>
                   )}
 
-                  {/* Keep Days */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
+                  <div className="space-y-4">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Database className="w-4 h-4" />
                       الاحتفاظ بالنسخ لمدة (أيام)
                     </label>
-                    <Input
-                      type="number"
-                      value={keepDays}
-                      onChange={(e) => setKeepDays(Math.max(1, parseInt(e.target.value) || 30))}
-                      min="1"
-                      className="w-32"
-                    />
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={keepDays}
+                        onChange={(e) => setKeepDays(Math.max(1, parseInt(e.target.value) || 30))}
+                        min="1"
+                        className="pl-12"
+                      />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">يوم</span>
+                    </div>
                   </div>
 
-                  {/* Save Button */}
-                  <div className="pt-2">
-                    <SimpleButton onClick={handleSaveAutoBackup} disabled={autoBackupLoading}>
-                      <Save className="h-4 w-4 mr-2" />
-                      حفظ الإعدادات
+                  <div className="md:col-span-2 pt-4 border-t border-border mt-2 flex justify-end">
+                    <SimpleButton onClick={handleSaveAutoBackup} disabled={autoBackupLoading} className="w-full md:w-auto min-w-[150px]">
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ التغييرات
                     </SimpleButton>
                   </div>
                 </div>
@@ -518,120 +532,106 @@ export const UnifiedBackup = () => {
       )}
 
       {/* Backups List */}
-      <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle>
-            {activeSubTab === 'database' ? 'نسخ قاعدة البيانات' : 'نسخ الإعدادات'}
+      <SimpleCard className="overflow-hidden border-border shadow-sm">
+        <SimpleCardHeader className="border-b border-border bg-muted/20 pb-4">
+          <SimpleCardTitle className="flex items-center gap-2">
+            <HardDrive className="w-5 h-5 text-primary" />
+            {activeSubTab === 'database' ? 'سجل نسخ قاعدة البيانات' : 'سجل نسخ الإعدادات'}
           </SimpleCardTitle>
         </SimpleCardHeader>
-        <SimpleCardContent>
-          {currentLoading && <LoadingSpinner />}
+        <SimpleCardContent className="p-0">
+          {currentLoading && <div className="p-12"><LoadingSpinner /></div>}
+
           {currentError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <p className="text-sm text-red-600">{currentError}</p>
-              </div>
+            <div className="m-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <p className="font-medium">{currentError}</p>
             </div>
           )}
+
           {!currentLoading && currentBackups && currentBackups.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Database className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>لا توجد نسخ احتياطية</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <Database className="h-10 w-10 opacity-50" />
+              </div>
+              <p className="text-lg font-medium">لا توجد نسخ احتياطية متاحة</p>
+              <p className="text-sm mt-1">قم بإنشاء نسخة احتياطية جديدة للبدء</p>
             </div>
           )}
+
           {!currentLoading && currentBackups && Array.isArray(currentBackups) && currentBackups.length > 0 && (
-            <div className="space-y-3">
+            <div className="divide-y divide-border">
               {currentBackups.map((backup, index) => {
-                // Ensure backup is an object, not an array or other type
-                if (!backup || typeof backup !== 'object' || Array.isArray(backup)) {
-                  if (process.env.NODE_ENV === 'development') {
-                    console.warn('Invalid backup object at index', index, backup);
-                  }
-                  return null;
-                }
-                // Additional check: if backup has a 'backups' property, it's likely the wrong structure
-                if (backup.backups && Array.isArray(backup.backups)) {
-                  if (process.env.NODE_ENV === 'development') {
-                    console.warn('Backup object has nested backups array at index', index, backup);
-                  }
-                  return null;
-                }
+                if (!backup || typeof backup !== 'object' || Array.isArray(backup) || (backup.backups && Array.isArray(backup.backups))) return null;
                 return (
-                <div
-                  key={backup.id || backup.filename || `backup-${index}`}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-5 w-5 text-gray-400" />
-                      <h3 className="font-medium">
-                        {backup.name || backup.description || (backup.id ? `نسخة #${backup.id}` : 'نسخة غير معروفة')}
-                      </h3>
+                  <div
+                    key={backup.id || backup.filename || `backup-${index}`}
+                    className="group flex flex-col md:flex-row md:items-center justify-between p-5 hover:bg-muted/30 transition-all duration-200"
+                  >
+                    <div className="flex items-start gap-4 mb-4 md:mb-0">
+                      <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:scale-110 transition-transform duration-300">
+                        <Database className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground text-lg">
+                          {backup.name || backup.description || (backup.id ? `نسخة #${backup.id}` : 'نسخة غير معروفة')}
+                        </h3>
+                        {backup.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{backup.description}</p>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-xs font-medium text-muted-foreground">
+                          <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(backup.createdAt)}
+                          </span>
+                          {backup.size && (
+                            <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                              <HardDrive className="h-3.5 w-3.5" />
+                              {formatSize(backup.size)}
+                            </span>
+                          )}
+                          {backup.createdBy && (
+                            <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                              <User className="h-3.5 w-3.5" />
+                              {backup.createdBy}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {backup.description && (
-                      <p className="text-sm text-gray-500 mt-1">{backup.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(backup.createdAt)}
-                      </span>
-                      {backup.size && (
-                        <span>{formatSize(backup.size)}</span>
-                      )}
-                      {backup.createdBy && (
-                        <span className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {backup.createdBy}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <SimpleButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedBackup(backup);
-                        setIsRestoreModalOpen(true);
-                      }}
-                    >
-                      <Upload className="h-4 w-4 mr-1" />
-                      استعادة
-                    </SimpleButton>
-                    <SimpleButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Try multiple ways to get the backup ID
-                        const backupId = backup.id || 
-                                        backup.filename || 
-                                        backup.metadata?.id ||
-                                        (backup.metadata && backup.metadata.id) ||
-                                        (typeof backup === 'string' ? backup : null);
-                        
-                        if (backupId !== undefined && backupId !== null && backupId !== '') {
-                          handleDelete(backupId);
-                        } else {
-                          // Log backup object for debugging (but only in development)
-                          if (process.env.NODE_ENV === 'development') {
-                            console.error('Backup object structure:', {
-                              id: backup?.id,
-                              filename: backup?.filename,
-                              name: backup?.name,
-                              fullObject: backup
-                            });
+
+                    <div className="flex gap-2 w-full md:w-auto pl-2">
+                      <SimpleButton
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 md:flex-none border-primary/20 hover:border-primary/50 hover:bg-primary/5 text-primary"
+                        onClick={() => {
+                          setSelectedBackup(backup);
+                          setIsRestoreModalOpen(true);
+                        }}
+                      >
+                        <Upload className="h-4 w-4 ml-1.5" />
+                        استعادة
+                      </SimpleButton>
+                      <SimpleButton
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 md:flex-none text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => {
+                          const backupId = backup.id || backup.filename || backup.metadata?.id || (backup.metadata && backup.metadata.id) || (typeof backup === 'string' ? backup : null);
+                          if (backupId !== undefined && backupId !== null && backupId !== '') {
+                            handleDelete(backupId);
+                          } else {
+                            notifications.error('خطأ', { message: 'معرف النسخة الاحتياطية غير موجود' });
                           }
-                          notifications.error('خطأ', { message: 'معرف النسخة الاحتياطية غير موجود' });
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      حذف
-                    </SimpleButton>
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 ml-1.5" />
+                        حذف
+                      </SimpleButton>
+                    </div>
                   </div>
-                </div>
                 );
               })}
             </div>
@@ -640,120 +640,152 @@ export const UnifiedBackup = () => {
       </SimpleCard>
 
       {/* Create Backup Modal */}
-      <ModalWrapper 
-        isOpen={isCreateModalOpen} 
+      <ModalWrapper
+        isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="إنشاء نسخة احتياطية"
-        description={activeSubTab === 'database' 
-          ? 'إنشاء نسخة احتياطية كاملة لقاعدة البيانات (سيتم تنظيف اسم الملف تلقائياً)'
-          : 'إنشاء نسخة احتياطية للإعدادات الحالية'
+        title="إنشاء نسخة احتياطية جديدة"
+        description={activeSubTab === 'database'
+          ? 'سيتم إنشاء نسخة كاملة لقاعدة البيانات الحالية. يمكنك استخدام هذه النسخة للاستعادة لاحقاً.'
+          : 'سيتم حفظ إعدادات النظام الحالية في ملف نسخة احتياطية.'
         }
         size="md"
       >
-          <div className="space-y-4 p-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">اسم النسخة الاحتياطية *</label>
-              <Input
-                value={backupName}
-                onChange={(e) => setBackupName(e.target.value)}
-                placeholder="مثال: backup_before_update"
-              />
-              {activeSubTab === 'database' && (
-                <p className="text-xs text-gray-500 mt-1">
-                  ملاحظة: سيتم استبدال المسافات والأحرف الخاصة بشرطة سفلية (_)
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">الوصف (اختياري)</label>
-              <Textarea
-                value={backupDescription}
-                onChange={(e) => setBackupDescription(e.target.value)}
-                placeholder="وصف مختصر للنسخة الاحتياطية"
-                rows={3}
-              />
-            </div>
+        <div className="space-y-5 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">اسم النسخة <span className="text-destructive">*</span></label>
+            <Input
+              value={backupName}
+              onChange={(e) => setBackupName(e.target.value)}
+              placeholder="مثال: backup_v1_before_update"
+              className="bg-background"
+              autoFocus
+            />
+            {activeSubTab === 'database' && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                سيتم تحويل المسافات تلقائياً إلى شرطة سفلية (_)
+              </p>
+            )}
           </div>
-          <ModalFooter>
-            <SimpleButton variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-              إلغاء
-            </SimpleButton>
-            <SimpleButton
-              onClick={activeSubTab === 'database' ? handleCreateDatabaseBackup : handleCreateSettingsBackup}
-              disabled={currentLoading || !backupName.trim()}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              إنشاء
-            </SimpleButton>
-          </ModalFooter>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">وصف إضافي (اختياري)</label>
+            <Textarea
+              value={backupDescription}
+              onChange={(e) => setBackupDescription(e.target.value)}
+              placeholder="اكتب ملاحظاتك حول هذه النسخة..."
+              rows={3}
+              className="resize-none bg-background"
+            />
+          </div>
+        </div>
+        <ModalFooter className="gap-2">
+          <SimpleButton variant="ghost" onClick={() => setIsCreateModalOpen(false)}>
+            إلغاء
+          </SimpleButton>
+          <SimpleButton
+            onClick={activeSubTab === 'database' ? handleCreateDatabaseBackup : handleCreateSettingsBackup}
+            disabled={currentLoading || !backupName.trim()}
+            className="px-8"
+          >
+            {currentLoading ? <LoadingSpinner size="sm" className="ml-2" /> : <Save className="h-4 w-4 ml-2" />}
+            تأكيد الإنشاء
+          </SimpleButton>
+        </ModalFooter>
       </ModalWrapper>
 
       {/* Restore Backup Modal */}
-      <ModalWrapper 
-        isOpen={isRestoreModalOpen} 
+      <ModalWrapper
+        isOpen={isRestoreModalOpen}
         onClose={() => setIsRestoreModalOpen(false)}
-        title="استعادة نسخة احتياطية"
-        description={selectedBackup ? `هل أنت متأكد من استعادة النسخة: ${selectedBackup.name || selectedBackup.description || `#${selectedBackup.id}`}؟` : ''}
+        title="تأكيد الاستعادة"
+        description="عملية الاستعادة قد تؤدي إلى فقدان البيانات الحالية. يرجى توخي الحذر."
         size="md"
       >
+        {selectedBackup && (
+          <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border">
+            <h4 className="font-semibold text-sm mb-2 text-foreground">تفاصيل النسخة المحددة:</h4>
+            <div className="text-sm space-y-1 text-muted-foreground">
+              <p><span className="font-medium text-foreground">الاسم:</span> {selectedBackup.name || selectedBackup.filename}</p>
+              <p><span className="font-medium text-foreground">التاريخ:</span> {formatDate(selectedBackup.createdAt)}</p>
+              {selectedBackup.size && <p><span className="font-medium text-foreground">الحجم:</span> {formatSize(selectedBackup.size)}</p>}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <h4 className="text-sm font-bold text-foreground mb-3">خيارات الاستعادة</h4>
           {activeSubTab === 'database' && (
-            <div className="space-y-4 p-4">
-              <label className="flex items-center gap-2">
+            <div className="space-y-3">
+              <label className="flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={restoreOptions.dropDatabase}
                   onChange={(e) => setRestoreOptions({ ...restoreOptions, dropDatabase: e.target.checked })}
-                  className="h-4 w-4"
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                 />
-                <span className="text-sm">حذف قاعدة البيانات الحالية قبل الاستعادة</span>
+                <div className="mr-3">
+                  <span className="block text-sm font-medium text-foreground">إعادة تهيئة قاعدة البيانات</span>
+                  <span className="block text-xs text-muted-foreground">حذف البيانات الحالية قبل الاستعادة (موصى به)</span>
+                </div>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={restoreOptions.createDatabase}
                   onChange={(e) => setRestoreOptions({ ...restoreOptions, createDatabase: e.target.checked })}
-                  className="h-4 w-4"
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                 />
-                <span className="text-sm">إنشاء قاعدة البيانات إذا لم تكن موجودة</span>
+                <div className="mr-3">
+                  <span className="block text-sm font-medium text-foreground">إنشاء قاعدة البيانات</span>
+                  <span className="block text-xs text-muted-foreground">إنشاء قاعدة البيانات إذا لم تكن موجودة مسبقاً</span>
+                </div>
               </label>
             </div>
           )}
           {activeSubTab === 'settings' && (
-            <div className="space-y-4 p-4">
-              <label className="flex items-center gap-2">
+            <div className="space-y-3">
+              <label className="flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={restoreOptions.overwriteExisting}
                   onChange={(e) => setRestoreOptions({ ...restoreOptions, overwriteExisting: e.target.checked })}
-                  className="h-4 w-4"
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                 />
-                <span className="text-sm">الكتابة فوق الإعدادات الموجودة</span>
+                <div className="mr-3">
+                  <span className="block text-sm font-medium text-foreground">استبدال الكل</span>
+                  <span className="block text-xs text-muted-foreground">الكتابة فوق كافة الإعدادات الحالية</span>
+                </div>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={restoreOptions.skipSystemSettings}
                   onChange={(e) => setRestoreOptions({ ...restoreOptions, skipSystemSettings: e.target.checked })}
-                  className="h-4 w-4"
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                 />
-                <span className="text-sm">تخطي إعدادات النظام</span>
+                <div className="mr-3">
+                  <span className="block text-sm font-medium text-foreground">حماية إعدادات النظام</span>
+                  <span className="block text-xs text-muted-foreground">عدم تغيير الإعدادات الحساسة للنظام</span>
+                </div>
               </label>
             </div>
           )}
-          <ModalFooter>
-            <SimpleButton variant="outline" onClick={() => setIsRestoreModalOpen(false)}>
-              إلغاء
-            </SimpleButton>
-            <SimpleButton
-              onClick={handleRestore}
-              disabled={currentLoading}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              استعادة
-            </SimpleButton>
-          </ModalFooter>
+        </div>
+
+        <ModalFooter className="gap-2 mt-6">
+          <SimpleButton variant="ghost" onClick={() => setIsRestoreModalOpen(false)}>
+            إلغاء الأمر
+          </SimpleButton>
+          <SimpleButton
+            onClick={handleRestore}
+            disabled={currentLoading}
+            className="bg-red-600 hover:bg-red-700 text-white px-6"
+          >
+            {currentLoading ? <LoadingSpinner size="sm" className="ml-2 text-white" /> : <RefreshCw className="h-4 w-4 ml-2" />}
+            بدء الاستعادة
+          </SimpleButton>
+        </ModalFooter>
       </ModalWrapper>
     </div>
   );
 };
-

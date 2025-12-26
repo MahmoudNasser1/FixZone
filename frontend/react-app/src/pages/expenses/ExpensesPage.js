@@ -11,7 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import ExpenseForm from './ExpenseForm';
-import { 
+import {
   Plus, Search, Filter, Download, RefreshCw,
   DollarSign, Calendar, Tag, Building2, Receipt,
   Eye, Edit, Trash2, TrendingUp, TrendingDown,
@@ -22,7 +22,7 @@ import {
 const ExpensesPage = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   // مساعد تنبيهات بسيط لتقليل الإزعاج
   const notify = useCallback((type, message) => {
     if (notifications?.addNotification) {
@@ -43,20 +43,20 @@ const ExpensesPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [error, setError] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  
+
   // Sorting state
   const [sortField, setSortField] = useState('expenseDate');
   const [sortDirection, setSortDirection] = useState('desc');
-  
+
   // Modal state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
-  
+
   // Stats state
   const [stats, setStats] = useState({
     totalExpenses: 0,
@@ -116,7 +116,7 @@ const ExpensesPage = () => {
           response = null;
         }
       }
-      
+
       if (Array.isArray(response)) {
         setVendors(response);
       } else if (response?.vendors) {
@@ -135,7 +135,7 @@ const ExpensesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {
         page: currentPage,
         limit: itemsPerPage
@@ -163,7 +163,7 @@ const ExpensesPage = () => {
       }
 
       const response = await apiService.getExpenses(params);
-      
+
       let expensesData = [];
       let totalCount = 0;
 
@@ -229,7 +229,7 @@ const ExpensesPage = () => {
       if (dateTo) params.dateTo = dateTo;
 
       const response = await apiService.getExpenseStats(params);
-      
+
       if (response?.success && response?.data) {
         const summary = response.data.summary || {};
         setStats({
@@ -300,8 +300,8 @@ const ExpensesPage = () => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
     }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-blue-600" /> :
       <ArrowDown className="w-4 h-4 text-blue-600" />;
   };
 
@@ -337,8 +337,8 @@ const ExpensesPage = () => {
         const expense = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-900">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">
               {expense.expenseDate ? new Date(expense.expenseDate).toLocaleDateString('ar-EG') : '-'}
             </span>
           </div>
@@ -365,7 +365,7 @@ const ExpensesPage = () => {
         const expense = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-gray-400" />
+            <Tag className="w-4 h-4 text-muted-foreground" />
             <SimpleBadge variant="secondary" className="text-xs">
               {expense.categoryName || 'غير محدد'}
             </SimpleBadge>
@@ -394,8 +394,8 @@ const ExpensesPage = () => {
         const amount = parseFloat(expense.amount || 0);
         return (
           <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-red-500" />
-            <span className="font-semibold text-red-600">
+            <DollarSign className="w-4 h-4 text-error" />
+            <span className="font-semibold text-error">
               {amount.toFixed(2)} ج.م
             </span>
           </div>
@@ -414,8 +414,8 @@ const ExpensesPage = () => {
         const expense = row.original;
         return expense.vendorName ? (
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{expense.vendorName}</span>
+            <Building2 className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">{expense.vendorName}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400">-</span>
@@ -434,7 +434,7 @@ const ExpensesPage = () => {
         const expense = row.original;
         return (
           <div className="max-w-xs">
-            <p className="text-sm text-gray-700 truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {expense.description || 'لا يوجد وصف'}
             </p>
           </div>
@@ -453,8 +453,8 @@ const ExpensesPage = () => {
         const expense = row.original;
         return expense.invoiceNumber ? (
           <div className="flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">#{expense.invoiceNumber}</span>
+            <Receipt className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">#{expense.invoiceNumber}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400">-</span>
@@ -501,8 +501,8 @@ const ExpensesPage = () => {
         const expense = row.original;
         return expense.branchName ? (
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-gray-700">{expense.branchName}</span>
+            <MapPin className="w-4 h-4 text-success/70" />
+            <span className="text-sm text-foreground">{expense.branchName}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400">-</span>
@@ -520,7 +520,7 @@ const ExpensesPage = () => {
       cell: ({ row }) => {
         const expense = row.original;
         return expense.createdByName ? (
-          <span className="text-sm text-gray-700">{expense.createdByName}</span>
+          <span className="text-sm text-foreground">{expense.createdByName}</span>
         ) : (
           <span className="text-sm text-gray-400">-</span>
         );
@@ -577,23 +577,23 @@ const ExpensesPage = () => {
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Tag className="w-4 h-4 text-gray-400" />
+                <Tag className="w-4 h-4 text-muted-foreground" />
                 <SimpleBadge variant="secondary" className="text-xs">
                   {expense.categoryName || 'غير محدد'}
                 </SimpleBadge>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">
+              <h3 className="font-semibold text-foreground mb-1">
                 {amount.toFixed(2)} ج.م
               </h3>
               {expense.description && (
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {expense.description}
                 </p>
               )}
             </div>
           </div>
-          
-          <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
@@ -608,7 +608,7 @@ const ExpensesPage = () => {
               {expense.repairRequestId && (
                 <div className="flex items-center gap-1">
                   <Wrench className="w-3 h-3 text-blue-600" />
-                  <a 
+                  <a
                     href={`/repairs/${expense.repairRequestId}`}
                     className="text-xs text-blue-600 hover:underline"
                     onClick={(e) => {
@@ -661,14 +661,14 @@ const ExpensesPage = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">إدارة المصروفات</h1>
-          <p className="text-gray-600 mt-1">تسجيل وإدارة جميع المصروفات</p>
+          <h1 className="text-3xl font-bold text-foreground">إدارة المصروفات</h1>
+          <p className="text-muted-foreground mt-1">تسجيل وإدارة جميع المصروفات</p>
         </div>
-        <SimpleButton onClick={handleCreateExpense}>
+        <SimpleButton onClick={handleCreateExpense} className="w-full sm:w-auto">
           <Plus className="w-5 h-5 ml-2" />
           إضافة مصروف جديد
         </SimpleButton>
@@ -676,16 +676,16 @@ const ExpensesPage = () => {
 
       {/* Stats Cards */}
       {!loadingStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-blue-500" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">إجمالي المصروفات</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalExpenses}</p>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي المصروفات</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalExpenses}</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -694,12 +694,12 @@ const ExpensesPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="p-2 bg-error/10 rounded-lg">
+                  <TrendingDown className="w-6 h-6 text-error" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">إجمالي المبلغ</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.totalAmount.toFixed(2)} ج.م</p>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي المبلغ</p>
+                  <p className="text-2xl font-bold text-error">{stats.totalAmount.toFixed(2)} ج.م</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -708,12 +708,12 @@ const ExpensesPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-success" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">المتوسط</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.averageAmount.toFixed(2)} ج.م</p>
+                  <p className="text-sm font-medium text-muted-foreground">المتوسط</p>
+                  <p className="text-2xl font-bold text-success">{stats.averageAmount.toFixed(2)} ج.م</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -722,13 +722,13 @@ const ExpensesPage = () => {
           <SimpleCard>
             <SimpleCardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 bg-orange-500/10 rounded-lg">
+                  <Calendar className="w-6 h-6 text-orange-500" />
                 </div>
                 <div className="mr-4">
-                  <p className="text-sm font-medium text-gray-600">اليوم</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.todayAmount.toFixed(2)} ج.م</p>
-                  <p className="text-xs text-gray-500">{stats.todayExpenses} مصروف</p>
+                  <p className="text-sm font-medium text-muted-foreground">اليوم</p>
+                  <p className="text-2xl font-bold text-orange-500">{stats.todayAmount.toFixed(2)} ج.م</p>
+                  <p className="text-xs text-muted-foreground">{stats.todayExpenses} مصروف</p>
                 </div>
               </div>
             </SimpleCardContent>
@@ -739,16 +739,16 @@ const ExpensesPage = () => {
       {/* Filters */}
       <SimpleCard>
         <SimpleCardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-wrap items-center gap-3 flex-1">
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {/* Search */}
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <div className="relative lg:col-span-1">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="البحث في المصروفات..."
+                  placeholder="البحث..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10 w-64"
+                  className="pr-10 w-full"
                 />
               </div>
 
@@ -760,8 +760,8 @@ const ExpensesPage = () => {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="جميع الفئات" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="الفئة" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">جميع الفئات</SelectItem>
@@ -781,8 +781,8 @@ const ExpensesPage = () => {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="جميع الموردين" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="المورد" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">جميع الموردين</SelectItem>
@@ -802,8 +802,7 @@ const ExpensesPage = () => {
                   setDateFrom(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder="من تاريخ"
-                className="w-40"
+                className="w-full"
               />
 
               {/* Date To */}
@@ -814,23 +813,11 @@ const ExpensesPage = () => {
                   setDateTo(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder="إلى تاريخ"
-                className="w-40"
+                className="w-full"
               />
+            </div>
 
-              {/* Clear Filters */}
-              {(selectedCategory || selectedVendor || dateFrom || dateTo || searchTerm) && (
-                <SimpleButton
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearFilters}
-                  className="text-gray-600"
-                >
-                  <X className="w-4 h-4 ml-1" />
-                  مسح
-                </SimpleButton>
-              )}
-
+            <div className="flex items-center justify-end gap-2">
               {/* Refresh */}
               <SimpleButton
                 variant="outline"
@@ -843,6 +830,19 @@ const ExpensesPage = () => {
               >
                 <RefreshCw className="w-4 h-4" />
               </SimpleButton>
+
+              {/* Clear Filters */}
+              {(selectedCategory || selectedVendor || dateFrom || dateTo || searchTerm) && (
+                <SimpleButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="text-muted-foreground"
+                >
+                  <X className="w-4 h-4 ml-1" />
+                  مسح الفلاتر
+                </SimpleButton>
+              )}
             </div>
           </div>
         </SimpleCardContent>
@@ -942,7 +942,7 @@ const ExpensesPage = () => {
       >
         <ExpenseForm
           expense={editingExpense}
-          onSave={() => {}}
+          onSave={() => { }}
           onCancel={() => {
             setIsFormModalOpen(false);
             setEditingExpense(null);

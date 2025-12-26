@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, DollarSign, Package, BarChart3, PieChart, 
-  Activity, AlertTriangle, RefreshCw 
+import {
+  TrendingUp, DollarSign, Package, BarChart3, PieChart,
+  Activity, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -19,6 +19,10 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 
 import analyticsService from '../../services/analyticsService';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { SimpleCard, SimpleCardContent, SimpleCardHeader, SimpleCardTitle } from '../../components/ui/SimpleCard';
+import SimpleButton from '../../components/ui/SimpleButton';
+import SimpleBadge from '../../components/ui/SimpleBadge';
+import { cn } from '../../lib/utils';
 
 ChartJS.register(
   CategoryScale,
@@ -33,6 +37,38 @@ ChartJS.register(
 );
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: 'oklch(var(--muted-foreground))',
+        font: { size: 12 }
+      },
+    },
+    tooltip: {
+      rtl: true,
+      backgroundColor: 'oklch(var(--card))',
+      titleColor: 'oklch(var(--foreground))',
+      bodyColor: 'oklch(var(--muted-foreground))',
+      borderColor: 'oklch(var(--border))',
+      borderWidth: 1,
+    }
+  },
+  scales: {
+    x: {
+      grid: { color: 'oklch(var(--border) / 0.1)' },
+      ticks: { color: 'oklch(var(--muted-foreground))' }
+    },
+    y: {
+      grid: { color: 'oklch(var(--border) / 0.1)' },
+      ticks: { color: 'oklch(var(--muted-foreground))' }
+    }
+  }
+};
 
 const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -82,365 +118,335 @@ const AnalyticsPage = () => {
   const { summary, inventoryValue, abcAnalysis, profitMargin, slowMoving } = data;
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">التحليلات المتقدمة</h1>
-          <p className="text-gray-600 mt-1">تحليلات شاملة لأداء المخزون</p>
-        </div>
-        <button
-          onClick={loadAnalytics}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <RefreshCw className="w-4 h-4" />
-          تحديث
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">إجمالي الأصناف</p>
-              <p className="text-2xl font-bold text-gray-900">{summary?.totalItems || 0}</p>
-            </div>
-            <Package className="w-10 h-10 text-blue-600" />
+    <div className="min-h-screen bg-background p-4 md:p-6 space-y-6 text-right" dir="rtl">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">التحليلات المتقدمة</h1>
+            <p className="text-muted-foreground mt-1">ذكاء الأعمال والرؤى العميقة لأداء المخزون</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <SimpleButton onClick={loadAnalytics} variant="outline" className="w-full md:w-auto">
+              <RefreshCw className="w-4 h-4 ml-2" />
+              تحديث البيانات
+            </SimpleButton>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">قيمة المخزون</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {(summary?.totalPurchaseValue || 0).toLocaleString()} ج.م
-              </p>
-            </div>
-            <DollarSign className="w-10 h-10 text-green-600" />
-          </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'إجمالي الأصناف', value: summary?.totalItems || 0, icon: Package, color: 'text-primary', bg: 'bg-primary/10' },
+            { label: 'قيمة المخزون', value: `${(summary?.totalPurchaseValue || 0).toLocaleString()} ج.م`, icon: DollarSign, color: 'text-success', bg: 'bg-success/10' },
+            { label: 'الربح المتوقع', value: `${(summary?.potentialProfit || 0).toLocaleString()} ج.م`, icon: TrendingUp, color: 'text-warning', bg: 'bg-warning/10' },
+            { label: 'هامش الربح', value: `${(summary?.profitMargin || 0).toFixed(1)}%`, icon: BarChart3, color: 'text-secondary', bg: 'bg-secondary/10' }
+          ].map((stat, i) => (
+            <SimpleCard key={i}>
+              <SimpleCardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  </div>
+                  <div className={cn("p-3 rounded-xl", stat.bg)}>
+                    <stat.icon className={cn("w-6 h-6", stat.color)} />
+                  </div>
+                </div>
+              </SimpleCardContent>
+            </SimpleCard>
+          ))}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">الربح المتوقع</p>
-              <p className="text-2xl font-bold text-green-600">
-                {(summary?.potentialProfit || 0).toLocaleString()} ج.م
-              </p>
-            </div>
-            <TrendingUp className="w-10 h-10 text-green-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">هامش الربح</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {(summary?.profitMargin || 0).toFixed(1)}%
-              </p>
-            </div>
-            <BarChart3 className="w-10 h-10 text-purple-600" />
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-4">
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-border overflow-x-auto no-scrollbar">
           {[
             { id: 'overview', label: 'نظرة عامة', icon: Activity },
             { id: 'abc', label: 'تحليل ABC', icon: PieChart },
             { id: 'profit', label: 'هامش الربح', icon: DollarSign },
             { id: 'slow', label: 'بطيء الحركة', icon: AlertTriangle }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                selectedTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = selectedTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all relative min-w-max",
+                  isActive
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
-      </div>
 
-      {/* Tab Content */}
-      <div>
-        {selectedTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Category Breakdown */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">التوزيع حسب الفئة</h3>
-              <div style={{ height: '300px' }}>
-                <Doughnut
-                  data={{
-                    labels: (inventoryValue?.categoryBreakdown || []).map(item => item.category),
-                    datasets: [{
-                      data: (inventoryValue?.categoryBreakdown || []).map(item => item.purchaseValue),
-                      backgroundColor: (inventoryValue?.categoryBreakdown || []).map((_, index) => 
-                        COLORS[index % COLORS.length]
-                      ),
-                    }]
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                      },
-                    },
-                  }}
-                />
-              </div>
+        {/* Tab Content Areas */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {selectedTab === 'overview' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle className="text-lg">التوزيع حسب الفئة (قيمة الشراء)</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  <div className="h-[300px]">
+                    <Doughnut
+                      data={{
+                        labels: (inventoryValue?.categoryBreakdown || []).map(item => item.category),
+                        datasets: [{
+                          data: (inventoryValue?.categoryBreakdown || []).map(item => item.purchaseValue),
+                          backgroundColor: COLORS,
+                          borderColor: 'oklch(var(--card))',
+                          borderWidth: 2
+                        }]
+                      }}
+                      options={chartOptions}
+                    />
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
+
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle className="text-lg">مقارنة التوزيع بين المستودعات</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  <div className="h-[300px]">
+                    <Bar
+                      data={{
+                        labels: (inventoryValue?.warehouseBreakdown || []).map(item => item.name),
+                        datasets: [
+                          {
+                            label: 'قيمة الشراء',
+                            data: (inventoryValue?.warehouseBreakdown || []).map(item => item.purchaseValue),
+                            backgroundColor: 'oklch(var(--primary) / 0.8)',
+                            borderRadius: 6
+                          },
+                          {
+                            label: 'قيمة البيع',
+                            data: (inventoryValue?.warehouseBreakdown || []).map(item => item.sellingValue),
+                            backgroundColor: 'oklch(var(--success) / 0.8)',
+                            borderRadius: 6
+                          }
+                        ]
+                      }}
+                      options={chartOptions}
+                    />
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
             </div>
+          )}
 
-            {/* Warehouse Breakdown */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">التوزيع حسب المستودع</h3>
-              <div style={{ height: '300px' }}>
-                <Bar
-                  data={{
-                    labels: (inventoryValue?.warehouseBreakdown || []).map(item => item.name),
-                    datasets: [
-                      {
-                        label: 'قيمة الشراء',
-                        data: (inventoryValue?.warehouseBreakdown || []).map(item => item.purchaseValue),
-                        backgroundColor: '#3b82f6',
-                      },
-                      {
-                        label: 'قيمة البيع',
-                        data: (inventoryValue?.warehouseBreakdown || []).map(item => item.sellingValue),
-                        backgroundColor: '#10b981',
-                      }
-                    ]
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'top',
-                      },
-                    },
-                  }}
-                />
+          {selectedTab === 'abc' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { class: 'A', count: abcAnalysis?.classACount || 0, value: abcAnalysis?.classAValue || 0, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+                  { class: 'B', count: abcAnalysis?.classBCount || 0, value: abcAnalysis?.classBValue || 0, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+                  { class: 'C', count: abcAnalysis?.classCCount || 0, value: abcAnalysis?.classCValue || 0, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' }
+                ].map(item => (
+                  <div key={item.class} className={cn("p-6 rounded-2xl border-2 transition-all hover:shadow-md", item.bg, item.border)}>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className={cn("text-xl font-bold", item.color)}>فئة {item.class}</h4>
+                      <SimpleBadge variant="outline">{item.count} صنف</SimpleBadge>
+                    </div>
+                    <p className="text-3xl font-extrabold text-foreground mb-1">
+                      {((item.value / (abcAnalysis?.summary.totalValue || 1)) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm text-muted-foreground font-medium">من إجمالي قيمة المخزون</p>
+                  </div>
+                ))}
               </div>
+
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle className="text-lg">تحليل Pareto - توزيع القيمة لأهم 15 صنف</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  <div className="h-[400px]">
+                    <Bar
+                      data={{
+                        labels: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.name),
+                        datasets: [{
+                          label: 'القيمة الإجمالية',
+                          data: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.totalValue),
+                          backgroundColor: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item =>
+                            item.classification === 'A' ? 'oklch(var(--success) / 0.8)' :
+                              item.classification === 'B' ? 'oklch(var(--primary) / 0.8)' : 'oklch(var(--warning) / 0.8)'
+                          ),
+                          borderRadius: 4
+                        }]
+                      }}
+                      options={chartOptions}
+                    />
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
             </div>
-          </div>
-        )}
+          )}
 
-        {selectedTab === 'abc' && (
-          <div className="space-y-6">
-            {/* ABC Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-green-50 p-6 rounded-lg border-2 border-green-200">
-                <h4 className="text-lg font-semibold text-green-800 mb-2">فئة A</h4>
-                <p className="text-3xl font-bold text-green-600">{abcAnalysis?.classACount || 0}</p>
-                <p className="text-gray-600 mt-1">
-                  {((abcAnalysis?.classAValue / abcAnalysis?.summary.totalValue * 100) || 0).toFixed(1)}% من القيمة
-                </p>
+          {selectedTab === 'profit' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SimpleCard>
+                  <SimpleCardContent className="p-8 flex items-center gap-6">
+                    <div className="p-4 bg-success/10 rounded-2xl">
+                      <TrendingUp className="w-8 h-8 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-medium mb-1">متوسط هامش الربح</p>
+                      <h4 className="text-4xl font-bold text-success">{profitMargin?.overall?.avgMargin || 0}%</h4>
+                    </div>
+                  </SimpleCardContent>
+                </SimpleCard>
+                <SimpleCard>
+                  <SimpleCardContent className="p-8 flex items-center gap-6">
+                    <div className="p-4 bg-primary/10 rounded-2xl">
+                      <DollarSign className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-medium mb-1">إجمالي الربح المتوقع</p>
+                      <h4 className="text-4xl font-bold text-primary">{(profitMargin?.overall?.totalPotentialProfit || 0).toLocaleString()} <span className="text-sm">ج.م</span></h4>
+                    </div>
+                  </SimpleCardContent>
+                </SimpleCard>
               </div>
 
-              <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
-                <h4 className="text-lg font-semibold text-blue-800 mb-2">فئة B</h4>
-                <p className="text-3xl font-bold text-blue-600">{abcAnalysis?.classBCount || 0}</p>
-                <p className="text-gray-600 mt-1">
-                  {((abcAnalysis?.classBValue / abcAnalysis?.summary.totalValue * 100) || 0).toFixed(1)}% من القيمة
-                </p>
-              </div>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle className="text-lg">هوامش الربحية حسب الفئات</SimpleCardTitle>
+                </SimpleCardHeader>
+                <SimpleCardContent>
+                  <div className="h-[300px]">
+                    <Bar
+                      data={{
+                        labels: (profitMargin?.byCategory || []).map(item => item.category),
+                        datasets: [{
+                          label: 'هامش الربح %',
+                          data: (profitMargin?.byCategory || []).map(item => item.avgMarginPercent),
+                          backgroundColor: 'oklch(var(--primary) / 0.7)',
+                          borderRadius: 6
+                        }]
+                      }}
+                      options={{
+                        ...chartOptions,
+                        plugins: { ...chartOptions.plugins, legend: { display: false } }
+                      }}
+                    />
+                  </div>
+                </SimpleCardContent>
+              </SimpleCard>
 
-              <div className="bg-orange-50 p-6 rounded-lg border-2 border-orange-200">
-                <h4 className="text-lg font-semibold text-orange-800 mb-2">فئة C</h4>
-                <p className="text-3xl font-bold text-orange-600">{abcAnalysis?.classCCount || 0}</p>
-                <p className="text-gray-600 mt-1">
-                  {((abcAnalysis?.classCValue / abcAnalysis?.summary.totalValue * 100) || 0).toFixed(1)}% من القيمة
-                </p>
-              </div>
+              <SimpleCard>
+                <SimpleCardHeader>
+                  <SimpleCardTitle>قائمة الأصناف الأكثر ربحية</SimpleCardTitle>
+                </SimpleCardHeader>
+                <div className="overflow-x-auto border-t border-border">
+                  <table className="w-full text-right">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase">الصنف</th>
+                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase text-center">التسعير</th>
+                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase text-center">الربح للوحدة</th>
+                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase text-center">الهامش</th>
+                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase text-right">الإجمالي المتوقع</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(profitMargin?.topProfitable || []).map((item) => (
+                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4">
+                            <p className="font-bold text-foreground">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">مخزون: {item.currentStock}</p>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="text-xs text-muted-foreground">شراء: {item.purchasePrice}</div>
+                            <div className="text-sm font-medium text-foreground">بيع: {item.sellingPrice}</div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="font-bold text-success">{item.profitPerUnit.toFixed(2)} ج.م</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <SimpleBadge variant="success">{item.marginPercent}%</SimpleBadge>
+                          </td>
+                          <td className="px-6 py-4 text-right font-bold text-primary">
+                            {item.potentialProfit.toLocaleString()} ج.م
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </SimpleCard>
             </div>
+          )}
 
-            {/* ABC Chart */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">تحليل ABC - توزيع القيمة</h3>
-              <div style={{ height: '400px' }}>
-                <Bar
-                  data={{
-                    labels: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.name),
-                    datasets: [{
-                      label: 'القيمة الإجمالية',
-                      data: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item => item.totalValue),
-                      backgroundColor: (abcAnalysis?.allItems?.slice(0, 15) || []).map(item =>
-                        item.classification === 'A' ? '#10b981' : 
-                        item.classification === 'B' ? '#3b82f6' : '#f59e0b'
-                      ),
-                    }]
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'top',
-                      },
-                    },
-                    scales: {
-                      x: {
-                        ticks: {
-                          maxRotation: 45,
-                          minRotation: 45,
-                        }
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedTab === 'profit' && (
-          <div className="space-y-6">
-            {/* Profit Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h4 className="text-gray-600 mb-2">متوسط هامش الربح</h4>
-                <p className="text-4xl font-bold text-green-600">
-                  {profitMargin?.overall?.avgMargin || 0}%
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h4 className="text-gray-600 mb-2">إجمالي الربح المتوقع</h4>
-                <p className="text-4xl font-bold text-blue-600">
-                  {(profitMargin?.overall?.totalPotentialProfit || 0).toLocaleString()} ج.م
-                </p>
-              </div>
-            </div>
-
-            {/* Profit by Category */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">هامش الربح حسب الفئة</h3>
-              <div style={{ height: '300px' }}>
-                <Bar
-                  data={{
-                    labels: (profitMargin?.byCategory || []).map(item => item.category),
-                    datasets: [{
-                      label: 'هامش الربح %',
-                      data: (profitMargin?.byCategory || []).map(item => item.avgMarginPercent),
-                      backgroundColor: '#10b981',
-                    }]
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'top',
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Top Profitable Items */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">الأصناف الأكثر ربحية</h3>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الصنف</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">سعر الشراء</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">سعر البيع</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الربح/وحدة</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">هامش الربح</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الكمية</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الربح المتوقع</th>
+          {selectedTab === 'slow' && (
+            <SimpleCard>
+              <SimpleCardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <SimpleCardTitle>أصناف بطيئة الحركة</SimpleCardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">الأصناف التي لم تتحرك منذ فترة طويلة</p>
+                  </div>
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+                    <p className="text-xs text-destructive font-bold uppercase tracking-wider mb-1">رأس مال معطل</p>
+                    <h4 className="text-2xl font-black text-destructive">{(slowMoving?.summary?.totalTiedUpCapital || 0).toLocaleString()} <span className="text-sm font-normal">ج.م</span></h4>
+                  </div>
+                </div>
+              </SimpleCardHeader>
+              <div className="overflow-x-auto border-t border-border">
+                <table className="w-full text-right">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="px-6 py-4 text-xs font-bold text-muted-foreground">الصنف / الفئة</th>
+                      <th className="px-6 py-4 text-xs font-bold text-muted-foreground text-center">الكمية</th>
+                      <th className="px-6 py-4 text-xs font-bold text-muted-foreground">رأس المال</th>
+                      <th className="px-6 py-4 text-xs font-bold text-muted-foreground text-center">أيام الركود</th>
+                      <th className="px-6 py-4 text-xs font-bold text-muted-foreground">التوصية</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {(profitMargin?.topProfitable || []).map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{item.purchasePrice} ج.م</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{item.sellingPrice} ج.م</td>
-                        <td className="px-4 py-3 text-sm text-green-600 font-semibold">
-                          {item.profitPerUnit.toFixed(2)} ج.م
+                  <tbody className="divide-y divide-border">
+                    {(slowMoving?.items || []).map((item) => (
+                      <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.category}</p>
                         </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
-                            {item.marginPercent}%
+                        <td className="px-6 py-4 text-center text-muted-foreground font-medium">{item.currentStock}</td>
+                        <td className="px-6 py-4 font-bold text-destructive">
+                          {item.tiedUpCapital.toLocaleString()} ج.م
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <SimpleBadge variant={item.daysSinceLastMovement > 180 ? 'danger' : 'warning'}>
+                            {item.daysSinceLastMovement > 365 ? 'أكثر من سنة' : `${item.daysSinceLastMovement} يوم`}
+                          </SimpleBadge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-xs font-bold border",
+                            item.recommendation === 'تصفية' ? 'bg-danger/10 border-danger/20 text-danger' :
+                              item.recommendation === 'خصم' ? 'bg-warning/10 border-warning/20 text-warning' :
+                                'bg-primary/10 border-primary/20 text-primary'
+                          )}>
+                            {item.recommendation}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{item.currentStock}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-blue-600">
-                          {item.potentialProfit.toLocaleString()} ج.م
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
-        )}
-
-        {selectedTab === 'slow' && (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">الأصناف بطيئة الحركة</h3>
-              <div className="text-sm text-gray-600">
-                إجمالي رأس المال المقيد: <span className="font-bold text-red-600">
-                  {(slowMoving?.summary?.totalTiedUpCapital || 0).toLocaleString()} ج.م
-                </span>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الصنف</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الفئة</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">الكمية</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">رأس المال المقيد</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">آخر حركة</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">التوصية</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {(slowMoving?.items || []).map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.category}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.currentStock}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-red-600">
-                        {item.tiedUpCapital.toLocaleString()} ج.م
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {item.daysSinceLastMovement > 365 ? '+365' : item.daysSinceLastMovement} يوم
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          item.recommendation === 'تصفية' ? 'bg-red-100 text-red-800' :
-                          item.recommendation === 'خصم' ? 'bg-orange-100 text-orange-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {item.recommendation}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+            </SimpleCard>
+          )}
+        </div>
       </div>
     </div>
   );
