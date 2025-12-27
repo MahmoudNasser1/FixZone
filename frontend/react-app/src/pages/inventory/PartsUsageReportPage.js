@@ -34,7 +34,6 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import apiService from '../../services/apiService';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorHandler from '../../components/common/ErrorHandler';
 
 ChartJS.register(

@@ -2,52 +2,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import {
-  Search,
-  QrCode,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   Package,
-  User,
   Phone,
-  Mail,
   Calendar,
   MapPin,
   Wrench,
   DollarSign,
   FileText,
-  RefreshCw,
-  Printer,
   Eye,
   Smartphone,
   Monitor,
   Cpu,
   HardDrive,
-  Database,
   Hash,
   Layers,
   Laptop,
   Tablet,
-  Building2,
   Shield,
   ShoppingCart,
   FileCheck,
   X,
-  Image,
   Download,
   Sun,
-  Moon,
-  ShoppingBag
+  Moon
 } from 'lucide-react';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
-import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { getDefaultApiBaseUrl } from '../../lib/apiConfig';
 import { useRepairUpdatesById } from '../../hooks/useWebSocket';
-import { ZoomIn, Receipt, Lock, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Receipt, Lock, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useTheme } from '../../components/ThemeProvider';
 
 const API_BASE_URL = getDefaultApiBaseUrl();
@@ -63,16 +51,10 @@ const PublicRepairTrackingPage = () => {
   };
 
   // State management
-  const [trackingCode, setTrackingCode] = useState('');
-  const [requestNumber, setRequestNumber] = useState('');
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState('trackingToken'); // 'trackingToken' or 'requestNumber'
   const [hasReports, setHasReports] = useState(false);
   const [inspectionReports, setInspectionReports] = useState([]);
-  const [inspectionReportsLoading, setInspectionReportsLoading] = useState(false);
-  const [attachments, setAttachments] = useState([]);
-  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [showInvoiceAuth, setShowInvoiceAuth] = useState(false);
   const [invoicePhone, setInvoicePhone] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
@@ -157,24 +139,7 @@ const PublicRepairTrackingPage = () => {
   };
 
   // Get device icon based on type
-  const getDeviceIcon = (deviceType) => {
-    switch (deviceType?.toLowerCase()) {
-      case 'smartphone':
-      case 'هاتف':
-        return Smartphone;
-      case 'laptop':
-      case 'لابتوب':
-        return Laptop;
-      case 'desktop':
-      case 'كمبيوتر':
-        return Monitor;
-      case 'tablet':
-      case 'تابلت':
-        return Tablet;
-      default:
-        return Package;
-    }
-  };
+  // getDeviceIcon removed as it was unused
 
   // دالة البحث التلقائي (للاستخدام من useEffect)
   const handleAutoSearch = async (value, type) => {
@@ -280,11 +245,6 @@ const PublicRepairTrackingPage = () => {
         } else if (repairData.trackingToken) {
           handleAutoSearch(repairData.trackingToken, 'trackingToken');
         }
-        // إعادة فحص التقارير عند focus (بعد تحديث بيانات الطلب)
-        setTimeout(() => {
-          console.log('[Focus] Refreshing reports after focus');
-          loadReports();
-        }, 1000);
       }
     };
 
@@ -309,11 +269,6 @@ const PublicRepairTrackingPage = () => {
             } else if (repairData.trackingToken) {
               handleAutoSearch(repairData.trackingToken, 'trackingToken');
             }
-            // إعادة فحص التقارير بعد تحديث بيانات الطلب
-            setTimeout(() => {
-              console.log('[WebSocket] Refreshing reports after repair update');
-              loadReports();
-            }, 1000); // انتظر ثانية إضافية بعد تحديث بيانات الطلب
           }, 500); // انتظر 500ms ثم حدث
         }
       }
@@ -360,176 +315,36 @@ const PublicRepairTrackingPage = () => {
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
 
-  // Load inspection reports
-  const loadInspectionReports = async () => {
-    if (!repairData?.id) {
-      console.log('[Reports] No repair ID available');
-      setHasReports(false);
-      setInspectionReports([]);
-      return;
-    }
-
-    const repairId = repairData.id;
-    console.log('[Reports] Loading reports for repair ID:', repairId);
-
-    try {
-      setInspectionReportsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${repairId}`);
-      console.log('[Reports] API Response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[Reports] API Response data:', data);
-
-        // Handle different response formats
-        // API returns: { success: true, data: [...] }
-        let reportsList = [];
-        if (data.success && data.data) {
-          reportsList = Array.isArray(data.data) ? data.data : [];
-        } else if (data.data) {
-          reportsList = Array.isArray(data.data) ? data.data : [];
-        } else if (data.reports) {
-          reportsList = Array.isArray(data.reports) ? data.reports : [];
-        } else if (Array.isArray(data)) {
-          reportsList = data;
-        }
-
-        console.log('[Reports] Parsed reports list:', reportsList);
-        console.log('[Reports] Number of reports:', reportsList.length);
-
-        setInspectionReports(reportsList);
-        setHasReports(reportsList.length > 0);
-      } else if (response.status === 404) {
-        // No reports found - this is normal, not an error
-        console.log('[Reports] No reports found (404)');
-        setInspectionReports([]);
-        setHasReports(false);
-      } else {
-        // Other error - log but don't show error to user
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('[Reports] Error loading reports:', response.status, errorData);
-        setInspectionReports([]);
-        setHasReports(false);
-      }
-    } catch (error) {
-      // Network error or other exception
-      console.error('[Reports] Exception loading reports:', error);
-      setInspectionReports([]);
-      setHasReports(false);
-    } finally {
-      setInspectionReportsLoading(false);
-    }
-  };
-
-  // Keep the old function name for backward compatibility
-  const loadReports = loadInspectionReports;
-
-  // Check for reports when repair data is loaded or updated
-  useEffect(() => {
-    if (repairData?.id) {
-      console.log('[Reports] useEffect triggered, repair ID:', repairData.id);
-      loadReports();
-    } else {
-      console.log('[Reports] useEffect triggered, no repair ID');
-      setHasReports(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repairData?.id]);
-
-  // تحديث دوري للتقارير كل 15 ثانية (للتأكد من ظهور التقارير الجديدة)
-  useEffect(() => {
-    if (!repairData?.id) return;
-
-    console.log('[Reports] Setting up periodic refresh for repair ID:', repairData.id);
-    const intervalId = setInterval(() => {
-      console.log('[Reports] Periodic refresh triggered');
-      loadReports();
-    }, 60000); // كل دقيقة
-
-    return () => {
-      console.log('[Reports] Clearing periodic refresh');
-      clearInterval(intervalId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repairData?.id]);
+  // Inspection reports and attachments logic moved to PublicRepairReportsPage.js
 
 
 
-  // Load attachments
-  const loadAttachments = async () => {
-    if (!repairData?.id) {
-      console.log('No repair data ID, skipping attachments load');
-      return;
-    }
 
-    try {
-      setAttachmentsLoading(true);
-      console.log('Loading attachments for repair ID:', repairData.id);
-      const response = await fetch(`${API_BASE_URL}/repairsSimple/${repairData.id}/attachments`);
-      console.log('Attachments API response status:', response.status);
+  // loadAttachments removed as it was unused
 
-      if (response.ok) {
-        const data = await response.json();
-        const attachmentsList = data.data || [];
-        console.log('Attachments loaded successfully:', attachmentsList.length, 'items');
-        console.log('Attachments details:', attachmentsList);
-        console.log('Debug info:', data.debug);
-
-        if (attachmentsList.length === 0 && data.debug) {
-          console.warn('No attachments found. Debug info:', {
-            hasAttachmentsField: data.debug.hasAttachmentsField,
-            rawAttachmentsCount: data.debug.rawAttachmentsCount,
-            uploadRoot: data.debug.uploadRoot
-          });
-        }
-
-        setAttachments(attachmentsList);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('Failed to load attachments:', response.status, errorData);
-        setAttachments([]);
-      }
-    } catch (error) {
-      console.error('Error loading attachments:', error);
-      setAttachments([]);
-    } finally {
-      setAttachmentsLoading(false);
-    }
-  };
-
-  // Load attachments when repair data is available (only once, not when opening reports)
-  // Note: We load attachments when opening reports modal instead to avoid double loading
-  // useEffect(() => {
-  //   if (repairData?.id) {
-  //     loadAttachments();
-  //   }
-  // }, [repairData?.id]);
 
   // Lightbox Handlers
-  const openLightbox = (index) => {
-    setSelectedImageIndex(index);
-    setLightboxOpen(true);
-    document.body.style.overflow = 'hidden'; // Prevent scrolling
-  };
+  // openLightbox removed as it was unused
+
 
   const closeLightbox = () => {
     setLightboxOpen(false);
     document.body.style.overflow = 'unset';
   };
 
-  const nextImage = (e) => {
-    e.stopPropagation();
+  const nextImage = React.useCallback((e) => {
+    if (e) e.stopPropagation();
     if (repairData?.attachments?.length) {
       setSelectedImageIndex((prev) => (prev + 1) % repairData.attachments.length);
     }
-  };
+  }, [repairData?.attachments]);
 
-  const prevImage = (e) => {
-    e.stopPropagation();
+  const prevImage = React.useCallback((e) => {
+    if (e) e.stopPropagation();
     if (repairData?.attachments?.length) {
       setSelectedImageIndex((prev) => (prev - 1 + repairData.attachments.length) % repairData.attachments.length);
     }
-  };
+  }, [repairData?.attachments]);
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -543,7 +358,7 @@ const PublicRepairTrackingPage = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxOpen, repairData?.attachments]);
+  }, [lightboxOpen, repairData?.attachments, nextImage, prevImage]);
 
   // Handle invoice authentication and open print page
   const handleInvoiceAuth = async () => {
