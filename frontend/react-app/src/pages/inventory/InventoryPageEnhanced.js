@@ -12,7 +12,7 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Filter, Box, DollarSign
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
-import { LoadingSpinner, TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
+import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import StatsDashboard from '../../components/inventory/StatsDashboard';
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '../../components/ui/Modal';
 

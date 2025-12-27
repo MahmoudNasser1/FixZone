@@ -5,25 +5,25 @@ import SimpleButton from '../../components/ui/SimpleButton';
 import { SimpleCard, SimpleCardHeader, SimpleCardTitle, SimpleCardContent } from '../../components/ui/SimpleCard';
 import SimpleBadge from '../../components/ui/SimpleBadge';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
-import { 
+import {
   Search, Plus, User, Mail, Phone, Shield, Edit, Trash2,
   UserCheck, UserX, Eye, Key, Settings, ArrowUpDown, ArrowUp, ArrowDown, Activity,
   Filter, RefreshCw, Download, Users as UsersIcon
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
-import { LoadingSpinner, TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
+import LoadingSpinner, { TableLoadingSkeleton, CardLoadingSkeleton } from '../../components/ui/LoadingSpinner';
 import { isTechnicianRole } from '../../constants/roles';
 import { ROLE_TECHNICIAN } from '../../constants/roles';
 
 const UsersPageEnhanced = () => {
   const navigate = useNavigate();
   const notifications = useNotifications();
-  
+
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State للبحث والفلترة
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -31,7 +31,7 @@ const UsersPageEnhanced = () => {
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const [activeTab, setActiveTab] = useState('all'); // all | technicians
-  
+
   // State للإحصائيات
   const [stats, setStats] = useState({
     total: 0,
@@ -50,15 +50,15 @@ const UsersPageEnhanced = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // جلب المستخدمين والأدوار
       // apiService.listUsers() يرجع JSON مباشرة وليس Response object
       let usersData = [];
       let rolesData = [];
-      
+
       try {
         const usersResult = await apiService.listUsers({ includeInactive: 1 });
-        
+
         // Backend يرجع array مباشر (بدون pagination) أو { success: true, data: { items, total } } (مع pagination)
         if (Array.isArray(usersResult)) {
           usersData = usersResult;
@@ -76,10 +76,10 @@ const UsersPageEnhanced = () => {
         notifications.error('خطأ في تحميل المستخدمين', { message: err.message || 'حدث خطأ غير متوقع' });
         usersData = [];
       }
-      
+
       try {
         const rolesResult = await apiService.listRoles();
-        
+
         // Backend يرجع array مباشر
         if (Array.isArray(rolesResult)) {
           rolesData = rolesResult;
@@ -95,14 +95,14 @@ const UsersPageEnhanced = () => {
         notifications.error('خطأ في تحميل الأدوار', { message: err.message || 'حدث خطأ غير متوقع' });
         rolesData = [];
       }
-      
+
       setUsers(usersData);
       setRoles(rolesData);
-      
+
       // حساب الإحصائيات
       const activeUsers = usersData.filter(u => u?.isActive);
       const inactiveUsers = usersData.filter(u => !u?.isActive);
-      
+
       setStats({
         total: usersData.length,
         active: activeUsers.length,
@@ -111,11 +111,11 @@ const UsersPageEnhanced = () => {
         technicians: usersData.filter(u => u && isTechnicianRole(u.roleId)).length,
         managers: usersData.filter(u => u?.roleId === 2).length
       });
-      
+
       if (usersData.length === 0) {
         console.warn('No users found. Check database or API response.');
       }
-      
+
     } catch (err) {
       console.error('Error loading data:', err);
       setError(err.message || 'حدث خطأ في تحميل البيانات');
@@ -127,15 +127,15 @@ const UsersPageEnhanced = () => {
 
   const handleToggleActive = async (user) => {
     const newStatus = !user.isActive;
-    
+
     // Optimistic update
     const prevStatus = user.isActive;
     setUsers(users.map(u => u.id === user.id ? { ...u, isActive: newStatus } : u));
-    
+
     try {
       // apiService.updateUser() يرجع JSON مباشر وليس Response object
       const result = await apiService.updateUser(user.id, { isActive: newStatus });
-      
+
       // Backend يرجع { success: true, message, data } أو { message }
       if (result?.success || result?.message) {
         notifications.success(`تم ${newStatus ? 'تفعيل' : 'تعطيل'} المستخدم بنجاح`);
@@ -154,14 +154,14 @@ const UsersPageEnhanced = () => {
   const handleChangeRole = async (user, newRoleId) => {
     const prevRoleId = user.roleId;
     const newRoleIdNum = Number(newRoleId);
-    
+
     // Optimistic update
     setUsers(users.map(u => u.id === user.id ? { ...u, roleId: newRoleIdNum } : u));
-    
+
     try {
       // apiService.updateUser() يرجع JSON مباشر وليس Response object
       const result = await apiService.updateUser(user.id, { roleId: newRoleIdNum });
-      
+
       // Backend يرجع { success: true, message, data } أو { message }
       if (result?.success || result?.message) {
         const roleName = roles.find(r => r.id === newRoleIdNum)?.name || 'غير محدد';
@@ -182,15 +182,15 @@ const UsersPageEnhanced = () => {
     if (!window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
       return;
     }
-    
+
     // Optimistic update
     const userToDelete = users.find(u => u.id === userId);
     setUsers(users.filter(u => u.id !== userId));
-    
+
     try {
       // apiService.deleteUser() يرجع JSON مباشر وليس Response object
       const result = await apiService.deleteUser(userId);
-      
+
       // Backend يرجع { success: true, message } أو { message }
       if (result?.success || result?.message) {
         notifications.success('تم حذف المستخدم بنجاح');
@@ -211,16 +211,16 @@ const UsersPageEnhanced = () => {
   // الفلترة والترتيب
   const getFilteredAndSortedUsers = () => {
     let filtered = [...users];
-    
+
     // فلترة حسب Tab (الفنيين أو الكل)
     if (activeTab === 'technicians') {
       filtered = filtered.filter(user => user && isTechnicianRole(user.roleId));
     }
-    
+
     // البحث
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter(user =>
         (user.name || '').toLowerCase().includes(search) ||
         (user.firstName || '').toLowerCase().includes(search) ||
         (user.lastName || '').toLowerCase().includes(search) ||
@@ -229,33 +229,33 @@ const UsersPageEnhanced = () => {
         (user.phone || '').includes(searchTerm)
       );
     }
-    
+
     // فلترة حسب الدور
     if (selectedRole) {
       filtered = filtered.filter(user => user.roleId === Number(selectedRole));
     }
-    
+
     // فلترة حسب الحالة
     if (statusFilter === 'active') {
       filtered = filtered.filter(user => user.isActive);
     } else if (statusFilter === 'inactive') {
       filtered = filtered.filter(user => !user.isActive);
     }
-    
+
     // الترتيب
     filtered.sort((a, b) => {
       let aValue, bValue;
-      
+
       if (sortField === 'name') {
         aValue = (a.name || `${a.firstName} ${a.lastName}`).toLowerCase();
         bValue = (b.name || `${b.firstName} ${b.lastName}`).toLowerCase();
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue, 'ar')
           : bValue.localeCompare(aValue, 'ar');
       } else if (sortField === 'email') {
         aValue = (a.email || '').toLowerCase();
         bValue = (b.email || '').toLowerCase();
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       } else if (sortField === 'roleId') {
@@ -272,7 +272,7 @@ const UsersPageEnhanced = () => {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
     });
-    
+
     return filtered;
   };
 
@@ -289,7 +289,7 @@ const UsersPageEnhanced = () => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
     }
-    return sortDirection === 'asc' 
+    return sortDirection === 'asc'
       ? <ArrowUp className="w-4 h-4 text-blue-600" />
       : <ArrowDown className="w-4 h-4 text-blue-600" />;
   };
@@ -322,7 +322,7 @@ const UsersPageEnhanced = () => {
           </h1>
           <p className="text-gray-600 mt-1">إدارة حسابات المستخدمين والصلاحيات</p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <SimpleButton
             variant="outline"
@@ -414,11 +414,10 @@ const UsersPageEnhanced = () => {
             setActiveTab('all');
             setSelectedRole('');
           }}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'all'
+          className={`px-4 py-2 font-medium transition-colors ${activeTab === 'all'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-900'
-          }`}
+            }`}
         >
           جميع المستخدمين
         </button>
@@ -431,11 +430,10 @@ const UsersPageEnhanced = () => {
               setSelectedRole(techRole.id.toString());
             }
           }}
-          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'technicians'
+          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'technicians'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-900'
-          }`}
+            }`}
         >
           <Settings className="w-4 h-4" />
           الفنيين ({stats.technicians})
