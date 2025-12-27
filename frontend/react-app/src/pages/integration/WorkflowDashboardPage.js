@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  ArrowPathIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  CurrencyDollarIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  PlusIcon,
-  WrenchIcon,
-  BanknotesIcon,
-  UserPlusIcon,
-  DocumentTextIcon,
-  ArchiveBoxIcon,
-  BellAlertIcon,
-  ArrowTrendingUpIcon,
-  CalendarIcon,
-  PhoneIcon,
-  ShoppingCartIcon
-} from '@heroicons/react/24/outline';
+  RefreshCw, // ArrowPathIcon
+  CheckCircle, // CheckCircleIcon
+  Clock, // ClockIcon
+  AlertTriangle, // ExclamationTriangleIcon
+  DollarSign, // CurrencyDollarIcon
+  Users, // UserGroupIcon
+  BarChart3, // ChartBarIcon
+  Settings, // Cog6ToothIcon
+  Plus, // PlusIcon
+  Wrench, // WrenchIcon
+  Banknote, // BanknotesIcon
+  UserPlus, // UserPlusIcon
+  FileText, // DocumentTextIcon
+  Archive, // ArchiveBoxIcon
+  Bell, // BellAlertIcon
+  TrendingUp, // ArrowTrendingUpIcon
+  Calendar, // CalendarIcon
+  Phone, // PhoneIcon
+  ShoppingCart // ShoppingCartIcon
+} from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import api from '../../services/api';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
@@ -323,31 +323,31 @@ const WorkflowDashboardPage = () => {
   const quickActions = [
     {
       label: 'طلب إصلاح جديد',
-      icon: WrenchIcon,
+      icon: Wrench,
       color: 'bg-blue-600 hover:bg-blue-700',
       action: () => navigate('/repairs/new')
     },
     {
       label: 'عميل جديد',
-      icon: UserPlusIcon,
+      icon: UserPlus,
       color: 'bg-green-600 hover:bg-green-700',
       action: () => navigate('/customers/new')
     },
     {
       label: 'فاتورة جديدة',
-      icon: DocumentTextIcon,
+      icon: FileText,
       color: 'bg-purple-600 hover:bg-purple-700',
       action: () => navigate('/invoices/new')
     },
     {
       label: 'إضافة مخزون',
-      icon: ArchiveBoxIcon,
+      icon: Archive,
       color: 'bg-orange-600 hover:bg-orange-700',
       action: () => navigate('/inventory')
     },
     {
       label: 'طلب شراء',
-      icon: ShoppingCartIcon,
+      icon: ShoppingCart,
       color: 'bg-indigo-600 hover:bg-indigo-700',
       action: () => navigate('/inventory/orders')
     }
@@ -371,7 +371,7 @@ const WorkflowDashboardPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Cog6ToothIcon className="h-10 w-10" />
+              <Settings className="h-10 w-10" />
               لوحة التحكم المتكاملة
             </h1>
             <p className="mt-2 text-blue-100 dark:text-blue-200">
@@ -382,7 +382,7 @@ const WorkflowDashboardPage = () => {
             onClick={loadAllData}
             className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
-            <ArrowPathIcon className="h-5 w-5" />
+            <RefreshCw className="h-5 w-5" />
             <span>تحديث</span>
           </button>
         </div>
@@ -391,7 +391,7 @@ const WorkflowDashboardPage = () => {
       {/* Quick Actions */}
       <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <BellAlertIcon className="h-6 w-6 text-primary" />
+          <Bell className="h-6 w-6 text-primary" />
           الإجراءات السريعة
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -418,12 +418,12 @@ const WorkflowDashboardPage = () => {
                 <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">إجمالي الطلبات</div>
                 <div className="text-4xl font-bold text-blue-900 dark:text-blue-100">{stats.totalRepairs}</div>
                 <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-1">
-                  <ArrowTrendingUpIcon className="h-4 w-4" />
+                  <TrendingUp className="h-4 w-4" />
                   نشط اليوم
                 </div>
               </div>
               <div className="bg-blue-600 dark:bg-blue-500 rounded-full p-4">
-                <WrenchIcon className="h-8 w-8 text-white" />
+                <Wrench className="h-8 w-8 text-white" />
               </div>
             </div>
           </div>
@@ -437,7 +437,7 @@ const WorkflowDashboardPage = () => {
                 <div className="text-xs text-orange-600 dark:text-orange-400 mt-2">يحتاج متابعة</div>
               </div>
               <div className="bg-orange-600 dark:bg-orange-500 rounded-full p-4">
-                <ClockIcon className="h-8 w-8 text-white" />
+                <Clock className="h-8 w-8 text-white" />
               </div>
             </div>
           </div>
@@ -451,7 +451,7 @@ const WorkflowDashboardPage = () => {
                 <div className="text-xs text-green-600 dark:text-green-400 mt-2">من {stats.totalCustomers} إجمالي</div>
               </div>
               <div className="bg-green-600 dark:bg-green-500 rounded-full p-4">
-                <UserGroupIcon className="h-8 w-8 text-white" />
+                <Users className="h-8 w-8 text-white" />
               </div>
             </div>
           </div>
@@ -469,7 +469,7 @@ const WorkflowDashboardPage = () => {
                 </div>
               </div>
               <div className="bg-purple-600 dark:bg-purple-500 rounded-full p-4">
-                <CurrencyDollarIcon className="h-8 w-8 text-white" />
+                <DollarSign className="h-8 w-8 text-white" />
               </div>
             </div>
           </div>
@@ -479,33 +479,33 @@ const WorkflowDashboardPage = () => {
       {/* Workflow Progress */}
       <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-          <ChartBarIcon className="h-6 w-6 text-primary" />
+          <BarChart3 className="h-6 w-6 text-primary" />
           تقدم سير العمل
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
             {
-              label: 'معلق', count: stats?.pendingRepairs || 0, color: 'yellow', icon: ExclamationTriangleIcon,
+              label: 'معلق', count: stats?.pendingRepairs || 0, color: 'yellow', icon: AlertTriangle,
               bgClass: 'bg-yellow-100 dark:bg-yellow-900/30', borderClass: 'border-yellow-200 dark:border-yellow-800',
               textIcon: 'text-yellow-600 dark:text-yellow-400', textCount: 'text-yellow-900 dark:text-yellow-100'
             },
             {
-              label: 'قيد الإصلاح', count: stats?.inProgressRepairs || 0, color: 'blue', icon: ClockIcon,
+              label: 'قيد الإصلاح', count: stats?.inProgressRepairs || 0, color: 'blue', icon: Clock,
               bgClass: 'bg-blue-100 dark:bg-blue-900/30', borderClass: 'border-blue-200 dark:border-blue-800',
               textIcon: 'text-blue-600 dark:text-blue-400', textCount: 'text-blue-900 dark:text-blue-100'
             },
             {
-              label: 'مكتمل', count: stats?.completedRepairs || 0, color: 'green', icon: CheckCircleIcon,
+              label: 'مكتمل', count: stats?.completedRepairs || 0, color: 'green', icon: CheckCircle,
               bgClass: 'bg-green-100 dark:bg-green-900/30', borderClass: 'border-green-200 dark:border-green-800',
               textIcon: 'text-green-600 dark:text-green-400', textCount: 'text-green-900 dark:text-green-100'
             },
             {
-              label: 'تم الاضافة', count: pendingInvoices.length, color: 'purple', icon: DocumentTextIcon,
+              label: 'تم الاضافة', count: pendingInvoices.length, color: 'purple', icon: FileText,
               bgClass: 'bg-purple-100 dark:bg-purple-900/30', borderClass: 'border-purple-200 dark:border-purple-800',
               textIcon: 'text-purple-600 dark:text-purple-400', textCount: 'text-purple-900 dark:text-purple-100'
             },
             {
-              label: 'مسلم', count: stats?.deliveredRepairs || 0, color: 'emerald', icon: CheckCircleIcon,
+              label: 'مسلم', count: stats?.deliveredRepairs || 0, color: 'emerald', icon: CheckCircle,
               bgClass: 'bg-emerald-100 dark:bg-emerald-900/30', borderClass: 'border-emerald-200 dark:border-emerald-800',
               textIcon: 'text-emerald-600 dark:text-emerald-400', textCount: 'text-emerald-900 dark:text-emerald-100'
             }
@@ -529,7 +529,7 @@ const WorkflowDashboardPage = () => {
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <WrenchIcon className="h-5 w-5 text-primary" />
+              <Wrench className="h-5 w-5 text-primary" />
               أحدث الطلبات
             </h3>
             <Link to="/repairs" className="text-sm text-primary hover:text-primary/80">
@@ -561,7 +561,7 @@ const WorkflowDashboardPage = () => {
                   </div>
                   <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3" />
+                      <Calendar className="h-3 w-3" />
                       {new Date(repair.createdAt).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
                     </span>
                     {repair.estimatedCost && (
@@ -580,7 +580,7 @@ const WorkflowDashboardPage = () => {
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <DocumentTextIcon className="h-5 w-5 text-primary" />
+              <FileText className="h-5 w-5 text-primary" />
               فواتير معلقة
             </h3>
             <Link to="/invoices" className="text-sm text-primary hover:text-primary/80">
@@ -621,7 +621,7 @@ const WorkflowDashboardPage = () => {
           {/* Recent Payments */}
           <div className="mt-6 pt-6 border-t border-border">
             <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              <BanknotesIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <Banknote className="h-4 w-4 text-green-600 dark:text-green-400" />
               آخر المدفوعات
             </h4>
             <div className="space-y-2">
@@ -644,7 +644,7 @@ const WorkflowDashboardPage = () => {
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <BellAlertIcon className="h-5 w-5 text-destructive" />
+              <Bell className="h-5 w-5 text-destructive" />
               تنبيهات النظام
             </h3>
             <span className="bg-destructive/10 text-destructive text-xs font-bold px-2 py-1 rounded-full">
@@ -656,7 +656,7 @@ const WorkflowDashboardPage = () => {
           {lowStockItems.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-bold text-destructive mb-3 flex items-center gap-2">
-                <ArchiveBoxIcon className="h-4 w-4" />
+                <Archive className="h-4 w-4" />
                 مخزون منخفض ({lowStockItems.length})
               </h4>
               <div className="space-y-2">
@@ -688,7 +688,7 @@ const WorkflowDashboardPage = () => {
           {pendingInvoices.length > 0 && (
             <div>
               <h4 className="text-sm font-bold text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
-                <DocumentTextIcon className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 فواتير غير مدفوعة ({pendingInvoices.length})
               </h4>
               <div className="text-sm text-muted-foreground">
@@ -706,7 +706,7 @@ const WorkflowDashboardPage = () => {
           {/* No Alerts */}
           {lowStockItems.length === 0 && pendingInvoices.length === 0 && (
             <div className="text-center py-8">
-              <CheckCircleIcon className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
+              <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
               <p className="text-muted-foreground">لا توجد تنبيهات حالياً</p>
               <p className="text-xs text-muted-foreground/80 mt-1">النظام يعمل بشكل طبيعي ✨</p>
             </div>
@@ -719,7 +719,7 @@ const WorkflowDashboardPage = () => {
         {/* Daily Summary */}
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
+            <Calendar className="h-5 w-5 text-primary" />
             ملخص اليوم
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -753,7 +753,7 @@ const WorkflowDashboardPage = () => {
         {/* System Health */}
         <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            <Cog6ToothIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Settings className="h-5 w-5 text-green-600 dark:text-green-400" />
             حالة النظام
           </h3>
           <div className="space-y-4">
@@ -766,16 +766,16 @@ const WorkflowDashboardPage = () => {
               <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${system.status === 'active' ? 'bg-green-500 dark:bg-green-400 animate-pulse' :
-                      system.status === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' :
-                        'bg-muted-foreground'
+                    system.status === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' :
+                      'bg-muted-foreground'
                     }`}></div>
                   <span className="font-medium text-foreground">{system.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">{system.count} عنصر</span>
                   <span className={`text-xs font-bold ${system.status === 'active' ? 'text-green-600 dark:text-green-400' :
-                      system.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
-                        'text-muted-foreground'
+                    system.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-muted-foreground'
                     }`}>
                     {system.status === 'active' ? 'نشط' : system.status === 'warning' ? 'تحذير' : 'متوقف'}
                   </span>
@@ -809,7 +809,7 @@ const WorkflowDashboardPage = () => {
         <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl border-2 border-red-200 dark:border-red-800 p-6">
           <div className="flex items-start gap-4">
             <div className="bg-red-100 dark:bg-red-900/40 rounded-full p-3">
-              <ExclamationTriangleIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
+              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold text-red-900 dark:text-red-200 mb-2">يحتاج انتباهك!</h3>
@@ -852,7 +852,7 @@ const WorkflowDashboardPage = () => {
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 p-6">
           <div className="flex items-center gap-4">
             <div className="bg-green-100 rounded-full p-3">
-              <CheckCircleIcon className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-green-900">ممتاز! 🎉</h3>

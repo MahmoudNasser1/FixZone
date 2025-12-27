@@ -59,17 +59,17 @@ export default function JobsListPage() {
 
   // Active main tab
   const [activeMainTab, setActiveMainTab] = useState('repairs'); // 'repairs' | 'tasks'
-  
+
   // Repairs state
   const [jobs, setJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'all');
-  
+
   // Tasks state
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [taskStatus, setTaskStatus] = useState('all');
-  
+
   // Common state
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('date_desc');
@@ -115,7 +115,7 @@ export default function JobsListPage() {
       }
     } catch (error) {
       console.error('Error loading jobs:', error);
-      notifications.error('خطأ', { 
+      notifications.error('خطأ', {
         message: error.message || 'فشل تحميل قائمة الإصلاحات',
         duration: 5000
       });
@@ -165,7 +165,7 @@ export default function JobsListPage() {
           notifications.success('تم', { message: 'تم إضافة المهمة بنجاح' });
         }
       }
-      
+
       setShowAddTaskModal(false);
       setEditingTask(null);
       setTaskForm({ title: '', description: '', priority: 'medium', status: 'todo', dueDate: '' });
@@ -177,7 +177,7 @@ export default function JobsListPage() {
 
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
-    
+
     try {
       const response = await deleteTask(taskId);
       if (response.success) {
@@ -210,7 +210,7 @@ export default function JobsListPage() {
     return jobs.filter(job => {
       // Apply status filter
       if (filterStatus !== 'all' && job.status !== filterStatus) return false;
-      
+
       // Apply search
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
@@ -227,7 +227,7 @@ export default function JobsListPage() {
     return tasks.filter(task => {
       // Apply status filter
       if (taskStatus !== 'all' && task.status !== taskStatus) return false;
-      
+
       // Apply search
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
@@ -309,7 +309,7 @@ export default function JobsListPage() {
   }, [filteredJobs]);
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-24 md:pb-8">
+    <PageTransition className="min-h-screen bg-background pb-24 md:pb-8">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -334,7 +334,7 @@ export default function JobsListPage() {
               {pendingJobs.slice(0, 3).map(job => {
                 const DeviceIcon = getDeviceIcon(job.deviceType);
                 return (
-                  <div 
+                  <div
                     key={job.id}
                     onClick={() => navigate(`/technician/jobs/${job.id}`)}
                     className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl cursor-pointer hover:shadow-md transition-all group"
@@ -376,8 +376,8 @@ export default function JobsListPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إدارة المهام</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              {activeMainTab === 'repairs' 
-                ? `${filteredJobs.length} طلب إصلاح` 
+              {activeMainTab === 'repairs'
+                ? `${filteredJobs.length} طلب إصلاح`
                 : `${filteredTasks.length} مهمة`
               }
             </p>
@@ -388,44 +388,40 @@ export default function JobsListPage() {
             <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm border border-slate-200/50 dark:border-slate-700">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'grid' 
-                    ? 'bg-teal-500 text-white shadow-sm' 
+                className={`p-2 rounded-lg transition-all ${viewMode === 'grid'
+                    ? 'bg-teal-500 text-white shadow-sm'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+                  }`}
                 title="عرض الشبكة"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('kanban')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'kanban' 
-                    ? 'bg-teal-500 text-white shadow-sm' 
+                className={`p-2 rounded-lg transition-all ${viewMode === 'kanban'
+                    ? 'bg-teal-500 text-white shadow-sm'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+                  }`}
                 title="عرض Kanban"
               >
                 <Kanban className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('calendar')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'calendar' 
-                    ? 'bg-teal-500 text-white shadow-sm' 
+                className={`p-2 rounded-lg transition-all ${viewMode === 'calendar'
+                    ? 'bg-teal-500 text-white shadow-sm'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+                  }`}
                 title="عرض التقويم"
               >
                 <Calendar className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('timeline')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'timeline' 
-                    ? 'bg-teal-500 text-white shadow-sm' 
+                className={`p-2 rounded-lg transition-all ${viewMode === 'timeline'
+                    ? 'bg-teal-500 text-white shadow-sm'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+                  }`}
                 title="عرض الجدول الزمني"
               >
                 <Timer className="w-4 h-4" />
@@ -456,9 +452,8 @@ export default function JobsListPage() {
                           setSortBy(option.id);
                           setShowSortMenu(false);
                         }}
-                        className={`w-full text-right px-4 py-2.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                          sortBy === option.id ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300'
-                        }`}
+                        className={`w-full text-right px-4 py-2.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${sortBy === option.id ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-medium' : 'text-slate-700 dark:text-slate-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -492,17 +487,15 @@ export default function JobsListPage() {
               setActiveMainTab('repairs');
               setViewMode('grid');
             }}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              activeMainTab === 'repairs'
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${activeMainTab === 'repairs'
                 ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25'
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700'
-            }`}
+              }`}
           >
             <Wrench className="w-4 h-4" />
             <span>الإصلاحات</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              activeMainTab === 'repairs' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
-            }`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${activeMainTab === 'repairs' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
+              }`}>
               {jobs.length}
             </span>
           </button>
@@ -511,17 +504,15 @@ export default function JobsListPage() {
               setActiveMainTab('tasks');
               setViewMode('grid');
             }}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              activeMainTab === 'tasks'
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${activeMainTab === 'tasks'
                 ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25'
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700'
-            }`}
+              }`}
           >
             <ListTodo className="w-4 h-4" />
             <span>المهام</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              activeMainTab === 'tasks' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
-            }`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${activeMainTab === 'tasks' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
+              }`}>
               {tasks.length}
             </span>
           </button>
@@ -543,11 +534,10 @@ export default function JobsListPage() {
                       setTaskStatus(tab.id);
                     }
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    (activeMainTab === 'repairs' ? filterStatus : taskStatus) === tab.id
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${(activeMainTab === 'repairs' ? filterStatus : taskStatus) === tab.id
                       ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -576,12 +566,12 @@ export default function JobsListPage() {
         ) : activeMainTab === 'repairs' ? (
           /* Repairs Content */
           viewMode === 'kanban' ? (
-            <RepairsKanbanView 
+            <RepairsKanbanView
               jobs={filteredJobs}
               onJobClick={(job) => navigate(`/technician/jobs/${job.id}`)}
             />
           ) : viewMode === 'calendar' ? (
-            <RepairsCalendarView 
+            <RepairsCalendarView
               jobs={filteredJobs}
               onJobClick={(job) => navigate(`/technician/jobs/${job.id}`)}
             />
@@ -603,7 +593,7 @@ export default function JobsListPage() {
               ))}
             </div>
           ) : (
-            <EmptyState 
+            <EmptyState
               icon={Wrench}
               title="لا توجد إصلاحات"
               description="جرب تغيير الفلاتر أو كلمات البحث"
@@ -616,7 +606,7 @@ export default function JobsListPage() {
         ) : (
           /* Tasks Content */
           viewMode === 'kanban' ? (
-            <KanbanBoard 
+            <KanbanBoard
               onTaskClick={(task) => {
                 setEditingTask(task);
                 setTaskForm({
@@ -635,7 +625,7 @@ export default function JobsListPage() {
               }}
             />
           ) : viewMode === 'calendar' ? (
-            <CalendarView 
+            <CalendarView
               onTaskClick={(task) => {
                 setEditingTask(task);
                 setTaskForm({
@@ -649,18 +639,18 @@ export default function JobsListPage() {
               }}
               onAddTask={(date) => {
                 setEditingTask(null);
-                setTaskForm({ 
-                  title: '', 
-                  description: '', 
-                  priority: 'medium', 
-                  status: 'todo', 
-                  dueDate: date ? date.toISOString().split('T')[0] : '' 
+                setTaskForm({
+                  title: '',
+                  description: '',
+                  priority: 'medium',
+                  status: 'todo',
+                  dueDate: date ? date.toISOString().split('T')[0] : ''
                 });
                 setShowAddTaskModal(true);
               }}
             />
           ) : viewMode === 'timeline' ? (
-            <TasksTimelineView 
+            <TasksTimelineView
               tasks={filteredTasks}
               onTaskClick={(task) => {
                 setEditingTask(task);
@@ -700,7 +690,7 @@ export default function JobsListPage() {
               ))}
             </div>
           ) : (
-            <EmptyState 
+            <EmptyState
               icon={ListTodo}
               title="لا توجد مهام"
               description="ابدأ بإضافة مهمة جديدة"
@@ -807,19 +797,19 @@ function RepairsKanbanView({ jobs, onJobClick }) {
 // Repairs Calendar View
 function RepairsCalendarView({ jobs, onJobClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-  
+
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
   const getJobsForDay = (day) => {
     return jobs.filter(job => {
       const jobDate = new Date(job.createdAt);
-      return jobDate.getDate() === day && 
-             jobDate.getMonth() === currentDate.getMonth() &&
-             jobDate.getFullYear() === currentDate.getFullYear();
+      return jobDate.getDate() === day &&
+        jobDate.getMonth() === currentDate.getMonth() &&
+        jobDate.getFullYear() === currentDate.getFullYear();
     });
   };
 
@@ -862,15 +852,14 @@ function RepairsCalendarView({ jobs, onJobClick }) {
         ))}
         {days.map(day => {
           const dayJobs = getJobsForDay(day);
-          const isToday = new Date().getDate() === day && 
-                          new Date().getMonth() === currentDate.getMonth() &&
-                          new Date().getFullYear() === currentDate.getFullYear();
+          const isToday = new Date().getDate() === day &&
+            new Date().getMonth() === currentDate.getMonth() &&
+            new Date().getFullYear() === currentDate.getFullYear();
           return (
-            <div 
+            <div
               key={day}
-              className={`min-h-[80px] border-b border-r border-slate-100 dark:border-slate-800 p-1 ${
-                isToday ? 'bg-teal-50 dark:bg-teal-900/20' : ''
-              }`}
+              className={`min-h-[80px] border-b border-r border-slate-100 dark:border-slate-800 p-1 ${isToday ? 'bg-teal-50 dark:bg-teal-900/20' : ''
+                }`}
             >
               <div className={`text-xs font-medium mb-1 ${isToday ? 'text-teal-600' : 'text-slate-500'}`}>
                 {day}
@@ -955,7 +944,7 @@ function TasksTimelineView({ tasks, onTaskClick, getPriorityColor, getStatusColo
   // Group tasks by date
   const tasksByDate = {};
   tasks.forEach(task => {
-    const date = task.dueDate 
+    const date = task.dueDate
       ? new Date(task.dueDate).toLocaleDateString('ar-EG')
       : 'بدون تاريخ';
     if (!tasksByDate[date]) tasksByDate[date] = [];
@@ -1014,9 +1003,8 @@ function TasksTimelineView({ tasks, onTaskClick, getPriorityColor, getStatusColo
 function TaskListItem({ task, onToggleComplete, onEdit, onDelete, getPriorityColor }) {
   return (
     <div
-      className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 p-4 hover:shadow-lg transition-all cursor-pointer group ${
-        task.status === 'done' ? 'opacity-60' : ''
-      }`}
+      className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 p-4 hover:shadow-lg transition-all cursor-pointer group ${task.status === 'done' ? 'opacity-60' : ''
+        }`}
     >
       <div className="flex items-start gap-4">
         <button
@@ -1032,12 +1020,11 @@ function TaskListItem({ task, onToggleComplete, onEdit, onDelete, getPriorityCol
             <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600 hover:text-teal-500 transition-colors" />
           )}
         </button>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">
-            <h3 className={`font-semibold text-slate-900 dark:text-white ${
-              task.status === 'done' ? 'line-through' : ''
-            }`}>
+            <h3 className={`font-semibold text-slate-900 dark:text-white ${task.status === 'done' ? 'line-through' : ''
+              }`}>
               {task.title}
             </h3>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -1064,13 +1051,13 @@ function TaskListItem({ task, onToggleComplete, onEdit, onDelete, getPriorityCol
               </button>
             </div>
           </div>
-          
+
           {task.description && (
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 line-clamp-2">
               {task.description}
             </p>
           )}
-          
+
           {task.dueDate && (
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               <Clock className="w-3.5 h-3.5" />

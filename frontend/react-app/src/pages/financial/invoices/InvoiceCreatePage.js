@@ -4,15 +4,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Box,
-  Button,
-  Typography,
-  Paper,
-  Grid,
-  Alert,
-  CircularProgress
-} from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
+  ArrowLeft as ArrowBackIcon,
+  Save as SaveIcon,
+  Loader2
+} from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
+import { Card, CardContent } from '../../../components/ui/Card';
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/Alert';
+import { Separator } from '../../../components/ui/Separator';
 import { useInvoices } from '../../../hooks/financial/useInvoices';
 import InvoiceForm from '../../../components/financial/invoices/InvoiceForm';
 import InvoiceItemsForm from '../../../components/financial/invoices/InvoiceItemsForm';
@@ -57,7 +56,7 @@ const InvoiceCreatePage = () => {
     // Handle both direct calls and event objects
     const fieldName = typeof name === 'string' ? name : name?.target?.name || name?.name;
     const fieldValue = typeof name === 'string' ? value : name?.target?.value || name?.value || value;
-    
+
     setFormData(prev => ({
       ...prev,
       [fieldName]: fieldValue
@@ -294,7 +293,7 @@ const InvoiceCreatePage = () => {
         if (repairResponse?.success && repairResponse?.data) {
           const repair = repairResponse.data;
           setRepairData(repair);
-          
+
           // Auto-fill customer if repair has customer
           if (repair.customerId) {
             setFormData(prev => ({
@@ -316,148 +315,132 @@ const InvoiceCreatePage = () => {
   }, [repairId]);
 
   return (
-    <Box p={3}>
-      <Box display="flex" alignItems="center" mb={3}>
+    <div className="container mx-auto p-6 max-w-5xl">
+      <div className="flex items-center mb-6">
         <Button
-          startIcon={<ArrowBackIcon />}
+          variant="ghost"
+          size="sm"
           onClick={() => navigate('/financial/invoices')}
-          sx={{ mr: 2 }}
+          className="mr-4"
         >
+          <ArrowBackIcon className="h-4 w-4 ml-2" />
           رجوع
         </Button>
-        <Typography variant="h4" component="h1">
+        <h1 className="text-3xl font-bold">
           إنشاء فاتورة جديدة
-        </Typography>
-      </Box>
+        </h1>
+      </div>
 
-      <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <InvoiceForm
-                formData={formData}
-                errors={errors}
-                onChange={handleChange}
-                customers={customers}
-                repairs={repairs}
-                loading={loadingData}
-              />
-            </Grid>
+      <Card>
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-8">
+              <div>
+                <InvoiceForm
+                  formData={formData}
+                  errors={errors}
+                  onChange={handleChange}
+                  customers={customers}
+                  repairs={repairs}
+                  loading={loadingData}
+                />
+              </div>
 
-            <Grid item xs={12}>
-              <InvoiceItemsForm
-                items={items}
-                onChange={handleItemsChange}
-                errors={errors}
-              />
-            </Grid>
+              <div>
+                <Separator className="my-6" />
+                <InvoiceItemsForm
+                  items={items}
+                  onChange={handleItemsChange}
+                  errors={errors}
+                />
+              </div>
 
-            {/* Summary */}
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end">
-                <Grid container spacing={2} sx={{ maxWidth: 400 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      المجموع الفرعي
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} align="right">
-                    <Typography variant="body1">
-                      {formatCurrency(formData.totalAmount)}
-                    </Typography>
-                  </Grid>
+              {/* Summary */}
+              <div className="md:col-span-2 flex justify-end">
+                <div className="w-full max-w-md space-y-4 bg-gray-50 p-4 rounded-lg border">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">المجموع الفرعي</span>
+                    <span>{formatCurrency(formData.totalAmount)}</span>
+                  </div>
 
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      الضريبة (14%)
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} align="right">
-                    <Typography variant="body1">
-                      {formatCurrency(formData.taxAmount)}
-                    </Typography>
-                  </Grid>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">الضريبة ({formData.taxRate}%)</span>
+                    <span>{formatCurrency(formData.taxAmount)}</span>
+                  </div>
 
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      الخصم
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} align="right">
-                    <Typography variant="body1" color="error">
-                      -{formatCurrency(formData.discountAmount)}
-                    </Typography>
-                  </Grid>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">الخصم</span>
+                    <span className="text-red-500">-{formatCurrency(formData.discountAmount)}</span>
+                  </div>
 
-                  <Grid item xs={6}>
-                    <Typography variant="h6">
-                      الإجمالي النهائي
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} align="right">
-                    <Typography variant="h6" fontWeight="bold" color="primary">
-                      {formatCurrency(finalTotal)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
+                  <Separator />
 
-            {/* Error Message */}
-            {submitError && (
-              <Grid item xs={12}>
-                <Alert severity="error" onClose={() => setSubmitError(null)}>
-                  {submitError}
-                </Alert>
-              </Grid>
-            )}
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>الإجمالي النهائي</span>
+                    <span className="text-primary">{formatCurrency(finalTotal)}</span>
+                  </div>
+                </div>
+              </div>
 
-            {/* Repair Info Alert */}
-            {repairData && (
-              <Grid item xs={12}>
-                <Alert severity="info">
-                  يتم إنشاء الفاتورة لطلب الإصلاح رقم: {repairData.id} - {repairData.reportedProblem || 'لا يوجد وصف'}
-                </Alert>
-              </Grid>
-            )}
+              <div className="flex flex-col gap-4">
+                {/* Error Message */}
+                {submitError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{submitError}</AlertDescription>
+                  </Alert>
+                )}
 
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end" gap={2}>
+                {/* Repair Info Alert */}
+                {repairData && (
+                  <Alert className="bg-blue-50 text-blue-900 border-blue-200">
+                    <AlertTitle>معلومات الإصلاح</AlertTitle>
+                    <AlertDescription>
+                      يتم إنشاء الفاتورة لطلب الإصلاح رقم: {repairData.id} - {repairData.reportedProblem || 'لا يوجد وصف'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4">
                 <Button
-                  variant="outlined"
+                  variant="outline"
+                  type="button"
                   onClick={() => navigate('/financial/invoices')}
                   disabled={loading}
                 >
                   إلغاء
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="outline"
+                  type="button"
                   onClick={handleSaveDraft}
                   disabled={loading || items.length === 0}
-                  startIcon={<SaveIcon />}
+                  className="flex items-center gap-2"
                 >
+                  <SaveIcon className="h-4 w-4" />
                   {loading ? 'جاري الحفظ...' : 'حفظ كمسودة'}
                 </Button>
                 <Button
                   type="submit"
-                  variant="contained"
                   disabled={loading}
+                  className="min-w-[120px]"
                 >
                   {loading ? (
                     <>
-                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       جاري الحفظ...
                     </>
                   ) : (
                     'حفظ وإرسال'
                   )}
                 </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
-      </Paper>
-    </Box>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

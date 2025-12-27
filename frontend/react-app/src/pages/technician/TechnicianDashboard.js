@@ -94,7 +94,7 @@ export default function TechnicianDashboard() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const dashboardRes = await getTechDashboard();
       if (dashboardRes.success) {
         setDashboardData(dashboardRes.data);
@@ -160,7 +160,7 @@ export default function TechnicianDashboard() {
             const now = Date.now();
             const elapsed = Math.floor((now - start) / 1000);
             setCurrentElapsedTime(elapsed);
-            
+
             // If we have a repairId from tracking, fetch its details and set as activeJob
             if (tracking.repairId) {
               setActiveRepairId(tracking.repairId);
@@ -189,7 +189,7 @@ export default function TechnicianDashboard() {
       }
 
       setRetryCount(0);
-      
+
       if (isRetry) {
         notifications.success('نجح', { message: 'تم تحميل البيانات بنجاح' });
       }
@@ -197,7 +197,7 @@ export default function TechnicianDashboard() {
       console.error('Error loading dashboard:', error);
       const errorMessage = error.message || 'فشل تحميل البيانات. يرجى المحاولة مرة أخرى.';
       setError(errorMessage);
-      
+
       if (!isRetry) {
         notifications.error('خطأ', { message: errorMessage });
       }
@@ -281,30 +281,30 @@ export default function TechnicianDashboard() {
   // Error State
   if (error && !loading) {
     return (
-      <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-red-950/20">
+      <PageTransition className="min-h-screen bg-background pb-20 md:pb-8">
         <TechnicianHeader user={user} notificationCount={5} />
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/50 rounded-2xl p-8 shadow-xl">
+          <div className="bg-card border border-destructive/20 rounded-2xl p-8 shadow-xl">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-destructive" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 خطأ في تحميل البيانات
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">{error}</p>
+              <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
               <div className="flex gap-3">
                 <button
                   onClick={handleRetry}
                   disabled={retryCount >= 3}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-500/25 font-medium"
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
                 >
                   <RefreshCw className="w-4 h-4" />
                   إعادة المحاولة {retryCount > 0 && `(${retryCount}/3)`}
                 </button>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                  className="px-6 py-3 bg-secondary text-secondary-foreground rounded-xl hover:bg-secondary/80 transition-colors font-medium"
                 >
                   تحديث الصفحة
                 </button>
@@ -321,18 +321,18 @@ export default function TechnicianDashboard() {
   const pendingCount = taskStats?.pending || pendingTasks.length || 0;
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-24 md:pb-8">
+    <PageTransition className="min-h-screen bg-background pb-24 md:pb-8">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Welcome Section - Simplified */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               أهلاً، {user?.name?.split(' ')[0]} 👋
             </h1>
           </div>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-muted-foreground">
             {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -348,7 +348,7 @@ export default function TechnicianDashboard() {
                 <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-white/5 rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
                 <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-white/5 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
               </div>
-              
+
               <div className="relative p-6 md:p-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -442,7 +442,7 @@ export default function TechnicianDashboard() {
                     </button>
                   </div>
                   <div className="hidden md:block">
-                    <Stopwatch 
+                    <Stopwatch
                       repairId={activeRepairId}
                       onTimeUpdate={(time) => {
                         setCurrentElapsedTime(time);
@@ -458,16 +458,16 @@ export default function TechnicianDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Progress Bar */}
               <div className="h-1 bg-emerald-800/50 overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400"
-                  style={{ 
+                  style={{
                     width: '100%',
                     backgroundSize: '200% 100%',
                     animation: 'shimmer 2s linear infinite'
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -482,7 +482,7 @@ export default function TechnicianDashboard() {
                 <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
                 <div className="absolute bottom-0 right-0 w-60 h-60 bg-white rounded-full translate-x-1/3 translate-y-1/3" />
               </div>
-              
+
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium">
@@ -560,7 +560,7 @@ export default function TechnicianDashboard() {
                   <span>اليوم: {formatDailyTime()}</span>
                 </div>
               </div>
-              <Stopwatch 
+              <Stopwatch
                 repairId={activeRepairId}
                 onTimeUpdate={(time) => {
                   setCurrentElapsedTime(time);
@@ -577,39 +577,39 @@ export default function TechnicianDashboard() {
         )}
 
         {/* Quick Stats - 3 Cards Only */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                <Wrench className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
+                <Wrench className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{inProgressCount}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">قيد العمل</p>
+                <p className="text-3xl font-bold text-foreground">{inProgressCount}</p>
+                <p className="text-xs text-muted-foreground font-medium">قيد العمل</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
-                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/20 rounded-xl">
+                <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{completedCount}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">مكتملة اليوم</p>
+                <p className="text-3xl font-bold text-foreground">{completedCount}</p>
+                <p className="text-xs text-muted-foreground font-medium">مكتملة اليوم</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-800 hover:shadow-xl transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
-                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-100 dark:bg-amber-900/20 rounded-xl">
+                <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{pendingCount}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">معلقة</p>
+                <p className="text-3xl font-bold text-foreground">{pendingCount}</p>
+                <p className="text-xs text-muted-foreground font-medium">معلقة</p>
               </div>
             </div>
           </div>
@@ -726,46 +726,46 @@ export default function TechnicianDashboard() {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">إجراءات سريعة</h3>
-          <div className="grid grid-cols-4 gap-3">
+          <h3 className="text-lg font-bold text-foreground mb-4">إجراءات سريعة</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
               onClick={() => setShowQRScanner(true)}
-              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all"
+              className="group flex flex-col items-center gap-2 p-4 bg-card rounded-2xl border border-border hover:border-violet-500/50 hover:shadow-lg transition-all"
             >
-              <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-violet-500/25">
-                <QrCode className="w-5 h-5 text-white" />
+              <div className="p-3 bg-violet-100 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 rounded-xl group-hover:scale-110 transition-transform">
+                <QrCode className="w-5 h-5" />
               </div>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">مسح QR</span>
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">مسح QR</span>
             </button>
 
             <button
               onClick={() => navigate('/technician/jobs')}
-              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-lg transition-all"
+              className="group flex flex-col items-center gap-2 p-4 bg-card rounded-2xl border border-border hover:border-teal-500/50 hover:shadow-lg transition-all"
             >
-              <div className="p-3 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-teal-500/25">
-                <Briefcase className="w-5 h-5 text-white" />
+              <div className="p-3 bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-xl group-hover:scale-110 transition-transform">
+                <Wrench className="w-5 h-5" />
               </div>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">المهام</span>
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">المهام</span>
             </button>
 
             <button
               onClick={() => navigate('/technician/time-reports')}
-              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all"
+              className="group flex flex-col items-center gap-2 p-4 bg-card rounded-2xl border border-border hover:border-blue-500/50 hover:shadow-lg transition-all"
             >
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/25">
-                <TrendingUp className="w-5 h-5 text-white" />
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl group-hover:scale-110 transition-transform">
+                <TrendingUp className="w-5 h-5" />
               </div>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">التقارير</span>
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">التقارير</span>
             </button>
 
             <button
               onClick={() => navigate('/technician/jobs')}
-              className="group flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-lg transition-all"
+              className="group flex flex-col items-center gap-2 p-4 bg-card rounded-2xl border border-border hover:border-slate-500/50 hover:shadow-lg transition-all"
             >
-              <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-slate-500/25">
-                <Search className="w-5 h-5 text-white" />
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl group-hover:scale-110 transition-transform">
+                <Search className="w-5 h-5" />
               </div>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">بحث</span>
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">بحث</span>
             </button>
           </div>
         </div>
@@ -813,11 +813,10 @@ export default function TechnicianDashboard() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                        job.priority === 'high' 
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${job.priority === 'high'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        }`}>
                         {job.priority === 'high' ? 'عاجل' : 'عادي'}
                       </span>
                       <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
@@ -868,7 +867,7 @@ export default function TechnicianDashboard() {
 // Add missing import for Briefcase
 const Briefcase = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+    <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
   </svg>
 );

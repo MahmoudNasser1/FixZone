@@ -1,41 +1,34 @@
+
 import React, { useState } from 'react';
 import {
-  Container,
-  Paper,
-  Typography,
-  Button,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Alert,
+  Upload as UploadIcon,
+  Download as DownloadIcon,
+  FileText as FileIcon,
+  CheckCircle as SuccessIcon,
+  AlertCircle as ErrorIcon,
+  AlertTriangle as WarningIcon,
+  Trash2 as DeleteIcon
+} from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent } from '../../components/ui/Card';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/Alert';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  LinearProgress,
-  Chip,
-  IconButton,
-  Tabs,
-  Tab
-} from '@mui/material';
-import {
-  CloudUpload as UploadIcon,
-  CloudDownload as DownloadIcon,
-  InsertDriveFile as FileIcon,
-  CheckCircle as SuccessIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+} from '../../components/ui/Table';
+import { Progress } from '../../components/ui/Progress';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import * as ExcelJS from 'exceljs';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import inventoryService from '../../services/inventoryService';
 
 const ImportExportPage = () => {
-  const [tabValue, setTabValue] = useState(0);
+  // const [tabValue, setTabValue] = useState(0); // Removed in favor of Radix Tabs internal state or string state if needed
   const [file, setFile] = useState(null);
   const [previewData, setPreviewData] = useState([]);
   const [validationErrors, setValidationErrors] = useState([]);
@@ -58,7 +51,7 @@ const ImportExportPage = () => {
     }
 
     setFile(uploadedFile);
-    
+
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -66,7 +59,7 @@ const ImportExportPage = () => {
           const arrayBuffer = e.target.result;
           const workbook = new ExcelJS.Workbook();
           await workbook.xlsx.load(arrayBuffer);
-          
+
           // Get first worksheet
           const worksheet = workbook.getWorksheet(1);
           if (!worksheet) {
@@ -98,7 +91,7 @@ const ImportExportPage = () => {
               }
             }
           });
-          
+
           setPreviewData(jsonData.slice(0, 10)); // أول 10 صفوف للمعاينة
           validateData(jsonData);
         } catch (error) {
@@ -117,7 +110,7 @@ const ImportExportPage = () => {
   const validateData = (data) => {
     const errors = [];
     const requiredFields = ['name', 'sku'];
-    
+
     data.forEach((row, index) => {
       requiredFields.forEach(field => {
         if (!row[field]) {
@@ -129,7 +122,7 @@ const ImportExportPage = () => {
         }
       });
     });
-    
+
     setValidationErrors(errors);
   };
 
@@ -148,7 +141,7 @@ const ImportExportPage = () => {
           const arrayBuffer = e.target.result;
           const workbook = new ExcelJS.Workbook();
           await workbook.xlsx.load(arrayBuffer);
-          
+
           const worksheet = workbook.getWorksheet(1);
           if (!worksheet) {
             showError('الملف لا يحتوي على أوراق عمل');
@@ -178,10 +171,10 @@ const ImportExportPage = () => {
               }
             }
           });
-          
+
           let successCount = 0;
           let failCount = 0;
-          
+
           for (const item of jsonData) {
             try {
               await inventoryService.createItem({
@@ -201,7 +194,7 @@ const ImportExportPage = () => {
               failCount++;
             }
           }
-          
+
           setImportResults({ successCount, failCount, total: jsonData.length });
           showSuccess(`تم استيراد ${successCount} صنف بنجاح`);
         } catch (error) {
@@ -225,11 +218,11 @@ const ImportExportPage = () => {
     try {
       const response = await inventoryService.listItems({ limit: 10000 });
       const items = response.data.data.items;
-      
+
       // Create workbook
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('الأصناف');
-      
+
       // Define columns
       worksheet.columns = [
         { header: 'الاسم', key: 'name', width: 30 },
@@ -242,7 +235,7 @@ const ImportExportPage = () => {
         { header: 'الوحدة', key: 'unit', width: 10 },
         { header: 'الوصف', key: 'description', width: 40 }
       ];
-      
+
       // Style header row
       worksheet.getRow(1).font = { bold: true };
       worksheet.getRow(1).fill = {
@@ -251,7 +244,7 @@ const ImportExportPage = () => {
         fgColor: { argb: 'FF3B82F6' }
       };
       worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
-      
+
       // Add data
       items.forEach(item => {
         worksheet.addRow({
@@ -266,7 +259,7 @@ const ImportExportPage = () => {
           description: item.description || ''
         });
       });
-      
+
       // Generate buffer and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -278,7 +271,7 @@ const ImportExportPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       showSuccess('تم التصدير بنجاح');
     } catch (error) {
       console.error('Error exporting:', error);
@@ -304,10 +297,10 @@ const ImportExportPage = () => {
           description: 'وصف الصنف'
         }
       ];
-      
+
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Template');
-      
+
       // Define columns
       worksheet.columns = [
         { header: 'name', key: 'name', width: 30 },
@@ -320,15 +313,15 @@ const ImportExportPage = () => {
         { header: 'unit', key: 'unit', width: 10 },
         { header: 'description', key: 'description', width: 40 }
       ];
-      
+
       // Style header row
       worksheet.getRow(1).font = { bold: true };
-      
+
       // Add template data
       template.forEach(item => {
         worksheet.addRow(item);
       });
-      
+
       // Generate buffer and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -340,7 +333,7 @@ const ImportExportPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       showSuccess('تم تحميل القالب');
     } catch (error) {
       console.error('Error generating template:', error);
@@ -349,95 +342,107 @@ const ImportExportPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          <FileIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2 mb-2">
+          <FileIcon className="h-8 w-8 text-blue-600" />
           استيراد وتصدير الأصناف
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h1>
+        <p className="text-muted-foreground">
           استيراد الأصناف من Excel أو تصدير البيانات الحالية
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-          <Tab label="استيراد" icon={<UploadIcon />} />
-          <Tab label="تصدير" icon={<DownloadIcon />} />
-        </Tabs>
-      </Paper>
+      <Tabs defaultValue="import" className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+          <TabsTrigger value="import" className="flex items-center gap-2">
+            <UploadIcon className="h-4 w-4" />
+            استيراد
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center gap-2">
+            <DownloadIcon className="h-4 w-4" />
+            تصدير
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Import Tab */}
-      {tabValue === 0 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        {/* Import Tab */}
+        <TabsContent value="import">
+          <div className="grid gap-6">
             <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">
                   رفع ملف Excel
-                </Typography>
-                
-                <Box sx={{ mb: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleDownloadTemplate}
-                    startIcon={<DownloadIcon />}
-                    sx={{ mr: 2 }}
-                  >
-                    تحميل قالب Excel
-                  </Button>
-                  
-                  <Button
-                    variant="contained"
-                    component="label"
-                    startIcon={<UploadIcon />}
-                  >
-                    اختر ملف
-                    <input
-                      type="file"
-                      hidden
-                      accept=".xlsx,.xls,.csv"
-                      onChange={handleFileUpload}
-                    />
-                  </Button>
-                </Box>
+                </h2>
 
-                {file && (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    الملف: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                  </Alert>
-                )}
+                <div className="mb-4 space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadTemplate}
+                      className="flex items-center gap-2"
+                    >
+                      <DownloadIcon className="h-4 w-4" />
+                      تحميل قالب Excel
+                    </Button>
 
-                {validationErrors.length > 0 && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2">
-                      {validationErrors.length} خطأ في التحقق
-                    </Typography>
-                    {validationErrors.slice(0, 3).map((err, idx) => (
-                      <Typography key={idx} variant="body2">
-                        • صف {err.row}: {err.message}
-                      </Typography>
-                    ))}
-                  </Alert>
-                )}
+                    <div className="relative">
+                      <Button className="flex items-center gap-2">
+                        <UploadIcon className="h-4 w-4" />
+                        اختر ملف
+                      </Button>
+                      <input
+                        type="file"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+                  </div>
 
-                {previewData.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      معاينة البيانات (أول 10 صفوف):
-                    </Typography>
-                    <TableContainer sx={{ maxHeight: 400 }}>
-                      <Table size="small">
-                        <TableHead>
+                  {file && (
+                    <Alert className="bg-blue-50 text-blue-900 border-blue-200">
+                      <AlertTitle>ملف محدد</AlertTitle>
+                      <AlertDescription>
+                        {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {validationErrors.length > 0 && (
+                    <Alert variant="destructive">
+                      <AlertTitle>
+                        {validationErrors.length} خطأ في التحقق
+                      </AlertTitle>
+                      <AlertDescription>
+                        <ul className="list-disc list-inside mt-2">
+                          {validationErrors.slice(0, 3).map((err, idx) => (
+                            <li key={idx}>
+                              صف {err.row}: {err.message}
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {previewData.length > 0 && (
+                    <div className="border rounded-md overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2 border-b">
+                        <h3 className="font-medium text-sm">
+                          معاينة البيانات (أول 10 صفوف):
+                        </h3>
+                      </div>
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell>الاسم</TableCell>
-                            <TableCell>رمز الصنف</TableCell>
-                            <TableCell>الفئة</TableCell>
-                            <TableCell>السعر</TableCell>
+                            <TableHead>الاسم</TableHead>
+                            <TableHead>رمز الصنف</TableHead>
+                            <TableHead>الفئة</TableHead>
+                            <TableHead>السعر</TableHead>
                           </TableRow>
-                        </TableHead>
+                        </TableHeader>
                         <TableBody>
                           {previewData.map((row, idx) => (
                             <TableRow key={idx}>
@@ -449,75 +454,76 @@ const ImportExportPage = () => {
                           ))}
                         </TableBody>
                       </Table>
-                    </TableContainer>
-                  </Box>
-                )}
+                    </div>
+                  )}
 
-                <Box sx={{ mt: 2 }}>
-                  <Button
-                    variant="contained"
-                    onClick={handleImport}
-                    disabled={!file || validationErrors.length > 0 || importing}
-                    fullWidth
-                  >
-                    {importing ? 'جاري الاستيراد...' : 'استيراد البيانات'}
-                  </Button>
-                  {importing && <LinearProgress sx={{ mt: 1 }} />}
-                </Box>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleImport}
+                      disabled={!file || validationErrors.length > 0 || importing}
+                      className="w-full"
+                    >
+                      {importing ? 'جاري الاستيراد...' : 'استيراد البيانات'}
+                    </Button>
+                    {importing && <Progress value={30} className="w-full" />}
+                  </div>
 
-                {importResults && (
-                  <Alert severity="success" sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2">
-                      نتائج الاستيراد:
-                    </Typography>
-                    <Typography variant="body2">
-                      • الإجمالي: {importResults.total}
-                    </Typography>
-                    <Typography variant="body2">
-                      • ناجح: {importResults.successCount}
-                    </Typography>
-                    <Typography variant="body2">
-                      • فاشل: {importResults.failCount}
-                    </Typography>
-                  </Alert>
-                )}
+                  {importResults && (
+                    <Alert variant="default" className="border-green-200 bg-green-50 text-green-900">
+                      <SuccessIcon className="h-4 w-4 text-green-600 mb-1" />
+                      <AlertTitle>نتائج الاستيراد</AlertTitle>
+                      <AlertDescription>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <span>• الإجمالي: {importResults.total}</span>
+                          <span>• ناجح: {importResults.successCount}</span>
+                          <span>• فاشل: {importResults.failCount}</span>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
-      )}
+          </div>
+        </TabsContent>
 
-      {/* Export Tab */}
-      {tabValue === 1 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        {/* Export Tab */}
+        <TabsContent value="export">
+          <div className="grid gap-6">
             <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">
                   تصدير البيانات
-                </Typography>
-                
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                </h2>
+
+                <p className="text-muted-foreground mb-6">
                   تصدير جميع الأصناف الحالية إلى ملف Excel
-                </Typography>
+                </p>
 
                 <Button
-                  variant="contained"
-                  size="large"
+                  size="lg"
                   onClick={handleExport}
                   disabled={exporting}
-                  startIcon={<DownloadIcon />}
-                  fullWidth
+                  className="w-full"
                 >
-                  {exporting ? 'جاري التصدير...' : 'تصدير جميع الأصناف'}
+                  {exporting ? (
+                    <>
+                      <span className="mr-2">جاري التصدير...</span>
+                      <Progress value={50} className="w-20 inline-block h-2 bg-blue-700" />
+                    </>
+                  ) : (
+                    <>
+                      <DownloadIcon className="mr-2 h-4 w-4" />
+                      تصدير جميع الأصناف
+                    </>
+                  )}
                 </Button>
-                {exporting && <LinearProgress sx={{ mt: 1 }} />}
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
-      )}
-    </Container>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

@@ -1,45 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import useAuthStore from '../../stores/authStore';
 import {
-  Box,
-  Typography,
-  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Badge } from '../../components/ui/Badge';
+import { Separator } from '../../components/ui/Separator';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/Alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../components/ui/Dialog';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Card,
-  CardContent,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Divider
-} from '@mui/material';
+} from '../../components/ui/Table';
 import {
-  Add as AddIcon,
-  Visibility as ViewIcon,
-  Delete as DeleteIcon,
-  Check as CheckIcon,
-  LocalShipping as ShippingIcon,
-  Inventory2 as TransferIcon,
-  Remove as RemoveIcon
-} from '@mui/icons-material';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
+import {
+  Plus,
+  Eye,
+  Trash2,
+  Check,
+  Truck,
+  ArrowLeftRight,
+  Minus
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -305,427 +309,432 @@ const StockTransferPage = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TransferIcon />
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <ArrowLeftRight className="h-8 w-8" />
           نقل بين المخازن
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenDialog(true)}
-        >
+        </h1>
+        <Button onClick={() => setOpenDialog(true)}>
+          <Plus className="mr-2 h-4 w-4" />
           إنشاء نقل جديد
         </Button>
-      </Box>
+      </div>
 
       {/* Stats Cards */}
+      {/* Stats Cards */}
       {stats && (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  إجمالي النقلات
-                </Typography>
-                <Typography variant="h4">
-                  {stats.totalTransfers || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  مكتملة
-                </Typography>
-                <Typography variant="h4" color="success.main">
-                  {stats.completedTransfers || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  الكمية المنقولة
-                </Typography>
-                <Typography variant="h4">
-                  {stats.totalQuantityTransferred || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  القيمة الإجمالية
-                </Typography>
-                <Typography variant="h4">
-                  {parseFloat(stats.totalValueTransferred || 0).toFixed(2)} ج.م
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                إجمالي النقلات
+              </div>
+              <div className="text-2xl font-bold">
+                {stats.totalTransfers || 0}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                مكتملة
+              </div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.completedTransfers || 0}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                الكمية المنقولة
+              </div>
+              <div className="text-2xl font-bold">
+                {stats.totalQuantityTransferred || 0}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                القيمة الإجمالية
+              </div>
+              <div className="text-2xl font-bold">
+                {parseFloat(stats.totalValueTransferred || 0).toFixed(2)} ج.م
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Transfers Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>رقم المرجع</TableCell>
-              <TableCell>من مخزن</TableCell>
-              <TableCell>إلى مخزن</TableCell>
-              <TableCell>التاريخ</TableCell>
-              <TableCell>الحالة</TableCell>
-              <TableCell>عدد العناصر</TableCell>
-              <TableCell>السبب</TableCell>
-              <TableCell>الإجراءات</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {transfers.map((transfer) => (
-              <TableRow key={transfer.id}>
-                <TableCell>{transfer.transferNumber || transfer.referenceNumber || `#${transfer.id}`}</TableCell>
-                <TableCell>{transfer.fromWarehouseName}</TableCell>
-                <TableCell>{transfer.toWarehouseName}</TableCell>
-                <TableCell>
-                  {format(new Date(transfer.transferDate), 'dd/MM/yyyy', { locale: ar })}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={getStatusText(transfer.status)}
-                    color={getStatusColor(transfer.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{transfer.items?.length || transfer.totalItems || 0}</TableCell>
-                <TableCell>{transfer.reason || '-'}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    onClick={() => setSelectedTransfer(transfer)}
-                  >
-                    <ViewIcon />
-                  </IconButton>
-                  
-                  {transfer.status === 'pending' && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleApprove(transfer.id)}
-                      color="success"
-                      title="موافقة"
-                    >
-                      <CheckIcon />
-                    </IconButton>
-                  )}
-                  
-                  {(transfer.status === 'approved' || transfer.status === 'pending') && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleShip(transfer.id)}
-                      color="primary"
-                      title="شحن"
-                    >
-                      <ShippingIcon />
-                    </IconButton>
-                  )}
-                  
-                  {(transfer.status === 'shipped' || transfer.status === 'in_transit') && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleReceive(transfer.id)}
-                      color="info"
-                      title="استلام"
-                    >
-                      <CheckIcon />
-                    </IconButton>
-                  )}
-                  
-                  {transfer.status === 'received' && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleComplete(transfer.id)}
-                      color="success"
-                      title="إكمال"
-                    >
-                      <CheckIcon />
-                    </IconButton>
-                  )}
-                  
-                  {(transfer.status === 'pending' || transfer.status === 'approved') && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(transfer.id)}
-                      color="error"
-                      title="حذف"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </TableCell>
+      <Card className="mb-6">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>رقم المرجع</TableHead>
+                <TableHead>من مخزن</TableHead>
+                <TableHead>إلى مخزن</TableHead>
+                <TableHead>التاريخ</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>عدد العناصر</TableHead>
+                <TableHead>السبب</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHeader>
+            <TableBody>
+              {transfers.map((transfer) => (
+                <TableRow key={transfer.id}>
+                  <TableCell>{transfer.transferNumber || transfer.referenceNumber || `#${transfer.id}`}</TableCell>
+                  <TableCell>{transfer.fromWarehouseName}</TableCell>
+                  <TableCell>{transfer.toWarehouseName}</TableCell>
+                  <TableCell>
+                    {format(new Date(transfer.transferDate), 'dd/MM/yyyy', { locale: ar })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      transfer.status === 'completed' || transfer.status === 'received' ? 'success' :
+                        transfer.status === 'cancelled' || transfer.status === 'rejected' ? 'destructive' :
+                          transfer.status === 'in_transit' || transfer.status === 'shipped' ? 'warning' :
+                            'outline'
+                    }>
+                      {getStatusText(transfer.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{transfer.items?.length || transfer.totalItems || 0}</TableCell>
+                  <TableCell>{transfer.reason || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedTransfer(transfer)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+
+                      {transfer.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleApprove(transfer.id)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          title="موافقة"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {(transfer.status === 'approved' || transfer.status === 'pending') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleShip(transfer.id)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="شحن"
+                        >
+                          <Truck className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {(transfer.status === 'shipped' || transfer.status === 'in_transit') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleReceive(transfer.id)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="استلام"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {transfer.status === 'received' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleComplete(transfer.id)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          title="إكمال"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {(transfer.status === 'pending' || transfer.status === 'approved') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(transfer.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="حذف"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Create Transfer Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>إنشاء نقل جديد</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>من مخزن</InputLabel>
-                <Select
-                  value={formData.fromWarehouseId}
-                  onChange={(e) => setFormData({ ...formData, fromWarehouseId: e.target.value })}
-                >
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>إنشاء نقل جديد</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <Label>من مخزن</Label>
+              <Select
+                value={formData.fromWarehouseId}
+                onValueChange={(val) => setFormData({ ...formData, fromWarehouseId: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المخزن" />
+                </SelectTrigger>
+                <SelectContent>
                   {warehouses.map((warehouse) => (
-                    <MenuItem key={warehouse.id} value={warehouse.id}>
+                    <SelectItem key={warehouse.id} value={warehouse.id?.toString()}>
                       {warehouse.name}
-                    </MenuItem>
+                    </SelectItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>إلى مخزن</InputLabel>
-                <Select
-                  value={formData.toWarehouseId}
-                  onChange={(e) => setFormData({ ...formData, toWarehouseId: e.target.value })}
-                >
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>إلى مخزن</Label>
+              <Select
+                value={formData.toWarehouseId}
+                onValueChange={(val) => setFormData({ ...formData, toWarehouseId: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المخزن" />
+                </SelectTrigger>
+                <SelectContent>
                   {warehouses
                     .filter(w => w.id !== formData.fromWarehouseId)
                     .map((warehouse) => (
-                      <MenuItem key={warehouse.id} value={warehouse.id}>
+                      <SelectItem key={warehouse.id} value={warehouse.id?.toString()}>
                         {warehouse.name}
-                      </MenuItem>
+                      </SelectItem>
                     ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="تاريخ النقل"
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ النقل</Label>
+              <Input
                 type="date"
                 value={formData.transferDate}
                 onChange={(e) => setFormData({ ...formData, transferDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
                 required
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="السبب"
+            </div>
+            <div className="space-y-2">
+              <Label>السبب</Label>
+              <Input
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="ملاحظات"
-                multiline
-                rows={2}
+            </div>
+            <div className="col-span-1 md:col-span-2 space-y-2">
+              <Label>ملاحظات</Label>
+              <Input
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               />
-            </Grid>
+            </div>
 
             {/* Add Items Section */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" gutterBottom>
+            <div className="col-span-1 md:col-span-2">
+              <Separator className="my-4" />
+              <h3 className="text-lg font-semibold mb-2">
                 العناصر المراد نقلها
-              </Typography>
-            </Grid>
+              </h3>
+            </div>
 
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth>
-                <InputLabel>الصنف</InputLabel>
+            <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+              <div className="md:col-span-5 space-y-2">
+                <Label>الصنف</Label>
                 <Select
                   value={selectedItem}
-                  onChange={(e) => {
-                    setSelectedItem(e.target.value);
-                    const item = items.find(i => i.id === parseInt(e.target.value));
+                  onValueChange={(val) => {
+                    setSelectedItem(val);
+                    const item = items.find(i => i.id === parseInt(val));
                     if (item) setItemPrice(item.purchasePrice || 0);
                   }}
                 >
-                  {items.map((item) => (
-                    <MenuItem key={item.id} value={item.id}>
-                      {item.name} - {item.sku}
-                    </MenuItem>
-                  ))}
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الصنف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {items.map((item) => (
+                      <SelectItem key={item.id} value={item.id?.toString()}>
+                        {item.name} - {item.sku}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="الكمية"
-                type="number"
-                value={itemQuantity}
-                onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
-                inputProps={{ min: 1 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="السعر"
-                type="number"
-                value={itemPrice}
-                onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleAddItem}
-                disabled={!selectedItem}
-                sx={{ height: '56px' }}
-              >
-                إضافة
-              </Button>
-            </Grid>
+              </div>
+              <div className="md:col-span-3 space-y-2">
+                <Label>الكمية</Label>
+                <Input
+                  type="number"
+                  value={itemQuantity}
+                  onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                  min={1}
+                />
+              </div>
+              <div className="md:col-span-3 space-y-2">
+                <Label>السعر</Label>
+                <Input
+                  type="number"
+                  value={itemPrice}
+                  onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
+                  min={0}
+                  step={0.01}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <Button
+                  onClick={handleAddItem}
+                  disabled={!selectedItem}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
             {/* Items List */}
             {formData.items.length > 0 && (
-              <Grid item xs={12}>
-                <List>
-                  {formData.items.map((item, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton edge="end" onClick={() => handleRemoveItem(index)} color="error">
-                          <RemoveIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={item.itemName}
-                        secondary={`الكمية: ${item.quantity} | السعر: ${item.unitPrice.toFixed(2)} ج.م | الإجمالي: ${(item.quantity * item.unitPrice).toFixed(2)} ج.م`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Divider />
-                <Box sx={{ mt: 2, textAlign: 'right' }}>
-                  <Typography variant="h6">
+              <div className="col-span-1 md:col-span-2">
+                <div className="border rounded-md mt-4">
+                  <Table>
+                    <TableBody>
+                      {formData.items.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{item.itemName}</TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground text-sm">
+                              الكمية: {item.quantity} | السعر: {item.unitPrice.toFixed(2)} | الإجمالي: {(item.quantity * item.unitPrice).toFixed(2)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveItem(index)}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="mt-2 text-left">
+                  <p className="text-lg font-bold">
                     الإجمالي: {formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2)} ج.م
-                  </Typography>
-                </Box>
-              </Grid>
+                  </p>
+                </div>
+              </div>
             )}
-          </Grid>
+          </div>
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>إلغاء</Button>
+            <Button
+              onClick={handleCreateTransfer}
+              disabled={!formData.fromWarehouseId || !formData.toWarehouseId || formData.items.length === 0 || loading}
+            >
+              {loading ? 'جاري الإنشاء...' : 'إنشاء'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>إلغاء</Button>
-          <Button
-            onClick={handleCreateTransfer}
-            variant="contained"
-            disabled={!formData.fromWarehouseId || !formData.toWarehouseId || formData.items.length === 0 || loading}
-          >
-            {loading ? <CircularProgress size={20} /> : 'إنشاء'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Transfer Details Dialog */}
       <Dialog
         open={!!selectedTransfer}
-        onClose={() => setSelectedTransfer(null)}
-        maxWidth="md"
-        fullWidth
+        onOpenChange={(open) => !open && setSelectedTransfer(null)}
       >
-        {selectedTransfer && (
-          <>
-            <DialogTitle>
-              تفاصيل النقل - {selectedTransfer.transferNumber || selectedTransfer.referenceNumber || `#${selectedTransfer.id}`}
-            </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    من مخزن
-                  </Typography>
-                  <Typography>{selectedTransfer.fromWarehouseName}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    إلى مخزن
-                  </Typography>
-                  <Typography>{selectedTransfer.toWarehouseName}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    التاريخ
-                  </Typography>
-                  <Typography>
+        <DialogContent className="sm:max-w-[600px]">
+          {selectedTransfer && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  تفاصيل النقل - {selectedTransfer.transferNumber || selectedTransfer.referenceNumber || `#${selectedTransfer.id}`}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">من مخزن</p>
+                  <p>{selectedTransfer.fromWarehouseName}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">إلى مخزن</p>
+                  <p>{selectedTransfer.toWarehouseName}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">التاريخ</p>
+                  <p>
                     {format(new Date(selectedTransfer.transferDate), 'dd/MM/yyyy', { locale: ar })}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    الحالة
-                  </Typography>
-                  <Chip
-                    label={getStatusText(selectedTransfer.status)}
-                    color={getStatusColor(selectedTransfer.status)}
-                    size="small"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    عدد العناصر
-                  </Typography>
-                  <Typography>{selectedTransfer.totalItems || 0}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    القيمة الإجمالية
-                  </Typography>
-                  <Typography>{parseFloat(selectedTransfer.totalValue || 0).toFixed(2)} ج.م</Typography>
-                </Grid>
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">الحالة</p>
+                  <Badge variant={
+                    selectedTransfer.status === 'completed' || selectedTransfer.status === 'received' ? 'success' :
+                      selectedTransfer.status === 'cancelled' || selectedTransfer.status === 'rejected' ? 'destructive' :
+                        selectedTransfer.status === 'in_transit' || selectedTransfer.status === 'shipped' ? 'warning' :
+                          'outline'
+                  }>
+                    {getStatusText(selectedTransfer.status)}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">عدد العناصر</p>
+                  <p>{selectedTransfer.totalItems || 0}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">القيمة الإجمالية</p>
+                  <p>{parseFloat(selectedTransfer.totalValue || 0).toFixed(2)} ج.م</p>
+                </div>
                 {selectedTransfer.reason && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      السبب
-                    </Typography>
-                    <Typography>{selectedTransfer.reason}</Typography>
-                  </Grid>
+                  <div className="col-span-2 space-y-1">
+                    <p className="text-sm font-medium text-gray-500">السبب</p>
+                    <p>{selectedTransfer.reason}</p>
+                  </div>
                 )}
                 {selectedTransfer.notes && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      ملاحظات
-                    </Typography>
-                    <Typography>{selectedTransfer.notes}</Typography>
-                  </Grid>
+                  <div className="col-span-2 space-y-1">
+                    <p className="text-sm font-medium text-gray-500">ملاحظات</p>
+                    <p>{selectedTransfer.notes}</p>
+                  </div>
                 )}
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setSelectedTransfer(null)}>إغلاق</Button>
-            </DialogActions>
-          </>
-        )}
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setSelectedTransfer(null)}>إغلاق</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

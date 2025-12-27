@@ -1,42 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Box,
   Card,
   CardContent,
-  Grid,
-  Chip,
-  Alert,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Badge } from '../../components/ui/Badge';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/Alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../components/ui/Dialog';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
-} from '@mui/material';
+} from '../../components/ui/Table';
 import {
-  QrCodeScanner as ScanIcon,
-  Search as SearchIcon,
-  History as HistoryIcon,
-  CameraAlt as CameraIcon,
-  Inventory as InventoryIcon,
-  Clear as ClearIcon,
-  CheckCircle as SuccessIcon,
-  Error as ErrorIcon
-} from '@mui/icons-material';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/Select';
+import {
+  Scan, // QrCodeScanner
+  Search, // SearchIcon
+  History, // HistoryIcon
+  Camera, // CameraIcon
+  Package, // InventoryIcon
+  X, // ClearIcon
+  CheckCircle, // SuccessIcon
+  AlertCircle // ErrorIcon
+} from 'lucide-react';
 import barcodeService from '../../services/barcodeService';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 
@@ -49,14 +55,14 @@ const BarcodeScannerPage = () => {
   const [scanType, setScanType] = useState('lookup');
   const [showHistory, setShowHistory] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
-  
+
   const inputRef = useRef(null);
   const { showSuccess, showError } = useNotifications();
 
   useEffect(() => {
     loadStats();
     loadHistory();
-    
+
     // Auto-focus على حقل الباركود
     if (inputRef.current) {
       inputRef.current.focus();
@@ -87,7 +93,7 @@ const BarcodeScannerPage = () => {
 
   const handleScan = async (e) => {
     e.preventDefault();
-    
+
     if (!barcode.trim()) {
       showError('الرجاء إدخال الباركود');
       return;
@@ -96,13 +102,13 @@ const BarcodeScannerPage = () => {
     setLoading(true);
     try {
       const response = await barcodeService.scanBarcode(barcode, scanType);
-      
+
       if (response.data.success) {
         setScanResult(response.data.data);
         showSuccess('تم المسح بنجاح');
         loadStats();
         loadHistory();
-        
+
         // Auto-clear للمسح التالي
         setTimeout(() => {
           setBarcode('');
@@ -136,212 +142,225 @@ const BarcodeScannerPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <div className="container mx-auto p-4 py-8 max-w-7xl">
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          <ScanIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2 flex items-center">
+          <Scan className="mr-2 inline-block" size={32} />
           مسح الباركود
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h1>
+        <p className="text-gray-500">
           امسح الباركود للبحث عن الأصناف والتحقق من المخزون
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Stats Cards */}
+      {/* Stats Cards */}
       {stats && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  إجمالي المسح
-                </Typography>
-                <Typography variant="h4">
-                  {stats.overview?.totalScans || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: 'success.light' }}>
-              <CardContent>
-                <Typography color="white" gutterBottom>
-                  ناجح
-                </Typography>
-                <Typography variant="h4" color="white">
-                  {stats.overview?.successfulScans || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: 'error.light' }}>
-              <CardContent>
-                <Typography color="white" gutterBottom>
-                  غير موجود
-                </Typography>
-                <Typography variant="h4" color="white">
-                  {stats.overview?.notFoundScans || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  أصناف فريدة
-                </Typography>
-                <Typography variant="h4">
-                  {stats.overview?.uniqueItems || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-sm text-gray-500 mb-2">
+                إجمالي المسح
+              </p>
+              <h3 className="text-2xl font-bold">
+                {stats.overview?.totalScans || 0}
+              </h3>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-500 text-white border-green-600">
+            <CardContent className="pt-6">
+              <p className="text-green-100 mb-2">
+                ناجح
+              </p>
+              <h3 className="text-2xl font-bold text-white">
+                {stats.overview?.successfulScans || 0}
+              </h3>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-red-500 text-white border-red-600">
+            <CardContent className="pt-6">
+              <p className="text-red-100 mb-2">
+                غير موجود
+              </p>
+              <h3 className="text-2xl font-bold text-white">
+                {stats.overview?.notFoundScans || 0}
+              </h3>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-sm text-gray-500 mb-2">
+                أصناف فريدة
+              </p>
+              <h3 className="text-2xl font-bold">
+                {stats.overview?.uniqueItems || 0}
+              </h3>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Scanner Card */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={8}>
-            <form onSubmit={handleScan}>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                <TextField
-                  inputRef={inputRef}
-                  fullWidth
-                  label="الباركود"
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="امسح أو أدخل الباركود..."
-                  autoFocus
-                  disabled={loading}
-                  InputProps={{
-                    endAdornment: barcode && (
-                      <IconButton size="small" onClick={handleClear}>
-                        <ClearIcon />
-                      </IconButton>
-                    )
-                  }}
-                />
-                <FormControl sx={{ minWidth: 120 }}>
-                  <InputLabel>نوع المسح</InputLabel>
-                  <Select
-                    value={scanType}
-                    label="نوع المسح"
-                    onChange={(e) => setScanType(e.target.value)}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <form onSubmit={handleScan}>
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1 w-full">
+                    <Label htmlFor="barcode" className="mb-2 block">
+                      الباركود
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="barcode"
+                        ref={inputRef}
+                        value={barcode}
+                        onChange={(e) => setBarcode(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="امسح أو أدخل الباركود..."
+                        autoFocus
+                        disabled={loading}
+                        className="pl-10 text-right"
+                      />
+                      {barcode && (
+                        <button
+                          type="button"
+                          onClick={handleClear}
+                          className="absolute left-2 top-2.5 text-gray-400 hover:text-gray-600"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-[150px]">
+                    <Label className="mb-2 block">نوع المسح</Label>
+                    <Select value={scanType} onValueChange={setScanType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="نوع المسح" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lookup">بحث</SelectItem>
+                        <SelectItem value="receive">استلام</SelectItem>
+                        <SelectItem value="issue">صرف</SelectItem>
+                        <SelectItem value="count">جرد</SelectItem>
+                        <SelectItem value="transfer">نقل</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    size="default"
+                    disabled={loading || !barcode.trim()}
+                    className="w-full md:w-auto"
                   >
-                    <MenuItem value="lookup">بحث</MenuItem>
-                    <MenuItem value="receive">استلام</MenuItem>
-                    <MenuItem value="issue">صرف</MenuItem>
-                    <MenuItem value="count">جرد</MenuItem>
-                    <MenuItem value="transfer">نقل</MenuItem>
-                  </Select>
-                </FormControl>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading || !barcode.trim()}
-                  startIcon={<SearchIcon />}
-                >
-                  مسح
-                </Button>
-              </Box>
-            </form>
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                    <Search className="mr-2 h-4 w-4" />
+                    مسح
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            <div className="flex items-end justify-end gap-2">
               <Button
-                variant="outlined"
-                startIcon={<CameraIcon />}
+                variant="outline"
                 onClick={() => setCameraMode(!cameraMode)}
                 disabled
               >
+                <Camera className="mr-2 h-4 w-4" />
                 كاميرا
               </Button>
               <Button
-                variant="outlined"
-                startIcon={<HistoryIcon />}
+                variant="outline"
                 onClick={() => setShowHistory(!showHistory)}
               >
+                <History className="mr-2 h-4 w-4" />
                 السجل
               </Button>
-            </Box>
-          </Grid>
-        </Grid>
+            </div>
+          </div>
 
-        {/* Scan Result */}
-        {scanResult && (
-          <Box sx={{ mt: 3 }}>
-            {scanResult.error ? (
-              <Alert severity="error" icon={<ErrorIcon />}>
-                <Typography variant="h6">الصنف غير موجود</Typography>
-                <Typography variant="body2">{scanResult.message}</Typography>
-              </Alert>
-            ) : scanResult.item ? (
-              <Alert severity="success" icon={<SuccessIcon />}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Typography variant="h6">{scanResult.item.name}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      رمز الصنف: <strong>{scanResult.item.sku}</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      الفئة: <strong>{scanResult.item.category || 'غير محدد'}</strong>
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      الكمية المتاحة: <strong>{scanResult.item.totalQuantity || 0}</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      السعر: <strong>{scanResult.item.sellingPrice || 0} ج.م</strong>
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Alert>
-            ) : null}
-          </Box>
-        )}
-      </Paper>
+          {/* Scan Result */}
+          {scanResult && (
+            <div className="mt-6">
+              {scanResult.error ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>الصنف غير موجود</AlertTitle>
+                  <AlertDescription>{scanResult.message}</AlertDescription>
+                </Alert>
+              ) : scanResult.item ? (
+                <Alert variant="success" className="bg-green-50 border-green-200 text-green-800">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <div className="ml-2 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="col-span-1 md:col-span-2">
+                        <h4 className="text-lg font-semibold">{scanResult.item.name}</h4>
+                      </div>
+                      <div>
+                        <p className="text-sm opacity-90">
+                          رمز الصنف: <strong>{scanResult.item.sku}</strong>
+                        </p>
+                        <p className="text-sm opacity-90">
+                          الفئة: <strong>{scanResult.item.category || 'غير محدد'}</strong>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm opacity-90">
+                          الكمية المتاحة: <strong>{scanResult.item.totalQuantity || 0}</strong>
+                        </p>
+                        <p className="text-sm opacity-90">
+                          السعر: <strong>{scanResult.item.sellingPrice || 0} ج.م</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Alert>
+              ) : null}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Scan History */}
       {showHistory && scanHistory.length > 0 && (
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Card className="p-4 mt-6">
+          <h3 className="text-lg font-bold mb-4">
             آخر عمليات المسح
-          </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
+          </h3>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell>الباركود</TableCell>
-                  <TableCell>الصنف</TableCell>
-                  <TableCell>النوع</TableCell>
-                  <TableCell>النتيجة</TableCell>
-                  <TableCell>الوقت</TableCell>
+                  <TableHead className="text-right">الباركود</TableHead>
+                  <TableHead className="text-right">الصنف</TableHead>
+                  <TableHead className="text-right">النوع</TableHead>
+                  <TableHead className="text-right">النتيجة</TableHead>
+                  <TableHead className="text-right">الوقت</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {scanHistory.map((scan) => (
                   <TableRow key={scan.id}>
                     <TableCell>{scan.barcode}</TableCell>
                     <TableCell>{scan.itemName || '-'}</TableCell>
                     <TableCell>
-                      <Chip label={scan.scanType} size="small" />
+                      <Badge variant="outline">{scan.scanType}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={scan.result}
-                        size="small"
-                        color={scan.result === 'success' ? 'success' : 'error'}
-                      />
+                      <Badge
+                        variant={scan.result === 'success' ? 'success' : 'destructive'}
+                      >
+                        {scan.result}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {new Date(scan.scannedAt).toLocaleString('ar-EG')}
@@ -350,25 +369,32 @@ const BarcodeScannerPage = () => {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
-        </Paper>
+          </div>
+        </Card>
       )}
 
       {/* Camera Mode (placeholder) */}
-      {cameraMode && (
-        <Dialog open={cameraMode} onClose={() => setCameraMode(false)} maxWidth="md" fullWidth>
-          <DialogTitle>مسح بالكاميرا</DialogTitle>
-          <DialogContent>
-            <Alert severity="info">
-              مسح الكاميرا قيد التطوير. استخدم الماسح الضوئي أو الإدخال اليدوي.
+      {/* Camera Mode (placeholder) */}
+      <Dialog open={cameraMode} onOpenChange={setCameraMode}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>مسح بالكاميرا</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Alert variant="info">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>معلومة</AlertTitle>
+              <AlertDescription>
+                مسح الكاميرا قيد التطوير. استخدم الماسح الضوئي أو الإدخال اليدوي.
+              </AlertDescription>
             </Alert>
-          </DialogContent>
-          <DialogActions>
+          </div>
+          <DialogFooter>
             <Button onClick={() => setCameraMode(false)}>إغلاق</Button>
-          </DialogActions>
-        </Dialog>
-      )}
-    </Container>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
