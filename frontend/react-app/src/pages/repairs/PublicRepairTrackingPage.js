@@ -20,8 +20,6 @@ import {
   HardDrive,
   Hash,
   Layers,
-  Laptop,
-  Tablet,
   Shield,
   ShoppingCart,
   FileCheck,
@@ -53,8 +51,8 @@ const PublicRepairTrackingPage = () => {
   // State management
   const [repairData, setRepairData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [hasReports, setHasReports] = useState(false);
-  const [inspectionReports, setInspectionReports] = useState([]);
+  const [hasReports] = useState(false);
+  const [inspectionReports] = useState([]);
   const [showInvoiceAuth, setShowInvoiceAuth] = useState(false);
   const [invoicePhone, setInvoicePhone] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
