@@ -84,10 +84,17 @@ export default function RepairPrintPage() {
         @media print {
           @page { size: ${paperSize}; margin: 10mm 10mm 12mm 10mm; }
           .no-print { display: none !important; }
-          .card { box-shadow: none !important; border: none !important; }
+          .card { box-shadow: none !important; border: 1px solid #eee !important; }
           .cut-line { display:none; }
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          .label, .sub, .meta, .muted, .sig, .terms, .contact { color: #000 !important; }
+          .value, strong { color: #000 !important; font-weight: 800 !important; }
         }
-        body { background: #f5f6f8; }
+        body { background: #f5f6f8; color: #000; }
         .container { max-width: 900px; margin: 16px auto; padding: 0 12px; }
         .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; }
@@ -98,17 +105,17 @@ export default function RepairPrintPage() {
         .meta { text-align:left; font-size:12px; color:#374151; }
         .meta .row { margin-bottom: 2px; }
         .title { font-size: 18px; font-weight: 700; }
-        .muted { color: #6b7280; font-size: 12px; }
+        .muted { color: #000; font-size: 13px; }
         .content { padding: 16px 20px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
-        .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
-        .value { font-size: 14px; color: #111827; }
+        .label { font-size: 13px; color: #000; font-weight: 700; margin-bottom: 4px; }
+        .value { font-size: 15px; color: #000; font-weight: 800; }
         .section { margin-top: 16px; }
         .section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
         .divider { height: 1px; background:#f0f0f0; margin: 12px 0; }
         .notes { white-space: pre-wrap; background:#fafafa; border:1px solid #eee; border-radius:6px; padding:10px; }
         .footer { display:flex; justify-content: space-between; margin-top:18px; gap:16px; }
-        .sig { flex:1; border-top: 1px dashed #cbd5e1; text-align:center; padding-top:8px; font-size:12px; color:#6b7280; }
+        .sig { flex:1; border-top: 1px dashed #000; text-align:center; padding-top:8px; font-size:13px; color:#000; font-weight: 700; }
         .table { width:100%; border-collapse: collapse; }
         .table th, .table td { border:1px solid #e5e7eb; padding:8px 10px; font-size:12px; }
         .table th { background:#f9fafb; text-align:right; }
@@ -118,9 +125,9 @@ export default function RepairPrintPage() {
         .badge-blue { background:#dbeafe; color:#1e40af; }
         .badge-green { background:#dcfce7; color:#166534; }
         .badge-red { background:#fee2e2; color:#991b1b; }
-        .terms { margin-top:12px; font-size:11px; color:#475569; line-height:1.6; }
+        .terms { margin-top:12px; font-size:12px; color:#000; line-height:1.6; font-weight: 500; }
         .highlight { background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:8px 10px; font-size:12px; }
-        .contact { margin-top:6px; font-size:11px; color:#6b7280; }
+        .contact { margin-top:6px; font-size:12px; color:#000; font-weight: 700; }
         .wm { position: fixed; inset: 0; display:flex; justify-content:center; align-items:center; pointer-events:none; }
         .wm span { opacity: 0.07; font-size: 96px; transform: rotate(-25deg); color:#0f172a; font-weight:800; }
         .bar-row { display:flex; align-items:center; gap:12px; margin-top:8px; }
@@ -152,11 +159,11 @@ export default function RepairPrintPage() {
               )}
               <div className="badges" style={{ marginTop: 6 }}>
                 <span className={`badge ${repair?.status === 'completed' ? 'badge-green' :
-                    repair?.status === 'ready-for-pickup' ? 'badge-green' :
+                  repair?.status === 'ready-for-pickup' ? 'badge-green' :
                     repair?.status === 'waiting-parts' ? 'badge-orange' :
-                    repair?.status === 'in-progress' ? 'badge-blue' :
-                      repair?.status === 'pending' ? 'badge-yellow' :
-                        repair?.status === 'cancelled' ? 'badge-red' : ''
+                      repair?.status === 'in-progress' ? 'badge-blue' :
+                        repair?.status === 'pending' ? 'badge-yellow' :
+                          repair?.status === 'cancelled' ? 'badge-red' : ''
                   }`}>
                   حالة: {getStatusText(repair?.status)}
                 </span>
