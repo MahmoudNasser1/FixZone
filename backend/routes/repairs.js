@@ -4068,212 +4068,210 @@ router.get('/:id/print/sticker', authMiddleware, async (req, res) => {
       ram: repair.ram || '—',
       storage: repair.storage || '—'
     };
-    const simpleRequestId = String(repair.id || '').padStart(4, '0');
+    const deviceBrand = repair.deviceBrand || '—';
+
+
     const html = `<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>استيكر - ${requestNumber}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet" />
+      <title>Sticker - ${requestNumber}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
       <style>
-        @page { 
-          size: 40mm 58mm portrait;
-          margin: 0;
-        }
+        @page { size: 40mm 58mm portrait; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
-          width: 40mm;
-          height: 58mm;
-          margin: 0;
-          padding: 0;
+          width: 100%;
+          min-height: 100vh;
+          background: #f0f2f5;
+          font-family: 'Tajawal', sans-serif;
+          direction: rtl;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        body { 
-          font-family: 'Tajawal','Cairo', Arial, sans-serif; 
-          direction: rtl; 
-          color: #111827; 
-          font-size: 9px;
-          background: #fff;
+        body {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
         }
         .sticker-container {
-          width: 100%;
-          height: 100%;
-          border: 2px solid #111827;
-          padding: 1mm 1mm 1.2mm;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
+          width: 40mm;
+          height: 58mm;
           background: #fff;
+          padding: 2mm;
+          display: flex;
+          flex-direction: column;
+          border: 0.5mm solid #000;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          position: relative;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        .sticker-header {
+        @media print {
+          body { background: none; padding: 0; display: block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .sticker-container {
+            width: 40mm;
+            height: 58mm;
+            border: 1px solid #000;
+            box-shadow: none;
+            margin: 0;
+            position: absolute;
+            top: 0;
+            right: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .no-print { display: none !important; }
+        }
+        .header {
+          border-bottom: 2px solid #000;
           text-align: center;
-          border-bottom: 1px solid #111827;
-          padding-bottom: 0.6mm;
-          margin-bottom: 0.6mm;
+          padding-bottom: 1mm;
+          margin-bottom: 1.5mm;
         }
-        .request-number {
-          font-size: 14px;
-          font-weight: 700;
-          letter-spacing: 1px;
+        .req-number {
+          font-size: 11px;
+          font-weight: 900;
+          color: #000;
         }
-        .meta-row {
-          display: flex;
-          justify-content: space-between;
-          font-size: 7.5px;
-          color: #111827;
-          padding: 0.2mm 0;
-          margin-bottom: 0.4mm;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        .meta-item {
-          display: flex;
-          flex-direction: column;
-        }
-        .meta-label {
-          font-weight: 600;
-          color: #6b7280;
-          letter-spacing: 0.2px;
-          font-size: 6.5px;
-        }
-        .meta-value {
-          font-weight: 700;
-          letter-spacing: 0.4px;
-          font-size: 8px;
-        }
-        .info-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6mm;
-          flex: 1;
+        .info-section {
+          font-size: 8.5px;
+          line-height: 1.4;
         }
         .info-row {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          gap: 1mm;
-          padding: 0.2mm 0;
+          padding: 0.5mm 0;
+          border-bottom: 0.1mm dashed #ccc;
         }
-        .info-row .label {
-          font-size: 6.5px;
-          color: #6b7280;
-          font-weight: 600;
-          text-align: right;
-          flex: 0 0 44%;
-          letter-spacing: 0.3px;
+        .label {
+          font-weight: 400;
+          color: #444;
+          font-size: 7.5px;
         }
-        .info-row .value {
-          font-size: 9.5px;
-          font-weight: 700;
-          color: #111827;
+        .value {
+          font-weight: 800;
           text-align: left;
-          flex: 1;
-          word-break: break-word;
+          font-size: 9px;
         }
-        .caps-line {
-          font-size: 9.2px;
-          color: #111827;
+        .device-card {
+          background: #000;
+          color: #fff;
+          padding: 1.5mm;
+          margin: 1.5mm 0;
+          border-radius: 1mm;
+          text-align: center;
+        }
+        .device-model {
+          font-size: 10.5px;
+          font-weight: 800;
+          display: block;
+          margin-bottom: 0.5mm;
+          color: #fff;
+        }
+        .device-specs {
+          font-size: 8px;
           font-weight: 700;
-          margin-top: 1.4mm;
-          letter-spacing: 0.3px;
+          color: #fff;
+        }
+        .problem-box {
+          flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 0.2mm;
-        }
-        .caps-label {
-          font-size: 6.3px;
-          color: #6b7280;
-          font-weight: 700;
-          letter-spacing: 0.3px;
-          text-transform: uppercase;
-        }
-        .caps-value {
-          font-size: 9.6px;
-          color: #111827;
-          letter-spacing: 0.3px;
-        }
-        .problem-card {
-          border-top: 1px solid #111827;
-          padding-top: 1.2mm;
-          margin-top: 1.4mm;
-        }
-        .problem-label {
-          font-size: 6px;
-          color: #6b7280;
-          font-weight: 700;
-          margin-bottom: 0.6mm;
-          letter-spacing: 0.4px;
-        }
-        .problem-value {
-          font-size: 8.6px;
-          color: #111827;
-          line-height: 1.5;
-          max-height: 24mm;
+          margin-top: 2mm;
+          padding: 0;
           overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 8;
-          -webkit-box-orient: vertical;
         }
-        @media print { 
-          .no-print {
-            display: none;
-          }
+        .problem-title {
+          font-size: 7px;
+          font-weight: 900;
+          text-decoration: underline;
+          color: #000;
+          margin-bottom: 0.5mm;
+        }
+        .problem-desc {
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1.2;
+          color: #000;
+          word-break: break-all;
+        }
+        .date-footer {
+          font-size: 6.5px;
+          text-align: left;
+          color: #71717a;
+          margin-top: 1mm;
+          font-weight: 600;
+        }
+        .btn-print {
+          position: fixed;
+          bottom: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #10b981;
+          color: #fff;
+          border: none;
+          padding: 12px 30px;
+          border-radius: 50px;
+          font-weight: 800;
+          font-size: 16px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+          z-index: 9999;
+          transition: all 0.3s;
+          font-family: 'Tajawal', sans-serif;
+        }
+        .btn-print:hover {
+          background: #059669;
+          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+          bottom: 32px;
         }
       </style>
     </head>
     <body>
+      <button class="btn-print no-print" onclick="window.print()">
+        طباعة الاستيكر 🖨️
+      </button>
+
       <div class="sticker-container">
-        <div class="sticker-header">
-          <div class="request-number">${requestNumber}</div>
+        <div class="header">
+          <div class="req-number">${requestNumber}</div>
         </div>
-        <div class="meta-row">
-          <div class="meta-item">
-            <span class="meta-label">رقم الطلب</span>
-            <span class="meta-value">${simpleRequestId}</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">التاريخ</span>
-            <span class="meta-value">${dateText}</span>
-          </div>
-          </div>
-        <div class="info-list">
+
+        <div class="info-section">
           <div class="info-row">
             <span class="label">العميل</span>
             <span class="value">${customerName}</span>
           </div>
           <div class="info-row">
-            <span class="label">رقم الموبايل</span>
+            <span class="label">الموبايل</span>
             <span class="value">${customerPhone}</span>
           </div>
-          <div class="info-row">
-            <span class="label">النوع</span>
-            <span class="value">${deviceType}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">الموديل</span>
-            <span class="value">${deviceModel}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">السيريال</span>
-            <span class="value">${serialNumber}</span>
-          </div>
         </div>
-        <div class="caps-line">
-          <span class="caps-label">الإمكانيات</span>
-          <span class="caps-value">CPU: ${specs.cpu} , RAM: ${specs.ram} , Storige: ${specs.storage}</span>
+
+        <div class="device-card">
+          <span class="device-model">${deviceBrand} ${deviceModel}</span>
+          <div class="device-specs">CPU: ${specs.cpu} | RAM: ${specs.ram} | Storage: ${specs.storage}</div>
+          ${serialNumber !== '—' ? `<div style="font-size: 7px; margin-top: 0.6mm; font-weight: 600; color: #000;">S/N: ${serialNumber}</div>` : ''}
         </div>
-        <div class="problem-card">
-          <div class="problem-label">المشكلة</div>
-          <div class="problem-value">${problem}</div>
+
+        <div class="problem-box">
+          <div class="problem-title">المشكلة:</div>
+          <div class="problem-desc">${problem}</div>
         </div>
-        <div class="no-print" style="text-align:center; margin-top:1.5mm;">
-          <button onclick="window.print()" style="padding:2px 5px; font-size:6px; border:1px solid #111827; border-radius:3px; background:#111827; color:#fff; cursor:pointer;">طباعة</button>
-        </div>
+
+        <div class="date-footer">${dateText}</div>
       </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(() => {
+            window.print();
+          }, 800);
+        }
+      </script>
     </body>
     </html>`;
 
