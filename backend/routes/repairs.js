@@ -1403,7 +1403,13 @@ router.post('/', authMiddleware, validate(repairSchemas.createRepair), async (re
           if (accessoryValue) {
             // البحث عن VariableOption الذي يطابق القيمة أو الاسم
             const [optionRows] = await connection.execute(
-              'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
+              `SELECT vo.id 
+               FROM VariableOption vo 
+               JOIN VariableCategory vc ON vo.categoryId = vc.id 
+               WHERE (vo.value = ? OR vo.label = ?) 
+               AND vc.code = 'accessories' 
+               AND vo.deletedAt IS NULL 
+               LIMIT 1`,
               [accessoryValue, accessoryValue]
             );
 
@@ -2073,7 +2079,13 @@ router.patch('/:id/details', authMiddleware, validate(repairSchemas.getRepairByI
           try {
             // البحث عن VariableOption الذي يطابق القيمة أو الاسم
             const [optionRows] = await db.execute(
-              'SELECT id FROM VariableOption WHERE (value = ? OR label = ?) AND category = "ACCESSORY" AND deletedAt IS NULL LIMIT 1',
+              `SELECT vo.id 
+               FROM VariableOption vo 
+               JOIN VariableCategory vc ON vo.categoryId = vc.id 
+               WHERE (vo.value = ? OR vo.label = ?) 
+               AND vc.code = 'accessories' 
+               AND vo.deletedAt IS NULL 
+               LIMIT 1`,
               [accessoryValue, accessoryValue]
             );
 

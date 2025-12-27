@@ -264,7 +264,7 @@ const PublicRepairTrackingPage = () => {
           handleAutoSearch(repairData.trackingToken, 'trackingToken');
         }
       }
-    }, 30000); // 30 ثانية
+    }, 60000); // 60 ثانية (تحديث كل دقيقة)
 
     return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -444,7 +444,7 @@ const PublicRepairTrackingPage = () => {
     const intervalId = setInterval(() => {
       console.log('[Reports] Periodic refresh triggered');
       loadReports();
-    }, 15000); // كل 15 ثانية
+    }, 60000); // كل دقيقة
 
     return () => {
       console.log('[Reports] Clearing periodic refresh');
@@ -592,7 +592,7 @@ const PublicRepairTrackingPage = () => {
         if (response.status === 403) {
           setInvoiceError(errorData.error || 'رقم الهاتف غير صحيح');
         } else if (response.status === 404) {
-          setInvoiceError(errorData.error || 'لا توجد فواتير لهذا الطلب');
+          setInvoiceError('لا توجد فاتورة مرتبطة بهذا الطلب حالياً. سيتم إخطارك بمجرد إصدار الفاتورة.');
         } else {
           setInvoiceError(errorData.error || 'فشل في جلب بيانات الفاتورة');
         }
@@ -834,10 +834,16 @@ const PublicRepairTrackingPage = () => {
                     {/* Invoice Button */}
                     <button
                       onClick={() => setShowInvoiceAuth(true)}
-                      className="group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400 text-white transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
+                      disabled={!repairData.actualCost}
+                      className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 ${repairData.actualCost
+                        ? 'bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400 text-white'
+                        : 'bg-muted dark:bg-muted/50 text-muted-foreground cursor-not-allowed'
+                        }`}
                     >
                       <Receipt className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                      <span>عرض وتحميل الفاتورة</span>
+                      <span>
+                        {repairData.actualCost ? 'عرض وتحميل الفاتورة' : 'الفاتورة غير متوفرة حالياً'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -945,25 +951,7 @@ const PublicRepairTrackingPage = () => {
                   </SimpleCardTitle>
                 </SimpleCardHeader>
                 <SimpleCardContent className="p-6">
-                  {/* Accessories Section */}
-                  {repairData.accessories && repairData.accessories.length > 0 && (
-                    <div className="mb-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-2 mb-3">
-                        <ShoppingBag className="w-4 h-4 text-emerald-600" />
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">المتعلقات المستلمة</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {repairData.accessories.map((acc, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm"
-                          >
-                            {acc}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="p-4 rounded-xl bg-muted/30 border border-border/20">
