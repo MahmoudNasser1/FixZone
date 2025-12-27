@@ -91,21 +91,21 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                         {/* Search Button - Command Palette Trigger */}
                         <button
                             onClick={openPalette}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-500 dark:text-slate-400"
+                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-secondary/50 hover:bg-secondary rounded-xl transition-colors text-sm text-muted-foreground"
                         >
                             <Search className="w-4 h-4" />
                             <span>بحث...</span>
-                            <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-900 text-xs rounded border border-slate-200 dark:border-slate-700">
+                            <kbd className="hidden lg:flex items-center gap-0.5 px-1.5 py-0.5 bg-background text-xs rounded border border-border">
                                 <Command className="w-3 h-3" />K
                             </kbd>
                         </button>
-                        
+
                         {/* Mobile Search Button */}
                         <button
                             onClick={openPalette}
-                            className="sm:hidden p-2 hover:bg-muted rounded-full transition-colors"
+                            className="md:hidden p-2 hover:bg-secondary/50 rounded-full transition-colors text-muted-foreground"
                         >
-                            <Search className="w-5 h-5 text-muted-foreground" />
+                            <Search className="w-5 h-5" />
                         </button>
 
                         {/* Status Toggle */}
@@ -196,8 +196,8 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                                                 </div>
                                             ) : techNotifications.length > 0 ? (
                                                 techNotifications.map((notif) => (
-                                                    <div 
-                                                        key={notif.id} 
+                                                    <div
+                                                        key={notif.id}
                                                         onClick={() => markAsRead(notif.id)}
                                                         className={`p-3 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                                                     >
@@ -296,7 +296,7 @@ export default function TechnicianHeader({ user, notificationCount = 0 }) {
                     </div>
                 </div>
             </div>
-            
+
             {/* Command Palette */}
             <CommandPalette isOpen={isCommandOpen} onClose={closePalette} />
         </header>

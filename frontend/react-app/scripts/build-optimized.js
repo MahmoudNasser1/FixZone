@@ -4,37 +4,46 @@
  * Ensures all optimizations are applied correctly
  */
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
+
+// 1. Cleanup before starting
+console.log('🧹 Cleaning up old build and cache...');
+const cachePath = path.join(__dirname, '../node_modules/.cache');
+const buildPath = path.join(__dirname, '../build');
+
+try {
+  if (fs.existsSync(cachePath)) fs.rmSync(cachePath, { recursive: true, force: true });
+  if (fs.existsSync(buildPath)) fs.rmSync(buildPath, { recursive: true, force: true });
+  console.log('✨ Cleanup done.');
+} catch (e) {
+  console.log('⚠️ Cleanup warning:', e.message);
+}
 
 // Set all optimization environment variables
-// Note: We call react-scripts directly to bypass npm's prebuild hook
 process.env.GENERATE_SOURCEMAP = 'false';
 process.env.DISABLE_ESLINT_PLUGIN = 'true';
 process.env.INLINE_RUNTIME_CHUNK = 'false';
-process.env.NODE_ENV = process.env.NODE_ENV || 'production';
-process.env.NODE_OPTIONS = process.env.NODE_OPTIONS || '--max-old-space-size=4096';
+process.env.NODE_ENV = 'production';
+// We use 2GB instead of 4GB for the VPS to leave room for the OS and avoid Swap thrashing
+process.env.NODE_OPTIONS = '--max-old-space-size=2048';
+process.env.IMAGE_INLINE_SIZE_LIMIT = '1000'; // Reduce base64 inlining to save CPU
 
-console.log('🚀 Starting optimized build (linting skipped):');
-console.log('  - GENERATE_SOURCEMAP:', process.env.GENERATE_SOURCEMAP);
-console.log('  - DISABLE_ESLINT_PLUGIN:', process.env.DISABLE_ESLINT_PLUGIN);
-console.log('  - INLINE_RUNTIME_CHUNK:', process.env.INLINE_RUNTIME_CHUNK);
-console.log('  - NODE_OPTIONS:', process.env.NODE_OPTIONS);
+console.log('🚀 Starting VPS Optimized Build:');
+console.log('  - Environment: Production');
+console.log('  - Memory Limit: 2048MB');
+console.log('  - Sourcemaps: Disabled');
 console.log('');
 
 const startTime = Date.now();
 
-// Call react-scripts directly to bypass npm prebuild hook entirely
-// This skips the prebuild linting step completely
 const build = spawn('npx', ['react-scripts', 'build'], {
   stdio: 'inherit',
   shell: true,
   env: {
     ...process.env,
-    GENERATE_SOURCEMAP: 'false',
-    DISABLE_ESLINT_PLUGIN: 'true',
-    INLINE_RUNTIME_CHUNK: 'false',
-    NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096'
+    CI: 'true' // Avoid interactive progress bars that consume CPU/IO
   }
 });
 

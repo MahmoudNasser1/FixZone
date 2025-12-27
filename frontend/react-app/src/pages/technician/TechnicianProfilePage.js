@@ -6,10 +6,10 @@ import PageTransition from '../../components/ui/PageTransition';
 import { useNotifications } from '../../components/notifications/NotificationSystem';
 import useAuthStore from '../../stores/authStore';
 import {
-  getTechnicianById,
-  getTechnicianStats,
-  getTechnicianPerformance,
-  getTechnicianSkills
+    getTechnicianById,
+    getTechnicianStats,
+    getTechnicianPerformance,
+    getTechnicianSkills
 } from '../../services/technicianService';
 import { getTechDashboard } from '../../services/technicianService';
 import {
@@ -65,7 +65,7 @@ export default function TechnicianProfilePage() {
 
     const loadProfileData = async () => {
         if (!user?.id) return;
-        
+
         setLoading(true);
         try {
             // جلب بيانات الفني
@@ -146,13 +146,13 @@ export default function TechnicianProfilePage() {
     const getAchievements = () => {
         const achievements = [];
         const completed = getCompletedCount();
-        
+
         if (completed >= 10) achievements.push({ icon: Trophy, label: 'فني نشط', color: 'text-amber-500' });
         if (completed >= 50) achievements.push({ icon: Zap, label: 'فني ماهر', color: 'text-blue-500' });
         if (completed >= 100) achievements.push({ icon: Star, label: 'فني محترف', color: 'text-violet-500' });
         if (getOnTimeRate() >= 90) achievements.push({ icon: Target, label: 'دقيق في المواعيد', color: 'text-emerald-500' });
         if (getRating() >= 4.5) achievements.push({ icon: Award, label: 'تقييم ممتاز', color: 'text-yellow-500' });
-        
+
         return achievements;
     };
 
@@ -182,7 +182,7 @@ export default function TechnicianProfilePage() {
     const onTimeRate = getOnTimeRate();
 
     return (
-        <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-24 md:pb-8">
+        <PageTransition className="min-h-screen bg-background pb-24 md:pb-8">
             <TechnicianHeader user={user} notificationCount={3} />
 
             <div className="max-w-4xl mx-auto px-4 py-6">
@@ -205,7 +205,7 @@ export default function TechnicianProfilePage() {
                             <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
                             <div className="absolute bottom-0 right-0 w-60 h-60 bg-white rounded-full translate-x-1/3 translate-y-1/2" />
                         </div>
-                        
+
                         {/* Edit Button */}
                         <button
                             onClick={() => navigate('/technician/settings')}
@@ -214,7 +214,7 @@ export default function TechnicianProfilePage() {
                             <Settings className="w-5 h-5" />
                         </button>
                     </div>
-                    
+
                     <div className="px-6 pb-6 -mt-16 relative z-10">
                         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                             {/* Avatar */}
@@ -223,7 +223,7 @@ export default function TechnicianProfilePage() {
                                     {user?.name?.charAt(0) || 'T'}
                                 </span>
                             </div>
-                            
+
                             {/* Info */}
                             <div className="flex-1">
                                 <div className="flex flex-wrap items-center gap-3 mb-1">
@@ -356,7 +356,7 @@ export default function TechnicianProfilePage() {
                         {/* Performance */}
                         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800 p-6">
                             <h3 className="font-bold text-slate-900 dark:text-white mb-4">الأداء الشهري</h3>
-                            
+
                             {/* On-time Rate */}
                             <div className="mb-4">
                                 <div className="flex justify-between text-sm mb-2">
@@ -364,7 +364,7 @@ export default function TechnicianProfilePage() {
                                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{onTimeRate}%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                    <div 
+                                    <div
                                         className="bg-gradient-to-r from-emerald-500 to-green-500 h-2.5 rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(onTimeRate, 100)}%` }}
                                     />
@@ -378,7 +378,7 @@ export default function TechnicianProfilePage() {
                                     <span className="font-bold text-blue-600 dark:text-blue-400">{(rating / 5 * 100).toFixed(0)}%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                    <div 
+                                    <div
                                         className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full transition-all duration-500"
                                         style={{ width: `${(rating / 5 * 100)}%` }}
                                     />

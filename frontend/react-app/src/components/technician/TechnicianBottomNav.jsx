@@ -100,7 +100,7 @@ const TechnicianBottomNav = () => {
     <>
       {/* Bottom Navigation */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card/98 backdrop-blur-lg border-t border-border/50 shadow-2xl md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[100] bg-card/95 backdrop-blur-lg border-t border-border shadow-2xl md:hidden safe-area-bottom"
         aria-label="التنقل السفلي"
         role="navigation"
       >
@@ -108,7 +108,7 @@ const TechnicianBottomNav = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
-            
+
             return (
               <button
                 key={item.label}
@@ -126,8 +126,8 @@ const TechnicianBottomNav = () => {
               >
                 <div className={cn(
                   'relative p-2.5 rounded-xl transition-all duration-300 transform',
-                  active 
-                    ? `bg-gradient-to-br ${item.gradient} shadow-lg scale-110` 
+                  active
+                    ? `bg-gradient-to-br ${item.gradient} shadow-lg scale-110`
                     : 'hover:bg-muted/60 hover:scale-105'
                 )}>
                   <Icon className={cn(
@@ -154,11 +154,11 @@ const TechnicianBottomNav = () => {
       {showMoreMenu && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] md:hidden animate-in fade-in duration-200"
             onClick={() => setShowMoreMenu(false)}
           />
-          
+
           {/* Bottom Sheet */}
           <div className="fixed bottom-0 left-0 right-0 z-[70] md:hidden animate-in slide-in-from-bottom duration-300">
             <div className="bg-card rounded-t-3xl shadow-2xl border-t border-border/50 overflow-hidden">
@@ -166,7 +166,7 @@ const TechnicianBottomNav = () => {
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
               </div>
-              
+
               {/* Header */}
               <div className="flex items-center justify-between px-6 pb-4 border-b border-border/50">
                 <h3 className="text-lg font-bold text-foreground">المزيد</h3>
@@ -178,13 +178,13 @@ const TechnicianBottomNav = () => {
                   <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
-              
+
               {/* Menu Items */}
               <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto pb-safe">
                 {moreMenuItems.map((item) => {
                   const Icon = item.icon;
                   const isItemActive = location.pathname.startsWith(item.path);
-                  
+
                   return (
                     <button
                       key={item.path}
@@ -200,8 +200,8 @@ const TechnicianBottomNav = () => {
                     >
                       <div className={cn(
                         'p-3 rounded-xl transition-colors',
-                        isItemActive 
-                          ? 'bg-primary text-white' 
+                        isItemActive
+                          ? 'bg-primary text-white'
                           : 'bg-muted text-muted-foreground'
                       )}>
                         <Icon className="w-5 h-5" />

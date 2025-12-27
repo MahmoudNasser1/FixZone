@@ -66,15 +66,15 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  
+
   // Notes state
   const [note, setNote] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
-  
+
   // Parts state
   const [selectedPart, setSelectedPart] = useState('');
   const [partQuantity, setPartQuantity] = useState(1);
-  
+
   // Inspection Reports state
   const [inspectionReports, setInspectionReports] = useState([]);
   const [inspectionReportsLoading, setInspectionReportsLoading] = useState(false);
@@ -92,7 +92,7 @@ export default function JobDetailsPage() {
   });
   const [inspectionSaving, setInspectionSaving] = useState(false);
   const [inspectionError, setInspectionError] = useState('');
-  
+
   // Time tracking state
   const [timeTrackings, setTimeTrackings] = useState([]);
   const [timeTrackingsLoading, setTimeTrackingsLoading] = useState(false);
@@ -137,37 +137,7 @@ export default function JobDetailsPage() {
   }, [job?.id]);
 
   // Debug: Log modal and button positions when modal opens
-  useEffect(() => {
-    if (!inspectionOpen) return;
-    
-    const checkLayout = () => {
-      const modalEl = document.querySelector('[data-modal="inspection-report"]');
-      const saveBtn = document.querySelector('[data-save-btn="inspection"]');
-      const navBar = document.querySelector('nav[aria-label="التنقل السفلي"]');
-      
-      if (modalEl && saveBtn && navBar) {
-        const modalRect = modalEl.getBoundingClientRect();
-        const btnRect = saveBtn.getBoundingClientRect();
-        const navRect = navBar.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        
-        fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:138',message:'Modal layout check on open',data:{modalBottom:modalRect.bottom,btnBottom:btnRect.bottom,btnTop:btnRect.top,navTop:navRect.top,windowHeight,btnVisible:btnRect.top >= 0 && btnRect.bottom <= windowHeight,btnBehindNav:btnRect.bottom > navRect.top,modalZIndex:window.getComputedStyle(modalEl.parentElement).zIndex,navZIndex:window.getComputedStyle(navBar).zIndex,btnDisabled:saveBtn.disabled},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      }
-    };
-    
-    // Check after a short delay to ensure DOM is updated
-    const timeout = setTimeout(checkLayout, 100);
-    
-    // Also check on scroll
-    window.addEventListener('scroll', checkLayout);
-    window.addEventListener('resize', checkLayout);
-    
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener('scroll', checkLayout);
-      window.removeEventListener('resize', checkLayout);
-    };
-  }, [inspectionOpen]);
+
 
   const loadJobDetails = async () => {
     try {
@@ -241,13 +211,13 @@ export default function JobDetailsPage() {
 
   const loadInspectionReports = async () => {
     if (!job?.id) return;
-    
+
     try {
       setInspectionReportsLoading(true);
       const response = await fetch(`${API_BASE_URL}/inspectionreports/repair/${job.id}`, {
         credentials: 'include'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         let reportsList = [];
@@ -283,24 +253,24 @@ export default function JobDetailsPage() {
 
   const loadTimeTrackings = async () => {
     if (!job?.id) return;
-    
+
     try {
       setTimeTrackingsLoading(true);
       const response = await getTimeTrackings({ repairId: job.id });
-      
+
       if (response.success && response.data?.trackings) {
         const trackings = response.data.trackings;
         setTimeTrackings(trackings);
-        
+
         // Calculate total time
         const totalSeconds = trackings.reduce((sum, t) => {
           return sum + (t.duration || 0);
         }, 0);
-        
+
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        
+
         setTotalTime({ hours, minutes, seconds });
       }
     } catch (error) {
@@ -309,7 +279,7 @@ export default function JobDetailsPage() {
       setTimeTrackingsLoading(false);
     }
   };
-  
+
   const formatTime = (totalSeconds) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -319,7 +289,7 @@ export default function JobDetailsPage() {
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   const formatDateTime = (dateString) => {
     if (!dateString) return 'غير محدد';
     const date = new Date(dateString);
@@ -334,7 +304,6 @@ export default function JobDetailsPage() {
 
   const handleSaveInspectionReport = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:302',message:'handleSaveInspectionReport called',data:{jobId:job?.id,hasDate:!!inspectionForm.reportDate,inspectionSaving},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
     // #endregion
     if (!job?.id) {
       setInspectionError('لا يوجد طلب إصلاح مرتبط');
@@ -354,7 +323,7 @@ export default function JobDetailsPage() {
       if (reportDateISO && reportDateISO.length === 10) {
         reportDateISO = new Date(reportDateISO + 'T00:00:00.000Z').toISOString();
       }
-      
+
       const payload = {
         repairRequestId: job.id,
         inspectionTypeId: inspectionForm.inspectionTypeId || null,
@@ -369,7 +338,7 @@ export default function JobDetailsPage() {
       const url = editingReport
         ? `${API_BASE_URL}/inspectionreports/${editingReport.id}`
         : `${API_BASE_URL}/inspectionreports`;
-      
+
       const method = editingReport ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -466,7 +435,7 @@ export default function JobDetailsPage() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
+      <div className="min-h-screen bg-background">
         <TechnicianHeader user={user} notificationCount={5} />
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="animate-pulse space-y-4">
@@ -486,7 +455,7 @@ export default function JobDetailsPage() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20 pb-28 md:pb-8">
+    <PageTransition className="min-h-screen bg-background pb-28 md:pb-8">
       <TechnicianHeader user={user} notificationCount={5} />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -522,7 +491,7 @@ export default function JobDetailsPage() {
               <div className="absolute bottom-0 right-0 w-60 h-60 bg-white rounded-full translate-x-1/3 translate-y-1/2" />
             </div>
           </div>
-          
+
           {/* Content */}
           <div className="px-6 pb-6 -mt-12 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end gap-4">
@@ -530,7 +499,7 @@ export default function JobDetailsPage() {
               <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center border-4 border-white dark:border-slate-900">
                 <DeviceIcon className="w-12 h-12 text-teal-600 dark:text-teal-400" />
               </div>
-              
+
               {/* Info */}
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -568,8 +537,8 @@ export default function JobDetailsPage() {
 
         {/* Stopwatch Section */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800 p-4 mb-6">
-          <Stopwatch 
-            repairId={job.id} 
+          <Stopwatch
+            repairId={job.id}
             onStop={() => {
               // Reload time trackings when stopwatch stops
               loadTimeTrackings();
@@ -587,11 +556,10 @@ export default function JobDetailsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium text-sm whitespace-nowrap transition-all border-b-2 -mb-px ${
-                    activeTab === tab.id
-                      ? 'text-teal-600 dark:text-teal-400 border-teal-500 bg-white dark:bg-slate-900'
-                      : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
+                  className={`flex items-center gap-2 px-6 py-4 font-medium text-sm whitespace-nowrap transition-all border-b-2 -mb-px ${activeTab === tab.id
+                    ? 'text-teal-600 dark:text-teal-400 border-teal-500 bg-white dark:bg-slate-900'
+                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
                 >
                   <TabIcon className="w-4 h-4" />
                   {tab.label}
@@ -693,7 +661,7 @@ export default function JobDetailsPage() {
                           {timeTrackings.length > 0 ? `${timeTrackings.length} جلسة عمل` : 'لا توجد جلسات عمل مسجلة'}
                         </div>
                       </div>
-                      
+
                       {/* Time Sessions List */}
                       {timeTrackings.length > 0 && (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -703,11 +671,10 @@ export default function JobDetailsPage() {
                                 <span className="text-sm font-medium text-slate-900 dark:text-white">
                                   {formatTime(tracking.duration || 0)}
                                 </span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  tracking.status === 'running' 
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                    : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                                }`}>
+                                <span className={`text-xs px-2 py-1 rounded-full ${tracking.status === 'running'
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                  }`}>
                                   {tracking.status === 'running' ? 'جاري' : 'مكتمل'}
                                 </span>
                               </div>
@@ -784,7 +751,7 @@ export default function JobDetailsPage() {
                               </p>
                             </div>
                           </div>
-                          
+
                           {report.technicianId === user?.id && (
                             <div className="flex items-center gap-2">
                               <button
@@ -826,8 +793,8 @@ export default function JobDetailsPage() {
 
                         {/* Inspection Components */}
                         <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                          <InspectionComponentsList 
-                            reportId={report.id} 
+                          <InspectionComponentsList
+                            reportId={report.id}
                             onComponentUpdate={loadInspectionReports}
                           />
                         </div>
@@ -979,7 +946,7 @@ export default function JobDetailsPage() {
       {/* Inspection Report Modal */}
       {inspectionOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-0 sm:p-4 md:p-4">
-          <div 
+          <div
             data-modal="inspection-report"
             className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[calc(100vh-88px)] sm:max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 absolute bottom-[88px] left-0 right-0 sm:relative sm:bottom-auto sm:left-auto sm:right-auto"
           >
@@ -1071,7 +1038,7 @@ export default function JobDetailsPage() {
                   data-save-btn="inspection"
                   onClick={() => {
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'JobDetailsPage.js:1032',message:'Save button clicked',data:{saving:inspectionSaving,hasDate:!!inspectionForm.reportDate,formData:Object.keys(inspectionForm)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/f156c2bc-9f08-4c5c-8680-c47fa95669dd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'JobDetailsPage.js:1032', message: 'Save button clicked', data: { saving: inspectionSaving, hasDate: !!inspectionForm.reportDate, formData: Object.keys(inspectionForm) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
                     // #endregion
                     handleSaveInspectionReport();
                   }}
